@@ -107,4 +107,31 @@ class StatusService
 
 		return $type;
 	}
-}    
+
+	public static function getjvType($jvType)
+	{
+		$type = "";
+
+		if($jvType == 0){
+			$type = "Standard JV";
+		} else if ($jvType == 1) {
+			$type = "Revenue Accrual JV";
+		} else if ($jvType == 2) {
+			$type = "Recurring JV";
+		} else if ($jvType == 3) {
+			$type = "Salary JV";
+		} else if ($jvType == 4) {
+			$type = "Allocation JV";
+		} else if ($jvType == 5) {
+			$type = "PO Accrual JV";
+		} else if ($jvType == 6) {
+			$type = "Gratuity Accrual JV";
+		} else if ($jvType == 7) {
+			$type = "Final Settlement Accrual JV";
+		} else if ($jvType == 8) {
+			$type = "13th Month Accrual JV";
+		}
+
+		return $type;
+	}
+}

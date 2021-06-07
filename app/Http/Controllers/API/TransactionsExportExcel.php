@@ -28,6 +28,7 @@ use App\Repositories\CustomerInvoiceTrackingRepository;
 use App\Repositories\QuotationMasterRepository;
 use App\Repositories\DeliveryOrderRepository;
 use App\Repositories\SalesReturnRepository;
+use App\Repositories\JvMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -53,6 +54,7 @@ class TransactionsExportExcel extends AppBaseController
     private $quotationMasterRepository;
     private $deliveryOrderRepository;
     private $salesReturnRepository;
+    private $jvMasterRepository;
     
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -76,7 +78,8 @@ class TransactionsExportExcel extends AppBaseController
         CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo,
         QuotationMasterRepository $quotationMasterRepo,
         DeliveryOrderRepository $deliveryOrderRepo,
-        SalesReturnRepository $salesReturnRepo
+        SalesReturnRepository $salesReturnRepo,
+        JvMasterRepository $jvMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -101,6 +104,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->quotationMasterRepository = $quotationMasterRepo;
         $this->deliveryOrderRepository = $deliveryOrderRepo;
         $this->salesReturnRepository = $salesReturnRepo;
+        $this->jvMasterRepository = $jvMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -189,6 +193,12 @@ class TransactionsExportExcel extends AppBaseController
                 }
                 break;
 
+            case '17':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'jvType'));
+                $dataQry = $this->jvMasterRepository->jvMasterListQuery($request, $input, $search);
+                $data = $this->jvMasterRepository->setExportExcelData($dataQry);
+                break;
+
             case '19':
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
                 $dataQry = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
@@ -233,25 +243,21 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '67':
-                $input = $request->all();
                 $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
                 $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '68':
-                $input = $request->all();
                 $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
                 $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '71':
-                $input = $request->all();
                 $dataQry = $this->deliveryOrderRepository->deliveryOrderListQuery($request, $input, $search);
                 $data = $this->deliveryOrderRepository->setExportExcelData($dataQry);
                 break;
 
             case '87':
-                $input = $request->all();
                 $dataQry = $this->salesReturnRepository->salesReturnListQuery($request, $input, $search);
                 $data = $this->salesReturnRepository->setExportExcelData($dataQry);
                 break;
