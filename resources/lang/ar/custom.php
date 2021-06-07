@@ -325,5 +325,9 @@ return [
     'item_sales_invoice' => 'فاتورة مبيعات الصنف',
     'from_delivery_note' => 'من مذكرة التسليم',
     'from_sales_order' => 'من طلب المبيعات',
+    'from_quotation' => 'من الاقتباس',
+    'rental_quotation' => 'تسعير الإيجار',
+    'sales_quotation' => 'تسعير المبيعات',
+    'direct_sales' => 'مبيعات مباشرة',
     'from_quotation' => 'من الاقتباس'
 ];

@@ -325,5 +325,9 @@ return [
     'item_sales_invoice' => 'Item Sales Invoice',
     'from_delivery_note' => 'From Delivery Note',
     'from_sales_order' => 'From Sales Order',
+    'from_quotation' => 'From Quotation',
+    'rental_quotation' => 'Rental Qquotation',
+    'sales_quotation' => 'Sales Quotation',
+    'direct_sales' => 'Direct Sales',
     'from_quotation' => 'From Quotation'
 ];

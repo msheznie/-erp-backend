@@ -792,76 +792,9 @@ class QuotationMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyId = $request['companyId'];
-
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
-
-        if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
-        } else {
-            $childCompanies = [$companyId];
-        }
-
-        $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies)
-            ->where('documentSystemID', $input['documentSystemID'])
-        ->with(['segment']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $quotationMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
-                $quotationMaster->where('approvedYN', $input['approvedYN']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $quotationMaster->whereMonth('documentDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $quotationMaster->whereYear('documentDate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('customerSystemCode', $input)) {
-            if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
-                $quotationMaster->where('customerSystemCode', $input['customerSystemCode']);
-            }
-        }
-
-        if (array_key_exists('salesPersonID', $input)) {
-            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $quotationMaster->where('salesPersonID', $input['salesPersonID']);
-            }
-        }
-
-
-        if (array_key_exists('quotationType', $input)) {
-            if ($input['quotationType'] && !is_null($input['quotationType'])) {
-                $quotationMaster->where('quotationType', $input['quotationType']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
-                $query->where('quotationCode', 'LIKE', "%{$search}%");
-            });
-        }
 
-        $data['search']['value'] = '';
-        $request->merge($data);
-
-        $request->request->remove('search.value');
-
+        $quotationMaster = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($quotationMaster)
             ->order(function ($query) use ($input) {

@@ -25,6 +25,7 @@ use App\Repositories\CustomerInvoiceDirectRepository;
 use App\Repositories\CreditNoteRepository;
 use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\CustomerInvoiceTrackingRepository;
+use App\Repositories\QuotationMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -47,8 +48,8 @@ class TransactionsExportExcel extends AppBaseController
     private $creditNoteRepository;
     private $customerReceivePaymentRepository;
     private $customerInvoiceTrackingRepository;
+    private $quotationMasterRepository;
     
-
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
         MaterielRequestRepository $materielRequestRepo, 
@@ -68,7 +69,8 @@ class TransactionsExportExcel extends AppBaseController
         CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,
         CreditNoteRepository $creditNoteRepo,
         CustomerReceivePaymentRepository $customerReceivePaymentRepo,
-        CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo
+        CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo,
+        QuotationMasterRepository $quotationMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -90,6 +92,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->creditNoteRepository = $creditNoteRepo;
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
         $this->customerInvoiceTrackingRepository = $customerInvoiceTrackingRepo;
+        $this->quotationMasterRepository = $quotationMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -219,6 +222,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
                 $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
                 $data = $this->inventoryReclassificationRepository->setExportExcelData($dataQry);
+                break;
+
+            case '67':
+                $input = $request->all();
+                $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
+                $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
                 break;
 
             default:

@@ -62,4 +62,21 @@ class StatusService
 
 		return $type;
 	}
+
+	public static function getQuotationType($quotationType, $documentSystemID)
+	{
+		$type = "";
+
+		if($quotationType == 1 && $documentSystemID == 67){
+			$type = trans('custom.rental_quotation');
+		} else if ($quotationType == 2 && $documentSystemID == 67) {
+			$type = trans('custom.sales_quotation');
+		} else if ($quotationType == 1 && $documentSystemID == 68) {
+			$type = trans('custom.direct_sales');
+		} else if ($quotationType == 2 && $documentSystemID == 68) {
+			$type = trans('custom.from_quotation');
+		}
+
+		return $type;
+	}
 }    
