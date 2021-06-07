@@ -24,6 +24,7 @@ use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use App\Repositories\CreditNoteRepository;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Repositories\CustomerInvoiceTrackingRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -45,6 +46,7 @@ class TransactionsExportExcel extends AppBaseController
     private $customerInvoiceDirectRepository;
     private $creditNoteRepository;
     private $customerReceivePaymentRepository;
+    private $customerInvoiceTrackingRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -64,7 +66,8 @@ class TransactionsExportExcel extends AppBaseController
         PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
         CustomerInvoiceDirectRepository $customerInvoiceDirectRepo,
         CreditNoteRepository $creditNoteRepo,
-        CustomerReceivePaymentRepository $customerReceivePaymentRepo
+        CustomerReceivePaymentRepository $customerReceivePaymentRepo,
+        CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -85,6 +88,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
         $this->creditNoteRepository = $creditNoteRepo;
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
+        $this->customerInvoiceTrackingRepository = $customerInvoiceTrackingRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -196,6 +200,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN'));
                 $dataQry = $this->monthlyAdditionsMasterRepository->monthlyAdditionsListQuery($request, $input, $search);
                 $data = $this->monthlyAdditionsMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '39':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'contractUID', 'year', 'month', 'customerID'));
+                $dataQry = $this->customerInvoiceTrackingRepository->customerInvoiceTrackingListQuery($request, $input, $search);
+                $data = $this->customerInvoiceTrackingRepository->setExportExcelData($dataQry);
                 break;
 
             case '61':

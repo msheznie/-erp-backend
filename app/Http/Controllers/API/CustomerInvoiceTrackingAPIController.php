@@ -490,58 +490,10 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $customerInvoiceTracking = CustomerInvoiceTracking::whereIn('companySystemID', $subCompanies)
-            ->with(['detail','customer']);
-
-        if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && !is_null($input['customerID'])) {
-                $customerInvoiceTracking->where('customerID', $input['customerID']);
-            }
-        }
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $customerInvoiceTracking->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('contractUID', $input)) {
-            if ($input['contractUID'] && !is_null($input['contractUID'])) {
-                $customerInvoiceTracking->where('contractUID', $input['contractUID']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $customerInvoiceTracking->whereYear('submittedDate', $input['year']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $customerInvoiceTracking->whereMonth('submittedDate', $input['month']);
-            }
-        }
-
+        
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $customerInvoiceTracking = $customerInvoiceTracking->where(function ($query) use ($search) {
-                $query->where('manualTrackingNo', 'LIKE', "%{$search}%")
-                    ->orWhere('customerInvoiceTrackingCode', 'LIKE', "%{$search}%");
-            });
-        }
+        $customerInvoiceTracking = $this->customerInvoiceTrackingRepository->customerInvoiceTrackingListQuery($request, $input, $search);
 
         return \DataTables::eloquent($customerInvoiceTracking)
             ->addColumn('Actions', 'Actions', "Actions")
