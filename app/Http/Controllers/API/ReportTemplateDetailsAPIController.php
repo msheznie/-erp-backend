@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\DocumentCodeGenerate;
 
 /**
  * Class ReportTemplateDetailsController
@@ -264,6 +265,21 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
+
+        if (isset($input['itemType']) && $input['itemType'] == 2) {
+            if ($input['serialLength'] == 0) {
+                return $this->sendError("Serial Number length cannot be zero.", 500);
+            }
+
+            $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
+                                                          ->where('detID', '!=', $input['detID'])
+                                                          ->first();
+            if ($checkPrefixDuplicate) {
+                return $this->sendError("Prefix already exists.", 500);
+            }
+        }
+
+
 
         $firstLevels = ReportTemplateDetails::where('masterID', $id)->get();
 
@@ -519,6 +535,19 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            $prefixValidate = true;
+            foreach ($input['subCategory'] as $key => $value) {
+                if (isset($value['itemType']) && $value['itemType'] == 2) {
+                    if ((!isset($value['prefix']) || (isset($value['prefix']) && $value['prefix'] == "")) || !isset($value['serialLength']) || (isset($value['serialLength']) && $value['serialLength'] == "")) {
+                        $prefixValidate = false;
+                    }
+                }
+            }
+
+            if (!$prefixValidate) {
+                return $this->sendError("Prefix and serial number length is required to sub category", 500);
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
@@ -545,9 +574,24 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                     if($input['itemType'] == 3){
                         $input['categoryType'] = null;
                         $input['isFinalLevel'] = 1;
+                        $input['prefix'] = null;
+                        $input['serialLength'] = 0;
                     } else {
                         $input['isFinalLevel'] = 0;
+                        $input['prefix'] = $val['prefix'];
+                        $input['serialLength'] = $val['serialLength'];
+
+                        if ($val['serialLength'] == 0) {
+                            return $this->sendError("Serial Number length cannot be zero.", 500);
+                        }
+
+                        $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $val['prefix'])
+                                                                      ->first();
+                        if ($checkPrefixDuplicate) {
+                            return $this->sendError("Prefix ".$val['prefix']. " cannot be duplicated.", 500);
+                        }
                     }
+
                     $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
                 }
             }
@@ -904,5 +948,18 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
       
         return $this->sendResponse([], 'gl synced successfully');
+    }
+
+    public function getChartOfAccountCode(Request $request)
+    {
+        $input = $request->all();
+
+        $reportCategoryDetail = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory']);
+
+        if (!$reportCategoryDetail['status']) {
+            return $this->sendError($reportCategoryDetail['message'], 500);
+        }
+
+        return $this->sendResponse($reportCategoryDetail['data'], 'gl code retrieved successfully');
     }
 }

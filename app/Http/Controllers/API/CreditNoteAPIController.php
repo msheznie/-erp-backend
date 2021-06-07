@@ -388,6 +388,13 @@ class CreditNoteAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
 
 
+        if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+            if ($companyCurrencyConversion) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
+        }
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompanySystemID'] != '') {
                 $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();

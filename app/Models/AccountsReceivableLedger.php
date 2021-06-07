@@ -300,4 +300,10 @@ class AccountsReceivableLedger extends Model
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
     }
+
+     public function customer_invoice()
+    {
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'documentCodeSystem', 'custInvoiceDirectAutoID')
+                    ->where('documentSystemID', 20);
+    }
 }

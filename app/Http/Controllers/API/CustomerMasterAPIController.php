@@ -116,6 +116,10 @@ class CustomerMasterAPIController extends AppBaseController
             //->whereIn('primaryCompanySystemID',$childCompanies)
             ->select('customermaster.*');
 
+        if (isset($input['customerCategoryID']) && $input['customerCategoryID'] > 0) {
+            $customerMasters = $customerMasters->where('customerCategoryID', $input['customerCategoryID']);
+        }
+
         $search = $request->input('search.value');
         if ($search) {
             $customerMasters = $customerMasters->where(function ($query) use ($search) {
@@ -286,12 +290,46 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getChartOfAccountsByCompanyForCustomer(Request $request)
+    {
+        $input = $request->all();
+
+        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+                                         ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                  ->where('isAssigned', -1)    
+                                                  ->where('isActive', 1);    
+                                         })
+                                        ->where('controlAccountsSystemID',3)
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                        ->orderBy('AccountDescription', 'asc')
+                                        ->get();
+
+        return $this->sendResponse($chartOfAccounts, 'Record retrieved successfully');
+
+    }
+
     public function getCustomerCatgeoryByCompany(Request $request)
     {
         $input = $request->all();
 
         $customerCategories = CustomerMasterCategory::whereHas('category_assigned', function ($query) use ($input) {
-                                                        $query->where('companySystemID', $input['companySystemID']);
+                                                        $query->when(isset($input['companySystemID']), function($query) use ($input){
+                                                                $query->where('companySystemID', $input['companySystemID']);
+                                                            })
+                                                            ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
+                                                                $companyId = $input['companySystemIDFilter'];
+
+                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+                                                                if ($isGroup) {
+                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                } else {
+                                                                    $childCompanies = [$companyId];
+                                                                }
+
+                                                                $query->whereIn('companySystemID', $childCompanies);
+                                                            });
                                                     })
                                                     ->get();
 
@@ -344,6 +382,15 @@ class CustomerMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+
+        if (isset($input['gl_account'])) {
+            unset($input['gl_account']);
+        }
+
+        if (isset($input['unbilled_account'])) {
+            unset($input['unbilled_account']);
+        }
+
 
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
@@ -502,7 +549,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomerMaster $customerMaster */
-        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
+        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy', 'gl_account', 'unbilled_account'])->findWithoutFail($id);
         // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');

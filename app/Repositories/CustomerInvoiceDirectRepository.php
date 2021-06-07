@@ -2,10 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Models\AccountsReceivableLedger;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\MatchDocumentMaster;
 use App\Models\CustomerInvoiceDirect;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
+use Carbon\Carbon;
 
 /**
  * Class CustomerInvoiceDirectRepository
@@ -313,6 +317,65 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }
 
         return $data;
+
+    public function croneJobCustomerInvoiceReminder()
+    {
+        $threeDayBefore = Carbon::now()->addDays(3)->format('Y-m-d');
+        $dueInvoices = AccountsReceivableLedger::where('documentSystemID', 20)
+                                               ->with(['customer_invoice' => function($query) {
+                                                    $query->with(['company']);
+                                               }, 'transaction_currency', 'customer' => function($query) {
+                                                    $query->with(['customer_contacts']);
+                                               }])
+                                               ->whereHas('customer_invoice', function($query) use ($threeDayBefore) {
+                                                    $query->whereDate('invoiceDueDate', $threeDayBefore);
+                                               })
+                                               ->where('fullyInvoiced', '!=', 2)
+                                               ->get();
+
+
+        foreach ($dueInvoices as $key => $value) {
+            $reciptVochers = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $value->documentCodeSystem)
+                                                                    ->where('companySystemID', $value->companySystemID)
+                                                                    ->where('addedDocumentSystemID', $value->documentSystemID)
+                                                                    ->get();
+
+            $totReceiveAmount = 0;
+            foreach ($reciptVochers as $key1 => $row1) {
+                $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $value->arAutoID)
+                        ->sum('receiveAmountTrans');
+
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+                    ->where('companySystemID', $row1["companySystemID"])
+                    ->where('PayMasterAutoId', $row1["bookingInvCodeSystem"])
+                    ->where('documentSystemID', $row1["addedDocumentSystemID"])
+                    ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+                if (!$matchedAmount) {
+                    $matchedAmount['SumOfmatchedAmount'] = 0;
+                }
+
+                $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+            }
+
+            $remainingAmount = $value->custInvoiceAmount - $totReceiveAmount;
+
+            if ($remainingAmount > 0) {
+                foreach ($value->customer->customer_contacts as $key1 => $row) {
+
+                    $dataEmail['empEmail'] = $row->contactPersonEmail;
+
+                    $dataEmail['companySystemID'] = $value->companySystemID;
+
+                    $temp = "Dear " . $value->customer->CustomerName . ',<p> This is a kind reminder of outstanding payment on invoice ' . $value->documentCode . " of Amount ".$value->transaction_currency->CurrencyCode." ".number_format($remainingAmount, $value->transaction_currency->DecimalPlaces)."<br> The Due date of payment is ".Carbon::parse($value->customer_invoice->invoiceDueDate)->format('Y-m-d').". Kindly note that the due date is approaching in 3 Days.</p><p>Please ignore if already paid.</p><br><p>Regards,</p><p>".$value->customer_invoice->company->CompanyName;
+                    $dataEmail['alertMessage'] = "Invoice ".$value->documentCode." overdue notification";
+                    $dataEmail['emailAlertMessage'] = $temp;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                }
+            }
+        }
+
+        return ['status' => true];
     }
 
 }

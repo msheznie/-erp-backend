@@ -113,7 +113,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                             ->first();
 
         if ($allowItemToType) {
-            $allowItemToTypePolicy = true;
+            if ($allowItemToType->isYesNO) {
+                $allowItemToTypePolicy = true;
+            }
         }
 
 
@@ -987,6 +989,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $extension = $excelUpload[0]['filetype'];
             $size = $excelUpload[0]['size'];
 
+            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestID'])
+                                               ->first();
+
+
+            if (empty($purchaseRequest)) {
+                return $this->sendError('Purchase Request not found', 500);
+            }
+
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -1004,26 +1014,56 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $finalData = [];
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->first()->toArray();
+            })->get()->toArray();
 
-            if (count($formatChk) > 0) {
-                if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
-                    return $this->sendError('Uploaded data format is invalid', 500);
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+                                                ->where('companySystemID', $purchaseRequest->companySystemID)
+                                                ->first();
+
+            if ($allowItemToType) {
+                if ($allowItemToType->isYesNO) {
+                    $allowItemToTypePolicy = true;
                 }
             }
+
+
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['item_description']) && !is_null($value['item_description']) || isset($value['comment']) && !is_null($value['comment']) || isset($value['qty']) && !is_null($value['qty'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+            // if (count($formatChk) > 0) {
+            //     if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
+            //     }
+            // }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'item_description', 'comment', 'qty'))->get()->toArray();
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
-            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestID'])
-                                               ->first();
-
-
-            if (empty($purchaseRequest)) {
-                return $this->sendError('Purchase Request not found', 500);
-            }
+           
 
 
             if ($purchaseRequest->cancelledYN == -1) {
@@ -1036,7 +1076,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             if (count($record) > 0) {
-                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID']);             
+                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);             
             } else {
                 return $this->sendError('No Records found!', 500);
             }

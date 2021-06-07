@@ -117,7 +117,7 @@ class SegmentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->withcount(['sub_levels'])->find($id);
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->withcount(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -168,7 +168,7 @@ class SegmentMasterAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var SegmentMaster $segmentMaster */
-        $segmentMaster = $this->segmentMasterRepository->with(['sub_levels'])->findWithoutFail($id);
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($id);
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
@@ -200,7 +200,7 @@ class SegmentMasterAPIController extends AppBaseController
                 $this->deleteSubLevels($value->sub_levels);
             }
 
-            $segmentMaster = $this->segmentMasterRepository->with(['sub_levels'])->findWithoutFail($value->serviceLineSystemID);
+            $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->with(['sub_levels'])->find($value->serviceLineSystemID);
 
             if (empty($segmentMaster)) {
                 return $this->sendError('Segment Master not found');
@@ -375,7 +375,8 @@ class SegmentMasterAPIController extends AppBaseController
     {
          $orgStructure = Company::withcount(['segments'])
                              ->with(['segments' => function ($q) {
-                                $q->where(function($query) {
+                                $q->withoutGlobalScope('final_level')
+                                  ->where(function($query) {
                                         $query->whereNull('masterID')
                                               ->orWhere('masterID', 0);
                                     })

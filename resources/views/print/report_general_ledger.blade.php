@@ -161,23 +161,35 @@
     <table style="border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $det)
             <tr>
-                <th colspan="6">{{ $key  }}</th>
+                <th colspan="{{6 + count($extraColumns)}}">{{ $key  }}</th>
                 <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
                 <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
             </tr>
             <tr>
-                <th width="100px">Document Number</th>
-                <th width="50px">Date</th>
-                <th width="270px">Document Narration</th>
-                <th width="60px">Service Line</th>
-                <th width="60px">Contract</th>
-                <th width="150px">Party Name</th>
-                @if($isGroup == 0)
-                    <th width="60px" style="text-align: center">Debit</th>
-                    <th width="60px" style="text-align: center">Credit</th>
+                <th>Document Number</th>
+                <th>Date</th>
+                <th>Document Narration</th>
+                <th>Service Line</th>
+                <th>Contract</th>
+                <th>Party Name</th>
+                @if(in_array('confi_name', $extraColumns))
+                    <th>Confirmed By</th>
                 @endif
-                <th width="60px" style="text-align: center">Debit</th>
-                <th width="60px" style="text-align: center">Credit</th>
+                @if(in_array('confi_date', $extraColumns))
+                    <th>Confirmed Date</th>
+                @endif
+                @if(in_array('app_name', $extraColumns))
+                    <th>Approved By</th>
+                @endif
+                @if(in_array('app_date', $extraColumns))
+                    <th>Approved Date</th>
+                @endif
+                @if($isGroup == 0)
+                    <th style="text-align: center">Debit</th>
+                    <th style="text-align: center">Credit</th>
+                @endif
+                <th style="text-align: center">Debit</th>
+                <th style="text-align: center">Credit</th>
             </tr>
             @foreach ($det as $key2 => $val)
                 <tr>
@@ -187,6 +199,18 @@
                     <td>{{ $val->serviceLineCode  }}</td>
                     <td>{{ $val->clientContractID  }}</td>
                     <td>{{ $val->isCustomer  }}</td>
+                    @if(in_array('confi_name', $extraColumns))
+                        <td>{{ $val->confirmedBy  }}</td>
+                    @endif
+                    @if(in_array('confi_date', $extraColumns))
+                        <td>{{\Helper::dateFormat($val->documentConfirmedDate)}}</td>
+                    @endif
+                    @if(in_array('app_name', $extraColumns))
+                        <td>{{ $val->approvedBy  }}</td>
+                    @endif
+                    @if(in_array('app_date', $extraColumns))
+                        <td>{{\Helper::dateFormat($val->documentFinalApprovedDate)}}</td>
+                    @endif
                     @if($isGroup == 0)
                         <td class="text-right">{{number_format($val->localDebit, $decimalPlaceLocal)}}</td>
                         <td class="text-right">{{number_format($val->localCredit, $decimalPlaceLocal)}}</td>
@@ -197,7 +221,7 @@
             @endforeach
         @endforeach
         <tr style="background-color: #E7E7E7">
-            <td colspan="6" class="text-right"
+            <td colspan="{{6 + count($extraColumns)}}" class="text-right"
                 style=""><b>Total Amount:</b>
             </td>
             @if($isGroup == 0)
@@ -218,7 +242,7 @@
             </td>
         </tr>
         <tr style="background-color: #E7E7E7">
-            <td colspan="6" class="text-right"
+            <td colspan="{{6 + count($extraColumns)}}" class="text-right"
                 style="">
             </td>
             @if($isGroup == 0)

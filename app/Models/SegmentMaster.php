@@ -14,6 +14,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class SegmentMaster
@@ -40,7 +41,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class SegmentMaster extends Model
 {
     //use SoftDeletes;
-
     public $table = 'serviceline';
 
     const CREATED_AT = 'createdDateTime';
@@ -153,6 +153,16 @@ class SegmentMaster extends Model
         return $query->whereIN('companySystemID',  $type);
     }
 
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('final_level', function (Builder $builder) {
+            $builder->where('isFinalLevel', 1);
+        });
+    }
+
     /**
      * joining the company with serviceline table.
      */
@@ -170,6 +180,6 @@ class SegmentMaster extends Model
 
     public function sub_levels()
     {
-        return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_levels')->where('isDeleted', 0);
+        return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_levels')->where('isDeleted', 0)->withoutGlobalScope('final_level');
     }
 }

@@ -35,6 +35,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\GRVDetails;
+use App\Models\CustomerMaster;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
@@ -4851,7 +4852,7 @@ class Helper
         return $permission;
     }
 
-    public static function checkCompanyForMasters($companyID, $documentSystemID = null, $documentType = null)
+    public static function checkCompanyForMasters($companyID, $documentSystemID = null, $documentType = null, $edit = false)
     {
         $isGroup = self::checkIsCompanyGroup($companyID);
 
@@ -4877,10 +4878,38 @@ class Helper
                 }
                 break;
             case 'customer':
-                $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
-                if (!is_null($customerAssigned)) {
-                    return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                if (!$edit) {
+                    $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                    if (!is_null($customerAssigned)) {
+                        return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                    }
                 }
+
+                $customerMasterData = CustomerMaster::find($documentSystemID);
+                if ($customerMasterData && !is_null($customerMasterData->customerCategoryID)) {
+                    $checkAssignedStatusOfCategory = Models\CustomerMasterCategoryAssigned::checkCustomerCategoryAssignedStatus($customerMasterData->customerCategoryID, $companyID);
+                    if (!$checkAssignedStatusOfCategory) {
+                        return ['success' => false, 'message' => 'Customer category of this customer is not assign to this company.'];
+                    }
+                }
+
+                if ($customerMasterData && (!is_null($customerMasterData->custGLAccountSystemID) || !is_null($customerMasterData->custUnbilledAccountSystemID))) {
+                    if (!is_null($customerMasterData->custGLAccountSystemID)) {
+                        $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custGLAccountSystemID, $companyID);
+                        if (!$checkAssignedStatusOfGL) {
+                            return ['success' => false, 'message' => 'GL Account of this customer is not assign to this company.'];
+                        }
+                    }
+
+
+                     if (!is_null($customerMasterData->custUnbilledAccountSystemID)) {
+                        $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custUnbilledAccountSystemID, $companyID);
+                        if (!$checkAssignedStatusOfGL) {
+                            return ['success' => false, 'message' => 'Unbilled Account of this customer is not assign to this company.'];
+                        }
+                    }
+                }
+
                 break;
             case 'customerCategory':
                 $customerAssigned = Models\CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $documentSystemID)->where('companySystemID', $companyID)->first();

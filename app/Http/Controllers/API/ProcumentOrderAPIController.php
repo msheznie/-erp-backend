@@ -3655,6 +3655,23 @@ WHERE
         $procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
         $procurementOrder->WO_amendRequestedByEmpID = $employee->empID;
         $procurementOrder->WO_amendRequestedDate = now();
+
+
+        // $company = Company::where('companySystemID', $procurementOrder->companySystemID)->first();
+        // if ($company) {
+        //     $procurementOrder->vatRegisteredYN = $company->vatRegisteredYN;
+        // }
+
+
+        // $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $procurementOrder->supplierID)
+        //                                         ->where('companySystemID', $procurementOrder->companySystemID)
+        //                                         ->first();
+
+        // if ($supplierAssignedDetai) {
+        //     $procurementOrder->supplierVATEligible = $supplierAssignedDetai->vatEligible;
+        //     $procurementOrder->VATPercentage = 0; // $supplierAssignedDetai->vatPercentage;
+        // }
+
         $procurementOrder->save();
 
         AuditTrial::createAuditTrial($procurementOrder->documentSystemID, $input['purchaseOrderID'], '', 'amended');
@@ -3787,7 +3804,7 @@ WHERE
             return $this->sendError('Procurement Order not found');
         }
 
-        $oldVaTEligible = $purchaseOrder->supplierVATEligible;
+        $oldVaTEligible = ($purchaseOrder->supplierVATEligible || $purchaseOrder->vatRegisteredYN) ? 1 : 0;
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($input['supplierTransactionCurrencyID']);
 
@@ -3925,6 +3942,11 @@ WHERE
             $purchaseOrder->logisticsAvailable = -1;
         }
 
+        $company = Company::where('companySystemID', $purchaseOrder->companySystemID)->first();
+        if ($company) {
+            $purchaseOrder->vatRegisteredYN = $company->vatRegisteredYN;
+        }
+
         $purchaseOrder->save();
 
         foreach ($purchaseOrder->detail as $item) {
@@ -3946,14 +3968,14 @@ WHERE
                 $purchaseOrderDetail->discountAmount = round($purchaseOrderDetail->unitCost * ($purchaseOrderDetail->discountPercentage / 100), $supplierCurrencyDecimalPlace);
             }
 
-
             if (TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible, $purchaseOrder->vatRegisteredYN)) {
-
                 $netUnitAmount = 0;
                 if (!$oldVaTEligible) {
                     $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID, $item['itemCode'], $purchaseOrder->supplierID);
                     $purchaseOrderDetail->VATPercentage = $vatDetails['percentage'];
                     $purchaseOrderDetail->VATApplicableOn = $vatDetails['applicableOn'];
+                    $purchaseOrderDetail->vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                    $purchaseOrderDetail->vatSubCategoryID = $vatDetails['vatSubCategoryID'];
                     $purchaseOrderDetail->VATAmount = 0;
                 }
 

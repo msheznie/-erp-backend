@@ -74,11 +74,16 @@ class CustomerAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-        $input = array_except($input, ['final_approved_by','company']);
+        $input = array_except($input, ['final_approved_by','company', 'gl_account', 'unbilled_account']);
         $input = $this->convertArrayToValue($input);
 
         if( array_key_exists ('customerAssignedID' , $input )){
+
             if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+                $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['customerCodeSystem'], 'customer', true);
+                if (!$validatorResult['success']) {
+                    return $this->sendError($validatorResult['message']);
+                }
                 $input['isAssigned'] = -1;
             }
             $data = [

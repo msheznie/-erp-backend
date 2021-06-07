@@ -135,6 +135,9 @@ class ReportTemplateDetails extends Model
         'modifiedUserSystemID',
         'modifiedUserID',
         'modifiedDateTime',
+        'prefix',
+        'serialLength',
+        'lastSerialNo',
         'timestamp'
     ];
 
@@ -153,6 +156,9 @@ class ReportTemplateDetails extends Model
         'isFinalLevel' => 'integer',
         'controlAccountType' => 'integer',
         'accountType' => 'string',
+        'prefix' => 'string',
+        'serialLength' => 'integer',
+        'lastSerialNo' => 'integer',
         'categoryType' => 'integer',
         'fontColor' => 'string',
         'bgColor' => 'string',

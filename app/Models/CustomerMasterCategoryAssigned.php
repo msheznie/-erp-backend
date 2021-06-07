@@ -104,5 +104,13 @@ class CustomerMasterCategoryAssigned extends Model
      public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
-    
+
+    public static function checkCustomerCategoryAssignedStatus($customerMasterCategoryID, $companySystemID)
+    {
+         return CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $customerMasterCategoryID)
+                                              ->where('companySystemID', $companySystemID)       
+                                              ->where('isAssigned', 1)       
+                                              ->where('isActive', 1)
+                                              ->first();       
+    }
 }

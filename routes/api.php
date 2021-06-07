@@ -254,6 +254,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getChartOfAccountsByCompanyForCustomer', 'CustomerMasterAPIController@getChartOfAccountsByCompanyForCustomer');
         Route::get('getCustomerCatgeoryByCompany', 'CustomerMasterAPIController@getCustomerCatgeoryByCompany');
         Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
         Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
@@ -1424,6 +1425,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
         Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
         Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
+        Route::post('getChartOfAccountCode', 'ReportTemplateDetailsAPIController@getChartOfAccountCode');
         Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
         Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation');
         Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode');
@@ -2058,8 +2060,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-
-
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
@@ -2078,3 +2078,6 @@ Route::resource('employee_designations', 'EmployeeDesignationAPIController');
 Route::resource('hrms_designations', 'HrmsDesignationAPIController');
 
 Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+
+
+Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
