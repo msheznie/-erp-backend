@@ -989,6 +989,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $extension = $excelUpload[0]['filetype'];
             $size = $excelUpload[0]['size'];
 
+            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestID'])
+                                               ->first();
+
+
+            if (empty($purchaseRequest)) {
+                return $this->sendError('Purchase Request not found', 500);
+            }
+
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -1013,8 +1021,22 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+                                                ->where('companySystemID', $purchaseRequest->companySystemID)
+                                                ->first();
+
+            if ($allowItemToType) {
+                if ($allowItemToType->isYesNO) {
+                    $allowItemToTypePolicy = true;
+                }
+            }
+
+
             foreach ($uniqueData as $key => $value) {
-                if (isset($value['item_code'])) {
+                if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
                 }
 
@@ -1041,13 +1063,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
-            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestID'])
-                                               ->first();
-
-
-            if (empty($purchaseRequest)) {
-                return $this->sendError('Purchase Request not found', 500);
-            }
+           
 
 
             if ($purchaseRequest->cancelledYN == -1) {
