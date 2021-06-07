@@ -230,6 +230,12 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
                 break;
 
+            case '68':
+                $input = $request->all();
+                $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
+                $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
+                break;
+
             default:
                 return $this->sendResponse(array(), 'export failed');
         }
