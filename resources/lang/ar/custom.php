@@ -329,5 +329,8 @@ return [
     'rental_quotation' => 'تسعير الإيجار',
     'sales_quotation' => 'تسعير المبيعات',
     'direct_sales' => 'مبيعات مباشرة',
-    'from_quotation' => 'من الاقتباس'
+    'from_quotation' => 'من الاقتباس',
+    'quotation_based' => 'أمر مباشر',
+    'quotation_based' => 'بناء على الاقتباس',
+    'sales Order_based' => 'بناء على طلب المبيعات'
 ];

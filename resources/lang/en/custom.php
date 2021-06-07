@@ -329,5 +329,8 @@ return [
     'rental_quotation' => 'Rental Qquotation',
     'sales_quotation' => 'Sales Quotation',
     'direct_sales' => 'Direct Sales',
-    'from_quotation' => 'From Quotation'
+    'from_quotation' => 'From Quotation',
+    'quotation_based' => 'Direct Order',
+    'quotation_based' => 'Quotation Based',
+    'sales Order_based' => 'Sales Order Based'
 ];

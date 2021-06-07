@@ -26,6 +26,7 @@ use App\Repositories\CreditNoteRepository;
 use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\CustomerInvoiceTrackingRepository;
 use App\Repositories\QuotationMasterRepository;
+use App\Repositories\DeliveryOrderRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -49,6 +50,7 @@ class TransactionsExportExcel extends AppBaseController
     private $customerReceivePaymentRepository;
     private $customerInvoiceTrackingRepository;
     private $quotationMasterRepository;
+    private $deliveryOrderRepository;
     
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -70,7 +72,8 @@ class TransactionsExportExcel extends AppBaseController
         CreditNoteRepository $creditNoteRepo,
         CustomerReceivePaymentRepository $customerReceivePaymentRepo,
         CustomerInvoiceTrackingRepository $customerInvoiceTrackingRepo,
-        QuotationMasterRepository $quotationMasterRepo
+        QuotationMasterRepository $quotationMasterRepo,
+        DeliveryOrderRepository $deliveryOrderRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -93,6 +96,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
         $this->customerInvoiceTrackingRepository = $customerInvoiceTrackingRepo;
         $this->quotationMasterRepository = $quotationMasterRepo;
+        $this->deliveryOrderRepository = $deliveryOrderRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -234,6 +238,12 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $request->all();
                 $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
                 $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '71':
+                $input = $request->all();
+                $dataQry = $this->deliveryOrderRepository->deliveryOrderListQuery($request, $input, $search);
+                $data = $this->deliveryOrderRepository->setExportExcelData($dataQry);
                 break;
 
             default:

@@ -79,4 +79,19 @@ class StatusService
 
 		return $type;
 	}
+
+	public static function getDeliveryOrderType($orderType)
+	{
+		$type = "";
+
+		if ($orderType == 1) {
+			$type = trans('custom.proforma_invoice');
+		} else if ($orderType == 2) {
+			$type = trans('custom.item_sales_invoice');
+		} else if ($orderType == 3) {
+			$type = trans('custom.from_delivery_note');
+		}
+
+		return $type;
+	}
 }    

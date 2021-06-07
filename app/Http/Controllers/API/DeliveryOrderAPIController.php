@@ -782,67 +782,9 @@ class DeliveryOrderAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyId = $request['companyId'];
-
-        $isGroup = Helper::checkIsCompanyGroup($companyId);
-
-        if ($isGroup) {
-            $childCompanies = Helper::getGroupCompany($companyId);
-        } else {
-            $childCompanies = [$companyId];
-        }
-
-        $deliveryOrder = DeliveryOrder::whereIn('companySystemID', $childCompanies)
-        ->with(['customer','transaction_currency','created_by','segment']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $deliveryOrder->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
-                $deliveryOrder->where('approvedYN', $input['approvedYN']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $deliveryOrder->whereMonth('deliveryOrderDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $deliveryOrder->whereYear('deliveryOrderDate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && !is_null($input['customerID'])) {
-                $deliveryOrder->where('customerID', $input['customerID']);
-            }
-        }
-
-        if (array_key_exists('orderType', $input)) {
-            if ($input['orderType'] && !is_null($input['orderType'])) {
-                $deliveryOrder->where('orderType', $input['orderType']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $deliveryOrder = $deliveryOrder->where(function ($query) use ($search) {
-                $query->where('deliveryOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%")
-                ->orWhereHas('customer', function ($q) use ($search){
-                    $q->where('CustomerName', 'LIKE', "%{$search}%");
-                });
-            });
-        }
 
+        $deliveryOrder = $this->deliveryOrderRepository->deliveryOrderListQuery($request, $input, $search);
 
         return \DataTables::eloquent($deliveryOrder)
             ->order(function ($query) use ($input) {
