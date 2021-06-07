@@ -29,6 +29,8 @@ use App\Repositories\QuotationMasterRepository;
 use App\Repositories\DeliveryOrderRepository;
 use App\Repositories\SalesReturnRepository;
 use App\Repositories\JvMasterRepository;
+use App\Repositories\BudgetTransferFormRepository;
+use App\Repositories\ConsoleJVMasterRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -55,6 +57,8 @@ class TransactionsExportExcel extends AppBaseController
     private $deliveryOrderRepository;
     private $salesReturnRepository;
     private $jvMasterRepository;
+    private $budgetTransferFormRepository;
+    private $consoleJVMasterRepository;
     
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -79,7 +83,9 @@ class TransactionsExportExcel extends AppBaseController
         QuotationMasterRepository $quotationMasterRepo,
         DeliveryOrderRepository $deliveryOrderRepo,
         SalesReturnRepository $salesReturnRepo,
-        JvMasterRepository $jvMasterRepo
+        JvMasterRepository $jvMasterRepo,
+        BudgetTransferFormRepository $budgetTransferFormRepo,
+        ConsoleJVMasterRepository $consoleJVMasterRepo
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -105,6 +111,8 @@ class TransactionsExportExcel extends AppBaseController
         $this->deliveryOrderRepository = $deliveryOrderRepo;
         $this->salesReturnRepository = $salesReturnRepo;
         $this->jvMasterRepository = $jvMasterRepo;
+        $this->budgetTransferFormRepository = $budgetTransferFormRepo;
+        $this->consoleJVMasterRepository = $consoleJVMasterRepo;
     }
 
     public function exportRecord(Request $request) { 
@@ -236,6 +244,12 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->customerInvoiceTrackingRepository->setExportExcelData($dataQry);
                 break;
 
+            case '46':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'contractUID', 'year', 'month', 'customerID'));
+                $dataQry = $this->budgetTransferFormRepository->budgetTransferFormListQuery($request, $input, $search);
+                $data = $this->budgetTransferFormRepository->setExportExcelData($dataQry);
+                break;
+
             case '61':
                 $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
                 $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
@@ -250,6 +264,12 @@ class TransactionsExportExcel extends AppBaseController
             case '68':
                 $dataQry = $this->quotationMasterRepository->quotationMasterListQuery($request, $input, $search);
                 $data = $this->quotationMasterRepository->setExportExcelData($dataQry);
+                break;
+
+            case '69':
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'confirmedYN'));
+                $dataQry = $this->consoleJVMasterRepository->consoleJVMasterListQuery($request, $input, $search);
+                $data = $this->consoleJVMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '71':
