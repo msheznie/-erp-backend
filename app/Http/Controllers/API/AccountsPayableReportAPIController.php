@@ -5147,7 +5147,7 @@ ORDER BY
         }
 
         if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. report is not sent');
+            return $this->sendError('Supplier email is not updated. report is not sent', 500);
         } else {
             return $this->sendResponse($emailSentTo, 'Supplier statement report sent');
 
