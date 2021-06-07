@@ -1899,53 +1899,9 @@ WHERE
             $sort = 'desc';
         }
 
-        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
-        $invMaster->whereIn('documentSystemID', [19, 21]);
-        $invMaster->with(['created_by' => function ($query) {
-        }, 'customer' => function ($query) {
-        }, 'transactioncurrency' => function ($query) {
-        }, 'cancelled_by']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $invMaster->where('matchingConfirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $invMaster->whereMonth('matchingDocdate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $invMaster->whereYear('matchingDocdate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && !is_null($input['customerID'])) {
-                $invMaster->where('BPVsupplierID', $input['customerID']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $search_without_comma = str_replace(",", "", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
-                $query->where('matchingDocCode', 'LIKE', "%{$search}%")
-                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
-                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('payAmountSuppTrans', 'LIKE', "%{$search}%")
-                    ->orWhere('matchingAmount', 'LIKE', "%{$search_without_comma}%")
-                    ->orWhereHas('customer', function ($query) use ($search) {
-                        $query->where('CutomerCode', 'LIKE', "%{$search}%")
-                            ->orWhere('CustomerName', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+
+        $invMaster = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

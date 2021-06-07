@@ -47,6 +47,7 @@ class TransactionsExportExcel extends AppBaseController
     private $creditNoteRepository;
     private $customerReceivePaymentRepository;
     private $customerInvoiceTrackingRepository;
+    
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -166,9 +167,15 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '15':
-                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
-                $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
-                $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
+                if($input['companySystemID'] == 57) {
+                    $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
+                    $dataQry = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
+                    $data = $this->matchDocumentMasterRepository->setReceiptVoucherMatchingExportExcelData($dataQry);
+                } else {
+                    $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
+                    $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
+                    $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
+                }
                 break;
 
             case '19':
