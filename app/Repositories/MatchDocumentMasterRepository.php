@@ -228,7 +228,7 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Matching Code'] = $val->matchingDocCode;
                 $data[$x]['Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
                 $data[$x]['Document Code'] = $val->BPVcode;
-                // $data[$x]['Customer Code'] = $val->customer? $val->customer->CutomerCode;
+                $data[$x]['Customer Code'] = $val->customer? $val->customer->CutomerCode : '';
                 $data[$x]['Customer Name'] = $val->customer? $val->customer->CustomerName : '';
                 $data[$x]['Comments'] = $val->BPVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
