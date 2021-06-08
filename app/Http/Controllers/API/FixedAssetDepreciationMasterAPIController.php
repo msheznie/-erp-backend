@@ -436,40 +436,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $assetCositng = FixedAssetDepreciationMaster::with(['depperiod_by' => function ($query) use ($input) {
-            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,depMasterAutoID');
-            $query->groupBy('depMasterAutoID');
-        }])->ofCompany($subCompanies);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $assetCositng->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $assetCositng->where('approved', $input['approved']);
-            }
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $assetCositng = $assetCositng->where(function ($query) use ($search) {
-                $query->where('depCode', 'LIKE', "%{$search}%");
-            });
-        }
+        $assetCositng = $this->fixedAssetDepreciationMasterRepository->fixedAssetDepreciationListQuery($request, $input, $search);
 
         return \DataTables::eloquent($assetCositng)
             ->addColumn('Actions', 'Actions', "Actions")
