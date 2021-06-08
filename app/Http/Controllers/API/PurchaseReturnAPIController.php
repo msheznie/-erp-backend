@@ -728,77 +728,9 @@ class PurchaseReturnAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
-            ->where('documentSystemID', $input['documentId'])
-            ->with(['created_by', 'segment_by', 'location_by', 'supplier_by', 'currency_by']);
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseReturn->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('purchaseReturnLocation', $input)) {
-            if ($input['purchaseReturnLocation'] && !is_null($input['purchaseReturnLocation'])) {
-                $purchaseReturn->where('purchaseReturnLocation', $input['purchaseReturnLocation']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $purchaseReturn->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $purchaseReturn->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $purchaseReturn->whereMonth('purchaseReturnDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $purchaseReturn->whereYear('purchaseReturnDate', '=', $input['year']);
-            }
-        }
-
-        $purchaseReturn = $purchaseReturn->select(
-            ['purhaseReturnAutoID',
-                'purchaseReturnCode',
-                'documentSystemID',
-                'purchaseReturnRefNo',
-                'createdDateTime',
-                'createdUserSystemID',
-                'narration',
-                'purchaseReturnLocation',
-                'purchaseReturnDate',
-                'supplierID',
-                'serviceLineSystemID',
-                'confirmedDate',
-                'approvedDate',
-                'supplierTransactionCurrencyID',
-                'timesReferred',
-                'refferedBackYN',
-                'confirmedYN',
-                'approved'
-            ]);
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $purchaseReturn = $purchaseReturn->where(function ($query) use ($search) {
-                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
-            });
-        }
 
+        $purchaseReturn = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();

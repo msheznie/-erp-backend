@@ -538,26 +538,9 @@ class InventoryReclassificationAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $invReclassification = InventoryReclassification::with(['segment_by', 'created_by'])->whereIN('companySystemID', $subCompanies);
-
         $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $invReclassification = $invReclassification->where(function ($query) use ($search) {
-                $query->where('documentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
-            });
-        }
+        
+        $invReclassification = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
 
         return \DataTables::eloquent($invReclassification)
             ->addColumn('Actions', 'Actions', "Actions")

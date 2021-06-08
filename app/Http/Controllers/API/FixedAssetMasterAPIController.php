@@ -1035,66 +1035,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
         $search = $request->input('search.value');
 
-        $assetAllocation = GRVDetails::with(['grv_master' => function ($q) use ($search) {
-                                                $q->where('grvConfirmedYN', 1);
-                                                $q->where('approved', -1);
-                                                $q->where('grvCancelledYN', 0);
-                                                if ($search) {
-                                                    $search = str_replace("\\", "\\\\", $search);
-                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
-                                                }
-                                            }, 'item_by', 'localcurrency', 'rptcurrency'])
-                                            ->whereHas('item_by', function ($q) {
-                                                $q->where('financeCategoryMaster', 3);
-                                                $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
-                                            })->whereHas('grv_master', function ($q) use ($search) {
-                                                $q->where('grvConfirmedYN', 1);
-                                                $q->where('approved', -1);
-                                                $q->where('grvCancelledYN', 0);
-                                                if ($search) {
-                                                    $search = str_replace("\\", "\\\\", $search);
-                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
-                                                }
-                                            })->whereHas('localcurrency', function ($q) {
-                                            })->whereHas('rptcurrency', function ($q) {
-                                            })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
-
-
-        if (array_key_exists('cancelYN', $input)) {
-            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
-                $assetAllocation->where('cancelYN', $input['cancelYN']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $assetAllocation->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $assetAllocation->where('approved', $input['approved']);
-            }
-        }
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $assetAllocation = $assetAllocation->where(function ($query) use ($search) {
-                $query->where('itemDescription', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
-            });
-        }
+        $assetAllocation = $this->fixedAssetMasterRepository->fixedAssetMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($assetAllocation)
             ->addColumn('Actions', 'Actions', "Actions")

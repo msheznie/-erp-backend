@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ConsoleJVMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class ConsoleJVMasterRepository
@@ -56,5 +57,64 @@ class ConsoleJVMasterRepository extends BaseRepository
     public function model()
     {
         return ConsoleJVMaster::class;
+    }
+
+
+    public function consoleJVMasterListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyID'];
+
+        $consoleJV = ConsoleJVMaster::with(['created_by'])->ofCompany($selectedCompanyId);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $consoleJV->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $consoleJV->whereMonth('consoleJVdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $consoleJV->whereYear('consoleJVdate', '=', $input['year']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $consoleJV = $consoleJV->where(function ($query) use ($search) {
+                $query->where('consoleJVcode', 'LIKE', "%{$search}%");
+                $query->orWhere('consoleJVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $consoleJV;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Document Date'] = \Helper::dateFormat($val->consoleJVdate);
+                $data[$x]['Document Code'] = $val->consoleJVcode;
+                $data[$x]['Narration'] = $val->consoleJVNarration;
+                $data[$x]['Type'] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Confirmed'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, NULL, NULL);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

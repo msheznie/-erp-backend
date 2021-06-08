@@ -568,57 +568,9 @@ class BankReconciliationAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $bankReconciliation = BankReconciliation::whereIn('companySystemID', $subCompanies)
-                                                ->with(['month', 'created_by', 'bank_account']);
-
-        if (isset($input['month']) && $input['month'] != null) {
-            $month = Carbon::parse($input['month'])->format('m');
-
-            $bankReconciliation = $bankReconciliation->where('month', $month);
-        }
-
-
-        if (isset($input['forReview']) && $input['forReview']) {
-            $bankReconciliation = $bankReconciliation->where('confirmedYN', 1);
-        }
-
-
-        if (isset($input['year']) && $input['year'] != null) {
-            $year = Carbon::parse($input['year'])->format('Y');
-
-            $bankReconciliation = $bankReconciliation->where('year', $year);
-        }
-
-        if (isset($input['bankAccountAutoID']) && $input['bankAccountAutoID'] > 0) {
-            $bankReconciliation = $bankReconciliation->where('bankAccountAutoID', $input['bankAccountAutoID']);
-        }
-
-        if (isset($input['bankmasterAutoID']) && $input['bankmasterAutoID'] > 0) {
-            $bankReconciliation = $bankReconciliation->whereHas('bank_account', function($query) use ($input) {
-                                                            $query->where('bankmasterAutoID', $input['bankmasterAutoID']);
-                                                    });
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {
-                $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhereHas('ledger_data', function ($query) use ($search) {
-                        $query->where('documentCode', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+        $bankReconciliation = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search);
 
         return \DataTables::eloquent($bankReconciliation)
             ->addColumn('Actions', 'Actions', "Actions")

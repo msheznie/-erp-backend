@@ -451,51 +451,9 @@ class BudgetTransferFormAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $budgetTransfer = BudgetTransferForm::whereIn('companySystemID', $subCompanies)
-            ->with('created_by','confirmed_by')
-            ->where('documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $budgetTransfer = $budgetTransfer->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
-                $budgetTransfer = $budgetTransfer->where('approvedYN', $input['approvedYN']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $budgetTransfer = $budgetTransfer->whereMonth('createdDateTime', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $budgetTransfer = $budgetTransfer->whereYear('createdDateTime', '=', $input['year']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $budgetTransfer = $budgetTransfer->where(function ($query) use ($search) {
-                $query->where('transferVoucherNo', 'LIKE', "%{$search}%")
-                      ->orWhere('comments', 'like', "%{$search}%");
-            });
-        }
+
+        $budgetTransfer = $this->budgetTransferFormRepository->budgetTransferFormListQuery($request, $input, $search);
 
         return \DataTables::of($budgetTransfer)
             ->order(function ($query) use ($input) {

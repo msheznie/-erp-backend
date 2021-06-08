@@ -1991,11 +1991,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
         Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
 
+
         Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
         Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
         Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
         Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
+
+        Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
 
     });
 
