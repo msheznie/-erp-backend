@@ -733,11 +733,11 @@
             {{$decimal = 2}}
             {{$x=1}}
             {{$directTraSubTotal=0}}
-            {{$vatTraSubTotal=0}}
+            {{$vatTraSubTotal = 0}}
             {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
             @foreach ($request->invoicedetails as $item)
-                {{$directTraSubTotal +=$item->invoiceAmount}}
-                {{$vatTraSubTotal +=$item->VATAmount}}
+                {{$directTraSubTotal += $item->invoiceAmount}}
+                {{$vatTraSubTotal += $item->VATAmount}}
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td>{{$x}}</td>
                     <td>{{$item->glCode}}</td>
@@ -808,7 +808,7 @@
                         style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                             <span class="font-weight-bold">
 
-                                    {{number_format(($directTraSubTotal + $vatTraSubTotal), $numberFormatting)}}</span>
+                                    {{number_format(($directTraSubTotal), $numberFormatting)}}</span>
                     </td>
                 </tr>
                 </tbody>
@@ -858,7 +858,7 @@
                             style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                                 <span class="font-weight-bold">
 
-                                        {{number_format((($directTraSubTotal/$request->localCurrencyER) + ($vatTraSubTotal/$request->localCurrencyER)), $numberFormatting)}}</span>
+                                        {{number_format(($directTraSubTotal/$request->localCurrencyER), $numberFormatting)}}</span>
                         </td>
                     </tr>
                     </tbody>
