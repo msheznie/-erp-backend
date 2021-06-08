@@ -317,6 +317,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }
 
         return $data;
+    }
 
     public function croneJobCustomerInvoiceReminder()
     {
