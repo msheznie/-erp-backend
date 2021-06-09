@@ -56,6 +56,7 @@ use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
+use App\Models\CurrencyConversionMaster;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -381,6 +382,13 @@ class email
                     if (!empty($salesReturn)) {
                         $data['docApprovedYN'] = $salesReturn->approvedYN;
                         $data['docCode'] = $salesReturn->salesReturnCode;
+                    }
+                    break;
+                 case 91:
+                    $currencyConversion = CurrencyConversionMaster::find($data['docSystemCode']);
+                    if (!empty($currencyConversion)) {
+                        $data['docApprovedYN'] = $currencyConversion->approvedYN;
+                        $data['docCode'] = $currencyConversion->conversionCode;
                     }
                     break;
                 default:

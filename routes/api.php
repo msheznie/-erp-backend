@@ -2047,6 +2047,35 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
+
+
+    Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+
+    Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+
+    Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+
+    Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+
+
+    Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
+
+    Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+
+    Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+
+
+    Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions');
+    Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen');
+    Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange');
+    Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster');
+    Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency');
+
+    Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
+    Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
+    Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
+    
+    Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
 });
 
 
@@ -2071,13 +2100,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-Route::resource('tax_ledgers', 'TaxLedgerAPIController');
-
-Route::resource('employee_designations', 'EmployeeDesignationAPIController');
-
-Route::resource('hrms_designations', 'HrmsDesignationAPIController');
-
-Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
-
-
-Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
