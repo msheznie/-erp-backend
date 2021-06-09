@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\TaxService;
 use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
 use App\Models\UnbilledGrvGroupBy;
@@ -50,12 +51,15 @@ class UnbilledGRVInsert implements ShouldQueue
                                                             ->where('companySystemID', $masterModel['companySystemID'])
                                                             ->first();
                 $valEligible = false;
-                if ($company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+                if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
                     $valEligible = true;
                 }
 
                 if ($masterModel['documentSystemID'] == 3) {
-                    if ($valEligible) {
+
+                    $rcmActivated = TaxService::isGRVRCMActivation($masterModel["autoID"]);
+
+                    if ($valEligible && !$rcmActivated) {
                         $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as totTransactionAmount,ROUND(SUM((GRVcostPerUnitLocalCur*noQty) + (VATAmountLocal*noQty)),7) as totLocalAmount, ROUND(SUM((GRVcostPerUnitComRptCur*noQty) + (VATAmountRpt*noQty)),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
                             ->leftJoin('erp_grvmaster', 'erp_grvdetails.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                             ->WHERE('erp_grvdetails.grvAutoID', $masterModel["autoID"])
