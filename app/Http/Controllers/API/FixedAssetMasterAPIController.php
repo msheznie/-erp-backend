@@ -543,6 +543,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             $input["faCode"] = $documentCode;
+            $input["faBarcode"] = $documentCode;
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
             if ($companyCurrencyConversion) {
@@ -737,12 +738,15 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
                 'documentDate.before_or_equal' => 'Document Date cannot be greater than DEP Date',
                 'faUnitSerialNo.unique' => 'The FA Serial-No has already been taken',
+                'faBarcode.unique' => 'The Barcode has already been taken',
             ];
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
                 'documentDate' => 'required|date|before_or_equal:dateDEP',
                 'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
+                'faBarcode' => ['required', Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
+                
             ], $messages);
 
 
