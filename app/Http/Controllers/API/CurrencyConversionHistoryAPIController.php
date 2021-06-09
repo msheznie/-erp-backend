@@ -278,4 +278,42 @@ class CurrencyConversionHistoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.currency_conversion_histories')]));
     }
+
+    public function getCurrencyConversionHistory(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $conversions = CurrencyConversionHistory::where('masterCurrencyID', $input['itemLine']['masterCurrencyID'])
+                                                ->where('subCurrencyID', $input['itemLine']['subCurrencyID']);
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $conversions = $conversions->where(function ($query) use ($search) {
+                $query->where('createdBy', 'LIKE', "%{$search}%")
+                    ->orWhere('createdpc', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($conversions)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('conversionhistoryID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
 }

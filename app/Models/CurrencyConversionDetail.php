@@ -6,17 +6,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CurrencyConversionHistory",
+ *      definition="CurrencyConversionDetail",
  *      required={""},
  *      @SWG\Property(
- *          property="conversionhistoryID",
- *          description="conversionhistoryID",
+ *          property="currencyConversionDetailAutoID",
+ *          description="currencyConversionDetailAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="serialNo",
- *          description="serialNo",
+ *          property="currencyConversioMasterID",
+ *          description="currencyConversioMasterID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -35,24 +35,8 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="conversion",
  *          description="conversion",
- *          type="float",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="createdBy",
- *          description="createdBy",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="createdUserID",
- *          description="createdUserID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="createdpc",
- *          description="createdpc",
- *          type="string"
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="timestamp",
@@ -62,24 +46,22 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CurrencyConversionHistory extends Model
+class CurrencyConversionDetail extends Model
 {
 
-    public $table = 'currencyconversionhistory';
+    public $table = 'currency_conversion_detail';
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'conversionhistoryID';
+
+    protected $primaryKey = 'currencyConversionDetailAutoID';
 
 
     public $fillable = [
-        'serialNo',
+        'currencyConversioMasterID',
         'masterCurrencyID',
         'subCurrencyID',
         'conversion',
-        'createdBy',
-        'createdUserID',
-        'createdpc',
         'timestamp'
     ];
 
@@ -89,14 +71,11 @@ class CurrencyConversionHistory extends Model
      * @var array
      */
     protected $casts = [
-        'conversionhistoryID' => 'integer',
-        'serialNo' => 'integer',
+        'currencyConversionDetailAutoID' => 'integer',
+        'currencyConversioMasterID' => 'integer',
         'masterCurrencyID' => 'integer',
         'subCurrencyID' => 'integer',
         'conversion' => 'float',
-        'createdBy' => 'string',
-        'createdUserID' => 'integer',
-        'createdpc' => 'string',
         'timestamp' => 'datetime'
     ];
 
@@ -106,12 +85,11 @@ class CurrencyConversionHistory extends Model
      * @var array
      */
     public static $rules = [
-        'conversionhistoryID' => 'required'
+        
     ];
 
-     public function sub_currency()
+    public function sub_currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'subCurrencyID','currencyID');
     }
-    
 }

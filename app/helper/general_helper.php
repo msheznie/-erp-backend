@@ -65,6 +65,7 @@ use App\helper\SupplierAssignService;
 use App\helper\CustomerAssignService;
 use App\helper\IvmsDeliveryOrderService;
 use App\helper\ChartOfAccountDependency;
+use App\helper\CurrencyConversionService;
 use Illuminate\Support\Facades\Schema;
 
 class Helper
@@ -591,6 +592,17 @@ class Helper
                     $docInforArr["confirmedDate"] = 'confirmedDate';
                     $docInforArr["tableName"] = 'salesreturn';
                     $docInforArr["modelName"] = 'SalesReturn';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
+                case 91: // Currency Conversion
+                    $docInforArr["documentCodeColumnName"] = 'conversionCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
+                    $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'currency_conversion_master';
+                    $docInforArr["modelName"] = 'CurrencyConversionMaster';
                     $docInforArr["primarykey"] = 'id';
                     break;
                 default:
@@ -1566,6 +1578,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 91: // Currency Conversion
+                $docInforArr["tableName"] = 'currency_conversion_master';
+                $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedby';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1594,8 +1618,8 @@ class Helper
                         ->first();
                 } else {
                     $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                        ->where('companySystemID', $isConfirmed['companySystemID'])
-                        ->first();
+                            ->where('companySystemID', $isConfirmed['companySystemID'])
+                            ->first();
                 }
 
 
@@ -1628,7 +1652,7 @@ class Helper
                     return ['success' => false, 'message' => 'You do not have access to approve this document.'];
                 } 
 
-                if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
+                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
                         return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
                     }
@@ -1999,6 +2023,14 @@ class Helper
                                 if (!$resSupplierRegister['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => $resSupplierRegister['message']];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 91) { //insert data to conversion table
+                                $conversionRes = CurrencyConversionService::setConversion($input);
+                                if (!$conversionRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $conversionRes['message']];
                                 }
                             }
 
@@ -2771,6 +2803,12 @@ class Helper
                     $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 91:
+                    $docInforArr["tableName"] = 'currency_conversion_master';
+                    $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2791,7 +2829,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 91])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
