@@ -37,6 +37,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'serialNo',
         'itemCode',
         'faCode',
+        'faBarcode',
         'assetCodeS',
         'faUnitSerialNo',
         'assetDescription',
