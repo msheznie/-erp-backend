@@ -384,7 +384,7 @@ class email
                         $data['docCode'] = $salesReturn->salesReturnCode;
                     }
                     break;
-                 case 91:
+                 case 96:
                     $currencyConversion = CurrencyConversionMaster::find($data['docSystemCode']);
                     if (!empty($currencyConversion)) {
                         $data['docApprovedYN'] = $currencyConversion->approvedYN;

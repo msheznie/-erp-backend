@@ -279,7 +279,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         if ($input['confirmedYN'] == 1 && $currencyConversionMaster->confirmedYN == 0) {
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => 91);
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => 96);
             $confirm = \Helper::confirmDocument($params);
             if(!$confirm["success"]){
                 return $this->sendError($confirm["message"]);
@@ -471,7 +471,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID',91)
+                ->where('employeesdepartments.documentSystemID',96)
                 ->whereIn('employeesdepartments.companySystemID',$companyID)
                 ->where('employeesdepartments.employeeSystemID',$empID)
                 ->where('employeesdepartments.isActive', 1)
@@ -491,7 +491,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
             ->leftJoin('employees','employees.employeeSystemID','=','createdBy')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN',0)
-            ->where('erp_documentapproved.documentSystemID',91)
+            ->where('erp_documentapproved.documentSystemID',96)
             ->whereIn('erp_documentapproved.companySystemID',$companyID);
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();

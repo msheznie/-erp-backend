@@ -594,7 +594,7 @@ class Helper
                     $docInforArr["modelName"] = 'SalesReturn';
                     $docInforArr["primarykey"] = 'id';
                     break;
-                case 91: // Currency Conversion
+                case 96: // Currency Conversion
                     $docInforArr["documentCodeColumnName"] = 'conversionCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedEmpName';
@@ -1578,7 +1578,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 91: // Currency Conversion
+            case 96: // Currency Conversion
                 $docInforArr["tableName"] = 'currency_conversion_master';
                 $docInforArr["modelName"] = 'CurrencyConversionMaster';
                 $docInforArr["primarykey"] = 'id';
@@ -2026,7 +2026,7 @@ class Helper
                                 }
                             }
 
-                            if ($input["documentSystemID"] == 91) { //insert data to conversion table
+                            if ($input["documentSystemID"] == 96) { //insert data to conversion table
                                 $conversionRes = CurrencyConversionService::setConversion($input);
                                 if (!$conversionRes['status']) {
                                     DB::rollback();
@@ -2803,7 +2803,7 @@ class Helper
                     $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-                case 91:
+                case 96:
                     $docInforArr["tableName"] = 'currency_conversion_master';
                     $docInforArr["modelName"] = 'CurrencyConversionMaster';
                     $docInforArr["primarykey"] = 'id';
@@ -2829,7 +2829,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 91])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

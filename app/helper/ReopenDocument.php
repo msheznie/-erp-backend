@@ -183,7 +183,7 @@ class ReopenDocument
                 $docInforArr["companyColumnName"] = 'companySystemID';
                 $docInforArr["confirmedByName"] = 'supplierConfirmedEmpName';
                 break;
-            case 91:
+            case 96:
                 $docInforArr["documentCodeColumnName"] = 'conversionCode';
                 $docInforArr["confirmColumnName"] = 'confirmedYN';
                 $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
