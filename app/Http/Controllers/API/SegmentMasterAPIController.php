@@ -17,6 +17,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
 use App\Models\SegmentMaster;
+use App\Models\ProcumentOrder;
+use App\Models\GeneralLedger;
+use App\Models\PurchaseRequest;
 use App\Models\Company;
 use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
@@ -175,6 +178,31 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         //delete validation 
+        $segmentUsed = false;
+        $procumentOrderCheck = ProcumentOrder::where('serviceLineSystemID', $id)
+                                             ->first();
+
+        if ($procumentOrderCheck) {
+            $segmentUsed = true;
+        }
+
+        $checkPR = PurchaseRequest::where('serviceLineSystemID', $id)
+                                             ->first();
+
+        if ($checkPR) {
+            $segmentUsed = true;
+        }
+
+        $checkGeneralLedger = GeneralLedger::where('serviceLineSystemID', $id)
+                                 ->first();
+
+        if ($checkGeneralLedger) {
+            $segmentUsed = true;
+        }
+
+        if ($segmentUsed) {
+            return $this->sendError("This segment is used in some documents. Therefore, cannot delete", 500);
+        }
 
         DB::beginTransaction();
         try {
@@ -313,7 +341,11 @@ class SegmentMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $segmentMaster = $this->segmentMasterRepository->findWithoutFail($input['serviceLineSystemID']);
+        $segmentMaster = $this->segmentMasterRepository->withoutGlobalScope('final_level')->find($input['serviceLineSystemID']);
+
+        if (!$segmentMaster) {
+            return $this->sendError("Segment not found", 500);
+        }
 
         if(isset($input['companySystemID']))
         {
@@ -330,8 +362,33 @@ class SegmentMasterAPIController extends AppBaseController
             $input['isMaster'] = $input['isMaster'][0];
 
 
+        $segmentUsed = false;
         if ($segmentMaster->isFinalLevel != $input['isFinalLevel']) {
             //validate
+            $procumentOrderCheck = ProcumentOrder::where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                                 ->first();
+
+            if ($procumentOrderCheck) {
+                $segmentUsed = true;
+            }
+
+            $checkPR = PurchaseRequest::where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                                 ->first();
+
+            if ($checkPR) {
+                $segmentUsed = true;
+            }
+
+            $checkGeneralLedger = GeneralLedger::where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                     ->first();
+
+            if ($checkGeneralLedger) {
+                $segmentUsed = true;
+            }
+
+            if ($segmentUsed) {
+                return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
+            }
         }
 
         $userId = Auth::id();
@@ -342,9 +399,11 @@ class SegmentMasterAPIController extends AppBaseController
 
         $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count']);
 
-        $segmentMaster = $this->segmentMasterRepository->update($data, $input['serviceLineSystemID']);
+        $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
+                                      ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                      ->update($data);
 
-        return $this->sendResponse($segmentMaster->toArray(), 'Segment master updated successfully');
+        return $this->sendResponse($segmentMaster, 'Segment master updated successfully');
     }
 
     public function getOrganizationStructure(Request $request)
