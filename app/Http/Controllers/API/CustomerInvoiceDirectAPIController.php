@@ -3378,11 +3378,12 @@ WHERE
                                 unit_price,
                                 percentage,
                                 vatAmount,
-                                amount 
+                                amount
                             FROM
                                 (
                                 SELECT
-                                    poLineNo AS po_detail_id,
+                                    prod_serv.TicketproductID,
+                                    prod_serv.poLineNo AS po_detail_id,
                                     ClientRef AS client_referance,
                                     ItemDescrip AS item_description,
                                     prod_serv.TicketNo AS TicketNo,
@@ -3390,13 +3391,14 @@ WHERE
                                     unit_price,
                                     prod_serv.percentage,
                                     prod_serv.vatAmount,
-                                    amount 
+                                    amount
                                 FROM
                                     erp_custinvoicedirect
-                                    JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID 
-                                    AND custInvoiceDirectAutoID = " . $master->custInvoiceDirectAutoID . "  
+                                    JOIN erp_custinvoicedirectdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custinvoicedirectdet.custInvoiceDirectID
+                                    AND custInvoiceDirectAutoID = " . $master->custInvoiceDirectAutoID . " 
                                     AND erp_custinvoicedirectdet.customerID = " . $master->customerID . " 
-                                    JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo AND erp_custinvoicedirectdet.glCode=performatemp.stdGlCode
+                                    JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo
+                                    AND erp_custinvoicedirectdet.glCode = performatemp.stdGlCode
                                     JOIN (
                                     SELECT
                                         mubbadrahop.productdetails.TicketproductID,
@@ -3407,9 +3409,10 @@ WHERE
                                         mubbadrahop.productdetails.vatAmount AS vatAmount,
                                         mubbadrahop.productdetails.percentage AS percentage,
                                         mubbadrahop.productdetails.TotalCharges AS amount,
-                                        mubbadrahop.productdetails.glCodeProduct AS glCodeService
+                                        mubbadrahop.productdetails.glCodeProduct AS glCodeService,
+                                        mubbadrahop.productdetails.pl3 AS poLineNo
                                     FROM
-                                        mubbadrahop.productdetails 
+                                        mubbadrahop.productdetails
                                     WHERE
                                         mubbadrahop.productdetails.companyID = '" . $master->companyID . "'
                                         AND mubbadrahop.productdetails.CustomerID = '" . $customerCode . "' UNION
@@ -3422,17 +3425,21 @@ WHERE
                                         mubbadrahop.servicedetails.vatAmount AS vatAmount,
                                         mubbadrahop.servicedetails.percentage AS percentage,
                                         mubbadrahop.servicedetails.TotalCharges AS amount,
-                                        mubbadrahop.servicedetails.glCodeService AS glCodeService
+                                        mubbadrahop.servicedetails.glCodeService AS glCodeService,
+                                        '' AS poLineNo
                                     FROM
-                                        mubbadrahop.servicedetails 
+                                        mubbadrahop.servicedetails
                                     WHERE
                                         mubbadrahop.servicedetails.companyID = '" . $master->companyID . "'
                                         AND mubbadrahop.servicedetails.CustomerID = '" . $customerCode . "'
-                                    ) AS prod_serv ON performatemp.TicketNo = prod_serv.TicketNo AND performatemp.stdGLCode=prod_serv.glCodeService
+                                    ) AS prod_serv ON performatemp.TicketNo = prod_serv.TicketNo
+                                    AND performatemp.stdGLCode = prod_serv.glCodeService
                                     JOIN contractdetails ON prod_serv.contractDetailID = contractdetails.ContractDetailID
                                 WHERE
                                     contractdetails.CompanyID ='" . $master->companyID . "'
                                     AND contractdetails.CustomerID = '" . $customerCode . "'
+                                    GROUP BY contractdetails.ContractDetailID
+                                
                                 ) AS temp");
 
         return $output;
