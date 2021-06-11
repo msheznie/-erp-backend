@@ -240,4 +240,9 @@ class StockTransferDetails extends Model
         return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
     }
 
+    public function master()
+    {
+        return $this->master_by();
+    }
+
 }

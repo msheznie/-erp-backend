@@ -20,6 +20,7 @@ use App\Http\Requests\API\CreateStockAdjustmentAPIRequest;
 use App\Http\Requests\API\UpdateStockAdjustmentAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\FinanceItemCategorySub;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
@@ -632,6 +633,10 @@ class StockAdjustmentAPIController extends AppBaseController
             }
         }
 
+        $financeSubCategories = FinanceItemCategorySub::where('itemCategoryID',1)
+                                                      ->get();
+
+
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -643,6 +648,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $output = array(
             'segments' => $segments,
+            'financeSubCategories' => $financeSubCategories,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,

@@ -316,4 +316,8 @@ class GRVDetails extends Model
     {
         return $this->hasMany('App\Models\PurchaseReturnDetails',  'grvDetailsID', 'grvDetailsID');
     }
+
+    public function master(){
+        return $this->grv_master();
+    }
 }
