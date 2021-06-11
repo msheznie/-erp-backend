@@ -2085,7 +2085,9 @@ Route::get('test', 'TenantAPIController@test');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
-
+Route::get('runCronJob/{cron}', function ($cron) {
+    Artisan::call($cron);
+});
 
 
 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceDueDateReminder extends Command
 {
