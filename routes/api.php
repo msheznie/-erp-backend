@@ -2076,19 +2076,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
     
     Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
-});
 
+    Route::get('runCronJob/{cron}', function ($cron) {
+        Artisan::call($cron);
+        return 'CRON Job run successfully';
+    });
+});
 
 
 Route::resource('tenants', 'TenantAPIController');
 Route::get('test', 'TenantAPIController@test');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
-
-
-Route::get('runCronJob/{cron}', function ($cron) {
-    Artisan::call($cron);
-});
-
 
 
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
