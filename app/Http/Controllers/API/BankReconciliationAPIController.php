@@ -1041,12 +1041,12 @@ class BankReconciliationAPIController extends AppBaseController
                             $data[$x]['Bank Currency'] = '';
                         }
                         $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $decimal);
-                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
-                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
-                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
                         $data[$x]['Treasury Cleared Status'] = ($val->trsClearedYN == -1) ? "Yes" : "No";
                         $data[$x]['Treasury Cleared Date'] = \Helper::dateFormat($val->trsClearedDate);
                         $data[$x]['Treasury Cleared By'] = $val->trsClearedByEmpName;
+                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
+                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
                         $x++;
                     }
                 }
@@ -1086,15 +1086,20 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $items = BankLedger::whereIn('companySystemID', $companyID)
-            ->where('bankClearedYN', -1)
-            ->where('bankAccountID', $request->bankAccountID)
-            ->where('bankID', $request->bankID)
-            ->whereBetween('bankReconciliationDate', [$fromDate, $toDate])
-            ->orderBy('bankReconciliationDate', 'desc')
-            ->with(['bank_account.currency'])
-            ->get();
+                            ->where('bankAccountID', $request->bankAccountID)
+                            ->where('bankID', $request->bankID)
+                            ->orderBy('bankReconciliationDate', 'desc')
+                            ->with(['bank_account.currency']);
+        
+        if ($request->reportID == "BRC") {
+            $items = $items->where('bankClearedYN', -1)
+                            ->whereBetween('bankReconciliationDate', [$fromDate, $toDate]);
+        } else {
+            $items = $items->whereBetween('documentDate', [$fromDate, $toDate]);
 
-        return $items;
+        }
+
+        return $items->get();
     }
 
     public function bankRecReopen(Request $request)
