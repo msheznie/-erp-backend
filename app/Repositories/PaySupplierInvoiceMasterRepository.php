@@ -111,6 +111,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         'noOfApprovalLevels',
         'isRelatedPartyYN',
         'advancePaymentTypeID',
+        'interCompanyToSystemID',
         'isPdcChequeYN',
         'finalSettlementYN',
         'expenseClaimOrPettyCash',
