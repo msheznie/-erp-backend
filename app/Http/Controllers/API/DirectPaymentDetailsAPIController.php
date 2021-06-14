@@ -881,7 +881,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
          if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
 
-            if(empty($paySupplierInvoiceMaster->interCompanyToSystemID)){
+            if(is_null($paySupplierInvoiceMaster->interCompanyToSystemID)){
                 return $this->sendError('Please select a company to');
             }
 
