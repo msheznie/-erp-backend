@@ -2026,7 +2026,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
         Route::post('getStockCountApprovalByUser', 'StockCountAPIController@getStockCountApprovalByUser');
         Route::post('getStockCountApprovedByUser', 'StockCountAPIController@getStockCountApprovedByUser');
+        Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack');
         Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
+
+
+        Route::resource('stock_count_reffered_backs', 'StockCountRefferedBackAPIController');
+        Route::post('getReferBackHistoryByStockCounts', 'StockCountRefferedBackAPIController@getReferBackHistoryByStockCounts');
+
+        Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
+        Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
 
     });
 
@@ -2102,13 +2110,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
-
-
-
-
-
-
-
-
-
-

@@ -13,6 +13,8 @@ use App\Models\StockTransferDetails;
 use App\Models\StockReceiveDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\DeliveryOrderDetail;
+use App\Models\StockCountDetailsRefferedBack;
+use App\Models\StockCountRefferedBack;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\InventoryReclassificationDetail;
 use App\Models\StockAdjustmentDetails;
@@ -1147,5 +1149,67 @@ class StockCountAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
+    }
+
+    public function stockCountReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $stockCount = $this->stockCountRepository->find($id);
+        if (empty($stockCount)) {
+            return $this->sendError('Stock Count not found');
+        }
+
+        if ($stockCount->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this stock Count');
+        }
+
+        $stockCountArray = $stockCount->toArray();
+
+        $storeSAHistory = StockCountRefferedBack::insert($stockCountArray);
+
+        $fetchDetails = StockCountDetail::where('stockCountAutoID', $id)
+                                        ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $stockCount->timesReferred;
+            }
+        }
+
+        $stockCountDetailArray = $fetchDetails->toArray();
+
+        $storeSADetailHistory = StockCountDetailsRefferedBack::insert($stockCountDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockCount->companySystemID)
+            ->where('documentSystemID', $stockCount->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $stockCount->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockCount->companySystemID)
+            ->where('documentSystemID', $stockCount->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->stockCountRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($stockCount->toArray(), 'Stock Count Amend successfully');
     }
 }
