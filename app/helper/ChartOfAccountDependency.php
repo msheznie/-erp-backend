@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateDetails;
+use App\Models\ChartOfAccountsAssigned;
 
 class ChartOfAccountDependency
 {
@@ -161,4 +162,27 @@ class ChartOfAccountDependency
 
         return ['status' => true];
 	}
+
+
+    public static function checkAndAssignToRelatedParty($chartOfAccountSystemID, $companySystemID)
+    {
+        $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->first();
+        if (!$chartOfAccount) {
+            return ['status' => false, 'message' => "Chart Of Account not found"];
+        }
+
+        if ($chartOfAccount->relatedPartyYN && !is_null($chartOfAccount->interCompanySystemID)) {
+            $checkAlradyAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $chartOfAccountSystemID)
+                                                          ->where('companySystemID', $chartOfAccount->interCompanySystemID)
+                                                          ->first();
+
+            if (!$checkAlradyAssigned) {
+                $chartOfAccountRela = ChartOfAccount::selectRaw('interCompanySystemID as companySystemID,interCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($chartOfAccountSystemID);
+
+                $chartOfAccountAssign = ChartOfAccountsAssigned::insert($chartOfAccountRela->toArray());
+            }        
+        }
+
+        return ['status' => true];
+    }
 }

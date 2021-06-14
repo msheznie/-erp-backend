@@ -2048,6 +2048,12 @@ class Helper
                                     DB::rollback();
                                     return ['success' => false, 'message' => $templateAssignRes['message']];
                                 }
+
+                                $checkAndAssignRelatedParty = ChartOfAccountDependency::checkAndAssignToRelatedParty($input["documentSystemCode"], $docApproved->companySystemID);
+                                if (!$checkAndAssignRelatedParty['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $checkAndAssignRelatedParty['message']];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 63) { //Create Asset Disposal
