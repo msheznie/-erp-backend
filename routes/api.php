@@ -1999,6 +1999,42 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
 
         Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
+            
+        Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+
+        Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+
+
+        Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions');
+        Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen');
+        Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange');
+        Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster');
+        Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency');
+
+        Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
+        Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
+        Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
+        
+        Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
+
+        Route::resource('stock_counts', 'StockCountAPIController');
+
+        Route::resource('stock_count_details', 'StockCountDetailAPIController');
+        Route::get('getItemsByStockCount', 'StockCountDetailAPIController@getItemsByStockCount');
+        Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems');
+        Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany');
+        Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
+        Route::post('getStockCountApprovalByUser', 'StockCountAPIController@getStockCountApprovalByUser');
+        Route::post('getStockCountApprovedByUser', 'StockCountAPIController@getStockCountApprovedByUser');
+        Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack');
+        Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
+
+
+        Route::resource('stock_count_reffered_backs', 'StockCountRefferedBackAPIController');
+        Route::post('getReferBackHistoryByStockCounts', 'StockCountRefferedBackAPIController@getReferBackHistoryByStockCounts');
+
+        Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
+        Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
 
     });
 
@@ -2060,23 +2096,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
-    Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
-
-    Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
-
-
-    Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions');
-    Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen');
-    Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange');
-    Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster');
-    Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency');
-
-    Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
-    Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
-    Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
-    
-    Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
-
     Route::get('runCronJob/{cron}', function ($cron) {
         Artisan::call($cron);
         return 'CRON Job run successfully';
@@ -2088,15 +2107,6 @@ Route::resource('tenants', 'TenantAPIController');
 Route::get('test', 'TenantAPIController@test');
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
-
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
-
-
-
-
-
-
-
-

@@ -53,6 +53,7 @@ use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
 use App\Models\RegisteredSupplier;
 use App\Models\StockAdjustment;
+use App\Models\StockCount;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
@@ -234,6 +235,13 @@ class email
                     if (!empty($stockAdjustment)) {
                         $data['docApprovedYN'] = $stockAdjustment->approved;
                         $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
+                    }
+                    break;
+                case 97:
+                    $stockAdjustment = StockCount::where('stockCountAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockAdjustment)) {
+                        $data['docApprovedYN'] = $stockAdjustment->approved;
+                        $data['docCode'] = $stockAdjustment->stockCountCode;
                     }
                     break;
                 case 15:

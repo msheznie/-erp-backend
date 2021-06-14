@@ -29,6 +29,7 @@ use App\Repositories\QuotationMasterRepository;
 use App\Repositories\DeliveryOrderRepository;
 use App\Repositories\SalesReturnRepository;
 use App\Repositories\JvMasterRepository;
+use App\Repositories\StockCountRepository;
 use App\Repositories\BudgetTransferFormRepository;
 use App\Repositories\ConsoleJVMasterRepository;
 use App\Repositories\BankAccountRepository;
@@ -46,6 +47,7 @@ class TransactionsExportExcel extends AppBaseController
     private $stockTransferRepository;
     private $stockReceiveRepository;
     private $stockAdjustmentRepository;
+    private $stockCountRepository;
     private $purchaseReturnRepository;
     private $inventoryReclassificationRepository;
     private $purchaseRequestRepository;
@@ -78,6 +80,7 @@ class TransactionsExportExcel extends AppBaseController
         StockTransferRepository $stockTransferRepo,
         StockReceiveRepository $stockReceiveRepo,
         StockAdjustmentRepository $stockAdjustmentRepo,
+        StockCountRepository $stockCountRepo,
         PurchaseReturnRepository $purchaseReturnRepo,
         InventoryReclassificationRepository $inventoryReclassificationRepo,
         PurchaseRequestRepository $purchaseRequestRepo,
@@ -110,6 +113,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->stockTransferRepository = $stockTransferRepo;
         $this->stockReceiveRepository = $stockReceiveRepo;
         $this->stockAdjustmentRepository = $stockAdjustmentRepo;
+        $this->stockCountRepository = $stockCountRepo;
         $this->purchaseReturnRepository = $purchaseReturnRepo;
         $this->inventoryReclassificationRepository = $inventoryReclassificationRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
@@ -330,6 +334,11 @@ class TransactionsExportExcel extends AppBaseController
             case '87':
                 $dataQry = $this->salesReturnRepository->salesReturnListQuery($request, $input, $search);
                 $data = $this->salesReturnRepository->setExportExcelData($dataQry);
+                break;
+            case '97':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+                $dataQry = $this->stockCountRepository->stockCountListQuery($request, $input, $search);
+                $data = $this->stockCountRepository->setExportExcelData($dataQry);
                 break;
 
             default:

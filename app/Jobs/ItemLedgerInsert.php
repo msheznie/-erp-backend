@@ -383,6 +383,34 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
                             'wacRpt' => 'wacValueReporting');
                         break;
+                    case 97: //Stock Count
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'StockCount';
+                        $docInforArr["childRelation"] = 'details';
+                        $docInforArr["autoID"] = 'stockCountAutoID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'wareHouseSystemCode' => 'location',
+                            'documentCode' => 'stockCountCode',
+                            'referenceNumber' => 'refNo');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCodeSystem',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'itemUnitOfMeasure',
+                            'inOutQty' => 'adjustedQty',
+                            'wacLocalCurrencyID' => 'currentWacLocalCurrencyID',
+                            'wacLocal' => 'wacAdjLocal',
+                            'wacRptCurrencyID' => 'currentWacRptCurrencyID',
+                            'wacRpt' => 'wacAdjRpt');
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;
@@ -415,13 +443,20 @@ class ItemLedgerInsert implements ShouldQueue
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                     }else if($masterModel["documentSystemID"] == 7){    // stock adjustment
-                                        if($masterRec['stockAdjustmentType']==2){       // cost adjustment
+                                        if($masterRec['stockCountType'] == 2){       // cost adjustment
                                             $data[$i][$column] = 1;
                                             Log::info('qty is'.$data[$i][$column]);
                                         }else{
                                             $data[$i][$column] = $detail[$value];
                                         }
-                                    }else{
+                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
+                                        if($masterRec['stockAdjustmentType']==2){       // cost count
+                                            $data[$i][$column] = 1;
+                                            Log::info('qty is'.$data[$i][$column]);
+                                        }else{
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+                                    } else{
                                         $data[$i][$column] = $detail[$value];
                                     }
                                 }else if ($column == 'wacLocal'){
