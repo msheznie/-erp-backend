@@ -564,7 +564,7 @@
                         @if ($request->linePdoinvoiceDetails)
                         <tr>
                             <td colspan="10">
-                                (Total Amount in {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} : {{\App\helper\Helper::amountInWords(($directTraSubTotal + $vatAmountSubTotal))}} Only)
+                                (Total Amount in {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} : {{\App\helper\Helper::amountInWords(round(($directTraSubTotal + $vatAmountSubTotal), $numberFormatting))}} Only)
                             </td>
                         </tr>
                         @endif
