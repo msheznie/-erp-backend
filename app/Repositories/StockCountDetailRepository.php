@@ -98,6 +98,7 @@ class StockCountDetailRepository extends BaseRepository
                                             $query->where('itemCodeSystem', $itemCodeSystem);
                                         })
                                         ->where('approved', 0)
+                                        ->where('refferedBackYN', 0)
                                         ->first();
 
             if (!empty($checkWhether)) {

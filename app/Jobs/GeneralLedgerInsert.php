@@ -13,6 +13,8 @@ use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CurrencyConversion;
+use App\Models\StockCount;
+use App\Models\StockCountDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
@@ -3848,6 +3850,89 @@ class GeneralLedgerInsert implements ShouldQueue
                                 } else {
                                     Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                     Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                                }
+                            }
+                        }
+                        break;
+                    case 97: // SA - Stock Count
+                        $masterData = StockCount::find($masterModel["autoID"]);
+                        //get balansheet account
+                        if ($masterData->stockCountType == 2) {
+
+                            // $bs = StockAdjustmentDetails::selectRaw("SUM(currenctStockQty * (wacAdjLocal - currentWaclocal)) as localAmount, SUM(currenctStockQty * (wacAdjRpt - currentWacRpt)) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                            // //get pnl account
+                            // $pl = StockAdjustmentDetails::selectRaw("SUM(currenctStockQty * (wacAdjLocal - currentWaclocal)) as localAmount, SUM(currenctStockQty * (wacAdjRpt - currentWacRpt)) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+
+                        } else {
+                            $bs = StockCountDetail::selectRaw("SUM(adjustedQty * wacAdjLocal) as localAmount, SUM(adjustedQty * wacAdjRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockCountAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                            //get pnl account
+                            $pl = StockCountDetail::selectRaw("SUM(adjustedQty * wacAdjLocal) as localAmount, SUM(adjustedQty * wacAdjRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockCountAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
+                        }
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->stockCountCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear($masterData->stockCountDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterData->stockCountDate);
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->comment;
+                            $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
+                            $data['supplierCodeSystem'] = 0;
+                            $data['documentTransCurrencyID'] = 0;
+                            $data['documentTransCurrencyER'] = 0;
+                            $data['documentTransAmount'] = 0;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+                            if ($bs) {
+                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
+                                $data['glCode'] = $bs->financeGLcodebBS;
+                                $data['glAccountType'] = 'BS';
+                                $data['glAccountTypeID'] = 1;
+                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $bs->localCurrencyER;
+                                $data['documentLocalAmount'] = $bs->localAmount;
+                                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
+                                $data['documentRptCurrencyER'] = $bs->reportingCurrencyER;
+                                $data['documentRptAmount'] = $bs->rptAmount;
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
+                            }
+
+                            if ($pl) {
+                                foreach ($pl as $val) {
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = 'PL';
+                                    $data['glAccountTypeID'] = 2;
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                    $data['documentLocalAmount'] = $val->localAmount * -1;
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                    $data['documentRptAmount'] = $val->rptAmount * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
                                 }
                             }
                         }

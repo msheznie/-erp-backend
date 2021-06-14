@@ -195,6 +195,7 @@ class StockCountAPIController extends AppBaseController
         }
 
         $input['documentSystemID'] = 97;
+        $input['stockCountType'] = 1;
         $input['documentID'] = 'SC';
 
         $lastSerial = StockCount::where('companySystemID', $input['companySystemID'])
@@ -518,6 +519,8 @@ class StockCountAPIController extends AppBaseController
                 $deleteNotUpdatedItems = StockCountDetail::where('stockCountAutoID', $id)
                                                         ->where('updatedFlag', 0)
                                                         ->delete();
+
+                $this->updateStockCountAdjustmentDetail($id, $stockCount);
              
                 $input['RollLevForApp_curr'] = 1;
                 $params = array('autoID' => $id,
@@ -548,6 +551,32 @@ class StockCountAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage()." ".$exception->getLine());
         }
+    }
+
+
+    public function updateStockCountAdjustmentDetail($stockCountAutoID, $stockCount)
+    {
+        $stockCountDetails = StockCountDetail::where('stockCountAutoID', $stockCountAutoID)
+                                            ->get();
+
+        foreach ($stockCountDetails as $key => $value) {
+            $data = array('companySystemID' => $stockCount->companySystemID,
+                        'itemCodeSystem' => $value->itemCodeSystem,
+                        'wareHouseId' => $stockCount->location);
+
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+            $updateData = [
+                'currenctStockQty' => $itemCurrentCostAndQty['currentStockQty'],
+                'systemQty' => $itemCurrentCostAndQty['currentStockQty'],
+                'adjustedQty' => $value->noQty - $itemCurrentCostAndQty['currentStockQty']
+            ];
+
+            StockCountDetail::where('stockCountDetailsAutoID', $value->stockCountDetailsAutoID)
+                            ->update($updateData);
+        }
+
+        return true;
     }
 
     /**
@@ -838,19 +867,19 @@ class StockCountAPIController extends AppBaseController
         $stockCount = $this->stockCountRepository->findWithoutFail($id);
         $emails = array();
         if (empty($stockCount)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError('Stock Count not found');
         }
 
         if ($stockCount->approved == -1) {
-            return $this->sendError('You cannot reopen this Stock Adjustment it is already fully approved');
+            return $this->sendError('You cannot reopen this Stock Count it is already fully approved');
         }
 
         if ($stockCount->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Stock Adjustment it is already partially approved');
+            return $this->sendError('You cannot reopen this Stock Count it is already partially approved');
         }
 
         if ($stockCount->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Stock Adjustment, it is not confirmed');
+            return $this->sendError('You cannot reopen this Stock Count, it is not confirmed');
         }
 
         $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
@@ -939,5 +968,184 @@ class StockCountAPIController extends AppBaseController
         $stockCount->docRefNo = \Helper::getCompanyDocRefNo($stockCount->companySystemID, $stockCount->documentSystemID);
 
         return $this->sendResponse($stockCount->toArray(), 'Stock Count retrieved successfully');
+    }
+
+     public function getStockCountApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_stockcount.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_stockcount', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'stockCountAutoID')
+                    ->where('erp_stockcount.companySystemID', $companyId)
+                    ->where('erp_stockcount.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_stockcount.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [97])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseReturnMaster->where('erp_stockcount.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('location', $input)) {
+            if ($input['location'] && !is_null($input['location'])) {
+                $purchaseReturnMaster->where('erp_stockcount.location', $input['location']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('stockCountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($purchaseReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('stockCountAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getStockCountApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_stockcount.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 97)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [97])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
+            })
+            ->join('erp_stockcount', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'stockCountAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_stockcount.companySystemID', $companyId)
+                    ->where('erp_stockcount.approved', 0)
+                    ->where('erp_stockcount.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_stockcount.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [97])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseReturnMaster->where('erp_stockcount.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('location', $input)) {
+            if ($input['location'] && !is_null($input['location'])) {
+                $purchaseReturnMaster->where('erp_stockcount.location', $input['location']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('stockCountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseReturnMaster = [];
+        }
+
+        return \DataTables::of($purchaseReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('stockCountAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
     }
 }

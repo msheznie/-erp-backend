@@ -2024,6 +2024,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems');
         Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany');
         Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
+        Route::post('getStockCountApprovalByUser', 'StockCountAPIController@getStockCountApprovalByUser');
+        Route::post('getStockCountApprovedByUser', 'StockCountAPIController@getStockCountApprovedByUser');
         Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
 
     });
