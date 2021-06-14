@@ -208,7 +208,7 @@ class FinancialReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'glCodes' => 'required',
                     'departments' => 'required',
-                    'contracts' => 'required'
+                    // 'contracts' => 'required'
                 ]);
 
                 if ($validator->fails()) {
