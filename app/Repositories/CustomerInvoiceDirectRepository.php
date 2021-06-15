@@ -368,7 +368,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
                     $dataEmail['companySystemID'] = $value->companySystemID;
 
-                    $temp = "Dear " . $value->customer->CustomerName . ',<p> This is a kind reminder of outstanding payment on invoice ' . $value->documentCode . " of Amount ".$value->transaction_currency->CurrencyCode." ".number_format($remainingAmount, $value->transaction_currency->DecimalPlaces)."<br> The Due date of payment is ".Carbon::parse($value->customer_invoice->invoiceDueDate)->format('Y-m-d').". Kindly note that the due date is approaching in 3 Days.</p><p>Please ignore if already paid.</p><br><p>Regards,</p><p>".$value->customer_invoice->company->CompanyName;
+                    $temp = "<p>Dear " . $value->customer->CustomerName . ',</p><p>This is a kind reminder of outstanding payment on invoice ' . $value->documentCode . " of Amount ".$value->transaction_currency->CurrencyCode." ".number_format($remainingAmount, $value->transaction_currency->DecimalPlaces).".</p> <p>The Due date of payment is ".Carbon::parse($value->customer_invoice->invoiceDueDate)->format('Y-m-d').". Kindly note that the due date is approaching in 3 Days.</p><p>Please ignore if already paid.</p><br><p>Regards,</p><p>".$value->customer_invoice->company->CompanyName;
                     $dataEmail['alertMessage'] = "Invoice ".$value->documentCode." overdue notification";
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
