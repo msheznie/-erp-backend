@@ -63,6 +63,7 @@ use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\SupplierAssignService;
 use App\helper\StockCountService;
+use App\helper\BudgetHistoryService;
 use App\helper\CustomerAssignService;
 use App\helper\IvmsDeliveryOrderService;
 use App\helper\ChartOfAccountDependency;
@@ -2015,6 +2016,14 @@ class Helper
                                 if (!$stockCountRes['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => $stockCountRes['message']];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 65) { //write budget to history table
+                                $budgetHistoryRes = BudgetHistoryService::updateHistory($input['documentSystemCode']);
+                                if (!$budgetHistoryRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $budgetHistoryRes['message']];
                                 }
                             }
 

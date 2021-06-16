@@ -28,6 +28,8 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
+use App\Models\ReportTemplate;
+use App\Models\ReportTemplateLinks;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
@@ -199,7 +201,6 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Already created budgets for selected template.', 500);
         }
 
-        //$months = Months::all();
 
         $glData = TemplatesGLCode::where('templateMasterID', $input['templateMasterID'])
             ->whereNotNull('chartOfAccountSystemID')
@@ -210,11 +211,23 @@ class BudgetMasterAPIController extends AppBaseController
             })
             ->get();
 
-      //  foreach ($months as $month) {
-            $input['month'] = 1; //$month->monthID;
-            $budgetMasters = $this->budgetMasterRepository->create($input);
-            AddBudgetDetails::dispatch($budgetMasters,$glData);
-       // }
+        $glData = ReportTemplateLinks::where('templateMasterID', $input['templateMasterID'])
+                                    ->whereNotNull('glAutoID')
+                                    ->whereHas('chart_of_account', function ($q) use ($input) {
+                                        $q->where('companySystemID', $input['companySystemID'])
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    })
+                                    ->with(['chart_of_account' => function ($q) use ($input) {
+                                        $q->where('companySystemID', $input['companySystemID'])
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    }])
+                                    ->get();
+
+        $input['month'] = 1; //$month->monthID;
+        $budgetMasters = $this->budgetMasterRepository->create($input);
+        AddBudgetDetails::dispatch($budgetMasters,$glData);
         return $this->sendResponse($budgetMasters->toArray(), 'Budget Master saved successfully');
     }
 
@@ -889,7 +902,12 @@ class BudgetMasterAPIController extends AppBaseController
             $financeYear = date("Y");
         }
 
+        $reportTemplates = ReportTemplate::where('isActive', 1)
+                                         ->where('companySystemID', $companyId)
+                                         ->get();
+
         $output = array(
+            'reportTemplates' => $reportTemplates,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -1040,7 +1058,7 @@ class BudgetMasterAPIController extends AppBaseController
         $budgets = DB::table('erp_documentapproved')
             ->select(
                 'erp_budgetmaster.*',
-                'erp_templatesmaster.templateDescription As templateDescription',
+                'erp_companyreporttemplate.description As templateDescription',
                 'serviceline.ServiceLineDes As ServiceLineDes',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
@@ -1052,7 +1070,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->where('erp_budgetmaster.confirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', -1)
-            ->leftJoin('erp_templatesmaster', 'erp_budgetmaster.templateMasterID', 'erp_templatesmaster.templatesMasterAutoID')
+            ->leftJoin('erp_companyreporttemplate', 'erp_budgetmaster.templateMasterID', 'erp_companyreporttemplate.companyReportTemplateID')
             ->leftJoin('serviceline', 'erp_budgetmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [65])
@@ -1136,7 +1154,7 @@ class BudgetMasterAPIController extends AppBaseController
         $budgets = DB::table('erp_documentapproved')
             ->select(
                 'erp_budgetmaster.*',
-                'erp_templatesmaster.templateDescription As templateDescription',
+                'erp_companyreporttemplate.description As templateDescription',
                 'serviceline.ServiceLineDes As ServiceLineDes',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
@@ -1169,7 +1187,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->where('erp_budgetmaster.confirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->leftJoin('erp_templatesmaster', 'templateMasterID', 'erp_templatesmaster.templatesMasterAutoID')
+            ->leftJoin('erp_companyreporttemplate', 'templateMasterID', 'erp_companyreporttemplate.companyReportTemplateID')
             ->leftJoin('serviceline', 'erp_budgetmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [65])

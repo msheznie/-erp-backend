@@ -20,6 +20,7 @@ use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
 use App\Models\TemplatesGLCode;
+use App\Models\ReportTemplateDetails;
 use App\Repositories\BudgetMasterRepository;
 use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
@@ -327,111 +328,95 @@ class BudjetdetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
         }
 
-        // Incomes
-        $income = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
-            ->where('controlAccountSystemID', 1)
-            ->whereHas('gl_codes', function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            })
-            ->with(['gl_codes' => function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            }])
-            ->orderBy('sortOrder', 'asc')
-            ->get();
+        $finalArray = ReportTemplateDetails::selectRaw('*,0 as expanded')
+                                         ->with(['subcategory' => function ($q) use ($budgetMaster){
+                                            $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster){
+                                                        $q->with('subcategory')
+                                                          ->orderBy('sortOrder', 'asc')
+                                                          ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          }])
+                                                          ->with(['items' => function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          }])
+                                                          ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          });
+                                                    }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                        $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                            $q->with('subcategory')
+                                                              ->orderBy('sortOrder', 'asc')
+                                                              ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              }])
+                                                              ->with(['items' => function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              }])
+                                                              ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              });
+                                                        }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                            $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                                $q->with('subcategory')
+                                                                  ->orderBy('sortOrder', 'asc')
+                                                                  ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  }])
+                                                                  ->with(['items' => function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  }])
+                                                                  ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  });
+                                                            }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                                $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                                    $q->with('subcategory')
+                                                                      ->orderBy('sortOrder', 'asc')
+                                                                      ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      }])
+                                                                      ->with(['items' => function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      }])
+                                                                      ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      });
+                                                                }]);
+                                                                $q->orderBy('sortOrder', 'asc');
+                                                            }]);
+                                                            $q->orderBy('sortOrder', 'asc');
+                                                        }]);
+                                                        $q->orderBy('sortOrder', 'asc');
+                                                    }]);
+                                            $q->orderBy('sortOrder', 'asc');
+                                        }, 'subcategorytot' => function ($q) {
+                                            $q->with('subcategory');
+                                        }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-
-        foreach ($income as $key1 => $data) {
-
-
-            foreach ($data['gl_codes'] as $key => $gl_code) {
-
-                $items = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
-                    'templateDetailID' => $gl_code['templatesDetailsAutoID']
-                ]);
-
-                $gl_code['items_count'] = count($items);
-                $gl_code['items'] = $items;
-            }
-        }
-
-        //Eexpense
-        $expense = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
-            ->where('controlAccountSystemID', 2)
-            ->whereHas('gl_codes', function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            })
-            ->with(['gl_codes' => function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            }])
-            ->orderBy('sortOrder', 'asc')
-            ->get();
-
-        foreach ($expense as $data) {
-
-            foreach ($data['gl_codes'] as $gl_code) {
-
-                $gl_code['items'] = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
-                    'templateDetailID' => $gl_code['templatesDetailsAutoID']
-                ]);
-            }
-
-        }
-
-
-        $finalIncomeArray = array();
-        $finalExpenseArray = array();
-
-        foreach ($income as  $data) {
-            $temGlCodes = array();
-            foreach ($data['gl_codes'] as $gl_code)
-            {
-                if(count($gl_code['items']) > 0){
-                    array_push($temGlCodes,$gl_code);
-                }
-            }
-            $data['gl_codes_data'] = $temGlCodes;
-            if(count($data['gl_codes_data']) > 0){
-                array_push($finalIncomeArray,$data);
-            }
-        }
-
-        foreach ($expense as  $data) {
-            $temGlCodes = array();
-            foreach ($data['gl_codes'] as $gl_code)
-            {
-                if(count($gl_code['items']) > 0){
-                    array_push($temGlCodes,$gl_code);
-                }
-            }
-            $data['gl_codes_data'] = $temGlCodes;
-            if(count($data['gl_codes_data']) > 0){
-                array_push($finalExpenseArray,$data);
-            }
-        }
-
-        $finalArray = array('income' => $finalIncomeArray, 'expense' => $finalExpenseArray);
 
         return $this->sendResponse($finalArray, trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }

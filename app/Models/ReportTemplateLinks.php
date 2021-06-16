@@ -12,6 +12,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
@@ -100,7 +101,7 @@ use Eloquent as Model;
  */
 class ReportTemplateLinks extends Model
 {
-
+     use Compoships;
     public $table = 'erp_companyreporttemplatelinks';
     
     const CREATED_AT = 'createdDateTime';
@@ -196,5 +197,14 @@ class ReportTemplateLinks extends Model
     {
         return $this->belongsTo('App\Models\ReportTemplateDetails','subCategory','detID');
     }
+
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccountsAssigned', 'glAutoID', 'chartOfAccountSystemID');
+    }
     
+    public function items()
+    {
+        return $this->hasMany('App\Models\Budjetdetails', ['chartOfAccountID', 'templateDetailID'], ['glAutoID', 'templateDetailID']);
+    }
 }
