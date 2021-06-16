@@ -909,7 +909,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                                             ->get();
 
         $warningMessage = '';
-        if (sizeof($items) == 0) {
+        if (count($items) == 0) {
             $warningMessage = "Account code is not assigned for the selected inter company";
         }
 
@@ -924,7 +924,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
 
 
-            if (sizeof($errorMessageArray) == sizeof($items)) {
+            if ((count($errorMessageArray) == count($items)) && count($items) > 0 && count($errorMessageArray) > 0) {
                 DB::rollBack();
                 return $this->sendError($errorMessageArray, 422);
             }

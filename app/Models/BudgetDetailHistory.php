@@ -1,25 +1,22 @@
 <?php
-/**
- * =============================================
- * -- File Name : Budjetdetails.php
- * -- Project Name : ERP
- * -- Module Name :  Budget
- * -- Author : Fayas
- * -- Create date : 16 - October 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
-use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
- *      definition="Budjetdetails",
+ *      definition="BudgetDetailHistory",
  *      required={""},
  *      @SWG\Property(
  *          property="budjetDetailsID",
  *          description="budjetDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="budjetDetailsHistoryID",
+ *          description="budjetDetailsHistoryID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -95,13 +92,13 @@ use Awobaz\Compoships\Compoships;
  *          property="budjetAmtLocal",
  *          description="budjetAmtLocal",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="budjetAmtRpt",
  *          description="budjetAmtRpt",
  *          type="number",
- *          format="float"
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="createdByUserSystemID",
@@ -124,20 +121,34 @@ use Awobaz\Compoships\Compoships;
  *          property="modifiedByUserID",
  *          description="modifiedByUserID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDateTime",
+ *          description="createdDateTime",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
  *      )
  * )
  */
-class Budjetdetails extends Model
+class BudgetDetailHistory extends Model
 {
-    use Compoships;
-    public $table = 'erp_budjetdetails';
+
+    public $table = 'erp_budjetdetails_history';
     
-    const CREATED_AT = 'createdDateTime';
+    const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey = 'budjetDetailsID';
+
+    protected $primaryKey = 'budjetDetailsHistoryID';
 
 
     public $fillable = [
+        'budjetDetailsID',
         'budgetmasterID',
         'companySystemID',
         'companyId',
@@ -167,6 +178,7 @@ class Budjetdetails extends Model
      */
     protected $casts = [
         'budjetDetailsID' => 'integer',
+        'budjetDetailsHistoryID' => 'integer',
         'budgetmasterID' => 'integer',
         'companySystemID' => 'integer',
         'companyId' => 'string',
@@ -184,7 +196,9 @@ class Budjetdetails extends Model
         'createdByUserSystemID' => 'integer',
         'createdByUserID' => 'string',
         'modifiedByUserSystemID' => 'integer',
-        'modifiedByUserID' => 'string'
+        'modifiedByUserID' => 'string',
+        'createdDateTime' => 'datetime',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -193,12 +207,8 @@ class Budjetdetails extends Model
      * @var array
      */
     public static $rules = [
-        
+        'budjetDetailsID' => 'required'
     ];
 
-    public function chart_of_account()
-
-    {
-        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountID','chartOfAccountSystemID');
-    }
+    
 }

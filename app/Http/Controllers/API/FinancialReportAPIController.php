@@ -1368,7 +1368,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = 'Company Name';
                             $data[$x]['GL  Type'] = 'GL  Type';
                             $data[$x]['Template Description'] = 'Template Description';
-                            $data[$x]['Document ID'] = 'Document ID';
+                            $data[$x]['Document Type'] = 'Document Type';
                             $data[$x]['Document Number'] = 'Document Number';
                             $data[$x]['Date'] = 'Date';
                             $data[$x]['Document Narration'] = 'Document Narration';
@@ -1408,7 +1408,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['GL  Type'] = $val->glAccountType;
                                     $data[$x]['Template Description'] = $val->templateDetailDescription;
-                                    $data[$x]['Document ID'] = $val->documentID;
+                                    $data[$x]['Document Type'] = $val->documentID;
                                     $data[$x]['Document Number'] = $val->documentCode;
                                     $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['Document Narration'] = $val->documentNarration;
@@ -1449,7 +1449,7 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Company Name'] = '';
                                 $data[$x]['GL  Type'] = '';
                                 $data[$x]['Template Description'] = '';
-                                $data[$x]['Document ID'] = '';
+                                $data[$x]['Document Type'] = '';
                                 $data[$x]['Document Number'] = '';
                                 $data[$x]['Date'] = '';
                                 $data[$x]['Document Narration'] = '';
@@ -1503,7 +1503,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Company Name'] = '';
                         $data[$x]['GL  Type'] = '';
                         $data[$x]['Template Description'] = '';
-                        $data[$x]['Document ID'] = '';
+                        $data[$x]['Document Type'] = '';
                         $data[$x]['Document Number'] = '';
                         $data[$x]['Date'] = '';
                         $data[$x]['Document Narration'] = '';
@@ -1543,7 +1543,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Account Description'] = $val->AccountDescription;
                             $data[$x]['GL  Type'] = $val->glAccountType;
                             $data[$x]['Template Description'] = $val->templateDetailDescription;
-                            $data[$x]['Document ID'] = $val->documentID;
+                            $data[$x]['Document Type'] = $val->documentID;
                             $data[$x]['Document Number'] = $val->documentCode;
                             $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Narration'] = $val->documentNarration;
