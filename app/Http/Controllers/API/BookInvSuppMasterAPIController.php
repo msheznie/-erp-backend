@@ -740,7 +740,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         ->where('companySystemID', $input['companySystemID'])
                         ->first();
                     $valEligible = false;
-                    if ($company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+                    $rcmActivate = TaxService::isSupplierInvoiceRcmActivated($id);
+                    if (($company->vatRegisteredYN == 1  || $supplierAssignedDetail->vatEligible == 1) && !$rcmActivate) {
                         $valEligible = true;
                     }
                     foreach ($checktotalExceed as $exc) {

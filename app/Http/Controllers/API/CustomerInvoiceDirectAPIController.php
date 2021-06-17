@@ -3465,7 +3465,7 @@ WHERE
                             FROM
                                 (
                                 SELECT
-                                    prod_serv.TicketproductID,
+                                    ticketId,
                                     prod_serv.poLineNo AS po_detail_id,
                                     ClientRef AS client_referance,
                                     ItemDescrip AS item_description,
@@ -3484,7 +3484,7 @@ WHERE
                                     AND erp_custinvoicedirectdet.glCode = performatemp.stdGlCode
                                     JOIN (
                                     SELECT
-                                        mubbadrahop.productdetails.TicketproductID,
+                                        CONCAT(mubbadrahop.productdetails.TicketproductID, 'pr') as ticketId,
                                         mubbadrahop.productdetails.contractDetailID AS contractDetailID,
                                         mubbadrahop.productdetails.TicketNo AS TicketNo,
                                         mubbadrahop.productdetails.Qty AS qty,
@@ -3500,7 +3500,7 @@ WHERE
                                         mubbadrahop.productdetails.companyID = '" . $master->companyID . "'
                                         AND mubbadrahop.productdetails.CustomerID = '" . $customerCode . "' UNION
                                     SELECT
-                                        mubbadrahop.servicedetails.TicketServiceID,
+                                        CONCAT(mubbadrahop.servicedetails.TicketServiceID, 'sr') as ticketId,
                                         mubbadrahop.servicedetails.contractDetailID AS contractDetailID,
                                         mubbadrahop.servicedetails.TicketNo AS TicketNo,
                                         mubbadrahop.servicedetails.Qty AS qty,
@@ -3521,7 +3521,7 @@ WHERE
                                 WHERE
                                     contractdetails.CompanyID ='" . $master->companyID . "'
                                     AND contractdetails.CustomerID = '" . $customerCode . "'
-                                    GROUP BY contractdetails.ContractDetailID
+                                    GROUP BY ticketId
                                 
                                 ) AS temp");
 
