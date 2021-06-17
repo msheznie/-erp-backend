@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateBudjetdetailsAPIRequest;
 use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
+use App\Models\BudgetMaster;
 use App\Models\TemplatesGLCode;
 use App\Models\ReportTemplateDetails;
 use App\Repositories\BudgetMasterRepository;
@@ -28,6 +29,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class BudjetdetailsController
@@ -476,5 +479,230 @@ class BudjetdetailsAPIController extends AppBaseController
         return $this->sendResponse($total, trans('custom.update', ['attribute' => trans('custom.budjet_details_summery')]));
     }
 
+    public function budgetDetailsUpload(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['budgetExcelUpload'];
+            $input = array_except($request->all(), 'budgetExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+            $budgetMaster = BudgetMaster::where('budgetmasterID', $input['budgetMasterID'])
+                                               ->first();
+
+
+            if (empty($budgetMaster)) {
+                return $this->sendError('Budget Master not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $validateExcel = false;
+            $validateData = false;
+            // $totalItemCount = 0;
+
+            foreach ($uniqueData as $key => $value) {
+               if (isset($value['account_code']) && isset($value['account_description']) && isset($value['main_category']) && isset($value['sub_category'])) {
+                   $validateExcel = true;
+               }
+
+               if ((isset($value['april']) && !is_null($value['april'])) || (isset($value['august']) && !is_null($value['august'])) || (isset($value['december']) && !is_null($value['december'])) || (isset($value['february']) && !is_null($value['february'])) || (isset($value['january']) && !is_null($value['january'])) || (isset($value['july']) && !is_null($value['july'])) || (isset($value['june']) && !is_null($value['june'])) || (isset($value['march']) && !is_null($value['march'])) || (isset($value['may']) && !is_null($value['may'])) || (isset($value['november']) && !is_null($value['november'])) || (isset($value['october']) && !is_null($value['october'])) || (isset($value['september']) && !is_null($value['september']))) {
+                   $validateData = true;
+               }
+            }
+
+            if (!$validateExcel) {
+                return $this->sendError('Excel is not valid, template deafult fields are modified', 500);
+            }
+
+            if (!$validateData) {
+                return $this->sendError('Detail values are null, you cannot upload these excel', 500);
+            }
+
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('account_code', 'account_description', 'april', 'august', 'december', 'february', 'january', 'july', 'june', 'main_category', 'march', 'may', 'november', 'october', 'september', 'sub_category'))->get()->toArray();
+
+            $filteredRecords = array_filter(collect($record)->toArray());
+            $cdcd = '-xs';
+
+            foreach ($filteredRecords as $key => $value) {
+                if (isset($value['sub_category'])) {
+                     $templateDetail = ReportTemplateDetails::where('description', $value['sub_category'])
+                                                       ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
+                                                       ->whereHas('gllink', function($query) use ($value) {
+                                                            $query->where('glCode', $value['account_code']);
+                                                       })
+                                                       ->first();
+
+                     if ($templateDetail) {
+                        if (isset($value['january']) && !is_null($value['january']) && (abs(floatval($value['january'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['january'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 1)
+                                                      ->update($amounts);
+                        }
+
+
+                        if (isset($value['february']) && !is_null($value['february']) && (abs(floatval($value['february'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['february'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 2)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['march']) && !is_null($value['march']) && (abs(floatval($value['march'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['march'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 3)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['april']) && !is_null($value['april']) && (abs(floatval($value['april'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['april'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 4)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['may']) && !is_null($value['may']) && (abs(floatval($value['may'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['may'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 5)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['june']) && !is_null($value['june']) && (abs(floatval($value['june'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['june'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 6)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['july']) && !is_null($value['july']) && (abs(floatval($value['july'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['july'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 7)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['august']) && !is_null($value['august']) && (abs(floatval($value['august'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['august'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 8)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['september']) && !is_null($value['september']) && (abs(floatval($value['september'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['september'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 9)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['october']) && !is_null($value['october']) && (abs(floatval($value['october'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['october'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 10)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['november']) && !is_null($value['november']) && (abs(floatval($value['november'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['november'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 11)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['december']) && !is_null($value['december']) && (abs(floatval($value['december'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['december'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 12)
+                                                      ->update($amounts);
+                        }
+                    }
+                }
+               
+            }
+
+            Storage::disk($disk)->delete('app/' . $originalFileName);
+            DB::commit();
+            return $this->sendResponse([], "Budget details uploaded successfully");
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function setBudgetRptAndLocalAmount($budjetAmtRpt, $companySystemID)
+    {
+        $input['budjetAmtRpt']  = $budjetAmtRpt;
+
+        $currencyConvection = \Helper::currencyConversion($companySystemID, 2, 2, $budjetAmtRpt);
+        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+
+        return $input;
+    }
 
 }
