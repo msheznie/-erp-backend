@@ -184,6 +184,11 @@ class ReportTemplateLinks extends Model
         return $this->belongsTo('App\Models\ReportTemplateDetails','subCategory','detID');
     }
 
+     public function template_category()
+    {
+        return $this->belongsTo('App\Models\ReportTemplateDetails','templateDetailID','detID');
+    }
+
     public function chartofaccount()
     {
         return $this->belongsTo('App\Models\ChartOfAccount','glAutoID','chartOfAccountSystemID');

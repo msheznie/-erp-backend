@@ -19,6 +19,7 @@ use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ReportTemplate;
+use App\Models\Budjetdetails;
 use App\Models\ReportTemplateColumnLink;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
@@ -376,6 +377,21 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             if ($columnLink) {
                 return $this->sendError('You cannot delete this record because already this record has been added to the formula');
             }
+
+
+            $glCodes = ReportTemplateLinks::where('templateDetailID',$id)
+                                      ->get()
+                                      ->pluck('glAutoID')
+                                      ->toArray();
+
+            $checkLinkInBudget = Budjetdetails::whereIn('chartOfAccountID', $glCodes)
+                                              ->where('templateDetailID', $id)
+                                              ->first();
+
+            if ($checkLinkInBudget) {
+                return $this->sendError('You cannot delete this record because chart of accounts under this category has been pulled to budget');
+            }
+
             $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
 
             foreach ($detID as $key => $value) {
@@ -412,6 +428,20 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         if ($columnLink) {
             return ['status'=> false, 'message' => 'You cannot delete this record because already this record has been added to the formula'];
         }
+
+        $glCodes = ReportTemplateLinks::where('templateDetailID',$categoryID)
+                                      ->get()
+                                      ->pluck('glAutoID')
+                                      ->toArray();
+
+        $checkLinkInBudget = Budjetdetails::whereIn('chartOfAccountID', $glCodes)
+                                          ->where('templateDetailID', $categoryID)
+                                          ->first();
+
+        if ($checkLinkInBudget) {
+            return ['status'=> false, 'message' => 'You cannot delete this record because chart of accounts under this category has been pulled to budget'];
+        }
+
         $detID = $reportTemplateDetails->subcategory()->pluck('detID')->toArray();
 
         foreach ($detID as $key => $value) {

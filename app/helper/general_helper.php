@@ -44,6 +44,7 @@ use App\Models\ProcumentOrder;
 use App\Models\CustomerReceivePayment;
 use App\Models\DocumentRestrictionAssign;
 use App\Models\PurchaseOrderDetails;
+use App\Models\ReportTemplateDetails;
 use App\Models\Employee;
 use App\Models\EmployeeNavigation;
 use App\Models\SupplierAssigned;
@@ -5537,5 +5538,39 @@ class Helper
     {
         $company = Company::find($companySystemID);
         return ($company) ? $company->isHrmsIntergrated : 0;
+    }
+
+    public static function headerCategoryOfReportTemplate($templateDetailID)
+    {
+        
+        $detail = ReportTemplateDetails::find($templateDetailID);
+
+        $headerDetail = "";
+        if ($detail) {
+            if (is_null($detail->masterID)) {
+                $headerDetail = $detail->description;
+            } else {
+                $headerDetail = self::getHeaderDetailOfReportTemplate($detail->masterID);
+            }
+        }
+
+        return $headerDetail;
+    }
+
+    public static function getHeaderDetailOfReportTemplate($templateDetailID)
+    {
+        
+        $detail = ReportTemplateDetails::find($templateDetailID);
+
+        $headerDetail = "";
+        if ($detail) {
+            if (is_null($detail->masterID)) {
+                $headerDetail = $detail->description;
+            } else {
+                $headerDetail = self::getHeaderDetailOfReportTemplate($detail->masterID);
+            }
+        }
+
+        return $headerDetail;
     }
 }

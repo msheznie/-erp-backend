@@ -1248,4 +1248,32 @@ class BudgetMasterAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function downloadBudgetUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+
+        $budgetMaster = BudgetMaster::find($input['id']);
+
+        if (!$budgetMaster) {
+            return $this->sendError("Budget not found", 500);
+        }
+
+        $glCOdes = ReportTemplateLinks::with(['template_category'])
+                                      ->whereHas('items', function($query) use ($budgetMaster) {
+                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                  ->where('Year', $budgetMaster->Year);
+                                      })
+                                      ->where('templateMasterID', $budgetMaster->templateMasterID)
+                                      ->orderBy('templateDetailID', 'sortOrder')
+                                      ->get();
+
+        $reportData['reportData'] = $glCOdes;
+        return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
+                     $excel->sheet('New sheet', function($sheet) use ($reportData) {
+                        $sheet->loadView('export_report.budget_upload_template', $reportData);
+                    });
+                })->download('xlsx');
+
+    }
 }

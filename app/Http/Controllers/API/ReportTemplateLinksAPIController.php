@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateReportTemplateLinksAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateLinksAPIRequest;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
+use App\Models\Budjetdetails;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\ReportTemplateLinks;
@@ -355,6 +356,15 @@ class ReportTemplateLinksAPIController extends AppBaseController
             return $this->sendError('Report Template Links not found');
         }
 
+        $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
+                                          ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
+                                          ->first();
+
+        if ($checkLinkInBudget) {
+             return $this->sendError('This chart Of Account cannot be deleted, since the Chart Of Account has been pulled to budget');
+        }
+
+
         $reportTemplateLinks->delete();
 
         $checkTemplateLinksExists = ReportTemplateLinks::where('templateDetailID', $reportTemplateLinks->templateDetailID)->first();
@@ -412,9 +422,24 @@ class ReportTemplateLinksAPIController extends AppBaseController
         return $this->sendResponse([], 'Report Template Links saved successfully');
     }
 
-    public function deleteAllLinkedGLCodes(Request $request){
+    public function deleteAllLinkedGLCodes(Request $request)
+    {
+        $input = $request->all();
+        $glCodes = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)
+                                      ->get()
+                                      ->pluck('glAutoID')
+                                      ->toArray();
+
+        $checkLinkInBudget = Budjetdetails::whereIn('chartOfAccountID', $glCodes)
+                                          ->where('templateDetailID', $request->templateDetailID)
+                                          ->first();
+
+        if ($checkLinkInBudget) {
+             return $this->sendError('Chart Of Accounts of this category cannot be deleted, since some of the Chart Of Accounts have been pulled to budget');
+        }
+
         $reportTemplateLinks = ReportTemplateLinks::where('templateDetailID',$request->templateDetailID)->delete();
-         $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $request->templateDetailID)->update(['isFinalLevel' => 0]);
+        $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $request->templateDetailID)->update(['isFinalLevel' => 0]);
         return $this->sendResponse([], 'Report Template Links deleted successfully');
     }
 
