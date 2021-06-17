@@ -2026,6 +2026,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
+
+
+    Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
+    Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
+    Route::post('storeVerification', 'AssetVerificationAPIController@store');
+    Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy');
+    Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show');
+    Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser');
+    Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser');
+    Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
+    Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
+    Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
+    Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
 });
 
 

@@ -165,8 +165,5 @@ class AssetFinanceCategory extends Model
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'DISPOGLCODESystemID','chartOfAccountSystemID');
     }
-
-
-
     
 }

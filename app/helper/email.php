@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalMaster;
+use App\Models\AssetVerification;
 use App\Models\BankAccount;
 use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
@@ -380,7 +381,14 @@ class email
                     $salesReturn = SalesReturn::find($data['docSystemCode']);
                     if (!empty($salesReturn)) {
                         $data['docApprovedYN'] = $salesReturn->approvedYN;
-                        $data['docCode'] = $salesReturn->salesReturnCode;
+                        $data['docCode'] = $salesReturn->verficationCode;
+                    }
+                    break;
+                case 99:
+                    $assetVerification = AssetVerification::find($data['docSystemCode']);
+                    if (!empty($assetVerification)) {
+                        $data['docApprovedYN'] = $assetVerification->approvedYN;
+                        $data['docCode'] = $assetVerification->salesReturnCode;
                     }
                     break;
                 default:

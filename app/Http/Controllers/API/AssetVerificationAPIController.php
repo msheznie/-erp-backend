@@ -1,0 +1,498 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\AppBaseController;
+use App\Http\Requests\API\CreateAssetVerificationAPIRequest;
+use App\Http\Requests\API\UpdateAssetVerificationAPIRequest;
+use App\Models\AssetVerification;
+use App\Models\Company;
+use App\Models\DocumentMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Repositories\AssetVerificationRepository;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Response;
+
+/**
+ * Class AssetVerificationController
+ *
+ * @package App\Http\Controllers\API
+ */
+class AssetVerificationAPIController extends AppBaseController
+{
+    /** @var  AssetVerificationRepository */
+    private $assetVerificationRepository;
+
+    public function __construct(AssetVerificationRepository $assetVerificationRepo)
+    {
+        $this->assetVerificationRepository = $assetVerificationRepo;
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetVerifications",
+     *      summary="Get a listing of the AssetVerifications.",
+     *      tags={"AssetVerification"},
+     *      description="Get all AssetVerifications",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/AssetVerification")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $input = $request->all();
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $assetVerifications = AssetVerification::whereIN('companySystemID', $subCompanies);
+
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetVerifications->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetVerifications->where('approved', $input['approved']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetVerifications = $assetVerifications->where(function ($query) use ($search) {
+                $query->where('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('verficationCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assetVerifications)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * @param CreateAssetVerificationAPIRequest $request
+     *
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/assetVerifications",
+     *      summary="Store a newly created AssetVerification in storage",
+     *      tags={"AssetVerification"},
+     *      description="Store AssetVerification",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetVerification that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetVerification")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetVerification"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateAssetVerificationAPIRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $documentMaster = DocumentMaster::find($input['documentSystemID']);
+            if ($documentMaster) {
+                $input['documentID'] = $documentMaster->documentID;
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $documentCode = ($company->CompanyID . '\\' . $documentMaster->documentID . str_pad($documentMaster->departmentSystemID, 6, '0', STR_PAD_LEFT));
+            $input['verficationCode'] = $documentCode;
+            $input['documentDate'] = new Carbon($input['documentDate']);
+            $input['serialNo'] = $documentMaster->departmentSystemID;
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+//            DocumentMaster::where('documentSystemID', $input['documentSystemID'])->update(['departmentSystemID' => ($documentMaster->departmentSystemID + 1)]);
+
+            $assetVerification = $this->assetVerificationRepository->create($input);
+            DB::commit();
+            return $this->sendResponse($assetVerification->toArray(), 'Asset Verification saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception);
+        }
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetVerifications/{id}",
+     *      summary="Display the specified AssetVerification",
+     *      tags={"AssetVerification"},
+     *      description="Get AssetVerification",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetVerification",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetVerification"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        $assetVerification = AssetVerification::with('assetVerificationDetail:id,faID')->where('id', $id)->first();
+
+        if (empty($assetVerification)) {
+            return $this->sendError('Asset Verification not found');
+        }
+
+        return $this->sendResponse($assetVerification, 'Asset Verification retrieved successfully.');
+    }
+
+    /**
+     * @param int                               $id
+     * @param UpdateAssetVerificationAPIRequest $request
+     *
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/assetVerifications/{id}",
+     *      summary="Update the specified AssetVerification in storage",
+     *      tags={"AssetVerification"},
+     *      description="Update AssetVerification",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetVerification",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetVerification that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetVerification")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetVerification"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateAssetVerificationAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $assetVerification = $this->assetVerificationRepository->findWithoutFail($id);
+
+        if (empty($assetVerification)) {
+            return $this->sendError('Asset verification Master not found');
+        }
+
+        if ($assetVerification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+            $params = [
+                'autoID' => $id,
+                'company' => $assetVerification->companySystemID,
+                'document' => $assetVerification->documentSystemID
+            ];
+
+            $confirm = \Helper::confirmDocument($params);
+
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+            }
+        }
+        $assetVerification = $this->assetVerificationRepository->update($input, $id);
+
+        return $this->sendResponse($assetVerification->toArray(), 'Asset verification updated successfully');
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/assetVerifications/{id}",
+     *      summary="Remove the specified AssetVerification from storage",
+     *      tags={"AssetVerification"},
+     *      description="Delete AssetVerification",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetVerification",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var AssetVerification $assetVerification */
+        $assetVerification = $this->assetVerificationRepository->findWithoutFail($id);
+
+        if ($assetVerification['approved']) {
+            return $this->sendError('You can\'t remove this asset');
+        }
+
+        if (empty($assetVerification)) {
+            return $this->sendError('Asset Verification not found');
+        }
+
+        $assetVerification->delete();
+
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_verification_master')]));
+    }
+
+    public function getVerificationFormData()
+    {
+        $yesNoSelection = YesNoSelection::all();
+
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getVerificationApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyID'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+
+        $assetVerification = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_verification.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode'
+            )
+            ->join('erp_fa_asset_verification', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                    ->where('erp_fa_asset_verification.companySystemID', $companyId)
+                    ->where('erp_fa_asset_verification.approved', 0)
+                    ->where('erp_fa_asset_verification.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [99])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetVerification = $assetVerification->where(function ($query) use ($search) {
+                $query->where('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('verficationCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetVerification)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getVerificationApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyID'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        DB::enableQueryLog();
+        $assetVerification = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_verification.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_fa_asset_verification', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                    ->where('erp_fa_asset_verification.companySystemID', $companyId)
+                    ->where('erp_fa_asset_verification.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [23])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetVerification = $assetVerification->where(function ($query) use ($search) {
+                $query->where('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('verficationCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetVerification)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('depMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+        $queries = DB::getQueryLog();
+        info(json_encode($queries));
+    }
+}
