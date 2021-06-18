@@ -5,10 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateAssetVerificationAPIRequest;
 use App\Http\Requests\API\UpdateAssetVerificationAPIRequest;
+use App\Models\AssetFinanceCategory;
 use App\Models\AssetVerification;
 use App\Models\AssetVerificationDetail;
 use App\Models\Company;
+use App\Models\DepartmentMaster;
 use App\Models\DocumentMaster;
+use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -379,15 +382,32 @@ class AssetVerificationAPIController extends AppBaseController
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_verification_master')]));
     }
 
-    public function getVerificationFormData()
+    public function getVerificationFormData(Request $request)
     {
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
         $yesNoSelection = YesNoSelection::all();
 
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+        $department = DepartmentMaster::showInCombo()->get();
+        $assetFinanceCategory = AssetFinanceCategory::all();
+        $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'department' => $department,
+            'assetFinanceCategory' => $assetFinanceCategory,
+            'fixedAssetCategory' => $fixedAssetCategory,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -527,15 +547,15 @@ class AssetVerificationAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $assetCositng->where('approved', $input['approved']);
-            }
-        }
-
         if (array_key_exists('mainCategory', $input)) {
             if ($input['mainCategory']) {
                 $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('department', $input)) {
+            if ($input['department']) {
+                $assetCositng->where('departmentSystemID', $input['department']);
             }
         }
 

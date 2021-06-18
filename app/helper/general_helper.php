@@ -2876,6 +2876,12 @@ class Helper
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 99: // Asset verification
+                    $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                    $docInforArr["modelName"] = 'AssetVerification';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
