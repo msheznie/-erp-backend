@@ -292,9 +292,16 @@ class AssetVerificationAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $assetVerification = $this->assetVerificationRepository->findWithoutFail($id);
 
+
         if (empty($assetVerification)) {
             return $this->sendError('Asset verification Master not found');
         }
+
+
+        $verified_date = $assetVerification['documentDate'];
+        AssetVerificationDetail::where('verification_id', $id)->get()->each(function ($asset) use ($verified_date) {
+            FixedAssetMaster::where('faID', $asset['faID'])->update(['lastVerifiedDate' => $verified_date]);
+        });
 
         if ($assetVerification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $params = [
@@ -310,6 +317,7 @@ class AssetVerificationAPIController extends AppBaseController
             }
         }
         $assetVerification = $this->assetVerificationRepository->update($input, $id);
+
 
         return $this->sendResponse($assetVerification->toArray(), 'Asset verification updated successfully');
     }
