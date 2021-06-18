@@ -351,8 +351,9 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
         $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
 
-        $input['VATAmountLocal' ]        = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt']        = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
 
         $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
         $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
