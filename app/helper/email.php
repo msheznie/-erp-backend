@@ -54,9 +54,11 @@ use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
 use App\Models\RegisteredSupplier;
 use App\Models\StockAdjustment;
+use App\Models\StockCount;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
+use App\Models\CurrencyConversionMaster;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -236,6 +238,13 @@ class email
                         $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
                     }
                     break;
+                case 97:
+                    $stockAdjustment = StockCount::where('stockCountAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockAdjustment)) {
+                        $data['docApprovedYN'] = $stockAdjustment->approved;
+                        $data['docCode'] = $stockAdjustment->stockCountCode;
+                    }
+                    break;
                 case 15:
                     $debitNote = DebitNote::where('debitNoteAutoID', $data['docSystemCode'])->first();
                     if (!empty($debitNote)) {
@@ -389,6 +398,13 @@ class email
                     if (!empty($assetVerification)) {
                         $data['docApprovedYN'] = $assetVerification->approvedYN;
                         $data['docCode'] = $assetVerification->salesReturnCode;
+                    }
+                    break;
+                 case 96:
+                    $currencyConversion = CurrencyConversionMaster::find($data['docSystemCode']);
+                    if (!empty($currencyConversion)) {
+                        $data['docApprovedYN'] = $currencyConversion->approvedYN;
+                        $data['docCode'] = $currencyConversion->conversionCode;
                     }
                     break;
                 default:

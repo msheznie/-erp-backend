@@ -609,84 +609,9 @@ class ItemReturnMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $itemReturnMaster = ItemReturnMaster::whereIn('companySystemID', $subCompanies)
-            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by']);
-
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $itemReturnMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $itemReturnMaster->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemReturnMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('wareHouseLocation', $input)) {
-            if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
-                $itemReturnMaster->where('wareHouseLocation', $input['wareHouseLocation']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $itemReturnMaster->whereMonth('ReturnDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $itemReturnMaster->whereYear('ReturnDate', '=', $input['year']);
-            }
-        }
-
-
-        $itemReturnMaster = $itemReturnMaster->select(
-            ['itemReturnAutoID',
-                'itemReturnCode',
-                'comment',
-                'ReturnDate',
-                'confirmedYN',
-                'approved',
-                'serviceLineSystemID',
-                'documentSystemID',
-                'confirmedByEmpSystemID',
-                'createdUserSystemID',
-                'confirmedDate',
-                'approvedDate',
-                'createdDateTime',
-                'ReturnRefNo',
-                'wareHouseLocation',
-                'refferedBackYN'
-            ]);
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
-                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
-            });
-        }
+        $itemReturnMaster = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search);
 
         return \DataTables::eloquent($itemReturnMaster)
             ->addColumn('Actions', 'Actions', "Actions")

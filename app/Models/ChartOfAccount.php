@@ -95,6 +95,7 @@ class ChartOfAccount extends Model
         'modifiedUser',
         'timestamp',
         'refferedBackYN',
+        'reportTemplateCategory',
         'isMasterAccount',
         'timesReferred'
     ];
@@ -107,6 +108,7 @@ class ChartOfAccount extends Model
     protected $casts = [
         'chartOfAccountSystemID' => 'integer',
         'primaryCompanySystemID' => 'integer',
+        'reportTemplateCategory' => 'integer',
         'primaryCompanyID' => 'string',
         'documentSystemID' => 'integer',
         'isMasterAccount' => 'integer',
@@ -183,4 +185,14 @@ class ChartOfAccount extends Model
         return $this->hasOne('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
+    public static function checkAccountCode($AccountCode, $chartOfAccountSystemID)
+    {
+        $checkAccountCode = ChartOfAccount::where('AccountCode', $AccountCode);
+
+        if (!is_null($chartOfAccountSystemID)) {
+            $checkAccountCode = $checkAccountCode->where('chartOfAccountSystemID', '!=', $chartOfAccountSystemID);            
+        }
+
+        return $checkAccountCode->first();
+    }
 }

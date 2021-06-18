@@ -677,50 +677,9 @@ class JvMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $invMaster = JvMaster::where('companySystemID', $input['companySystemID']);
-        //$invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by', 'transactioncurrency', 'detail' => function ($query) {
-            $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
-            $query->groupBy('jvMasterAutoId');
-        }]);
-        if (array_key_exists('jvType', $input)) {
-            if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5) && !is_null($input['jvType'])) {
-                $invMaster->where('jvType', $input['jvType']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $invMaster->whereMonth('JVdate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $invMaster->whereYear('JVdate', '=', $input['year']);
-            }
-        }
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search) {
-                $query->where('JVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('JVNarration', 'LIKE', "%{$search}%");
-            });
-        }
+
+        $invMaster = $this->jvMasterRepository->jvMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\QuotationMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class QuotationMasterRepository
@@ -100,5 +101,110 @@ class QuotationMasterRepository extends BaseRepository
     public function model()
     {
         return QuotationMaster::class;
+    }
+
+    public function quotationMasterListQuery($request, $input, $search = '') {
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $quotationMaster = QuotationMaster::whereIn('companySystemID', $childCompanies)
+            ->where('documentSystemID', $input['documentSystemID'])
+        ->with(['segment']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $quotationMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $quotationMaster->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $quotationMaster->whereMonth('documentDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $quotationMaster->whereYear('documentDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerSystemCode', $input)) {
+            if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
+                $quotationMaster->where('customerSystemCode', $input['customerSystemCode']);
+            }
+        }
+
+        if (array_key_exists('salesPersonID', $input)) {
+            if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
+                $quotationMaster->where('salesPersonID', $input['salesPersonID']);
+            }
+        }
+
+
+        if (array_key_exists('quotationType', $input)) {
+            if ($input['quotationType'] && !is_null($input['quotationType'])) {
+                $quotationMaster->where('quotationType', $input['quotationType']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $quotationMaster = $quotationMaster->where(function ($query) use ($search) {
+                $query->where('quotationCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $request->request->remove('search.value');
+
+        return $quotationMaster;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Document Code'] = $val->quotationCode;
+                $data[$x]['Type'] = StatusService::getQuotationType($val->quotationType, $val->documentSystemID);
+                $data[$x]['Customer Name'] = $val->customerName;
+                $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                $data[$x]['Document Exp Date'] = \Helper::dateFormat($val->documentExpDate);
+                $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
+                $data[$x]['Comments'] = $val->narration;
+                $data[$x]['Created By'] = $val->createdUserName;
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Currency'] = $val->transactionCurrency? $val->transactionCurrency : '';
+                $data[$x]['Amount'] = number_format($val->transactionAmount, $val->transactionCurrencyDecimalPlaces? $val->transactionCurrencyDecimalPlaces : '', ".", "");
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

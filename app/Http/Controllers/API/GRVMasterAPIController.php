@@ -684,106 +684,16 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
+        
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
-
-        $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
-        $grvMaster->where('documentSystemID', $input['documentId']);
-        $grvMaster->with(['created_by' => function ($query) {
-        }, 'segment_by' => function ($query) {
-        }, 'location_by' => function ($query) {
-        }, 'supplier_by' => function ($query) {
-        }, 'currency_by' => function ($query) {
-        }, 'grvtype_by' => function ($query) {
-        }]);
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $grvMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('grvLocation', $input)) {
-            if ($input['grvLocation'] && !is_null($input['grvLocation'])) {
-                $grvMaster->where('grvLocation', $input['grvLocation']);
-            }
-        }
-
-        if (array_key_exists('grvCancelledYN', $input)) {
-            if (($input['grvCancelledYN'] == 0 || $input['grvCancelledYN'] == -1) && !is_null($input['grvCancelledYN'])) {
-                $grvMaster->where('grvCancelledYN', $input['grvCancelledYN']);
-            }
-        }
-
-        if (array_key_exists('grvConfirmedYN', $input)) {
-            if (($input['grvConfirmedYN'] == 0 || $input['grvConfirmedYN'] == 1) && !is_null($input['grvConfirmedYN'])) {
-                $grvMaster->where('grvConfirmedYN', $input['grvConfirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $grvMaster->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $grvMaster->whereMonth('grvDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $grvMaster->whereYear('grvDate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('grvTypeID', $input)) {
-            if ($input['grvTypeID'] && !is_null($input['grvTypeID'])) {
-                $grvMaster->where('grvTypeID', $input['grvTypeID']);
-            }
-        }
-
-        $grvMaster = $grvMaster->select(
-            ['erp_grvmaster.grvAutoID',
-                'erp_grvmaster.grvPrimaryCode',
-                'erp_grvmaster.documentSystemID',
-                'erp_grvmaster.grvDoRefNo',
-                'erp_grvmaster.createdDateTime',
-                'erp_grvmaster.createdUserSystemID',
-                'erp_grvmaster.grvNarration',
-                'erp_grvmaster.grvLocation',
-                'erp_grvmaster.grvDate',
-                'erp_grvmaster.supplierID',
-                'erp_grvmaster.serviceLineSystemID',
-                'erp_grvmaster.grvConfirmedDate',
-                'erp_grvmaster.approvedDate',
-                'erp_grvmaster.supplierTransactionCurrencyID',
-                'erp_grvmaster.grvTotalSupplierTransactionCurrency',
-                'erp_grvmaster.grvCancelledYN',
-                'erp_grvmaster.timesReferred',
-                'erp_grvmaster.grvConfirmedYN',
-                'erp_grvmaster.approved',
-                'erp_grvmaster.grvLocation',
-                'erp_grvmaster.refferedBackYN',
-                'erp_grvmaster.grvTypeID',
-                'erp_grvmaster.companySystemID'
-            ]);
-
+        
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $grvMaster = $grvMaster->where(function ($query) use ($search) {
-                $query->where('grvPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('grvNarration', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
-            });
-        }
 
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input,$search);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();

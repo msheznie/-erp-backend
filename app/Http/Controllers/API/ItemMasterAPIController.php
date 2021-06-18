@@ -33,6 +33,7 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
@@ -517,10 +518,13 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
+        $assetFinanceCategory = AssetFinanceCategory::all();
+
 
         $output = array('companiesByGroup' => $companiesByGroup,
             'allCompanies' => $allCompanies,
             'financeItemCategoryMaster' => $itemCategory,
+            'assetFinanceCategory' => $assetFinanceCategory,
             'financeItemCategorySub' => $itemCategorySubArray,
             'yesNoSelection' => $yesNoSelection,
             'units' => $units,
@@ -567,10 +571,15 @@ class ItemMasterAPIController extends AppBaseController
             $ruleArray = array_merge($ruleArray, ['sellingCost' => 'required|numeric|min:0.001']);
         }
 
+
         $validator = \Validator::make($input, $ruleArray, $messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
+            return $this->sendError('Finance Audit category is required.');
         }
 
         $employee = Helper::getEmployeeInfo();
@@ -594,6 +603,13 @@ class ItemMasterAPIController extends AppBaseController
         if(!(isset($input['barcode']) && $input['barcode'] != null)){
             $input['barcode'] = $primaryCode;
         }
+
+
+
+        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] != 3) {
+            $input['faFinanceCatID'] = null;
+        }
+
         $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $input['financeCategorySub'])->first();
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
@@ -631,7 +647,7 @@ class ItemMasterAPIController extends AppBaseController
 
         if ($input['isPOSItem'] == 1) {
             $itemMaster = DB::table('itemmaster')
-                ->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp,isPOSItem')
+                ->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp,isPOSItem, faFinanceCatID')
                 ->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')
                 ->where('itemCodeSystem', $itemMasters->itemCodeSystem)
                 ->first();
@@ -680,6 +696,8 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+
+
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -703,6 +721,15 @@ class ItemMasterAPIController extends AppBaseController
                     $input[$key] = 0;
                 }
             }
+        }
+
+
+        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
+            return $this->sendError('Finance Audit category is required.');
+        }
+
+        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] != 3) {
+            $input['faFinanceCatID'] = null;
         }
 
         if($itemMaster->itemApprovedYN == 1){
@@ -785,7 +812,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID');
 
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
@@ -1084,19 +1111,18 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemCode = isset($input['itemCodeSystem'])?$input['itemCodeSystem']:0;
 
-        $supplierCatalog = SupplierCatalogMaster::where('isActive',1)
-            ->with(['supplier','company','data'=> function($query) use($itemCode){
-                $query->with(['uom_default','local_currency'])
-                    ->where('itemCodeSystem',$itemCode);
-            }])
-            ->whereHas('details', function ($query) use($itemCode){
-                $query->where('itemCodeSystem',$itemCode)
-                    ->where(function ($q){
-                        $q->whereNull('isDeleted')
-                            ->orWhere('isDeleted',0);
-                    });
-            })
-        ->paginate(15);
+        $supplierCatalog = SupplierCatalogMaster::with(['supplier','company','data'=> function($query) use($itemCode){
+                                                    $query->with(['uom_default','local_currency'])
+                                                        ->where('itemCodeSystem',$itemCode);
+                                                }])
+                                                ->whereHas('details', function ($query) use($itemCode){
+                                                    $query->where('itemCodeSystem',$itemCode)
+                                                        ->where(function ($q){
+                                                            $q->whereNull('isDeleted')
+                                                                ->orWhere('isDeleted',0);
+                                                        });
+                                                })
+                                                ->paginate(15);
         return $this->sendResponse($supplierCatalog, 'Data retrieved successfully');
 
 //        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {

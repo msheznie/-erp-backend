@@ -35,6 +35,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\GRVDetails;
+use App\Models\CustomerMaster;
 use App\Models\Alert;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
@@ -60,8 +61,12 @@ use InfyOm\Generator\Utils\ResponseUtil;
 use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
+use App\helper\SupplierAssignService;
+use App\helper\StockCountService;
+use App\helper\CustomerAssignService;
 use App\helper\IvmsDeliveryOrderService;
 use App\helper\ChartOfAccountDependency;
+use App\helper\CurrencyConversionService;
 use Illuminate\Support\Facades\Schema;
 
 class Helper
@@ -589,6 +594,28 @@ class Helper
                     $docInforArr["tableName"] = 'salesreturn';
                     $docInforArr["modelName"] = 'SalesReturn';
                     $docInforArr["primarykey"] = 'id';
+                    break;
+                case 96: // Currency Conversion
+                    $docInforArr["documentCodeColumnName"] = 'conversionCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
+                    $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'currency_conversion_master';
+                    $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
+                 case 97:
+                    $docInforArr["documentCodeColumnName"] = 'stockCountCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_stockcount';
+                    $docInforArr["modelName"] = 'StockCount';
+                    $docInforArr["primarykey"] = 'stockCountAutoID';
                     break;
                  case 99: // asset verification
                     $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
@@ -1574,6 +1601,30 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 96: // Currency Conversion
+                $docInforArr["tableName"] = 'currency_conversion_master';
+                $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedby';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
+                break;
+            case 97: // stock count
+                $docInforArr["tableName"] = 'erp_stockcount';
+                $docInforArr["modelName"] = 'StockCount';
+                $docInforArr["primarykey"] = 'stockCountAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 99: // SalesReturn
                 $docInforArr["tableName"] = 'erp_fa_asset_verification';
                 $docInforArr["modelName"] = 'AssetVerification';
@@ -1614,8 +1665,8 @@ class Helper
                         ->first();
                 } else {
                     $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                        ->where('companySystemID', $isConfirmed['companySystemID'])
-                        ->first();
+                            ->where('companySystemID', $isConfirmed['companySystemID'])
+                            ->first();
                 }
 
 
@@ -1648,7 +1699,7 @@ class Helper
                     return ['success' => false, 'message' => 'You do not have access to approve this document.'];
                 } 
 
-                if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
+                if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
                         return ['success' => false, 'message' => 'Not authorized. Confirmed person cannot approve!'];
                     }
@@ -1982,7 +2033,15 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) { // already GL entry passed Check
+                            if ($input["documentSystemID"] == 97) { //stock count negative validation
+                                $stockCountRes = StockCountService::updateStockCountAdjustmentDetail($input);
+                                if (!$stockCountRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $stockCountRes['message']];
+                                }
+                            }
+
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
                                 $outputGL = Models\GeneralLedger::where('documentSystemCode',$input["documentSystemCode"])->where('documentSystemID',$input["documentSystemID"])->first();
                                 if($outputGL){
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
@@ -1994,14 +2053,24 @@ class Helper
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
-                                $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,markupPercentage,isMarkupPercentage,NOW() as timeStamp,jsrsNo,jsrsExpiry')->find($input["documentSystemCode"]);
-                                $supData = array_except($supplierMaster->toArray(),'isSUPDAmendAccess');
-                                $supplierAssign = Models\SupplierAssigned::insert($supData);
+                               $supplierAssignRes = SupplierAssignService::assignSupplier($input["documentSystemCode"], $docApproved->companySystemID);
+                               if (!$supplierAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => "Error occured while assign supplier"];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 58) { //Auto assign customer
+                               $supplierAssignRes = CustomerAssignService::assignCustomer($input["documentSystemCode"], $docApproved->companySystemID);
+                               if (!$supplierAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => "Error occured while assign customer"];
+                                }
                             }
 
                             if ($input["documentSystemID"] == 86) { //insert data to supplier table
@@ -2012,6 +2081,14 @@ class Helper
                                 }
                             }
 
+                            if ($input["documentSystemID"] == 96) { //insert data to conversion table
+                                $conversionRes = CurrencyConversionService::setConversion($input);
+                                if (!$conversionRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $conversionRes['message']];
+                                }
+                            }
+
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
@@ -2019,6 +2096,18 @@ class Helper
                                 if (!$assignResp['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => $assignResp['message']];
+                                }
+
+                                $templateAssignRes = ChartOfAccountDependency::assignToTemplateCategory($input["documentSystemCode"], $docApproved->companySystemID);
+                                if (!$templateAssignRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $templateAssignRes['message']];
+                                }
+
+                                $checkAndAssignRelatedParty = ChartOfAccountDependency::checkAndAssignToRelatedParty($input["documentSystemCode"], $docApproved->companySystemID);
+                                if (!$checkAndAssignRelatedParty['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $checkAndAssignRelatedParty['message']];
                                 }
                             }
 
@@ -2040,14 +2129,14 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97])) {
 
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
@@ -2775,6 +2864,18 @@ class Helper
                     $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 96:
+                    $docInforArr["tableName"] = 'currency_conversion_master';
+                    $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                 case 97: // Stock Count
+                    $docInforArr["tableName"] = 'erp_stockcount';
+                    $docInforArr["modelName"] = 'StockCount';
+                    $docInforArr["primarykey"] = 'stockCountAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2795,7 +2896,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -4856,7 +4957,7 @@ class Helper
         return $permission;
     }
 
-    public static function checkCompanyForMasters($companyID, $documentSystemID = null, $documentType = null)
+    public static function checkCompanyForMasters($companyID, $documentSystemID = null, $documentType = null, $edit = false)
     {
         $isGroup = self::checkIsCompanyGroup($companyID);
 
@@ -4882,9 +4983,43 @@ class Helper
                 }
                 break;
             case 'customer':
-                $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                if (!$edit) {
+                    $customerAssigned = Models\CustomerAssigned::where('customerCodeSystem', $documentSystemID)->where('companySystemID', $companyID)->first();
+                    if (!is_null($customerAssigned)) {
+                        return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                    }
+                }
+
+                $customerMasterData = CustomerMaster::find($documentSystemID);
+                if ($customerMasterData && !is_null($customerMasterData->customerCategoryID)) {
+                    $checkAssignedStatusOfCategory = Models\CustomerMasterCategoryAssigned::checkCustomerCategoryAssignedStatus($customerMasterData->customerCategoryID, $companyID);
+                    if (!$checkAssignedStatusOfCategory) {
+                        return ['success' => false, 'message' => 'Customer category of this customer is not assign to this company.'];
+                    }
+                }
+
+                if ($customerMasterData && (!is_null($customerMasterData->custGLAccountSystemID) || !is_null($customerMasterData->custUnbilledAccountSystemID))) {
+                    if (!is_null($customerMasterData->custGLAccountSystemID)) {
+                        $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custGLAccountSystemID, $companyID);
+                        if (!$checkAssignedStatusOfGL) {
+                            return ['success' => false, 'message' => 'GL Account of this customer is not assign to this company.'];
+                        }
+                    }
+
+
+                     if (!is_null($customerMasterData->custUnbilledAccountSystemID)) {
+                        $checkAssignedStatusOfGL = Models\ChartOfAccountsAssigned::checkCOAAssignedStatus($customerMasterData->custUnbilledAccountSystemID, $companyID);
+                        if (!$checkAssignedStatusOfGL) {
+                            return ['success' => false, 'message' => 'Unbilled Account of this customer is not assign to this company.'];
+                        }
+                    }
+                }
+
+                break;
+            case 'customerCategory':
+                $customerAssigned = Models\CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $documentSystemID)->where('companySystemID', $companyID)->first();
                 if (!is_null($customerAssigned)) {
-                    return ['success' => false, 'message' => 'This is customer is already assign to this company.'];
+                    return ['success' => false, 'message' => 'This is customer catgeory is already assign to this company.'];
                 }
                 break;
             case 'chartofaccounts':

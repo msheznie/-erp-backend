@@ -6,6 +6,7 @@ use App\Models\ChequeRegisterDetail;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class PaySupplierInvoiceMasterRepository
@@ -110,6 +111,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         'noOfApprovalLevels',
         'isRelatedPartyYN',
         'advancePaymentTypeID',
+        'interCompanyToSystemID',
         'isPdcChequeYN',
         'finalSettlementYN',
         'expenseClaimOrPettyCash',
@@ -185,6 +187,131 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 ->update($update_array);
         }
 
+    }
+
+    public function paySupplierInvoiceListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type'])->whereIN('companySystemID', $subCompanies);
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $paymentVoucher->where('cancelYN', $input['cancelYN']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $paymentVoucher->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $paymentVoucher->whereMonth('BPVdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('invoiceType', $input)) {
+            if ($input['invoiceType'] && !is_null($input['invoiceType'])) {
+                $paymentVoucher->where('invoiceType', $input['invoiceType']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $paymentVoucher->where('BPVsupplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('chequePaymentYN', $input)) {
+            if (($input['chequePaymentYN'] == 0 || $input['chequePaymentYN'] == -1) && !is_null($input['chequePaymentYN'])) {
+                $paymentVoucher->where('chequePaymentYN', $input['chequePaymentYN']);
+            }
+        }
+
+
+        if (array_key_exists('BPVbank', $input)) {
+            if ($input['BPVbank'] && !is_null($input['BPVbank'])) {
+                $paymentVoucher->where('BPVbank', $input['BPVbank']);
+            }
+        }
+
+        if (array_key_exists('BPVAccount', $input)) {
+            if ($input['BPVAccount'] && !is_null($input['BPVAccount'])) {
+                $paymentVoucher->where('BPVAccount', $input['BPVAccount']);
+            }
+        }
+
+        if (array_key_exists('chequeSentToTreasury', $input)) {
+            if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
+                $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
+            }
+        }
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%");
+            });
+        }
+
+        return $paymentVoucher;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Payment Code'] = $val->BPVcode;
+                $data[$x]['Type'] = StatusService::getInvoiceType($val->invoiceType);
+                $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
+                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->BPVdate);
+                $data[$x]['Cheque No'] = $val->BPVchequeNo;
+                $data[$x]['Comment'] = $val->BPVNarration;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Supplier Currency'] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
+                $data[$x]['Supplier Amount'] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
+                $data[$x]['Bank Currency'] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
+                $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
+                $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 
 }

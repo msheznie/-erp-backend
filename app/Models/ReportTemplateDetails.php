@@ -120,6 +120,7 @@ class ReportTemplateDetails extends Model
         'masterID',
         'isFinalLevel',
         'accountType',
+        'controlAccountType',
         'categoryType',
         'fontColor',
         'bgColor',
@@ -134,6 +135,9 @@ class ReportTemplateDetails extends Model
         'modifiedUserSystemID',
         'modifiedUserID',
         'modifiedDateTime',
+        'prefix',
+        'serialLength',
+        'lastSerialNo',
         'timestamp'
     ];
 
@@ -150,7 +154,11 @@ class ReportTemplateDetails extends Model
         'sortOrder' => 'integer',
         'masterID' => 'integer',
         'isFinalLevel' => 'integer',
+        'controlAccountType' => 'integer',
         'accountType' => 'string',
+        'prefix' => 'string',
+        'serialLength' => 'integer',
+        'lastSerialNo' => 'integer',
         'categoryType' => 'integer',
         'fontColor' => 'string',
         'bgColor' => 'string',

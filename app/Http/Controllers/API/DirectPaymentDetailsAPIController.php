@@ -23,6 +23,7 @@ use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentDetails;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Employee;
 use App\Models\ExpenseClaimDetails;
 use App\Models\PaySupplierInvoiceMaster;
@@ -35,6 +36,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class DirectPaymentDetailsController
@@ -837,6 +839,105 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');
+    }
+
+    public function addPVDetailsByInterCompany(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['interCompanyToSystemID'])) {
+            return $this->sendError("Inter company ID not found", 500);
+        }
+
+        $checkCompany = Company::find($input['interCompanyToSystemID']);
+
+        if (!$checkCompany) {
+            return $this->sendError("Inter company ID not found", 500);
+        }
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return $this->sendError('Pay Supplier Invoice not found', 500);
+        }
+
+        if($paySupplierInvoiceMaster->confirmedYN){
+            return $this->sendError('You cannot add Direct Payment Detail, this document already confirmed', 500);
+        }
+
+
+        $bankMaster = BankAssign::ofCompany($paySupplierInvoiceMaster->companySystemID)->isActive()->where('bankmasterAutoID', $paySupplierInvoiceMaster->BPVbank)->first();
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active', 500);
+        }
+
+        $bankAccount = BankAccount::isActive()->find($paySupplierInvoiceMaster->BPVAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active', 500);
+        }
+
+
+         if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+
+            if(is_null($paySupplierInvoiceMaster->interCompanyToSystemID)){
+                return $this->sendError('Please select a company to');
+            }
+
+            $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['PayMasterAutoId'], 'relatedPartyYN' => 1]);
+            if (count($directPaymentDetails) > 0) {
+                return $this->sendError('Cannot add GL code as there is a related party GL code added.', 500);
+            }
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['PayMasterAutoId'], 'glCodeIsBank' => 1]);
+        if (count($directPaymentDetails) > 0) {
+            return $this->sendError('Cannot add GL code as there is a bank GL code added.', 500);
+        }
+
+
+        $items = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) use ($input){
+                                                $q->where('isApproved', 1)
+                                                  ->where('interCompanySystemID', $input['interCompanyToSystemID']);
+                                            })
+                                            ->where('isAssigned', -1)
+                                            ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                            ->where('controllAccountYN', 0)
+                                            ->where('controlAccountsSystemID', '<>', 1)
+                                            ->where('isActive', 1)
+                                            ->get();
+
+        $warningMessage = '';
+        if (count($items) == 0) {
+            $warningMessage = "Account code is not assigned for the selected inter company";
+        }
+
+        DB::beginTransaction();
+        try {
+            $errorMessageArray = [];
+            foreach ($items as $key => $value) {
+                $res = $this->directPaymentDetailsRepository->storeDirectDetail($input['PayMasterAutoId'],$value->chartOfAccountSystemID);
+                if (!$res['status']) {
+                    $errorMessageArray[] = $res['message'];
+                }
+            }
+
+
+            if ((count($errorMessageArray) == count($items)) && count($items) > 0 && count($errorMessageArray) > 0) {
+                DB::rollBack();
+                return $this->sendError($errorMessageArray, 422);
+            }
+
+
+            $message = [['status' => 'success', 'message' => 'PaySupplierInvoiceMaster updated successfully'], ['status' => 'warning', 'message' => $warningMessage], ['status' => 'error', 'message' => $errorMessageArray]];
+            DB::commit();
+            return $this->sendResponse([], $message);
+        } catch
+        (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage(), 500);
+        }
     }
 
 }

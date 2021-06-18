@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\Models\GRVDetails;
+use App\helper\StatusService;
 
 /**
  * Class FixedAssetMasterRepository
@@ -35,6 +37,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'serialNo',
         'itemCode',
         'faCode',
+        'faBarcode',
         'assetCodeS',
         'faUnitSerialNo',
         'assetDescription',
@@ -108,5 +111,93 @@ class FixedAssetMasterRepository extends BaseRepository
     public function model()
     {
         return FixedAssetMaster::class;
+    }
+
+    public function fixedAssetMasterListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetAllocation = GRVDetails::with(['grv_master' => function ($q) use ($search) {
+                                                $q->where('grvConfirmedYN', 1);
+                                                $q->where('approved', -1);
+                                                $q->where('grvCancelledYN', 0);
+                                                if ($search) {
+                                                    $search = str_replace("\\", "\\\\", $search);
+                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+                                                }
+                                            }, 'item_by', 'localcurrency', 'rptcurrency'])
+                                            ->whereHas('item_by', function ($q) {
+                                                $q->where('financeCategoryMaster', 3);
+                                                $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
+                                            })->whereHas('grv_master', function ($q) use ($search) {
+                                                $q->where('grvConfirmedYN', 1);
+                                                $q->where('approved', -1);
+                                                $q->where('grvCancelledYN', 0);
+                                                if ($search) {
+                                                    $search = str_replace("\\", "\\\\", $search);
+                                                    $q->where('grvPrimaryCode', 'LIKE', "%{$search}%");
+                                                }
+                                            })->whereHas('localcurrency', function ($q) {
+                                            })->whereHas('rptcurrency', function ($q) {
+                                            })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
+
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $assetAllocation->where('cancelYN', $input['cancelYN']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetAllocation->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetAllocation->where('approved', $input['approved']);
+            }
+        }
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetAllocation = $assetAllocation->where(function ($query) use ($search) {
+                $query->where('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return $assetAllocation;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Doc No'] = $val->grv_master? $val->grv_master->grvPrimaryCode : '';
+                $data[$x]['Doc Description'] = $val->itemDescription;
+                $data[$x]['Doc Date'] = $val->grv_master? (\Helper::dateFormat($val->grv_master->approvedDate)) : '';
+                $data[$x]['Qty'] = $val->noQty;
+                $data[$x]['Amount / Unit(Local)'] = number_format($val->landingCost_LocalCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
+                $data[$x]['Amount / Unit(Reporting)'] = number_format($val->landingCost_RptCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

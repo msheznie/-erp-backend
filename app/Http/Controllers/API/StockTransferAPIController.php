@@ -732,83 +732,9 @@ class StockTransferAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $stockTransferMaster = StockTransfer::where('companySystemID', $input['companyId']);
-        $stockTransferMaster->where('documentSystemID', $input['documentId']);
-        $stockTransferMaster->with(['created_by' => function ($query) {
-        }, 'segment_by' => function ($query) {
-        }]);
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockTransferMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $stockTransferMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $stockTransferMaster->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('interCompanyTransferYN', $input)) {
-            if (($input['interCompanyTransferYN'] == 0 || $input['interCompanyTransferYN'] == -1) && !is_null($input['interCompanyTransferYN'])) {
-                $stockTransferMaster->where('interCompanyTransferYN', $input['interCompanyTransferYN']);
-            }
-        }
-
-        if (array_key_exists('locationFrom', $input)) {
-            if ($input['locationFrom'] && !is_null($input['locationFrom'])) {
-                $stockTransferMaster->where('locationFrom', '=', $input['locationFrom']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $stockTransferMaster->whereMonth('tranferDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $stockTransferMaster->whereYear('tranferDate', '=', $input['year']);
-            }
-        }
-
-        $stockTransferMaster = $stockTransferMaster->select(
-            ['erp_stocktransfer.stockTransferAutoID',
-                'erp_stocktransfer.stockTransferCode',
-                'erp_stocktransfer.documentSystemID',
-                'erp_stocktransfer.refNo',
-                'erp_stocktransfer.createdDateTime',
-                'erp_stocktransfer.createdUserSystemID',
-                'erp_stocktransfer.comment',
-                'erp_stocktransfer.tranferDate',
-                'erp_stocktransfer.serviceLineSystemID',
-                'erp_stocktransfer.confirmedDate',
-                'erp_stocktransfer.approvedDate',
-                'erp_stocktransfer.timesReferred',
-                'erp_stocktransfer.confirmedYN',
-                'erp_stocktransfer.approved',
-                'erp_stocktransfer.approvedDate',
-                'erp_stocktransfer.fullyReceived',
-                'erp_stocktransfer.refferedBackYN'
-            ]);
-
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $stockTransferMaster = $stockTransferMaster->where(function ($query) use ($search) {
-                $query->where('stockTransferCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%")
-                    ->orWhere('refNo', 'LIKE', "%{$search}%");
-            });
-        }
+
+        $stockTransferMaster = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
 
         $policy = 0;
 

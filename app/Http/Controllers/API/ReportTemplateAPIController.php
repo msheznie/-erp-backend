@@ -319,7 +319,15 @@ class ReportTemplateAPIController extends AppBaseController
             return $this->sendError('Report Template not found');
         }
 
+
         $reportTemplate = $this->reportTemplateRepository->update($input, $id);
+
+        if ($input['isDefault']) {
+            $updateOtherDefault = ReportTemplate::where('reportID', $input['reportID'])
+                                                ->where('companyReportTemplateID', '!=', $input['companyReportTemplateID'])
+                                                ->update(['isDefault' => 0]);
+        }
+
 
         return $this->sendResponse($reportTemplate->toArray(), 'ReportTemplate updated successfully');
     }

@@ -44,6 +44,7 @@ use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\WarehouseMaster;
+use App\Models\CustomerMasterCategory;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
@@ -858,6 +859,7 @@ class SalesMarketingReportAPIController extends AppBaseController
     public function getSalesMarketFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
+        $customerCategoryID = $request['customerCategoryID'];
         $companiesByGroup = "";
         if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
@@ -872,14 +874,23 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
             ->groupBy('customerCodeSystem')
             ->orderBy('CustomerName', 'ASC')
-            ->WhereNotNull('customerCodeSystem')
-            ->get();
+            ->WhereNotNull('customerCodeSystem');
+
+        if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+            $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                    $query->where('customerCategoryID', $customerCategoryID);
+                                            });
+        }
+
+        $customerMaster = $customerMaster->get();
 
         $wareHouses = WarehouseMaster::whereIn("companySystemID", $companiesByGroup)->where('isActive', 1)->get();
         $financeCategoryMasters = FinanceItemCategoryMaster::all();
 
+        $customerCategories = CustomerMasterCategory::all();
         $output = array(
             'customers' => $customerMaster,
+            'customerCategories' => $customerCategories,
             'financeCategoryMasters' => $financeCategoryMasters,
             'wareHouses' => $wareHouses
         );

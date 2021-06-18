@@ -86,6 +86,7 @@ class ItemMaster extends Model
         'unit',
         'financeCategoryMaster',
         'financeCategorySub',
+        'faFinanceCatID',
         'itemPicture',
         'selectedForAssign',
         'isActive',
@@ -140,6 +141,7 @@ class ItemMaster extends Model
         'unit' => 'integer',
         'financeCategoryMaster' => 'integer',
         'financeCategorySub' => 'integer',
+        'faFinanceCatID' => 'integer',
         'itemPicture' => 'string',
         'selectedForAssign' => 'integer',
         'isActive' => 'integer',
@@ -192,6 +194,10 @@ class ItemMaster extends Model
 
     public function financeSubCategory(){
         return $this->hasOne('App\Models\FinanceItemCategorySub','itemCategorySubID','financeCategorySub');
+    }
+
+    public function asset_category(){
+        return $this->hasOne('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
     }
 
     public function documentapproved(){

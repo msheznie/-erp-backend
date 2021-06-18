@@ -1455,6 +1455,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $search = $request->input('search.value');
+
         $master = CustomerReceivePayment::where('erp_customerreceivepayment.companySystemID', $input['companyId'])
             ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
@@ -1531,7 +1533,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_bankledger.trsClearedYN as trsClearedYN'
         ]);
 
-        $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $search_without_comma = str_replace(",", "", $search);

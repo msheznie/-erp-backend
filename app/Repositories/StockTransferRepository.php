@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\StockTransfer;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class StockTransferRepository
@@ -71,5 +72,114 @@ class StockTransferRepository extends BaseRepository
                 ->where('documentSystemID', 13);
         },'audit_trial.modified_by'])
             ->findWithoutFail($id);
+    }
+
+    public function stockTransferListQuery($request, $input, $search = '') {
+
+        $stockTransferMaster = StockTransfer::where('companySystemID', $input['companyId']);
+        $stockTransferMaster->where('documentSystemID', $input['documentId']);
+        $stockTransferMaster->with(['created_by' => function ($query) {
+        }, 'segment_by' => function ($query) {
+        }]);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $stockTransferMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $stockTransferMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $stockTransferMaster->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('interCompanyTransferYN', $input)) {
+            if (($input['interCompanyTransferYN'] == 0 || $input['interCompanyTransferYN'] == -1) && !is_null($input['interCompanyTransferYN'])) {
+                $stockTransferMaster->where('interCompanyTransferYN', $input['interCompanyTransferYN']);
+            }
+        }
+
+        if (array_key_exists('locationFrom', $input)) {
+            if ($input['locationFrom'] && !is_null($input['locationFrom'])) {
+                $stockTransferMaster->where('locationFrom', '=', $input['locationFrom']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $stockTransferMaster->whereMonth('tranferDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $stockTransferMaster->whereYear('tranferDate', '=', $input['year']);
+            }
+        }
+
+        $stockTransferMaster = $stockTransferMaster->select(
+            ['erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.documentSystemID',
+                'erp_stocktransfer.refNo',
+                'erp_stocktransfer.createdDateTime',
+                'erp_stocktransfer.createdUserSystemID',
+                'erp_stocktransfer.comment',
+                'erp_stocktransfer.tranferDate',
+                'erp_stocktransfer.serviceLineSystemID',
+                'erp_stocktransfer.confirmedDate',
+                'erp_stocktransfer.approvedDate',
+                'erp_stocktransfer.timesReferred',
+                'erp_stocktransfer.confirmedYN',
+                'erp_stocktransfer.approved',
+                'erp_stocktransfer.approvedDate',
+                'erp_stocktransfer.fullyReceived',
+                'erp_stocktransfer.refferedBackYN'
+            ]);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockTransferMaster = $stockTransferMaster->where(function ($query) use ($search) {
+                $query->where('stockTransferCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%")
+                    ->orWhere('refNo', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $stockTransferMaster;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Stock Transfer Code'] = $val->stockTransferCode;
+                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x]['Reference No'] = $val->refNo;
+                $data[$x]['Transfer Date'] = \Helper::dateFormat($val->tranferDate);
+                $data[$x]['Comment'] = $val->comment;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

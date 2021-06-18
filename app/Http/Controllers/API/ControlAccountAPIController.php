@@ -45,9 +45,14 @@ class ControlAccountAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
+        $input = $request->all();
         $this->controlAccountRepository->pushCriteria(new RequestCriteria($request));
         $this->controlAccountRepository->pushCriteria(new LimitOffsetCriteria($request));
         $controlAccounts = $this->controlAccountRepository->all();
+
+        if (isset($input['controlAccountCode']) && $input['controlAccountCode'] != "") {
+            $controlAccounts = $this->controlAccountRepository->where('controlAccountCode', $input['controlAccountCode'])->get();
+        }
 
         return $this->sendResponse($controlAccounts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.control_accounts')]));
     }

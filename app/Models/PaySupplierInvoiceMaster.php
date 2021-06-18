@@ -813,6 +813,11 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
 
+    public function expense_claim_type()
+    {
+        return $this->belongsTo('App\Models\ExpenseClaimType', 'expenseClaimOrPettyCash', 'expenseClaimTypeID');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');

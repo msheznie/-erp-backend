@@ -222,4 +222,9 @@ class StockReceiveDetails extends Model
     {
         return $this->belongsTo('App\Models\StockReceive', 'stockReceiveAutoID', 'stockReceiveAutoID');
     }
+
+    public function master()
+    {
+        return $this->stock_receive();
+    }
 }

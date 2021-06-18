@@ -109,5 +109,9 @@ class CurrencyConversionHistory extends Model
         'conversionhistoryID' => 'required'
     ];
 
+     public function sub_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'subCurrencyID','currencyID');
+    }
     
 }

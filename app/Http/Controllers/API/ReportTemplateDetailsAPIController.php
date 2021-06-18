@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\DocumentCodeGenerate;
 
 /**
  * Class ReportTemplateDetailsController
@@ -265,6 +266,51 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
+        if (isset($input['itemType']) && $input['itemType'] == 2) {
+            if ($input['serialLength'] == 0) {
+                return $this->sendError("Serial Number length cannot be zero.", 500);
+            }
+
+            $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
+                                                          ->where('detID', '!=', $input['detID'])
+                                                          ->first();
+            if ($checkPrefixDuplicate) {
+                return $this->sendError("Prefix already exists.", 500);
+            }
+        }
+
+
+
+        $firstLevels = ReportTemplateDetails::where('masterID', $id)->get();
+
+        foreach ($firstLevels as $key1 => $value1) {
+            $secondLevels = ReportTemplateDetails::where('masterID', $value1->detID)->get();
+            
+            foreach ($secondLevels as $key2 => $value2) {
+                $secondLevels = ReportTemplateDetails::where('masterID', $value2->detID)->get();
+
+                foreach ($secondLevels as $key3 => $value3) {
+                    $thirdLevels = ReportTemplateDetails::where('masterID', $value3->detID)->get();
+
+                    foreach ($thirdLevels as $key4 => $value4) {
+                        $fouthLevels = ReportTemplateDetails::where('masterID', $value3->detID)->get();
+
+                        foreach ($fouthLevels as $key5 => $value5) {
+                            ReportTemplateDetails::where('detID', $value5->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                        }
+                        
+                        ReportTemplateDetails::where('detID', $value4->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                    }
+
+                    ReportTemplateDetails::where('detID', $value3->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+                }
+                ReportTemplateDetails::where('detID', $value2->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+            }
+
+            ReportTemplateDetails::where('detID', $value1->detID)->update(['controlAccountType' => $input['controlAccountType']]);
+        }
+
+
         /** @var ReportTemplateDetails $reportTemplateDetails */
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
 
@@ -489,6 +535,19 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            $prefixValidate = true;
+            foreach ($input['subCategory'] as $key => $value) {
+                if (isset($value['itemType']) && $value['itemType'] == 2) {
+                    if ((!isset($value['prefix']) || (isset($value['prefix']) && $value['prefix'] == "")) || !isset($value['serialLength']) || (isset($value['serialLength']) && $value['serialLength'] == "")) {
+                        $prefixValidate = false;
+                    }
+                }
+            }
+
+            if (!$prefixValidate) {
+                return $this->sendError("Prefix and serial number length is required to sub category", 500);
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
@@ -503,15 +562,36 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             unset($input['subCategory']);
             if(count($subCategory) > 0){
                 foreach ($subCategory as $val) {
+                    $masterDetails = ReportTemplateDetails::find($input['masterID']);
+
+                    if ($masterDetails) {
+                        $input['controlAccountType'] = $masterDetails->controlAccountType;
+                    }
+
                     $input['description'] = $val['description'];
                     $input['itemType'] = $val['itemType'];
                     $input['sortOrder'] = $val['sortOrder'];
                     if($input['itemType'] == 3){
                         $input['categoryType'] = null;
                         $input['isFinalLevel'] = 1;
+                        $input['prefix'] = null;
+                        $input['serialLength'] = 0;
                     } else {
                         $input['isFinalLevel'] = 0;
+                        $input['prefix'] = $val['prefix'];
+                        $input['serialLength'] = $val['serialLength'];
+
+                        if ($val['serialLength'] == 0) {
+                            return $this->sendError("Serial Number length cannot be zero.", 500);
+                        }
+
+                        $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $val['prefix'])
+                                                                      ->first();
+                        if ($checkPrefixDuplicate) {
+                            return $this->sendError("Prefix ".$val['prefix']. " cannot be duplicated.", 500);
+                        }
                     }
+
                     $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
                 }
             }
@@ -782,6 +862,30 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
     }
 
+    public function getDefaultTemplateCategories(Request $request)
+    {
+        $input = $request->all();
+
+        if (isset($input['controlAccountsSystemID'])) {
+            $reportTemplate = ReportTemplateDetails::where('itemType', 2)
+                                                   ->where('controlAccountType', $input['controlAccountsSystemID'])
+                                                   ->where(function($query) {
+                                                        $query->where('isFinalLevel', 1)
+                                                             ->orWhereDoesntHave('subcategory');
+                                                   })
+                                                   ->whereHas('master', function($query) use ($input){
+                                                        $query->where('reportID', $input['catogaryBLorPLID'])
+                                                              ->where('isDefault', 1);
+                                                   })
+                                                   ->whereNotNull('masterID')
+                                                   ->get();
+            
+        } else {
+            $reportTemplate = [];
+        }
+        return $this->sendResponse($reportTemplate, 'Report Template retrieved successfully');
+    }
+
     public function linkPandLGLCodeValidation(Request $request)
     {
         $input = $request->all();
@@ -844,5 +948,18 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
       
         return $this->sendResponse([], 'gl synced successfully');
+    }
+
+    public function getChartOfAccountCode(Request $request)
+    {
+        $input = $request->all();
+
+        $reportCategoryDetail = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory']);
+
+        if (!$reportCategoryDetail['status']) {
+            return $this->sendError($reportCategoryDetail['message'], 500);
+        }
+
+        return $this->sendResponse($reportCategoryDetail['data'], 'gl code retrieved successfully');
     }
 }

@@ -43,12 +43,15 @@ use App\Models\Company;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerContactDetails;
+use App\Models\CustomerMasterCategory;
 use App\Models\CustomerMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\GeneralLedger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -1624,83 +1627,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'CS':
-                if ($request->reportTypeID == 'CSA') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    $customerName = CustomerMaster::find($request->singleCustomer);
-
-                    $companyLogo = $checkIsGroup->logo_url;
-
-                    $output = $this->getCustomerStatementAccountQRY($request);
-
-                    $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
-                    $balanceTotal = array_sum($balanceTotal);
-
-                    $receiptAmount = collect($output)->pluck('receiptAmount')->toArray();
-                    $receiptAmount = array_sum($receiptAmount);
-
-                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
-                    $invoiceAmount = array_sum($invoiceAmount);
-
-                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                    $decimalPlace = array_unique($decimalPlace);
-
-                    $currencyCode = "";
-                    $currency = \Helper::companyCurrency($request->companySystemID);
-
-                    if ($request->currencyID == 2) {
-                        $currencyCode = $currency->localcurrency->CurrencyCode;
-                    }
-                    if ($request->currencyID == 3) {
-                        $currencyCode = $currency->reportingcurrency->CurrencyCode;
-                    }
-
-                    $outputArr = array();
-
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->documentCurrency][] = $val;
-                        }
-                    }
-
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
-
-                    $html = view('print.customer_statement_of_account_pdf', $dataArr);
-
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
-
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
-                } elseif ($request->reportTypeID == 'CBS') {
-
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $checkIsGroup = Company::find($request->companySystemID);
-                    $output = $this->getCustomerBalanceStatementQRY($request);
-
-                    $companyLogo = $checkIsGroup->logo_url;
-
-                    $outputArr = array();
-                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
-                    $grandTotal = array_sum($grandTotal);
-
-                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
-                    $decimalPlace = array_unique($decimalPlace);
-
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
-                        }
-                    }
-
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
-
-                    $html = view('print.customer_balance_statement', $dataArr);
-
-                    $pdf = \App::make('dompdf.wrapper');
-                    $pdf->loadHTML($html);
-
-                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
-                }
+                return $this->customerStatementExportPdf($request);
                 break;
             case 'CR':
                 if ($request->reportTypeID == 'RMS') {
@@ -1904,9 +1831,164 @@ class AccountsReceivableReportAPIController extends AppBaseController
         }
     }
 
+    public function customerStatementExportPdf($request, $sentTo = false)
+    {
+         if ($request->reportTypeID == 'CSA') {
+            $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $checkIsGroup = Company::find($request->companySystemID);
+            $customerName = CustomerMaster::find($request->singleCustomer);
+
+            $companyLogo = $checkIsGroup->logo_url;
+
+            $output = $this->getCustomerStatementAccountQRY($request);
+
+            $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
+            $balanceTotal = array_sum($balanceTotal);
+
+            $receiptAmount = collect($output)->pluck('receiptAmount')->toArray();
+            $receiptAmount = array_sum($receiptAmount);
+
+            $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+            $invoiceAmount = array_sum($invoiceAmount);
+
+            $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+            $decimalPlace = array_unique($decimalPlace);
+
+            $currencyCode = "";
+            $currency = \Helper::companyCurrency($request->companySystemID);
+
+            if ($request->currencyID == 2) {
+                $currencyCode = $currency->localcurrency->CurrencyCode;
+            }
+            if ($request->currencyID == 3) {
+                $currencyCode = $currency->reportingcurrency->CurrencyCode;
+            }
+
+            $outputArr = array();
+
+            if ($output) {
+                foreach ($output as $val) {
+                    $outputArr[$val->documentCurrency][] = $val;
+                }
+            }
+
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+
+            $html = view('print.customer_statement_of_account_pdf', $dataArr);
+
+            if ($sentTo) {
+                return $html;
+            }
+
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+        } elseif ($request->reportTypeID == 'CBS') {
+
+            $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+            $checkIsGroup = Company::find($request->companySystemID);
+            $output = $this->getCustomerBalanceStatementQRY($request);
+
+            $companyLogo = $checkIsGroup->logo_url;
+
+            $outputArr = array();
+            $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
+            $grandTotal = array_sum($grandTotal);
+
+            $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+            $decimalPlace = array_unique($decimalPlace);
+
+            if ($output) {
+                foreach ($output as $val) {
+                    $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                }
+            }
+
+            $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+
+            $html = view('print.customer_balance_statement', $dataArr);
+
+            if ($sentTo) {
+                return $html;
+            }
+
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+
+            return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+        }
+    }
+
+    public function sentCustomerStatement(Request $request)
+    {
+        $input = $request->all();
+
+        if (isset($input['customers']) && count($input['customers']) != 1 && $request->reportTypeID == 'CBS') {
+            return $this->sendError("customer Statement cannot be sent to multiple customers",500);
+        }
+
+        $html = $this->customerStatementExportPdf($request, true);
+
+        $pdf = \App::make('dompdf.wrapper');
+        $path = public_path().'/uploads/emailAttachment';
+
+        if (!file_exists($path)) {
+            File::makeDirectory($path, 0777, true, true);
+        }
+        $nowTime = time();
+
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_statement_' . $nowTime . '.pdf');
+
+        $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
+
+        $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+                                               ->get();
+
+        $customerMaster = CustomerMaster::find($customerCodeSystem);
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        $emailSentTo = 0;
+
+        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+        
+        if ($fetchCusEmail) {
+            foreach ($fetchCusEmail as $row) {
+                if (!empty($row->contactPersonEmail)) {
+                    $emailSentTo = 1;
+                    $dataEmail['empEmail'] = $row->contactPersonEmail;
+
+                    $dataEmail['companySystemID'] = $input['companySystemID'];
+
+                    $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer statement report has been sent from ' . $company->CompanyName . $footer;
+
+                    $pdfName = realpath("uploads/emailAttachment/customer_statement_" . $nowTime . ".pdf");
+
+                    $dataEmail['isEmailSend'] = 0;
+                    $dataEmail['attachmentFileName'] = $pdfName;
+                    $dataEmail['alertMessage'] = "Customer statement report from " . $company->CompanyName;
+                    $dataEmail['emailAlertMessage'] = $temp;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if (!$sendEmail["success"]) {
+                        return $this->sendError($sendEmail["message"], 500);
+                    }
+                }
+            }
+        }
+
+        if ($emailSentTo == 0) {
+            return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+        } else {
+            return $this->sendResponse($emailSentTo, 'Customer statement report sent');
+        }
+    }
+
     public function getAcountReceivableFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
+        $customerCategoryID = $request['customerCategoryID'];
         $companiesByGroup = "";
         if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
@@ -1924,13 +2006,30 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $customerMaster = '';
 
         if ($request['reportID'] == 'CR') {
-            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->WhereNotNull('customerCodeSystem')->get();
+            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
+                                              ->groupBy('customerCodeSystem')
+                                              ->orderBy('CustomerName', 'ASC')
+                                              ->WhereNotNull('customerCodeSystem');
+
+            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                        $query->where('customerCategoryID', $customerCategoryID);
+                                                });
+            }
+            $customerMaster = $customerMaster->get();
         } else {
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
-            ->groupBy('customerCodeSystem')
-            ->orderBy('CustomerName', 'ASC')
-            ->WhereNotNull('customerCodeSystem')
-            ->get();
+                                            ->groupBy('customerCodeSystem')
+                                            ->orderBy('CustomerName', 'ASC')
+                                            ->WhereNotNull('customerCodeSystem');
+
+            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                        $query->where('customerCategoryID', $customerCategoryID);
+                                                });
+            }
+
+            $customerMaster = $customerMaster->get();
         }
         $years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
             ->whereNotNull('documentDate')
@@ -1938,9 +2037,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get(['year']);
 
+        $customerCategories = CustomerMasterCategory::all();
+
         $output = array(
             'controlAccount' => $controlAccount,
             'customers' => $customerMaster,
+            'customerCategories' => $customerCategories,
             'departments' => $departments,
             'years' => $years,
         );
@@ -5952,6 +6054,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
 
     public function getInvoiceTrackerReportFilterData(Request $request){
         $companyId = $request['selectedCompanyId'];
+        $customerCategoryID = $request['customerCategoryID'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -5961,11 +6064,18 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             $childCompanies = [$companyId];
         }
 
-        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+        $customers = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
             ->whereIN('companySystemID', $childCompanies)
             ->where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->get();
+            ->where('isAssigned', -1);
+
+        if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
+            $customers = $customers->whereHas('customer_master', function($query) use ($customerCategoryID) {
+                                                    $query->where('customerCategoryID', $customerCategoryID);
+                                            });
+        }
+
+        $output['customer'] = $customers->get();
 
         $output['years'] = FreeBillingMasterPerforma::select(DB::raw("YEAR(rentalStartDate) as year"))
             ->whereNotNull('rentalStartDate')
@@ -5973,6 +6083,8 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
+
+        $output['customerCategories'] = CustomerMasterCategory::all();
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }

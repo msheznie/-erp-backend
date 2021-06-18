@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\MatchDocumentMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class MatchDocumentMasterRepository
@@ -85,5 +86,167 @@ class MatchDocumentMasterRepository extends BaseRepository
     public function model()
     {
         return MatchDocumentMaster::class;
+    }
+
+    public function matchDocumentListQuery($request, $input, $search = '') {
+
+        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster->whereIn('documentSystemID', [4, 15]);
+        $invMaster->with(['created_by' => function ($query) {
+        }, 'supplier' => function ($query) {
+        }, 'transactioncurrency' => function ($query) {
+        },'cancelled_by']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $invMaster->where('matchingConfirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('matchingDocdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invMaster->whereYear('matchingDocdate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $invMaster->where('BPVsupplierID', $input['supplierID']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search) {
+                $query->where('matchingDocCode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                            ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $invMaster;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Matching Code'] = $val->matchingDocCode;
+                $data[$x]['Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
+                $data[$x]['Document Code'] = $val->BPVcode;
+                $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName : '';
+                $data[$x]['Comments'] = $val->BPVNarration;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Cancelled By'] = $val->cancelled_by? $val->cancelled_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Cancelled At'] = \Helper::dateFormat($val->cancelledDate);
+                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
+    }
+
+    public function receiptVoucherMatchingListQuery($request, $input, $search = '') {
+
+        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster->whereIn('documentSystemID', [19, 21]);
+        $invMaster->with(['created_by' => function ($query) {
+        }, 'customer' => function ($query) {
+        }, 'transactioncurrency' => function ($query) {
+        }, 'cancelled_by']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $invMaster->where('matchingConfirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('matchingDocdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invMaster->whereYear('matchingDocdate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $invMaster->where('BPVsupplierID', $input['customerID']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
+                $query->where('matchingDocCode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('payAmountSuppTrans', 'LIKE', "%{$search}%")
+                    ->orWhere('matchingAmount', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhereHas('customer', function ($query) use ($search) {
+                        $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                            ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $invMaster;
+    }
+
+    public function setReceiptVoucherMatchingExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Matching Code'] = $val->matchingDocCode;
+                $data[$x]['Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
+                $data[$x]['Document Code'] = $val->BPVcode;
+                $data[$x]['Customer Code'] = $val->customer? $val->customer->CutomerCode : '';
+                $data[$x]['Customer Name'] = $val->customer? $val->customer->CustomerName : '';
+                $data[$x]['Comments'] = $val->BPVNarration;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Cancelled By'] = $val->cancelled_by? $val->cancelled_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Cancelled At'] = \Helper::dateFormat($val->cancelledDate);
+                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Currency'] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
+                $data[$x]['Receipt Amount'] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
+                $data[$x]['Matched Amount'] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
+                $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, NULL, $val->matchingConfirmedYN, NULL, NULL);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

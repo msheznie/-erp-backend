@@ -539,56 +539,9 @@ class PaymentBankTransferAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $bankTransfer = PaymentBankTransfer::whereIn('companySystemID', $subCompanies)
-                                           ->with(['created_by', 'bank_account']);
-
-        if (isset($input['month']) && $input['month'] != null) {
-            $month = Carbon::parse($input['month'])->format('m');
-
-            $bankTransfer = $bankTransfer->whereMonth('documentDate', $month);
-        }
-
-        if (isset($input['forReview']) && $input['forReview']) {
-            $bankTransfer = $bankTransfer->where('confirmedYN', 1);
-        }
-
-        if (isset($input['year']) && $input['year'] != null) {
-            $year = Carbon::parse($input['year'])->format('Y');
-
-            $bankTransfer = $bankTransfer->whereYear('documentDate', $year);
-        }
-
-        if (isset($input['bankAccountAutoID']) && $input['bankAccountAutoID'] > 0) {
-            $bankTransfer = $bankTransfer->where('bankAccountAutoID', $input['bankAccountAutoID']);
-        }
-
-        if (isset($input['bankmasterAutoID']) && $input['bankmasterAutoID'] > 0) {
-            $bankTransfer = $bankTransfer->whereHas('bank_account', function($query) use ($input) {
-                                                            $query->where('bankmasterAutoID', $input['bankmasterAutoID']);
-                                                    });
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
-                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%")
-                    ->orWhereHas('ledger_data', function ($query) use ($search) {
-                        $query->where('documentCode', 'LIKE', "%{$search}%");
-                    });
-            });
-        }
+        $bankTransfer = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search);
 
         return \DataTables::eloquent($bankTransfer)
             ->addColumn('Actions', 'Actions', "Actions")

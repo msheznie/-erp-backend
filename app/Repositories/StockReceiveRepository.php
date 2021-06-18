@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\StockReceive;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class StockReceiveRepository
@@ -80,5 +81,118 @@ class StockReceiveRepository extends BaseRepository
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 10);
         },'audit_trial.modified_by'])->findWithoutFail($id);
+    }
+
+    public function stockReceiveListQuery($request, $input, $search = '') {
+
+        $stockReceive = StockReceive::where('companySystemID', $input['companyId'])
+        ->where('documentSystemID', $input['documentId'])
+        ->with(['created_by', 'segment_by']);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $stockReceive->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('locationFrom', $input)) {
+            if ($input['locationFrom'] && !is_null($input['locationFrom'])) {
+                $stockReceive->where('locationFrom', $input['locationFrom']);
+            }
+        }
+
+        if (array_key_exists('locationTo', $input)) {
+            if ($input['locationTo'] && !is_null($input['locationTo'])) {
+                $stockReceive->where('locationTo', $input['locationTo']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $stockReceive->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $stockReceive->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('interCompanyTransferYN', $input)) {
+            if (($input['interCompanyTransferYN'] == 0 || $input['interCompanyTransferYN'] == -1) && !is_null($input['interCompanyTransferYN'])) {
+                $stockReceive->where('interCompanyTransferYN', $input['interCompanyTransferYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $stockReceive->whereMonth('receivedDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $stockReceive->whereYear('receivedDate', '=', $input['year']);
+            }
+        }
+
+        $stockReceive = $stockReceive->select(
+            ['stockReceiveAutoID',
+                'stockReceiveCode',
+                'documentSystemID',
+                'refNo',
+                'createdDateTime',
+                'createdUserSystemID',
+                'comment',
+                'receivedDate',
+                'serviceLineSystemID',
+                'confirmedDate',
+                'approvedDate',
+                'timesReferred',
+                'confirmedYN',
+                'approved',
+                'approvedDate',
+                'refferedBackYN'
+            ]);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockReceive = $stockReceive->where(function ($query) use ($search) {
+                $query->where('stockReceiveCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%")
+                    ->orWhere('refNo', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $stockReceive;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Stock Receive Code'] = $val->stockReceiveCode;
+                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x]['Reference No'] = $val->refNo;
+                $data[$x]['Received Date'] = \Helper::dateFormat($val->receivedDate);
+                $data[$x]['Comment'] = $val->comment;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\MonthlyAdditionsMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class MonthlyAdditionsMasterRepository
@@ -69,5 +70,66 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
             }])
                 ->where('documentSystemID', 28);
         },'audit_trial.modified_by'])->findWithoutFail($id);
+    }
+
+    public function monthlyAdditionsListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $monthlyAdditions = MonthlyAdditionsMaster::whereIn('companySystemID', $subCompanies)
+            ->with('currency_by')
+            ->where('expenseClaimAdditionYN', 1)
+            ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $monthlyAdditions = $monthlyAdditions->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $monthlyAdditions = $monthlyAdditions->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $monthlyAdditions = $monthlyAdditions->where(function ($query) use ($search) {
+                $query->where('monthlyAdditionsCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $monthlyAdditions;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Date'] = \Helper::dateFormat($val->dateMA);
+                $data[$x]['Document Code'] = $val->monthlyAdditionsCode;
+                $data[$x]['Description'] = $val->description;
+                $data[$x]['Currency'] = $val->currency_by? $val->currency_by->CurrencyCode : '';
+                $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->timesReferred);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

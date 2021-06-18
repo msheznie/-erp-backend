@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Models\BookInvSuppMaster;
 use InfyOm\Generator\Common\BaseRepository;
+use Illuminate\Support\Facades\DB;
+use App\helper\StatusService;
 
 /**
  * Class BookInvSuppMasterRepository
@@ -82,5 +84,129 @@ class BookInvSuppMasterRepository extends BaseRepository
     public function model()
     {
         return BookInvSuppMaster::class;
+    }
+
+    public function bookInvSuppListQuery($request, $input, $search = '') {
+
+        \DB::enableQueryLog();
+        $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster->where('documentSystemID', $input['documentId']);
+        $invMaster->with('created_by', 'transactioncurrency', 'supplier');
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $invMaster->where('cancelYN', $input['cancelYN']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $invMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('documentType', $input)) {
+            if (($input['documentType'] == 0 || $input['documentType'] == 1) && !is_null($input['documentType'])) {
+                $invMaster->where('documentType', $input['documentType']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $invMaster->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('bookingDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invMaster->whereYear('bookingDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $invMaster->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        $invMaster = $invMaster->select(
+            ['erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
+                'erp_bookinvsuppmaster.bookingInvCode',
+                'erp_bookinvsuppmaster.documentSystemID',
+                'erp_bookinvsuppmaster.supplierInvoiceNo',
+                'erp_bookinvsuppmaster.secondaryRefNo',
+                'erp_bookinvsuppmaster.createdDateTime',
+                'erp_bookinvsuppmaster.createdDateAndTime',
+                'erp_bookinvsuppmaster.createdUserSystemID',
+                'erp_bookinvsuppmaster.comments',
+                'erp_bookinvsuppmaster.bookingDate',
+                'erp_bookinvsuppmaster.supplierID',
+                'erp_bookinvsuppmaster.confirmedDate',
+                'erp_bookinvsuppmaster.approvedDate',
+                'erp_bookinvsuppmaster.supplierTransactionCurrencyID',
+                'erp_bookinvsuppmaster.bookingAmountTrans',
+                'erp_bookinvsuppmaster.cancelYN',
+                'erp_bookinvsuppmaster.timesReferred',
+                'erp_bookinvsuppmaster.refferedBackYN',
+                'erp_bookinvsuppmaster.confirmedYN',
+                'erp_bookinvsuppmaster.documentType',
+                'erp_bookinvsuppmaster.approved',
+                'erp_bookinvsuppmaster.supplierInvoiceNo',
+                'erp_bookinvsuppmaster.supplierInvoiceDate'
+            ]);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierInvoiceNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('bookingAmountTrans', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('supplierName', 'like', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        return $invMaster;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Invoice Code'] = $val->bookingInvCode;
+                $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
+                $data[$x]['Supplier'] = $val->supplier? $val->supplier->primarySupplierCode : '';
+                $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
+                $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
+                $data[$x]['Comments'] = $val->comments;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
+                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
+                $data[$x]['Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\InventoryReclassification;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class InventoryReclassificationRepository
@@ -74,5 +75,55 @@ class InventoryReclassificationRepository extends BaseRepository
                 ->where('documentSystemID',61);
         },'audit_trial.modified_by'])
             ->findWithoutFail($id);
+    }
+
+    public function inventoryReclassificationListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $invReclassification = InventoryReclassification::with(['segment_by', 'created_by'])->whereIN('companySystemID', $subCompanies);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $invReclassification = $invReclassification->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $invReclassification;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Reclassification Code'] = $val->documentCode;
+                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x]['Reclassification Date'] = \Helper::dateFormat($val->inventoryReclassificationDate);
+                $data[$x]['Comment'] = $val->narration;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

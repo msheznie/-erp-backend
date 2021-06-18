@@ -122,5 +122,7 @@ class CustomerMasterCategory extends Model
         
     ];
 
-    
+     public function category_assigned(){
+        return $this->hasMany('App\Models\CustomerMasterCategoryAssigned','customerMasterCategoryID','categoryID');
+    }
 }

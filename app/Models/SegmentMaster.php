@@ -14,6 +14,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class SegmentMaster
@@ -40,7 +41,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class SegmentMaster extends Model
 {
     //use SoftDeletes;
-
     public $table = 'serviceline';
 
     const CREATED_AT = 'createdDateTime';
@@ -66,11 +66,14 @@ class SegmentMaster extends Model
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
+        'isDeleted',
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
         'consoleCode',
+        'isFinalLevel',
+        'masterID',
         'consoleDescription'
     ];
 
@@ -91,6 +94,9 @@ class SegmentMaster extends Model
         'isMaster' => 'integer',
         'isPublic' => 'integer',
         'isServiceLine' => 'integer',
+        'masterID' => 'integer',
+        'isFinalLevel' => 'boolean',
+        'isDeleted' => 'boolean',
         'isDepartment' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
@@ -147,6 +153,16 @@ class SegmentMaster extends Model
         return $query->whereIN('companySystemID',  $type);
     }
 
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('final_level', function (Builder $builder) {
+            $builder->where('isFinalLevel', 1);
+        });
+    }
+
     /**
      * joining the company with serviceline table.
      */
@@ -161,5 +177,9 @@ class SegmentMaster extends Model
         return $this->hasMany('App\Models\HrmsDepartmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
-    
+
+    public function sub_levels()
+    {
+        return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_levels')->where('isDeleted', 0)->withoutGlobalScope('final_level');
+    }
 }

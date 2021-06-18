@@ -128,4 +128,13 @@ class ChartOfAccountsAssigned extends Model
     {
         return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
     }
+
+     public static function checkCOAAssignedStatus($chartOfAccountSystemID, $companySystemID)
+    {
+         return ChartOfAccountsAssigned::where('chartOfAccountSystemID', $chartOfAccountSystemID)
+                                              ->where('companySystemID', $companySystemID)       
+                                              ->where('isAssigned', -1)       
+                                              ->where('isActive', 1)
+                                              ->first();       
+    }
 }

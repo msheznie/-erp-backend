@@ -20,6 +20,7 @@ use App\Http\Requests\API\CreateStockAdjustmentAPIRequest;
 use App\Http\Requests\API\UpdateStockAdjustmentAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\FinanceItemCategorySub;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
@@ -562,83 +563,9 @@ class StockAdjustmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $stockAdjustments = StockAdjustment::whereIn('companySystemID', $subCompanies)
-            ->with(['created_by', 'warehouse_by', 'segment_by']);
-
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $stockAdjustments->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $stockAdjustments->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockAdjustments->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('location', $input)) {
-            if ($input['location'] && !is_null($input['location'])) {
-                $stockAdjustments->where('location', $input['location']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $stockAdjustments->whereMonth('stockAdjustmentDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $stockAdjustments->whereYear('stockAdjustmentDate', '=', $input['year']);
-            }
-        }
-
-
-        $stockAdjustments = $stockAdjustments->select(
-            ['stockAdjustmentAutoID',
-                'stockAdjustmentCode',
-                'comment',
-                'stockAdjustmentDate',
-                'confirmedYN',
-                'approved',
-                'serviceLineSystemID',
-                'documentSystemID',
-                'confirmedByEmpSystemID',
-                'createdUserSystemID',
-                'confirmedDate',
-                'createdDateTime',
-                'refNo',
-                'location',
-                'refferedBackYN'
-            ]);
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $stockAdjustments = $stockAdjustments->where(function ($query) use ($search) {
-                $query->where('stockAdjustmentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
-            });
-        }
+        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search);
 
         return \DataTables::eloquent($stockAdjustments)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -706,6 +633,10 @@ class StockAdjustmentAPIController extends AppBaseController
             }
         }
 
+        $financeSubCategories = FinanceItemCategorySub::where('itemCategoryID',1)
+                                                      ->get();
+
+
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -717,6 +648,7 @@ class StockAdjustmentAPIController extends AppBaseController
 
         $output = array(
             'segments' => $segments,
+            'financeSubCategories' => $financeSubCategories,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,

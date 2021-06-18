@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\MaterielRequest;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
 
 /**
  * Class MaterielRequestRepository
@@ -76,5 +77,92 @@ class MaterielRequestRepository extends BaseRepository
                 $q->with(['details.designation']);
             }])->where('documentSystemID',9);
         },'audit_trial.modified_by'])->findWithoutFail($id);
+    }
+
+    public function materialrequestsListQuery($request, $input, $search = '') {
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
+                                    ->with(['created_by', 'priority_by', 'warehouse_by','segment_by']);
+
+
+
+        if (array_key_exists('ConfirmedYN', $input)) {
+
+            if(($input['ConfirmedYN'] == 0 || $input['ConfirmedYN'] == 1)  && !is_null($input['ConfirmedYN'])) {
+                $materielRequests->where('ConfirmedYN', $input['ConfirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if(($input['approved'] == 0 || $input['approved'] == -1 ) && !is_null($input['approved'])) {
+                $materielRequests->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $materielRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+
+        $materielRequests = $materielRequests->select(
+            ['erp_request.RequestID',
+                'erp_request.RequestCode',
+                'erp_request.comments',
+                'erp_request.location',
+                'erp_request.RequestedDate',
+                'erp_request.priority',
+                'erp_request.ConfirmedYN',
+                'erp_request.approved',
+                'erp_request.serviceLineSystemID',
+                'erp_request.documentSystemID',
+                'erp_request.refferedBackYN'
+            ]);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('RequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        return $materielRequests;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Request Code'] = $val->RequestCode;
+                $data[$x]['Comments'] = $val->comments;
+                $data[$x]['Segment'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x]['Location'] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
+                $data[$x]['Requested Date'] = \Helper::dateFormat($val->RequestedDate);
+                $data[$x]['Priority'] = $val->priority_by? $val->priority_by->priorityDescription : '';
+                $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

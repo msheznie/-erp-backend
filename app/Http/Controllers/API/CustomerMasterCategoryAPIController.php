@@ -17,6 +17,8 @@ use App\Http\Requests\API\CreateCustomerMasterCategoryAPIRequest;
 use App\Http\Requests\API\UpdateCustomerMasterCategoryAPIRequest;
 use App\Models\CustomerMasterCategory;
 use App\Models\Company;
+use App\Models\CustomerMasterCategoryAssigned;
+use App\Models\CustomerMaster;
 use App\Repositories\CustomerMasterCategoryRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -315,8 +317,17 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $customerMasterCategory = $this->customerMasterCategoryRepository->findWithoutFail($id);
 
         if (empty($customerMasterCategory)) {
+            return $this->sendError('Customer Master Category not found', 500);
+        }
+
+        $checkCustomerMaster = CustomerMaster::where('customerCategoryID', $id)->first();
+
+        if ($checkCustomerMaster) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_master_categories')]));
         }
+
+        CustomerMasterCategoryAssigned::where('customerMasterCategoryID', $id)
+                                      ->delete();
 
         $customerMasterCategory->delete();
 
@@ -364,5 +375,30 @@ class CustomerMasterCategoryAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    public function getNotAssignedCompaniesByCustomerCategory(Request $request)
+    {
+
+        $categoryID = $request->get('categoryID');
+
+        $selectedCompanyId = $request->get('selectedCompanyId');
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companies = Company::whereIn('companySystemID', $subCompanies)
+            ->whereDoesntHave('customerCategoryAssigned',function ($query) use ($categoryID) {
+                $query->where('customerMasterCategoryID', '=', $categoryID);
+            })->where('isGroup',0)
+            ->get(['companySystemID','CompanyID','CompanyName']);
+
+        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
     }
 }

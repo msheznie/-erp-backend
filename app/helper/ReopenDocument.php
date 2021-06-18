@@ -72,12 +72,17 @@ class ReopenDocument
 
             if ($documentApproval) {
                 if ($documentApproval->approvedYN == 0) {
-                    $companyDocument = CompanyDocumentAttachment::companyDocumentAttachemnt($sourceModel[$docInforArr['companyColumnName']], $input['documentSystemID']);
-                    if (empty($companyDocument)) {
-                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    $isServiceLineApproval = null;
+                    if (isset($docInforArr['companyColumnName']) && !is_null($docInforArr['companyColumnName'])) {
+                        $companyDocument = CompanyDocumentAttachment::companyDocumentAttachemnt($sourceModel[$docInforArr['companyColumnName']], $input['documentSystemID']);
+                        if (empty($companyDocument)) {
+                            return ['success' => false, 'message' => 'Policy not found for this document'];
+                        }
+
+                        $isServiceLineApproval = $companyDocument['isServiceLineApproval'];
                     }
 
-                    $approvalList = self::userApprovalAccess($documentApproval->approvalGroupID, $documentApproval->companySystemID, null, $documentApproval->documentSystemID, $documentApproval->serviceLineSystemID, $companyDocument['isServiceLineApproval'], "get");
+                    $approvalList = self::userApprovalAccess($documentApproval->approvalGroupID, $documentApproval->companySystemID, null, $documentApproval->documentSystemID, $documentApproval->serviceLineSystemID, $isServiceLineApproval, "get");
 
                     foreach ($approvalList as $da) {
                         if ($da->employee) {
@@ -105,6 +110,7 @@ class ReopenDocument
         } catch (\Exception $e) {
             DB::rollback();
             return ['success' => false, 'message' => 'Error Occurred'];
+            // return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -176,6 +182,19 @@ class ReopenDocument
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["companyColumnName"] = 'companySystemID';
                 $docInforArr["confirmedByName"] = 'supplierConfirmedEmpName';
+                break;
+            case 96:
+                $docInforArr["documentCodeColumnName"] = 'conversionCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                $docInforArr["confirmedByID"] = 'ConfirmedBy';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'currency_conversion_master';
+                $docInforArr["modelName"] = 'CurrencyConversionMaster';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["companyColumnName"] = null;
+                $docInforArr["confirmedByName"] = 'confirmedEmpName';
                 break;
             default:
                 return [];

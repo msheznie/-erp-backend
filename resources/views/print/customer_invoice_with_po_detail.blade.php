@@ -502,13 +502,13 @@
                                 <td><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
                             </tr>
                         @endif
-                        @if($request->line_seNo)
+                      <!--   @if($request->line_seNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">SE No</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td><span>{{$request->wanNO}}</span></td>
                             </tr>
-                        @endif
+                        @endif -->
                         @if($request->line_dueDate)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Due Date</span></td>

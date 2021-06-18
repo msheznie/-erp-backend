@@ -40,6 +40,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\GRVDetails;
@@ -233,7 +234,12 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0);
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -241,6 +247,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($allowFinanceCategory) {
             $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
+        }
+
+        if ($allowItemToType) {
+            $conditions['allowItemToType'] = $allowItemToType->isYesNO;
         }
 
 
@@ -867,95 +877,9 @@ class PurchaseRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
-
-
-        if (array_key_exists('requestReview', $input)) {
-            if ($input['requestReview'] == 1) {
-                $purchaseRequests->where('cancelledYN', 0);
-                //->where('approved', -1);
-            }
-        } else {
-            $purchaseRequests = $purchaseRequests->where('documentSystemID', $input['documentId']);
-        }
-
-        $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
-        }, 'priority' => function ($query) {
-
-        }, 'location' => function ($query) {
-
-        }, 'segment' => function ($query) {
-
-        }, 'financeCategory' => function ($query) {
-
-        }]);
-
-        if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
-            }
-        }
-
-        if (array_key_exists('cancelledYN', $input)) {
-            if (($input['cancelledYN'] == 0 || $input['cancelledYN'] == -1) && !is_null($input['cancelledYN'])) {
-                $purchaseRequests->where('cancelledYN', $input['cancelledYN']);
-            }
-        }
-
-        if (array_key_exists('PRConfirmedYN', $input)) {
-            if (($input['PRConfirmedYN'] == 0 || $input['PRConfirmedYN'] == 1) && !is_null($input['PRConfirmedYN'])) {
-                $purchaseRequests->where('PRConfirmedYN', $input['PRConfirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $purchaseRequests->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $purchaseRequests->whereMonth('createdDateTime', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $purchaseRequests->whereYear('createdDateTime', '=', $input['year']);
-            }
-        }
-
-        $purchaseRequests = $purchaseRequests->select(
-            ['erp_purchaserequest.purchaseRequestID',
-                'erp_purchaserequest.purchaseRequestCode',
-                'erp_purchaserequest.createdDateTime',
-                'erp_purchaserequest.createdUserSystemID',
-                'erp_purchaserequest.comments',
-                'erp_purchaserequest.location',
-                'erp_purchaserequest.priority',
-                'erp_purchaserequest.cancelledYN',
-                'erp_purchaserequest.PRConfirmedYN',
-                'erp_purchaserequest.approved',
-                'erp_purchaserequest.timesReferred',
-                'erp_purchaserequest.refferedBackYN',
-                'erp_purchaserequest.serviceLineSystemID',
-                'erp_purchaserequest.financeCategory',
-                'erp_purchaserequest.documentSystemID',
-                'erp_purchaserequest.manuallyClosed',
-                'erp_purchaserequest.prClosedYN',
-                'erp_purchaserequest.budgetYear'
-            ]);
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
-                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
-            });
-        }
+        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2510,6 +2434,18 @@ class PurchaseRequestAPIController extends AppBaseController
         $output = Helper::getDocumentDetails($companySystemID,$documentSystemID,$documentSystemCode,$matchingDoc);
 
         return $this->sendResponse($output,'Success');
+    }
+
+
+     public function downloadPrItemUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx', 'purchase_request_item_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
     }
 
 }

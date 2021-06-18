@@ -199,9 +199,13 @@ class DocumentApproved extends Model
      public static function deleteApproval($documentSystemCode, $companySystemID, $documentSystemID)
     {
         $res = new DocumentApproved();
-        return $res->where('documentSystemCode', $documentSystemCode)
-                    ->where('companySystemID', $companySystemID)
-                    ->where('documentSystemID', $documentSystemID)
-                    ->delete();
+        $result =  $res->where('documentSystemCode', $documentSystemCode)
+                       ->where('documentSystemID', $documentSystemID);
+
+        if (!is_null($companySystemID)) {
+            $result = $result->where('companySystemID', $companySystemID);
+        }
+
+        return $result->delete();
     }
 }

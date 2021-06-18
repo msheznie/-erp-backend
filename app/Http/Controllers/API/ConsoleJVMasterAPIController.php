@@ -483,37 +483,9 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyID'];
-
-        $consoleJV = ConsoleJVMaster::with(['created_by'])->ofCompany($selectedCompanyId);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $consoleJV->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $consoleJV->whereMonth('consoleJVdate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $consoleJV->whereYear('consoleJVdate', '=', $input['year']);
-            }
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $consoleJV = $consoleJV->where(function ($query) use ($search) {
-                $query->where('consoleJVcode', 'LIKE', "%{$search}%");
-                $query->orWhere('consoleJVNarration', 'LIKE', "%{$search}%");
-            });
-        }
+        $consoleJV = $this->consoleJVMasterRepository->consoleJVMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($consoleJV)
             ->addColumn('Actions', 'Actions', "Actions")

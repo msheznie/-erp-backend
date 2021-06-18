@@ -1244,94 +1244,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
-
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency'])->whereIN('companySystemID', $subCompanies);
-
-        if (array_key_exists('cancelYN', $input)) {
-            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
-                $paymentVoucher->where('cancelYN', $input['cancelYN']);
-            }
-        }
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $paymentVoucher->where('approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $paymentVoucher->whereMonth('BPVdate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
-            }
-        }
-
-        if (array_key_exists('invoiceType', $input)) {
-            if ($input['invoiceType'] && !is_null($input['invoiceType'])) {
-                $paymentVoucher->where('invoiceType', $input['invoiceType']);
-            }
-        }
-
-        if (array_key_exists('supplierID', $input)) {
-            if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $paymentVoucher->where('BPVsupplierID', $input['supplierID']);
-            }
-        }
-
-        if (array_key_exists('chequePaymentYN', $input)) {
-            if (($input['chequePaymentYN'] == 0 || $input['chequePaymentYN'] == -1) && !is_null($input['chequePaymentYN'])) {
-                $paymentVoucher->where('chequePaymentYN', $input['chequePaymentYN']);
-            }
-        }
-
-
-        if (array_key_exists('BPVbank', $input)) {
-            if ($input['BPVbank'] && !is_null($input['BPVbank'])) {
-                $paymentVoucher->where('BPVbank', $input['BPVbank']);
-            }
-        }
-
-        if (array_key_exists('BPVAccount', $input)) {
-            if ($input['BPVAccount'] && !is_null($input['BPVAccount'])) {
-                $paymentVoucher->where('BPVAccount', $input['BPVAccount']);
-            }
-        }
-
-        if (array_key_exists('chequeSentToTreasury', $input)) {
-            if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
-                $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
-            }
-        }
-
         $search = $request->input('search.value');
 
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $search_without_comma = str_replace(",", "", $search);
-            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
-                $query->where('BPVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%");
-            });
-        }
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2095,6 +2010,7 @@ HAVING
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
+                'erp_expenseclaimtype.expenseClaimTypeDescription',
                 'erp_documentapproved.documentSystemCode',
                 'erp_bankmemosupplier.memoHeaderSupplier',
                 'erp_bankmemosupplier.memoDetailSupplier',
@@ -2134,7 +2050,8 @@ HAVING
                     ->on('erp_paysupplierinvoicemaster.documentSystemID', '=', 'erp_bankmemopayee.documentSystemID');
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('employees', 'erp_paysupplierinvoicemaster.createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_expenseclaimtype', 'expenseClaimOrPettyCash', 'erp_expenseclaimtype.expenseClaimTypeID')
             ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
             ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
             ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')

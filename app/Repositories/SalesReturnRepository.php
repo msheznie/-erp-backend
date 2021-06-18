@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Models\SalesReturn;
 use InfyOm\Generator\Common\BaseRepository;
+use App\helper\Helper;
+use App\helper\StatusService;
 
 /**
  * Class SalesReturnRepository
@@ -91,5 +93,101 @@ class SalesReturnRepository extends BaseRepository
     public function model()
     {
         return SalesReturn::class;
+    }
+
+    public function salesReturnListQuery($request, $input, $search = '') {
+
+        $companyId = $request['companyId'];
+
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $salesReturn = SalesReturn::whereIn('companySystemID', $childCompanies)
+        ->with(['customer','transaction_currency','created_by','segment']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $salesReturn->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $salesReturn->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $salesReturn->whereMonth('salesReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $salesReturn->whereYear('salesReturnDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $salesReturn->where('customerID', $input['customerID']);
+            }
+        }
+
+        if (array_key_exists('returnType', $input)) {
+            if ($input['returnType'] && !is_null($input['returnType'])) {
+                $salesReturn->where('returnType', $input['returnType']);
+            }
+        }
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $salesReturn = $salesReturn->where(function ($query) use ($search) {
+                $query->where('salesReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                ->orWhereHas('customer', function ($q) use ($search){
+                    $q->where('CustomerName', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return $salesReturn;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Document Code'] = $val->salesReturnCode;
+                $data[$x]['Type'] = StatusService::getSalesReturnType($val->returnType);
+                $data[$x]['Customer Name'] = $val->customer? $val->customer->CustomerName : '';
+                $data[$x]['Document Date'] = \Helper::dateFormat($val->salesReturnDate);
+                $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
+                $data[$x]['Comments'] = $val->narration;
+                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
+                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Currency'] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
+                $data[$x]['Amount'] = $val->transactionAmount? number_format($val->transactionAmount + $val->VATAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "") : 0;
+                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
     }
 }

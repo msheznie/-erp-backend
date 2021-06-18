@@ -145,16 +145,9 @@
                     </td>
                     <td valign="top" style="width: 55%">
                         <br><br>
+                        <span class="font-weight-bold">{{$companyName}}</span><br>
                         <span class="font-weight-bold">Supplier Statement</span><br>
                         <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td valign="top" style="width: 45%">
-                        <span class="font-weight-bold"> &nbsp;&nbsp;&nbsp;{{$companyName}}</span>
-                    </td>
-                    <td>
-
                     </td>
                 </tr>
             </table>

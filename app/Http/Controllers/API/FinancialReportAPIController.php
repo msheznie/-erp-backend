@@ -208,7 +208,7 @@ class FinancialReportAPIController extends AppBaseController
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'glCodes' => 'required',
                     'departments' => 'required',
-                    'contracts' => 'required'
+                    // 'contracts' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -1334,6 +1334,11 @@ class FinancialReportAPIController extends AppBaseController
                     $currencyIdRpt = $decimalPlaceUniqueRpt[0];
                 }
 
+                $extraColumns = [];
+                if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
+                    $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
+                }
+
                 $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
                 $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
 
@@ -1363,12 +1368,28 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Company Name'] = 'Company Name';
                             $data[$x]['GL  Type'] = 'GL  Type';
                             $data[$x]['Template Description'] = 'Template Description';
-                            $data[$x]['Document ID'] = 'Document ID';
+                            $data[$x]['Document Type'] = 'Document Type';
                             $data[$x]['Document Number'] = 'Document Number';
                             $data[$x]['Date'] = 'Date';
                             $data[$x]['Document Narration'] = 'Document Narration';
                             $data[$x]['Service Line'] = 'Service Line';
                             $data[$x]['Contract'] = 'Contract';
+                            
+                            if (in_array('confi_name', $extraColumns)) {
+                                $data[$x]['Confirmed By'] = 'Confirmed By';
+                            }
+
+                            if (in_array('confi_date', $extraColumns)) {
+                                $data[$x]['Confirmed Date'] = 'Confirmed Date';
+                            }
+
+                            if (in_array('app_name', $extraColumns)) {
+                                $data[$x]['Approved By'] = 'Approved By';
+                            }
+
+                            if (in_array('app_date', $extraColumns)) {
+                                $data[$x]['Approved Date'] = 'Approved Date';
+                            }
                             $data[$x]['Supplier/Customer'] = 'Supplier/Customer';
                             if ($checkIsGroup->isGroup == 0) {
                                 $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = 'Debit (Local Currency - ' . $currencyLocal . ')';
@@ -1387,14 +1408,29 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['GL  Type'] = $val->glAccountType;
                                     $data[$x]['Template Description'] = $val->templateDetailDescription;
-                                    $data[$x]['Document ID'] = $val->documentID;
+                                    $data[$x]['Document Type'] = $val->documentID;
                                     $data[$x]['Document Number'] = $val->documentCode;
                                     $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['Document Narration'] = $val->documentNarration;
                                     $data[$x]['Service Line'] = $val->serviceLineCode;
                                     $data[$x]['Contract'] = $val->clientContractID;
-                                    $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                                    
+                                    if (in_array('confi_name', $extraColumns)) {
+                                        $data[$x]['Confirmed By'] = $val->confirmedBy;
+                                    }
 
+                                    if (in_array('confi_date', $extraColumns)) {
+                                        $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                                    }
+
+                                    if (in_array('app_name', $extraColumns)) {
+                                        $data[$x]['Approved By'] = $val->approvedBy;
+                                    }
+
+                                    if (in_array('app_date', $extraColumns)) {
+                                        $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                    }
+                                    $data[$x]['Supplier/Customer'] = $val->isCustomer;
                                     if ($checkIsGroup->isGroup == 0) {
                                         $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
                                         $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
@@ -1413,14 +1449,29 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Company Name'] = '';
                                 $data[$x]['GL  Type'] = '';
                                 $data[$x]['Template Description'] = '';
-                                $data[$x]['Document ID'] = '';
+                                $data[$x]['Document Type'] = '';
                                 $data[$x]['Document Number'] = '';
                                 $data[$x]['Date'] = '';
                                 $data[$x]['Document Narration'] = '';
                                 $data[$x]['Service Line'] = '';
                                 $data[$x]['Contract'] = '';
-                                $data[$x]['Supplier/Customer'] = 'Total';
+                                
+                                 if (in_array('confi_name', $extraColumns)) {
+                                    $data[$x]['Confirmed By'] = '';
+                                }
 
+                                if (in_array('confi_date', $extraColumns)) {
+                                    $data[$x]['Confirmed Date'] = '';
+                                }
+
+                                if (in_array('app_name', $extraColumns)) {
+                                    $data[$x]['Approved By'] = '';
+                                }
+
+                                if (in_array('app_date', $extraColumns)) {
+                                    $data[$x]['Approved Date'] = '';
+                                }
+                                $data[$x]['Supplier/Customer'] = 'Total';
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
@@ -1452,13 +1503,29 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Company Name'] = '';
                         $data[$x]['GL  Type'] = '';
                         $data[$x]['Template Description'] = '';
-                        $data[$x]['Document ID'] = '';
+                        $data[$x]['Document Type'] = '';
                         $data[$x]['Document Number'] = '';
                         $data[$x]['Date'] = '';
                         $data[$x]['Document Narration'] = '';
                         $data[$x]['Service Line'] = '';
                         $data[$x]['Contract'] = '';
-                        $data[$x]['Supplier/Customer'] = 'Grand Total';
+                       
+                        if (in_array('confi_name', $extraColumns)) {
+                            $data[$x]['Confirmed By'] = '';
+                        }
+
+                        if (in_array('confi_date', $extraColumns)) {
+                            $data[$x]['Confirmed Date'] = '';
+                        }
+
+                        if (in_array('app_name', $extraColumns)) {
+                            $data[$x]['Approved By'] = '';
+                        }
+
+                        if (in_array('app_date', $extraColumns)) {
+                            $data[$x]['Approved Date'] = '';
+                        }
+                         $data[$x]['Supplier/Customer'] = 'Grand Total';
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
                             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
@@ -1476,13 +1543,28 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Account Description'] = $val->AccountDescription;
                             $data[$x]['GL  Type'] = $val->glAccountType;
                             $data[$x]['Template Description'] = $val->templateDetailDescription;
-                            $data[$x]['Document ID'] = $val->documentID;
+                            $data[$x]['Document Type'] = $val->documentID;
                             $data[$x]['Document Number'] = $val->documentCode;
                             $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                             $data[$x]['Document Narration'] = $val->documentNarration;
                             $data[$x]['Service Line'] = $val->serviceLineCode;
                             $data[$x]['Contract'] = $val->clientContractID;
                             $data[$x]['Supplier/Customer'] = $val->isCustomer;
+                            if (in_array('confi_name', $extraColumns)) {
+                                $data[$x]['Confirmed By'] = $val->confirmedBy;
+                            }
+
+                            if (in_array('confi_date', $extraColumns)) {
+                                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                            }
+
+                            if (in_array('app_name', $extraColumns)) {
+                                $data[$x]['Approved By'] = $val->approvedBy;
+                            }
+
+                            if (in_array('app_date', $extraColumns)) {
+                                $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                            }
 
                             if ($checkIsGroup->isGroup == 0) {
                                 $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
@@ -2551,6 +2633,10 @@ class FinancialReportAPIController extends AppBaseController
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
                         erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
                         erp_templatesdetails.templateDetailDescription,
                     IF
@@ -2566,6 +2652,8 @@ class FinancialReportAPIController extends AppBaseController
                         ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
@@ -2606,6 +2694,10 @@ class FinancialReportAPIController extends AppBaseController
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
                         erp_templatesglcode.templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
                         erp_templatesdetails.templateDetailDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
@@ -2616,6 +2708,8 @@ class FinancialReportAPIController extends AppBaseController
                         "" AS isCustomer
                     FROM
                         erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
@@ -2712,9 +2806,15 @@ class FinancialReportAPIController extends AppBaseController
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate
                     FROM
                         erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
@@ -2754,9 +2854,15 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.documentRptCurrencyID,
                         sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
                         sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
-                        "" AS isCustomer
+                        "" AS isCustomer,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate
                     FROM
                         erp_generalledger
+                        LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
+                        LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
@@ -2933,6 +3039,11 @@ AND MASTER .canceledYN = 0';
                     $currencyIdRpt = $decimalPlaceUniqueRpt[0];
                 }
 
+                 $extraColumns = [];
+                if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
+                    $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
+                }
+
                 $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
                 $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
 
@@ -2954,6 +3065,7 @@ AND MASTER .canceledYN = 0';
 
                 $dataArr = array(
                     'reportData' => $finalData,
+                    'extraColumns' => $extraColumns,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,

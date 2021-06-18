@@ -773,73 +773,10 @@ class CreditNoteAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $master = DB::table('erp_creditnote')
-            ->leftjoin('currencymaster', 'customerCurrencyID', '=', 'currencyID')
-            ->leftjoin('employees', 'erp_creditnote.createdUserSystemID', '=', 'employees.employeeSystemID')
-            ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_creditnote.customerID')
-            ->where('erp_creditnote.companySystemID', $input['companyId'])
-            ->where('erp_creditnote.documentSystemID', $input['documentId']);
-
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $master->where('erp_creditnote.confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('customerID', $input)) {
-            if (($input['customerID'] != '')) {
-                $master->where('erp_creditnote.customerID', $input['customerID']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $master->where('erp_creditnote.approved', $input['approved']);
-            }
-        }
-
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $master->whereMonth('creditNoteDate', '=', $input['month']);
-            }
-        }
-
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $master->whereYear('creditNoteDate', '=', $input['year']);
-            }
-        }
-
-        /*   if (array_key_exists('year', $input)) {
-               if ($input['year'] && !is_null($input['year'])) {
-                   $creditNoteDate = $input['year'] . '-12-31';
-                   if (array_key_exists('month', $input)) {
-                       if ($input['month'] && !is_null($input['month'])) {
-                           $creditNoteDate = $input['year'] . '-' . $input['month'] . '-31';
-                       }
-                   }
-
-                   $master->where('creditNoteDate', '<=', $creditNoteDate);
-
-               }
-           }*/
-
 
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $search_without_comma = str_replace(",", "", $search);
-            $master = $master->where(function ($query) use ($search, $search_without_comma) {
-                $query->Where('creditNoteCode', 'LIKE', "%{$search}%")
-                    ->orwhere('employees.empName', 'LIKE', "%{$search}%")
-                    ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
-                    ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%")
-                    ->orWhere('creditAmountTrans', 'LIKE', "%{$search_without_comma}%");
-            });
-        }
-        $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans');
+
+        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {
