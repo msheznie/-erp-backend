@@ -2106,7 +2106,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
     Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
     Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
-});
+
 
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
