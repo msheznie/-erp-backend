@@ -6,8 +6,10 @@ use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateAssetVerificationAPIRequest;
 use App\Http\Requests\API\UpdateAssetVerificationAPIRequest;
 use App\Models\AssetVerification;
+use App\Models\AssetVerificationDetail;
 use App\Models\Company;
 use App\Models\DocumentMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetVerificationRepository;
@@ -227,7 +229,7 @@ class AssetVerificationAPIController extends AppBaseController
      */
     public function show($id)
     {
-        $assetVerification = AssetVerification::with('assetVerificationDetail:id,faID')->where('id', $id)->first();
+        $assetVerification = AssetVerification::with('assetVerificationDetail:id,verification_id,faID')->where('id', $id)->first();
 
         if (empty($assetVerification)) {
             return $this->sendError('Asset Verification not found');
@@ -282,6 +284,7 @@ class AssetVerificationAPIController extends AppBaseController
      *          )
      *      )
      * )
+     * @throws \Prettus\Validator\Exceptions\ValidatorException
      */
     public function update($id, UpdateAssetVerificationAPIRequest $request)
     {
@@ -450,7 +453,6 @@ class AssetVerificationAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
-        DB::enableQueryLog();
         $assetVerification = DB::table('erp_documentapproved')
             ->select(
                 'erp_fa_asset_verification.*',
@@ -467,7 +469,7 @@ class AssetVerificationAPIController extends AppBaseController
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->whereIn('erp_documentapproved.documentSystemID', [23])
+            ->whereIn('erp_documentapproved.documentSystemID', [99])
             ->where('erp_documentapproved.companySystemID', $companyId)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
@@ -481,18 +483,99 @@ class AssetVerificationAPIController extends AppBaseController
 
         return \DataTables::of($assetVerification)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getAllCostingByCompanyForVerification(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'auditCategory', 'mainCategory', 'subCategory'));
+        $isDeleted = (isset($input['is_deleted']) && $input['is_deleted'] == 1) ? 1 : 0;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])
+            ->ofCompany($subCompanies);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetCositng->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetCositng->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('mainCategory', $input)) {
+            if ($input['mainCategory']) {
+                $assetCositng->where('faCatID', $input['mainCategory']);
+            }
+        }
+
+        if (array_key_exists('subCategory', $input)) {
+            if ($input['subCategory']) {
+                $assetCositng->where('faSubCatID', $input['subCategory']);
+            }
+        }
+
+        if (array_key_exists('auditCategory', $input)) {
+            if ($input['auditCategory']) {
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
+            }
+        }
+
+        // get only deleted
+        if ($isDeleted == 1) {
+            $assetCositng->onlyTrashed();
+        }
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCositng = $assetCositng->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('docOrigin', 'LIKE', "%{$search}%")
+                    ->orWhere('faUnitSerialNo', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $verification_id = $input['verificationId'];
+        return \DataTables::eloquent($assetCositng)
+            ->addColumn('Actions', function ($asset) use ($verification_id) {
+                return AssetVerificationDetail::where('faID', $asset->faID)->where('verification_id', $verification_id)->exists();
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('depMasterAutoID', $input['order'][0]['dir']);
+                        $query->orderBy('faID', $input['order'][0]['dir']);
                     }
                 }
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-
-        $queries = DB::getQueryLog();
-        info(json_encode($queries));
     }
+
 }

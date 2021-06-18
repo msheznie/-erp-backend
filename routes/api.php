@@ -2036,6 +2036,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser');
     Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser');
     Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
+    Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification');
     Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
     Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
     Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
