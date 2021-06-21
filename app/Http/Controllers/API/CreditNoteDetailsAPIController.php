@@ -450,8 +450,9 @@ class CreditNoteDetailsAPIController extends AppBaseController
         // vat amount
         $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;
         $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
-        $input["VATAmountRpt"] = $currencyVAT['reportingAmount'];
-        $input["VATAmountLocal"] = $currencyVAT['localAmount'];
+        $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
+        $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+        $input["VATAmount"] = \Helper::roundValue($vatAmount);
         // net amount
         $netAmount = isset($input['netAmount'])?$input['netAmount']:0;
         $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);

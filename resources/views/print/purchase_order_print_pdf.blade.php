@@ -609,7 +609,7 @@
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)
-                        <td class="text-right">{{number_format($det->VATAmount, $numberFormatting)}}</td>
+                        <td class="text-right">@if($podata->rcmActivated) {{number_format(0, $numberFormatting)}}@else{{number_format($det->VATAmount, $numberFormatting)}} @endif</td>
                     @endif
                     <td class="text-right">{{number_format($netUnitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->netAmount, $numberFormatting)}}</td>
@@ -669,7 +669,7 @@
                         </span></td>
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                class="font-weight-bold">{{number_format($podata->VATAmount, $numberFormatting)}}</span>
+                                class="font-weight-bold">@if($podata->rcmActivated){{number_format(0, $numberFormatting)}} @else {{number_format($podata->VATAmount, $numberFormatting)}}@endif</span>
                     </td>
                 </tr>
             @endif

@@ -353,6 +353,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
 
 
         $input['modifiedDateTime'] = Carbon::now();

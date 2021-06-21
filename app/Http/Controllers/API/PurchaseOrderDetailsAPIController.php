@@ -825,6 +825,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
+            $input['discountAmount'] = isset($input['discountAmount']) ? \Helper::roundValue($input['discountAmount']) : 0;
             $discountedUnitPrice = $input['unitCost']  - $input['discountAmount'];
             if(TaxService::checkPOVATEligible($purchaseOrder->supplierVATEligible, $purchaseOrder->vatRegisteredYN)){
                 $discountedUnitPrice =  $discountedUnitPrice + $input['VATAmount'];
@@ -846,6 +847,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['VATAmount']);
                 $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                 $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
             } else {
                 $input['VATAmount'] = 0;
                 $input['VATAmountLocal'] = 0;
