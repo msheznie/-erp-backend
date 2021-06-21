@@ -3978,7 +3978,7 @@ WHERE
                 }
 
                 if ($netUnitAmount > 0 && $purchaseOrderDetail->VATPercentage > 0) {
-                    $purchaseOrderDetail->VATAmount = round((($netUnitAmount / 100) * $purchaseOrderDetail->VATPercentage), $supplierCurrencyDecimalPlace);
+                    $purchaseOrderDetail->VATAmount = (($netUnitAmount / 100) * $purchaseOrderDetail->VATPercentage);
                 }
                 $purchaseOrderDetail->netAmount = ($purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount) * $purchaseOrderDetail->noQty;
 

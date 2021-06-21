@@ -691,7 +691,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
                                 ->sum('totTransactionAmount');
 
-                            if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+                            if ((round($unbilledSumData->totTransactionAmount, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
 
                                 $unbilledSumData->selectedForBooking = -1;
                                 $unbilledSumData->fullyBooked = 2;
