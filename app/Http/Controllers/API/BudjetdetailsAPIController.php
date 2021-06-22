@@ -20,6 +20,7 @@ use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
 use App\Models\BudgetMaster;
+use App\Models\ReportTemplateLinks;
 use App\Models\TemplatesGLCode;
 use App\Models\ReportTemplateDetails;
 use App\Repositories\BudgetMasterRepository;
@@ -31,6 +32,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\AddBudgetDetails;
 
 /**
  * Class BudjetdetailsController
@@ -703,6 +705,43 @@ class BudjetdetailsAPIController extends AppBaseController
         $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
 
         return $input;
+    }
+
+
+    public function syncGlBudget(Request $request)
+    {
+        $input = $request->all();
+
+        $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
+        if (!$budgetMaster) {
+            return $this->sendError("Budget master not fouund", 500);
+        }
+
+        $glData = ReportTemplateLinks::where('templateMasterID', $budgetMaster->templateMasterID)
+                                    ->whereNotNull('glAutoID')
+                                    ->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
+                                        $q->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    })
+                                    ->whereHas('template_category', function ($q) use ($input) {
+                                        $q->where('itemType', '!=',4);
+                                    })
+                                    ->with(['chart_of_account' => function ($q) use ($budgetMaster) {
+                                        $q->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    }])
+                                    ->whereDoesntHave('items', function($query) use ($input) {
+                                        $query->where('budgetmasterID', $input['budgetMasterID']);
+                                    })
+                                    ->get();
+
+        if (count($glData)) {
+            AddBudgetDetails::dispatch($budgetMaster,$glData);
+        }
+
+        return $this->sendResponse($budgetMaster->toArray(), 'Budget details synced successfully');
     }
 
 }

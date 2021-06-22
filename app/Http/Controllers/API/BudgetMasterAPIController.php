@@ -169,6 +169,11 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Service Line not found', 500);
         }
 
+        $template = ReportTemplate::find($input['templateMasterID']);
+        if (empty($template)) {
+            return $this->sendError('Template not found', 500);
+        }
+
         if ($segment->isActive == 0) {
             return $this->sendError('Please select a active Service Line', 500);
         }
@@ -202,6 +207,21 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Already created budgets for selected template.', 500);
         }
 
+        $checkDuplicateTypeBudget = BudgetMaster::where('companySystemID', $input['companySystemID'])
+                                                ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                                ->where('Year', $input['Year'])
+                                                ->whereHas('template_master', function($query) use ($template) {
+                                                    $query->where('reportID', $template->reportID);
+                                                })
+                                                ->count();
+
+        if ($checkDuplicateTypeBudget > 0) {
+            if ($template->reportID == 2) {
+                return $this->sendError('Already budget created for P&L type template.', 500);
+            } else {
+                return $this->sendError('Already budget created for BS type template.', 500);
+            }
+        }
 
         $glData = TemplatesGLCode::where('templateMasterID', $input['templateMasterID'])
             ->whereNotNull('chartOfAccountSystemID')
@@ -872,6 +892,7 @@ class BudgetMasterAPIController extends AppBaseController
 
     public function getBudgetFormData(Request $request)
     {
+        $input = $request->all();
         $companyId = $request['companyId'];
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -906,9 +927,64 @@ class BudgetMasterAPIController extends AppBaseController
             $financeYear = date("Y");
         }
 
-        $reportTemplates = ReportTemplate::where('isActive', 1)
-                                         ->where('companySystemID', $companyId)
-                                         ->get();
+        $reportTemplates = [];
+
+        if (isset($input['Year']) && !is_null($input['Year']) && $input['Year'] != 'null' && isset($input['serviceLineSystemID']) && !is_null($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != 'null') {
+
+            $checkBudget = BudgetMaster::where('companySystemID', $companyId)
+                                            ->where('Year', $input['Year'])
+                                            ->with(['template_master'])
+                                            ->groupBy('templateMasterID')
+                                            ->get();
+
+            $templateIDs = (count($checkBudget) > 0) ? $checkBudget->pluck('templateMasterID')->toArray() : [];
+
+            if (count($checkBudget) > 0) {
+                $templatTypes = ReportTemplate::whereIn('companyReportTemplateID', $templateIDs)
+                                              ->groupBy('reportID')
+                                              ->get()
+                                              ->pluck('reportID')
+                                              ->toArray();
+
+                if (count($templatTypes) == 2) {
+                    $reportTemplates = ReportTemplate::whereIn('companyReportTemplateID', $templateIDs)
+                                                 ->get();
+                } else {
+                    if (in_array(1,$templatTypes)) {
+                        foreach ($checkBudget as $key => $value) {
+                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 1) {
+                                $reportTemplates[] = $value->template_master;
+                            }
+                        }
+                        
+                        $pandlTemplates = ReportTemplate::where('isActive', 1)
+                                                 ->where('companySystemID', $companyId)
+                                                 ->where('reportID', 2)
+                                                 ->get();
+
+                        $reportTemplates = collect($reportTemplates)->merge($pandlTemplates);
+                    } else {
+                        foreach ($checkBudget as $key => $value) {
+                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 2) {
+                                $reportTemplates[] = $value->template_master;
+                            }
+                        }
+                        
+                        $pandlTemplates = ReportTemplate::where('isActive', 1)
+                                                 ->where('companySystemID', $companyId)
+                                                 ->where('reportID', 1)
+                                                 ->get();
+
+                        $reportTemplates = collect($reportTemplates)->merge($pandlTemplates);
+                    }
+                }
+            } else {
+                $reportTemplates = ReportTemplate::where('isActive', 1)
+                                                 ->where('companySystemID', $companyId)
+                                                 ->where('reportID', '!=', 3)
+                                                 ->get();
+            }
+        }
 
         $output = array(
             'reportTemplates' => $reportTemplates,

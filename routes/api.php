@@ -1177,6 +1177,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
         Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy');
         Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument');
+        Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
 
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
