@@ -199,4 +199,14 @@ class PurchaseRequestDetails extends Model
     public function closed_by(){
         return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
     }
+
+    public function budget_detail_pl()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodePLSystemID','chartOfAccountID');
+    } 
+
+    public function budget_detail_bs()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
 }

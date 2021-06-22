@@ -14,6 +14,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
@@ -131,7 +132,7 @@ use Eloquent as Model;
  */
 class BudgetConsumedData extends Model
 {
-
+    use Compoships;
     public $table = 'erp_budgetconsumeddata';
     
     const CREATED_AT = NULL; //'timestamp';
@@ -201,6 +202,8 @@ class BudgetConsumedData extends Model
         return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
     }
 
-
-    
+    public function budget_detail()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', ['chartOfAccountID', 'year'], ['chartOfAccountID', 'Year']);
+    }
 }

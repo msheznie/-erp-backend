@@ -39,6 +39,7 @@ use App\Models\TemplatesGLCode;
 use App\Models\TemplatesMaster;
 use App\Models\Year;
 use App\Models\YesNoSelection;
+use App\helper\BudgetConsumptionService;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetMasterRepository;
 use App\Traits\AuditTrial;
@@ -217,6 +218,9 @@ class BudgetMasterAPIController extends AppBaseController
                                         $q->where('companySystemID', $input['companySystemID'])
                                             ->where('isActive', 1)
                                             ->where('isAssigned', -1);
+                                    })
+                                    ->whereHas('template_category', function ($q) use ($input) {
+                                        $q->where('itemType', '!=',4);
                                     })
                                     ->with(['chart_of_account' => function ($q) use ($input) {
                                         $q->where('companySystemID', $input['companySystemID'])
@@ -1275,5 +1279,40 @@ class BudgetMasterAPIController extends AppBaseController
                     });
                 })->download('xlsx');
 
+    }
+
+    public function checkBudgetShowPolicy(Request $request)
+    {
+        $input = $request->all();
+
+        $checkBudgetPolicy = 0;
+        if (isset($input['companySystemID'])) {
+            $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
+                                        ->where('companySystemID', $input['companySystemID'])
+                                        ->first();
+
+            if ($checkBudget && $checkBudget->isYesNO == 1) {
+                $checkBudgetPolicy = 1;
+            }
+        }
+
+        return $this->sendResponse(['checkBudgetPolicy' => $checkBudgetPolicy], 'Budget policy retrieved successfully');
+    }
+
+    public function getBudgetConsumptionByDocument(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['documentSystemID']) || !isset($input['documentSystemID'])) {
+            return $this->sendError("Error occured while retrieving budget consumption data");
+        }
+
+        $budgetConsumedData = BudgetConsumptionService::getConsumptionData($input['documentSystemID'], $input['documentSystemCode']);
+
+        if (!$budgetConsumedData['status']) {
+            return $this->sendError($budgetConsumedData['message']);
+        }
+
+        return $this->sendResponse($budgetConsumedData['data'], 'Budget consumption retrieved successfully');
     }
 }
