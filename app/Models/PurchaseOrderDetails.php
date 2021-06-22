@@ -351,4 +351,14 @@ class PurchaseOrderDetails extends Model
     public function scopeRequestDetailSum($q,$purchaseRequestDetailsID = 0){
         return $q->where('purchaseRequestDetailsID', $purchaseRequestDetailsID)->sum('noQty');
     }
+
+    public function budget_detail_pl()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodePLSystemID','chartOfAccountID');
+    }
+
+    public function budget_detail_bs()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
 }

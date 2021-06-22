@@ -197,8 +197,12 @@ class Budjetdetails extends Model
     ];
 
     public function chart_of_account()
-
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountID','chartOfAccountSystemID');
+    }
+
+    public function budget_master()
+    {
+        return $this->belongsTo('App\Models\BudgetMaster', 'budgetmasterID','budgetmasterID');
     }
 }
