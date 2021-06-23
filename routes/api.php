@@ -1487,7 +1487,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
         Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
         Route::get('getNotAssignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAPIController@getNotAssignedCompaniesByCustomerCategory');
-        
+
         Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
         Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
         Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
@@ -1999,7 +1999,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
 
         Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
-            
+
         Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
 
         Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
@@ -2014,7 +2014,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
         Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
         Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
-        
+
         Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
 
         Route::resource('stock_counts', 'StockCountAPIController');
@@ -2036,6 +2036,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
         Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
 
+        Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
+        Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
+        Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
+        Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
+        Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2110,3 +2115,4 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
+
