@@ -17,7 +17,7 @@ class BudgetConsumptionService
 {
 	public static function checkBudget($documentSystemID, $documentSystemCode)
 	{
-		$budgetData = self::getConsumptionData($documentSystemID, $documentSystemCode);
+		$budgetData = self::getConsumptionData($documentSystemID, $documentSystemCode, true);
 
 		if ($budgetData['status']) {
 			if (sizeof($budgetData['data']) > 0) {
@@ -51,7 +51,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function getConsumptionData($documentSystemID, $documentSystemCode)
+	public static function getConsumptionData($documentSystemID, $documentSystemCode, $checkBudgetWhileApprove = false)
 	{
 		$documentLevelCheckBudget = true;
 		$budgetFormData = [];
@@ -79,6 +79,10 @@ class BudgetConsumptionService
 			case 5:
 			case 52:
 				$masterData = ProcumentOrder::find($documentSystemCode);
+
+				if ($masterData->poTypeID != 2 && $checkBudgetWhileApprove) {
+					return ['status' => true, 'data' => []];
+				}
 
 				$budgetFormData['companySystemID'] = $masterData->companySystemID;
 				$documentLevelCheckBudget = true;
@@ -618,5 +622,96 @@ class BudgetConsumptionService
 		}
 
 		return $finalData;
+	}
+
+	public static function budgetCheckDocumentList($documentSystemID)
+	{
+		return (in_array($documentSystemID, [1, 50, 51, 2, 5, 52]) ? true : false);
+	}
+
+	public static function budgetConsumedDocumentList($documentSystemID)
+	{
+		return (in_array($documentSystemID, [2, 5, 52]) ? true : false);
+	}
+
+	public static function insertBudgetConsumedData($documentSystemID, $documentSystemCode)
+	{
+		switch ($documentSystemID) {
+			case 2:
+			case 5:
+			case 52:
+				$result = self::poBudgetConsumption($documentSystemCode);
+				break;
+			
+			default:
+				return ['status' => false, 'message' => "Budget consumption is not set for this documnt"];
+				break;
+		}
+
+
+		return $result;		
+	}
+
+	public static function poBudgetConsumption($documentSystemCode)
+	{
+		$poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($documentSystemCode);
+		$budgetConsumeData = array();
+        if ($poMaster->financeCategory == 3) {
+            $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $documentSystemCode . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.budgetYear');
+            if (!empty($poDetail)) {
+                foreach ($poDetail as $value) {
+                    $budgetConsumeData[] = array(
+                        "companySystemID" => $value->companySystemID,
+                        "companyID" => $value->companyID,
+                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                        "serviceLineCode" => $value->serviceLineCode,
+                        "documentSystemID" => $poMaster["documentSystemID"],
+                        "documentID" => $poMaster["documentID"],
+                        "documentSystemCode" => $documentSystemCode,
+                        "documentCode" => $poMaster["purchaseOrderCode"],
+                        "chartOfAccountID" => 9,
+                        "GLCode" => 10000,
+                        "year" => $value->budgetYear,
+                        "month" => $poMaster["month"],
+                        "consumedLocalCurrencyID" => $value->localCurrencyID,
+                        "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                        "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                        "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                        "timestamp" => date('d/m/Y H:i:s A')
+                    );
+                }
+                $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+            }
+        } else {
+            $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $documentSystemCode . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear');
+            if (!empty($poDetail)) {
+                foreach ($poDetail as $value) {
+                    if ($value->financeGLcodePLSystemID != "") {
+                        $budgetConsumeData[] = array(
+                            "companySystemID" => $value->companySystemID,
+                            "companyID" => $value->companyID,
+                            "serviceLineSystemID" => $value->serviceLineSystemID,
+                            "serviceLineCode" => $value->serviceLineCode,
+                            "documentSystemID" => $poMaster["documentSystemID"],
+                            "documentID" => $poMaster["documentID"],
+                            "documentSystemCode" => $documentSystemCode,
+                            "documentCode" => $poMaster["purchaseOrderCode"],
+                            "chartOfAccountID" => $value->financeGLcodePLSystemID,
+                            "GLCode" => $value->financeGLcodePL,
+                            "year" => $value->budgetYear,
+                            "month" => $poMaster["month"],
+                            "consumedLocalCurrencyID" => $value->localCurrencyID,
+                            "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                            "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                            "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                            "timestamp" => date('d/m/Y H:i:s A')
+                        );
+                    }
+                }
+                $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+            }
+        }
+
+        return ['status' => true];
 	}
 }
