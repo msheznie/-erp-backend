@@ -617,6 +617,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockCount';
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     break;
+                 case 99: // asset verification
+                    $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                    $docInforArr["modelName"] = 'AssetVerification';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1614,6 +1625,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 99: // SalesReturn
+                $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                $docInforArr["modelName"] = 'AssetVerification';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -2009,7 +2032,7 @@ class Helper
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
-                            
+
                             if ($input["documentSystemID"] == 97) { //stock count negative validation
                                 $stockCountRes = StockCountService::updateStockCountAdjustmentDetail($input);
                                 if (!$stockCountRes['status']) {
@@ -2851,6 +2874,12 @@ class Helper
                     $docInforArr["tableName"] = 'erp_stockcount';
                     $docInforArr["modelName"] = 'StockCount';
                     $docInforArr["primarykey"] = 'stockCountAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 99: // Asset verification
+                    $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                    $docInforArr["modelName"] = 'AssetVerification';
+                    $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
