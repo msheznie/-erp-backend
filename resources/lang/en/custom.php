@@ -334,5 +334,7 @@ return [
     'quotation_based' => 'Quotation Based',
     'sales Order_based' => 'Sales Order Based',
     'from_delivery_order' => 'From Delivery Order',
-    'from_sales_invoice' => 'From Sales Invoice'
+    'from_sales_invoice' => 'From Sales Invoice',
+    'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered Histories',
+    'asset_verification_master'=>'Asset Verification Master'
 ];

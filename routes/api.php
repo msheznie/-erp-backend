@@ -2036,6 +2036,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
         Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
 
+        Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
+        Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
+        Route::post('storeVerification', 'AssetVerificationAPIController@store');
+        Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy');
+        Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show');
+        Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser');
+        Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser');
+        Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
+        Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification');
+        Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
+        Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
+        Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
+
         Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
         Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
@@ -2115,4 +2128,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
-
