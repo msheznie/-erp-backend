@@ -1629,14 +1629,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError( 'Ticket Master not found', 500);
         }
 
-        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
-            ->where('companySystemID', $master->companySystemID)
-            ->where('documentSystemID', $master->documentSystemiD)
-            ->first();
-
-        if (!empty($tax)) {
-            return $this->sendResponse('e', 'Please delete tax details to continue');
-        }
 
         if (!empty($contract)) {
             if ($contract->paymentInDaysForJob <= 0) {
@@ -1660,7 +1652,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $myCurr = $bankAccountDetails->currencyID; /*currencyID*/
-        $updatedInvoiceNo = PerformaDetails::select('*')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->get();
+        $updatedInvoiceNo = PerformaDetails::select('*')
+            ->where('companyID', $master->companyID)
+            ->where('performaMasterID', $performaMasterID)
+            ->get();
         //$companyCurrency = \Helper::companyCurrency($myCurr);
         $transDecimalPlace = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
