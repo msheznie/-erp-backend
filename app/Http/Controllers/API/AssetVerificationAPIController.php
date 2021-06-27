@@ -539,7 +539,7 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
         $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])
-            ->ofCompany($subCompanies);
+            ->ofCompany($subCompanies)->where('approved',-1);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
