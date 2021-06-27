@@ -30,8 +30,6 @@ use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\ExpenseClaimType;
 use App\Models\GeneralLedger;
-use App\Models\GRVDetails;
-use App\Models\GRVMaster;
 use App\Models\Months;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateColumnLink;
@@ -1771,6 +1769,10 @@ class FinancialReportAPIController extends AppBaseController
             $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
         }
 
+        $serviceLines = join(',', array_map(function ($sl) {
+            return $sl['serviceLineSystemID'];
+        }, $request->selectedServicelines));
+
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -1813,6 +1815,7 @@ class FinancialReportAPIController extends AppBaseController
                     WHERE
                         erp_generalledger.glAccountType = "BS" 
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" -- filter by from date
                     GROUP BY
                         ' . $isCompanyWiseGL . '
@@ -1845,6 +1848,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             erp_generalledger.glAccountType = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                         ) AS ERP_qry_TBBS_BF -- filter by from date ERP_qry_TBBS_BF;
                     UNION ALL
@@ -1874,6 +1878,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         ) AS ERP_qry_TBBS -- ERP_qry_TBBS
                     UNION ALL
@@ -1903,6 +1908,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "PL" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         ) AS ERP_qry_TBPL 
                         ) AS FINAL 
@@ -1932,6 +1938,10 @@ class FinancialReportAPIController extends AppBaseController
         } else {
             $companyID = (array)$request->companySystemID;
         }
+
+        $serviceLines = join(',', array_map(function ($sl) {
+            return $sl['serviceLineSystemID'];
+        }, $request->selectedServicelines));
 
         //DB::enableQueryLog();
 
@@ -2154,6 +2164,7 @@ class FinancialReportAPIController extends AppBaseController
                     WHERE
                         erp_generalledger.glAccountType = "BS" 
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                         AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                     GROUP BY
                         glCode
@@ -2183,6 +2194,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                             AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         ) AS ERP_qry_TBBS 
                     UNION ALL
@@ -2210,6 +2222,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "PL" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                             AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         ) AS ERP_qry_TBPL 
                         ) AS FINAL 
@@ -2254,6 +2267,7 @@ class FinancialReportAPIController extends AppBaseController
                     WHERE
                         erp_generalledger.glAccountType = "BS" 
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                         AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         glCode
@@ -2282,6 +2296,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                             AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                         ) AS ERP_qry_TBBS 
                     UNION ALL
@@ -2308,6 +2323,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             chartofaccounts.catogaryBLorPL = "PL" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                             AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
                             AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                         ) AS ERP_qry_TBPL 
                         ) AS FINAL 
