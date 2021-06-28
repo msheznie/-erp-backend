@@ -26,6 +26,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ReportTemplateDetails;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\ReportTemplate;
@@ -1338,17 +1339,32 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError("Budget not found", 500);
         }
 
-        $glCOdes = ReportTemplateLinks::with(['template_category'])
-                                      ->whereHas('items', function($query) use ($budgetMaster) {
-                                            $query->where('companySystemID', $budgetMaster->companySystemID)
-                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                  ->where('Year', $budgetMaster->Year);
+        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($budgetMaster) {
+                                            $query->whereHas('items', function($query) use ($budgetMaster) {
+                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                              ->where('Year', $budgetMaster->Year);
+                                                  })
+                                                  ->orderBy('sortOrder');
+                                      }])
+                                      ->whereHas('gllink',function ($query) use ($budgetMaster) {
+                                            $query->whereHas('items', function($query) use ($budgetMaster) {
+                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                              ->where('Year', $budgetMaster->Year);
+                                                  });
                                       })
-                                      ->where('templateMasterID', $budgetMaster->templateMasterID)
-                                      ->orderBy('templateDetailID', 'sortOrder')
+                                      ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
+                                      ->orderBy('sortOrder')
                                       ->get();
 
-        $reportData['reportData'] = $glCOdes;
+        foreach ($glCOdes as $key => $value) {
+            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
+        }
+
+        $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
+
+        $reportData['reportData'] = $glCOdesSorted->values()->all();
         return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
                      $excel->sheet('New sheet', function($sheet) use ($reportData) {
                         $sheet->loadView('export_report.budget_upload_template', $reportData);

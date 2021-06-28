@@ -5202,10 +5202,10 @@ class Helper
         
         $detail = ReportTemplateDetails::find($templateDetailID);
 
-        $headerDetail = "";
+        $headerDetail = ['description' => "", 'sortOrder' => 0];;
         if ($detail) {
             if (is_null($detail->masterID)) {
-                $headerDetail = $detail->description;
+                $headerDetail = ['description' => $detail->description, 'sortOrder' => $detail->sortOrder];
             } else {
                 $headerDetail = self::getHeaderDetailOfReportTemplate($detail->masterID);
             }
@@ -5222,7 +5222,7 @@ class Helper
         $headerDetail = "";
         if ($detail) {
             if (is_null($detail->masterID)) {
-                $headerDetail = $detail->description;
+                $headerDetail = ['description' => $detail->description, 'sortOrder' => $detail->sortOrder];
             } else {
                 $headerDetail = self::getHeaderDetailOfReportTemplate($detail->masterID);
             }
@@ -5230,4 +5230,6 @@ class Helper
 
         return $headerDetail;
     }
+
+
 }

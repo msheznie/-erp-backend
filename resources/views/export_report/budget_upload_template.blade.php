@@ -21,35 +21,35 @@
 	    	</tr>
 	    </thead>
 	 	<tbody>
-	 		@foreach ($reportData as $row)
-		 		<tr>
-		 			<td>
-		 				{{\App\helper\Helper::headerCategoryOfReportTemplate($row->templateDetailID) }}
-		 			</td>
-		 			<td>
-		 				@if(isset($row->template_category->description))
-		 					{{$row->template_category->description}}
-		 				@endif
-		 			</td>
-		 			<td>
-	 					{{$row->glCode}}
-		 			</td>
-		 			<td>
-		 				{{$row->glDescription}}
-		 			</td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 			<td></td>
-		 		</tr>
+	 		@foreach ($reportData as $rowLevel)
+		 		@foreach ($rowLevel->gllink as $row)
+			 		<tr>
+			 			<td>
+			 				{{\App\helper\Helper::headerCategoryOfReportTemplate($row->templateDetailID)['description'] }}
+			 			</td>
+			 			<td>
+		 					{{$rowLevel->description}}
+			 			</td>
+			 			<td>
+		 					{{$row->glCode}}
+			 			</td>
+			 			<td>
+			 				{{$row->glDescription}}
+			 			</td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 			<td></td>
+			 		</tr>
+		 		@endforeach
 	 		@endforeach
 	 	</tbody>
  	</table>
