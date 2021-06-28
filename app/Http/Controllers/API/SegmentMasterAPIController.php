@@ -21,6 +21,7 @@ use App\Models\ProcumentOrder;
 use App\Models\GeneralLedger;
 use App\Models\PurchaseRequest;
 use App\Models\Company;
+use App\Models\SrpEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
 use Illuminate\Http\Request;
@@ -200,6 +201,16 @@ class SegmentMasterAPIController extends AppBaseController
             $segmentUsed = true;
         }
 
+        $company = Company::find($segmentMaster->companySystemID);
+        if ($company && $company->isHrmsIntergrated) {
+            $checkEmployeeDetails = SrpEmployeeDetails::where('segmentID', $id)
+                                 ->first();
+
+            if ($checkEmployeeDetails) {
+                $segmentUsed = true;
+            }
+        }
+
         if ($segmentUsed) {
             return $this->sendError("This segment is used in some documents. Therefore, cannot delete", 500);
         }
@@ -362,6 +373,15 @@ class SegmentMasterAPIController extends AppBaseController
             $input['isMaster'] = $input['isMaster'][0];
 
 
+        $checkForDuplicateCode = $this->segmentMasterRepository->withoutGlobalScope('final_level')
+                                                               ->where('serviceLineSystemID', '!=', $input['serviceLineSystemID'])
+                                                               ->where('ServiceLineCode', $input['ServiceLineCode'])
+                                                               ->first();
+        if ($checkForDuplicateCode) {
+            return $this->sendError("Segment code already exists", 500);
+        }
+
+
         $segmentUsed = false;
         if ($segmentMaster->isFinalLevel != $input['isFinalLevel']) {
             //validate
@@ -385,6 +405,17 @@ class SegmentMasterAPIController extends AppBaseController
             if ($checkGeneralLedger) {
                 $segmentUsed = true;
             }
+
+            $company = Company::find($segmentMaster->companySystemID);
+            if ($company && $company->isHrmsIntergrated) {
+                $checkEmployeeDetails = SrpEmployeeDetails::where('segmentID', $input['serviceLineSystemID'])
+                                     ->first();
+
+                if ($checkEmployeeDetails) {
+                    $segmentUsed = true;
+                }
+            }
+
 
             if ($segmentUsed) {
                 return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
