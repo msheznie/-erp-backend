@@ -52,95 +52,90 @@
 
 namespace App\Http\Controllers\API;
 
-use App\helper\email;
 use App\helper\Helper;
 use App\helper\TaxService;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\AddonCostCategories;
-use App\Models\CustomerInvoiceItemDetails;
-use App\Models\CustomerReceivePaymentDetail;
-use App\Models\CustomerReceivePayment;
-use App\Models\Alert;
-use App\Models\DirectReceiptDetail;
+use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppMaster;
+use App\Models\BudgetConsumedData;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyPolicyMaster;
+use App\Models\CurrencyMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
-use App\Models\DocumentAttachments;
-use App\Models\DocumentReferedHistory;
-use App\Models\SalesReturnDetail;
-use App\Models\SalesReturn;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DebitNote;
 use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderDetail;
+use App\Models\DirectReceiptDetail;
+use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
+use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\ErpAddress;
 use App\Models\ErpItemLedger;
-use App\Models\CustomerInvoiceDirect;
-use App\Models\Months;
+use App\Models\ErpProjectMaster;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
+use App\Models\ItemAssigned;
+use App\Models\ItemIssueMaster;
+use App\Models\Location;
+use App\Models\MatchDocumentMaster;
 use App\Models\MaterielRequest;
-use App\Models\PurchaseReturnDetails;
-use App\Models\Company;
+use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
 use App\Models\PoAdvancePayment;
+use App\Models\PoPaymentTerms;
 use App\Models\PoPaymentTermsRefferedback;
+use App\Models\ProcumentOrder;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
+use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
 use App\Models\PurchaseOrderMasterRefferedHistory;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseReturnDetails;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
+use App\Models\SalesReturn;
+use App\Models\SalesReturnDetail;
+use App\Models\SecondaryCompany;
+use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
+use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
-use App\Models\CompanyPolicyMaster;
-use App\Models\ItemIssueMaster;
-use App\Models\CurrencyMaster;
-use App\Models\DocumentMaster;
-use App\Models\FinanceItemCategoryMaster;
-use App\Models\Location;
-use App\Models\DocumentApproved;
-use App\Models\ProcumentOrder;
-use App\Models\SegmentMaster;
-use App\Models\BookInvSuppMaster;
-use App\Models\Tax;
-use App\Models\QuotationMaster;
-use App\Models\QuotationDetails;
-use App\Models\DeliveryOrderDetail;
-use App\Models\MatchDocumentMaster;
+use App\Models\WorkOrderGenerationLog;
+use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
-use App\Models\ItemAssigned;
-use App\Models\PurchaseOrderDetails;
-use App\Models\ErpAddress;
-use App\Models\PoPaymentTermTypes;
-use App\Models\SupplierAssigned;
-use App\Models\CompanyDocumentAttachment;
-use App\Models\PoPaymentTerms;
-use App\Models\SupplierCurrency;
-use App\Models\GRVDetails;
-use App\Models\DebitNote;
-use App\Models\AdvancePaymentDetails;
-use App\Models\PaySupplierInvoiceMaster;
-use App\Models\BudgetConsumedData;
-use App\Models\GRVMaster;
-use App\Models\Year;
-use App\Models\SecondaryCompany;
-use App\Models\FinanceItemcategorySubAssigned;
-use App\Models\WorkOrderGenerationLog;
 use App\Repositories\ProcumentOrderRepository;
-use App\Traits\AuditTrial;
-use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
-use App\Http\Controllers\AppBaseController;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\AuditTrial;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
-use function PHPSTORM_META\type;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 
 /**
@@ -1567,6 +1562,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
         }
 
+
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companyId)
+            ->exists();
+        $projects = [];
+        if($isProject_base){
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
+        }
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1588,7 +1592,9 @@ class ProcumentOrderAPIController extends AppBaseController
             'poAddonCategoryDrop' => $poAddonCategoryDrop,
             'icvCategories' => $icvCategories,
             'isSupplierCatalogPolicy' => $hasPolicy,
-            'isEEOSSPolicy' => $hasEEOSSPolicy
+            'isEEOSSPolicy' => $hasEEOSSPolicy,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
