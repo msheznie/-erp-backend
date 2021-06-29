@@ -949,6 +949,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 if (count($templatTypes) == 2) {
                     $reportTemplates = ReportTemplate::whereIn('companyReportTemplateID', $templateIDs)
+                                                 ->where('isActive', 1) 
                                                  ->get();
                 } else {
                     if (in_array(1,$templatTypes)) {
