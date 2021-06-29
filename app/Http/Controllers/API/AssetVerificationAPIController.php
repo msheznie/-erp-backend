@@ -301,11 +301,6 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
 
-        $verified_date = $assetVerification['documentDate'];
-        AssetVerificationDetail::where('verification_id', $id)->get()->each(function ($asset) use ($verified_date) {
-            FixedAssetMaster::where('faID', $asset['faID'])->update(['lastVerifiedDate' => $verified_date]);
-        });
-
         if ($assetVerification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $params = [
                 'autoID' => $id,
