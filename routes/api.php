@@ -1166,6 +1166,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_masters', 'BudgetMasterAPIController');
         Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+        Route::post('getBudgetBlockedDocuments', 'BudgetMasterAPIController@getBudgetBlockedDocuments');
         Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
         Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
         Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');

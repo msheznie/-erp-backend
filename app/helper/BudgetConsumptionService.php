@@ -1169,6 +1169,11 @@ class BudgetConsumptionService
 		return (in_array($documentSystemID, [1, 50, 51, 2, 5, 52, 11, 4]) ? true : false);
 	}
 
+	public static function budgetBlockUpdateDocumentList($documentSystemID)
+	{
+		return (in_array($documentSystemID, [1, 50, 51, 2, 5, 52]) ? true : false);
+	}
+
 	public static function budgetConsumedDocumentList($documentSystemID)
 	{
 		return (in_array($documentSystemID, [2, 5, 52]) ? true : false);

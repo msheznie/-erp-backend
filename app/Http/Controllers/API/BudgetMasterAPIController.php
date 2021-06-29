@@ -25,6 +25,8 @@ use App\Models\Budjetdetails;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
+use App\Models\PurchaseRequest;
+use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ReportTemplateDetails;
 use App\Models\CurrencyMaster;
@@ -1406,5 +1408,69 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($budgetConsumedData['data'], 'Budget consumption retrieved successfully');
+    }
+
+    public function getBudgetBlockedDocuments(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $purchaseRequests = PurchaseRequest::selectRaw('purchaseRequestID as documentSystemCode, documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, createdDateTime, cancelledYN, manuallyClosed, refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, serviceLineSystemID, location, priority, createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected')
+                                           ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by'])
+                                           ->where('companySystemID', $input['companySystemID'])
+                                           ->where('cancelledYN', 0)
+                                           ->where('approved', 0)
+                                           ->where('budgetBlockYN', -1);
+        
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected')
+                                           ->with(['financeCategory', 'segment', 'supplier', 'created_by','currency', 'document_by'])
+                                           ->where('companySystemID', $input['companySystemID'])
+                                           ->where('poCancelledYN', 0)
+                                           ->where('approved', 0)
+                                           ->where('budgetBlockYN', -1);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseOrders = $purchaseOrders->where(function ($query) use ($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        $mergeResult = collect($purchaseOrders->get())->merge($purchaseRequests->get());
+
+        $mergeAll = $mergeResult->all();
+
+        return \DataTables::of($mergeAll)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        // $query->orderBy('documentSystemCode', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
     }
 }

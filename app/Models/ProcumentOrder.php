@@ -517,6 +517,10 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\FinanceItemCategoryMaster', 'financeCategory', 'itemCategoryID');
     }
 
+    public function financeCategory(){
+       return $this->fcategory();
+   }
+
     public function detail()
     {
         return $this->hasMany('App\Models\PurchaseOrderDetails', 'purchaseOrderMasterID', 'purchaseOrderID');

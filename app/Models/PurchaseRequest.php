@@ -366,6 +366,9 @@ class PurchaseRequest extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purchaseRequestID')->whereIn('documentSystemID',[1,50,51]);
     }
 
-
+    public function document_by()
+    {
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
 
 }
