@@ -272,8 +272,8 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                        (SUM(budjetAmtLocal) * -1) as totalLocal,
                                        (SUM(budjetAmtRpt) * -1) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
-                                       erp_templatesdetails.templateDetailDescription,
-                                       erp_templatesdetails.templatesMasterAutoID,
+                                       erp_companyreporttemplatedetails.description as templateDetailDescription,
+                                       erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
                                        erp_budjetdetails.*
                                        ,ifnull(ca.consumed_amount,0) as consumed_amount
                                        ,ifnull(ppo.rptAmt,0) as pending_po_amount,
@@ -283,10 +283,10 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
             ->where('erp_budjetdetails.Year', $budgetTransferMaster->year)
             ->where('erp_budjetdetails.templateDetailID', $input['fromTemplateDetailID'])
-            ->where('erp_templatesdetails.templatesMasterAutoID', $budgetTransferMaster->templatesMasterAutoID)
+            ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
             ->where('erp_budjetdetails.chartOfAccountID', $input['fromChartOfAccountSystemID'])
             ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
-            ->leftJoin('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID')
+            ->leftJoin('erp_companyreporttemplatedetails', 'templateDetailID', '=', 'detID')
             ->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID,
                                                 erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year, 
                                                 Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM

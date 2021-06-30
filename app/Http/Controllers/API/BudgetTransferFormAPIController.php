@@ -18,6 +18,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBudgetTransferFormAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormAPIRequest;
 use App\Models\BudgetTransferForm;
+use App\Models\ReportTemplate;
 use App\Models\BudgetTransferFormDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -486,7 +487,10 @@ class BudgetTransferFormAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)
                                  ->where('isActive', 1)->get();
 
-        $masterTemplates = TemplatesMaster::all();
+        $masterTemplates = ReportTemplate::where('isActive', 1)
+                                         ->where('companySystemID', $companyId)
+                                         ->where('reportID', '!=', 3)
+                                         ->get();
 
 
         if (count($companyFinanceYear) > 0) {
