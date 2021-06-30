@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateTemplatesDetailsAPIRequest;
 use App\Http\Requests\API\UpdateTemplatesDetailsAPIRequest;
 use App\Models\BudgetTransferForm;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ErpBudgetAddition;
 use App\Models\TemplatesDetails;
 use App\Models\TemplatesGLCode;
 use App\Repositories\TemplatesDetailsRepository;
@@ -303,6 +304,28 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         if (empty($budgetTransferMaster)) {
             return $this->sendError('Budget Transfer not found');
+        }
+
+        $templateMaster = $this->templatesMasterRepository->findWithoutFail($budgetTransferMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $budgetTransferMaster->templatesMasterAutoID]);
+
+        return $this->sendResponse($details, 'Templates Details retrieved successfully');
+    }
+
+    public function getTemplatesDetailsByBudgetAddition(Request $request)
+    {
+
+        $id = $request->get('id');
+
+        $budgetTransferMaster = ErpBudgetAddition::find($id);
+
+        if (empty($budgetTransferMaster)) {
+            return $this->sendError('Budget Addition not found');
         }
 
         $templateMaster = $this->templatesMasterRepository->findWithoutFail($budgetTransferMaster->templatesMasterAutoID);

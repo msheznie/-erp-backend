@@ -551,7 +551,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $id = $input['budgetTransferFormAutoID'];
 
         $items = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
-            ->with(['from_segment', 'to_segment', 'from_template', 'to_template'])
+            ->with(['segment', 'template'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
