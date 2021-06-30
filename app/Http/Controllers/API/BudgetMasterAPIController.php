@@ -539,16 +539,16 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
                                        (SUM(budjetAmtRpt) * -1) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
-                                       erp_templatesdetails.templateDetailDescription,
-                                       erp_templatesdetails.templatesMasterAutoID,
+                                       erp_companyreporttemplatedetails.description as templateDetailDescription,
+                                       erp_companyreporttemplatedetails.detID as templatesMasterAutoID,
                                        erp_budjetdetails.*,ifnull(ca.consumed_amount,0) as consumed_amount,ifnull(ppo.rptAmt,0) as pending_po_amount,
                                        ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,ifnull(adj.SumOfadjustmentRptAmount,0) AS adjusted_amount"))
             ->where('erp_budjetdetails.companySystemID', $budgetMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $budgetMaster->serviceLineSystemID)
             ->where('erp_budjetdetails.Year', $budgetMaster->Year)
-            ->where('erp_templatesdetails.templatesMasterAutoID', $budgetMaster->templateMasterID)
+            ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $budgetMaster->templateMasterID)
             ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
-            ->leftJoin('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID');
+            ->leftJoin('erp_companyreporttemplatedetails', 'templateDetailID', '=', 'detID');
 
         // IF Policy on filter consumed amounta and pending amount by service
             if($DLBCPolicy){
@@ -624,7 +624,7 @@ class BudgetMasterAPIController extends AppBaseController
                 })
             ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
                 'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
-            ->orderBy('erp_templatesdetails.templateDetailDescription','ASC')
+            ->orderBy('erp_companyreporttemplatedetails.description','ASC')
             ->get();
 
         $total = array();
@@ -688,16 +688,16 @@ class BudgetMasterAPIController extends AppBaseController
                 ->when($DLBCPolicy, function ($q) use($input){
                     return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
                 })
-                ->where('Year', $input['Year'])
+                ->where('year', $input['Year'])
                 ->where('consumeYN', -1)
                 ->join(DB::raw('(SELECT
-                                    erp_templatesglcode.templatesDetailsAutoID,
-                                    erp_templatesglcode.templateMasterID,
-                                    erp_templatesglcode.chartOfAccountSystemID,
-                                    erp_templatesglcode.glCode 
+                                    erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    erp_companyreporttemplatelinks.templateMasterID,
+                                    erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    erp_companyreporttemplatelinks.glCode 
                                     FROM
-                                    erp_templatesglcode
-                                    WHERE erp_templatesglcode.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_templatesglcode.templatesDetailsAutoID = ' . $input['templateDetailID'] . ' AND erp_templatesglcode.chartOfAccountSystemID is not null) as tem_gl'),
+                                    erp_companyreporttemplatelinks
+                                    WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
                     function ($join) {
                         $join->on('erp_budgetconsumeddata.chartOfAccountID', '=', 'tem_gl.chartOfAccountSystemID');
                     })
@@ -715,13 +715,13 @@ class BudgetMasterAPIController extends AppBaseController
             })
                 ->where('budgetYear', $input['Year'])
                 ->join(DB::raw('(SELECT
-                                                    erp_templatesglcode.templatesDetailsAutoID,
-                                                    erp_templatesglcode.templateMasterID,
-                                                    erp_templatesglcode.chartOfAccountSystemID,
-                                                    erp_templatesglcode.glCode 
+                                                    erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                    erp_companyreporttemplatelinks.templateMasterID,
+                                                    erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                    erp_companyreporttemplatelinks.glCode 
                                                     FROM
-                                                    erp_templatesglcode
-                                                    WHERE erp_templatesglcode.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_templatesglcode.templatesDetailsAutoID = ' . $input['templateDetailID'] . ' AND erp_templatesglcode.chartOfAccountSystemID is not null) as tem_gl'),
+                                                    erp_companyreporttemplatelinks
+                                                    WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
                     function ($join) {
                         $join->on('erp_purchaseorderdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                     })
@@ -774,8 +774,8 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
                                        if((SUM(budjetAmtRpt) * -1) < 0,(SUM(budjetAmtRpt) * -1),(SUM(budjetAmtRpt) * -1)) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
-                                       erp_templatesdetails.templateDetailDescription,
-                                       erp_templatesdetails.templatesMasterAutoID,
+                                       erp_companyreporttemplatedetails.description as templateDetailDescription,
+                                       erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
                                        erp_budjetdetails.*
                                         /*,ifnull(ca.consumed_amount,0) as consumed_amount
                                          ,ifnull(ppo.rptAmt,0) as pending_po_amount,
@@ -784,9 +784,9 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('erp_budjetdetails.companySystemID', $budgetMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $budgetMaster->serviceLineSystemID)
             ->where('erp_budjetdetails.Year', $budgetMaster->Year)
-            ->where('erp_templatesdetails.templatesMasterAutoID', $budgetMaster->templateMasterID)
+            ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $budgetMaster->templateMasterID)
             ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
-            ->join('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID')
+            ->join('erp_companyreporttemplatedetails', 'templateDetailID', '=', 'detID')
 
            /* ->join(DB::raw('(SELECT
                                     erp_templatesglcode.templatesDetailsAutoID,
@@ -828,16 +828,16 @@ class BudgetMasterAPIController extends AppBaseController
                   })*/
             ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
                 'erp_budjetdetails.templateDetailID', 'erp_budjetdetails.Year'])
-            ->orderBy('erp_templatesdetails.templateDetailDescription')
+            ->orderBy('erp_companyreporttemplatedetails.description')
             ->get();
 
         foreach ($reportData as $data) {
 
-            $glData = TemplatesGLCode::where('templateMasterID', $budgetMaster->templateMasterID)
-                                            ->where('templatesDetailsAutoID', $data['templateDetailID'])
-                                            ->whereNotNull('chartOfAccountSystemID')->get();
+            $glData = ReportTemplateLinks::where('templateMasterID', $budgetMaster->templateMasterID)
+                                            ->where('templateDetailID', $data['templateDetailID'])
+                                            ->whereNotNull('glAutoID')->get();
 
-            $glIds = collect($glData)->pluck('chartOfAccountSystemID')->toArray();
+            $glIds = collect($glData)->pluck('glAutoID')->toArray();
 
 
             $data->consumed_amount = BudgetConsumedData::where('companySystemID', $data['companySystemID'])
@@ -884,8 +884,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         $decimalPlaceLocal = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 3;
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
-
-        $data =
 
         $data = array('entity' => $budgetMaster->toArray(), 'reportData' => $reportData,
             'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);

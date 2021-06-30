@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateTemplatesDetailsAPIRequest;
 use App\Models\BudgetTransferForm;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ReportTemplateLinks;
+use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\TemplatesDetails;
 use App\Models\TemplatesGLCode;
@@ -349,13 +350,14 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         $id = $request->get('id');
 
-        $templateMaster = $this->templatesMasterRepository->findWithoutFail($id);
+        $templateMaster = ReportTemplate::find($id);
 
         if (empty($templateMaster)) {
             return $this->sendError('Templates Master not found');
         }
 
-        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $id]);
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $id)
+                                        ->get();
 
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
