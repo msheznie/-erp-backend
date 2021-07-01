@@ -18,6 +18,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBudgetTransferFormAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormAPIRequest;
 use App\Models\BudgetTransferForm;
+use App\Models\ReportTemplate;
+use App\Models\BudgetReviewTransferAddition;
 use App\Models\BudgetTransferFormDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -30,6 +32,7 @@ use App\Models\SegmentMaster;
 use App\Models\TemplatesMaster;
 use App\Models\Year;
 use App\Models\YesNoSelection;
+use App\helper\BudgetConsumptionService;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetTransferFormRepository;
 use App\Traits\AuditTrial;
@@ -486,7 +489,10 @@ class BudgetTransferFormAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)
                                  ->where('isActive', 1)->get();
 
-        $masterTemplates = TemplatesMaster::all();
+        $masterTemplates = ReportTemplate::where('isActive', 1)
+                                         ->where('companySystemID', $companyId)
+                                         ->where('reportID', '!=', 3)
+                                         ->get();
 
 
         if (count($companyFinanceYear) > 0) {
@@ -805,6 +811,139 @@ class BudgetTransferFormAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function budgetTransferCreateFromReview(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['type']) || (isset($input['type']) && $input['type'] == "")) {
+            return $this->sendError("Please choose budget create type", 500);
+        }
+
+        if ($input['type'] == 1) {
+            return $this->createBudgetTransferFromReview($input);
+        } else {
+
+        }
+    }
+
+    public function createBudgetTransferFromReview($input)
+    {
+        $selectedPoPrs = collect($input['budgetReviews'])->where('selected', 1)->all();
+
+        $budgetYears = array_unique(collect($selectedPoPrs)->pluck('budgetYear')->toArray());
+        if (count($budgetYears) != 1) {
+            return $this->sendError("Different Budget year cannot be selected", 500);
+        }
+
+
+        $consumptionData = [];
+        $consumptionDataWithPoPr = [];
+        foreach ($selectedPoPrs as $key => $value) {
+            $res = BudgetConsumptionService::getConsumptionData($value['documentSystemID'], $value['documentSystemCode']);
+
+            if ($res['status'] && isset($res['data']) && count($res['data']) > 0) {
+                foreach ($res['data'] as $key1 => $value1) {
+                    $consumptionData[] = $value1;
+                    $temp['budgetData'] = $value1;
+                    $temp['poData'] = $value;
+
+                     $consumptionDataWithPoPr[] = $temp;
+                }
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $templateIDs = array_unique(collect($consumptionData)->pluck('companyReportTemplateID')->toArray());
+            if (count($templateIDs) == 0) {
+                return $this->sendError("Budget not found for this document", 500);
+            }
+
+            $budgetTransferCods = "";
+            foreach ($templateIDs as $key => $value) {
+                $commentAndDoc = $this->getBudgetTransferComment($value, $consumptionDataWithPoPr);
+
+                $employee = \Helper::getEmployeeInfo();
+                $saveData['createdPcID'] = gethostname();
+                $saveData['createdUserID'] = $employee->empID;
+                $saveData['createdUserSystemID'] = $employee->employeeSystemID;
+                $saveData['createdDate'] = now();
+                $saveData['year'] = $budgetYears[0];
+                $saveData['comments'] = $commentAndDoc['comment'];
+                $saveData['companySystemID'] = $input['companySystemID'];
+                $saveData['templatesMasterAutoID'] = $value;
+                $saveData['documentSystemID'] = 46;
+                $saveData['documentID'] = 'BTN';
+                $saveData['documentID'] = 'BTN';
+
+                $lastSerial = BudgetTransferForm::where('companySystemID', $input['companySystemID'])
+                                                ->orderBy('budgetTransferFormAutoID', 'desc')
+                                                ->first();
+
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                }
+
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+                if (empty($company)) {
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company')]), 500);
+                }
+
+                $saveData['companyID'] = $company->CompanyID;
+                $saveData['serialNo'] = $lastSerialNumber;
+                $saveData['RollLevForApp_curr'] = 1;
+
+                $documentMaster = DocumentMaster::where('documentSystemID', $saveData['documentSystemID'])->first();
+
+                if ($documentMaster) {
+                    $code = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $saveData['transferVoucherNo'] = $code;
+
+                    $budgetTransferCods .= (($budgetTransferCods == "") ? "" : ", ").$code;
+                }
+
+                $budgetTransferForms = $this->budgetTransferFormRepository->create($saveData);
+
+                if ($budgetTransferForms) {
+                    foreach ($commentAndDoc['docs'] as $key => $value) {
+                        $createData = [
+                            'budgetTransferAdditionID' => $budgetTransferForms->budgetTransferFormAutoID,
+                            'budgetTransferType' => 1,
+                            'documentSystemCode' => $value['documentSystemCode'],
+                            'documentSystemID' => $value['documentSystemID']
+                        ];
+
+                        BudgetReviewTransferAddition::insert($createData);
+                    }
+                }
+            }
+
+             DB::commit();
+            return $this->sendResponse([], " Budget transfer(s) ".$budgetTransferCods." is/are created for selected documents");
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getBudgetTransferComment($templatesMasterAutoID, $consumptionDataWithPoPr)
+    {
+        $docs = [];
+        $comment = "";
+        foreach ($consumptionDataWithPoPr as $key => $value) {
+            if ($value['budgetData']['companyReportTemplateID'] == $templatesMasterAutoID) {
+                $docs[] = $value['poData'];
+
+                $comment .= (($comment == "") ? " " : ", ").$value['poData']['documentCode']; 
+            }
+        }
+
+        return ['docs' => $docs, 'comment' => "Budget transfer created for ".$comment];
     }
     
 }
