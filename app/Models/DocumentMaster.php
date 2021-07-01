@@ -22,7 +22,7 @@ class DocumentMaster extends Model
     public $table = 'erp_documentmaster';
     
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'documentSystemID';
 
 
