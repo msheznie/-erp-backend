@@ -24,6 +24,13 @@ class CreateErpBudgetAdditionDetailAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return ErpBudgetAdditionDetail::$rules;
+        return [
+            'budgetAdditionFormAutoID' => 'required',
+            'templateDetailID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'chartOfAccountSystemID' => 'required|numeric|min:1',
+            'adjustmentAmountRpt' => 'required|numeric',
+            'remarks' => 'required'
+        ];
     }
 }

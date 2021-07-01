@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateErpBudgetAdditionDetailAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionDetailAPIRequest;
-use App\Models\BudgetTransferFormDetail;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Repositories\ErpBudgetAdditionDetailRepository;
 use Illuminate\Http\Request;
@@ -112,10 +111,11 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
     public function store(CreateErpBudgetAdditionDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
-        $erpBudgetAdditionDetail = $this->erpBudgetAdditionDetailRepository->create($input);
+        $budgetAdditionDetails = $this->erpBudgetAdditionDetailRepository->create($input);
 
-        return $this->sendResponse($erpBudgetAdditionDetail->toArray(), 'Erp Budget Addition Detail saved successfully');
+        return $this->sendResponse($budgetAdditionDetails->toArray(), 'Budget Transfer Form Detail saved successfully');
     }
 
     /**
@@ -282,7 +282,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
 
         $erpBudgetAdditionDetail->delete();
 
-        return $this->sendSuccess('Erp Budget Addition Detail deleted successfully');
+        return $this->sendResponse($id, 'Erp Budget Addition Detail deleted successfully');
     }
 
     public function getDetailsByBudgetAddition(Request $request)
@@ -291,9 +291,10 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $id = $input['id'];
 
         $items = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)
-            ->with(['from_segment', 'to_segment', 'from_template', 'to_template'])
+            ->with(['segment', 'template'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
     }
+
 }

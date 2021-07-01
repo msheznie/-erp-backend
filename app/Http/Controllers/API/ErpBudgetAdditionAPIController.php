@@ -5,9 +5,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateErpBudgetAdditionAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionAPIRequest;
+use App\Models\BudgetMaster;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\ErpBudgetAddition;
+use App\Models\Months;
+use App\Models\ReportTemplate;
+use App\Models\SegmentMaster;
+use App\Models\Year;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ErpBudgetAdditionRepository;
 use Illuminate\Http\Request;
 use Response;
@@ -347,5 +354,73 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $erpBudgetAddition->delete();
 
         return $this->sendSuccess('Erp Budget Addition deleted successfully');
+    }
+
+    public function getBudgetAdditionFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = Year::orderBy('year', 'desc')->get();
+
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+
+        $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->where('isActive', 1)->get();
+
+        if (count($companyFinanceYear) > 0) {
+            $startYear = $companyFinanceYear[0]['financeYear'];
+            $finYearExp = explode('/', (explode('|', $startYear))[0]);
+            $financeYear = (int)$finYearExp[2];
+        } else {
+            $financeYear = date("Y");
+        }
+
+        $masterTemplates = BudgetMaster::where([
+            'companySystemID' => $companyId,
+            'Year' => $financeYear
+        ])->first()->template_master()->get();
+
+        $output = [
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'companyFinanceYear' => $companyFinanceYear,
+            'segments' => $segments,
+            'masterTemplates' => $masterTemplates,
+            'financeYear' => $financeYear
+        ];
+
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+    }
+
+    public function getTemplatesDetailsByBudgetAddition(Request $request)
+    {
+
+        $id = $request->get('id');
+
+        $budgetAdditionMaster = ErpBudgetAddition::find($id);
+
+        if (empty($budgetAdditionMaster)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        $template_details = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID)
+        ->details()->where([
+            'isFinalLevel' => 1,
+            'companySystemID' => $budgetAdditionMaster->companySystemID
+        ])->get();
+        if (empty($template_details)) {
+            return $this->sendError('Templates not found');
+        }
+
+        return $this->sendResponse($template_details, 'Templates Details retrieved successfully');
     }
 }

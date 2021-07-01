@@ -320,29 +320,6 @@ class TemplatesDetailsAPIController extends AppBaseController
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
 
-    public function getTemplatesDetailsByBudgetAddition(Request $request)
-    {
-
-        $id = $request->get('id');
-
-        $budgetTransferMaster = ErpBudgetAddition::find($id);
-
-        if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Addition not found');
-        }
-
-        $templateMaster = $this->templatesMasterRepository->findWithoutFail($budgetTransferMaster->templatesMasterAutoID);
-
-        if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
-        }
-
-        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
-                                        ->where('isFinalLevel', 1)
-                                        ->get();
-
-        return $this->sendResponse($details, 'Templates Details retrieved successfully');
-    }
 
     public function getAllGLCodesByTemplate(Request $request)
     {

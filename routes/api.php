@@ -2045,9 +2045,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_addition', 'ErpBudgetAdditionAPIController');
         Route::post('budget_additions', 'ErpBudgetAdditionAPIController@index');
-        Route::get('getTemplatesDetailsByBudgetAddition', 'TemplatesDetailsAPIController@getTemplatesDetailsByBudgetAddition');
+        Route::get('getTemplatesDetailsByBudgetAddition', 'ErpBudgetAdditionAPIController@getTemplatesDetailsByBudgetAddition');
         Route::get('getDetailsByBudgetAddition', 'ErpBudgetAdditionDetailAPIController@getDetailsByBudgetAddition');
-//        Route::resource('erp_budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
+        Route::get('getBudgetAdditionFormData', 'ErpBudgetAdditionAPIController@getBudgetAdditionFormData');
+        Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
