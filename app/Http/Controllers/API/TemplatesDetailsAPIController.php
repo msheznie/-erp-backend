@@ -16,6 +16,9 @@ use App\Http\Requests\API\CreateTemplatesDetailsAPIRequest;
 use App\Http\Requests\API\UpdateTemplatesDetailsAPIRequest;
 use App\Models\BudgetTransferForm;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ReportTemplateLinks;
+use App\Models\ReportTemplate;
+use App\Models\ReportTemplateDetails;
 use App\Models\ErpBudgetAddition;
 use App\Models\TemplatesDetails;
 use App\Models\TemplatesGLCode;
@@ -334,7 +337,9 @@ class TemplatesDetailsAPIController extends AppBaseController
             return $this->sendError('Templates Master not found');
         }
 
-        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $budgetTransferMaster->templatesMasterAutoID]);
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
+                                        ->where('isFinalLevel', 1)
+                                        ->get();
 
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
@@ -343,18 +348,18 @@ class TemplatesDetailsAPIController extends AppBaseController
     {
 
         $id = $request->get('id');
-        $templateDetail = $this->templatesDetailsRepository->find($id);
+        $templateDetail = ReportTemplateDetails::find($id);
 
         if (empty($templateDetail)) {
             return $this->sendError('Templates Detail not found');
         }
 
-        $glData = TemplatesGLCode::where('templateMasterID', $templateDetail->templatesMasterAutoID)
-                                    ->where('templatesDetailsAutoID', $id)
-                                    ->whereNotNull('chartOfAccountSystemID')
+        $glData = ReportTemplateLinks::where('templateMasterID', $templateDetail->companyReportTemplateID)
+                                    ->where('templateDetailID', $id)
+                                    ->whereNotNull('glAutoID')
                                     ->get();
 
-        $glIds = collect($glData)->pluck('chartOfAccountSystemID')->toArray();
+        $glIds = collect($glData)->pluck('glAutoID')->toArray();
 
         $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))
             ->whereIn('chartOfAccountSystemID', $glIds)
@@ -368,13 +373,14 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         $id = $request->get('id');
 
-        $templateMaster = $this->templatesMasterRepository->findWithoutFail($id);
+        $templateMaster = ReportTemplate::find($id);
 
         if (empty($templateMaster)) {
             return $this->sendError('Templates Master not found');
         }
 
-        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $id]);
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $id)
+                                        ->get();
 
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
