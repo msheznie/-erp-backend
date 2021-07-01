@@ -620,7 +620,7 @@ class Helper
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     break;
                  case 99: // asset verification
-                    $docInforArr["documentCodeColumnName"] = 'salesReturnCode';
+                    $docInforArr["documentCodeColumnName"] = 'verficationCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
@@ -1627,7 +1627,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 99: // SalesReturn
+            case 99: // asset verification
                 $docInforArr["tableName"] = 'erp_fa_asset_verification';
                 $docInforArr["modelName"] = 'AssetVerification';
                 $docInforArr["primarykey"] = 'id';
