@@ -58,6 +58,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
 use App\Models\CurrencyConversionMaster;
+use App\Models\ContingencyBudgetPlan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -112,7 +113,7 @@ class email
             } else {
                 return ['success' => false, 'message' => 'Document Not Found'];
             }
-
+            
             switch ($data['docSystemID']) { // check the document id and set relevant parameters
                 case 1:
                 case 50:
@@ -399,6 +400,13 @@ class email
                         $data['docCode'] = $currencyConversion->conversionCode;
                     }
                     break;
+                case 100:
+                    $contingencyBudgetPlan = ContingencyBudgetPlan::find($data['docSystemCode']);
+                    if(!empty($contingencyBudgetPlan)){
+                        $data['docApprovedYN'] = $contingencyBudgetPlan->approvedYN;
+                        $data['docCode'] = $contingencyBudgetPlan->contingencyBudgetNo;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -407,7 +415,6 @@ class email
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
-
 
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
             if ($data) {
