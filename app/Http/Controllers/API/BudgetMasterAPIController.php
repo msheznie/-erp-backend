@@ -913,12 +913,12 @@ class BudgetMasterAPIController extends AppBaseController
             })
             ->get();
 
-        $masterTemplates = TemplatesMaster::when(request('isFilter') == 0, function ($q) {
-                                            return $q->where('isBudgetUpload',-1)
-                                                      ->where('isActive',-1);
+        $masterTemplates = ReportTemplate::when(request('isFilter') == 0, function ($q) {
+                                            return $q->where('isActive',1);
                                         })
-                                        ->where('templateType','PL')
-                                        ->get();
+                                        ->where('companySystemID', $companyId)
+                                         ->where('reportID', '!=', 3)
+                                         ->get();
 
         if (count($companyFinanceYear) > 0) {
             $startYear = $companyFinanceYear[0]['financeYear'];
@@ -1418,8 +1418,8 @@ class BudgetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseRequests = PurchaseRequest::selectRaw('purchaseRequestID as documentSystemCode, documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, createdDateTime, cancelledYN, manuallyClosed, refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, serviceLineSystemID, location, priority, createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected')
-                                           ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by'])
+        $purchaseRequests = PurchaseRequest::selectRaw('purchaseRequestID as documentSystemCode, documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, createdDateTime, cancelledYN, manuallyClosed, refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, serviceLineSystemID, location, priority, createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
+                                           ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by', 'budget_transfer_addition'])
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('cancelledYN', 0)
                                            ->where('approved', 0)
@@ -1434,8 +1434,8 @@ class BudgetMasterAPIController extends AppBaseController
             });
         }
 
-        $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected')
-                                           ->with(['financeCategory', 'segment', 'supplier', 'created_by','currency', 'document_by'])
+        $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
+                                           ->with(['financeCategory', 'segment', 'supplier', 'created_by','currency', 'document_by', 'budget_transfer_addition'])
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('poCancelledYN', 0)
                                            ->where('approved', 0)

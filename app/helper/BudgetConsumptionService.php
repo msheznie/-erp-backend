@@ -273,6 +273,8 @@ class BudgetConsumptionService
 				$finalData[$value]['availableAmount'] = $availableAmount;
 				$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
 				$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
+				$finalData[$value]['templateDetailID'] = $value;
+				$finalData[$value]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
 
 			}
 

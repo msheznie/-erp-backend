@@ -16,6 +16,7 @@ use App\helper\Helper;
 use App\helper\TaxService;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Awobaz\Compoships\Compoships;
 
 /**
  * Class ProcumentOrder
@@ -149,6 +150,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class ProcumentOrder extends Model
 {
+    use Compoships;
     //use SoftDeletes;
 
     public $table = 'erp_purchaseordermaster';
@@ -694,5 +696,10 @@ class ProcumentOrder extends Model
     public function scopeSupplierCountryJoin($q,$as = 'supplier_country', $column = 'countryID' , $columnAs = 'countryID')
     {
         return $q->leftJoin('countrymaster as '.$as,$as.'.countryID','supplier.'.$column);
+    }
+
+    public function budget_transfer_addition()
+    {
+        return $this->hasMany('App\Models\BudgetReviewTransferAddition', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
     }
 }

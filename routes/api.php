@@ -1208,6 +1208,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
         Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
         Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
+        Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview');
         Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
         Route::get('getBudgetTransferAudit', 'BudgetTransferFormAPIController@getBudgetTransferAudit');
         Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen');
@@ -2118,3 +2119,5 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
 Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
+
+Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
