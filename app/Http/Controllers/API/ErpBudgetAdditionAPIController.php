@@ -144,6 +144,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
         $input['createdDate'] = now();
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $validator = \Validator::make($input, [
             'year' => 'required|numeric|min:1',
@@ -289,18 +292,41 @@ class ErpBudgetAdditionAPIController extends AppBaseController
      */
     public function update($id, UpdateErpBudgetAdditionAPIRequest $request)
     {
-        $input = $request->all();
 
-        /** @var ErpBudgetAddition $erpBudgetAddition */
+        $input = $request->only(['confirmedYN']);
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN'));
+        $input['comments'] = $request->get('comments');
+
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
 
         if (empty($erpBudgetAddition)) {
             return $this->sendError('Erp Budget Addition not found');
         }
+        $employee = \Helper::getEmployeeInfo();
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        if ($erpBudgetAddition->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $params = array('autoID' => $id,
+                'company' => $erpBudgetAddition->companySystemID,
+                'document' => $erpBudgetAddition->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => 0
+            );
+            info(json_encode($params));
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
 
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->update($input, $id);
 
-        return $this->sendResponse($erpBudgetAddition->toArray(), 'ErpBudgetAddition updated successfully');
+        return $this->sendResponse($erpBudgetAddition->toArray(), 'Budget Addition updated successfully');
     }
 
     /**
@@ -413,10 +439,10 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         $template_details = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID)
-        ->details()->where([
-            'isFinalLevel' => 1,
-            'companySystemID' => $budgetAdditionMaster->companySystemID
-        ])->get();
+            ->details()->where([
+                'isFinalLevel' => 1,
+                'companySystemID' => $budgetAdditionMaster->companySystemID
+            ])->get();
         if (empty($template_details)) {
             return $this->sendError('Templates not found');
         }
