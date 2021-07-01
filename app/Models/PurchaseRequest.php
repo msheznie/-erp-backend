@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Awobaz\Compoships\Compoships;
 
 /**
  * Class PurchaseRequest
@@ -99,7 +100,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PurchaseRequest extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'erp_purchaserequest';
     
     const CREATED_AT = 'createdDateTime';
@@ -366,6 +367,14 @@ class PurchaseRequest extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'purchaseRequestID')->whereIn('documentSystemID',[1,50,51]);
     }
 
+    public function document_by()
+    {
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
 
+    public function budget_transfer_addition()
+    {
+        return $this->hasMany('App\Models\BudgetReviewTransferAddition', ['documentSystemCode', 'documentSystemID'], ['purchaseRequestID', 'documentSystemID']);
+    }
 
 }

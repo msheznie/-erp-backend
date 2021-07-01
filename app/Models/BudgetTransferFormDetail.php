@@ -197,12 +197,12 @@ class BudgetTransferFormDetail extends Model
 
     public function from_template()
     {
-        return $this->belongsTo('App\Models\TemplatesDetails', 'fromTemplateDetailID', 'templatesDetailsAutoID');
+        return $this->belongsTo('App\Models\ReportTemplateDetails', 'fromTemplateDetailID', 'detID');
     }
 
     public function to_template()
     {
-        return $this->belongsTo('App\Models\TemplatesDetails', 'toTemplateDetailID', 'templatesDetailsAutoID');
+        return $this->belongsTo('App\Models\ReportTemplateDetails', 'toTemplateDetailID', 'detID');
     }
 
     public function master()

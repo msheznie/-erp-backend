@@ -273,6 +273,8 @@ class BudgetConsumptionService
 				$finalData[$value]['availableAmount'] = $availableAmount;
 				$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
 				$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
+				$finalData[$value]['templateDetailID'] = $value;
+				$finalData[$value]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
 
 			}
 
@@ -1167,6 +1169,11 @@ class BudgetConsumptionService
 	public static function budgetCheckDocumentList($documentSystemID)
 	{
 		return (in_array($documentSystemID, [1, 50, 51, 2, 5, 52, 11, 4]) ? true : false);
+	}
+
+	public static function budgetBlockUpdateDocumentList($documentSystemID)
+	{
+		return (in_array($documentSystemID, [1, 50, 51, 2, 5, 52]) ? true : false);
 	}
 
 	public static function budgetConsumedDocumentList($documentSystemID)
