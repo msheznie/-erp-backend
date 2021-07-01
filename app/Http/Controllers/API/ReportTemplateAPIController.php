@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateReportTemplateAPIRequest;
 use App\Http\Requests\API\UpdateReportTemplateAPIRequest;
 use App\Models\AccountsType;
 use App\Models\ChartOfAccount;
+use App\Models\BudgetMaster;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\ReportTemplate;
@@ -379,6 +380,13 @@ class ReportTemplateAPIController extends AppBaseController
 
             if (empty($reportTemplate)) {
                 return $this->sendError('Report Template not found');
+            }
+
+            $checkReportInBudget = BudgetMaster::where('templateMasterID', $id)
+                                               ->first();
+
+            if ($checkReportInBudget) {
+                return $this->sendError('Report Template has linked to budget');
             }
 
             $templateDetail = ReportTemplateDetails::ofMaster($id)->delete();

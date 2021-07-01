@@ -949,11 +949,12 @@ class BudgetMasterAPIController extends AppBaseController
 
                 if (count($templatTypes) == 2) {
                     $reportTemplates = ReportTemplate::whereIn('companyReportTemplateID', $templateIDs)
+                                                 ->where('isActive', 1) 
                                                  ->get();
                 } else {
                     if (in_array(1,$templatTypes)) {
                         foreach ($checkBudget as $key => $value) {
-                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 1) {
+                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 1 && $value->template_master->isActive == 1) {
                                 $reportTemplates[] = $value->template_master;
                             }
                         }
@@ -966,7 +967,7 @@ class BudgetMasterAPIController extends AppBaseController
                         $reportTemplates = collect($reportTemplates)->merge($pandlTemplates);
                     } else {
                         foreach ($checkBudget as $key => $value) {
-                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 2) {
+                            if (isset($value->template_master->reportID) && $value->template_master->reportID == 2 && $value->template_master->isActive == 1) {
                                 $reportTemplates[] = $value->template_master;
                             }
                         }
