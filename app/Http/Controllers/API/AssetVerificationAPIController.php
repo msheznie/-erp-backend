@@ -180,7 +180,8 @@ class AssetVerificationAPIController extends AppBaseController
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-//            DocumentMaster::where('documentSystemID', $input['documentSystemID'])->update(['departmentSystemID' => ($documentMaster->departmentSystemID + 1)]);
+
+            DocumentMaster::where('documentSystemID', $input['documentSystemID'])->increment('departmentSystemID');
 
             $assetVerification = $this->assetVerificationRepository->create($input);
             DB::commit();
@@ -534,7 +535,7 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
         $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])
-            ->ofCompany($subCompanies)->where('approved',-1);
+            ->ofCompany($subCompanies)->where('approved', -1);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
