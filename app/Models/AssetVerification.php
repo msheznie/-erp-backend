@@ -223,7 +223,7 @@ class AssetVerification extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'timesReferred' => 'integer',
-        'refferedBackYN' => 'boolean',
+        'refferedBackYN' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
