@@ -63,6 +63,7 @@ use App\helper\CurrencyValidation;
 use App\helper\BlockInvoice;
 use App\helper\SupplierRegister;
 use App\helper\SupplierAssignService;
+use App\helper\BudgetReviewService;
 use App\helper\StockCountService;
 use App\helper\BudgetHistoryService;
 use App\helper\CustomerAssignService;
@@ -1727,6 +1728,14 @@ class Helper
                                 if (!$stockCountRes['status']) {
                                     DB::rollback();
                                     return ['success' => false, 'message' => $stockCountRes['message']];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 46) { //Budget transfer for review notfifications
+                                $budgetBlockNotifyRes = BudgetReviewService::notfifyBudgetBlockRemoval($input['documentSystemID'], $input['documentSystemCode']);
+                                if (!$budgetBlockNotifyRes['status']) {
+                                    DB::rollback();
+                                    return ['success' => false, 'message' => $budgetBlockNotifyRes['message']];
                                 }
                             }
 

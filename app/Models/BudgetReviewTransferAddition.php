@@ -81,5 +81,13 @@ class BudgetReviewTransferAddition extends Model
         
     ];
 
-    
+    public function purchase_order()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function purchase_request()
+    {
+        return $this->belongsTo('App\Models\PurchaseRequest', 'documentSystemCode', 'purchaseRequestID');
+    }
 }

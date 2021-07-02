@@ -203,6 +203,9 @@ class ReportTemplate extends Model
         return $this->hasMany('App\Models\ReportTemplateDetails', 'companyReportTemplateID', 'companyReportTemplateID');
     }
 
-
+    public function getDescriptionAttribute($value)
+    {
+        return is_string($value) ? htmlspecialchars_decode($value) : $value;
+    }
     
 }
