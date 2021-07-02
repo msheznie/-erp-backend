@@ -8,6 +8,7 @@ use App\Http\Requests\API\UpdateAssetVerificationAPIRequest;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetVerification;
 use App\Models\AssetVerificationDetail;
+use App\Models\BookInvSuppMaster;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentMaster;
@@ -181,15 +182,24 @@ class AssetVerificationAPIController extends AppBaseController
                 $input['companyID'] = $company->CompanyID;
             }
 
-            $documentCode = ($company->CompanyID . '\\' . $documentMaster->documentID . str_pad($documentMaster->departmentSystemID, 6, '0', STR_PAD_LEFT));
+            $lastSerial = AssetVerification::where('companySystemID', $input['companySystemID'])
+                ->orderBy('serialNo', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $documentCode = ($company->CompanyID . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
             $input['verficationCode'] = $documentCode;
             $input['documentDate'] = new Carbon($input['documentDate']);
-            $input['serialNo'] = $documentMaster->departmentSystemID;
+            $input['serialNo'] = $lastSerialNumber;
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
-            DocumentMaster::where('documentSystemID', $input['documentSystemID'])->increment('departmentSystemID');
 
             $assetVerification = $this->assetVerificationRepository->create($input);
             DB::commit();
@@ -311,6 +321,12 @@ class AssetVerificationAPIController extends AppBaseController
 
 
         if ($assetVerification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $isDetailsExists = AssetVerificationDetail::where('verification_id', $id)->exists();
+            if(!$isDetailsExists){
+                return $this->sendError('Asset verification details not found');
+            }
+
             $params = [
                 'autoID' => $id,
                 'company' => $assetVerification->companySystemID,
