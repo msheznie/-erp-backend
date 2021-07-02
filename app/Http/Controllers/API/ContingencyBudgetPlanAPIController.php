@@ -147,11 +147,11 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $check_recExist = $this->check_validation(0,$input);
+        $check_recExist = $this->check_validation(0,$input); 
 
-        if($check_recExist != 'success'){
-            return $this->sendError($check_recExist, 500);
-        }
+        if($check_recExist != 'success'){ 
+            return $this->sendError($check_recExist, 500); 
+        } 
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
@@ -292,26 +292,25 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         
         $employee = \Helper::getEmployeeInfo();
 
-        $validator = \Validator::make($input, [
-            'year' => 'required|numeric|min:1',
-            'comments' => 'required',
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            'templateMasterID' => 'required|numeric|min:1',
-            'contingencyPercentage' => 'required|numeric',
-            'contigencyAmount' => 'required|numeric',
-            'budgetAmount' => 'required|numeric'
-        ]);
+        $validator = \Validator::make($input, [ 
+            'year' => 'required|numeric|min:1', 
+            'comments' => 'required', 
+            'serviceLineSystemID' => 'required|numeric|min:1', 
+            'templateMasterID' => 'required|numeric|min:1', 
+            'contingencyPercentage' => 'required|numeric', 
+            'contigencyAmount' => 'required|numeric', 
+            'budgetAmount' => 'required|numeric' 
+        ]); 
 
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
+        if ($validator->fails()) { 
+            return $this->sendError($validator->messages(), 422); 
+        } 
 
-        $check_recExist = $this->check_validation($id,$input);
+        $check_recExist = $this->check_validation($id,$input); 
 
-        if($check_recExist != 'success'){
-            return $this->sendError($check_recExist, 500);
-        }
-        
+        if($check_recExist != 'success'){ 
+            return $this->sendError($check_recExist, 500); 
+        } 
 
         if ($contingencyBudgetPlan->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -682,22 +681,22 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
     }
-
-    public function check_validation($id=0,$input){
-
-        $check_valid = ContingencyBudgetPlan::where(['year' => $input['year'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']])
-                                            ->select('ID','year','budgetID','templateMasterID','contingencyBudgetNo');
-        if($id != 0){
-            $check_valid = $check_valid->where('ID', '!=', $id);
-        }
-        $check_valid = $check_valid->first();
-        $msg = '';
-
-        if(!empty($check_valid)){
-            $msg = 'Contingency budget already exist.';
-        }else{
-            $msg = 'success';
-        }
-        return $msg;
-    }
+ 
+    public function check_validation($id=0,$input){ 
+ 
+        $check_valid = ContingencyBudgetPlan::where(['year' => $input['year'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']]) 
+                                            ->select('ID','year','budgetID','templateMasterID','contingencyBudgetNo'); 
+        if($id != 0){ 
+            $check_valid = $check_valid->where('ID', '!=', $id); 
+        } 
+        $check_valid = $check_valid->first(); 
+        $msg = ''; 
+ 
+        if(!empty($check_valid)){ 
+            $msg = 'Contingency budget already exist.'; 
+        }else{ 
+            $msg = 'success'; 
+        } 
+        return $msg; 
+    } 
 }
