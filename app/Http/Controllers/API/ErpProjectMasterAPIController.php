@@ -97,7 +97,14 @@ class ErpProjectMasterAPIController extends AppBaseController
 
 
         return \DataTables::eloquent($projectMaster)
-            ->addIndexColumn()
+            ->addIndexColumn()->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -173,7 +180,7 @@ class ErpProjectMasterAPIController extends AppBaseController
 
         $erpProjectMaster = $this->erpProjectMasterRepository->create($input);
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'Erp Project Master saved successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master saved successfully');
     }
 
     /**
@@ -224,7 +231,7 @@ class ErpProjectMasterAPIController extends AppBaseController
             return $this->sendError('Erp Project Master not found');
         }
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'Erp Project Master retrieved successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master retrieved successfully');
     }
 
     /**
@@ -311,7 +318,7 @@ class ErpProjectMasterAPIController extends AppBaseController
 
         $erpProjectMaster = $this->erpProjectMasterRepository->update($input, $id);
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'ErpProjectMaster updated successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master updated successfully');
     }
 
     /**
@@ -359,12 +366,12 @@ class ErpProjectMasterAPIController extends AppBaseController
         $erpProjectMaster = $this->erpProjectMasterRepository->findWithoutFail($id);
 
         if (empty($erpProjectMaster)) {
-            return $this->sendError('Erp Project Master not found');
+            return $this->sendError('Project Master not found');
         }
 
         $erpProjectMaster->delete();
 
-        return $this->sendSuccess('Erp Project Master deleted successfully');
+        return $this->sendSuccess('Project Master deleted successfully');
     }
 
     public function formData(Request $request)
