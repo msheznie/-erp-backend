@@ -72,7 +72,7 @@ class ErpProjectMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $projectMaster = ErpProjectMaster::select(['id', 'projectCode', 'description', 'start_date', 'end_date']);
+        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName')->select(['id', 'projectCode', 'description', 'start_date', 'end_date','companySystemID']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
