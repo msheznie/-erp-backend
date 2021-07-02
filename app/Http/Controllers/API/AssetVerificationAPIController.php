@@ -114,6 +114,14 @@ class AssetVerificationAPIController extends AppBaseController
         return \DataTables::eloquent($assetVerifications)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
