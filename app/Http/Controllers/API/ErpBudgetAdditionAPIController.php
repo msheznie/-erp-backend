@@ -158,8 +158,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $input['documentSystemID'] = 46;
-        $input['documentID'] = 'BTN';
+        $input['documentSystemID'] = 102;
+        $input['documentID'] = 'BDA';
 
         $lastSerial = ErpBudgetAddition::where('companySystemID', $input['companySystemID'])
             ->orderBy('id', 'desc')
@@ -316,7 +316,6 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => 0
             );
-            info(json_encode($params));
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
