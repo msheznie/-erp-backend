@@ -202,7 +202,5 @@ class ReportTemplate extends Model
     {
         return $this->hasMany('App\Models\ReportTemplateDetails', 'companyReportTemplateID', 'companyReportTemplateID');
     }
-
-
     
 }
