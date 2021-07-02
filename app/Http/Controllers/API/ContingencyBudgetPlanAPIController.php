@@ -132,9 +132,9 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             'comments' => 'required',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'templateMasterID' => 'required|numeric|min:1',
-            'contingencyPercentage' => 'required|numeric|min:1',
-            'contigencyAmount' => 'required|numeric|min:1',
-            'budgetAmount' => 'required|numeric|min:1'
+            'contingencyPercentage' => 'required|numeric',
+            'contigencyAmount' => 'required|numeric',
+            'budgetAmount' => 'required|numeric'
         ]);
 
         $serialNo = DB::table('erp_budget_contingency')->where('companySystemID',$input['companySystemID'])->max('serialNo');
@@ -145,6 +145,12 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        $check_recExist = $this->check_validation(0,$input);
+
+        if($check_recExist != 'success'){
+            return $this->sendError($check_recExist, 500);
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -283,28 +289,30 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         if (empty($contingencyBudgetPlan)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => 'Contingency Budget']));
         }
-        //echo '<pre>';print_r($contingencyBudgetPlan);'</pre>';exit;
+        
         $employee = \Helper::getEmployeeInfo();
 
+        $validator = \Validator::make($input, [
+            'year' => 'required|numeric|min:1',
+            'comments' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'templateMasterID' => 'required|numeric|min:1',
+            'contingencyPercentage' => 'required|numeric',
+            'contigencyAmount' => 'required|numeric',
+            'budgetAmount' => 'required|numeric'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $check_recExist = $this->check_validation($id,$input);
+
+        if($check_recExist != 'success'){
+            return $this->sendError($check_recExist, 500);
+        }
+
         if ($contingencyBudgetPlan->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-            $validator = \Validator::make($input, [
-                'year' => 'required|numeric|min:1',
-                'comments' => 'required',
-                'serviceLineSystemID' => 'required|numeric|min:1',
-                'templateMasterID' => 'required|numeric|min:1',
-                'contingencyPercentage' => 'required|numeric|min:1',
-                'contigencyAmount' => 'required|numeric|min:1',
-                'budgetAmount' => 'required|numeric|min:1'
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-
-            $input['confirmedDate'] = now();
-            $input['confirmedByEmpSystemID'] = $employee->employeeSystemID;
-            $input['confirmedByEmpID'] = $employee->empID;
-            $input['confirmedByEmpName'] = $employee->empName;
 
             $params = array('autoID' => $id,
                 'company' => $contingencyBudgetPlan->companySystemID,
@@ -485,7 +493,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     }
 
     public function getBudgetAmount($id){
-        $get_budget_amount = \DB::select("SELECT sum(det.budjetAmtRpt) as budgetamount
+        $get_budget_amount = \DB::select("SELECT IF(rep.reportID = 1,sum( det.budjetAmtRpt ), sum(det.budjetAmtRpt) * (- 1)) AS budgetamount
                                           FROM erp_budjetdetails det 
                                           INNER JOIN erp_budgetmaster mas on det.budgetmasterID = mas.budgetmasterID
                                           INNER JOIN erp_companyreporttemplate  rep on mas.templateMasterID = rep.companyReportTemplateID
@@ -672,5 +680,23 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reject["message"]);
         }
+    }
+
+    public function check_validation($id=0,$input){
+
+        $check_valid = ContingencyBudgetPlan::where(['year' => $input['year'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']])
+                                            ->select('ID','year','budgetID','templateMasterID','contingencyBudgetNo');
+        if($id != 0){
+            $check_valid = $check_valid->where('ID', '!=', $id);
+        }
+        $check_valid = $check_valid->first();
+        $msg = '';
+
+        if(!empty($check_valid)){
+            $msg = 'Contingency budget already exist.';
+        }else{
+            $msg = 'success';
+        }
+        return $msg;
     }
 }
