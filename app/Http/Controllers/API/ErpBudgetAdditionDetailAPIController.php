@@ -5,8 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateErpBudgetAdditionDetailAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionDetailAPIRequest;
+use App\Models\BudgetMaster;
+use App\Models\Budjetdetails;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\ErpBudgetAdditionDetail;
+use App\Models\SegmentMaster;
 use App\Repositories\ErpBudgetAdditionDetailRepository;
+use App\Repositories\ErpBudgetAdditionRepository;
 use Illuminate\Http\Request;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -22,9 +27,12 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
     /** @var  ErpBudgetAdditionDetailRepository */
     private $erpBudgetAdditionDetailRepository;
 
-    public function __construct(ErpBudgetAdditionDetailRepository $erpBudgetAdditionDetailRepo)
+    private $erpBudgetAdditionRepository;
+
+    public function __construct(ErpBudgetAdditionDetailRepository $erpBudgetAdditionDetailRepo, ErpBudgetAdditionRepository $erpBudgetAdditionRepository)
     {
         $this->erpBudgetAdditionDetailRepository = $erpBudgetAdditionDetailRepo;
+        $this->erpBudgetAdditionRepository = $erpBudgetAdditionRepository;
     }
 
     /**
@@ -113,9 +121,72 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
+        $budgetAdditionMaster = $this->erpBudgetAdditionRepository->find($input['budgetAdditionFormAutoID']);
+
+        if (empty($budgetAdditionMaster)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+
+        /*Department*/
+        $department = SegmentMaster::where('companySystemID', $budgetAdditionMaster->companySystemID)
+            ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+            ->first();
+
+        if (empty($department)) {
+            return $this->sendError('Department not found');
+        }
+
+        if ($department->isActive == 0) {
+            return $this->sendError('Please select an active to department', 500);
+        }
+
+        $input['serviceLineCode'] = $department->ServiceLineCode;
+
+        /*GL Code*/
+        $chartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetAdditionMaster->companySystemID)
+            ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+            ->first();
+
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Account Not Found', 500);
+        }
+
+        $input['gLCode'] = $chartOfAccount->AccountCode;
+        $input['gLCodeDescription'] = $chartOfAccount->AccountDescription;
+
+        /*Local Amount*/
+        $currency = \Helper::currencyConversion($budgetAdditionMaster->companySystemID, 2, 2, $input['adjustmentAmountRpt']);
+        $input['adjustmentAmountLocal'] = $currency['localAmount'];
+
+        /*Budget details id*/
+        $budgetMaster = BudgetMaster::where([
+            'companySystemID' => $budgetAdditionMaster->companySystemID,
+            'Year' => $budgetAdditionMaster['year']
+        ])->first();
+
+
+        if (!$budgetMaster) {
+            return $this->sendError('Budget Master not found');
+        }
+
+        $budgetDetails = Budjetdetails::where([
+            'budgetmasterID' => $budgetMaster['budgetmasterID'],
+            'companySystemID' => $budgetAdditionMaster->companySystemID,
+            'templateDetailID' => $input['templateDetailID'],
+            'Year' => $budgetAdditionMaster['year'],
+        ])->first();
+
+        if (!$budgetDetails) {
+            return $this->sendError('Budget Details not found');
+        }
+
+
+        $input['budjetDetailsID'] = $budgetDetails['budjetDetailsID'];
+
         $budgetAdditionDetails = $this->erpBudgetAdditionDetailRepository->create($input);
 
-        return $this->sendResponse($budgetAdditionDetails->toArray(), 'Budget Transfer Form Detail saved successfully');
+        return $this->sendResponse($budgetAdditionDetails->toArray(), 'Budget Addition Form Detail saved successfully');
     }
 
     /**
@@ -294,7 +365,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             ->with(['segment', 'template'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
+        return $this->sendResponse($items->toArray(), 'Budget Addition Form Detail retrieved successfully');
     }
 
 }
