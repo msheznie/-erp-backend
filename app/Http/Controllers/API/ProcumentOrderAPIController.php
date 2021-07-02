@@ -1565,6 +1565,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
             ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
             ->exists();
         $projects = [];
         if($isProject_base){
