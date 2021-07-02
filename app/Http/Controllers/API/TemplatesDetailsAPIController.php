@@ -19,6 +19,7 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
+use App\Models\ErpBudgetAddition;
 use App\Models\TemplatesDetails;
 use App\Models\TemplatesGLCode;
 use App\Repositories\TemplatesDetailsRepository;
@@ -314,12 +315,11 @@ class TemplatesDetailsAPIController extends AppBaseController
             return $this->sendError('Templates Master not found');
         }
 
-        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
-                                        ->where('isFinalLevel', 1)
-                                        ->get();
+        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $budgetTransferMaster->templatesMasterAutoID]);
 
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
+
 
     public function getAllGLCodesByTemplate(Request $request)
     {
