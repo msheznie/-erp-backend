@@ -83,16 +83,13 @@ class SegmentMasterAPIController extends AppBaseController
             $input['companyID'] = $this->getCompanyById($input['companySystemID']);
         }
 
-        $messages = array(
-            'ServiceLineCode.unique'   => 'Segment code already exists'
-        );
+        $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
+                                         ->where('ServiceLineCode', $input['ServiceLineCode'])
+                                         ->where('isDeleted',0)
+                                         ->first();
 
-        $validator = \Validator::make($input, [
-            'ServiceLineCode' => 'unique:serviceline'
-        ],$messages);
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422 );
+        if ($segmentCodeCheck) {
+           return $this->sendError(['ServiceLineCode' => ["Segment code already exists"]], 422);
         }
 
         $id = Auth::id();
@@ -376,6 +373,7 @@ class SegmentMasterAPIController extends AppBaseController
         $checkForDuplicateCode = $this->segmentMasterRepository->withoutGlobalScope('final_level')
                                                                ->where('serviceLineSystemID', '!=', $input['serviceLineSystemID'])
                                                                ->where('ServiceLineCode', $input['ServiceLineCode'])
+                                                               ->where('isDeleted', 0)
                                                                ->first();
         if ($checkForDuplicateCode) {
             return $this->sendError("Segment code already exists", 500);
