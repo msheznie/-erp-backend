@@ -254,5 +254,8 @@ class BudgetTransferForm extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetTransferFormAutoID')->where('documentSystemID',46);
     }
 
-
+    public function from_reviews()
+    {
+        return $this->hasMany('App\Models\BudgetReviewTransferAddition', 'budgetTransferAdditionID', 'budgetTransferFormAutoID')->where('budgetTransferType',1);
+    }
 }
