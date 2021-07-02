@@ -277,7 +277,7 @@ class ErpProjectMasterAPIController extends AppBaseController
     public function update($id, UpdateErpProjectMasterAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         /** @var ErpProjectMaster $erpProjectMaster */
         $erpProjectMaster = $this->erpProjectMasterRepository->findWithoutFail($id);
 
@@ -302,9 +302,6 @@ class ErpProjectMasterAPIController extends AppBaseController
         }
 
         $employee = \Helper::getEmployeeInfo();
-        $input['companySystemID'] = $input['companySystemID'][0];
-        $input['serviceLineSystemID'] = $input['serviceLineSystemID'][0];
-        $input['projectCurrencyID'] = $input['projectCurrencyID'][0];
         $input['start_date'] = Carbon::parse($input['startDate']);
         $input['end_date'] = Carbon::parse($input['endDate']);
         $input['modifiedPCID'] = gethostname();
