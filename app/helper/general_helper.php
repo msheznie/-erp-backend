@@ -19,37 +19,32 @@ use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateGRVSupplierInvoice;
-use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\PushNotification;
-use App\Jobs\RollBackApproval;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\Alert;
+use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
+use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DocumentRestrictionAssign;
+use App\Models\EmployeeNavigation;
+use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Models\ProcumentOrder;
+use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
-use App\Models\GRVDetails;
-use App\Models\CustomerMaster;
-use App\Models\Alert;
-use App\Models\SupplierMaster;
-use App\Models\CompanyPolicyMaster;
-use App\Models\Company;
-use App\Models\ProcumentOrder;
-use App\Models\CustomerReceivePayment;
-use App\Models\DocumentRestrictionAssign;
-use App\Models\PurchaseOrderDetails;
 use App\Models\ReportTemplateDetails;
-use App\Models\Employee;
-use App\Models\EmployeeNavigation;
-use App\Models\SupplierAssigned;
+use App\Models\SupplierMaster;
 use App\Models\User;
-use App\Models\FcmToken;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -57,20 +52,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
-use App\helper\CurrencyValidation;
-use App\helper\BlockInvoice;
-use App\helper\SupplierRegister;
-use App\helper\SupplierAssignService;
-use App\helper\StockCountService;
-use App\helper\BudgetHistoryService;
-use App\helper\CustomerAssignService;
-use App\helper\IvmsDeliveryOrderService;
-use App\helper\BudgetConsumptionService;
-use App\helper\ChartOfAccountDependency;
-use App\helper\CurrencyConversionService;
-use Illuminate\Support\Facades\Schema;
+use Response;
 
 class Helper
 {
@@ -192,7 +175,7 @@ class Helper
         if (!array_key_exists('document', $params)) {
             return ['success' => false, 'message' => 'Parameter document is missing'];
         }
-        
+
         DB::beginTransaction();
         try {
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
@@ -620,7 +603,18 @@ class Helper
                     $docInforArr["modelName"] = 'StockCount';
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     break;
-                case 100: 
+                 case 102:
+                    $docInforArr["documentCodeColumnName"] = 'additionVoucherNo';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_budgetaddition';
+                    $docInforArr["modelName"] = 'ErpBudgetAddition';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
+                case 100:
                     $docInforArr["documentCodeColumnName"] = 'ID';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByName';
@@ -1628,7 +1622,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 100: 
+            case 100:
                 $docInforArr["tableName"] = 'erp_budget_contingency';
                 $docInforArr["modelName"] = 'ContingencyBudgetPlan';
                 $docInforArr["primarykey"] = 'ID';
@@ -2543,7 +2537,7 @@ class Helper
                     $docInforArr["primarykey"] = 'stockCountAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-                case 100: 
+                case 100:
                     $docInforArr["tableName"] = 'erp_budget_contingency';
                     $docInforArr["modelName"] = 'ContingencyBudgetPlan';
                     $docInforArr["primarykey"] = 'ID';
@@ -2578,7 +2572,7 @@ class Helper
                         /*send Email*/
                         $confirmedUser = 0;
                         $emails = array();
-                        
+
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                         if (!empty($sourceModel)) {
 
