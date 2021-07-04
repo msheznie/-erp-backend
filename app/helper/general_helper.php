@@ -2311,6 +2311,7 @@ class Helper
                                     $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
                                 }
 
+
                                 $emails[] = array('empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
                                     'companySystemID' => $currentApproved->companySystemID,
                                     'docSystemID' => $currentApproved->documentSystemID,
