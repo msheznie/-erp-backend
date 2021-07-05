@@ -29,6 +29,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
+use App\Models\ErpBudgetAddition;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\DocumentMaster;
@@ -405,6 +406,13 @@ class email
                     if(!empty($contingencyBudgetPlan)){
                         $data['docApprovedYN'] = $contingencyBudgetPlan->approvedYN;
                         $data['docCode'] = $contingencyBudgetPlan->contingencyBudgetNo;
+                    }
+                    break;
+                case 102:
+                    $budgetAddition = ErpBudgetAddition::find($data['docSystemCode']);
+                    if(!empty($budgetAddition)){
+                        $data['docApprovedYN'] = $budgetAddition->approvedYN;
+                        $data['docCode'] = $budgetAddition->additionVoucherNo;
                     }
                     break;
                 default:
