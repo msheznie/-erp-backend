@@ -1647,6 +1647,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 102:
+                $docInforArr["tableName"] = 'erp_budgetaddition';
+                $docInforArr["modelName"] = 'ErpBudgetAddition';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserSystemID';
+                $docInforArr["approvedBySystemID"] = 'approvedEmpID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

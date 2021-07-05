@@ -2058,6 +2058,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDetailsByBudgetAddition', 'ErpBudgetAdditionDetailAPIController@getDetailsByBudgetAddition');
         Route::get('getBudgetAdditionFormData', 'ErpBudgetAdditionAPIController@getBudgetAdditionFormData');
         Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
+        Route::post('getBudgetAdditionApprovalByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovalByUser');
+        Route::post('getBudgetAdditionApprovedByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovedByUser');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

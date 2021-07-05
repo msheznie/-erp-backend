@@ -17,6 +17,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ErpBudgetAdditionRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -447,5 +448,186 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         return $this->sendResponse($template_details, 'Templates Details retrieved successfully');
+    }
+
+    public function getBudgetAdditionApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $debitNotes = DB::table('erp_documentapproved')
+            ->select(
+                'erp_budgetaddition.*',
+                'employees.empName As confirmed_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [102])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
+            })
+            ->join('erp_budgetaddition', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_budgetaddition.companySystemID', $companyId)
+                    ->where('erp_budgetaddition.approvedYN', 0)
+                    ->where('erp_budgetaddition.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'confirmedByEmpSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [102])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $debitNotes = $debitNotes->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('createdDateTime', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('additionVoucherNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'like', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $debitNotes = [];
+        }
+
+        return \DataTables::of($debitNotes)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getBudgetAdditionApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $debitNotes = DB::table('erp_documentapproved')
+            ->select(
+                'erp_budgetaddition.*',
+                'employees.empName As confirmed_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_budgetaddition', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                    ->where('erp_budgetaddition.companySystemID', $companyId)
+                    ->where('erp_budgetaddition.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'confirmedByEmpSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [102])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $debitNotes = $debitNotes->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('createdDateTime', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('additionVoucherNo', 'LIKE', "%$search%")
+                    ->orWhere('comments', 'like', "%$search%");
+            });
+        }
+
+        return \DataTables::of($debitNotes)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }
