@@ -1,0 +1,291 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateAssetRequestDetailAPIRequest;
+use App\Http\Requests\API\UpdateAssetRequestDetailAPIRequest;
+use App\Models\AssetRequestDetail;
+use App\Repositories\AssetRequestDetailRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use App\Models\AssetRequest;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class AssetRequestDetailController
+ * @package App\Http\Controllers\API
+ */
+
+class AssetRequestDetailAPIController extends AppBaseController
+{
+    /** @var  AssetRequestDetailRepository */
+    private $assetRequestDetailRepository;
+
+    public function __construct(AssetRequestDetailRepository $assetRequestDetailRepo)
+    {
+        $this->assetRequestDetailRepository = $assetRequestDetailRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetRequestDetails",
+     *      summary="Get a listing of the AssetRequestDetails.",
+     *      tags={"AssetRequestDetail"},
+     *      description="Get all AssetRequestDetails",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/AssetRequestDetail")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->assetRequestDetailRepository->pushCriteria(new RequestCriteria($request));
+        $this->assetRequestDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $assetRequestDetails = $this->assetRequestDetailRepository->all();
+
+        return $this->sendResponse($assetRequestDetails->toArray(), 'Asset Request Details retrieved successfully');
+    }
+
+    /**
+     * @param CreateAssetRequestDetailAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/assetRequestDetails",
+     *      summary="Store a newly created AssetRequestDetail in storage",
+     *      tags={"AssetRequestDetail"},
+     *      description="Store AssetRequestDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetRequestDetail that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetRequestDetail")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetRequestDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateAssetRequestDetailAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $assetRequestDetail = $this->assetRequestDetailRepository->create($input);
+
+        return $this->sendResponse($assetRequestDetail->toArray(), 'Asset Request Detail saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetRequestDetails/{id}",
+     *      summary="Display the specified AssetRequestDetail",
+     *      tags={"AssetRequestDetail"},
+     *      description="Get AssetRequestDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetRequestDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetRequestDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var AssetRequestDetail $assetRequestDetail */
+        $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
+
+        if (empty($assetRequestDetail)) {
+            return $this->sendError('Asset Request Detail not found');
+        }
+
+        return $this->sendResponse($assetRequestDetail->toArray(), 'Asset Request Detail retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateAssetRequestDetailAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/assetRequestDetails/{id}",
+     *      summary="Update the specified AssetRequestDetail in storage",
+     *      tags={"AssetRequestDetail"},
+     *      description="Update AssetRequestDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetRequestDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetRequestDetail that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetRequestDetail")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetRequestDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateAssetRequestDetailAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var AssetRequestDetail $assetRequestDetail */
+        $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
+
+        if (empty($assetRequestDetail)) {
+            return $this->sendError('Asset Request Detail not found');
+        }
+
+        $assetRequestDetail = $this->assetRequestDetailRepository->update($input, $id);
+
+        return $this->sendResponse($assetRequestDetail->toArray(), 'AssetRequestDetail updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/assetRequestDetails/{id}",
+     *      summary="Remove the specified AssetRequestDetail from storage",
+     *      tags={"AssetRequestDetail"},
+     *      description="Delete AssetRequestDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetRequestDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var AssetRequestDetail $assetRequestDetail */
+        $assetRequestDetail = $this->assetRequestDetailRepository->findWithoutFail($id);
+
+        if (empty($assetRequestDetail)) {
+            return $this->sendError('Asset Request Detail not found');
+        }
+
+        $assetRequestDetail->delete();
+
+        return $this->sendSuccess('Asset Request Detail deleted successfully');
+    }
+    public function getAssetRequestDetails(Request $request){ 
+        $id = $request['id'];
+        $companyID = $request['companyId'];
+
+        $data['assetRequestDetail'] = AssetRequestDetail::where('company_id',$companyID)->where('erp_fa_fa_asset_request_id',$id)->get();
+        $data['assetRequestMaster'] = AssetRequest::with(['employee','company','confirmed_by','approved_by'])->where('company_id',$companyID)->where('id',$id)->first();
+
+        return $this->sendResponse($data, 'Asset Request data');
+    }
+}

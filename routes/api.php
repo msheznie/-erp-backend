@@ -2054,6 +2054,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
         Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
         Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
+
+        /* Asset Request */
+        Route::resource('asset_requests', 'AssetRequestAPIController');
+        Route::post('getAllAssetRequestList', 'AssetRequestAPIController@getAllAssetRequestList');
+        Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2131,3 +2136,7 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
+
+
+
+Route::resource('asset_request_details', 'AssetRequestDetailAPIController');
