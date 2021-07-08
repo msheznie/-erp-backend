@@ -1016,13 +1016,13 @@ class SalesReturnAPIController extends AppBaseController
                                 $invDetail_arr['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
                                 $invDetail_arr['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
                             } else {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError("Account code not updated for ".$new['itemPrimaryCode'].".", 500);
                             }
 
                             if (!$invDetail_arr['financeGLcodebBS'] || !$invDetail_arr['financeGLcodebBSSystemID']
                                 || !$invDetail_arr['financeGLcodePL'] || !$invDetail_arr['financeGLcodePLSystemID']
                                 || !$invDetail_arr['financeGLcodeRevenueSystemID'] || !$invDetail_arr['financeGLcodeRevenue']) {
-                                return $this->sendError("Account code not updated for ".$new['itemSystemCode'].".", 500);
+                                return $this->sendError("Account code not updated for ".$new['itemPrimaryCode'].".", 500);
                             }
 
 

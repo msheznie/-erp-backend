@@ -2059,3 +2059,6 @@ Route::resource('employee_designations', 'EmployeeDesignationAPIController');
 Route::resource('hrms_designations', 'HrmsDesignationAPIController');
 
 Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+
+
+Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
