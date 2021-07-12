@@ -65,6 +65,7 @@ use App\helper\IvmsDeliveryOrderService;
 use App\helper\BudgetConsumptionService;
 use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
+use App\Jobs\BudgetAdditionAdjustment;
 use Illuminate\Support\Facades\Schema;
 use Response;
 
@@ -1933,6 +1934,10 @@ class Helper
 
                             if ($input["documentSystemID"] == 46 && !empty($sourceModel)) {
                                 $jobBTN = BudgetAdjustment::dispatch($sourceModel);
+                            }
+                           
+                            if ($input["documentSystemID"] == 102 && !empty($sourceModel)) { //Budget Addition Note Job
+                                $jobBDA = BudgetAdditionAdjustment::dispatch($sourceModel);
                             }
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset

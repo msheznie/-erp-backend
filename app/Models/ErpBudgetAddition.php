@@ -271,7 +271,7 @@ class ErpBudgetAddition extends Model
 
     public function detail()
     {
-        return $this->hasMany('App\Models\ErpBudgetAdditionDetail', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
+        return $this->hasMany('App\Models\ErpBudgetAdditionDetail', 'budgetAdditionFormAutoID', 'id');
     }
 
     public function audit_trial()
