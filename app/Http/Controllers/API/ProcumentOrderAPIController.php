@@ -451,6 +451,11 @@ class ProcumentOrderAPIController extends AppBaseController
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier','location']);
         $input = $this->convertArrayToValue($input);
 
+        if (isset($input['VATAmountPreview'])) {
+            unset($input['VATAmountPreview']);
+        }
+
+
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
 
         if (isset($input['expectedDeliveryDate']) && $input['expectedDeliveryDate']) {
@@ -581,14 +586,15 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
+        $poMasterSumDeductedNotRounded = ($poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'] - $input['poDiscountAmount']);
 
-        $input['poTotalSupplierTransactionCurrency'] = \Helper::roundValue($poMasterSumDeducted);
+        $input['poTotalSupplierTransactionCurrency'] = \Helper::roundValue($poMasterSumDeductedNotRounded);
 
-        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeductedNotRounded);
 
         $procumentOrderUpdate->poTotalComRptCurrency = \Helper::roundValue($currencyConversionMaster['reportingAmount']);
         $procumentOrderUpdate->poTotalLocalCurrency = \Helper::roundValue($currencyConversionMaster['localAmount']);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeducted);
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeductedNotRounded);
         $procumentOrderUpdate->companyReportingER = \Helper::roundValue($currencyConversionMaster['trasToRptER']);
         $procumentOrderUpdate->localCurrencyER = \Helper::roundValue($currencyConversionMaster['trasToLocER']);
 
@@ -1000,9 +1006,10 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             //getting total sum of Po Payment Terms
-            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+           $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
                 ->where('poID', $input['purchaseOrderID'])
                 ->first();
+
 
             //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
 
@@ -3993,7 +4000,7 @@ WHERE
                 }
 
                 if ($netUnitAmount > 0 && $purchaseOrderDetail->VATPercentage > 0) {
-                    $purchaseOrderDetail->VATAmount = round((($netUnitAmount / 100) * $purchaseOrderDetail->VATPercentage), $supplierCurrencyDecimalPlace);
+                    $purchaseOrderDetail->VATAmount = (($netUnitAmount / 100) * $purchaseOrderDetail->VATPercentage);
                 }
                 $purchaseOrderDetail->netAmount = ($purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount) * $purchaseOrderDetail->noQty;
 

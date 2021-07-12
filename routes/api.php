@@ -2136,7 +2136,10 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
-
-
-
 Route::resource('asset_request_details', 'AssetRequestDetailAPIController');
+Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
+
