@@ -238,8 +238,12 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companyId)
+            ->first();
 
-        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0);
+
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0, 'allocateItemToSegment' => 0);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -251,6 +255,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($allowItemToType) {
             $conditions['allowItemToType'] = $allowItemToType->isYesNO;
+        }
+
+        if ($allocateItemToSegment) {
+            $conditions['allocateItemToSegment'] = $allocateItemToSegment->isYesNO;
         }
 
 
@@ -1192,6 +1200,14 @@ class PurchaseRequestAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+        }
+
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+            $input['allocateItemToSegment'] = 1;
         }
 
         $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);

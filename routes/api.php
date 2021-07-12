@@ -2060,6 +2060,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
         Route::post('getBudgetAdditionApprovalByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovalByUser');
         Route::post('getBudgetAdditionApprovedByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovedByUser');
+
+        
+        Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
+
+        Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
+
+
+        Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
+        Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
+        Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2134,7 +2144,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
-
-Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
-
-Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');

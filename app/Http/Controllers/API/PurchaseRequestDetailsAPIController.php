@@ -21,11 +21,13 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
+use App\Models\SegmentAllocatedItem;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Repositories\PurchaseRequestRepository;
 use Illuminate\Http\Request;
@@ -45,13 +47,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 {
     /** @var  PurchaseRequestDetailsRepository */
     private $purchaseRequestDetailsRepository;
-
+    private $segmentAllocatedItemRepository;
     private $purchaseRequestRepository;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, PurchaseRequestRepository $purchaseRequestRepo)
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, PurchaseRequestRepository $purchaseRequestRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
     {
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
     }
 
     /**
@@ -828,9 +831,55 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $input['estimatedCost'] = 0;
         }
 
-        $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
+            $purchaseRequestDetailsRes = $this->purchaseRequestDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseRequestDetails->toArray(), 'PurchaseRequestDetails updated successfully');
+            if ($purchaseRequestDetails->quantityRequested != $input['quantityRequested']) {
+                $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=',$purchaseRequest->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purchaseRequestID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->get();
+
+                if (sizeof($checkAlreadyAllocated) == 0) {
+                    $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID',$purchaseRequest->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purchaseRequestID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->delete();
+
+                    $allocationData = [
+                        'serviceLineSystemID' => $purchaseRequest->serviceLineSystemID,
+                        'documentSystemID' => $purchaseRequest->documentSystemID,
+                        'docAutoID' => $input['purchaseRequestID'],
+                        'docDetailID' => $id
+                    ];
+
+                    $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+
+                    if (!$segmentAllocatedItem['status']) {
+                        return $this->sendError($segmentAllocatedItem['message']);
+                    }
+                } else {
+                     $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                 ->where('documentMasterAutoID', $input['purchaseRequestID'])
+                                                 ->where('documentDetailAutoID', $id)
+                                                 ->sum('allocatedQty');
+
+                    if ($allocatedQty > $input['quantityRequested']) {
+                        return $this->sendError("You cannot update the requested quantity. since quantity has been allocated to segments", 500);
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse($purchaseRequestDetailsRes->toArray(), 'PurchaseRequestDetails updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 
     /**

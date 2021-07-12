@@ -199,6 +199,7 @@ class PurchaseRequest extends Model
         'manuallyClosedByEmpID',
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
+        'allocateItemToSegment',
         'manuallyClosedComment'
     ];
 
@@ -281,6 +282,7 @@ class PurchaseRequest extends Model
         'modifiedUser' => 'string',
         'manuallyClosed' => 'integer',
         'manuallyClosedByEmpSystemID' => 'integer',
+        'allocateItemToSegment' => 'integer',
         'manuallyClosedByEmpID' => 'string',
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
