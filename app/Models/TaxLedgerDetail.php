@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
-
+use Awobaz\Compoships\Compoships;
 /**
  * @SWG\Definition(
  *      definition="TaxLedgerDetail",
@@ -273,7 +273,7 @@ use Eloquent as Model;
  */
 class TaxLedgerDetail extends Model
 {
-
+    use Compoships;
     public $table = 'tax_ledger_details';
     
     const CREATED_AT = 'createdDateTime';
@@ -453,4 +453,9 @@ class TaxLedgerDetail extends Model
     public function output_vat_transfer(){
         return $this->belongsTo('App\Models\ChartOfAccount', 'outputVatTransferGLAccountID','chartOfAccountSystemID');
     }
+
+    public function supplier_invoice(){
+        return $this->belongsTo('App\Models\BookInvSuppMaster',['documentMasterAutoID','documentSystemID','companySystemID'], ['bookingSuppMasInvAutoID','documentSystemID','companySystemID']);
+    }
+
 }

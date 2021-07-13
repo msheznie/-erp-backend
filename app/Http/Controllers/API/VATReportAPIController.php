@@ -423,20 +423,38 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Accounting Document Number'] = $val->documentNumber ;
                 $data[$x]['Accounting Document Date'] = Helper::dateFormat($val->documentDate);
                 $data[$x]['Year'] = Carbon::parse($val->documentDate)->format('Y');
-                $data[$x]['Revenue GL Code'] = $val->accountCode;
-                $data[$x]['Revenue GL Code Description'] = $val->accountDescription;
+                if ($input['reportTypeID'] == 3) {
+                    $data[$x]['Revenue GL Code'] = $val->accountCode;
+                    $data[$x]['Revenue GL Code Description'] = $val->accountDescription;
+                } else if ($input['reportTypeID'] == 4){
+                    $data[$x]['Revenue GL Code'] = $val->accountCode;
+                    $data[$x]['Revenue GL Code Description'] = $val->accountDescription;
+                }
+
                 $data[$x]['Document Currency'] = isset($val->transcurrency->CurrencyCode) ? $val->transcurrency->CurrencyCode : "";
                 $data[$x]['Document Type'] = isset($val->document_master->documentDescription) ? $val->document_master->documentDescription : "";
                 $data[$x]['Original Document No'] = $val->originalInvoice;
                 $data[$x]['Original Document Date'] = Helper::dateFormat($val->originalInvoiceDate);
+                if ($input['reportTypeID'] == 4) {
+                    $data[$x]['Payment Due Date'] = "";
+                }
                 $data[$x]['Date Of Supply'] = Helper::dateFormat($val->dateOfSupply);
                 $data[$x]['Reference Invoice No'] = "" ;
                 $data[$x]['Reference Invoice Date'] = "";
-                $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
-                if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
-                    $data[$x]['Bill To CustomerName'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
-                } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
-                    $data[$x]['Bill To CustomerName'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
+                if ($input['reportTypeID'] == 3) {
+                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                    if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
+                        $data[$x]['Bill To CustomerName'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
+                    } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
+                        $data[$x]['Bill To CustomerName'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
+                    }
+                } else if ($input['reportTypeID'] == 4) {
+                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                    if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
+                        $data[$x]['Supplier Name'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
+                    } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
+                        $data[$x]['Supplier Name'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
+                    }
                 }
                 $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
                 $data[$x]['Customer VAT Registration No'] = $val->partyVATRegNo;
@@ -457,6 +475,11 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['VAT In Local Currency'] = round($val->VATAmountLocal, $val->transcurrency->DecimalPlaces);
                 $data[$x]['VAT GL Code'] = isset($val->output_vat->AccountCode) ? $val->output_vat->AccountCode : "";
                 $data[$x]['VAT GL Description'] = isset($val->output_vat->AccountDescription) ? $val->output_vat->AccountDescription : "";
+                 if ($input['reportTypeID'] == 4) {
+                    $data[$x]['Input Tax Recoverability'] = (isset($val->company->vatRegisteredYN) && $val->company->vatRegisteredYN) ? "Yes" : "No";
+                    $data[$x]['Input Tax Recoverability %'] = $val->recovertabilityPercentage;
+                    $data[$x]['Input Tax Recoverability (Amount)'] = round($val->recoverabilityAmount, $val->transcurrency->DecimalPlaces);
+                }
 
             }
 
@@ -653,7 +676,7 @@ class VATReportAPIController extends AppBaseController
                             })
                             ->with(['supplier','customer','rptcurrency','localcurrency','document_master','main_category', 'sub_category', 'transcurrency', 'country', 'company' => function($query) {
                                 $query->with(['country']);
-                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer']);
+                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice']);
         return $output;
 
     }
