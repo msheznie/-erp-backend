@@ -208,7 +208,7 @@ class PurchaseRequestRepository extends BaseRepository
         if (count($dataSet) > 0) {
             $x = 0;
 
-            foreach ($dataSet as $val) {dd($val);
+            foreach ($dataSet as $val) {
                 $data[$x]['PR Code'] = $val->purchaseRequestCode;
                 $data[$x]['Category'] = $val->finance_category? $val->finance_category : '';
                 $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
