@@ -115,6 +115,7 @@ class VATReportAPIController extends AppBaseController
 
                 break;
             case 4:
+            case 5:
                 $validator = \Validator::make($request->all(), [
                     'toDate' => 'required',
                     'fromDate' => 'required',
