@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SegmentAllocatedItem;
+use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -127,6 +128,26 @@ class SegmentAllocatedItemRepository extends BaseRepository
             }
         } else {
 
+        }
+
+        return ['status' => true];
+    }
+
+    public function validatePurchaseRequestAllocatedQuantity($purchaseRequestID)
+    {
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestID);
+        $items = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestID)
+                                       ->get();
+
+        foreach ($items as $key => $value) {
+            $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                 ->where('documentMasterAutoID', $purchaseRequestID)
+                                                 ->where('documentDetailAutoID', $value->purchaseRequestDetailsID)
+                                                 ->sum('allocatedQty');
+
+            if ($allocatedQty != $value->quantityRequested) {
+                return ['status' => false, 'message' => $value->itemPrimaryCode." is not fully allocated. please allocate the item quantity to segments"];
+            }
         }
 
         return ['status' => true];

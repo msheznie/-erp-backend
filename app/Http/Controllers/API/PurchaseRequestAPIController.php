@@ -69,6 +69,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Repositories\SegmentAllocatedItemRepository;
 
 /**
  * Class PurchaseRequestController
@@ -79,11 +80,13 @@ class PurchaseRequestAPIController extends AppBaseController
     /** @var  PurchaseRequestRepository */
     private $purchaseRequestRepository;
     private $userRepository;
+    private $segmentAllocatedItemRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo)
+    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->userRepository = $userRepo;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
     }
 
     /**
@@ -1390,6 +1393,10 @@ class PurchaseRequestAPIController extends AppBaseController
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
 
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->sum('totalCost');

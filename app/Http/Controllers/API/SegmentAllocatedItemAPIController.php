@@ -290,7 +290,7 @@ class SegmentAllocatedItemAPIController extends AppBaseController
 
         $segmentAllocatedItem->delete();
 
-        return $this->sendSuccess('Segment Allocated Item deleted successfully');
+        return $this->sendResponse([], 'Segment Allocated Item deleted successfully');
     }
 
     public function allocateSegmentWiseItem(Request $request)
