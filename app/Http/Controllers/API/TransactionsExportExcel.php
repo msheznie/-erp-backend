@@ -226,7 +226,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '15':
-                if($input['companySystemID'] == 57) {
+                if($input['companySystemID'] == 57 OR $input['docName'] == "receipt_voucher-matching") {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
                     $dataQry = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
                     $data = $this->matchDocumentMasterRepository->setReceiptVoucherMatchingExportExcelData($dataQry);
