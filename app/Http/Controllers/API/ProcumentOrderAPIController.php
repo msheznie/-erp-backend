@@ -128,6 +128,7 @@ use App\Models\SecondaryCompany;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\WorkOrderGenerationLog;
 use App\Repositories\ProcumentOrderRepository;
+use App\Repositories\SegmentAllocatedItemRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -152,11 +153,13 @@ class ProcumentOrderAPIController extends AppBaseController
     /** @var  ProcumentOrderRepository */
     private $procumentOrderRepository;
     private $userRepository;
+    private $segmentAllocatedItemRepository;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo)
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
     }
 
     /**
@@ -393,6 +396,14 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($supplierAssignedDetai) {
             $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
             $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
+        }
+
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+            $input['allocateItemToSegment'] = 1;
         }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
@@ -1043,6 +1054,11 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['poConfirmedByEmpID']);
             unset($input['poConfirmedByName']);
             unset($input['poConfirmedDate']);
+
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseOrderAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
 
 
             if ($isAmendAccess != 1) {
