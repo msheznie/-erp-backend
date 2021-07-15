@@ -309,13 +309,15 @@ class TemplatesDetailsAPIController extends AppBaseController
             return $this->sendError('Budget Transfer not found');
         }
 
-        $templateMaster = $this->templatesMasterRepository->findWithoutFail($budgetTransferMaster->templatesMasterAutoID);
+        $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
             return $this->sendError('Templates Master not found');
         }
 
-        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $budgetTransferMaster->templatesMasterAutoID]);
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
+                                        ->where('isFinalLevel', 1)
+                                        ->get();
 
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }

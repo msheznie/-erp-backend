@@ -409,9 +409,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         $masterTemplates = BudgetMaster::where([
-            'companySystemID' => $companyId,
-            'Year' => $financeYear
-        ])->first()->template_master()->get();
+                                            'companySystemID' => $companyId,
+                                            'Year' => $financeYear
+                                        ])->first()->template_master()->get();
 
         $output = [
             'yesNoSelection' => $yesNoSelection,
