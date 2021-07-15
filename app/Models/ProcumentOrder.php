@@ -305,6 +305,7 @@ class ProcumentOrder extends Model
         'supCategoryICVMasterID',
         'workOrderGenerateID',
         'supCategorySubICVID',
+        'allocateItemToSegment',
         'rcmActivated'
     ];
 
@@ -315,6 +316,7 @@ class ProcumentOrder extends Model
      */
     protected $casts = [
         'purchaseOrderID' => 'integer',
+        'allocateItemToSegment' => 'integer',
         'poProcessId' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',

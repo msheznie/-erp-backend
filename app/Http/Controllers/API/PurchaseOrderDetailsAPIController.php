@@ -32,6 +32,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierAssigned;
+use App\Models\SegmentAllocatedItem;
 use App\Models\SupplierMaster;
 use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
@@ -42,6 +43,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\SegmentAllocatedItemRepository;
 
 
 /**
@@ -53,11 +55,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     /** @var  PurchaseOrderDetailsRepository */
     private $purchaseOrderDetailsRepository;
     private $userRepository;
+    private $segmentAllocatedItemRepository;
 
-    public function __construct(PurchaseOrderDetailsRepository $purchaseOrderDetailsRepo, UserRepository $userRepo)
+    public function __construct(PurchaseOrderDetailsRepository $purchaseOrderDetailsRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
     {
         $this->purchaseOrderDetailsRepository = $purchaseOrderDetailsRepo;
         $this->userRepository = $userRepo;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
     }
 
     /**
@@ -822,6 +826,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         } else {
             $input['madeLocallyYN'] = 0;
         }
+
+        $purchaseOrderDetailsData = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
         DB::beginTransaction();
         try {
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
@@ -951,6 +957,45 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     return $this->sendError('Sub work order is exceeding the main work order total amount. Cannot amend.', 500);
                 }
             }
+
+            if ($purchaseOrderDetailsData->noQty != $input['noQty'] && $purchaseOrder->poTypeID == 2) {
+                $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=',$purchaseOrder->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purchaseOrderMasterID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->get();
+
+                if (sizeof($checkAlreadyAllocated) == 0) {
+                    $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID',$purchaseOrder->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purchaseOrderMasterID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->delete();
+
+                    $allocationData = [
+                        'serviceLineSystemID' => $purchaseOrder->serviceLineSystemID,
+                        'documentSystemID' => $purchaseOrder->documentSystemID,
+                        'docAutoID' => $input['purchaseOrderMasterID'],
+                        'docDetailID' => $id
+                    ];
+
+                    $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+
+                    if (!$segmentAllocatedItem['status']) {
+                        return $this->sendError($segmentAllocatedItem['message']);
+                    }
+                } else {
+                     $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                 ->where('documentMasterAutoID', $input['purchaseOrderMasterID'])
+                                                 ->where('documentDetailAutoID', $id)
+                                                 ->sum('allocatedQty');
+
+                    if ($allocatedQty > $input['noQty']) {
+                        return $this->sendError("You cannot update the order quantity. since quantity has been allocated to segments", 500);
+                    }
+                }
+            }
+
             DB::commit();
             return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
         } catch (\Exception $ex) {

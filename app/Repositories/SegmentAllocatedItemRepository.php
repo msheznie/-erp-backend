@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Models\SegmentAllocatedItem;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\PurchaseOrderDetails;
+use App\Models\ProcumentOrder;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -66,7 +68,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         if (in_array($input['documentSystemID'], [1,50,51])) {
             return $this->allocatePurchaseRequestItems($input);   
         } else {
-
+            return $this->allocatePurchaseOrderItems($input);   
         }
     }
 
@@ -106,6 +108,41 @@ class SegmentAllocatedItemRepository extends BaseRepository
         return ['status' => true];
     }
 
+    public function allocatePurchaseOrderItems($input)
+    {
+        $itemData = PurchaseOrderDetails::find($input['docDetailID']);
+
+        if (!$itemData) {
+            return ['status' => false, 'message' => 'Item detail not found'];
+        }
+
+        $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
+                                             ->where('documentMasterAutoID', $input['docAutoID'])
+                                             ->where('documentDetailAutoID', $input['docDetailID'])
+                                             ->sum('allocatedQty');
+
+        if ($allocatedQty == $itemData->noQty) {
+            return ['status' => false, 'message' => 'No remaining quantity to allocate'];
+        }
+
+        $allocationData = [
+            'documentSystemID' => $input['documentSystemID'],
+            'documentMasterAutoID' => $input['docAutoID'],
+            'documentDetailAutoID' => $input['docDetailID'],
+            'detailQty' => $itemData->noQty,
+            'allocatedQty' => $itemData->noQty - $allocatedQty,
+            'serviceLineSystemID' => $input['serviceLineSystemID']
+        ];
+
+        $createRes = SegmentAllocatedItem::create($allocationData);
+
+        if (!$createRes) {
+            return ['status' => false, 'message' => 'Error occured while allocating'];
+        }
+
+        return ['status' => true];
+    }
+
     public function updateAlllocationValidation($input)
     {
         if (in_array($input['documentSystemID'], [1,50,51])) {
@@ -127,7 +164,23 @@ class SegmentAllocatedItemRepository extends BaseRepository
                 return ['status' => false, 'message' => 'quantity cannot be greater than total requested quantity'];
             }
         } else {
+            $itemData = PurchaseOrderDetails::find($input['documentDetailAutoID']);
 
+            if (!$itemData) {
+                return ['status' => false, 'message' => 'Item detail not found'];
+            }
+
+            $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
+                                                 ->where('documentMasterAutoID', $input['documentMasterAutoID'])
+                                                 ->where('documentDetailAutoID', $input['documentDetailAutoID'])
+                                                 ->where('id', '!=',$input['id'])
+                                                 ->sum('allocatedQty');
+
+            $remainingQty = $itemData->noQty - $allocatedQty;
+
+            if ($input['allocatedQty'] > $remainingQty) {
+                return ['status' => false, 'message' => 'quantity cannot be greater than total ordered quantity'];
+            }
         }
 
         return ['status' => true];
@@ -146,6 +199,26 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                                  ->sum('allocatedQty');
 
             if ($allocatedQty != $value->quantityRequested) {
+                return ['status' => false, 'message' => $value->itemPrimaryCode." is not fully allocated. please allocate the item quantity to segments"];
+            }
+        }
+
+        return ['status' => true];
+    }
+
+    public function validatePurchaseOrderAllocatedQuantity($purchaseOrderID)
+    {
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+        $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                                       ->get();
+
+        foreach ($items as $key => $value) {
+            $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                 ->where('documentMasterAutoID', $purchaseOrderID)
+                                                 ->where('documentDetailAutoID', $value->purchaseOrderDetailsID)
+                                                 ->sum('allocatedQty');
+
+            if ($allocatedQty != $value->noQty) {
                 return ['status' => false, 'message' => $value->itemPrimaryCode." is not fully allocated. please allocate the item quantity to segments"];
             }
         }
