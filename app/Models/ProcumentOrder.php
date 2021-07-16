@@ -306,7 +306,7 @@ class ProcumentOrder extends Model
         'workOrderGenerateID',
         'supCategorySubICVID',
         'allocateItemToSegment',
-        'rcmActivated'
+        'rcmActivated',
         'orderType',
         'projectID',
     ];
