@@ -5158,25 +5158,41 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data[$x]['Company ID'] = $val->companyID;
                 if ($val->company) {
                     $data[$x]['Company Name'] = $val->company->CompanyName;
+                } else {
+                    $data[$x]['Company Name'] = "";
                 }
+                
                 $data[$x]['Order Code'] = $val->purchaseOrderCode;
                 if ($val->segment) {
                     $data[$x]['Service Line'] = $val->segment->ServiceLineDes;
+                }else {
+                    $data[$x]['Service Line'] = "";
                 }
+
                 $data[$x]['Created at'] = \Helper::dateFormat($val->createdDateTime);
                 if ($val->created_by) {
                     $data[$x]['Created By'] = $val->created_by->empName;
+                }else {
+                    $data[$x]['Created By'] = "";
                 }
+
                 if ($val->fcategory) {
                     $data[$x]['Category'] = $val->fcategory->categoryDescription;
+                }else {
+                    $data[$x]['Category'] = "";
                 }
-                $data[$x]['Narration'] = $val->narration;
+
+                $data[$x]['Narration'] = ($val->narration == "" || $val->narration == null) ? "-" : $val->narration;
                 $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
                 $data[$x]['Supplier Name'] = $val->supplierName;
                 $data[$x]['Credit Period'] = $val->creditPeriod;
+
                 if ($val->supplier) {
                     $data[$x][' Supplier Country'] = $val->supplier->country->countryName;
+                }else {
+                    $data[$x]['Supplier Country'] = "";
                 }
+
                 $data[$x]['Expected Delivery Date'] = \Helper::dateFormat($val->expectedDeliveryDate);
                 $data[$x]['Delivery Terms'] = $val->deliveryTerms;
                 $data[$x]['Penalty Terms'] = $val->panaltyTerms;
@@ -5193,18 +5209,32 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Approved Status'] = 'No';
                 }
                 $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+
                 if ($val->currency) {
                     $data[$x]['Transaction Currency'] = $val->currency->CurrencyCode;
+                } else {
+                    $data[$x]['Transaction Currency'] = "";
                 }
+
                 if ($val->currency) {
                     $data[$x]['Transaction Amount'] = $val->poTotalSupplierTransactionCurrency;
+                } else {
+                    $data[$x]['Transaction Amount'] = "";
                 }
+
                 if ($val->localcurrency) {
                     $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;
+                } else {
+                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = 0;
                 }
+
                 if ($val->reportingcurrency) {
                     $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;
                 }
+                else {
+                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = 0;
+                }
+
                 if ($val->advance_detail) {
                     if (isset($val->advance_detail[0]->advanceSum)) {
                         $data[$x]['Advance Payment Available'] = 'Yes';
