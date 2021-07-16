@@ -28,6 +28,8 @@ use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
 use App\Models;
+use App\Models\AssetVerificationDetail;
+use App\Models\FixedAssetMaster;
 use App\Models\Alert;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
@@ -629,15 +631,25 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     break;
                 case 100:
+                    $docInforArr["tableName"] = 'erp_budget_contingency';
+                    $docInforArr["modelName"] = 'ContingencyBudgetPlan';
+                    $docInforArr["primarykey"] = 'ID';
                     $docInforArr["documentCodeColumnName"] = 'ID';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
-                    $docInforArr["tableName"] = 'erp_budget_contingency';
-                    $docInforArr["modelName"] = 'ContingencyBudgetPlan';
-                    $docInforArr["primarykey"] = 'ID';
+                 case 99: // asset verification
+                    $docInforArr["documentCodeColumnName"] = 'verficationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                    $docInforArr["modelName"] = 'AssetVerification';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -1659,6 +1671,17 @@ class Helper
                 $docInforArr["approveValue"] = 1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+            case 99: // asset verification
+                $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                $docInforArr["modelName"] = 'AssetVerification';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -1764,7 +1787,14 @@ class Helper
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
-                            
+
+                            if ($input["documentSystemID"] == 99) { // asset verification
+                                $verified_date = $isConfirmed['documentDate'];
+                                AssetVerificationDetail::where('verification_id', $isConfirmed['id'])->get()->each(function ($asset) use ($verified_date) {
+                                    FixedAssetMaster::where('faID', $asset['faID'])->update(['lastVerifiedDate' => $verified_date]);
+                                });
+                            }
+
                             if ($input["documentSystemID"] == 97) { //stock count negative validation
                                 $stockCountRes = StockCountService::updateStockCountAdjustmentDetail($input);
                                 if (!$stockCountRes['status']) {
@@ -2580,6 +2610,11 @@ class Helper
                     $docInforArr["modelName"] = 'ContingencyBudgetPlan';
                     $docInforArr["primarykey"] = 'ID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                case 99: // Asset verification
+                    $docInforArr["tableName"] = 'erp_fa_asset_verification';
+                    $docInforArr["modelName"] = 'AssetVerification';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
@@ -2596,13 +2631,15 @@ class Helper
                 $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+                    $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                     if ($approvalLevel) {
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 100])) {
-                            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100])) {
+
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }

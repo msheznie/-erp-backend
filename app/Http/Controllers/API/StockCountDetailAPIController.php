@@ -6,12 +6,16 @@ use App\Http\Requests\API\CreateStockCountDetailAPIRequest;
 use App\Http\Requests\API\UpdateStockCountDetailAPIRequest;
 use App\Models\StockCountDetail;
 use App\Models\StockCount;
+use App\Models\ItemAssigned;
 use App\Repositories\StockCountDetailRepository;
+use App\Repositories\StockCountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class StockCountDetailController
@@ -22,9 +26,11 @@ class StockCountDetailAPIController extends AppBaseController
 {
     /** @var  StockCountDetailRepository */
     private $stockCountDetailRepository;
+    private $stockCountRepository;
 
-    public function __construct(StockCountDetailRepository $stockCountDetailRepo)
+    public function __construct(StockCountDetailRepository $stockCountDetailRepo, StockCountRepository $stockCountRepo)
     {
+        $this->stockCountRepository = $stockCountRepo;
         $this->stockCountDetailRepository = $stockCountDetailRepo;
     }
 
@@ -111,9 +117,47 @@ class StockCountDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $stockCountDetail = $this->stockCountDetailRepository->create($input);
+        $stockCount = StockCount::find($input['stockCountAutoID']);
 
-        return $this->sendResponse($stockCountDetail->toArray(), 'Stock Count Detail saved successfully');
+        if (empty($stockCount)) {
+            return $this->sendError('Stock Count not found');
+        }
+
+        $input['location'] = $stockCount->location;
+
+        $items = ItemAssigned::where('companySystemID', $input['companySystemID'])
+                            ->where('itemCodeSystem', $input['itemCodeSystem'])
+                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode'])
+                            ->get();
+
+        $checkProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
+
+        if (count($checkProducts['usedItems']) > 0) {
+            return $this->sendError('You cannot used this item, this items has been pulled in the following documents', 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
+        }
+
+        DB::beginTransaction();
+        try {
+            $errorMessage = "";
+            foreach ($items as $key => $value) {
+                $stockCountRes = $this->stockCountDetailRepository->addStockCountItems($value->itemCodeSystem, $stockCount, $input['companySystemID']);
+                if (!$stockCountRes['status']) {
+                    DB::rollBack();
+                    return $this->sendError($stockCountRes['message'], 500);
+                } else {
+                    if (isset($stockCountRes['message']) && $stockCountRes['message']) {
+                        DB::rollBack();
+                        return $this->sendError($stockCountRes['message'], 500);
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Stock Count Detail saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage()." ".$exception->getLine());
+        }
     }
 
     /**
@@ -231,6 +275,13 @@ class StockCountDetailAPIController extends AppBaseController
             return $this->sendError('Stock Count not found');
         }
 
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+            ->where('companySystemID', $stockCount->companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
 
         $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,
             $stockCountDetail->currentWacLocalCurrencyID,
@@ -254,8 +305,19 @@ class StockCountDetailAPIController extends AppBaseController
                         'wareHouseId' => $stockCount->location);
 
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
-            $input['systemQty'] = $itemCurrentCostAndQty['currentStockQty'];
-            $input['adjustedQty'] = $input['noQty'] - $itemCurrentCostAndQty['currentStockQty'];
+            $input['systemQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+            $input['adjustedQty'] = $input['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
+
+            $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+            $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+
+            $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+
+            $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
+            $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
+            $input['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['wacAdjLocalER'] = 1;
         }
 
         $input['updatedFlag'] = 1;

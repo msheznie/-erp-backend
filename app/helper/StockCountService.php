@@ -4,6 +4,7 @@ namespace App\helper;
 use App\helper\Helper;
 use Carbon\Carbon;
 use App\Models\StockCountDetail;
+use App\Models\ItemAssigned;
 use App\Models\StockCount;
 
 class StockCountService
@@ -25,11 +26,26 @@ class StockCountService
 
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
+
             $updateData = [
                 'currenctStockQty' => $itemCurrentCostAndQty['currentStockQty'],
                 'systemQty' => $itemCurrentCostAndQty['currentStockQty'],
+                'wacAdjRpt' => $itemCurrentCostAndQty['wacValueReporting'],
+                'currentWacRpt' => $itemCurrentCostAndQty['wacValueReporting'],
                 'adjustedQty' => $value->noQty - $itemCurrentCostAndQty['currentStockQty']
             ];
+
+            $item = ItemAssigned::where('itemCodeSystem', $value->itemCodeSystem)
+                                ->where('companySystemID', $stockCount->companySystemID)
+                                ->first();
+
+            if ($item) {
+                $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+                $updateData['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
+                $updateData['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
+                $updateData['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
+                $updateData['wacAdjLocalER'] = 1;
+            }
 
             StockCountDetail::where('stockCountDetailsAutoID', $value->stockCountDetailsAutoID)
                             ->update($updateData);

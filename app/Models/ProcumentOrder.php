@@ -307,6 +307,8 @@ class ProcumentOrder extends Model
         'supCategorySubICVID',
         'allocateItemToSegment',
         'rcmActivated'
+        'orderType',
+        'projectID',
     ];
 
     /**
@@ -444,7 +446,8 @@ class ProcumentOrder extends Model
         'supCategoryICVMasterID' => 'integer',
         'workOrderGenerateID' => 'integer',
         'supCategorySubICVID' => 'integer',
-        'rcmActivated' => 'integer'
+        'rcmActivated' => 'integer',
+        'orderType' => 'boolean'
     ];
 
     /**

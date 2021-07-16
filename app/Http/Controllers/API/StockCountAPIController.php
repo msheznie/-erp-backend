@@ -238,13 +238,13 @@ class StockCountAPIController extends AppBaseController
 
         $skipItemIds = [];
         if (isset($input['preCheck']) && $input['preCheck']) {
-            $checkProducts = $this->validateProductsForStockCount($input, $items);
+            $checkProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
 
             if (count($checkProducts['usedItems']) > 0) {
                 return $this->sendError('You cannot used these items, these items have been pulled in the following documents', 500, array('type' => 'used_items', 'used_items' => $checkProducts['usedItems']));
             }
         } else {
-            $skipProducts = $this->validateProductsForStockCount($input, $items);
+            $skipProducts = $this->stockCountRepository->validateProductsForStockCount($input, $items);
 
             $skipItemIds = $skipProducts['skipItemIds'];
         }
@@ -569,10 +569,24 @@ class StockCountAPIController extends AppBaseController
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
             $updateData = [
-                'currenctStockQty' => $itemCurrentCostAndQty['currentStockQty'],
-                'systemQty' => $itemCurrentCostAndQty['currentStockQty'],
-                'adjustedQty' => $value->noQty - $itemCurrentCostAndQty['currentStockQty']
+                'currenctStockQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
+                'systemQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
+                'wacAdjRpt' => $itemCurrentCostAndQty['wacValueReporting'],
+                'currentWacRpt' => $itemCurrentCostAndQty['wacValueReporting'],
+                'adjustedQty' => $value->noQty - $itemCurrentCostAndQty['currentWareHouseStockQty']
             ];
+
+            $item = ItemAssigned::where('itemCodeSystem', $value->itemCodeSystem)
+                                ->where('companySystemID', $stockCount->companySystemID)
+                                ->first();
+
+            if ($item) {
+                $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+                $updateData['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
+                $updateData['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
+                $updateData['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
+                $updateData['wacAdjLocalER'] = 1;
+            }
 
             StockCountDetail::where('stockCountDetailsAutoID', $value->stockCountDetailsAutoID)
                             ->update($updateData);
@@ -631,203 +645,6 @@ class StockCountAPIController extends AppBaseController
         $stockCount->delete();
 
         return $this->sendSuccess('Stock Count deleted successfully');
-    }
-
-    public function validateProductsForStockCount($input, $items)
-    {
-        $itemCodeSystems = $items->pluck('itemCodeSystem')->toArray();
-
-        $checkGrvs = GRVDetails::selectRaw('grvDetailsID, grvAutoID, grvAutoID as documentID, itemDescription, itemPrimaryCode, itemCode')
-                               ->whereIn('itemCode', $itemCodeSystems)
-                               ->with(['master' => function ($query) use ($input) {
-                                   $query->selectRaw('grvAutoID, grvPrimaryCode as documentCode, documentSystemID')
-                                         ->where('companySystemID', $input['companySystemID'])
-                                         ->where('approved', '!=', -1);
-                               }])
-                               ->whereHas('master', function ($query) use ($input) {
-                                    $query->where('companySystemID', $input['companySystemID'])
-                                          ->where('approved', '!=', -1);
-                               })
-                               ->get();
-
-        $skipIds = [];
-        if (count($checkGrvs)) {
-            $skipIds[] = $checkGrvs->pluck('itemCode');
-        }
-
-        $checkMaterialIssues = ItemIssueDetails::selectRaw('itemIssueDetailID, itemIssueAutoID, itemIssueAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('itemIssueAutoID, itemIssueCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkMaterialIssues)) {
-            $skipIds[] = $checkMaterialIssues->pluck('itemCodeSystem');
-        }
-
-
-        $checkMaterialReturn = ItemReturnDetails::selectRaw('itemReturnDetailID, itemReturnAutoID, itemReturnAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('itemReturnAutoID, itemReturnCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkMaterialReturn)) {
-            $skipIds[] = $checkMaterialReturn->pluck('itemCodeSystem');
-        }
-
-
-        $checkStockTransfer = StockTransferDetails::selectRaw('stockTransferDetailsID, stockTransferAutoID, stockTransferAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('stockTransferAutoID, stockTransferCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkStockTransfer)) {
-            $skipIds[] = $checkStockTransfer->pluck('itemCodeSystem');
-        }
-
-
-        $checkStockRecive = StockReceiveDetails::selectRaw('stockReceiveDetailsID, stockReceiveAutoID, stockReceiveAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('stockReceiveAutoID, stockReceiveCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkStockRecive)) {
-            $skipIds[] = $checkStockRecive->pluck('itemCodeSystem');
-        }
-
-
-        $checkStockAdj = StockAdjustmentDetails::selectRaw('stockAdjustmentDetailsAutoID, stockAdjustmentAutoID, stockAdjustmentAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('stockAdjustmentAutoID, stockAdjustmentCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkStockAdj)) {
-            $skipIds[] = $checkStockAdj->pluck('itemCodeSystem');
-        }
-
-
-        $checkPR = PurchaseReturnDetails::selectRaw('purhasereturnDetailID, purhaseReturnAutoID, purhaseReturnAutoID as documentID, itemDescription, itemPrimaryCode, itemCode')
-                                               ->whereIn('itemCode', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('purhaseReturnAutoID, purchaseReturnCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkPR)) {
-            $skipIds[] = $checkPR->pluck('itemCode');
-        }
-
-        $checkDeliveryOrder = DeliveryOrderDetail::selectRaw('deliveryOrderDetailID, deliveryOrderID, deliveryOrderID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('deliveryOrderID, deliveryOrderCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approvedYN', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approvedYN', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkDeliveryOrder)) {
-            $skipIds[] = $checkDeliveryOrder->pluck('itemCodeSystem');
-        }
-
-         $checkCustomerInvoice = CustomerInvoiceItemDetails::selectRaw('customerItemDetailID, custInvoiceDirectAutoID, custInvoiceDirectAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
-                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('custInvoiceDirectAutoID, bookingInvCode as documentCode, documentSystemiD as documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkCustomerInvoice)) {
-            $skipIds[] = $checkCustomerInvoice->pluck('itemCodeSystem');
-        }
-        
-
-       $checkInventoryReClassification = InventoryReclassificationDetail::selectRaw('inventoryReclassificationDetailID, inventoryreclassificationID, inventoryreclassificationID as documentID, itemDescription, itemPrimaryCode, itemSystemCode')
-                                               ->whereIn('itemSystemCode', $itemCodeSystems)
-                                               ->with(['master' => function ($query) use ($input) {
-                                                   $query->selectRaw('inventoryreclassificationID, documentCode as documentCode, documentSystemID')
-                                                         ->where('companySystemID', $input['companySystemID'])
-                                                         ->where('approved', '!=', -1);
-                                               }])
-                                               ->whereHas('master', function ($query) use ($input) {
-                                                    $query->where('companySystemID', $input['companySystemID'])
-                                                          ->where('approved', '!=', -1);
-                                               })
-                                               ->get();
-
-        if (count($checkInventoryReClassification)) {
-            $skipIds[] = $checkInventoryReClassification->pluck('itemSystemCode');
-        }
-
-        $skipFinalIDs = [];
-        foreach ($skipIds as $key => $value) {
-            foreach ($value as $key1 => $value1) {
-                $skipFinalIDs[] = $value1;
-            }
-        }
-        
-
-        $skipItemIds = array_unique($skipFinalIDs);
-
-        $usedItems = $checkInventoryReClassification->merge($checkCustomerInvoice)->merge($checkDeliveryOrder)->merge($checkPR)->merge($checkStockAdj)->merge($checkStockRecive)->merge($checkStockTransfer)->merge($checkMaterialReturn)->merge($checkMaterialIssues)->merge($checkGrvs);
-
-
-        return ['usedItems' => $usedItems, 'skipItemIds' => $skipItemIds];
     }
 
     public function getAllStockCountsByCompany(Request $request)

@@ -1494,7 +1494,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('customerMasterCategories', 'CustomerMasterCategoryAPIController');
         Route::post('getAllCustomerCategories', 'CustomerMasterCategoryAPIController@getAllCustomerCategories');
         Route::get('getNotAssignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAPIController@getNotAssignedCompaniesByCustomerCategory');
-        
+
         Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
         Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
         Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
@@ -2006,7 +2006,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
 
         Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
-            
+
         Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
 
         Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
@@ -2021,7 +2021,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
         Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
         Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
-        
+
         Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
 
         Route::resource('stock_counts', 'StockCountAPIController');
@@ -2061,7 +2061,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getBudgetAdditionApprovalByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovalByUser');
         Route::post('getBudgetAdditionApprovedByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovedByUser');
 
-        
         Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
 
         Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
@@ -2070,6 +2069,24 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
         Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
         Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
+        Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
+        Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
+        Route::post('storeVerification', 'AssetVerificationAPIController@store');
+        Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy');
+        Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show');
+        Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser');
+        Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser');
+        Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
+        Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification');
+        Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
+        Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
+        Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
+
+        Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
+        Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
+        Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
+        Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
+        Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2144,3 +2161,5 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
+
+Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');

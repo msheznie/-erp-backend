@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\helper\DocumentCodeGenerate;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
@@ -49,9 +50,7 @@ use App\Repositories\FixedAssetMasterRepository;
 use App\Traits\AuditTrial;
 use App\Traits\UserActivityLogger;
 use Carbon\Carbon;
-use Dompdf\Positioner\Fixed;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -118,6 +117,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     /**
      * @param CreateFixedAssetMasterAPIRequest $request
+     *
      * @return Response
      *
      * @SWG\Post(
@@ -746,7 +746,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'documentDate' => 'required|date|before_or_equal:dateDEP',
                 'faUnitSerialNo' => ['required',Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
                 'faBarcode' => ['required', Rule::unique('erp_fa_asset_master')->ignore($id, 'faID')],
-                
+
             ], $messages);
 
 

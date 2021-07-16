@@ -207,5 +207,4 @@ class ReportTemplate extends Model
     {
         return is_string($value) ? htmlspecialchars_decode($value) : $value;
     }
-    
 }

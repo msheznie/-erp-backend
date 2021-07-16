@@ -74,7 +74,7 @@ class StockCountDetailRepository extends BaseRepository
             $input['stockCountAutoIDCode'] = $stockCount->stockCountCode;
             $input['stockCountAutoID'] = $stockCount->stockCountAutoID;
             $input['comments'] = null;
-            $input['noQty'] = 0;
+            $input['noQty'] = null;
 
             $input['itemCodeSystem'] = $item->itemCodeSystem;
             $input['itemPrimaryCode'] = $item->itemPrimaryCode;
@@ -113,8 +113,8 @@ class StockCountDetailRepository extends BaseRepository
             $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
             $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
-            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
-            $input['systemQty'] = $itemCurrentCostAndQty['currentStockQty'];
+            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+            $input['systemQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
             $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
             $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
