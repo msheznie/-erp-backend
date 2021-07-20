@@ -551,7 +551,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $id = $input['budgetTransferFormAutoID'];
 
         $items = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
-            ->with(['segment', 'template'])
+            ->with(['from_segment', 'to_segment', 'from_template', 'to_template'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
@@ -583,7 +583,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
 
         if($fromDataBudgetCheck == 0){
-            return $this->sendError('Selected account code is not available in the budget. Please allocate ans try again.', 500);
+            return $this->sendError('Selected account code is not available in the budget. Please allocate and try again.', 500);
         }
 
         return $this->sendResponse($fromDataBudgetCheck, 'successfully');
