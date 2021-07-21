@@ -161,6 +161,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
         Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
         Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
+        Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
         Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
@@ -2069,6 +2070,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
         Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
         Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
+        Route::post('getSegmentAllocatedFormData', 'SegmentAllocatedItemAPIController@getSegmentAllocatedFormData');
         Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
         Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
         Route::post('storeVerification', 'AssetVerificationAPIController@store');

@@ -699,6 +699,58 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                             $update = PurchaseRequestDetails::where('purchaseRequestDetailsID', $new['purchaseRequestDetailsID'])
                                 ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $totalAddedQty, 'prClosedYN' => $prClosedYN]);
+
+
+                            if (isset($input['allocationMappingData'])) {
+                                $mappingPurchaseRequestIDs = collect($input['allocationMappingData'])->pluck('purchaseRequestDetailsID')->toArray();
+
+                                if (in_array($new['purchaseRequestDetailsID'], $mappingPurchaseRequestIDs)) {
+                                    foreach ($input['allocationMappingData'] as $keyMap => $valueMap) {
+                                        if ($new['purchaseRequestDetailsID'] == $valueMap['purchaseRequestDetailsID']) {
+                                            if (isset($valueMap['allocationMappingArray']) && count($valueMap['allocationMappingArray']) > 0) {
+
+                                                foreach ($valueMap['allocationMappingArray'] as $key1 => $value1) {
+                                                    if (isset($value1['allocatedQty']) && floatval($value1['allocatedQty']) > 0) {
+                                                        $allocatedData = [
+                                                            'docDetailID' => $item->purchaseOrderDetailsID,
+                                                            'documentSystemID' => $purchaseOrder->documentSystemID,
+                                                            'docAutoID' => $purchaseOrder->purchaseOrderID,
+                                                            'serviceLineSystemID' => $value1['serviceLineSystemID'],
+                                                            'allocatedQty' => $value1['allocatedQty'],
+                                                            'pulledDocumentSystemID' => $value1['documentSystemID'],
+                                                            'pulledDocumentDetailID' => $value1['documentDetailAutoID'],
+                                                        ];
+
+                                                        $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocatePurchaseOrderItemsFromPR($allocatedData);
+
+                                                        if (!$segmentAllocatedItem['status']) {
+                                                            return $this->sendError($segmentAllocatedItem['message']);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    $allocatedData = [
+                                        'docDetailID' => $item->purchaseOrderDetailsID,
+                                        'documentSystemID' => $purchaseOrder->documentSystemID,
+                                        'docAutoID' => $purchaseOrder->purchaseOrderID,
+                                        'pulledDocumentDetailID' => $new['purchaseRequestDetailsID'],
+                                    ];
+                                    if ($new['quantityRequested'] == $new['poQty']) {
+                                        $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData);
+                                        if (!$segmentAllocatedItem['status']) {
+                                            return $this->sendError($segmentAllocatedItem['message']);
+                                        }
+                                    } else {
+                                        $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData, $new['poQty']);
+                                        if (!$segmentAllocatedItem['status']) {
+                                            return $this->sendError($segmentAllocatedItem['message']);
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // fetching the total count records from purchase Request Details table
@@ -958,7 +1010,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 }
             }
 
-            if ($purchaseOrderDetailsData->noQty != $input['noQty'] && $purchaseOrder->poTypeID == 2) {
+            if ($purchaseOrderDetailsData->noQty != $input['noQty']) {
                 $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=',$purchaseOrder->serviceLineSystemID)
                                                          ->where('documentSystemID', $purchaseOrder->documentSystemID)
                                                          ->where('documentMasterAutoID', $input['purchaseOrderMasterID'])
@@ -1029,8 +1081,30 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
+        $checkSegmentAllocation = SegmentAllocatedItem::where('documentDetailAutoID', $id)
+                                                      ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                      ->get();
+
+        foreach ($checkSegmentAllocation as $key => $value) {
+            if (!is_null($value->pulledDocumentDetailID)) {
+                $segmentData = SegmentAllocatedItem::where('documentDetailAutoID', $value->pulledDocumentDetailID)
+                                                   ->where('documentSystemID', $value->pulledDocumentSystemID)
+                                                   ->where('serviceLineSystemID', $value->serviceLineSystemID)
+                                                   ->first();
+
+                if ($segmentData) {
+                    $segmentData->copiedQty = floatval($segmentData->copiedQty) - floatval($value->allocatedQty);
+                    $segmentData->save();
+                }
+            }
+        }
+
+
         $purchaseOrderDetails->delete();
 
+        $checkSegmentAllocation = SegmentAllocatedItem::where('documentDetailAutoID', $id)
+                                                      ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                      ->delete();
         // updating master and detail table number of qty
 
         if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
@@ -1106,12 +1180,42 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $detailExistAll = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
         if (empty($detailExist)) {
             return $this->sendError('There are no details to delete');
         }
         if (!empty($detailExistAll)) {
 
             foreach ($detailExistAll as $cvDeatil) {
+
+                $checkSegmentAllocation = SegmentAllocatedItem::where('documentDetailAutoID', $cvDeatil['purchaseOrderDetailsID'])
+                                                      ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                      ->get();
+
+                foreach ($checkSegmentAllocation as $key => $value) {
+                    if (!is_null($value->pulledDocumentDetailID)) {
+                        $segmentData = SegmentAllocatedItem::where('documentDetailAutoID', $value->pulledDocumentDetailID)
+                                                           ->where('documentSystemID', $value->pulledDocumentSystemID)
+                                                           ->where('serviceLineSystemID', $value->serviceLineSystemID)
+                                                           ->first();
+
+                        if ($segmentData) {
+                            $segmentData->copiedQty = floatval($segmentData->copiedQty) - floatval($value->allocatedQty);
+                            $segmentData->save();
+                        }
+                    }
+                }
+
+
+                $checkSegmentAllocation = SegmentAllocatedItem::where('documentDetailAutoID', $cvDeatil['purchaseOrderDetailsID'])
+                                                              ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                                                              ->delete();
 
                 $deleteDetails = PurchaseOrderDetails::where('purchaseOrderDetailsID', $cvDeatil['purchaseOrderDetailsID'])->delete();
 
@@ -1355,5 +1459,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         return $output;
+    }
+
+
+    public function validateItemAlllocationInPO(Request $request)
+    {
+        $input = $request->all();
+        $validated = true;
+        $finalArray = [];
+        foreach ($input['detailTable'] as $key => $value) {
+            $allocationMappingArray = [];
+            if (isset($value['isChecked']) && $value['isChecked']) {
+                $purchaseRequest = PurchaseRequest::find($value['purchaseRequestID']);
+
+                if ($purchaseRequest && $value['quantityRequested'] > $value['poQty']) {
+                    $checkAllocation = SegmentAllocatedItem::selectRaw('(allocatedQty - copiedQty) as remaingQty, serviceLineSystemID, documentMasterAutoID, id, documentDetailAutoID, documentSystemID')
+                                                           ->with(['segment'])
+                                                           ->where('documentMasterAutoID', $value['purchaseRequestID'])
+                                                           ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                           ->where('documentDetailAutoID', $value['purchaseRequestDetailsID'])
+                                                           ->get();
+
+                    if (count($checkAllocation) > 1) {
+                        foreach ($checkAllocation as $key1 => $value1) {
+                            $allocationMappingArray[] = $value1;
+                            $validated = false;
+                        }
+                    }
+                }
+            }
+
+            if (count($allocationMappingArray) > 0) {
+                $value['allocationMappingArray'] = $allocationMappingArray;
+
+                $finalArray[] = $value;
+            }
+        }
+
+        return $this->sendResponse(['allocationMappingArray' => $finalArray, 'validated' => $validated], "Allocation validated successfully");
     }
 }
