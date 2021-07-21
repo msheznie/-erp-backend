@@ -74,6 +74,7 @@ class SegmentAllocatedItem extends Model
         'documentMasterAutoID',
         'documentDetailAutoID',
         'detailQty',
+        'copiedQty',
         'allocatedQty',
         'pulledDocumentSystemID',
         'serviceLineSystemID',
@@ -92,6 +93,7 @@ class SegmentAllocatedItem extends Model
         'serviceLineSystemID' => 'integer',
         'documentDetailAutoID' => 'integer',
         'detailQty' => 'float',
+        'copiedQty' => 'float',
         'allocatedQty' => 'float',
         'pulledDocumentSystemID' => 'integer',
         'pulledDocumentDetailID' => 'integer'
