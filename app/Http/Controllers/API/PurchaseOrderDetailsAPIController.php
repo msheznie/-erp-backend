@@ -750,6 +750,24 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                         }
                                     }
                                 }
+                            } else {
+                                $allocatedData = [
+                                    'docDetailID' => $item->purchaseOrderDetailsID,
+                                    'documentSystemID' => $purchaseOrder->documentSystemID,
+                                    'docAutoID' => $purchaseOrder->purchaseOrderID,
+                                    'pulledDocumentDetailID' => $new['purchaseRequestDetailsID'],
+                                ];
+                                if ($new['quantityRequested'] == $new['poQty']) {
+                                    $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData);
+                                    if (!$segmentAllocatedItem['status']) {
+                                        return $this->sendError($segmentAllocatedItem['message']);
+                                    }
+                                } else {
+                                    $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData, $new['poQty']);
+                                    if (!$segmentAllocatedItem['status']) {
+                                        return $this->sendError($segmentAllocatedItem['message']);
+                                    }
+                                }
                             }
                         }
 
