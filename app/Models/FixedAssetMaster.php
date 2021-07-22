@@ -445,6 +445,7 @@ class FixedAssetMaster extends Model
     protected $primaryKey = 'faID';
 
     protected $dates = ['deleted_at'];
+    protected $appends = ['asset_code_concat'];
 
     public $fillable = [
         'departmentSystemID',
@@ -868,6 +869,18 @@ class FixedAssetMaster extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'faID')->where('documentSystemID',22);
+    }
+    public function getAssetCodeConcatAttribute(): string
+    {
+        if (isset($this->attributes['assetDescription'])) {
+            if ($this->attributes['assetDescription']) {
+                return $this->attributes['faCode'].' - '.$this->attributes['assetDescription'];
+            } else {
+                return 'N/A';
+            }
+        }
+
+        return '';
     }
 
 }
