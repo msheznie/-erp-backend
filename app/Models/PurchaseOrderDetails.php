@@ -351,4 +351,7 @@ class PurchaseOrderDetails extends Model
     public function scopeRequestDetailSum($q,$purchaseRequestDetailsID = 0){
         return $q->where('purchaseRequestDetailsID', $purchaseRequestDetailsID)->sum('noQty');
     }
+    public function grvDetails(){ 
+        return $this->hasMany('App\Models\GRVDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');  
+    }
 }

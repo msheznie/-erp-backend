@@ -9,6 +9,8 @@ use App\Repositories\AssetRequestDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequest;
+use App\Models\FixedAssetMaster;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -279,13 +281,46 @@ class AssetRequestDetailAPIController extends AppBaseController
 
         return $this->sendSuccess('Asset Request Detail deleted successfully');
     }
-    public function getAssetRequestDetails(Request $request){ 
+    public function getAssetRequestDetails(Request $request)
+    {
         $id = $request['id'];
-        $companyID = $request['companyId'];
-
-        $data['assetRequestDetail'] = AssetRequestDetail::where('company_id',$companyID)->where('erp_fa_fa_asset_request_id',$id)->get();
-        $data['assetRequestMaster'] = AssetRequest::with(['employee','company','confirmed_by','approved_by'])->where('company_id',$companyID)->where('id',$id)->first();
-
+        $companyID = $request['companyId']; 
+        $data['assetRequestDetail'] = AssetRequestDetail::where('company_id', $companyID)->where('erp_fa_fa_asset_request_id', $id)->get();
+        $data['assetRequestMaster'] = AssetRequest::with(['employee', 'company', 'confirmed_by', 'approved_by'])->where('company_id', $companyID)->where('id', $id)->first();
         return $this->sendResponse($data, 'Asset Request data');
     }
+    public function getAssetRequestMaster(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $assetRequestMaster =DB::select("SELECT id, document_code, (requesedQty.qtyRequested - IFNULL(transferedQTY.transferedQty,0)) as qty FROM erp_fa_fa_asset_request 
+        LEFT JOIN (SELECT erp_fa_fa_asset_request_id as reqMasterID, SUM(qty) as qtyRequested FROM `erp_fa_fa_asset_request_details` WHERE company_id = $companyID 
+        GROUP BY erp_fa_fa_asset_request_id  ) as requesedQty ON requesedQty.reqMasterID = erp_fa_fa_asset_request.id 
+        LEFT JOIN (SELECT erp_fa_fa_asset_request_id AS MasterID, COUNT( id ) AS transferedQty FROM `erp_fa_fa_asset_transfer_details` WHERE company_id = $companyID  GROUP BY erp_fa_fa_asset_request_id) as transferedQTY ON transferedQTY.MasterID = erp_fa_fa_asset_request.id 
+        WHERE company_id = $companyID AND approved_yn = 1 HAVING qty > 0 ");
+         /* AssetRequest::where('company_id', $companyID)->where('approved_yn', 1)->get(); */
+        return $this->sendResponse($assetRequestMaster, 'Asset request master data retrieved successfully');
+    }
+    public function getAssetRequestDetailSelected(Request $request){ 
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $assetRequestMasterID = $input['AssetRequestMasterID'];
+
+        //$assetRequestDetail = AssetRequestDetail::where('company_id', $companyID)->where('erp_fa_fa_asset_request_id', $assetRequestMasterID)->get();
+       
+       $assetRequestDetail = DB::select("SELECT erp_fa_fa_asset_request_details.*, (qty - IFNULL(qtyTransfer,0) ) as qty FROM `erp_fa_fa_asset_request_details` 
+        LEFT JOIN (SELECT erp_fa_fa_asset_request_detail_id as requestDetailID, count(id) as qtyTransfer FROM `erp_fa_fa_asset_transfer_details` 
+        WHERE erp_fa_fa_asset_request_id = $assetRequestMasterID
+        GROUP BY erp_fa_fa_asset_request_detail_id) transferedQty ON transferedQty.requestDetailID = erp_fa_fa_asset_request_details.id
+        WHERE company_id = $companyID AND erp_fa_fa_asset_request_id = $assetRequestMasterID HAVING qty > 0");
+
+        return $this->sendResponse($assetRequestDetail, 'Asset request detail data retrieved successfully');
+    }
+    public function getAssetDropData(Request $request){ 
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)->get();
+        return $this->sendResponse($assetMaster->toArray(), 'Asset master data retrieved successfully');
+    }
+   
 }

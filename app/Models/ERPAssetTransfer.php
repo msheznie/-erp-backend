@@ -7,7 +7,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="AssetRequest",
+ *      definition="ERPAssetTransfer",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -23,6 +23,16 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="document_code",
  *          description="document_code",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="type",
+ *          description="type",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="reference_no",
+ *          description="reference_no",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -131,11 +141,11 @@ use Eloquent as Model;
  *      )
  * )
  */
-class AssetRequest extends Model
+class ERPAssetTransfer extends Model
 {
 
-    public $table = 'erp_fa_fa_asset_request';
-    
+    public $table = 'erp_fa_fa_asset_transfer';
+    public $primaryKey = 'id';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -145,23 +155,30 @@ class AssetRequest extends Model
     public $fillable = [
         'document_id',
         'document_code',
+        'type',
+        'location',
+        'budgetYear',
+        'prBelongsYear',
+        'reference_no',
         'document_date',
         'approval_comments',
-        'timesReferred',
         'serial_no',
         'emp_id',
         'narration',
         'company_id',
         'confirmed_yn',
         'confirmed_by_emp_id',
-        'confirmed_by_name',
+        'confirmedByName',
         'confirmed_date',
         'approved_yn',
         'approved_date',
         'approved_by_emp_name',
         'approved_by_emp_id',
         'current_level_no',
-        'created_user_id'
+        'created_user_id',
+        'confirmedByEmpID',
+        'serviceLineSystemID',
+        'serviceLineCode'
     ];
 
     /**
@@ -171,18 +188,25 @@ class AssetRequest extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'timesReferred' => 'integer',
+        'serviceLineSystemID' => 'integer',
+        'budgetYear' => 'integer',
+        'prBelongsYear' => 'integer',
         'document_id' => 'string',
         'document_code' => 'string',
+        'type' => 'integer',
+        'location' => 'integer',
+        'reference_no' => 'string',
         'document_date' => 'date',
         'approval_comments' => 'string',
         'serial_no' => 'integer',
         'emp_id' => 'integer',
         'narration' => 'string',
+        'serviceLineCode' => 'string',
         'company_id' => 'integer',
         'confirmed_yn' => 'integer',
         'confirmed_by_emp_id' => 'integer',
-        'confirmed_by_name' => 'string',
+        'confirmedByName' => 'string',
+        'confirmedByEmpID' => 'string',
         'confirmed_date' => 'datetime',
         'approved_yn' => 'integer',
         'approved_date' => 'datetime',
@@ -197,12 +221,10 @@ class AssetRequest extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
+    protected $appends = ['document_date_formatted', 'transfer_type'];
 
-    protected $appends = ['document_date_formatted'];
-    
+
     public function getDocumentDateFormattedAttribute(): string
     {
         if (isset($this->attributes['document_date'])) {
@@ -216,13 +238,16 @@ class AssetRequest extends Model
         return '';
     }
 
-    public function employee()
+    public function getTransferTypeAttribute(): string
     {
-        return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'emp_id');
-    }
-    public function employeeApproved()
-    {
-        return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'approved_by_emp_id');
+        if (isset($this->attributes['type'])) {
+            if ($this->attributes['type']) {
+                return ($this->attributes['type'] == 1) ? 'Request Based Transfer' : 'Direct';
+            } else {
+                return 'N/A';
+            }
+        }
+        return '';
     }
     public function company()
     {
@@ -232,11 +257,8 @@ class AssetRequest extends Model
     {
         return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'confirmed_by_emp_id');
     }
-    public function approved_by()
-    {
-        return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'approved_by_emp_id');
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','id');
     }
 
-
-    
 }

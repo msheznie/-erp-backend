@@ -59,6 +59,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
 use App\Models\CurrencyConversionMaster;
+use App\Models\ERPAssetTransfer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -407,6 +408,13 @@ class email
                         $data['docCode'] = $currencyConversion->conversionCode;
                     }
                     break;
+                 case 103:
+                        $erpAssetTransfer = ERPAssetTransfer::find($data['docSystemCode']);
+                        if (!empty($erpAssetTransfer)) {
+                            $data['docApprovedYN'] = $erpAssetTransfer->approved_yn;
+                            $data['docCode'] = $erpAssetTransfer->document_code;
+                        }
+                 break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
