@@ -243,5 +243,10 @@ class DirectInvoiceDetails extends Model
     {
         return $this->belongsTo('App\Models\BookInvSuppMaster', 'directInvoiceAutoID', 'bookingSuppMasInvAutoID');
     }
+
+    public function budget_detail()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'chartOfAccountSystemID','chartOfAccountID');
+    }
     
 }

@@ -19,7 +19,10 @@ use App\Http\Requests\API\CreateBudjetdetailsAPIRequest;
 use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
+use App\Models\BudgetMaster;
+use App\Models\ReportTemplateLinks;
 use App\Models\TemplatesGLCode;
+use App\Models\ReportTemplateDetails;
 use App\Repositories\BudgetMasterRepository;
 use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
@@ -27,6 +30,9 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\AddBudgetDetails;
 
 /**
  * Class BudjetdetailsController
@@ -327,111 +333,95 @@ class BudjetdetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
         }
 
-        // Incomes
-        $income = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
-            ->where('controlAccountSystemID', 1)
-            ->whereHas('gl_codes', function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            })
-            ->with(['gl_codes' => function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            }])
-            ->orderBy('sortOrder', 'asc')
-            ->get();
+        $finalArray = ReportTemplateDetails::selectRaw('*,0 as expanded')
+                                         ->with(['subcategory' => function ($q) use ($budgetMaster){
+                                            $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster){
+                                                        $q->with('subcategory')
+                                                          ->orderBy('sortOrder', 'asc')
+                                                          ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          }])
+                                                          ->with(['items' => function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          }])
+                                                          ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                      ->where('Year', $budgetMaster->Year);
+                                                          });
+                                                    }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                        $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                            $q->with('subcategory')
+                                                              ->orderBy('sortOrder', 'asc')
+                                                              ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              }])
+                                                              ->with(['items' => function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              }])
+                                                              ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                          ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                          ->where('Year', $budgetMaster->Year);
+                                                              });
+                                                        }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                            $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                                $q->with('subcategory')
+                                                                  ->orderBy('sortOrder', 'asc')
+                                                                  ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  }])
+                                                                  ->with(['items' => function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  }])
+                                                                  ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                              ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                              ->where('Year', $budgetMaster->Year);
+                                                                  });
+                                                            }, 'subcategory' => function ($q) use ($budgetMaster) {
+                                                                $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                                                    $q->with('subcategory')
+                                                                      ->orderBy('sortOrder', 'asc')
+                                                                      ->withCount(['items' => function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      }])
+                                                                      ->with(['items' => function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      }])
+                                                                      ->whereHas('items', function($query) use ($budgetMaster) {
+                                                                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                                                                  ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                      });
+                                                                }]);
+                                                                $q->orderBy('sortOrder', 'asc');
+                                                            }]);
+                                                            $q->orderBy('sortOrder', 'asc');
+                                                        }]);
+                                                        $q->orderBy('sortOrder', 'asc');
+                                                    }]);
+                                            $q->orderBy('sortOrder', 'asc');
+                                        }, 'subcategorytot' => function ($q) {
+                                            $q->with('subcategory');
+                                        }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-
-        foreach ($income as $key1 => $data) {
-
-
-            foreach ($data['gl_codes'] as $key => $gl_code) {
-
-                $items = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
-                    'templateDetailID' => $gl_code['templatesDetailsAutoID']
-                ]);
-
-                $gl_code['items_count'] = count($items);
-                $gl_code['items'] = $items;
-            }
-        }
-
-        //Eexpense
-        $expense = TemplatesDetails::where('templatesMasterAutoID', $budgetMaster->templateMasterID)
-            ->where('controlAccountSystemID', 2)
-            ->whereHas('gl_codes', function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            })
-            ->with(['gl_codes' => function ($q) use ($budgetMaster) {
-                $q->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
-                    $q->where('companySystemID', $budgetMaster->companySystemID)
-                        ->where('isActive', 1)
-                        ->where('isAssigned', -1);
-                });
-            }])
-            ->orderBy('sortOrder', 'asc')
-            ->get();
-
-        foreach ($expense as $data) {
-
-            foreach ($data['gl_codes'] as $gl_code) {
-
-                $gl_code['items'] = $this->budjetdetailsRepository->findWhere(['companySystemID' => $budgetMaster->companySystemID,
-                    'serviceLineSystemID' => $budgetMaster->serviceLineSystemID,
-                    'Year' => $budgetMaster->Year,
-                    'chartOfAccountID' => $gl_code['chartOfAccountSystemID'],
-                    'templateDetailID' => $gl_code['templatesDetailsAutoID']
-                ]);
-            }
-
-        }
-
-
-        $finalIncomeArray = array();
-        $finalExpenseArray = array();
-
-        foreach ($income as  $data) {
-            $temGlCodes = array();
-            foreach ($data['gl_codes'] as $gl_code)
-            {
-                if(count($gl_code['items']) > 0){
-                    array_push($temGlCodes,$gl_code);
-                }
-            }
-            $data['gl_codes_data'] = $temGlCodes;
-            if(count($data['gl_codes_data']) > 0){
-                array_push($finalIncomeArray,$data);
-            }
-        }
-
-        foreach ($expense as  $data) {
-            $temGlCodes = array();
-            foreach ($data['gl_codes'] as $gl_code)
-            {
-                if(count($gl_code['items']) > 0){
-                    array_push($temGlCodes,$gl_code);
-                }
-            }
-            $data['gl_codes_data'] = $temGlCodes;
-            if(count($data['gl_codes_data']) > 0){
-                array_push($finalExpenseArray,$data);
-            }
-        }
-
-        $finalArray = array('income' => $finalIncomeArray, 'expense' => $finalExpenseArray);
 
         return $this->sendResponse($finalArray, trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
@@ -491,5 +481,267 @@ class BudjetdetailsAPIController extends AppBaseController
         return $this->sendResponse($total, trans('custom.update', ['attribute' => trans('custom.budjet_details_summery')]));
     }
 
+    public function budgetDetailsUpload(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['budgetExcelUpload'];
+            $input = array_except($request->all(), 'budgetExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+            $budgetMaster = BudgetMaster::where('budgetmasterID', $input['budgetMasterID'])
+                                               ->first();
+
+
+            if (empty($budgetMaster)) {
+                return $this->sendError('Budget Master not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $validateExcel = false;
+            $validateData = false;
+            // $totalItemCount = 0;
+
+            foreach ($uniqueData as $key => $value) {
+               if (isset($value['account_code']) && isset($value['account_description']) && isset($value['main_category']) && isset($value['sub_category'])) {
+                   $validateExcel = true;
+               }
+
+               if ((isset($value['april']) && !is_null($value['april'])) || (isset($value['august']) && !is_null($value['august'])) || (isset($value['december']) && !is_null($value['december'])) || (isset($value['february']) && !is_null($value['february'])) || (isset($value['january']) && !is_null($value['january'])) || (isset($value['july']) && !is_null($value['july'])) || (isset($value['june']) && !is_null($value['june'])) || (isset($value['march']) && !is_null($value['march'])) || (isset($value['may']) && !is_null($value['may'])) || (isset($value['november']) && !is_null($value['november'])) || (isset($value['october']) && !is_null($value['october'])) || (isset($value['september']) && !is_null($value['september']))) {
+                   $validateData = true;
+               }
+            }
+
+            if (!$validateExcel) {
+                return $this->sendError('Excel is not valid, template deafult fields are modified', 500);
+            }
+
+            if (!$validateData) {
+                return $this->sendError('Detail values are null, you cannot upload these excel', 500);
+            }
+
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('account_code', 'account_description', 'april', 'august', 'december', 'february', 'january', 'july', 'june', 'main_category', 'march', 'may', 'november', 'october', 'september', 'sub_category'))->get()->toArray();
+
+            $filteredRecords = array_filter(collect($record)->toArray());
+            $cdcd = '-xs';
+
+            foreach ($filteredRecords as $key => $value) {
+                if (isset($value['sub_category'])) {
+                     $templateDetail = ReportTemplateDetails::where('description', $value['sub_category'])
+                                                       ->where('companyReportTemplateID', $budgetMaster->templateMasterID)
+                                                       ->whereHas('gllink', function($query) use ($value) {
+                                                            $query->where('glCode', $value['account_code']);
+                                                       })
+                                                       ->first();
+
+                     if ($templateDetail) {
+                        if (isset($value['january']) && !is_null($value['january']) && (abs(floatval($value['january'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['january'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 1)
+                                                      ->update($amounts);
+                        }
+
+
+                        if (isset($value['february']) && !is_null($value['february']) && (abs(floatval($value['february'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['february'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 2)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['march']) && !is_null($value['march']) && (abs(floatval($value['march'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['march'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 3)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['april']) && !is_null($value['april']) && (abs(floatval($value['april'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['april'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 4)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['may']) && !is_null($value['may']) && (abs(floatval($value['may'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['may'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 5)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['june']) && !is_null($value['june']) && (abs(floatval($value['june'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['june'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 6)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['july']) && !is_null($value['july']) && (abs(floatval($value['july'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['july'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 7)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['august']) && !is_null($value['august']) && (abs(floatval($value['august'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['august'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 8)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['september']) && !is_null($value['september']) && (abs(floatval($value['september'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['september'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 9)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['october']) && !is_null($value['october']) && (abs(floatval($value['october'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['october'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 10)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['november']) && !is_null($value['november']) && (abs(floatval($value['november'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['november'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 11)
+                                                      ->update($amounts);
+                        }
+
+                        if (isset($value['december']) && !is_null($value['december']) && (abs(floatval($value['december'])) > 0)) {
+                            $amounts = $this->setBudgetRptAndLocalAmount($value['december'], $budgetMaster->companySystemID);
+
+                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                      ->where('budgetmasterID', $input['budgetMasterID'])
+                                                      ->where('glCode', $value['account_code'])
+                                                      ->where('month', 12)
+                                                      ->update($amounts);
+                        }
+                    }
+                }
+               
+            }
+
+            Storage::disk($disk)->delete('app/' . $originalFileName);
+            DB::commit();
+            return $this->sendResponse([], "Budget details uploaded successfully");
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function setBudgetRptAndLocalAmount($budjetAmtRpt, $companySystemID)
+    {
+        $input['budjetAmtRpt']  = $budjetAmtRpt;
+
+        $currencyConvection = \Helper::currencyConversion($companySystemID, 2, 2, $budjetAmtRpt);
+        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+
+        return $input;
+    }
+
+
+    public function syncGlBudget(Request $request)
+    {
+        $input = $request->all();
+
+        $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
+        if (!$budgetMaster) {
+            return $this->sendError("Budget master not fouund", 500);
+        }
+
+        $glData = ReportTemplateLinks::where('templateMasterID', $budgetMaster->templateMasterID)
+                                    ->whereNotNull('glAutoID')
+                                    ->whereHas('chart_of_account', function ($q) use ($budgetMaster) {
+                                        $q->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    })
+                                    ->whereHas('template_category', function ($q) use ($input) {
+                                        $q->where('itemType', '!=',4);
+                                    })
+                                    ->with(['chart_of_account' => function ($q) use ($budgetMaster) {
+                                        $q->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('isActive', 1)
+                                            ->where('isAssigned', -1);
+                                    }])
+                                    ->whereDoesntHave('items', function($query) use ($input) {
+                                        $query->where('budgetmasterID', $input['budgetMasterID']);
+                                    })
+                                    ->get();
+
+        if (count($glData)) {
+            AddBudgetDetails::dispatch($budgetMaster,$glData);
+        }
+
+        return $this->sendResponse($budgetMaster->toArray(), 'Budget details synced successfully');
+    }
 
 }

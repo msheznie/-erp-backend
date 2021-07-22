@@ -165,7 +165,7 @@ class BudgetMaster extends Model
 
     public function template_master()
     {
-        return $this->belongsTo('App\Models\TemplatesMaster', 'templateMasterID', 'templatesMasterAutoID');
+        return $this->belongsTo('App\Models\ReportTemplate', 'templateMasterID', 'companyReportTemplateID');
     }
 
     public function finance_year_by()

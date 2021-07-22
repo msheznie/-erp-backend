@@ -153,6 +153,18 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
 
+            case '50':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
+                break;
+
+            case '51':
+                $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
+                break;
+
             case '3':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
                 $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
@@ -214,7 +226,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '15':
-                if($input['companySystemID'] == 57) {
+                if($input['companySystemID'] == 57 OR $input['docName'] == "receipt_voucher-matching") {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
                     $dataQry = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
                     $data = $this->matchDocumentMasterRepository->setReceiptVoucherMatchingExportExcelData($dataQry);
@@ -287,7 +299,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '61':
-                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
+                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by')); 
                 $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
                 $data = $this->inventoryReclassificationRepository->setExportExcelData($dataQry);
                 break;

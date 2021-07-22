@@ -220,5 +220,10 @@ class ReportTemplateDetails extends Model
         return $this->hasMany('App\Models\ReportTemplateLinks','templateDetailID','detID');
     }
 
+    public function gl_codes()
+    {
+        return $this->gllink();
+    }
+
     
 }

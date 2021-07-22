@@ -605,15 +605,19 @@ class ChequeRegisterAPIController extends AppBaseController
         if(!empty($output)){
             $x = 0;
             foreach ($output as $value) {
-                $data[$x]['Cheque No'] = $value->cheque_no;
-                $data[$x]['Cheque Date'] = isset($value->document->BPVchequeDate)?$value->document->BPVchequeDate:'';
-                $data[$x]['PV No'] = isset($value->document->BPVcode)?$value->document->BPVcode:'';
-                if($value->status==1){
-                    $data[$x]['Cheque Status'] = 'Used';
-                }elseif($value->status==2){
-                    $data[$x]['Cheque Status'] = 'Cancelled';
-                }else{
-                    $data[$x]['Cheque Status'] = 'Un Used';
+                if($value->document){
+                    $data[$x]['Cheque No'] = $value->cheque_no;
+                    $data[$x]['Cheque Date'] = isset($value->document->BPVchequeDate)?$value->document->BPVchequeDate:'';
+                    $data[$x]['PV No'] = isset($value->document->BPVcode)?$value->document->BPVcode:'';
+                    if($value->status==1){
+                        $data[$x]['Cheque Status'] = 'Used';
+                    }elseif($value->status==2){
+                        $data[$x]['Cheque Status'] = 'Cancelled';
+                    }
+                    else{
+                        $data[$x]['Cheque Status'] = 'Un Used';
+                    }
+
                 }
 
                 $data[$x]['Last Modifed By'] = isset($value->updatedBy->empFullName)?$value->updatedBy->empFullName:'';

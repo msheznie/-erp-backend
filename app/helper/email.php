@@ -30,6 +30,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
+use App\Models\ErpBudgetAddition;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\DocumentMaster;
@@ -60,6 +61,7 @@ use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
 use App\Models\CurrencyConversionMaster;
 use App\Models\ERPAssetTransfer;
+use App\Models\ContingencyBudgetPlan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -114,7 +116,7 @@ class email
             } else {
                 return ['success' => false, 'message' => 'Document Not Found'];
             }
-
+            
             switch ($data['docSystemID']) { // check the document id and set relevant parameters
                 case 1:
                 case 50:
@@ -408,6 +410,7 @@ class email
                         $data['docCode'] = $currencyConversion->conversionCode;
                     }
                     break;
+
                  case 103:
                         $erpAssetTransfer = ERPAssetTransfer::find($data['docSystemCode']);
                         if (!empty($erpAssetTransfer)) {
@@ -415,6 +418,21 @@ class email
                             $data['docCode'] = $erpAssetTransfer->document_code;
                         }
                  break;
+
+                case 100:
+                    $contingencyBudgetPlan = ContingencyBudgetPlan::find($data['docSystemCode']);
+                    if(!empty($contingencyBudgetPlan)){
+                        $data['docApprovedYN'] = $contingencyBudgetPlan->approvedYN;
+                        $data['docCode'] = $contingencyBudgetPlan->contingencyBudgetNo;
+                    }
+                    break;
+                case 102:
+                    $budgetAddition = ErpBudgetAddition::find($data['docSystemCode']);
+                    if(!empty($budgetAddition)){
+                        $data['docApprovedYN'] = $budgetAddition->approvedYN;
+                        $data['docCode'] = $budgetAddition->additionVoucherNo;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -423,7 +441,6 @@ class email
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
-
 
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
             if ($data) {

@@ -69,6 +69,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Repositories\SegmentAllocatedItemRepository;
 
 /**
  * Class PurchaseRequestController
@@ -79,11 +80,13 @@ class PurchaseRequestAPIController extends AppBaseController
     /** @var  PurchaseRequestRepository */
     private $purchaseRequestRepository;
     private $userRepository;
+    private $segmentAllocatedItemRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo)
+    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->userRepository = $userRepo;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
     }
 
     /**
@@ -238,8 +241,12 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
+            ->where('companySystemID', $companyId)
+            ->first();
 
-        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0);
+
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0, 'allocateItemToSegment' => 0);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -251,6 +258,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($allowItemToType) {
             $conditions['allowItemToType'] = $allowItemToType->isYesNO;
+        }
+
+        if ($allocateItemToSegment) {
+            $conditions['allocateItemToSegment'] = $allocateItemToSegment->isYesNO;
         }
 
 
@@ -1194,6 +1205,14 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+            $input['allocateItemToSegment'] = 1;
+        }
+
         $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
         $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
 
@@ -1374,6 +1393,10 @@ class PurchaseRequestAPIController extends AppBaseController
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
 
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->sum('totalCost');

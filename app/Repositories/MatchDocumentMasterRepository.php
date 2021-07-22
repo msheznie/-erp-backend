@@ -155,7 +155,15 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
                 $data[$x]['Cancelled At'] = \Helper::dateFormat($val->cancelledDate);
                 $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                
+                if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
+                    $data[$x]['Status'] = "Not Confirmed";
+                } else if ($val->matchingConfirmedYN == 1 && $val->cancelledYN == 0) {
+                    $data[$x]['Status'] = "Confirmed";
+                } else if ($val->cancelledYN == 1) {
+                    $data[$x]['Status'] = "Cancelled";
+                }
+                // $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }
@@ -239,7 +247,15 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Currency'] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Receipt Amount'] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x]['Matched Amount'] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, NULL, $val->matchingConfirmedYN, NULL, NULL);
+
+                if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
+                    $data[$x]['Status'] = "Not Confirmed";
+                } else if ($val->matchingConfirmedYN == 1 && $val->cancelledYN == 0) {
+                    $data[$x]['Status'] = "Confirmed";
+                } else if ($val->cancelledYN == 1) {
+                    $data[$x]['Status'] = "Cancelled";
+                }
+                // $data[$x]['Status'] = StatusService::getStatus( $val->cancelledYN, NULL, $val->matchingConfirmedYN, NULL, NULL);
 
                 $x++;
             }
@@ -250,3 +266,4 @@ class MatchDocumentMasterRepository extends BaseRepository
         return $data;
     }
 }
+;
