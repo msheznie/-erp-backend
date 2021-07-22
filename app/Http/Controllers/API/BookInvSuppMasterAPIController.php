@@ -691,7 +691,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
                                 ->sum('totTransactionAmount');
 
-                            if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+                            if ((round($unbilledSumData->totTransactionAmount, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
 
                                 $unbilledSumData->selectedForBooking = -1;
                                 $unbilledSumData->fullyBooked = 2;
@@ -740,7 +740,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         ->where('companySystemID', $input['companySystemID'])
                         ->first();
                     $valEligible = false;
-                    if ($company->vatRegisteredYN == 1 && $supplierAssignedDetail->vatEligible == 1) {
+                    $rcmActivate = TaxService::isSupplierInvoiceRcmActivated($id);
+                    if (($company->vatRegisteredYN == 1  || $supplierAssignedDetail->vatEligible == 1) && !$rcmActivate) {
                         $valEligible = true;
                     }
                     foreach ($checktotalExceed as $exc) {

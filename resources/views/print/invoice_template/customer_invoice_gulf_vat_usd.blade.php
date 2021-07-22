@@ -575,7 +575,9 @@
                                  </span>
                             </td>
                             <td style="text-align: right;">
-                                {{$request->localCurrencyER}}
+                                @if($request->localCurrencyER != 0)
+                                    {{ round(1/$request->localCurrencyER,4)}}
+                                @endif
                             </td>
                             <td colspan="2">
                             </td>
@@ -758,7 +760,9 @@
                          </span>
                     </td>
                     <td style="text-align: right;">
-                        {{$request->localCurrencyER}}
+                        @if($request->localCurrencyER != 0)
+                           {{ round(1/$request->localCurrencyER,4)}}
+                        @endif
                     </td>
                     <td colspan="3">
                     </td>
@@ -911,7 +915,9 @@
                          </span>
                     </td>
                     <td style="text-align: right;">
-                        {{$request->localCurrencyER}}
+                        @if($request->localCurrencyER != 0)
+                            {{ round(1/$request->localCurrencyER,4)}}
+                        @endif
                     </td>
                     <td colspan="3">
                     </td>

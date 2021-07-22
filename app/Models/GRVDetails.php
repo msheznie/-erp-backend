@@ -320,4 +320,7 @@ class GRVDetails extends Model
     public function master(){
         return $this->grv_master();
     }
+    public function assetMaster(){ 
+        return $this->hasMany('App\Models\FixedAssetMaster',  'docOriginDetailID', 'grvDetailsID');
+    }
 }

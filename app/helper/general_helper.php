@@ -61,6 +61,7 @@ use App\helper\SupplierRegister;
 use App\helper\SupplierAssignService;
 use App\helper\BudgetReviewService;
 use App\helper\StockCountService;
+use App\helper\AssetTransferService;
 use App\helper\BudgetHistoryService;
 use App\helper\CustomerAssignService;
 use App\helper\IvmsDeliveryOrderService;
@@ -651,10 +652,21 @@ class Helper
                     $docInforArr["modelName"] = 'AssetVerification';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 103: // asset Transfer
+                        $docInforArr["documentCodeColumnName"] = 'document_code';
+                        $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                        $docInforArr["confirmed_by_name"] = 'confirmedByName';
+                        $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                        $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_id';
+                        $docInforArr["confirmedDate"] = 'confirmed_date';
+                        $docInforArr["tableName"] = 'erp_fa_fa_asset_transfer';
+                        $docInforArr["modelName"] = 'ERPAssetTransfer';
+                        $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
-
+               
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
@@ -672,7 +684,7 @@ class Helper
                         }
                     }
                 } 
-
+            
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
@@ -723,11 +735,13 @@ class Helper
                             } else {
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
-
+                         
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+                    
                             if ($isSegmentWise) {
                                 if (array_key_exists('segment', $params)) {
+                                    
                                     if ($params["segment"]) {
                                         $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                         $approvalLevel->where('serviceLineWise', 1);
@@ -738,7 +752,7 @@ class Helper
                                     return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                 }
                             }
-
+                           
                             if ($isCategoryWise) {
                                 if (array_key_exists('category', $params)) {
                                     if ($params["category"]) {
@@ -769,9 +783,10 @@ class Helper
                                 }
                             }
                             $output = $approvalLevel->first();
-
+                  
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
+                          
                                 if ($isCategoryWise) {
                                     $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
                                     if ($isSegmentWise) {
@@ -786,7 +801,7 @@ class Helper
                                             return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                         }
                                     }
-
+                                  
                                     if ($isValueWise) {
                                         if (array_key_exists('amount', $params)) {
                                             if ($params["amount"] >= 0) {
@@ -1683,6 +1698,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 103: // asset Transfer
+                $docInforArr["tableName"] = 'erp_fa_fa_asset_transfer';
+                $docInforArr["modelName"] = 'ERPAssetTransfer';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1824,6 +1851,14 @@ class Helper
                                 if($outputGL){
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
                                 }
+                            }
+
+                            if($input["documentSystemID"] == 103){ // Asset Transfer
+                                    $generatePR = AssetTransferService::generatePRForAssetTransfer($input);
+                                    if (!$generatePR['status']) {
+                                        DB::rollback();
+                                        return ['success' => false, 'message' => $generatePR['message']];
+                                    }
                             }
 
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
@@ -2151,6 +2186,7 @@ class Helper
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
                                     $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
                                 }
+
 
                                 $emails[] = array('empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
                                     'companySystemID' => $currentApproved->companySystemID,
@@ -2616,6 +2652,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 103: // Asset Transfer
+                    $docInforArr["tableName"] = 'erp_fa_fa_asset_transfer';
+                    $docInforArr["modelName"] = 'ERPAssetTransfer';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2637,8 +2679,8 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100,103])) {
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100])) {
 
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
