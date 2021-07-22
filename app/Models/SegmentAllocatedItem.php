@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
-
+use Awobaz\Compoships\Compoships;
 /**
  * @SWG\Definition(
  *      definition="SegmentAllocatedItem",

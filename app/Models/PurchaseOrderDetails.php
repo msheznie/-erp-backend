@@ -14,6 +14,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Awobaz\Compoships\Compoships;
 
 /**
  * Class PurchaseOrderDetails
@@ -360,5 +361,9 @@ class PurchaseOrderDetails extends Model
     public function budget_detail_bs()
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
+
+    public function allocations(){
+        return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseOrderDetailsID');
     }
 }

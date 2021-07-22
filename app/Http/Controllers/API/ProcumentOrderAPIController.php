@@ -393,7 +393,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['VATPercentage'] = 0; // $supplierAssignedDetai->vatPercentage;
         }
 
-        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 

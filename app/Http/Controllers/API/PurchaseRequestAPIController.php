@@ -241,7 +241,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
             ->where('companySystemID', $companyId)
             ->first();
 
@@ -1205,7 +1205,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
-        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
