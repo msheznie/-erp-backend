@@ -173,7 +173,7 @@
     <div class="footer">
         <table style="width:100%;">
             <tr>
-                <td width="40%"><span class="font-weight-bold">Confirmed By :</span>
+                <td width="40%"><span class="font-weight-bold">Confirmed By :</span> {{ $assetTransferMaster->confirmed_by? $assetTransferMaster->confirmed_by->Ename2:'' }}
                 </td>
                 <td><span class="font-weight-bold">Review By :</span></td>
             </tr>
@@ -187,7 +187,25 @@
             </tr>
         </table>
         <table style="width:100%;">
-
+        <tr>
+            @if ($assetTransferMaster->approved_by)
+                @foreach ($assetTransferMaster->approved_by as $det)
+                    <td style="padding-right: 25px;font-size: 9px;">
+                        <div>
+                            @if($det->employee)
+                                {{$det->employee->empFullName }}
+                            @endif
+                        </div>
+                        <div><span>
+                @if(!empty($det->approvedDate))
+                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                @endif
+              </span></div>
+                        <div style="width: 3px"></div>
+                    </td>
+                @endforeach
+            @endif
+        </tr>
         </table>
         <table style="width:100%;">
             <tr>

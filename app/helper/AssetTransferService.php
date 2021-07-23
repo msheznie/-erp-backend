@@ -27,7 +27,7 @@ class AssetTransferService
 			$id = Auth::id();
 			$user = User::with(['employee'])->where('id', $id)->first();
 
-			$lastSerial = PurchaseRequest::where('companySystemID', 3)
+			$lastSerial = PurchaseRequest::where('companySystemID', $companyID)
 				->where('documentSystemID', 1)
 				->orderBy('purchaseRequestID', 'desc')
 				->first();
