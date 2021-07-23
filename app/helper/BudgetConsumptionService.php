@@ -1228,7 +1228,7 @@ class BudgetConsumptionService
 	 																 });
 	 													 });
 	 										 }])
-	 										 ->where('directPaymentAutoID', $budgetFormData['documentSystemCode'])
+	 										 ->where('directInvoiceAutoID', $budgetFormData['documentSystemCode'])
 	 										 ->where('budgetYear', $budgetFormData['budgetYear'])
 											 ->groupBy('chartOfAccountSystemID')
 											 ->get();
