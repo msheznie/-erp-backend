@@ -1823,11 +1823,11 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 97) { //stock count negative validation
-                                $stockCountRes = StockCountService::updateStockCountAdjustmentDetail($input);
-                                if (!$stockCountRes['status']) {
-                                    DB::rollback();
-                                    return ['success' => false, 'message' => $stockCountRes['message']];
-                                }
+                                // $stockCountRes = StockCountService::updateStockCountAdjustmentDetail($input);
+                                // if (!$stockCountRes['status']) {
+                                //     DB::rollback();
+                                //     return ['success' => false, 'message' => $stockCountRes['message']];
+                                // }
                             }
 
                             if ($input["documentSystemID"] == 46) { //Budget transfer for review notfifications
