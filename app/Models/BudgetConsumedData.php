@@ -158,6 +158,7 @@ class BudgetConsumedData extends Model
         'consumedRptCurrencyID',
         'consumedRptAmount',
         'consumeYN',
+        'projectID',
         'timestamp'
     ];
 
@@ -185,6 +186,7 @@ class BudgetConsumedData extends Model
         'consumedRptCurrencyID' => 'integer',
         'consumedRptAmount' => 'float',
         'consumeYN' => 'integer',
+        'projectID' => 'integer',
         'timestamp' => 'string'
     ];
 
