@@ -18,6 +18,7 @@ use App\Models\SegmentAllocatedItem;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\DirectPaymentDetails;
 use App\Models\ErpProjectMaster;
+use App\Models\ChartOfAccount;
 
 class BudgetConsumptionService
 {
@@ -50,9 +51,24 @@ class BudgetConsumptionService
 					}
 				}
 
+				if (isset($budgetData['validateArray']) && count($budgetData['validateArray']) > 0) {
+					$userMessageE .= "<br>";
+					$userMessageE .= "<br>";
+					$userMessageE .= "Budget not configured for below GL codes";
+					$userMessageE .= "<br>";
+					foreach ($budgetData['validateArray'] as $key => $value) {
+						$userMessageE .= $value;
+						$userMessageE .= "<br>";
+					}
+				}
+
 				return ['status' => true, 'message' => $userMessageE];
 			} else {
-				return ['status' => true, 'message' => ""];
+				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy']) {
+					return ['status' => true, 'message' => "Budget not configured for this document"];
+				} else {
+					return ['status' => true, 'message' => ""];
+				}
 			}
 		} else {
 			return ['status' => false, 'message' => $budgetData['message']];
@@ -206,15 +222,18 @@ class BudgetConsumptionService
 
 	    $budgetFormData['departmentWiseCheckBudgetPolicy'] = $departmentWiseCheckBudgetPolicy;
 	    $budgetData = [];
+	    $validateArray = [];
 
+	    $budgetCheckPolicy = false;
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && (!is_null($budgetFormData['projectID']) && $budgetFormData['projectID'] != 0))
 	    {
+	    	$budgetCheckPolicy = true;
 	    	$budgetData = self::budgetConsumptionByProject($budgetFormData);
-	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true];
+	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy];
 	    }
 
-
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && $documentLevelCheckBudget && !is_null($budgetFormData['financeCategory'])) {
+	    	$budgetCheckPolicy = true;
 	    	if ($budgetFormData['financeCategory'] != 3) {
 	    		$budgetFormData['glCodes'] = $budgetFormData['financeGLcodePLSystemIDs'];
 	    		$budgetFormData['glColumnName'] = "financeGLcodePLSystemID";
@@ -232,9 +251,11 @@ class BudgetConsumptionService
 	    			$budgetData = self::budgetConsumptionByTemplate($budgetFormData, $budgetFormData['glCodes'], true);
 	    		}
 	    	}
+
+	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
@@ -266,6 +287,31 @@ class BudgetConsumptionService
 		} else {
 			return [];
 		}
+	}
+
+	public static function validateBudget($budgetFormData)
+	{
+		$invalidArray = [];
+		foreach ($budgetFormData['glCodes'] as $key => $value) {
+			$checkBudgetConfiguration = Budjetdetails::where('chartOfAccountID', $value)
+													 ->whereHas('budget_master',function($query) use ($budgetFormData) {
+														 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+														 		  ->where('approvedYN', -1)
+														 		   ->where('Year', $budgetFormData['budgetYear'])
+														 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																	 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																	 });
+														 })
+														 ->groupBy('templateDetailID')
+														 ->first();
+			if (!$checkBudgetConfiguration) {
+				$chartOfAccount = ChartOfAccount::find($value);
+
+				$invalidArray[] = $chartOfAccount->AccountCode." - ".$chartOfAccount->AccountDescription;
+			}
+		}
+
+		return $invalidArray;
 	}
 
 	public static function budgetConsumptionByTemplate($budgetFormData, $glCodes = [], $fixedAssetFlag = false, $directDocument = false)

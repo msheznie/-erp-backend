@@ -1796,10 +1796,10 @@ class Helper
                     if ($approvalLevel) {
                         //Budget check on the 1st level approval for PR/DR/WR
                         if ($input["rollLevelOrder"] == 1) {
-                            if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
+                            if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"])) {
                                 $budgetCheck = BudgetConsumptionService::checkBudget($input["documentSystemID"], $input["documentSystemCode"]);
                                 if ($budgetCheck['status'] && $budgetCheck['message'] != "") {
-                                    if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"])) {
+                                    if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
                                     }
                                     DB::commit();
