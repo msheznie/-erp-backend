@@ -14,6 +14,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Awobaz\Compoships\Compoships;
 
 /**
  * Class PurchaseOrderDetails
@@ -352,6 +353,10 @@ class PurchaseOrderDetails extends Model
         return $q->where('purchaseRequestDetailsID', $purchaseRequestDetailsID)->sum('noQty');
     }
 
+    public function grvDetails(){ 
+        return $this->hasMany('App\Models\GRVDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');  
+    }
+
     public function budget_detail_pl()
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodePLSystemID','chartOfAccountID');
@@ -360,5 +365,10 @@ class PurchaseOrderDetails extends Model
     public function budget_detail_bs()
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
+
+    public function allocations(){
+        return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseOrderDetailsID');
+
     }
 }

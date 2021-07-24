@@ -1546,14 +1546,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError( 'Ticket Master not found', 500);
         }
 
-        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
-            ->where('companySystemID', $master->companySystemID)
-            ->where('documentSystemID', $master->documentSystemiD)
-            ->first();
-
-        if (!empty($tax)) {
-            return $this->sendResponse('e', 'Please delete tax details to continue');
-        }
 
         if (!empty($contract)) {
             if ($contract->paymentInDaysForJob <= 0) {
@@ -1577,7 +1569,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $myCurr = $bankAccountDetails->currencyID; /*currencyID*/
-        $updatedInvoiceNo = PerformaDetails::select('*')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->get();
+        $updatedInvoiceNo = PerformaDetails::select('*')
+            ->where('companyID', $master->companyID)
+            ->where('performaMasterID', $performaMasterID)
+            ->get();
         //$companyCurrency = \Helper::companyCurrency($myCurr);
         $transDecimalPlace = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
@@ -3382,7 +3377,7 @@ WHERE
                             FROM
                                 (
                                 SELECT
-                                    prod_serv.TicketproductID,
+                                    ticketId,
                                     prod_serv.poLineNo AS po_detail_id,
                                     ClientRef AS client_referance,
                                     ItemDescrip AS item_description,
@@ -3401,7 +3396,7 @@ WHERE
                                     AND erp_custinvoicedirectdet.glCode = performatemp.stdGlCode
                                     JOIN (
                                     SELECT
-                                        mubbadrahop.productdetails.TicketproductID,
+                                        CONCAT(mubbadrahop.productdetails.TicketproductID, 'pr') as ticketId,
                                         mubbadrahop.productdetails.contractDetailID AS contractDetailID,
                                         mubbadrahop.productdetails.TicketNo AS TicketNo,
                                         mubbadrahop.productdetails.Qty AS qty,
@@ -3417,7 +3412,7 @@ WHERE
                                         mubbadrahop.productdetails.companyID = '" . $master->companyID . "'
                                         AND mubbadrahop.productdetails.CustomerID = '" . $customerCode . "' UNION
                                     SELECT
-                                        mubbadrahop.servicedetails.TicketServiceID,
+                                        CONCAT(mubbadrahop.servicedetails.TicketServiceID, 'sr') as ticketId,
                                         mubbadrahop.servicedetails.contractDetailID AS contractDetailID,
                                         mubbadrahop.servicedetails.TicketNo AS TicketNo,
                                         mubbadrahop.servicedetails.Qty AS qty,
@@ -3438,7 +3433,7 @@ WHERE
                                 WHERE
                                     contractdetails.CompanyID ='" . $master->companyID . "'
                                     AND contractdetails.CustomerID = '" . $customerCode . "'
-                                    GROUP BY contractdetails.ContractDetailID
+                                    GROUP BY ticketId
                                 
                                 ) AS temp");
 

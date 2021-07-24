@@ -1,0 +1,401 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="TaxLedgerDetail",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="id",
+ *          description="id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentMasterAutoID",
+ *          description="documentMasterAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentDetailID",
+ *          description="documentDetailID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="taxLedgerID",
+ *          description="taxLedgerID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="vatSubCategoryID",
+ *          description="vatSubCategoryID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="vatMasterCategoryID",
+ *          description="vatMasterCategoryID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentDate",
+ *          description="documentDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="postedDate",
+ *          description="postedDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentNumber",
+ *          description="documentNumber",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="chartOfAccountSystemID",
+ *          description="chartOfAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="accountCode",
+ *          description="accountCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="accountDescription",
+ *          description="accountDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="transactionCurrencyID",
+ *          description="transactionCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="originalInvoice",
+ *          description="originalInvoice",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="originalInvoiceDate",
+ *          description="originalInvoiceDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="dateOfSupply",
+ *          description="dateOfSupply",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="partyType",
+ *          description="partyType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="partyAutoID",
+ *          description="partyAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="partyVATRegisteredYN",
+ *          description="partyVATRegisteredYN",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="partyVATRegNo",
+ *          description="partyVATRegNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="countryID",
+ *          description="countryID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemSystemCode",
+ *          description="itemSystemCode",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemCode",
+ *          description="itemCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemDescription",
+ *          description="itemDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="VATPercentage",
+ *          description="VATPercentage",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="taxableAmount",
+ *          description="taxableAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="VATAmount",
+ *          description="VATAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="localER",
+ *          description="localER",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="localAmount",
+ *          description="localAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="reportingER",
+ *          description="reportingER",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="reportingAmount",
+ *          description="reportingAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="taxableAmountLocal",
+ *          description="taxableAmountLocal",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="taxableAmountReporting",
+ *          description="taxableAmountReporting",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="VATAmountLocal",
+ *          description="VATAmountLocal",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="VATAmountRpt",
+ *          description="VATAmountRpt",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="inputVATGlAccountID",
+ *          description="inputVATGlAccountID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="inputVatTransferAccountID",
+ *          description="inputVatTransferAccountID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="outputVatTransferGLAccountID",
+ *          description="outputVatTransferGLAccountID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="outputVatGLAccountID",
+ *          description="outputVatGLAccountID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCID",
+ *          description="createdPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDateTime",
+ *          description="createdDateTime",
+ *          type="string",
+ *          format="date-time"
+ *      )
+ * )
+ */
+class TaxLedgerDetail extends Model
+{
+
+    public $table = 'tax_ledger_details';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'createdDateTime';
+
+
+
+
+    public $fillable = [
+        'documentSystemID',
+        'documentMasterAutoID',
+        'documentDetailID',
+        'taxLedgerID',
+        'vatSubCategoryID',
+        'vatMasterCategoryID',
+        'serviceLineSystemID',
+        'documentDate',
+        'postedDate',
+        'documentNumber',
+        'chartOfAccountSystemID',
+        'accountCode',
+        'accountDescription',
+        'transactionCurrencyID',
+        'originalInvoice',
+        'originalInvoiceDate',
+        'dateOfSupply',
+        'partyType',
+        'partyAutoID',
+        'partyVATRegisteredYN',
+        'partyVATRegNo',
+        'countryID',
+        'itemSystemCode',
+        'itemCode',
+        'itemDescription',
+        'rptCurrencyID',
+        'localCurrencyID',
+        'VATPercentage',
+        'taxableAmount',
+        'VATAmount',
+        'localER',
+        'reportingER',
+        'taxableAmountLocal',
+        'taxableAmountReporting',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'inputVATGlAccountID',
+        'inputVatTransferAccountID',
+        'outputVatTransferGLAccountID',
+        'outputVatGLAccountID',
+        'companySystemID',
+        'createdPCID',
+        'createdUserSystemID',
+        'rcmApplicableYN',
+        'recovertabilityPercentage',
+        'recoverabilityAmount',
+        'createdDateTime'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentMasterAutoID' => 'integer',
+        'localCurrencyID' => 'integer',
+        'rptCurrencyID' => 'integer',
+        'documentDetailID' => 'integer',
+        'taxLedgerID' => 'integer',
+        'vatSubCategoryID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'serviceLineSystemID' => 'integer',
+        'rcmApplicableYN' => 'integer',
+        'documentDate' => 'datetime',
+        'postedDate' => 'datetime',
+        'documentNumber' => 'string',
+        'chartOfAccountSystemID' => 'integer',
+        'accountCode' => 'string',
+        'accountDescription' => 'string',
+        'transactionCurrencyID' => 'integer',
+        'originalInvoice' => 'string',
+        'originalInvoiceDate' => 'datetime',
+        'dateOfSupply' => 'datetime',
+        'partyType' => 'integer',
+        'partyAutoID' => 'integer',
+        'partyVATRegisteredYN' => 'boolean',
+        'partyVATRegNo' => 'string',
+        'countryID' => 'integer',
+        'itemSystemCode' => 'integer',
+        'itemCode' => 'string',
+        'itemDescription' => 'string',
+        'VATPercentage' => 'float',
+        'recovertabilityPercentage' => 'float',
+        'recoverabilityAmount' => 'float',
+        'taxableAmount' => 'float',
+        'VATAmount' => 'float',
+        'localER' => 'float',
+        'reportingER' => 'float',
+        'taxableAmountLocal' => 'float',
+        'taxableAmountReporting' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'inputVATGlAccountID' => 'integer',
+        'inputVatTransferAccountID' => 'integer',
+        'outputVatTransferGLAccountID' => 'integer',
+        'outputVatGLAccountID' => 'integer',
+        'companySystemID' => 'integer',
+        'createdPCID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdDateTime' => 'datetime'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

@@ -348,7 +348,7 @@ class BankMemoPayeeAPIController extends AppBaseController
         $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $request['id'])
                                             ->delete();
 
-        return $this->sendResponse($bankMemoSupplier, trans('custom.delete', ['attribute' => trans('custom.bank_memos')]);
+        return $this->sendResponse($bankMemoSupplier, trans('custom.delete', ['attribute' => trans('custom.bank_memos')]));
     }
 
 

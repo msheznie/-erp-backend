@@ -5,6 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSegmentAllocatedItemAPIRequest;
 use App\Http\Requests\API\UpdateSegmentAllocatedItemAPIRequest;
 use App\Models\SegmentAllocatedItem;
+use App\Models\PurchaseOrderDetails;
+use App\Models\SegmentMaster;
+use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequestDetails;
 use App\Repositories\SegmentAllocatedItemRepository;
 use Illuminate\Http\Request;
@@ -223,13 +226,25 @@ class SegmentAllocatedItemAPIController extends AppBaseController
             return $this->sendError('Segment Allocated Item not found');
         }
         
-        $segmentAllocatedItem = $this->segmentAllocatedItemRepository->updateAlllocationValidation($input);
-        if (!$segmentAllocatedItem['status']) {
-            return $this->sendError($segmentAllocatedItem['message'], 500);
+        $segmentAllocatedItemRes = $this->segmentAllocatedItemRepository->updateAlllocationValidation($input);
+        if (!$segmentAllocatedItemRes['status']) {
+            return $this->sendError($segmentAllocatedItemRes['message'], 500);
         }
 
         if (isset($input['segment'])) {
             unset($input['segment']);
+        }
+
+        if (!is_null($segmentAllocatedItem->pulledDocumentDetailID)) {
+            $segmentData = SegmentAllocatedItem::where('documentDetailAutoID', $segmentAllocatedItem->pulledDocumentDetailID)
+                                               ->where('documentSystemID', $segmentAllocatedItem->pulledDocumentSystemID)
+                                               ->where('serviceLineSystemID', $segmentAllocatedItem->serviceLineSystemID)
+                                               ->first();
+
+            if ($segmentData) {
+                $segmentData->copiedQty = floatval($segmentData->copiedQty) - floatval($segmentAllocatedItem->allocatedQty) + floatval($input['allocatedQty']);
+                $segmentData->save();
+            }
         }
 
         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->update($input, $id);
@@ -288,6 +303,18 @@ class SegmentAllocatedItemAPIController extends AppBaseController
             return $this->sendError('Segment Allocated Item not found');
         }
 
+        if (!is_null($segmentAllocatedItem->pulledDocumentDetailID)) {
+            $segmentData = SegmentAllocatedItem::where('documentDetailAutoID', $segmentAllocatedItem->pulledDocumentDetailID)
+                                               ->where('documentSystemID', $segmentAllocatedItem->pulledDocumentSystemID)
+                                               ->where('serviceLineSystemID', $segmentAllocatedItem->serviceLineSystemID)
+                                               ->first();
+
+            if ($segmentData) {
+                $segmentData->copiedQty = floatval($segmentData->copiedQty) - floatval($segmentAllocatedItem->allocatedQty);
+                $segmentData->save();
+            }
+        }
+
         $segmentAllocatedItem->delete();
 
         return $this->sendResponse([], 'Segment Allocated Item deleted successfully');
@@ -318,5 +345,37 @@ class SegmentAllocatedItemAPIController extends AppBaseController
         
         
         return $this->sendResponse($allocatedItems, 'Segment Allocated Item updated successfully');
+    } 
+
+    public function getSegmentAllocatedFormData(Request $request)
+    {
+        $input = $request->all();
+
+        $segments = [];
+
+        if (in_array($input['documentSystemID'], [2,5,52])) {
+            $checkPurchaseOrder = ProcumentOrder::find($input['docAutoID']);
+
+            if ($checkPurchaseOrder && $checkPurchaseOrder->poTypeID == 1) {
+                $purchaseOrderDetail = PurchaseOrderDetails::with(['requestDetail' => function($query) {
+                                                                $query->with(['purchase_request']);
+                                                            }])->find($input['docDetailID']);
+
+                if ($purchaseOrderDetail) {
+                    $allocatedItems = SegmentAllocatedItem::where('documentSystemID', $purchaseOrderDetail->requestDetail->purchase_request->documentSystemID)
+                                                         ->where('documentMasterAutoID', $purchaseOrderDetail->requestDetail->purchaseRequestID)
+                                                         ->where('documentDetailAutoID', $purchaseOrderDetail->purchaseRequestDetailsID)
+                                                         ->get();
+
+                    $segemntIds = collect($allocatedItems)->pluck('serviceLineSystemID')->toArray();
+
+                    $segments = SegmentMaster::whereIn('serviceLineSystemID', $segemntIds)
+                                             ->get();
+                }
+
+            }
+        }
+
+        return $this->sendResponse($segments, 'Segment form data retrieved successfully');
     }
 }

@@ -161,6 +161,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
         Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
         Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
+        Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
         Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
@@ -2070,6 +2071,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
         Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
         Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
+        Route::post('getSegmentAllocatedFormData', 'SegmentAllocatedItemAPIController@getSegmentAllocatedFormData');
         Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
         Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
         Route::post('storeVerification', 'AssetVerificationAPIController@store');
@@ -2088,6 +2090,32 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
         Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
         Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
+
+        /* Asset Request */
+        Route::resource('asset_requests', 'AssetRequestAPIController');
+        Route::post('getAllAssetRequestList', 'AssetRequestAPIController@getAllAssetRequestList');
+        Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails');
+        Route::get('getassetRequestMaster', 'AssetRequestDetailAPIController@getAssetRequestMaster');
+        Route::get('getassetRequestDetailSelected', 'AssetRequestDetailAPIController@getAssetRequestDetailSelected');
+        Route::get('getAssetDropData', 'AssetRequestDetailAPIController@getAssetDropData');
+
+        /* Asset Transfer */
+        Route::resource('asset_transfer', 'ERPAssetTransferAPIController');
+        Route::post('getAllAssetTransferList', 'ERPAssetTransferAPIController@getAllAssetTransferList');
+        Route::get('fetch-asset-transfer-master/{id}', 'ERPAssetTransferAPIController@fetchAssetTransferMaster');
+        Route::post('add-asset-transfer-detail/{id}', 'ERPAssetTransferDetailAPIController@store'); 
+        Route::get('get-employee-asset-transfer-details/{id}', 'ERPAssetTransferDetailAPIController@get_employee_asset_transfer_details');
+        Route::resource('asset_transfer_detail', 'ERPAssetTransferDetailAPIController'); 
+        Route::get('asset-transfer-drop', 'ERPAssetTransferDetailAPIController@assetTransferDrop');
+        Route::post('add-employee-asset-transfer-asset-detail/{id}', 'ERPAssetTransferDetailAPIController@addEmployeeAsset');
+        Route::get('asset-transfer-details', 'ERPAssetTransferDetailAPIController@getAssetTransferDetails');
+        Route::post('getAssetTransferApprovalByUser', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUser');
+        Route::post('rejectAssetTransfer', 'ERPAssetTransferAPIController@rejectAssetTransfer');
+        Route::post('approveAssetTransfer', 'ERPAssetTransferAPIController@approveAssetTransfer');
+        Route::get('getAssetTransferData', 'ERPAssetTransferAPIController@getAssetTransferData');
+        Route::post('asset_transfer_detail_asset', 'ERPAssetTransferDetailAPIController@assetTransferDetailAsset');
+        Route::get('getAssetDropPR', 'ERPAssetTransferAPIController@getAssetDropPR');
+        Route::post('getAssetTransferApprovalByUserApproved', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUserApproved');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2132,11 +2160,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
     Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
+    Route::get('printERPAssetTransfer', 'ERPAssetTransferDetailAPIController@printERPAssetTransfer');
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
-
-
+  
     Route::resource('tax_ledgers', 'TaxLedgerAPIController');
 
     Route::resource('employee_designations', 'EmployeeDesignationAPIController');
@@ -2152,6 +2180,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Artisan::call($cron);
         return 'CRON Job run successfully';
     });
+
+
 });
 
 
@@ -2163,4 +2193,19 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
+
+
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
+Route::resource('asset_request_details', 'AssetRequestDetailAPIController');
+Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
+
+
+
+
+
+Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
+

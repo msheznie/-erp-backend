@@ -1,0 +1,403 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateERPAssetTransferDetailAPIRequest;
+use App\Http\Requests\API\UpdateERPAssetTransferDetailAPIRequest;
+use App\Models\ERPAssetTransferDetail;
+use App\Repositories\ERPAssetTransferDetailRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use App\Models\ERPAssetTransfer;
+use App\Models\ErpLocation;
+use App\Models\FixedAssetMaster;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ERPAssetTransferDetailController
+ * @package App\Http\Controllers\API
+ */
+
+class ERPAssetTransferDetailAPIController extends AppBaseController
+{
+    /** @var  ERPAssetTransferDetailRepository */
+    private $eRPAssetTransferDetailRepository;
+
+    public function __construct(ERPAssetTransferDetailRepository $eRPAssetTransferDetailRepo)
+    {
+        $this->eRPAssetTransferDetailRepository = $eRPAssetTransferDetailRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/eRPAssetTransferDetails",
+     *      summary="Get a listing of the ERPAssetTransferDetails.",
+     *      tags={"ERPAssetTransferDetail"},
+     *      description="Get all ERPAssetTransferDetails",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ERPAssetTransferDetail")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->eRPAssetTransferDetailRepository->pushCriteria(new RequestCriteria($request));
+        $this->eRPAssetTransferDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $eRPAssetTransferDetails = $this->eRPAssetTransferDetailRepository->all();
+
+        return $this->sendResponse($eRPAssetTransferDetails->toArray(), 'E R P Asset Transfer Details retrieved successfully');
+    }
+
+    /**
+     * @param CreateERPAssetTransferDetailAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/eRPAssetTransferDetails",
+     *      summary="Store a newly created ERPAssetTransferDetail in storage",
+     *      tags={"ERPAssetTransferDetail"},
+     *      description="Store ERPAssetTransferDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ERPAssetTransferDetail that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ERPAssetTransferDetail")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPAssetTransferDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateERPAssetTransferDetailAPIRequest $request, $id)
+    {
+        $input = $request->all();
+
+        if (isset($input) && !empty($input)) {
+            foreach ($input as $item => $value) {
+                $data[] = [
+                    'erp_fa_fa_asset_transfer_id' => $value['masterID'],
+                    'erp_fa_fa_asset_request_id' => $value['erp_fa_fa_asset_request_id'],
+                    'erp_fa_fa_asset_request_detail_id' => $value['id'],
+                    'fa_master_id' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true  ? 0 : $value['assetDropTransferID']),
+                    'pr_created_yn' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true ? 1 : 0),
+                    'company_id' => $value['company_id'],
+                    'created_user_id' => \Helper::getEmployeeSystemID(),
+                ];
+            }
+            $this->eRPAssetTransferDetailRepository->insert($data);
+            return $this->sendResponse(['id' => $id], 'Asset Transfer Detail saved successfully');
+        } else {
+            return $this->sendError('please add atleast one item to proceed');
+        }
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/eRPAssetTransferDetails/{id}",
+     *      summary="Display the specified ERPAssetTransferDetail",
+     *      tags={"ERPAssetTransferDetail"},
+     *      description="Get ERPAssetTransferDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ERPAssetTransferDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPAssetTransferDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ERPAssetTransferDetail $eRPAssetTransferDetail */
+        $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
+
+        if (empty($eRPAssetTransferDetail)) {
+            return $this->sendError('E R P Asset Transfer Detail not found');
+        }
+
+        return $this->sendResponse($eRPAssetTransferDetail->toArray(), 'E R P Asset Transfer Detail retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateERPAssetTransferDetailAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/eRPAssetTransferDetails/{id}",
+     *      summary="Update the specified ERPAssetTransferDetail in storage",
+     *      tags={"ERPAssetTransferDetail"},
+     *      description="Update ERPAssetTransferDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ERPAssetTransferDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ERPAssetTransferDetail that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ERPAssetTransferDetail")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPAssetTransferDetail"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateERPAssetTransferDetailAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ERPAssetTransferDetail $eRPAssetTransferDetail */
+        $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
+
+        if (empty($eRPAssetTransferDetail)) {
+            return $this->sendError('E R P Asset Transfer Detail not found');
+        }
+
+        $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->update($input, $id);
+
+        return $this->sendResponse($eRPAssetTransferDetail->toArray(), 'ERPAssetTransferDetail updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/eRPAssetTransferDetails/{id}",
+     *      summary="Remove the specified ERPAssetTransferDetail from storage",
+     *      tags={"ERPAssetTransferDetail"},
+     *      description="Delete ERPAssetTransferDetail",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ERPAssetTransferDetail",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+
+        /** @var ERPAssetTransferDetail $eRPAssetTransferDetail */
+        $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($id);
+
+        if (empty($eRPAssetTransferDetail)) {
+            return $this->sendError('Asset Transfer Detail not found');
+        }
+        $eRPAssetTransferDetail->delete();
+        return $this->sendResponse($id, 'Asset Transfer Detail deleted successfully');
+    }
+    public function get_employee_asset_transfer_details(Request $request, $id)
+    {
+        $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
+        if ($data['assetMaster']->type == 1) {
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        } else {
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        }
+        return $this->sendResponse($data, 'Asset Request Detail');
+    }
+    public function assetTransferDrop(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $data['assetMaster_drop'] = FixedAssetMaster::where('companySystemID', $companyID)->get();
+        $data['location_drop'] = ErpLocation::select('locationID', 'locationName')->get();
+        return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
+    }
+    public function addEmployeeAsset(Request $request, $id)
+    {
+        $input = $request->all();
+        if (isset($input) && !empty($input)) {
+            $x = 1;
+            foreach ($input as $item => $value) {
+                if ($value['from_location'] == $value['to_location']) {
+                    return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                } else {
+                    $data[] = [
+                        'erp_fa_fa_asset_transfer_id' => $id,
+                        'from_location_id' => $value['from_location'],
+                        'to_location_id' => $value['to_location'],
+                        'fa_master_id' => $value['asset'],
+                        'company_id' => $value['companySystemID'],
+                        'created_user_id' => \Helper::getEmployeeSystemID(),
+                    ];
+                }
+                $x++;
+            }
+            $this->eRPAssetTransferDetailRepository->insert($data);
+            return $this->sendResponse(['id' => $id], 'Asset Transfer Detail saved successfully');
+        }
+    }
+    public function getAssetTransferDetails(Request $request)
+    {
+        $id = $request['id'];
+        $companyID = $request['companyId'];
+
+        return $this->sendResponse($this->getAssetTransfer($id, $companyID), 'Asset Request data');
+    }
+
+    public function printERPAssetTransfer(Request $request)
+    {
+
+        $id = $request->get('transferID');
+        $companyID = $request->get('companyID');
+        $AssetTransferMaster = ERPAssetTransfer::find($id);
+        if (empty($AssetTransferMaster)) {
+            return $this->sendError('Asset Transfer not found');
+        }
+        $transferDetails = $this->getAssetTransfer($id, $companyID);
+
+
+        $time = strtotime("now");
+        $fileName = 'asset_transfer.blade' . $id . '_' . $time . '.pdf';
+        $html = view('print.asset_transfer', $transferDetails);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getAssetTransfer($id, $companyID)
+    {
+
+        $data['assetTransferMaster'] = ERPAssetTransfer::with([
+            'company', 'confirmed_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('rejectedYN', 0)
+                    ->where('documentSystemID', 103);
+            }
+        ])->where('company_id', $companyID)->where('id', $id)->first();
+        if ($data['assetTransferMaster']->type == 1) {
+            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster'])->where('company_id', $companyID)
+                ->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        } else {
+            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('company_id', $companyID)
+                ->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        }
+
+
+        return $data;
+    }
+    public function assetTransferDetailAsset(Request $request)
+    {
+
+
+        $updateData = [
+            'fa_master_id' =>  $request['value']
+        ];
+        ERPAssetTransferDetail::where('id', $request['id'])
+            ->update($updateData);
+
+
+
+        return $this->sendResponse(['id' => $request['value']], 'Asset Transfer Detail saved successfully');
+    }
+}
