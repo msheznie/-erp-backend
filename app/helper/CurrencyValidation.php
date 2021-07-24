@@ -1,6 +1,7 @@
 <?php
 
 namespace App\helper;
+use App\Models\Company;
 use Carbon\Carbon;
 
 class CurrencyValidation
@@ -396,4 +397,20 @@ class CurrencyValidation
 
 		return $docInforArr;
 	}
+
+	public static function convertToLocalCurrencyDecimal($companyId, $amount)
+    {
+        $dPlace = 2;
+        $local_currency_id = self::companyLocalCurrency($companyId);
+
+        if($local_currency_id){
+            $dPlace = Helper::getCurrencyDecimalPlace($local_currency_id);
+        }
+
+        return number_format($amount, $dPlace);
+    }
+
+	public static function companyLocalCurrency($companyId){
+	    return Company::find($companyId)->localCurrencyID;
+    }
 }

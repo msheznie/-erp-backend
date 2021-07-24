@@ -132,6 +132,8 @@ class BudgetTransferFormDetail extends Model
     public $fillable = [
         'budgetTransferFormAutoID',
         'year',
+        'isFromContingency',
+        'contingencyBudgetID',
         'fromTemplateDetailID',
         'fromServiceLineSystemID',
         'fromServiceLineCode',
@@ -159,6 +161,8 @@ class BudgetTransferFormDetail extends Model
         'budgetTransferFormDetailAutoID' => 'integer',
         'budgetTransferFormAutoID' => 'integer',
         'year' => 'integer',
+        'isFromContingency' => 'integer',
+        'contingencyBudgetID' => 'integer',
         'fromTemplateDetailID' => 'integer',
         'fromServiceLineSystemID' => 'integer',
         'fromServiceLineCode' => 'string',
@@ -208,5 +212,10 @@ class BudgetTransferFormDetail extends Model
     public function master()
     {
         return $this->belongsTo('App\Models\BudgetTransferForm', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
+    }
+
+    public function contingency()
+    {
+        return $this->belongsTo(ContingencyBudgetPlan::class, 'contingencyBudgetID', 'ID');
     }
 }
