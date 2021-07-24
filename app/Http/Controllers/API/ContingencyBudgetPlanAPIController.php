@@ -4,14 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateContingencyBudgetPlanAPIRequest;
 use App\Http\Requests\API\UpdateContingencyBudgetPlanAPIRequest;
+use App\Models\BudgetTransferForm;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\SegmentMaster;
 use App\Models\Year;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\TemplatesMaster;
-use App\Models\Budjetdetails;
-use App\Models\ReportTemplate;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\YesNoSelection;
 use App\Models\BudgetMaster;
@@ -698,5 +697,53 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             $msg = 'success'; 
         } 
         return $msg; 
-    } 
+    }
+
+    function budget_list(Request $request){
+
+        $budgetTransID = $request['budgetTransID'];
+        $serviceLineID = $request['serviceLineID'];
+
+        $master = BudgetTransferForm::find($budgetTransID);
+
+        if (empty($master)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
+        }
+
+        $list = ContingencyBudgetPlan::selectRaw("ID AS `value`, CONCAT(contingencyBudgetNo, ' | ', comments) AS label, 
+                    currencyID, contigencyAmount")
+                    ->where('companySystemID', $master->companySystemID)
+                    ->where('year', $master->year)
+                    ->where('templateMasterID', $master->templatesMasterAutoID)
+                    ->where('serviceLineSystemID', $serviceLineID)
+                    //->where('approvedYN', 1)
+                    ->with('currency_by:currencyID,CurrencyCode,DecimalPlaces')
+                    ->get();
+
+        if(empty($list)){
+            return $this->sendResponse([], 'Contingency Budget not found for these filters');
+        }
+
+        $list = $list->toArray();
+
+        foreach ($list as $key=> $row){
+            $amt = $row['contigencyAmount'];
+            $label = $row['label'];
+
+            $dPlace = 2; $currencyCode = '';
+            if($row['currency_by']){
+                $dPlace = $row['currency_by']['DecimalPlaces'];
+                $currencyCode = ' '. $row['currency_by']['CurrencyCode'];
+            }
+
+            $label .= ' | '. number_format($amt, $dPlace);
+            $label .= $currencyCode;
+
+            $list[$key]['label'] = $label;
+
+            $list[$key]['balanceAmount'] = number_format($amt, $dPlace, '.', '');
+        }
+
+        return $this->sendResponse($list, 'Contingency Budget list retrieved successfully');
+    }
 }
