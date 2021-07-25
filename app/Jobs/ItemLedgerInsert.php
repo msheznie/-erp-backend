@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Models\Employee;
 use Exception;
 use App\Models\ErpItemLedger;
+use App\Models\StockCount;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -450,11 +451,17 @@ class ItemLedgerInsert implements ShouldQueue
                                             $data[$i][$column] = $detail[$value];
                                         }
                                     } else if($masterModel["documentSystemID"] == 97){    // stock count
+                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
                                         if($masterRec['stockAdjustmentType']==2){       // cost count
                                             $data[$i][$column] = 1;
                                             Log::info('qty is'.$data[$i][$column]);
                                         }else{
-                                            $data[$i][$column] = $detail[$value];
+                                            $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentStockQty'];
                                         }
                                     } else{
                                         $data[$i][$column] = $detail[$value];
@@ -465,7 +472,17 @@ class ItemLedgerInsert implements ShouldQueue
 
                                     }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
                                         $data[$i][$column] = $detail['issueCostLocal'];
-                                    }else{
+                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
+                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                        $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'],$detail['wacValueReportingCurrencyID'],$detail['wacValueReportingCurrencyID'],$itemCurrentCostAndQty['wacValueReporting']);
+
+                                        $data[$i][$column] = $companyCurrencyConversion['localAmount'];
+                                    } else{
                                         $data[$i][$column] = $detail[$value];
                                     }
                                 }else if ($column == 'wacRpt'){
@@ -474,7 +491,15 @@ class ItemLedgerInsert implements ShouldQueue
 
                                     }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
                                         $data[$i][$column] = $data[$i][$column] = $detail['issueCostRpt'];
-                                    }else{
+                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
+                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                        $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
+                                    } else{
                                         $data[$i][$column] = $detail[$value];
                                     }
                                 }else{

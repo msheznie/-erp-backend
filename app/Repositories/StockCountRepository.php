@@ -394,7 +394,7 @@ class StockCountRepository extends BaseRepository
             $skipIds[] = $checkDeliveryOrder->pluck('itemCodeSystem');
         }
 
-         $checkCustomerInvoice = CustomerInvoiceItemDetails::selectRaw('customerItemDetailID, custInvoiceDirectAutoID, custInvoiceDirectAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
+        $checkCustomerInvoice = CustomerInvoiceItemDetails::selectRaw('customerItemDetailID, custInvoiceDirectAutoID, custInvoiceDirectAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
                                                ->whereIn('itemCodeSystem', $itemCodeSystems)
                                                ->with(['master' => function ($query) use ($input) {
                                                    $query->selectRaw('custInvoiceDirectAutoID, bookingInvCode as documentCode, documentSystemiD as documentSystemID')
@@ -433,6 +433,26 @@ class StockCountRepository extends BaseRepository
             $skipIds[] = $checkInventoryReClassification->pluck('itemSystemCode');
         }
 
+
+        $stockCountDetails = StockCountDetail::selectRaw('stockCountDetailsAutoID, stockCountAutoID, stockCountAutoID as documentID, itemDescription, itemPrimaryCode, itemCodeSystem')
+                                               ->whereIn('itemCodeSystem', $itemCodeSystems)
+                                               ->with(['master' => function ($query) use ($input) {
+                                                   $query->selectRaw('stockCountAutoID, stockCountCode as documentCode, documentSystemID')
+                                                         ->where('companySystemID', $input['companySystemID'])
+                                                         ->where('location', $input['location'])
+                                                         ->where('approved', '!=', -1);
+                                               }])
+                                               ->whereHas('master', function ($query) use ($input) {
+                                                    $query->where('companySystemID', $input['companySystemID'])
+                                                          ->where('location', $input['location'])
+                                                          ->where('approved', '!=', -1);
+                                               })
+                                               ->get();
+
+        if (count($stockCountDetails)) {
+            $skipIds[] = $stockCountDetails->pluck('itemCodeSystem');
+        }
+
         $skipFinalIDs = [];
         foreach ($skipIds as $key => $value) {
             foreach ($value as $key1 => $value1) {
@@ -443,7 +463,7 @@ class StockCountRepository extends BaseRepository
 
         $skipItemIds = array_unique($skipFinalIDs);
 
-        $usedItems = $checkInventoryReClassification->merge($checkCustomerInvoice)->merge($checkDeliveryOrder)->merge($checkPR)->merge($checkStockAdj)->merge($checkStockRecive)->merge($checkStockTransfer)->merge($checkMaterialReturn)->merge($checkMaterialIssues)->merge($checkGrvs);
+        $usedItems = $checkInventoryReClassification->merge($checkCustomerInvoice)->merge($checkDeliveryOrder)->merge($checkPR)->merge($checkStockAdj)->merge($checkStockRecive)->merge($checkStockTransfer)->merge($checkMaterialReturn)->merge($checkMaterialIssues)->merge($checkGrvs)->merge($stockCountDetails);
 
 
         return ['usedItems' => $usedItems, 'skipItemIds' => $skipItemIds];

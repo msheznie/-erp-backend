@@ -2045,6 +2045,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
         // contingency budget plan
         Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
+        Route::get('contingency_budget_list', 'ContingencyBudgetPlanAPIController@budget_list');
         Route::post('get_contingency_budget', 'ContingencyBudgetPlanAPIController@get_contingency_budget');
         Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData');
         Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount');
