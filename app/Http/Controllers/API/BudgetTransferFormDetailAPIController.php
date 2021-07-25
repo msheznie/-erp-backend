@@ -182,6 +182,21 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
         $input['year'] = $budgetTransferMaster->year;
 
+        $fromDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('serviceLineSystemID', $input['fromServiceLineSystemID'])
+            ->first();
+
+        if (empty($fromDepartment)) {
+            throw new \Exception("From Department not found", 500);
+        }
+
+        if ($fromDepartment->isActive == 0) {
+            throw new \Exception("Please select an active from department", 500);
+        }
+
+        $input['fromServiceLineCode'] = $fromDepartment->ServiceLineCode;
+
+
         $toDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
             ->where('serviceLineSystemID', $input['toServiceLineSystemID'])
             ->first();
@@ -460,21 +475,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             }
         }
 
-        $input['year'] = $budgetTransferMaster->year;
 
-        $fromDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
-            ->where('serviceLineSystemID', $input['fromServiceLineSystemID'])
-            ->first();
-
-        if (empty($fromDepartment)) {
-            throw new \Exception("From Department not found", 500);
-        }
-
-        if ($fromDepartment->isActive == 0) {
-            throw new \Exception("Please select an active from department", 500);
-        }
-
-        $input['fromServiceLineCode'] = $fromDepartment->ServiceLineCode;
 
         $fromChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
             ->where('chartOfAccountSystemID', $input['fromChartOfAccountSystemID'])

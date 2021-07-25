@@ -711,13 +711,14 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         }
 
         $list = ContingencyBudgetPlan::selectRaw("ID AS `value`, CONCAT(contingencyBudgetNo, ' | ', comments) AS label, 
-                    currencyID, contigencyAmount")
+                    currencyID, contigencyAmount, ID")
                     ->where('companySystemID', $master->companySystemID)
                     ->where('year', $master->year)
                     ->where('templateMasterID', $master->templatesMasterAutoID)
                     ->where('serviceLineSystemID', $serviceLineID)
                     ->where('approvedYN', 1)
                     ->with('currency_by:currencyID,CurrencyCode,DecimalPlaces')
+                    ->with('budget_transfer:contingencyBudgetID,adjustmentAmountRpt')
                     ->get();
 
         if(empty($list)){
@@ -726,8 +727,22 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $list = $list->toArray();
 
+        $data = [];
         foreach ($list as $key=> $row){
             $amt = $row['contigencyAmount'];
+
+            $utilized_sum = 0;
+            if($row['budget_transfer']){
+                $utilized_arr = $row['budget_transfer'];
+                $utilized_sum = array_sum( array_column($utilized_arr, 'adjustmentAmountRpt') );
+            }
+
+            $balance = $amt - $utilized_sum;
+
+            if($balance <= 0){
+                continue;
+            }
+
             $label = $row['label'];
 
             $dPlace = 2; $currencyCode = '';
@@ -739,11 +754,15 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             $label .= ' | '. number_format($amt, $dPlace);
             $label .= $currencyCode;
 
-            $list[$key]['label'] = $label;
+            $balance = number_format($balance, $dPlace, '.', '');
 
-            $list[$key]['balanceAmount'] = number_format($amt, $dPlace, '.', '');
+            $data[] = [
+                'value'=> $row['value'],
+                'label'=> $label,
+                'balanceAmount'=> $balance
+            ];
         }
 
-        return $this->sendResponse($list, 'Contingency Budget list retrieved successfully');
+        return $this->sendResponse($data, 'Contingency Budget list retrieved successfully');
     }
 }

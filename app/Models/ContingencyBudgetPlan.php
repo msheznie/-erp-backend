@@ -314,4 +314,9 @@ class ContingencyBudgetPlan extends Model
     {
         return $this->belongsTo('App\Models\ReportTemplate', 'templateMasterID', 'companyReportTemplateID');
     }
+
+    public function budget_transfer()
+    {
+        return $this->hasMany(BudgetTransferFormDetail::class, 'contingencyBudgetID', 'ID');
+    }
 }

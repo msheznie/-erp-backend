@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\BudgetTransferForm;
 use App\Models\Budjetdetails;
+use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
 use App\Models\TemplatesDetails;
 use App\Repositories\AuditTrailRepository;
@@ -54,13 +55,15 @@ class BudgetAdjustment implements ShouldQueue
                     // template detail
                     $conversionFrom  = 1;
                     $conversionTo  = 1;
-                    $templateDetail = TemplatesDetails::find($item['fromTemplateDetailID']);
+                    //$templateDetail = TemplatesDetails::find($item['fromTemplateDetailID']);
+                    $templateDetail = ChartOfAccount::find($item['fromChartOfAccountSystemID']);
 
                     if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
                         $conversionFrom = -1;
                     }
 
-                    $templateDetail = TemplatesDetails::find($item['toTemplateDetailID']);
+                    //$templateDetail = TemplatesDetails::find($item['toTemplateDetailID']);
+                    $templateDetail = ChartOfAccount::find($item['toChartOfAccountSystemID']);
 
                     if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
                         $conversionTo = -1;
@@ -133,8 +136,11 @@ class BudgetAdjustment implements ShouldQueue
                         $fromMinusAmountLocal = round(($item['adjustmentAmountLocal']/$fromTotalCount),3);
 
                         foreach ($fromBudgetDetails as $fromBudgetDetail){
-                            $budjetdetailsRepo->update(['budjetAmtLocal' => ((($fromBudgetDetail['budjetAmtLocal'] * $conversionFrom) - $fromMinusAmountLocal)* $conversionFrom),
-                                'budjetAmtRpt' => ((($fromBudgetDetail['budjetAmtRpt']* $conversionFrom) - $fromMinusAmountRpt) * $conversionFrom)],$fromBudgetDetail['budjetDetailsID']);
+                            $budjetdetailsRepo->update([
+                                'budjetAmtLocal' => ((($fromBudgetDetail['budjetAmtLocal'] * $conversionFrom) - $fromMinusAmountLocal)* $conversionFrom),
+                                'budjetAmtRpt' => ((($fromBudgetDetail['budjetAmtRpt']* $conversionFrom) - $fromMinusAmountRpt) * $conversionFrom)
+                            ],
+                                $fromBudgetDetail['budjetDetailsID']);
                         }
                     }
 
@@ -148,15 +154,18 @@ class BudgetAdjustment implements ShouldQueue
                                                         ->where('month','>=', date("m"))
                                                         ->get();
 
-                    $toTotalCount = count($fromBudgetDetails);
+                    $toTotalCount = count($toTotalBudgetDetails);
 
                     if($toTotalCount > 0){
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$toTotalCount),2);
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$toTotalCount),3);
 
                         foreach ($toTotalBudgetDetails as $toBudgetDetail){
-                            $budjetdetailsRepo->update(['budjetAmtLocal' => ((($toBudgetDetail['budjetAmtLocal'] * $conversionTo)  + $toAddAmountLocal) * $conversionTo) ,
-                                'budjetAmtRpt' => ((($toBudgetDetail['budjetAmtRpt'] * $conversionTo) + $toAddAmountRpt) * $conversionTo)],$toBudgetDetail['budjetDetailsID']);
+                            $budjetdetailsRepo->update([
+                                'budjetAmtLocal' => ((($toBudgetDetail['budjetAmtLocal'] * $conversionTo)  + $toAddAmountLocal) * $conversionTo) ,
+                                'budjetAmtRpt' => ((($toBudgetDetail['budjetAmtRpt'] * $conversionTo) + $toAddAmountRpt) * $conversionTo)
+                            ],
+                            $toBudgetDetail['budjetDetailsID']);
                         }
                     }
 
@@ -212,7 +221,9 @@ class BudgetAdjustment implements ShouldQueue
                     //Log::info('toAdjustment');
                     //Log::info($toAdjustment);
 
-                    $budgetAdjustmentRepo->create($fromAdjustment);
+                    if($item['isFromContingency'] == 0){
+                        $budgetAdjustmentRepo->create($fromAdjustment);
+                    }
                     $budgetAdjustmentRepo->create($toAdjustment);
 
                     // Budget Adjustment End
