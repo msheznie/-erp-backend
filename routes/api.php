@@ -2115,6 +2115,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('asset_transfer_detail_asset', 'ERPAssetTransferDetailAPIController@assetTransferDetailAsset');
         Route::get('getAssetDropPR', 'ERPAssetTransferAPIController@getAssetDropPR');
         Route::post('getAssetTransferApprovalByUserApproved', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUserApproved');
+        Route::get('asset-location-value', 'ERPAssetTransferDetailAPIController@getAssetLocationValue');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
