@@ -716,7 +716,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
                     ->where('year', $master->year)
                     ->where('templateMasterID', $master->templatesMasterAutoID)
                     ->where('serviceLineSystemID', $serviceLineID)
-                    //->where('approvedYN', 1)
+                    ->where('approvedYN', 1)
                     ->with('currency_by:currencyID,CurrencyCode,DecimalPlaces')
                     ->get();
 
