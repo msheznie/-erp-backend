@@ -133,7 +133,7 @@ class ERPAssetTransferDetail extends Model
     ];
     public function assetRequestDetail()
     {
-        return $this->hasOne(assetRequestDetail::class, 'id', 'erp_fa_fa_asset_request_detail_id');
+        return $this->hasOne(AssetRequestDetail::class, 'id', 'erp_fa_fa_asset_request_detail_id');
     }
 
     public function assetMaster(){ 

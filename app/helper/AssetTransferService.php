@@ -14,12 +14,13 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\SegmentAllocatedItem;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
 class AssetTransferService
 {
+	
 	public static function generatePRForAssetTransfer($input)
 	{
 		if ($input['type'] == 1) {
@@ -52,7 +53,13 @@ class AssetTransferService
 			if ($company) {
 				$data['companyID'] = $company->CompanyID;
 			}
+			$allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
+            ->where('companySystemID', $companyID)
+            ->first();
 
+        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+            $data['allocateItemToSegment'] = 1;
+        }
 			$data['companySystemID'] = $companyID;
 			$data['createdPcID'] = gethostname();
 			$data['createdUserID'] = $user->employee['empID'];
@@ -84,7 +91,7 @@ class AssetTransferService
 			erp_fa_fa_asset_request_details.comment
 			FROM `erp_fa_fa_asset_transfer_details`
 			JOIN erp_fa_fa_asset_request_details ON erp_fa_fa_asset_request_details.id = erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_request_detail_id 
-			WHERE erp_fa_fa_asset_transfer_id = {$input['id']} AND fa_master_id = 0 AND erp_fa_fa_asset_transfer_details.company_id = $companyID GROUP BY erp_fa_fa_asset_request_detail_id"); 
+			WHERE erp_fa_fa_asset_transfer_id = {$input['id']} AND fa_master_id = 0 AND erp_fa_fa_asset_transfer_details.company_id = $companyID GROUP BY itemCodeSystem"); 
 		
 			if (!empty($query)) {
 				foreach ($query as $val) {
@@ -349,10 +356,65 @@ class AssetTransferService
 					$data_detail['quantityRequested'] = $val->qtyRequested;
 					$data_detail['totalCost'] = ($data_detail['quantityRequested'] * $data_detail['estimatedCost']);
 					$data_detail['comments'] = $val->comment;
-					PurchaseRequestDetails::create($data_detail);
+					$PurchaseRequestDetails =PurchaseRequestDetails::create($data_detail);
+				
+					$checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=', $input['serviceLineSystemID'])
+					->where('documentSystemID', $purchaseRequestMaster->documentSystemID)
+					->where('documentMasterAutoID', $purchaseRequestMaster->purchaseRequestID)
+					->where('documentDetailAutoID', $PurchaseRequestDetails->purchaseRequestDetailsID)
+					->get();
+					if (sizeof($checkAlreadyAllocated) == 0) {
+						$checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', $input['serviceLineSystemID'])
+						->where('documentSystemID', $purchaseRequestMaster->documentSystemID)
+						->where('documentMasterAutoID', $purchaseRequestMaster->purchaseRequestID)
+						->where('documentDetailAutoID', $PurchaseRequestDetails->purchaseRequestDetailsID)
+						->first();
+
+						if ($checkAlreadyAllocated) {
+							return ['status' => false, 'message' => 'Item already allocated for selected segment'];
+						}
+
+						$itemData = PurchaseRequestDetails::find($PurchaseRequestDetails->purchaseRequestDetailsID);
+        
+						if (!$itemData) {
+							return ['status' => false, 'message' => 'Item detail not found'];
+						} 
+
+						$allocatedQty = SegmentAllocatedItem::where('documentSystemID', 1)
+						->where('documentMasterAutoID', $purchaseRequestMaster->purchaseRequestID)
+						->where('documentDetailAutoID', $PurchaseRequestDetails->purchaseRequestDetailsID)
+						->sum('allocatedQty');
+
+						if ($allocatedQty == $itemData->quantityRequested) {
+						return ['status' => false, 'message' => 'No remaining quantity to allocate'];
+						}
+						
+						$allocationData = [
+							'documentSystemID' => 1,
+							'documentMasterAutoID' => $purchaseRequestMaster->purchaseRequestID,
+							'documentDetailAutoID' =>  $PurchaseRequestDetails->purchaseRequestDetailsID,
+							'detailQty' => $itemData->quantityRequested,
+							'allocatedQty' => $itemData->quantityRequested - $allocatedQty,
+							'serviceLineSystemID' => $input['serviceLineSystemID']
+						];
+				
+						$createRes = SegmentAllocatedItem::create($allocationData);
+				
+						if (!$createRes) {
+							return ['status' => false, 'message' => 'Error occured while allocating'];
+						}
+					}else { 
+						$allocatedQty = SegmentAllocatedItem::where('documentSystemID',1)
+                                                 ->where('documentMasterAutoID',  $purchaseRequestMaster->purchaseRequestID)
+                                                 ->where('documentDetailAutoID', $PurchaseRequestDetails->purchaseRequestDetailsID)
+                                                 ->sum('allocatedQty');
+
+                   		 if ($allocatedQty > $input['quantityRequested']) {
+							return ['status' => false, 'message' => 'You cannot update the requested quantity. since quantity has been allocated to segments'];
+                    	}
+					}
 				}
 			}
-
 
 			$updateData = [
 				'purchaseRequestID' =>  $purchaseRequestMaster->purchaseRequestID,
