@@ -307,7 +307,7 @@ class StockCountAPIController extends AppBaseController
 
             if (count($errorMessage) == count($finalItems)) {
                 DB::rollBack();
-                return $this->sendError("Error occured while creating stock count, items not found", 500);
+                return $this->sendError("All items are pulled for transaction document. There no items to proceed this documents.", 500, array('type' => 'no_item'));
             }
 
             DB::commit();
