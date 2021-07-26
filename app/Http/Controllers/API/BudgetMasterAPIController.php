@@ -1406,7 +1406,7 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError($budgetConsumedData['message']);
         }
 
-        return $this->sendResponse(['budgetConsumedData' => $budgetConsumedData['data'], 'validateArray' => (isset($budgetConsumedData['validateArray']) ? $budgetConsumedData['validateArray'] : []), 'checkBudgetBasedOnGLPolicy' => (isset($budgetConsumedData['checkBudgetBasedOnGLPolicy']) ? $budgetConsumedData['checkBudgetBasedOnGLPolicy'] : false)], 'Budget consumption retrieved successfully');
+        return $this->sendResponse(['budgetConsumedData' => $budgetConsumedData['data'], 'validateArray' => (isset($budgetConsumedData['validateArray']) ? $budgetConsumedData['validateArray'] : []), 'checkBudgetBasedOnGLPolicy' => (isset($budgetConsumedData['checkBudgetBasedOnGLPolicy']) ? $budgetConsumedData['checkBudgetBasedOnGLPolicy'] : false),  'departmentWiseCheckBudgetPolicy' => (isset($budgetConsumedData['departmentWiseCheckBudgetPolicy']) ? $budgetConsumedData['departmentWiseCheckBudgetPolicy'] : false)], 'Budget consumption retrieved successfully');
     }
 
     public function getBudgetBlockedDocuments(Request $request)

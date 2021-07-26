@@ -19,6 +19,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\DirectPaymentDetails;
 use App\Models\ErpProjectMaster;
 use App\Models\ChartOfAccount;
+use App\Models\SegmentMaster;
 
 class BudgetConsumptionService
 {
@@ -50,6 +51,11 @@ class BudgetConsumptionService
 
 						$userMessageE .= $budgetExceMsg. $value['templateCategory'] ;
                         $userMessageE .= "<br>";
+
+                        if (isset($budgetData['departmentWiseCheckBudgetPolicy']) && $budgetData['departmentWiseCheckBudgetPolicy']) {
+                        	$userMessageE .= "Service Line : ". $value['serviceLine'] ;
+                        	$userMessageE .= "<br>";
+                        }
                         $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, 2) ;
                         $userMessageE .= "<br>";
                         $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], 2) ;
@@ -240,7 +246,7 @@ class BudgetConsumptionService
 	    {
 	    	$budgetCheckPolicy = true;
 	    	$budgetData = self::budgetConsumptionByProject($budgetFormData);
-	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy];
+	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy];
 	    }
 
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && $documentLevelCheckBudget && !is_null($budgetFormData['financeCategory'])) {
@@ -266,7 +272,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
@@ -368,57 +374,61 @@ class BudgetConsumptionService
 			$finalData = [];
 
 			if (count($glCodes) == 0) {
-				foreach ($templateCategoryIDs as $key => $value) {
-					$templateDetail = ReportTemplateDetails::find($value);
+				if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+					foreach ($templateCategoryIDs as $key => $value) {
+						foreach ($budgetFormData['serviceLineSystemID'] as $keyServ => $serviceLineSystemID) {
+							$templateDetail = ReportTemplateDetails::find($value);
+							$segmentData = SegmentMaster::find($serviceLineSystemID);
 
-					$budgetAmountData = collect($budgetAmount)->firstWhere('templateDetailID', $value);
-					$consumedAmountData = collect($consumedAmount)->firstWhere('templateDetailID', $value);
-					$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('templateDetailID', $value);
-					$pendingPrAmountsData = collect($pendingPrAmounts)->firstWhere('templateDetailID', $value);
-					$documentAmountData = collect($documentAmount)->firstWhere('templateDetailID', $value);
-					$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->firstWhere('templateDetailID', $value);
-					$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->firstWhere('templateDetailID', $value);
+							$budgetAmountData = collect($budgetAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$consumedAmountData = collect($consumedAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$pendingPoAmountsData = collect($pendingPoAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$pendingPrAmountsData = collect($pendingPrAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$documentAmountData = collect($documentAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
+							$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('templateDetailID', $value)->first();
 
-					$currenctDocumentConsumption = 0;
-					if (isset($documentAmountData['totalCost'])) {
-						$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $documentAmountData['totalCost']);
-						 $currenctDocumentConsumption = $currencyConversionRptAmount['reportingAmount'];
+							$currenctDocumentConsumption = 0;
+							if (isset($documentAmountData['totalCost'])) {
+								$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $documentAmountData['totalCost']);
+								 $currenctDocumentConsumption = $currencyConversionRptAmount['reportingAmount'];
+							}
+
+							$budgetAmountValue = (isset($budgetAmountData->budgetRptAmount) ? $budgetAmountData->budgetRptAmount : 0);
+
+							$totalBudgetRptAmount = (!$fixedAssetFlag) ?  ($budgetAmountValue * -1) : abs($budgetAmountValue);
+
+							$pendingDocumentAmount = (isset($pendingPrAmountsData['rptAmt']) ? $pendingPrAmountsData['rptAmt'] : 0) + (isset($pendingPoAmountsData['rptAmt']) ? $pendingPoAmountsData['rptAmt'] : 0) + (isset($pendingSupplierInvoiceAmountsData['rptAmt']) ? $pendingSupplierInvoiceAmountsData['rptAmt'] : 0) + (isset($pendingPaymentVoucherAmountsData['rptAmt']) ? $pendingPaymentVoucherAmountsData['rptAmt'] : 0);
+
+							$totalConsumedAmount = $currenctDocumentConsumption +  (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0) + $pendingDocumentAmount;
+
+							$availableAmount = $totalBudgetRptAmount - $totalConsumedAmount;
+
+
+							$finalData[$value.$serviceLineSystemID]['templateCategory'] = (isset($templateDetail->description) ? $templateDetail->description : 0);
+							$finalData[$value.$serviceLineSystemID]['serviceLine'] = ($segmentData) ? $segmentData->ServiceLineCode.' - '.$segmentData->ServiceLineDes : "";
+							$finalData[$value.$serviceLineSystemID]['budgetAmount'] = $totalBudgetRptAmount;
+							$finalData[$value.$serviceLineSystemID]['currenctDocumentConsumption'] = $currenctDocumentConsumption;
+							$finalData[$value.$serviceLineSystemID]['availableAmount'] = $availableAmount;
+							$finalData[$value.$serviceLineSystemID]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
+							$finalData[$value.$serviceLineSystemID]['pendingDocumentAmount'] = $pendingDocumentAmount;
+							$finalData[$value.$serviceLineSystemID]['templateDetailID'] = $value;
+							$finalData[$value.$serviceLineSystemID]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
+							$finalData[$value.$serviceLineSystemID]['glCodes'] = $glCodes;
+						}
+
 					}
+				} else {
+					foreach ($templateCategoryIDs as $key => $value) {
+						$templateDetail = ReportTemplateDetails::find($value);
 
-					$budgetAmountValue = (isset($budgetAmountData->budgetRptAmount) ? $budgetAmountData->budgetRptAmount : 0);
-
-					$totalBudgetRptAmount = (!$fixedAssetFlag) ?  ($budgetAmountValue * -1) : abs($budgetAmountValue);
-
-					$pendingDocumentAmount = (isset($pendingPrAmountsData['rptAmt']) ? $pendingPrAmountsData['rptAmt'] : 0) + (isset($pendingPoAmountsData['rptAmt']) ? $pendingPoAmountsData['rptAmt'] : 0) + (isset($pendingSupplierInvoiceAmountsData['rptAmt']) ? $pendingSupplierInvoiceAmountsData['rptAmt'] : 0) + (isset($pendingPaymentVoucherAmountsData['rptAmt']) ? $pendingPaymentVoucherAmountsData['rptAmt'] : 0);
-
-					$totalConsumedAmount = $currenctDocumentConsumption +  (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0) + $pendingDocumentAmount;
-
-					$availableAmount = $totalBudgetRptAmount - $totalConsumedAmount;
-
-
-					$finalData[$value]['templateCategory'] = (isset($templateDetail->description) ? $templateDetail->description : 0);
-					$finalData[$value]['budgetAmount'] = $totalBudgetRptAmount;
-					$finalData[$value]['currenctDocumentConsumption'] = $currenctDocumentConsumption;
-					$finalData[$value]['availableAmount'] = $availableAmount;
-					$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
-					$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
-					$finalData[$value]['templateDetailID'] = $value;
-					$finalData[$value]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
-					$finalData[$value]['glCodes'] = $glCodes;
-
-				}
-			} else {
-				foreach ($glCodes as $key => $value) {
-					if (self::checkChartAccountBudgetStatus($value, $budgetFormData)) {
-						$chartOfAcData = ChartOfAccount::find($value);
-
-						$budgetAmountData = collect($budgetAmount)->firstWhere('chartOfAccountID', $value);
-						$consumedAmountData = collect($consumedAmount)->firstWhere('chartOfAccountID', $value);
-						$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('chartOfAccountID', $value);
-						$pendingPrAmountsData = collect($pendingPrAmounts)->firstWhere('chartOfAccountID', $value);
-						$documentAmountData = collect($documentAmount)->firstWhere('chartOfAccountID', $value);
-						$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->firstWhere('chartOfAccountID', $value);
-						$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->firstWhere('chartOfAccountID', $value);
+						$budgetAmountData = collect($budgetAmount)->firstWhere('templateDetailID', $value);
+						$consumedAmountData = collect($consumedAmount)->firstWhere('templateDetailID', $value);
+						$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('templateDetailID', $value);
+						$pendingPrAmountsData = collect($pendingPrAmounts)->firstWhere('templateDetailID', $value);
+						$documentAmountData = collect($documentAmount)->firstWhere('templateDetailID', $value);
+						$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->firstWhere('templateDetailID', $value);
+						$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->firstWhere('templateDetailID', $value);
 
 						$currenctDocumentConsumption = 0;
 						if (isset($documentAmountData['totalCost'])) {
@@ -437,17 +447,109 @@ class BudgetConsumptionService
 						$availableAmount = $totalBudgetRptAmount - $totalConsumedAmount;
 
 
-						$finalData[$value]['templateCategory'] = ($chartOfAcData) ? $chartOfAcData->AccountCode.' - '.$chartOfAcData->AccountDescription : "";
+						$finalData[$value]['templateCategory'] = (isset($templateDetail->description) ? $templateDetail->description : 0);
 						$finalData[$value]['budgetAmount'] = $totalBudgetRptAmount;
 						$finalData[$value]['currenctDocumentConsumption'] = $currenctDocumentConsumption;
 						$finalData[$value]['availableAmount'] = $availableAmount;
 						$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
 						$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
 						$finalData[$value]['templateDetailID'] = $value;
-						$finalData[$value]['companyReportTemplateID'] = $chartOfAcData->chartOfAccountSystemID;
+						$finalData[$value]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
 						$finalData[$value]['glCodes'] = $glCodes;
+
 					}
 				}
+			} else {
+				if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+					foreach ($glCodes as $key => $value) {
+						if (self::checkChartAccountBudgetStatus($value, $budgetFormData)) {
+
+							foreach ($budgetFormData['serviceLineSystemID'] as $keyServ => $serviceLineSystemID) {
+								$chartOfAcData = ChartOfAccount::find($value);
+								$segmentData = SegmentMaster::find($serviceLineSystemID);
+
+								$budgetAmountData = collect($budgetAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$consumedAmountData = collect($consumedAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$pendingPoAmountsData = collect($pendingPoAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$pendingPrAmountsData = collect($pendingPrAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$documentAmountData = collect($documentAmount)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+								$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->where('serviceLineSystemID', $serviceLineSystemID)->where('chartOfAccountID', $value)->first();
+
+								$currenctDocumentConsumption = 0;
+								if (isset($documentAmountData['totalCost'])) {
+									$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $documentAmountData['totalCost']);
+									 $currenctDocumentConsumption = $currencyConversionRptAmount['reportingAmount'];
+								}
+
+								$budgetAmountValue = (isset($budgetAmountData->budgetRptAmount) ? $budgetAmountData->budgetRptAmount : 0);
+
+								$totalBudgetRptAmount = (!$fixedAssetFlag) ?  ($budgetAmountValue * -1) : abs($budgetAmountValue);
+
+								$pendingDocumentAmount = (isset($pendingPrAmountsData['rptAmt']) ? $pendingPrAmountsData['rptAmt'] : 0) + (isset($pendingPoAmountsData['rptAmt']) ? $pendingPoAmountsData['rptAmt'] : 0) + (isset($pendingSupplierInvoiceAmountsData['rptAmt']) ? $pendingSupplierInvoiceAmountsData['rptAmt'] : 0) + (isset($pendingPaymentVoucherAmountsData['rptAmt']) ? $pendingPaymentVoucherAmountsData['rptAmt'] : 0);
+
+								$totalConsumedAmount = $currenctDocumentConsumption +  (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0) + $pendingDocumentAmount;
+
+								$availableAmount = $totalBudgetRptAmount - $totalConsumedAmount;
+
+
+								$finalData[$value.$serviceLineSystemID]['templateCategory'] = ($chartOfAcData) ? $chartOfAcData->AccountCode.' - '.$chartOfAcData->AccountDescription : "";
+								$finalData[$value.$serviceLineSystemID]['serviceLine'] = ($segmentData) ? $segmentData->ServiceLineCode.' - '.$segmentData->ServiceLineDes : "";
+								$finalData[$value.$serviceLineSystemID]['budgetAmount'] = $totalBudgetRptAmount;
+								$finalData[$value.$serviceLineSystemID]['currenctDocumentConsumption'] = $currenctDocumentConsumption;
+								$finalData[$value.$serviceLineSystemID]['availableAmount'] = $availableAmount;
+								$finalData[$value.$serviceLineSystemID]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
+								$finalData[$value.$serviceLineSystemID]['pendingDocumentAmount'] = $pendingDocumentAmount;
+								$finalData[$value.$serviceLineSystemID]['templateDetailID'] = $value;
+								$finalData[$value.$serviceLineSystemID]['companyReportTemplateID'] = $chartOfAcData->chartOfAccountSystemID;
+								$finalData[$value.$serviceLineSystemID]['glCodes'] = $glCodes;
+							}
+						}
+					}
+				} else {
+					foreach ($glCodes as $key => $value) {
+						if (self::checkChartAccountBudgetStatus($value, $budgetFormData)) {
+							$chartOfAcData = ChartOfAccount::find($value);
+
+							$budgetAmountData = collect($budgetAmount)->firstWhere('chartOfAccountID', $value);
+							$consumedAmountData = collect($consumedAmount)->firstWhere('chartOfAccountID', $value);
+							$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('chartOfAccountID', $value);
+							$pendingPrAmountsData = collect($pendingPrAmounts)->firstWhere('chartOfAccountID', $value);
+							$documentAmountData = collect($documentAmount)->firstWhere('chartOfAccountID', $value);
+							$pendingSupplierInvoiceAmountsData = collect($pendingSupplierInvoiceAmounts)->firstWhere('chartOfAccountID', $value);
+							$pendingPaymentVoucherAmountsData = collect($pendingPaymentVoucherAmounts)->firstWhere('chartOfAccountID', $value);
+
+							$currenctDocumentConsumption = 0;
+							if (isset($documentAmountData['totalCost'])) {
+								$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $documentAmountData['totalCost']);
+								 $currenctDocumentConsumption = $currencyConversionRptAmount['reportingAmount'];
+							}
+
+							$budgetAmountValue = (isset($budgetAmountData->budgetRptAmount) ? $budgetAmountData->budgetRptAmount : 0);
+
+							$totalBudgetRptAmount = (!$fixedAssetFlag) ?  ($budgetAmountValue * -1) : abs($budgetAmountValue);
+
+							$pendingDocumentAmount = (isset($pendingPrAmountsData['rptAmt']) ? $pendingPrAmountsData['rptAmt'] : 0) + (isset($pendingPoAmountsData['rptAmt']) ? $pendingPoAmountsData['rptAmt'] : 0) + (isset($pendingSupplierInvoiceAmountsData['rptAmt']) ? $pendingSupplierInvoiceAmountsData['rptAmt'] : 0) + (isset($pendingPaymentVoucherAmountsData['rptAmt']) ? $pendingPaymentVoucherAmountsData['rptAmt'] : 0);
+
+							$totalConsumedAmount = $currenctDocumentConsumption +  (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0) + $pendingDocumentAmount;
+
+							$availableAmount = $totalBudgetRptAmount - $totalConsumedAmount;
+
+
+							$finalData[$value]['templateCategory'] = ($chartOfAcData) ? $chartOfAcData->AccountCode.' - '.$chartOfAcData->AccountDescription : "";
+							$finalData[$value]['budgetAmount'] = $totalBudgetRptAmount;
+							$finalData[$value]['currenctDocumentConsumption'] = $currenctDocumentConsumption;
+							$finalData[$value]['availableAmount'] = $availableAmount;
+							$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
+							$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
+							$finalData[$value]['templateDetailID'] = $value;
+							$finalData[$value]['companyReportTemplateID'] = $chartOfAcData->chartOfAccountSystemID;
+							$finalData[$value]['glCodes'] = $glCodes;
+						}
+					}
+
+				}
+
 			}
 
 			$finalResData = [];
@@ -465,6 +567,11 @@ class BudgetConsumptionService
 
 	public static function pendingPoQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
 	{
+
+		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+			return self::pendingPoQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
+		}
+
 		if ($directDocument) {
 			return self::pendingPoQryValuesForDirectDocs($budgetFormData, $templateCategoryIDs, $glCodes);
 		}
@@ -474,7 +581,7 @@ class BudgetConsumptionService
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
 											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
-											 					  ->whereIn('documentSystemID', [1,50,51]);
+											 					  ->whereIn('documentSystemID', [2,5,52]);
 												 	});
 											 })
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -671,7 +778,12 @@ class BudgetConsumptionService
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [11]), function($query) use ($budgetFormData) {
 	 										 	$query->where('directInvoiceAutoID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
-											 ->groupBy('chartOfAccountSystemID')
+	 										 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID', 'serviceLineSystemID');
+											 })
+											  ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == false), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID');
+											 })
 											 ->get();
 
 		if (count($glCodes) == 0) {
@@ -681,7 +793,15 @@ class BudgetConsumptionService
 				}
 			}
 
-			$groups = collect($pendingSupInvQry)->groupBy('templateDetailID'); 
+			if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+				$groups = collect($pendingSupInvQry)->groupBy(function ($item, $key) {
+					                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+					                });
+				
+			} else {
+				$groups = collect($pendingSupInvQry)->groupBy('templateDetailID');
+			}
+
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 			    return [
@@ -883,7 +1003,12 @@ class BudgetConsumptionService
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [4]), function($query) use ($budgetFormData) {
 	 										 	$query->where('directPaymentAutoID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
-											 ->groupBy('chartOfAccountSystemID')
+	 										 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID', 'serviceLineSystemID');
+											 })
+											  ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == false), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID');
+											 })
 											 ->get();
 
 		if (count($glCodes) == 0) {
@@ -893,7 +1018,14 @@ class BudgetConsumptionService
 				}
 			}
 
-			$groups = collect($pendingSupInvQry)->groupBy('templateDetailID'); 
+			if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+				$groups = collect($pendingSupInvQry)->groupBy(function ($item, $key) {
+					                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+					                });
+				
+			} else {
+				$groups = collect($pendingSupInvQry)->groupBy('templateDetailID');
+			}
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 			    return [
@@ -927,7 +1059,7 @@ class BudgetConsumptionService
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
 											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
-											 					  ->whereIn('documentSystemID', [1,50,51]);
+											 					  ->whereIn('documentSystemID', [2,5,52]);
 												 	});
 											 })
 											 ->with(['budget_detail_pl' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -1122,7 +1254,12 @@ class BudgetConsumptionService
 									 	$query->whereNull('projectID')
 									 		  ->orWhere('projectID', 0);
 									 })
-									 ->groupBy('chartOfAccountID')
+									 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+									 	$query->groupBy('chartOfAccountID', 'serviceLineSystemID');
+									 })
+									 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == false), function($query) use ($budgetFormData) {
+									 	$query->groupBy('chartOfAccountID');
+									 })
 									 ->get();
 
 		if (count($glCodes) == 0) {
@@ -1132,7 +1269,16 @@ class BudgetConsumptionService
 				}
 			}
 
-			$groups = collect($consumedAmount)->groupBy('templateDetailID'); 
+
+			if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+				$groups = collect($consumedAmount)->groupBy(function ($item, $key) {
+					                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+					                });
+				
+			} else {
+				$groups = collect($consumedAmount)->groupBy('templateDetailID');
+			}
+
 
 			$consumedAmountData = $groups->map(function ($group) {
 			    return [
@@ -1191,10 +1337,16 @@ class BudgetConsumptionService
 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 													 });
 										 })
-										 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+										 ->when(count($glCodes) > 0 && $budgetFormData['departmentWiseCheckBudgetPolicy'] == true, function($query) use ($glCodes) {
+										 	$query->groupBy('chartOfAccountID', 'serviceLineSystemID');
+										 })
+										 ->when(count($glCodes) > 0 && $budgetFormData['departmentWiseCheckBudgetPolicy'] == false, function($query) use ($glCodes) {
 										 	$query->groupBy('chartOfAccountID');
 										 })
-										 ->when(count($glCodes) == 0, function($query) use ($glCodes) {
+										 ->when(count($glCodes) == 0 && $budgetFormData['departmentWiseCheckBudgetPolicy'] == true, function($query) use ($glCodes) {
+										 	$query->groupBy('templateDetailID', 'serviceLineSystemID');
+										 })
+										 ->when(count($glCodes) == 0 && $budgetFormData['departmentWiseCheckBudgetPolicy'] == false, function($query) use ($glCodes) {
 										 	$query->groupBy('templateDetailID');
 										 })
 										 ->get();
@@ -1233,6 +1385,10 @@ class BudgetConsumptionService
 
 	public static function purchaseRequestDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
+		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+			return self::purchaseRequestDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);	
+		}
+
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseRequestDetails::selectRaw('SUM(estimatedCost * quantityRequested) AS totalCost, purchaseRequestID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'] .' as chartOfAccountID')
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -1322,7 +1478,7 @@ class BudgetConsumptionService
 
 	public static function supplierInvoiceDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
-		$docAmountQry = DirectInvoiceDetails::selectRaw('SUM(netAmount) AS totalCost, directInvoiceAutoID, companySystemID, budgetYear,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID')
+		$docAmountQry = DirectInvoiceDetails::selectRaw('SUM(netAmount) AS totalCost, directInvoiceAutoID, companySystemID, budgetYear,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID,serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
@@ -1367,7 +1523,12 @@ class BudgetConsumptionService
 	 										 }])
 	 										 ->where('directInvoiceAutoID', $budgetFormData['documentSystemCode'])
 	 										 ->where('budgetYear', $budgetFormData['budgetYear'])
-											 ->groupBy('chartOfAccountSystemID')
+	 										 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID', 'serviceLineSystemID');
+											 })
+											  ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == false), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID');
+											 })
 											 ->get();
 
 		if (count($glCodes) == 0) {
@@ -1377,7 +1538,14 @@ class BudgetConsumptionService
 				}
 			}
 
-			$groups = collect($docAmountQry)->groupBy('templateDetailID'); 
+			if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+				$groups = collect($docAmountQry)->groupBy(function ($item, $key) {
+					                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+					                });
+				
+			} else {
+				$groups = collect($docAmountQry)->groupBy('templateDetailID');
+			}
 
 			$pendingPoQryData = $groups->map(function ($group) {
 			    return [
@@ -1385,6 +1553,7 @@ class BudgetConsumptionService
 			        'budgetYear' => $group->first()['budgetYear'],
 			        'companySystemID' => $group->first()['companySystemID'],
 			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
 			        'totalCost' => $group->sum('totalCost'),
 			    ];
 			});
@@ -1404,7 +1573,7 @@ class BudgetConsumptionService
 
 	public static function paymentVoucherDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
-		$docAmountQry = DirectPaymentDetails::selectRaw('SUM(DPAmount) AS totalCost, directPaymentAutoID, companySystemID, budgetYear,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID')
+		$docAmountQry = DirectPaymentDetails::selectRaw('SUM(DPAmount) AS totalCost, directPaymentAutoID, companySystemID, budgetYear,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID, serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
@@ -1449,7 +1618,12 @@ class BudgetConsumptionService
 	 										 }])
 	 										 ->where('directPaymentAutoID', $budgetFormData['documentSystemCode'])
 	 										 ->where('budgetYear', $budgetFormData['budgetYear'])
-											 ->groupBy('chartOfAccountSystemID')
+											 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID', 'serviceLineSystemID');
+											 })
+											  ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == false), function($query) use ($budgetFormData) {
+											 	$query->groupBy('chartOfAccountSystemID');
+											 })
 											 ->get();
 
 		if (count($glCodes) == 0) {
@@ -1459,7 +1633,14 @@ class BudgetConsumptionService
 				}
 			}
 
-			$groups = collect($docAmountQry)->groupBy('templateDetailID'); 
+			if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+				$groups = collect($docAmountQry)->groupBy(function ($item, $key) {
+					                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+					                });
+				
+			} else {
+				$groups = collect($docAmountQry)->groupBy('templateDetailID');
+			}
 
 			$pendingPoQryData = $groups->map(function ($group) {
 			    return [
@@ -1467,6 +1648,7 @@ class BudgetConsumptionService
 			        'budgetYear' => $group->first()['budgetYear'],
 			        'companySystemID' => $group->first()['companySystemID'],
 			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
 			        'totalCost' => $group->sum('totalCost'),
 			    ];
 			});
@@ -1485,6 +1667,10 @@ class BudgetConsumptionService
 
 	public static function purchaseOrderDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
+		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
+			return self::purchaseOrderDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);
+		}
+
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitSupTransCur * noQty) AS totalCost, purchaseOrderMasterID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID')
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -1748,5 +1934,634 @@ class BudgetConsumptionService
         }
 
         return ['status' => true];
+	}
+
+
+	public static function pendingPoQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	{
+		if ($directDocument) {
+			return self::pendingPoQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes);
+		}
+		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
+		$pendingPoQry = PurchaseOrderDetails::selectRaw('GRVcostPerUnitLocalCur AS localAmt, GRVcostPerUnitComRptCur AS rptAmt, '.$budgetFormData['glColumnName'].', companySystemID, '.$budgetFormData['glColumnName'].' as chartOfAccountID,serviceLineSystemID, purchaseOrderDetailsID')
+								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
+								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
+											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  ->whereIn('documentSystemID', [2,5,52]);
+												 	})
+											 		->with(['allocations' => function($query) use ($budgetFormData) {
+											 					$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  	  ->whereIn('documentSystemID', [2,5,52]);
+									 					  }]);
+											 })
+											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+											 		   ->where('Year', $budgetFormData['budgetYear'])
+											 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+											 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+														 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+														 })
+											 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+														 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+														 		  ->where('approvedYN', -1)
+														 		   ->where('Year', $budgetFormData['budgetYear'])
+														 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																	 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																	 });
+														 });
+											 })
+											 ->with([$budgetRelationName => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		   ->where('Year', $budgetFormData['budgetYear'])
+	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 													 })
+	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 													 		  ->where('approvedYN', -1)
+	 													 		   ->where('Year', $budgetFormData['budgetYear'])
+	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 																 });
+	 													 });
+	 										 }])
+	 										 ->whereHas('order', function($query) use ($budgetFormData) {
+	 										 	$query->where('approved', 0)
+	 										 		  ->where('poCancelledYN', 0)
+	 										 		  ->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		  ->where('budgetYear', $budgetFormData['budgetYear'])
+	 										 		  ->where(function($query) {
+													 	$query->whereNull('projectID')
+													 		  ->orWhere('projectID', 0);
+													  });
+	 										 })
+	 										 ->when(in_array($budgetFormData['documentSystemID'], [2,5,52]), function($query) use ($budgetFormData) {
+	 										 	$query->where('purchaseOrderMasterID', '!=' ,$budgetFormData['documentSystemCode']);
+	 										 })
+											 // ->groupBy($budgetFormData['glColumnName'])
+											 ->get();
+
+		if (count($glCodes) == 0) {
+			foreach ($pendingPoQry as $key => $value) {
+				if ($fixedAssetFlag) {
+					if (isset($value->budget_detail_bs) && !is_null($value->budget_detail_bs)) {
+						$value->templateDetailID = $value->budget_detail_bs->templateDetailID;
+					}
+				} else {
+					if (isset($value->budget_detail_pl) && !is_null($value->budget_detail_pl)) {
+						$value->templateDetailID = $value->budget_detail_pl->templateDetailID;
+					}
+				}
+			}
+
+			$pendingData = [];
+			foreach ($pendingPoQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['localAmt'] = $value->localAmt * $value1->allocatedQty;
+					$temp['rptAmt'] = $value->rptAmt * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['templateDetailID'] = $value->templateDetailID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+
+			$groups = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+				                });
+
+			$pendingPoQryData = $groups->map(function ($group) use ($budgetFormData){
+			    return [
+			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'chartOfAccountID' => $group->first()['chartOfAccountID'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+			        'localAmt' => $group->sum('localAmt'),
+			        'rptAmt' => $group->sum('rptAmt'),
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+		} else {
+			$pendingData = [];
+			foreach ($pendingPoQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['localAmt'] = $value->localAmt * $value1->allocatedQty;
+					$temp['rptAmt'] = $value->rptAmt * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+			$grouped = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['chartOfAccountID'].$item['serviceLineSystemID'];
+				                });
+
+			$pendingPoQryData = $grouped->map(function ($group) use ($budgetFormData){
+			    return [
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+			        'chartOfAccountID' => $group->first()['chartOfAccountID'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'localAmt' => $group->sum('localAmt'),
+			        'rptAmt' => $group->sum('rptAmt'),
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+		}
+	}
+
+	public static function purchaseRequestDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	{
+		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
+		$docAmountQry = PurchaseRequestDetails::selectRaw('estimatedCost, purchaseRequestID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'] .' as chartOfAccountID, purchaseRequestDetailsID')
+											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+											 		   ->where('Year', $budgetFormData['budgetYear'])
+											 		   ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+											 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+														 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+														 })
+											 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+														 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+														 		  ->where('approvedYN', -1)
+														 		   ->where('Year', $budgetFormData['budgetYear'])
+														 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																	 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																	 });
+														 });
+											 })
+											 ->with([$budgetRelationName => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		   ->where('Year', $budgetFormData['budgetYear'])
+	 										 		   ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 													 })
+	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 													 		  ->where('approvedYN', -1)
+	 													 		   ->where('Year', $budgetFormData['budgetYear'])
+	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 																 });
+	 													 });
+	 										 }])
+	 										 ->with(['allocations' => function ($query) use ($budgetFormData){
+	 										 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  ->whereIn('documentSystemID', [1,50,51]);
+	 										 }])
+	 										 ->where('purchaseRequestID', $budgetFormData['documentSystemCode'])
+	 										 ->where('budgetYear', $budgetFormData['budgetYear'])
+											 // ->groupBy($budgetFormData['glColumnName'])
+											 ->get();
+
+		if (count($glCodes) == 0) {
+			foreach ($docAmountQry as $key => $value) {
+				if ($fixedAssetFlag) {
+					if (isset($value->budget_detail_bs) && !is_null($value->budget_detail_bs)) {
+						$value->templateDetailID = $value->budget_detail_bs->templateDetailID;
+					}
+				} else {
+					if (isset($value->budget_detail_pl) && !is_null($value->budget_detail_pl)) {
+						$value->templateDetailID = $value->budget_detail_pl->templateDetailID;
+					}
+				}
+			}
+
+			$pendingData = [];
+			foreach ($docAmountQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['totalCost'] = $value->estimatedCost * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+					$temp['budgetYear'] = $value->budgetYear;
+					$temp['templateDetailID'] = $value->templateDetailID;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+			$groups = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+				                });
+
+
+			$pendingPoQryData = $groups->map(function ($group) {
+			    return [
+			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'budgetYear' => $group->first()['budgetYear'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+			        'totalCost' => $group->sum('totalCost'),
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+		} else {
+			$pendingData = [];
+			foreach ($docAmountQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['totalCost'] = $value->estimatedCost * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+					$temp['budgetYear'] = $value->budgetYear;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+			$grouped = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['chartOfAccountID'].$item['serviceLineSystemID'];
+				                });
+
+			$pendingPoQryData = $grouped->map(function ($group) use ($budgetFormData){
+			    return [
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+			        'chartOfAccountID' => $group->first()['chartOfAccountID'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'budgetYear' => $group->first()['budgetYear'],
+			        'totalCost' => $group->sum('totalCost')
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+
+		}
+	}
+
+	public static function purchaseOrderDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	{
+		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
+		$docAmountQry = PurchaseOrderDetails::selectRaw('GRVcostPerUnitSupTransCur, purchaseOrderMasterID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, purchaseOrderDetailsID')
+											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+											 		   ->where('Year', $budgetFormData['budgetYear'])
+											 		   ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+											 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+														 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+														 })
+											 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+														 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+														 		  ->where('approvedYN', -1)
+														 		   ->where('Year', $budgetFormData['budgetYear'])
+														 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																	 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																	 });
+														 });
+											 })
+											 ->with([$budgetRelationName => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		   ->where('Year', $budgetFormData['budgetYear'])
+	 										 		   ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 													 })
+	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 													 		  ->where('approvedYN', -1)
+	 													 		   ->where('Year', $budgetFormData['budgetYear'])
+	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 																 });
+	 													 });
+	 										 }])
+	 										 ->with(['allocations' => function ($query) use ($budgetFormData){
+	 										 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  ->whereIn('documentSystemID', [2,5,52]);
+	 										 }])
+	 										 ->where('purchaseOrderMasterID', $budgetFormData['documentSystemCode'])
+	 										 ->where('budgetYear', $budgetFormData['budgetYear'])
+											 // ->groupBy($budgetFormData['glColumnName'])
+											 ->get();
+
+		if (count($glCodes) == 0) {
+			foreach ($docAmountQry as $key => $value) {
+				if ($fixedAssetFlag) {
+					if (isset($value->budget_detail_bs) && !is_null($value->budget_detail_bs)) {
+						$value->templateDetailID = $value->budget_detail_bs->templateDetailID;
+					}
+				} else {
+					if (isset($value->budget_detail_pl) && !is_null($value->budget_detail_pl)) {
+						$value->templateDetailID = $value->budget_detail_pl->templateDetailID;
+					}
+				}
+			}
+
+			$pendingData = [];
+			foreach ($docAmountQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['totalCost'] = $value->GRVcostPerUnitSupTransCur * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+					$temp['budgetYear'] = $value->budgetYear;
+					$temp['templateDetailID'] = $value->templateDetailID;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+			$groups = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+				                });
+
+
+			$pendingPoQryData = $groups->map(function ($group) {
+			    return [
+			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'budgetYear' => $group->first()['budgetYear'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'totalCost' => $group->sum('totalCost'),
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+		} else {
+			$pendingData = [];
+			foreach ($docAmountQry as $key => $value) {
+				foreach ($value->allocations as $key1 => $value1) {
+					$temp = [];
+					$temp['totalCost'] = $value->GRVcostPerUnitSupTransCur * $value1->allocatedQty;
+					$temp['chartOfAccountID'] = $value->chartOfAccountID;
+					$temp['companySystemID'] = $value->companySystemID;
+					$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+					$temp['budgetYear'] = $value->budgetYear;
+
+					$pendingData[] = $temp;
+				}
+			}
+
+			$grouped = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['chartOfAccountID'].$item['serviceLineSystemID'];
+				                });
+
+			$pendingPoQryData = $grouped->map(function ($group) use ($budgetFormData){
+			    return [
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+			        'chartOfAccountID' => $group->first()['chartOfAccountID'],
+			        'companySystemID' => $group->first()['companySystemID'],
+			        'budgetYear' => $group->first()['budgetYear'],
+			        'totalCost' => $group->sum('totalCost')
+			    ];
+			});
+
+
+			$finalData = [];			
+			foreach ($pendingPoQryData as $key => $value) {
+				$finalData[] = $value;
+			}
+
+			return $finalData;
+		}
+
+	}
+
+	public static function pendingPoQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes)
+	{
+		$pendingPoQry = PurchaseOrderDetails::selectRaw('GRVcostPerUnitLocalCur AS localAmt, GRVcostPerUnitComRptCur AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, serviceLineSystemID, purchaseOrderDetailsID')
+								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
+								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+											 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
+											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  ->whereIn('documentSystemID', [2,5,52]);
+												 	})
+											 		->with(['allocations' => function($query) use ($budgetFormData) {
+											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
+											 					  ->whereIn('documentSystemID', [2,5,52]);
+												 	}]);
+											 })
+											 ->with(['budget_detail_pl' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		   ->where('Year', $budgetFormData['budgetYear'])
+	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 													 })
+	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 													 		  ->where('approvedYN', -1)
+	 													 		   ->where('Year', $budgetFormData['budgetYear'])
+	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 																 });
+	 													 });
+	 										 }, 'budget_detail_bs' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		   ->where('Year', $budgetFormData['budgetYear'])
+	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+														 })
+														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+														 	$query->whereIn('chartOfAccountID', $glCodes);
+														 })
+	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 													 })
+	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+	 													 		  ->where('approvedYN', -1)
+	 													 		   ->where('Year', $budgetFormData['budgetYear'])
+	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+	 																 });
+	 													 });
+	 										 }])
+											 ->where(function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+												 $query->whereHas('budget_detail_pl',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 		   ->where('Year', $budgetFormData['budgetYear'])
+													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+																 })
+																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+																 	$query->whereIn('chartOfAccountID', $glCodes);
+																 })
+													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																 })
+													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+																 		  ->where('approvedYN', -1)
+																 		   ->where('Year', $budgetFormData['budgetYear'])
+																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																			 });
+																 });
+													 })
+												 	 ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 		   ->where('Year', $budgetFormData['budgetYear'])
+													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+																 })
+																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+																 	$query->whereIn('chartOfAccountID', $glCodes);
+																 })
+													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																 })
+													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+																 		  ->where('approvedYN', -1)
+																 		   ->where('Year', $budgetFormData['budgetYear'])
+																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+																			 });
+																 });
+													 });
+											 })
+	 										 ->whereHas('order', function($query) use ($budgetFormData) {
+	 										 	$query->where('approved', 0)
+	 										 		  ->where('poCancelledYN', 0)
+	 										 		  ->where('companySystemID', $budgetFormData['companySystemID'])
+	 										 		  ->where('budgetYear', $budgetFormData['budgetYear'])
+	 										 		  ->where(function($query) {
+													 	 $query->whereNull('projectID')
+													 		  ->orWhere('projectID', 0);
+													  });
+	 										 })
+	 										 ->when(in_array($budgetFormData['documentSystemID'], [2,5,52]), function($query) use ($budgetFormData) {
+	 										 	$query->where('purchaseOrderMasterID', '!=' ,$budgetFormData['documentSystemCode']);
+	 										 })
+											 ->get();
+
+		foreach ($pendingPoQry as $key => $value) {
+			if (isset($value->budget_detail_bs) && !is_null($value->budget_detail_bs)) {
+				$value->templateDetailID = $value->budget_detail_bs->templateDetailID;
+				$value->chartOfAccountIDGrp = $value->financeGLcodebBSSystemID;
+			}
+
+			if (isset($value->budget_detail_pl) && !is_null($value->budget_detail_pl)) {
+				$value->templateDetailID = $value->budget_detail_pl->templateDetailID;
+				$value->chartOfAccountIDGrp = $value->financeGLcodePLSystemID;
+			}
+		}
+
+		$pendingData = [];
+		foreach ($pendingPoQry as $key => $value) {
+			foreach ($value->allocations as $key1 => $value1) {
+				$temp = [];
+				$temp['localAmt'] = $value->localAmt * $value1->allocatedQty;
+				$temp['rptAmt'] = $value->rptAmt * $value1->allocatedQty;
+				$temp['chartOfAccountIDGrp'] = $value->chartOfAccountIDGrp;
+				$temp['companySystemID'] = $value->companySystemID;
+				$temp['templateDetailID'] = $value->templateDetailID;
+				$temp['serviceLineSystemID'] = $value1->serviceLineSystemID;
+
+				$pendingData[] = $temp;
+			}
+		}
+
+
+		if (count($glCodes) == 0) {
+			$groups = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['templateDetailID'].$item['serviceLineSystemID'];
+				                });
+		} else {
+			$groups = collect($pendingData)->groupBy(function ($item, $key) {
+				                    return $item['chartOfAccountIDGrp'].$item['serviceLineSystemID'];
+				                }); 
+		}
+
+		$pendingPoQryData = $groups->map(function ($group) use ($budgetFormData, $glCodes){
+		    return [
+		        'templateDetailID' => $group->first()['templateDetailID'],
+		        'chartOfAccountID' => $group->first()['chartOfAccountIDGrp'],
+		        'companySystemID' => $group->first()['companySystemID'],
+		        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
+		        'localAmt' => $group->sum('localAmt'),
+		        'rptAmt' => $group->sum('rptAmt'),
+		    ];
+		});
+
+
+		$finalData = [];			
+		foreach ($pendingPoQryData as $key => $value) {
+			$finalData[] = $value;
+		}
+
+		return $finalData;
 	}
 }

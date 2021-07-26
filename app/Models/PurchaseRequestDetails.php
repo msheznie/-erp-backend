@@ -209,4 +209,8 @@ class PurchaseRequestDetails extends Model
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
     }
+
+    public function allocations(){
+        return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseRequestDetailsID');
+    }
 }
