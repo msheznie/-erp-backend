@@ -563,7 +563,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $assetTransferID =  $request['id'];
         $assetTransferMaster = ERPAssetTransfer::where('company_id', $companyId)->where('id', $assetTransferID)->first();
-        /* $data['assetMaster_drop'] = DB::select("SELECT faID,
+      /*   $data['assetMaster_drop'] = DB::select("SELECT faID,
         CONCAT(faCode,'-',assetDescription) as asset
         FROM
         `erp_purchaseorderdetails`
@@ -573,15 +573,22 @@ class ERPAssetTransferAPIController extends AppBaseController
         erp_purchaseorderdetails.companySystemID = $companyId 
         AND purchaseRequestID = $assetTransferMaster->purchaseRequestID  
         AND docOriginDocumentID = 'GRV'"); */
-        $data['assetMaster_drop'] =  PurchaseOrderDetails::with(['grvDetails'=> function ($q) {
+         $data['assetMaster_drop'] =  PurchaseOrderDetails::with(['grvDetails'=> function ($q) {
             $q->with(['assetMaster'=> function ($q2)  {
-                $q2->where('docOriginDocumentID','GRV');
+                $q2->where('docOriginDocumentID','GRV')
+                ->where('approved',-1);
             }]);
         } ])
+        ->whereHas('grvDetails', function($q){
+            $q->whereHas('assetMaster',function ($q2)  {
+                $q2->where('docOriginDocumentID','GRV')
+                ->where('approved',-1);
+            });
+        })
         ->where('companySystemID',$companyId )
-        ->where('purchaseRequestID',$assetTransferMaster->purchaseRequestID)->get();
+        ->where('purchaseRequestID',$assetTransferMaster->purchaseRequestID)->get(); 
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        return $data;
     }
     public function getAssetTransferApprovalByUserApproved(Request $request)
     {

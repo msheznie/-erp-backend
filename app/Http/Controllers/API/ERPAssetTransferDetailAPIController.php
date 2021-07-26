@@ -112,22 +112,30 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     public function store(CreateERPAssetTransferDetailAPIRequest $request, $id)
     {
         $input = $request->all();
-        $valuesOfAsset = isset($input['assetDropTransferID'])? array_column($input,'assetDropTransferID'):0;
-        if($valuesOfAsset > 0){ 
+
+       $valuesOfAsset = array_filter(array_column($input, 'assetDropTransferID'), function($n){ 
+            return $n >0;
+        });
+        
+        if(isset($valuesOfAsset)){ 
             $unique = array_unique($valuesOfAsset);
             $duplicates =  sizeof(array_diff_assoc($valuesOfAsset, $unique));
-            if($duplicates > 0){ 
-                return $this->sendError('Same asset cannot be link multiple times');
+         
+            if ($duplicates > 0) {
+                 return $this->sendError('Same asset cannot be link multiple times');
             }
         }
-      
+
         if (isset($input) && !empty($input)) {
             foreach ($input as $item => $value) {
-               $erpAsset = ERPAssetTransferDetail::select('erp_fa_fa_asset_transfer_id')->where('erp_fa_fa_asset_transfer_id',$value['masterID'])
-               ->where('fa_master_id',$value['assetDropTransferID'])->get();
-               if(count($erpAsset) > 0){
-                return $this->sendError('Same asset cannot be link multiple times');
-               }
+                $erpAsset = ERPAssetTransferDetail::select('erp_fa_fa_asset_transfer_id')->where('erp_fa_fa_asset_transfer_id', $value['masterID'])
+                    ->where('fa_master_id', $value['assetDropTransferID'])
+                    ->where('pr_created_yn','!=',1)
+                    ->get();
+                    
+                if (count($erpAsset) > 0) {
+                    return $this->sendError('Same asset cannot be link multiple times');
+                }
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
                     'erp_fa_fa_asset_request_id' => $value['erp_fa_fa_asset_request_id'],
@@ -310,9 +318,9 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     public function get_employee_asset_transfer_details(Request $request, $id)
     {
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
-        
+
         if ($data['assetMaster']->type == 1) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
             $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
@@ -329,10 +337,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     public function addEmployeeAsset(Request $request, $id)
     {
         $input = $request->all();
-        $valuesOfAsset = array_column($input,'asset');
+        $valuesOfAsset = array_column($input, 'asset');
         $unique = array_unique($valuesOfAsset);
         $duplicates =  sizeof(array_diff_assoc($valuesOfAsset, $unique));
-        if($duplicates > 0){ 
+        if ($duplicates > 0) {
             return $this->sendError('Same asset cannot be add multiple times');
         }
 
@@ -342,7 +350,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 if ($value['from_location'][0] == $value['to_location']) {
                     return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
                 } else {
-        
+
                     $data[] = [
                         'erp_fa_fa_asset_transfer_id' => $id,
                         'from_location_id' => $value['from_location'][0],
@@ -354,9 +362,9 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
 
 
                     FixedAssetMaster::find($value['asset'])
-                    ->update([
-                        'LOCATION' =>  $value['to_location']
-                    ]);
+                        ->update([
+                            'LOCATION' =>  $value['to_location']
+                        ]);
                 }
                 $x++;
             }
@@ -418,11 +426,11 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
 
         $eRPAssetTransferDetail = $this->eRPAssetTransferDetailRepository->findWithoutFail($request['id']);
-        $erpAsset = ERPAssetTransferDetail::select('erp_fa_fa_asset_transfer_id')->where('erp_fa_fa_asset_transfer_id',$eRPAssetTransferDetail->erp_fa_fa_asset_transfer_id)
-        ->where('fa_master_id',$request['value'])->get();
-        
-        if(count($erpAsset) > 0){
-         return $this->sendError('Same asset cannot be link multiple times');
+        $erpAsset = ERPAssetTransferDetail::select('erp_fa_fa_asset_transfer_id')->where('erp_fa_fa_asset_transfer_id', $eRPAssetTransferDetail->erp_fa_fa_asset_transfer_id)
+            ->where('fa_master_id', $request['value'])->get();
+
+        if (count($erpAsset) > 0) {
+            return $this->sendError('Same asset cannot be link multiple times');
         }
 
         $updateData = [
@@ -439,10 +447,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
         $assetID = $input['assetID'];
-        $data['assetLocation'] = FixedAssetMaster::select('faID','LOCATION')
-        ->where('faID', $assetID)
-        ->where('companySystemID', $companyID)->first();
-         
+        $data['assetLocation'] = FixedAssetMaster::select('faID', 'LOCATION')
+            ->where('faID', $assetID)
+            ->where('companySystemID', $companyID)->first();
+
         return $data;
     }
 }
