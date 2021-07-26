@@ -111,4 +111,10 @@ class ErpBudgetAdditionRepository extends BaseRepository
 
         return $budgetAddition;
     }
+
+    public function fetchBudgetData($id){ 
+        $data = ErpBudgetAddition::with(['created_by'])->where('id',$id)->first();
+
+        return $data;
+    }
 }

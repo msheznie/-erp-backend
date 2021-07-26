@@ -162,7 +162,9 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         /*Budget details id*/
         $budgetMaster = BudgetMaster::where([
             'companySystemID' => $budgetAdditionMaster->companySystemID,
-            'Year' => $budgetAdditionMaster['year']
+            'Year' => $budgetAdditionMaster['year'],
+            'templateMasterID'=> $budgetAdditionMaster->templatesMasterAutoID,
+            'serviceLineSystemID'=> $input['serviceLineSystemID'],
         ])->first();
 
 
@@ -176,7 +178,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             'templateDetailID' => $input['templateDetailID'],
             'Year' => $budgetAdditionMaster['year'],
         ])->first();
-
+        
         if (!$budgetDetails) {
             return $this->sendError('Budget Details not found');
         }

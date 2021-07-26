@@ -131,7 +131,7 @@ class ErpBudgetAdditionDetail extends Model
 
     public function template()
     {
-        return $this->belongsTo('App\Models\TemplatesDetails', 'templateDetailID', 'templatesDetailsAutoID');
+        return $this->belongsTo('App\Models\ReportTemplateDetails', 'templateDetailID', 'detID');
     }
 
 
