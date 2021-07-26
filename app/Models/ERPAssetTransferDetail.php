@@ -152,4 +152,8 @@ class ERPAssetTransferDetail extends Model
     {
         return $this->hasOne(SrpEmployeeDetails::class,'EIdNo','confirmed_by_emp_id');
     }
+    public function assetRequestMaster()
+    {
+        return $this->hasOne(AssetRequest::class,'id','erp_fa_fa_asset_request_id');
+    }
 }
