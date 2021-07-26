@@ -1734,7 +1734,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }, 'company',
             'secondarycompany' => function ($query) use ($createdDateTime) {
                 $query->whereDate('cutOffDate', '<=', $createdDateTime);
-            }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'
+            }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment', 'project'
         ])->first();
 
 

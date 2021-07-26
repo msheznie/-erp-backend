@@ -624,6 +624,11 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\SupplierCategoryICVSub', 'supCategorySubICVID', 'supCategorySubICVID');
     }
 
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
+    }
+
     public function getIsWoAmendAccessAttribute()
     {
         $value = false;
