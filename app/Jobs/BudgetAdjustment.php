@@ -58,14 +58,14 @@ class BudgetAdjustment implements ShouldQueue
                     //$templateDetail = TemplatesDetails::find($item['fromTemplateDetailID']);
                     $templateDetail = ChartOfAccount::find($item['fromChartOfAccountSystemID']);
 
-                    if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
+                    if(!empty($templateDetail) && $templateDetail->controlAccountsSystemID == 2){
                         $conversionFrom = -1;
                     }
 
                     //$templateDetail = TemplatesDetails::find($item['toTemplateDetailID']);
                     $templateDetail = ChartOfAccount::find($item['toChartOfAccountSystemID']);
 
-                    if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
+                    if(!empty($templateDetail) && $templateDetail->controlAccountsSystemID == 2){
                         $conversionTo = -1;
                     }
 
