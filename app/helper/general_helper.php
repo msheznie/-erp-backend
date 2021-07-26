@@ -641,6 +641,7 @@ class Helper
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
+                    break;
                  case 99: // asset verification
                     $docInforArr["documentCodeColumnName"] = 'verficationCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
