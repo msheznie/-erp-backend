@@ -235,13 +235,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ErpBudgetAddition $erpBudgetAddition */
-        $erpBudgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
+        $erpBudgetAddition = $this->erpBudgetAdditionRepository->fetchBudgetData($id);
 
         if (empty($erpBudgetAddition)) {
             return $this->sendError('Erp Budget Addition not found');
         }
 
-        return $this->sendResponse($erpBudgetAddition->toArray(), 'Erp Budget Addition retrieved successfully');
+        return $this->sendResponse($erpBudgetAddition, 'Erp Budget Addition retrieved successfully');
     }
 
     /**

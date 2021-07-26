@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\ErpBudgetAddition;
 use App\Models\Budjetdetails;
+use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
 use App\Models\TemplatesDetails;
 use App\Repositories\AuditTrailRepository;
@@ -48,8 +49,10 @@ class BudgetAdditionAdjustment implements ShouldQueue
                 Log::info($budgetAddition);
                 foreach ($budgetAddition->detail as $item) {
                     $conversion  = 1;
-                    $templateDetail = TemplatesDetails::find($item['templateDetailID']);
-                    if(!empty($templateDetail) && $templateDetail->controlAccountSystemID == 2){
+                   // $templateDetail = TemplatesDetails::find($item['templateDetailID']);
+                    $templateDetail = ChartOfAccount::find($item['chartOfAccountSystemID']);
+                    Log::info('Control Account System ID ' .$templateDetail->controlAccountsSystemID );
+                    if(!empty($templateDetail) && $templateDetail->controlAccountsSystemID == 2){
                         $conversion = -1;
                     }
 
@@ -82,19 +85,33 @@ class BudgetAdditionAdjustment implements ShouldQueue
                      $BudgetDetails = Budjetdetails::where('companySystemID', $budgetAddition->companySystemID)
                      ->where('serviceLineSystemID', $item['serviceLineSystemID'])
                      ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
-                     ->where('Year', $item['year'])
+                     ->where('Year', $budgetAddition->year)
                      ->where('month','>=', date("m"))
                      ->get();
 
-                    $TotalCount = count($BudgetDetails);
+                    $TotalCount = count($BudgetDetails); 
+
                  
+                    Log::info('Budget Details Total Count ' .$TotalCount);
+                    Log::info('serviceLineSystemID ' .$item['serviceLineSystemID']);
+                    Log::info('chartOfAccountID ' .$item['chartOfAccountSystemID']);
+                    Log::info('Year ' .$budgetAddition->year);
+                    Log::info('month ' . date("m"));
+                    Log::info('conversion ' .  $conversion);
+
                     if($TotalCount > 0){
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),2);
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$TotalCount),3);
 
                         foreach ($BudgetDetails as $BudgetDetailVal){
-                            $budjetdetailsRepo->update(['budjetAmtLocal' => ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion) ,
-                                'budjetAmtRpt' => ((($BudgetDetailVal['budjetAmtRpt'] * $conversion) + $toAddAmountRpt) * $conversion)],$BudgetDetailVal['budjetDetailsID']);
+                            Log::info('budjetAmtLocal conversion ' .  ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion));
+                            Log::info('To Amount Local ' .  $toAddAmountLocal);
+
+                            $budjetdetailsRepo->update([
+                                'budjetAmtLocal' => ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion) ,
+                                'budjetAmtRpt' => ((($BudgetDetailVal['budjetAmtRpt'] * $conversion) + $toAddAmountRpt) * $conversion)
+                            ],
+                                $BudgetDetailVal['budjetDetailsID']);
                         }
                     }
                     

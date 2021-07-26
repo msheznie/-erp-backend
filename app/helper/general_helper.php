@@ -1687,6 +1687,7 @@ class Helper
                 $docInforArr["approveValue"] = 1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 99: // asset verification
                 $docInforArr["tableName"] = 'erp_fa_asset_verification';
                 $docInforArr["modelName"] = 'AssetVerification';
