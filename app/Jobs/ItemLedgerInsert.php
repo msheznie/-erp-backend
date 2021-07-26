@@ -461,7 +461,7 @@ class ItemLedgerInsert implements ShouldQueue
                                             $data[$i][$column] = 1;
                                             Log::info('qty is'.$data[$i][$column]);
                                         }else{
-                                            $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentStockQty'];
+                                            $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                         }
                                     } else{
                                         $data[$i][$column] = $detail[$value];
