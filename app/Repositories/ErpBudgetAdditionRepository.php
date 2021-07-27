@@ -113,7 +113,11 @@ class ErpBudgetAdditionRepository extends BaseRepository
     }
 
     public function fetchBudgetData($id){ 
-        $data = ErpBudgetAddition::with(['created_by'])->where('id',$id)->first();
+        $data = ErpBudgetAddition::with(['created_by','company'=> function ($q) {
+            $q->with(['reportingcurrency']);
+        }])
+        ->where('id',$id)
+        ->first();
 
         return $data;
     }
