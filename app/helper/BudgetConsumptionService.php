@@ -2342,6 +2342,7 @@ class BudgetConsumptionService
 			        'budgetYear' => $group->first()['budgetYear'],
 			        'companySystemID' => $group->first()['companySystemID'],
 			        'templateDetailID' => $group->first()['templateDetailID'],
+			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
 			        'totalCost' => $group->sum('totalCost'),
 			    ];
 			});
