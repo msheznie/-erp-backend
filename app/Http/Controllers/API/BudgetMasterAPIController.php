@@ -1440,6 +1440,10 @@ class BudgetMasterAPIController extends AppBaseController
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('poCancelledYN', 0)
                                            ->where('approved', 0)
+                                           ->where(function($query) {
+                                                $query->whereNull('projectID')
+                                                      ->orWhere('projectID', 0);
+                                              })
                                            ->where('budgetBlockYN', -1);
 
 
