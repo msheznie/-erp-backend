@@ -566,84 +566,85 @@ class ChequeRegisterAPIController extends AppBaseController
 
     public function exportChequeRegistry(Request $request)
     {
-        $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('bank_id','bank_acc_id','cheque_status_id','companySystemID'));
-        $type = $input['type'];
+        
         $data = array();
         $output = ChequeRegisterDetail::with(['document','master']);
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['company_id']);
+        $type = $input['type'];
 
-        if (array_key_exists('company_id', $input)) {
-            if ($input['company_id'] != null) {
-                $output->where('company_id', $input['company_id']);
-            }
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
         }
+
+        $selectedCompanyId = $request['company_id'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $search = $request->input('search.value');
+
+        $chequeRegister = ChequeRegister::whereIn('company_id', $subCompanies)
+            ->with(['bank', 'bank_account.currency'])
+            ->withCount(['details', 'details as unused_count' => function ($q) {
+                $q->where('status', 0);
+            }]);
 
         if (array_key_exists('bank_id', $input)) {
             if ($input['bank_id'] != null) {
-                $output->whereHas('master', function ($q) use ($input) {
-                    return $q->where('bank_id', $input['bank_id']);
-                });
+                $chequeRegister->where('bank_id', $input['bank_id']);
             }
         }
 
         if (array_key_exists('bank_acc_id', $input)) {
             if ($input['bank_acc_id'] != null) {
-                $output->whereHas('master', function ($q) use ($input) {
-                    return $q->where('bank_account_id', $input['bank_acc_id']);
-                });
+                $chequeRegister->where('bank_account_id', $input['bank_acc_id']);
             }
         }
 
         if (array_key_exists('cheque_status_id', $input)) {
             if ($input['cheque_status_id'] != null) {
-                $output->where('status', $input['cheque_status_id']);
+                $chequeRegister->whereHas('details', function ($q) use ($input) {
+                    return $q->where('status', $input['cheque_status_id']);
+                });
             }
         }
 
-        $output = $output->get();
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $chequeRegister = $chequeRegister->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%")
+                    ->orWhereHas('bank', function ($q) use ($search) {
+                        return $q->where('bankName', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('details', function ($q) use ($search) {
+                        return $q->where('cheque_no', 'LIKE', "%{$search}%");
+                    })->orWhereHas('bank_account', function ($q) use ($search) {
+                        return $q->where('AccountNo', 'LIKE', "%{$search}%")
+                            ->orWhere('glCodeLinked', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $output = $chequeRegister->get();
+        
 
         if(!empty($output)){
             $x = 0;
             foreach ($output as $value) {
-                if($value->document){
-                    $data[$x]['Cheque No'] = $value->cheque_no;
-                    $data[$x]['Cheque Date'] = isset($value->document->BPVchequeDate)?$value->document->BPVchequeDate:'';
-                    $data[$x]['PV No'] = isset($value->document->BPVcode)?$value->document->BPVcode:'';
-                    if($value->status==1){
-                        $data[$x]['Cheque Status'] = 'Used';
-                    }elseif($value->status==2){
-                        $data[$x]['Cheque Status'] = 'Cancelled';
-                    }
-                    else{
-                        $data[$x]['Cheque Status'] = 'Un Used';
-                    }
+                    $data[$x]['Description'] = $value->description;
+                    $data[$x]['Bank Name'] = $value->bank->bankName;
+                    $data[$x]['Account'] = $value->bank_account->AccountNo;
+                    $data[$x]['Start Cheque No'] = $value->started_cheque_no;
+                    $data[$x]['End Cheque No'] = $value->ended_cheque_no;
+                    $data[$x]['No Of Cheques'] = $value->no_of_cheques;
+                    $data[$x]['Un Used Cheques'] = $value->unused_count;
 
-                }
-
-                $data[$x]['Last Modifed By'] = isset($value->updatedBy->empFullName)?$value->updatedBy->empFullName:'';
-                if($data[$x]['Last Modifed By'] != ''){
-                    $data[$x]['Last Modifed Date'] = $value->updated_at;
-                }else{
-                    $data[$x]['Last Modifed Date'] = '';
-                }
-
-
-                if(isset($value->document->chequePrintedYN)) {
-
-                    if($value->document->chequePrintedYN==-1) {
-                        $data[$x]['Print Status'] = 'Printed';
-                    }else{
-                        $data[$x]['Print Status'] = 'Not Printed';
-                    }
-
-                    $data[$x]['Print By'] = $value->document->chequePrintedByEmpName;
-                    $data[$x]['Print Date'] = $value->document->chequePrintedDateTime;
-
-                }else{
-                    $data[$x]['Print Status'] = '';
-                    $data[$x]['Print By'] = '';
-                    $data[$x]['Print Date'] = '';
-                }
                 $x++;
             }
 
