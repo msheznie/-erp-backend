@@ -704,7 +704,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         $updateInput = ['confirmed_yn' => 0, 'confirmedByEmpID' => null, 'confirmedByName' => null,
-            'confirmed_by_emp_id' => null, 'confirmedDate' => null, 'current_level_no' => 1];
+            'confirmed_by_emp_id' => null, 'confirmed_date' => null, 'current_level_no' => 1];
 
         $this->eRPAssetTransferRepository->update($updateInput, $id);
 
