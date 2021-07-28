@@ -7,9 +7,14 @@ use App\Http\Requests\API\CreateErpBudgetAdditionAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionAPIRequest;
 use App\Models\BudgetMaster;
 use App\Models\Company;
+use App\Models\ChartOfAccount;
+use App\Models\ReportTemplateDetails;
+use App\Models\CompanyPolicyMaster;
+use App\Models\BudgetReviewTransferAddition;
 use App\Models\DocumentMaster;
 use App\Models\ErpBudgetAddition;
 use App\Models\Months;
+use App\Models\ErpBudgetAdditionDetail;
 use App\Models\ReportTemplate;
 use App\Models\SegmentMaster;
 use App\Models\Year;
@@ -19,6 +24,7 @@ use App\Repositories\ErpBudgetAdditionRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\BudgetConsumptionService;
 
 /**
  * Class ErpBudgetAdditionController
@@ -309,6 +315,11 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         if ($erpBudgetAddition->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+            $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
+            $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
+            if (!$checkBudgetFromReview['status']) {
+               return $this->sendError("You cannot confirm this document.", 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
+            }
 
             $params = array('autoID' => $id,
                 'company' => $erpBudgetAddition->companySystemID,
@@ -327,6 +338,140 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $erpBudgetAddition = $this->erpBudgetAdditionRepository->update($input, $id);
 
         return $this->sendResponse($erpBudgetAddition->toArray(), 'Budget Addition updated successfully');
+    }
+
+    public function validateBudgetFormReview($budgetTransferFormAutoID, $budgetTransferForm, $details)
+    {
+        $checkFormReview = BudgetReviewTransferAddition::where('budgetTransferAdditionID', $budgetTransferFormAutoID)
+                                                       ->where('budgetTransferType', 2)
+                                                       ->with(['purchase_order', 'purchase_request'])
+                                                       ->get();
+
+        $currency = \Helper::companyCurrency($budgetTransferForm->companySystemID);
+
+        $consumptionData = [];
+        $consumptionDataWithPoPr = [];
+        if (count($checkFormReview) > 0) {
+            $checkFormReview = $checkFormReview->toArray();
+            foreach ($checkFormReview as $key => $value) {
+                $res = BudgetConsumptionService::getConsumptionData($value['documentSystemID'], $value['documentSystemCode']);
+
+                if ($res['status'] && isset($res['data']) && count($res['data']) > 0) {
+                    foreach ($res['data'] as $key1 => $value1) {
+                        $consumptionData[] = $value1;
+                        $temp['budgetData'] = $value1;
+                        if (in_array($value['documentSystemID'], [2,5,52])) {
+                            $temp['docCode'] = $value['purchase_order']['purchaseOrderCode'];
+                        } else {
+                            $temp['docCode'] = $value['purchase_request']['purchaseRequestCode'];
+                        }
+
+                        $consumptionDataWithPoPr[] = $temp;
+                    }
+                }
+            }
+
+            $checkBudgetBasedOnGL = CompanyPolicyMaster::where('companyPolicyCategoryID', 55)
+                                        ->where('companySystemID', $budgetTransferForm->companySystemID)
+                                        ->first();
+
+            $departmentWiseCheckBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 33)
+                                    ->where('companySystemID', $budgetTransferForm->companySystemID)
+                                    ->first();
+            
+            $departmentWiseCheckBudgetPolicy = false;
+            if ($departmentWiseCheckBudget && $departmentWiseCheckBudget->isYesNO == 1) {
+                $departmentWiseCheckBudgetPolicy = true;
+            }
+
+
+            $errorMasg = [];
+            if ($checkBudgetBasedOnGL && $checkBudgetBasedOnGL->isYesNO == 0) {
+                if ($departmentWiseCheckBudgetPolicy) {
+                    $groupByDetail = collect($consumptionData)->groupBy(function ($item, $key) {
+                                        return $item['templateDetailID'].$item['serviceLineSystemID'];
+                                    });
+                } else {
+                    $groupByDetail = collect($consumptionData)->groupBy('templateDetailID')->all();
+                }
+                foreach ($groupByDetail as $key => $value) {
+                    $budgetAmountToUnBlock = abs($value[0]['availableAmount']);
+                    if ($budgetAmountToUnBlock > 0) {
+                        $templateDetailData = ReportTemplateDetails::find($value[0]['templateDetailID']);
+                        $documents = $this->getDocumentsForErrorMessageOfTransferConfirm($value[0]['templateDetailID'], $consumptionDataWithPoPr);
+
+                        $transferedAmount = ErpBudgetAdditionDetail::where('templateDetailID', $value[0]['templateDetailID'])
+                                                                    ->when($departmentWiseCheckBudgetPolicy == true, function($query) use ($value){
+                                                                        $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
+                                                                    })
+                                                                    ->sum('adjustmentAmountRpt');
+
+                        // return $budgetAmountToUnBlock;
+                        $differentAmount = $budgetAmountToUnBlock - $transferedAmount;
+                        $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
+                        if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
+                            if ($departmentWiseCheckBudgetPolicy) {
+                                $errorMasg[] = $templateDetailData->description." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            } else {
+                                $errorMasg[] = $templateDetailData->description." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            }
+                        } else if ($transferedAmount == 0) {
+                            if ($departmentWiseCheckBudgetPolicy) {
+                                $errorMasg[] = $templateDetailData->description." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            } else {
+                                $errorMasg[] = $templateDetailData->description." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            }
+                        }
+                    }
+                }
+            } else {
+                 if ($departmentWiseCheckBudgetPolicy) {
+                    $groupByDetail = collect($consumptionData)->groupBy(function ($item, $key) {
+                                        return $item['templateDetailID'].$item['serviceLineSystemID'];
+                                    });
+                } else {
+                    $groupByDetail = collect($consumptionData)->groupBy('templateDetailID')->all();
+                }
+                foreach ($groupByDetail as $key => $value) {
+                    $budgetAmountToUnBlock = abs($value[0]['availableAmount']);
+                    if ($budgetAmountToUnBlock > 0) {
+                        $templateDetailData = ChartOfAccount::find($value[0]['templateDetailID']);
+                        $documents = $this->getDocumentsForErrorMessageOfTransferConfirm($value[0]['templateDetailID'], $consumptionDataWithPoPr);
+
+                        $transferedAmount = ErpBudgetAdditionDetail::where('chartOfAccountSystemID', $value[0]['templateDetailID'])
+                                                                    ->when($departmentWiseCheckBudgetPolicy == true, function($query) use ($value){
+                                                                        $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
+                                                                    })
+                                                                    ->sum('adjustmentAmountRpt');
+
+                        // return $budgetAmountToUnBlock;
+                        $differentAmount = $budgetAmountToUnBlock - $transferedAmount;
+                        $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
+                        if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
+                            if ($departmentWiseCheckBudgetPolicy) {
+                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            } else {
+                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            }
+                        } else if ($transferedAmount == 0) {
+                            if ($departmentWiseCheckBudgetPolicy) {
+                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            } else {
+                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (count($errorMasg) > 0) {
+                return ['status' => false, 'message' => $errorMasg];
+            }
+
+            return ['status' => true];
+        } else {
+            return ['status' => true];
+        }
     }
 
     /**
@@ -635,5 +780,22 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getDocumentsForErrorMessageOfTransferConfirm($templateDetailID, $consumptionDataWithPoPr)
+    {
+        $docs = [];
+        $comment = "";
+        $addedArray = [];
+        foreach ($consumptionDataWithPoPr as $key => $value) {
+            if ($value['budgetData']['templateDetailID'] == $templateDetailID) {
+                if (!in_array($value['docCode'], $addedArray)) {
+                    $comment .= (($comment == "") ? " " : ", ").$value['docCode']; 
+                    $addedArray[] = $value['docCode'];
+                }
+            }
+        }
+
+        return $comment;
     }
 }
