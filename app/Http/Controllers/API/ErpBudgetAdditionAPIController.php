@@ -25,7 +25,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\BudgetConsumptionService;
-
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
+use App\Models\EmployeesDepartment;
+use App\Traits\AuditTrial;
 /**
  * Class ErpBudgetAdditionController
  *
@@ -797,5 +800,109 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         return $comment;
+    }
+
+    public function budgetAdditionReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+        $budgetAddition = $this->erpBudgetAdditionRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($budgetAddition)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        if ($budgetAddition->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Budget Addition it is already fully approved');
+        }
+
+        if ($budgetAddition->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Budget Addition it is already partially approved');
+        }
+
+        if ($budgetAddition->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Budget Addition, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByEmpName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+        $this->erpBudgetAdditionRepository->update($updateInput, $id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $budgetAddition->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetAddition->additionVoucherNo . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetAddition->additionVoucherNo;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $budgetAddition->companySystemID)
+            ->where('documentSystemCode', $budgetAddition->id)
+            ->where('documentSystemID', $budgetAddition->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $budgetAddition->companySystemID)
+                    ->where('documentSystemID', $budgetAddition->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $budgetAddition->companySystemID)
+            ->where('documentSystemID', $budgetAddition->documentSystemID)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($budgetAddition->documentSystemID,$id,$input['reopenComments'],'Reopened');
+
+        return $this->sendResponse($budgetAddition->toArray(),'Budget Addition reopened successfully');
+    }
+    public function getBudgetAdditionAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $budgetAddition = $this->erpBudgetAdditionRepository->getAudit($id);
+
+        if (empty($budgetAddition)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        return $this->sendResponse($budgetAddition, 'Budget Addition audit detailed retrived');
     }
 }
