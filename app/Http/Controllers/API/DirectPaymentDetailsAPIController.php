@@ -940,4 +940,29 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
     }
 
+    function updat_monthly_deduction(UpdateDirectPaymentDetailsAPIRequest $request){
+        $validator = \Validator::make($request->all(), [
+            'id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $id = $request->input('id');
+
+        /** @var DirectPaymentDetails $directPaymentDetails */
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($id);
+
+        if (empty($directPaymentDetails)) {
+            return $this->sendError('Direct Payment Details not found');
+        }
+
+        $input['deductionType'] = $request->input('deduction_type');
+        $input = $this->convertArrayToValue( $input );
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
+        return $this->sendResponse($directPaymentDetails->toArray(), 'Monthly deduction type updated successfully');
+
+    }
 }

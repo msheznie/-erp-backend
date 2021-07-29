@@ -48,6 +48,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
+use App\Models\MonthlyDeclarationsTypes;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceDetailReferback;
@@ -861,6 +862,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         'bank_account_reporting_currency_er_not_updated' => array(),
                         'bank_account_reporting_currency_amount_not_updated' => array(),
                         'inter_company_gl_code_not_created' => array(),
+                        'monthly_deduction_not_updated' => [],
                     );
 
                     $error_count = 0;
@@ -937,6 +939,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 array_push($finalError['inter_company_gl_code_not_created'], $item->glCode . ' | ' . $item->glCodeDes);
                             }
 
+                        }
+
+                        if($paySupplierInvoiceMaster->createMonthlyDeduction){
+                            if (empty($item->deductionType)) {
+                                $finalError['monthly_deduction_not_updated'][] = $item->glCode . ' | ' . $item->glCodeDes;
+                                $error_count++;
+                            }
                         }
                     }
                     $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
@@ -1120,6 +1129,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             }
 
+            $input['createMonthlyDeduction'] = ($input['createMonthlyDeduction'] == 1)? 1: 0;
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = \Helper::getEmployeeID();
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -1282,9 +1292,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->get();
 
         if (isset($request['type']) && $request['type'] == 'account_details') {
-            $output = array(
-                'bank' => $bank,
-                'currency' => $currency);
+            $output = array( 'bank' => $bank, 'currency' => $currency);
         } else {
             $supplier = SupplierAssigned::whereIn("companySystemID", $subCompanies);
             if (isset($request['type']) && $request['type'] != 'filter') {
@@ -1329,6 +1337,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $policyOn = 1;
             }
 
+            $monthly_declarations_drop = MonthlyDeclarationsTypes::selectRaw("monthlyDeclarationID, monthlyDeclaration")
+                    ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
+                    ->get();
+
             $output = array(
                 'financialYears' => $financialYears,
                 'companyFinanceYear' => $companyFinanceYear,
@@ -1345,6 +1357,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'interCompany' => $interCompanyTo,
                 'companyCurrency' => $companyCurrency,
                 'isPolicyOn' => $policyOn,
+                'deduction_type_drop' => $monthly_declarations_drop,
             );
         }
 

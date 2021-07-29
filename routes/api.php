@@ -768,6 +768,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController',['except' => ['index']]);
         Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController',['except' => ['index','store']]);
         Route::post('addPVDetailsByInterCompany', 'DirectPaymentDetailsAPIController@addPVDetailsByInterCompany');
+        Route::post('pv-md-deduction-type', 'DirectPaymentDetailsAPIController@updat_monthly_deduction');
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -2210,3 +2211,9 @@ Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
 
+
+
+Route::resource('monthly_declarations_types', 'MonthlyDeclarationsTypesAPIController');
+
+
+Route::resource('hr_monthly_deduction_masters', 'HrMonthlyDeductionMasterAPIController');

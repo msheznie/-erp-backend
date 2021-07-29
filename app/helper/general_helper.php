@@ -1239,7 +1239,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "supplierConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
                 break;
-             case 86:
+            case 86:
                 $docInforArr["tableName"] = 'registeredsupplier';
                 $docInforArr["modelName"] = 'RegisteredSupplier';
                 $docInforArr["primarykey"] = 'supplierName';
@@ -2067,6 +2067,11 @@ class Helper
                                 }
                             }
 
+                            // create monthly deduction
+                            if ($input["documentSystemID"] == 4) {
+                                // HrMonthlyDeductionService
+                            }
+
                             // generate asset costing
                             if ($input["documentSystemID"] == 22) {
                                 $assetCosting = self::generateAssetCosting($sourceModel);
@@ -2091,7 +2096,8 @@ class Helper
                                 $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
 
-                        } else {
+                        }
+                        else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }

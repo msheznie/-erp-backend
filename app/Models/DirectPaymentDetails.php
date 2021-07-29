@@ -293,6 +293,7 @@ class DirectPaymentDetails extends Model
         'glCodeDes',
         'glCodeIsBank',
         'comments',
+        'deductionType',
         'supplierTransCurrencyID',
         'supplierTransER',
         'DPAmountCurrency',
@@ -349,6 +350,7 @@ class DirectPaymentDetails extends Model
         'glCodeDes' => 'string',
         'glCodeIsBank' => 'integer',
         'comments' => 'string',
+        'deductionType' => 'integer',
         'supplierTransCurrencyID' => 'integer',
         'supplierTransER' => 'float',
         'DPAmountCurrency' => 'integer',
@@ -391,7 +393,7 @@ class DirectPaymentDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function segment()
