@@ -5054,6 +5054,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
 
         $type = $input['type'];
+        $data = [];
 
         $output = ProcumentOrder::where('companySystemID', $input['companyId']);
         $output->where('documentSystemID', $input['documentId']);
@@ -5061,6 +5062,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $output->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('poType_N', $input)) {
+            if (($input['poType_N'] == 5 || $input['poType_N'] == 6) && !is_null($input['poType_N'])) {
+                $output->where('poType_N', $input['poType_N']);
             }
         }
 
