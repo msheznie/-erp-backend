@@ -1945,6 +1945,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
         Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
 
+        Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
+        Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport');
+        Route::get('reportSoToReceiptFilterOptions', 'SalesMarketingReportAPIController@reportSoToReceiptFilterOptions');
+
         Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog');
 
         Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
