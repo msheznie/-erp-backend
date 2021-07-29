@@ -178,7 +178,11 @@ class ERPAssetTransfer extends Model
         'created_user_id',
         'confirmedByEmpID',
         'serviceLineSystemID',
-        'serviceLineCode'
+        'serviceLineCode',
+        'updated_user_id',
+        'refferedBackYN',
+        'company_code',
+        'documentSystemID'
     ];
 
     /**
@@ -189,7 +193,9 @@ class ERPAssetTransfer extends Model
     protected $casts = [
         'id' => 'integer',
         'serviceLineSystemID' => 'integer',
+        'documentSystemID' => 'integer',
         'budgetYear' => 'integer',
+        'refferedBackYN' => 'integer',
         'prBelongsYear' => 'integer',
         'document_id' => 'string',
         'document_code' => 'string',
@@ -213,7 +219,9 @@ class ERPAssetTransfer extends Model
         'approved_by_emp_name' => 'string',
         'approved_by_emp_id' => 'integer',
         'current_level_no' => 'integer',
-        'created_user_id' => 'integer'
+        'created_user_id' => 'integer',
+        'updated_user_id' => 'integer',
+        'company_code' => 'string'
     ];
 
     /**
@@ -259,6 +267,27 @@ class ERPAssetTransfer extends Model
     }
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','id');
+    }
+    public function detail()
+    {
+        return $this->hasMany('App\Models\ERPAssetTransferDetail', 'erp_fa_fa_asset_transfer_id', 'id');
+    }
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'id')->where('documentSystemID',103);
+    }
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'created_user_id', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'updated_user_id', 'employeeSystemID');
     }
 
 }

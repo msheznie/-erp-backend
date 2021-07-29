@@ -121,4 +121,16 @@ class ErpBudgetAdditionRepository extends BaseRepository
 
         return $data;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['detail' => function ($query) {
+            //$query->with('segment');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 102);
+        }, 'company','confirmed_by', 'created_by', 'modified_by','audit_trial.modified_by'])
+            ->findWithoutFail($id);
+    }
+
 }
