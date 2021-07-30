@@ -2230,7 +2230,7 @@ class Helper
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
-            // return ['success' => false, 'message' => $e->getMessage()];
+            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
         }
     }
 

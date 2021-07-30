@@ -81,7 +81,7 @@ class BudgetConsumptionService
 
 				return ['status' => true, 'message' => $userMessageE];
 			} else {
-				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy']) {
+				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy'] && (isset($budgetData['glCodes']) && count($budgetData['glCodes']) > 0)) {
 					return ['status' => true, 'message' => "Budget not configured for this document"];
 				} else {
 					return ['status' => true, 'message' => ""];
@@ -123,8 +123,8 @@ class BudgetConsumptionService
 
 
                 $budgetFormData['serviceLineSystemID'] = (count($segmentAllocationData) > 0) ? $segmentAllocationData->pluck('serviceLineSystemID')->toArray() : [$masterData->serviceLineSystemID];
-                $budgetFormData['financeGLcodePLSystemIDs'] = $detailData->pluck('financeGLcodePLSystemID')->toArray();
-                $budgetFormData['financeGLcodebBSSystemIDs'] = $detailData->pluck('financeGLcodebBSSystemID')->toArray();
+                $budgetFormData['financeGLcodePLSystemIDs'] = array_filter($detailData->pluck('financeGLcodePLSystemID')->toArray());
+                $budgetFormData['financeGLcodebBSSystemIDs'] = array_filter($detailData->pluck('financeGLcodebBSSystemID')->toArray());
 				break;
 			case 2:
 			case 5:
@@ -272,7 +272,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes']];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
@@ -313,8 +313,9 @@ class BudgetConsumptionService
 			$checkBudgetConfiguration = self::checkChartAccountBudgetStatus($value, $budgetFormData);
 			if (!$checkBudgetConfiguration) {
 				$chartOfAccount = ChartOfAccount::find($value);
-
-				$invalidArray[] = $chartOfAccount->AccountCode." - ".$chartOfAccount->AccountDescription;
+				if ($chartOfAccount) {
+					$invalidArray[] = $chartOfAccount->AccountCode." - ".$chartOfAccount->AccountDescription;
+				}
 			}
 		}
 
