@@ -988,8 +988,12 @@ class BudgetMasterAPIController extends AppBaseController
             }
         }
 
+
+        $currencyData = \Helper::companyCurrency($companyId);
+
         $output = array(
             'reportTemplates' => $reportTemplates,
+            'currencyData' => $currencyData,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
