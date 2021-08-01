@@ -4,9 +4,13 @@
 namespace App\helper;
 
 
+use App\Models\CurrencyMaster;
+use App\Models\DirectPaymentDetails;
 use App\Models\HrMonthlyDeductionMaster;
+use App\Models\HrPayrollHeaderDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SrpEmployeeDetails;
+use Carbon\Carbon;
 
 class HrMonthlyDeductionService
 {
@@ -14,10 +18,21 @@ class HrMonthlyDeductionService
     private $pv_master;
     private $pv_details = [];
     private $current_user = [];
+    private $md_code;
+    private $serial_no;
+    private $date_time;
+    private $companyID;
+    private $employee;
+    private $local_currency;
+    private $rpt_currency;
+    private $emp_currency;
+    private $document_date;
+    private $monthly_ded_id;
 
     public function __construct($id)
     {
         $this->pv_id = $id;
+        $this->date_time = Carbon::now();
     }
 
     public function create_monthly_deduction(){
@@ -31,48 +46,205 @@ class HrMonthlyDeductionService
             return true;
         }
 
+        $this->companyID = $this->pv_master->companySystemID;
+
+        $this->set_user_details();
+
+        $this->setup_currency();
+
+        $this->setup_emp_det();
+
         $this->create_header();
 
         return true;
     }
 
-    function set_user_details(){
-        $emp_id = Helper::getEmployeeSystemID();
-
-        $emp_det = SrpEmployeeDetails::find($emp_id);
-
-        $this->current_user = [
-            'user_id' => $emp_id,
-        ];
-    }
-
     function create_header(){
-        $this->set_user_details();
-        //
+        $this->generator_code();
+
+        $this->setup_document_date();
 
         $header = new HrMonthlyDeductionMaster;
 
-        //$header->fillable
-        $header->monthlyDeductionCode = null;
-        $header->serialNo = null;
-        $header->documentID = null;
-        $header->description = null;
-        $header->currencyID = null;
-        $header->currency = null;
-        $header->dateMD = null;
-        $header->isNonPayroll = null;
+        $header->monthlyDeductionCode = $this->md_code;
+        $header->serialNo = $this->serial_no;
+        $header->documentID = 'MD';
+        $header->description = "System generated document - ".$this->pv_master->BPVcode;
+        $header->currency = $this->local_currency->CurrencyCode;
+        $header->dateMD = $this->document_date;
+        $header->isNonPayroll = 'N';
+        $header->pv_id = $this->pv_id;
 
         $header->confirmedYN = 1;
-        $header->confirmedByEmpID = null;
-        $header->confirmedByName = null;
-        $header->confirmedDate = null;
+        $header->confirmedByEmpID = $this->current_user['user_id'];
+        $header->confirmedByName = $this->current_user['user_name'];
+        $header->confirmedDate = $this->date_time;
 
-        $header->companyID = null;
-        $header->companyCode = null;
+        $header->companyID = $this->companyID;
+        $header->companyCode = $this->pv_master->companyID;
 
-        $header->createdUserGroup = null;
-        $header->createdPCID = null;
-        $header->createdUserID = null;
-        $header->createdUserName = null;
+        $header->createdPCID = gethostname();
+        $header->createdUserID = $this->current_user['user_id'];
+        $header->createdUserName = $this->current_user['user_name'];
+        $header->createdDateTime = $this->date_time;
+        $header->timestamp = $this->date_time;
+
+        /*$header->save();
+        $this->monthly_ded_id = $header->id;*/
+        $this->monthly_ded_id = 8;
+
+        $this->load_pv_details();
+
+        $this->add_details();
     }
+
+    function add_details(){
+        $data = [];
+
+        $pv_currency = $this->pv_master->directPayeeCurrency;
+        //$this->emp_currency->currencyID;
+
+        $companyCurrencyConversion = Helper::currencyConversion($this->companyID, $pv_currency, $pv_currency, 0);
+        if ($companyCurrencyConversion) {
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        }
+
+
+        foreach ($this->pv_details as $row){
+            $ded_det = $row->monthly_deduction_det;
+
+            $data[] = [
+                'monthlyDeductionMasterID'=> $this->monthly_ded_id, 'empID'=> $this->employee->EIdNo,
+                'accessGroupID'=> 0,
+                'declarationID'=> $row->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
+                'categoryID'=> $ded_det->salaryCategoryID,
+
+                'transactionCurrencyID'=> $this->emp_currency->currencyID,
+                'transactionCurrency'=> $this->emp_currency->CurrencyCode,
+                'transactionCurrencyDecimalPlaces'=> $this->emp_currency->DecimalPlaces,
+                'transactionExchangeRate'=> 1, 'transactionAmount',
+
+                'companyLocalCurrencyID'=> $this->local_currency->currencyID,
+                'companyLocalCurrency'=> $this->local_currency->CurrencyCode,
+                'companyLocalCurrencyDecimalPlaces'=> $this->local_currency->DecimalPlaces,
+                'companyLocalExchangeRate'=> 0, 'companyLocalAmount'=> $row->localAmount,
+
+                'companyReportingCurrencyID'=> $this->rpt_currency->currencyID,
+                'companyReportingCurrency'=> $this->rpt_currency->CurrencyCode,
+                'companyReportingCurrencyDecimalPlaces'=> $this->rpt_currency->DecimalPlaces,
+                'companyReportingExchangeRate'=> 0, 'companyReportingAmount'=> $row->comRptAmount,
+
+                'companyID'=> $this->companyID, 'companyCode'=> $this->pv_master->companyID,
+                'createdPCID'=> gethostname(), 'createdUserID'=> $this->current_user['user_id'],
+                'createdDateTime'=> $this->date_time, 'createdUserName'=> $this->current_user['user_name'],
+                'timestamp'=> $this->date_time
+            ];
+        }
+
+
+        echo '<pre>'; print_r($data); echo '</pre>'; exit;
+    }
+
+    function generator_code(){
+        $serialNo = HrMonthlyDeductionMaster::where('companyID', $this->companyID)
+            ->max('serialNo');
+
+        $serialNo += 1;
+
+        $this->serial_no = $serialNo;
+
+        $this->md_code = HrDocumentCodeService::generate(
+            $this->companyID,
+            $this->pv_master->companyID,
+            'MD',
+            $serialNo
+        );
+    }
+
+    function set_user_details(){
+        $user_id = Helper::getEmployeeSystemID();
+
+        $user_name = SrpEmployeeDetails::find($user_id)->Ename2;
+
+        $this->current_user = [
+            'user_id' => $user_id,
+            'user_name' => $user_name,
+        ];
+    }
+
+    function setup_currency(){
+        $company_det = Helper::companyCurrency( $this->companyID );
+
+        if( empty($company_det->localcurrency) ){
+            throw new \Exception("Company local currency details not found", 404);
+        }
+
+        if( empty($company_det->reportingcurrency) ){
+            throw new \Exception("Company Reporting currency details not found", 404);
+        }
+
+        $this->local_currency = $company_det->localcurrency;
+
+        $this->rpt_currency = $company_det->reportingcurrency;
+    }
+
+    function setup_emp_det(){
+        $this->employee = SrpEmployeeDetails::with('currency')
+            ->find( $this->pv_master->directPaymentPayeeEmpID );
+
+        if( empty($this->employee) ){
+            throw new \Exception("Employee details not found", 404);
+        }
+
+
+        $this->emp_currency = $this->employee->currency;
+
+        if( empty($this->emp_currency) ){
+            throw new \Exception("Employee currency details not found", 404);
+        }
+    }
+
+    function setup_document_date(){
+        $document_date = Carbon::parse( $this->pv_master->BPVdate );
+
+
+        $is_processed = true;
+        while( $is_processed ){
+            $pv_date_arr = [
+                'year'=> $document_date->format('Y'),
+                'month'=> $document_date->format('m')
+            ];
+
+            //check payroll status of given month
+            $is_processed = HrPayrollHeaderDetails::where('EmpID', $this->employee->EIdNo)
+                ->whereHas('master', function ($q) use ($pv_date_arr){
+                    $q->where('payrollYear', $pv_date_arr['year'])
+                        ->where('payrollMonth', $pv_date_arr['month']);
+                })
+                ->with('master')
+                ->first();
+
+            if($is_processed){
+                //if payroll processed check next month payroll
+                $document_date = $document_date->firstOfMonth();
+                $document_date = $document_date->addMonth();
+            }
+        }
+
+        $this->document_date = $document_date->format('Y-m-d');
+    }
+
+    function load_pv_details(){
+        $this->pv_details = DirectPaymentDetails::where('directPaymentAutoID', $this->pv_id)
+            ->selectRaw('DPAmountCurrency, DPAmount, deductionType, localAmount, comRptAmount')
+            ->whereHas('monthly_deduction_det')
+            ->with('monthly_deduction_det:monthlyDeclarationID,salaryCategoryID,expenseGLCode')
+            ->get();
+
+        if( empty($this->pv_details) ){
+            throw new \Exception("PV details not found", 404);
+        }
+    }
+
 }

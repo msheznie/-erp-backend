@@ -415,4 +415,9 @@ class DirectPaymentDetails extends Model
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'chartOfAccountSystemID','chartOfAccountID');
     }
+
+    public function monthly_deduction_det()
+    {
+        return $this->belongsTo(MonthlyDeclarationsTypes::class, 'deductionType', 'monthlyDeclarationID');
+    }
 }

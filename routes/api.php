@@ -14,6 +14,11 @@
 Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
+        Route::get('md', function(){
+            $n = new \App\helper\HrMonthlyDeductionService(33);
+            $r = $n->create_monthly_deduction();
+            dd($r);
+        });
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
@@ -2217,3 +2222,12 @@ Route::resource('monthly_declarations_types', 'MonthlyDeclarationsTypesAPIContro
 
 
 Route::resource('hr_monthly_deduction_masters', 'HrMonthlyDeductionMasterAPIController');
+
+
+Route::resource('hr_payroll_masters', 'HrPayrollMasterAPIController');
+
+Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIController');
+
+Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
+
+Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');

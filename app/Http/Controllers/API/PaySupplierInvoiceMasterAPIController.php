@@ -1213,8 +1213,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Pay Supplier Invoice Master deleted successfully');
     }
 
-    public
-    function getPaymentVoucherMaster(Request $request)
+    public function getPaymentVoucherMaster(Request $request)
     {
         $input = $request->all();
 
