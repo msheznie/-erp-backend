@@ -33,6 +33,7 @@ use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\RegisteredSupplierCurrency;
 use App\Models\RegisteredBankMemoSupplier;
+use App\Models\BankMemoSupplier;
 use App\Models\RegisteredSupplierContactDetail;
 use App\Models\RegisteredSupplierAttachment;
 use App\Models\DocumentApproved;
@@ -507,6 +508,34 @@ class SupplierMasterAPIController extends AppBaseController
 
         $updateSupplierMasters->save();
 
+        if (isset($input['currency']) && $input['currency'] > 0) {
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+            $empId = $user->employee['empID'];
+            $empName = $user->employee['empName'];
+
+            $supplierCurrency = new SupplierCurrency();
+            $supplierCurrency->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
+            $supplierCurrency->currencyID = $input['currency'];
+            $supplierCurrency->isAssigned = -1;
+            $supplierCurrency->isDefault = -1;
+            $supplierCurrency->save();
+
+            $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
+
+            foreach ($companyDefaultBankMemos as $value) {
+                $temBankMemo = new BankMemoSupplier();
+                $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                $temBankMemo->memoDetail = '';
+                $temBankMemo->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
+                $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+                $temBankMemo->updatedByUserID = $empId;
+                $temBankMemo->updatedByUserName = $empName;
+                $temBankMemo->save();
+            }
+        }
+
         return $this->sendResponse($supplierMasters->toArray(), 'Supplier Master saved successfully');
     }
 
@@ -667,6 +696,43 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+
+        if ($supplierMasterOld['currency'] != $input['currency']) {
+            $checkSupplierCurrency = SupplierCurrency::where('supplierCodeSystem', $id)->get();
+
+            if (count($checkSupplierCurrency) == 1) {
+                SupplierCurrency::where('supplierCodeSystem', $id)->delete();
+                BankMemoSupplier::where('supplierCurrencyID', collect($checkSupplierCurrency)->first()->supplierCurrencyID)->delete();
+
+
+                $userID = Auth::id();
+                $user = $this->userRepository->with(['employee'])->findWithoutFail($userID);
+                $empId = $user->employee['empID'];
+                $empName = $user->employee['empName'];
+
+                $supplierCurrency = new SupplierCurrency();
+                $supplierCurrency->supplierCodeSystem = $id;
+                $supplierCurrency->currencyID = $input['currency'];
+                $supplierCurrency->isAssigned = -1;
+                $supplierCurrency->isDefault = -1;
+                $supplierCurrency->save();
+
+                $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
+
+                foreach ($companyDefaultBankMemos as $value) {
+                    $temBankMemo = new BankMemoSupplier();
+                    $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                    $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                    $temBankMemo->memoDetail = '';
+                    $temBankMemo->supplierCodeSystem = $id;
+                    $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+                    $temBankMemo->updatedByUserID = $empId;
+                    $temBankMemo->updatedByUserName = $empName;
+                    $temBankMemo->save();
+                }
+            }
+        }
+
 
         return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
     }
