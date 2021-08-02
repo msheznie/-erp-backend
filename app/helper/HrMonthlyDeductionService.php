@@ -4,8 +4,9 @@
 namespace App\helper;
 
 
-use App\Models\CurrencyMaster;
+use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentDetails;
+use App\Models\HrMonthlyDeductionDetail;
 use App\Models\HrMonthlyDeductionMaster;
 use App\Models\HrPayrollHeaderDetails;
 use App\Models\PaySupplierInvoiceMaster;
@@ -45,6 +46,8 @@ class HrMonthlyDeductionService
         if( empty($this->pv_master->createMonthlyDeduction) ){
             return true;
         }
+
+        $this->is_document_created();
 
         $this->companyID = $this->pv_master->companySystemID;
 
@@ -89,9 +92,8 @@ class HrMonthlyDeductionService
         $header->createdDateTime = $this->date_time;
         $header->timestamp = $this->date_time;
 
-        /*$header->save();
-        $this->monthly_ded_id = $header->id;*/
-        $this->monthly_ded_id = 8;
+        $header->save();
+        $this->monthly_ded_id = $header->id;
 
         $this->load_pv_details();
 
@@ -101,15 +103,7 @@ class HrMonthlyDeductionService
     function add_details(){
         $data = [];
 
-        $pv_currency = $this->pv_master->directPayeeCurrency;
-        //$this->emp_currency->currencyID;
-
-        $companyCurrencyConversion = Helper::currencyConversion($this->companyID, $pv_currency, $pv_currency, 0);
-        if ($companyCurrencyConversion) {
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-        }
-
+        $this->setup_currency_conversion();
 
         foreach ($this->pv_details as $row){
             $ded_det = $row->monthly_deduction_det;
@@ -123,17 +117,17 @@ class HrMonthlyDeductionService
                 'transactionCurrencyID'=> $this->emp_currency->currencyID,
                 'transactionCurrency'=> $this->emp_currency->CurrencyCode,
                 'transactionCurrencyDecimalPlaces'=> $this->emp_currency->DecimalPlaces,
-                'transactionExchangeRate'=> 1, 'transactionAmount',
+                'transactionExchangeRate'=> 1, 'transactionAmount'=> ($row->DPAmount * $this->emp_currency->ExchangeRate),
 
                 'companyLocalCurrencyID'=> $this->local_currency->currencyID,
                 'companyLocalCurrency'=> $this->local_currency->CurrencyCode,
                 'companyLocalCurrencyDecimalPlaces'=> $this->local_currency->DecimalPlaces,
-                'companyLocalExchangeRate'=> 0, 'companyLocalAmount'=> $row->localAmount,
+                'companyLocalExchangeRate'=> $this->local_currency->ExchangeRate, 'companyLocalAmount'=> $row->localAmount,
 
                 'companyReportingCurrencyID'=> $this->rpt_currency->currencyID,
                 'companyReportingCurrency'=> $this->rpt_currency->CurrencyCode,
                 'companyReportingCurrencyDecimalPlaces'=> $this->rpt_currency->DecimalPlaces,
-                'companyReportingExchangeRate'=> 0, 'companyReportingAmount'=> $row->comRptAmount,
+                'companyReportingExchangeRate'=> $this->rpt_currency->ExchangeRate, 'companyReportingAmount'=> $row->comRptAmount,
 
                 'companyID'=> $this->companyID, 'companyCode'=> $this->pv_master->companyID,
                 'createdPCID'=> gethostname(), 'createdUserID'=> $this->current_user['user_id'],
@@ -142,8 +136,9 @@ class HrMonthlyDeductionService
             ];
         }
 
+        HrMonthlyDeductionDetail::insert($data);
 
-        echo '<pre>'; print_r($data); echo '</pre>'; exit;
+        return true;
     }
 
     function generator_code(){
@@ -237,7 +232,7 @@ class HrMonthlyDeductionService
 
     function load_pv_details(){
         $this->pv_details = DirectPaymentDetails::where('directPaymentAutoID', $this->pv_id)
-            ->selectRaw('DPAmountCurrency, DPAmount, deductionType, localAmount, comRptAmount')
+            ->selectRaw('DPAmount, deductionType, localAmount, comRptAmount, localCurrencyER, comRptCurrencyER')
             ->whereHas('monthly_deduction_det')
             ->with('monthly_deduction_det:monthlyDeclarationID,salaryCategoryID,expenseGLCode')
             ->get();
@@ -247,4 +242,44 @@ class HrMonthlyDeductionService
         }
     }
 
+    function setup_currency_conversion()
+    {
+        $pv_currency = $this->pv_master->directPayeeCurrency;
+        $emp_currency = $this->emp_currency->currencyID;
+
+        if( $emp_currency == $pv_currency ){
+            $this->emp_currency->ExchangeRate = 1;
+            $this->local_currency->ExchangeRate = $this->pv_details[0]->localCurrencyER;
+            $this->rpt_currency->ExchangeRate = $this->pv_details[0]->comRptCurrencyER;
+
+            return true;
+        }
+
+        $this->emp_currency->ExchangeRate = self::currency_conversion($emp_currency, $pv_currency);
+        $this->local_currency->ExchangeRate = self::currency_conversion($emp_currency, $this->local_currency->currencyID);
+        $this->rpt_currency->ExchangeRate = self::currency_conversion($emp_currency, $this->rpt_currency->currencyID);
+
+        return true;
+    }
+
+    public static function currency_conversion($master, $sub){
+        if($master == $sub){
+            return 1;
+        }
+
+        return CurrencyConversion::where('masterCurrencyID', $master)
+                    ->where('subCurrencyID', $sub)
+                    ->value('conversion');
+    }
+
+    function is_document_created(){
+        $doc = HrMonthlyDeductionMaster::where('pv_id', $this->pv_id)->first();
+
+        if($doc){
+            $msg = "Monthly deduction document already created.  <br> [ {$doc->monthlyDeductionCode} ]";
+            throw new \Exception($msg, 500);
+        }
+
+        return false;
+    }
 }
