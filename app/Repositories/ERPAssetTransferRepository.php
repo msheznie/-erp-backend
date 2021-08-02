@@ -49,4 +49,12 @@ class ERPAssetTransferRepository extends BaseRepository
     {
         return ERPAssetTransfer::class;
     }
+
+    public function getAudit($id){ 
+        return $this->with(['detail','segment','approved_by'=> function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 103);
+        },'company','confirmed_by', 'created_by', 'modified_by','audit_trial.modified_by'])
+            ->findWithoutFail($id);
+    }
 }

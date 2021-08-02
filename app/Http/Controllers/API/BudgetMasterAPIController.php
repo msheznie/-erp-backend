@@ -988,8 +988,12 @@ class BudgetMasterAPIController extends AppBaseController
             }
         }
 
+
+        $currencyData = \Helper::companyCurrency($companyId);
+
         $output = array(
             'reportTemplates' => $reportTemplates,
+            'currencyData' => $currencyData,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -1440,6 +1444,10 @@ class BudgetMasterAPIController extends AppBaseController
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('poCancelledYN', 0)
                                            ->where('approved', 0)
+                                           ->where(function($query) {
+                                                $query->whereNull('projectID')
+                                                      ->orWhere('projectID', 0);
+                                              })
                                            ->where('budgetBlockYN', -1);
 
 

@@ -354,7 +354,17 @@ trait AuditTrial
                 $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
                 $docInforArr["serviceLineCode"] = 'serviceLineCode';
                 break;
-
+                case 103: // Asset Transfer
+                    $docInforArr["modelName"] = 'ERPAssetTransfer';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["documentCodeColumnName"] = 'document_code';
+                    $docInforArr["companySystemID"] = 'company_id';
+                    $docInforArr["companyID"] = 'company_code';
+                    $docInforArr["documentSystemID"] = 'documentSystemID';
+                    $docInforArr["documentID"] = 'document_id';
+                    $docInforArr["serviceLineSystemID"] = 'serviceLineSystemID';
+                    $docInforArr["serviceLineCode"] = 'serviceLineCode';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

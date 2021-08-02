@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateBudjetdetailsAPIRequest;
 use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
+use App\Models\Company;
 use App\Models\BudgetMaster;
 use App\Models\ReportTemplateLinks;
 use App\Models\TemplatesGLCode;
@@ -257,7 +258,11 @@ class BudjetdetailsAPIController extends AppBaseController
             $input['budjetAmtRpt'] = 0;
         }
 
-        $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, 2, 2, $input['budjetAmtRpt']);
+        $companyData = Company::find($budjetdetails->companySystemID);
+
+        $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
+
+        $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, $reportingCurrencyID, $reportingCurrencyID, $input['budjetAmtRpt']);
 
         $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
         $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
@@ -701,7 +706,11 @@ class BudjetdetailsAPIController extends AppBaseController
     {
         $input['budjetAmtRpt']  = $budjetAmtRpt;
 
-        $currencyConvection = \Helper::currencyConversion($companySystemID, 2, 2, $budjetAmtRpt);
+        $companyData = Company::find($companySystemID);
+
+        $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
+
+        $currencyConvection = \Helper::currencyConversion($companySystemID, $reportingCurrencyID, $reportingCurrencyID, $budjetAmtRpt);
         $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
 
         return $input;

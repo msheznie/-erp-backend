@@ -2239,12 +2239,15 @@ class Helper
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
 
+
             $msg = 'Error Occurred';
             if( in_array($e->getCode(), [404, 500]) ){
                 $msg = $e->getMessage();
             }
 
             return ['success' => false, 'message' => $msg];
+            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
+
         }
     }
 

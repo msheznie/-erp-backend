@@ -560,6 +560,12 @@ class SupplierMasterAPIController extends AppBaseController
 
             //check policy 3
 
+            if ($input['nameOnPaymentCheque'] != $supplierMaster->nameOnPaymentCheque) {
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['nameOnPaymentCheque']), $id);
+
+                return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+            }
+
             $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],3);
 
             if($policy){

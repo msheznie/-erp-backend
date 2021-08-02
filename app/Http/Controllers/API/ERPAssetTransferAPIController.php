@@ -9,8 +9,11 @@ use App\Repositories\ERPAssetTransferRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ERPAssetTransferDetail;
 use App\Models\FixedAssetMaster;
 use App\Models\Location;
@@ -21,7 +24,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
-
+use App\Traits\AuditTrial;
 /**
  * Class ERPAssetTransferController
  * @package App\Http\Controllers\API
@@ -173,6 +176,12 @@ class ERPAssetTransferAPIController extends AppBaseController
             $input['created_user_id'] = \Helper::getEmployeeSystemID();
             $input['prBelongsYear'] = $input['prBelongsYear'];
             $input['budgetYear'] = $input['budgetYear'];
+            $input['documentSystemID'] = 103;
+            $company = Company::where('companySystemID', $company_id)->first();
+			if ($company) {
+				$input['company_code'] = $company->CompanyID;
+			}
+            $input['updated_user_id'] = \Helper::getEmployeeSystemID();
             $eRPAssetTransfer = $this->eRPAssetTransferRepository->create($input);
             DB::commit();
             return $this->sendResponse($eRPAssetTransfer->toArray(), 'Asset Transfer saved successfully');
@@ -324,6 +333,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data['reference_no'] = $input['reference_no'];
         $data['document_date'] = new Carbon($input['document_date']);
         $data['narration'] = $input['narration'];
+        $data['updated_user_id'] = \Helper::getEmployeeSystemID();
 
         if (isset($input['confirmed_yn']) == 1) {
             if ($eRPAssetTransfer->confirmed_yn == 0 && $input['confirmed_yn'] == 1) {
@@ -515,6 +525,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     public function rejectAssetTransfer(Request $request)
     {
         $request['documentSystemID'] = 103;
+        $request['documentSystemCode'] = $request['id'];
         $reject = \Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
@@ -658,4 +669,108 @@ class ERPAssetTransferAPIController extends AppBaseController
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
+    public function getAssetTransferMasterRecord(Request $request)
+    {
+        $id = $request->get('assetTransferID');
+        $assetTransfer = $this->eRPAssetTransferRepository->getAudit($id);
+
+        if (empty($assetTransfer)) {
+            return $this->sendError('Asset Transfer not found');
+        }
+
+        return $this->sendResponse($assetTransfer, 'Data retrieved successfully');
+    } 
+    public function assetTransferReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['assetTransferID'];
+        $assetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($assetTransfer)) {
+            return $this->sendError('Asset Transfer not found');
+        }
+
+        if ($assetTransfer->approved_yn == 1) {
+            return $this->sendError('You cannot reopen this Asset Transfer it is already fully approved');
+        }
+
+        if ($assetTransfer->current_level_no > 1) {
+            return $this->sendError('You cannot reopen this Asset Transfer it is already partially approved');
+        }
+
+        if ($assetTransfer->confirmed_yn == 0) {
+            return $this->sendError('You cannot reopen this Asset Transfer, it is not confirmed');
+        }
+
+        $updateInput = ['confirmed_yn' => 0, 'confirmedByEmpID' => null, 'confirmedByName' => null,
+            'confirmed_by_emp_id' => null, 'confirmed_date' => null, 'current_level_no' => 1];
+
+        $this->eRPAssetTransferRepository->update($updateInput, $id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', 103)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetTransfer->document_code . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $assetTransfer->document_code;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $document->companySystemID)
+            ->where('documentSystemCode', $assetTransfer->id)
+            ->where('documentSystemID', 103)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $assetTransfer->company_id)
+                    ->where('documentSystemID',103)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $assetTransfer->company_id)
+            ->where('documentSystemID',103)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial(103,$id,$input['reopenComments'],'Reopened');
+
+        return $this->sendResponse($assetTransfer->toArray(), 'Asset Transfer reopened successfully');
+    }
+
 }

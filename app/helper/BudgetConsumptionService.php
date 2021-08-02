@@ -34,7 +34,7 @@ class BudgetConsumptionService
 					$totalConsumedAmount = $value['consumedAmount'] + $value['currenctDocumentConsumption'] + $value['pendingDocumentAmount'];
 					$totalBudgetRptAmount = $value['budgetAmount'];
 
-					if ($totalConsumedAmount > $totalBudgetRptAmount) {
+					if ($totalConsumedAmount > $totalBudgetRptAmount &&  $value['currenctDocumentConsumption'] > 0) {
 						if ($userMessageE != "") {
 							$userMessageE .= "<br><br>";
 						}
@@ -52,7 +52,7 @@ class BudgetConsumptionService
 						$userMessageE .= $budgetExceMsg. $value['templateCategory'] ;
                         $userMessageE .= "<br>";
 
-                        if (isset($budgetData['departmentWiseCheckBudgetPolicy']) && $budgetData['departmentWiseCheckBudgetPolicy']) {
+                        if (isset($budgetData['departmentWiseCheckBudgetPolicy']) && $budgetData['departmentWiseCheckBudgetPolicy'] && (!isset($budgetData['projectBased']) || (isset($budgetData['projectBased']) && !$budgetData['projectBased']))) {
                         	$userMessageE .= "Service Line : ". $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
@@ -81,7 +81,7 @@ class BudgetConsumptionService
 
 				return ['status' => true, 'message' => $userMessageE];
 			} else {
-				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy']) {
+				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy'] && (isset($budgetData['glCodes']) && count($budgetData['glCodes']) > 0)) {
 					return ['status' => true, 'message' => "Budget not configured for this document"];
 				} else {
 					return ['status' => true, 'message' => ""];
@@ -123,8 +123,8 @@ class BudgetConsumptionService
 
 
                 $budgetFormData['serviceLineSystemID'] = (count($segmentAllocationData) > 0) ? $segmentAllocationData->pluck('serviceLineSystemID')->toArray() : [$masterData->serviceLineSystemID];
-                $budgetFormData['financeGLcodePLSystemIDs'] = $detailData->pluck('financeGLcodePLSystemID')->toArray();
-                $budgetFormData['financeGLcodebBSSystemIDs'] = $detailData->pluck('financeGLcodebBSSystemID')->toArray();
+                $budgetFormData['financeGLcodePLSystemIDs'] = array_filter($detailData->pluck('financeGLcodePLSystemID')->toArray());
+                $budgetFormData['financeGLcodebBSSystemIDs'] = array_filter($detailData->pluck('financeGLcodebBSSystemID')->toArray());
 				break;
 			case 2:
 			case 5:
@@ -272,7 +272,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes']];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
@@ -313,8 +313,9 @@ class BudgetConsumptionService
 			$checkBudgetConfiguration = self::checkChartAccountBudgetStatus($value, $budgetFormData);
 			if (!$checkBudgetConfiguration) {
 				$chartOfAccount = ChartOfAccount::find($value);
-
-				$invalidArray[] = $chartOfAccount->AccountCode." - ".$chartOfAccount->AccountDescription;
+				if ($chartOfAccount) {
+					$invalidArray[] = $chartOfAccount->AccountCode." - ".$chartOfAccount->AccountDescription;
+				}
 			}
 		}
 
@@ -414,6 +415,7 @@ class BudgetConsumptionService
 							$finalData[$value.$serviceLineSystemID]['pendingDocumentAmount'] = $pendingDocumentAmount;
 							$finalData[$value.$serviceLineSystemID]['templateDetailID'] = $value;
 							$finalData[$value.$serviceLineSystemID]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
+							$finalData[$value.$serviceLineSystemID]['serviceLineSystemID'] = $serviceLineSystemID;
 							$finalData[$value.$serviceLineSystemID]['glCodes'] = $glCodes;
 						}
 
@@ -462,8 +464,9 @@ class BudgetConsumptionService
 			} else {
 				if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 					foreach ($glCodes as $key => $value) {
-						if (self::checkChartAccountBudgetStatus($value, $budgetFormData)) {
-
+						$templateStatus = self::checkChartAccountBudgetStatus($value, $budgetFormData);
+						if ($templateStatus) {
+							$templateDetail = ReportTemplateDetails::find($templateStatus->templateDetailID);
 							foreach ($budgetFormData['serviceLineSystemID'] as $keyServ => $serviceLineSystemID) {
 								$chartOfAcData = ChartOfAccount::find($value);
 								$segmentData = SegmentMaster::find($serviceLineSystemID);
@@ -501,14 +504,17 @@ class BudgetConsumptionService
 								$finalData[$value.$serviceLineSystemID]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
 								$finalData[$value.$serviceLineSystemID]['pendingDocumentAmount'] = $pendingDocumentAmount;
 								$finalData[$value.$serviceLineSystemID]['templateDetailID'] = $value;
-								$finalData[$value.$serviceLineSystemID]['companyReportTemplateID'] = $chartOfAcData->chartOfAccountSystemID;
+								$finalData[$value.$serviceLineSystemID]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
+								$finalData[$value.$serviceLineSystemID]['serviceLineSystemID'] = $serviceLineSystemID;
 								$finalData[$value.$serviceLineSystemID]['glCodes'] = $glCodes;
 							}
 						}
 					}
 				} else {
 					foreach ($glCodes as $key => $value) {
-						if (self::checkChartAccountBudgetStatus($value, $budgetFormData)) {
+						$templateStatus = self::checkChartAccountBudgetStatus($value, $budgetFormData);
+						if ($templateStatus) {
+							$templateDetail = ReportTemplateDetails::find($templateStatus->templateDetailID);
 							$chartOfAcData = ChartOfAccount::find($value);
 
 							$budgetAmountData = collect($budgetAmount)->firstWhere('chartOfAccountID', $value);
@@ -543,7 +549,7 @@ class BudgetConsumptionService
 							$finalData[$value]['consumedAmount'] = (isset($consumedAmountData['ConsumedRptAmount']) ? $consumedAmountData['ConsumedRptAmount'] : 0);
 							$finalData[$value]['pendingDocumentAmount'] = $pendingDocumentAmount;
 							$finalData[$value]['templateDetailID'] = $value;
-							$finalData[$value]['companyReportTemplateID'] = $chartOfAcData->chartOfAccountSystemID;
+							$finalData[$value]['companyReportTemplateID'] = $templateDetail->companyReportTemplateID;
 							$finalData[$value]['glCodes'] = $glCodes;
 						}
 					}
@@ -1054,7 +1060,7 @@ class BudgetConsumptionService
 
 	public static function pendingPoQryValuesForDirectDocs($budgetFormData, $templateCategoryIDs, $glCodes)
 	{
-		$pendingPoQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitLocalCur * noQty) AS localAmt, SUM(GRVcostPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, serviceLineSystemID')
+		$pendingPoQry = PurchaseOrderDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty) AS localAmt, (GRVcostPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, serviceLineSystemID, purchaseOrderMasterID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereHas('allocations', function($query) use ($budgetFormData) {

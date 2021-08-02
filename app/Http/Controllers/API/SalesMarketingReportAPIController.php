@@ -41,7 +41,9 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\ErpItemLedger;
 use App\Models\Contract;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CurrencyMaster;
+use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerAssigned;
 use App\Models\WarehouseMaster;
 use App\Models\CustomerMasterCategory;
@@ -1134,6 +1136,351 @@ class SalesMarketingReportAPIController extends AppBaseController
         }
         return $output;
 
+    }
+
+
+    public function reportSoToReceipt(Request $request)
+    {
+        $input = $request->all();
+        $salesOrder = $this->getSoToReceiptQry($input);
+        $data = \DataTables::of($salesOrder)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('quotationMasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->addColumn('deliveryOrder', function ($row) {
+                return $this->getSOtoReceiptChainViaDeliveryOrder($row);
+            })
+            ->make(true);
+
+        return $data;
+    }
+
+    public function getSOtoReceiptChainViaDeliveryOrder($row)
+    {
+        $deliveryOrders = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
+                                        sum(companyReportingAmount) as rptAmount,
+                                        quotationMasterID,deliveryOrderID')
+            ->where('quotationMasterID', $row->quotationMasterID)
+            ->with(['master' => function ($query) {
+                $query->with(['transaction_currency']);
+            }])
+            ->groupBy('deliveryOrderID')
+            ->get();
+
+        if (count($deliveryOrders) == 0) {
+            $returnData['deliveryOrder'] = false;   
+            $returnData['invoices'] = $this->getSOtoReceiptChainViaCustomerInvoice($row);
+
+            return [$returnData];
+        }
+
+        foreach ($deliveryOrders as $do) {
+            $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
+                                                 sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+                ->where('deliveryOrderID', $do->deliveryOrderID)
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('custInvoiceDirectAutoID')
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                                 sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                    ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                    ->where('addedDocumentSystemID', 20)
+                    ->where('matchingDocID', 0)
+                    ->with(['master' => function ($query) {
+                        $query->with(['currency']);
+                    }])
+                    ->groupBy('custReceivePaymentAutoID')
+                    ->get();
+
+                $totalInvoices = $recieptVouchers->toArray();
+
+                $invoice->payments = $totalInvoices;
+            }
+
+            $do->invoices = $invoices->toArray();
+        }
+
+        return $deliveryOrders->toArray();
+    }
+
+    
+    public function getSOtoReceiptChainViaCustomerInvoice($row)
+    {
+        $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
+                                             sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+            ->where('quotationMasterID', $row->quotationMasterID)
+            ->with(['master' => function ($query) {
+                $query->with(['currency']);
+            }])
+            ->groupBy('custInvoiceDirectAutoID')
+            ->get();
+
+        foreach ($invoices as $invoice) {
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                ->where('addedDocumentSystemID', 20)
+                ->where('matchingDocID', 0)
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('custReceivePaymentAutoID')
+                ->get();
+
+            $totalInvoices = $recieptVouchers->toArray();
+
+            $invoice->payments = $totalInvoices;
+        }
+
+        return $invoices->toArray();
+    }
+
+
+    public function getSoToReceiptQry($request)
+    {
+        $input = $request;
+        $from = "";
+        $to = "";
+
+        if (array_key_exists('fromDate', $input) && $input['fromDate']) {
+            $from = ((new Carbon($input['fromDate']))->format('Y-m-d'));
+        }
+
+        if (array_key_exists('toDate', $input) && $input['toDate']) {
+            $to = ((new Carbon($input['toDate']))->format('Y-m-d'));
+        }
+
+        if (
+            array_key_exists('toDate', $input) && array_key_exists('fromDate', $input) &&
+            $input['toDate'] && $input['fromDate'] && $to <= $from
+        ) {
+            //$from = "";
+            //$to = "";
+        }
+
+        $search = $input['search']['value'];
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+        }
+
+        $purchaseOrder = QuotationMaster::where('companySystemID', $input['companyId'])
+            ->where('documentSystemID', 68)
+            ->where('confirmedYN', 1)
+            ->where('isDeleted', 0)
+            ->where('approvedYN', -1)
+            ->when($from && $to == "", function ($q) use ($from, $to) {
+                return $q->where('approvedDate', '>=', $from);
+            })
+            ->when($from == "" && $to, function ($q) use ($from, $to) {
+                return $q->where('approvedDate', '<=', $to);
+            })
+            ->when($from && $to, function ($q) use ($from, $to) {
+                return $q->whereBetween('approvedDate', [$from, $to]);
+            })
+            ->when(request('customerID', false), function ($q) use ($input) {
+                return $q->where('customerSystemCode', $input['customerID']);
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('quotationCode', 'LIKE', "%{$search}%")
+                        ->orWhere('narration', 'LIKE', "%{$search}%");
+                });
+            })
+            ->with(['customer']);
+
+        return $purchaseOrder;
+    }
+
+    public function reportSoToReceiptFilterOptions(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $customers = CustomerAssigned::where('companySystemID', $companyId);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $customers = $customers->where(function ($query) use ($search) {
+                $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        $customers = $customers->take(15)->get(['companySystemID', 'CutomerCode', 'CustomerName', 'customerCodeSystem']);
+        $output = array('customers' => $customers);
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+
+    public function exportSoToReceiptReport(Request $request)
+    {
+        $input = $request->all();
+        $data = array();
+        $output = ($this->getSoToReceiptQry($input))->orderBy('quotationMasterID', 'DES')->get();
+
+        foreach ($output as $row) {
+            $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row);
+        }
+
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Company ID'] = $value->companyID;
+                $data[$x]['SO Number'] = $value->quotationCode;
+                $data[$x]['SO Approved Date'] = \Helper::dateFormat($value->approvedDate);
+                $data[$x]['Narration'] = $value->narration;
+                if ($value->customer) {
+                    $data[$x]['Customer Code'] = $value->customer->CutomerCode;
+                    $data[$x]['Customer Name'] = $value->customer->CustomerName;
+                } else {
+                    $data[$x]['Customer Code'] = '';
+                    $data[$x]['Customer Name'] = '';
+                }
+                $data[$x]['SO Amount'] = number_format($value->transactionAmount, 2);
+
+                if (count($value->deliveryOrders) > 0) {
+                    $grvMasterCount = 0;
+                    foreach ($value->deliveryOrders as $grv) {
+                        if ($grvMasterCount != 0) {
+                            $x++;
+                            $data[$x]['Company ID'] = '';
+                            $data[$x]['SO Number'] = '';
+                            $data[$x]['SO Approved Date'] = '';
+                            $data[$x]['Narration'] = '';
+                            $data[$x]['Customer Code'] = '';
+                            $data[$x]['Customer Name'] = '';
+                            $data[$x]['SO Amount'] = '';
+                        }
+
+                        if (isset($grv['master'])) {
+                            $data[$x]['Delivery Code'] = $grv['master']['deliveryOrderCode'];
+                            $data[$x]['Delivery Date'] = \Helper::dateFormat($grv['master']['deliveryOrderDate']);
+                            $data[$x]['Delivery Amount'] = number_format($grv['rptAmount'], 2);
+                        } else {
+                            $data[$x]['Delivery Code'] = '';
+                            $data[$x]['Delivery Date'] = '';
+                            $data[$x]['Delivery Amount'] = '';
+                        }
+
+
+                        if (count($grv['invoices']) > 0) {
+                            $invoicesCount = 0;
+                            foreach ($grv['invoices'] as $invoice) {
+                                if ($invoicesCount != 0) {
+                                    $x++;
+                                    $data[$x]['Company ID'] = '';
+                                    $data[$x]['SO Number'] = '';
+                                    $data[$x]['SO Approved Date'] = '';
+                                    $data[$x]['Narration'] = '';
+                                    $data[$x]['Customer Code'] = '';
+                                    $data[$x]['Customer Name'] = '';
+                                    $data[$x]['PO Amount'] = '';
+                                    $data[$x]['Delivery Code'] = '';
+                                    $data[$x]['Delivery Date'] = '';
+                                    $data[$x]['Delivery Amount'] = '';
+                                }
+
+                                if ($invoice['master']) {
+                                    $data[$x]['Invoice Code'] = $invoice['master']['bookingInvCode'];
+                                    $data[$x]['Invoice Date'] = \Helper::dateFormat($invoice['master']['bookingDate']);
+                                } else {
+                                    $data[$x]['Invoice Code'] = '';
+                                    $data[$x]['Invoice Date'] = '';
+                                }
+                                $data[$x]['Invoice Amount'] = number_format($invoice['rptAmount'], 2);
+
+                                if (count($invoice['payments']) > 0) {
+                                    $paymentsCount = 0;
+                                    foreach ($invoice['payments'] as $payment) {
+                                        if ($paymentsCount != 0) {
+                                            $x++;
+                                            $data[$x]['Company ID'] = '';
+                                            $data[$x]['SO Number'] = '';
+                                            $data[$x]['SO Approved Date'] = '';
+                                            $data[$x]['Narration'] = '';
+                                            $data[$x]['Customer Code'] = '';
+                                            $data[$x]['Customer Name'] = '';
+                                            $data[$x]['SO Amount'] = '';
+                                            $data[$x]['Delivery Code'] = '';
+                                            $data[$x]['Delivery Date'] = '';
+                                            $data[$x]['Delivery Amount'] = '';
+                                            $data[$x]['Invoice Code'] = '';
+                                            $data[$x]['Invoice Date'] = '';
+                                            $data[$x]['Invoice Amount'] = '';
+                                        }
+
+                                        if (!empty($payment['master'])) {
+                                            $data[$x]['Receipt Code'] = $payment['master']['custPaymentReceiveCode'];
+                                            $data[$x]['Receipt Date'] = \Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
+                                            $data[$x]['Receipt Posted Date'] = \Helper::dateFormat($payment['master']['postedDate']);
+                                        } else {
+                                            $data[$x]['Receipt Code'] = '';
+                                            $data[$x]['Receipt Date'] = '';
+                                            $data[$x]['Receipt Posted Date'] = '';
+                                        }
+                                       
+                                        $data[$x]['Paid Amount'] = number_format($payment['rptAmount'], 2);
+                                        $paymentsCount++;
+                                    }
+                                } else {
+                                    $data[$x]['Receipt Code'] = '';
+                                    $data[$x]['Receipt Date'] = '';
+                                    $data[$x]['Receipt Posted Date'] = '';
+                                    $data[$x]['Paid Amount'] = '';
+                                }
+                                $invoicesCount++;
+                            }
+                        } else {
+                            $data[$x]['Invoice Code'] = '';
+                            $data[$x]['Invoice Date'] = '';
+                            $data[$x]['Invoice Amount'] = '';
+                            $data[$x]['Receipt Code'] = '';
+                            $data[$x]['Receipt Date'] = '';
+                            $data[$x]['Receipt Posted Date'] = '';
+                            $data[$x]['Paid Amount'] = '';
+                        }
+                        $grvMasterCount++;
+                    }
+                } else {
+                    $data[$x]['Delivery Code'] = '';
+                    $data[$x]['Delivery Date'] = '';
+                    $data[$x]['Delivery Amount'] = '';
+                    $data[$x]['Invoice Code'] = '';
+                    $data[$x]['Invoice Date'] = '';
+                    $data[$x]['Invoice Amount'] = '';
+                    $data[$x]['Receipt Code'] = '';
+                    $data[$x]['Receipt Date'] = '';
+                    $data[$x]['Receipt Posted Date'] = '';
+                    $data[$x]['Paid Amount'] = '';
+                }
+                $x++;
+            }
+        }
+
+        \Excel::create('so_to_receipt', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }

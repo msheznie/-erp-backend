@@ -265,7 +265,7 @@ class ErpBudgetAddition extends Model
 
     public function approved_by()
     {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'budgetTransferFormAutoID');
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'id');
     }
 
 
@@ -276,7 +276,7 @@ class ErpBudgetAddition extends Model
 
     public function audit_trial()
     {
-        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetTransferFormAutoID')->where('documentSystemID',46);
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'id')->where('documentSystemID',102);
     }
 
 

@@ -167,7 +167,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $currency = \Helper::companyCurrency($input['companySystemID']);
 
-        $input['currencyID'] = $currency->localCurrencyID;
+        $input['currencyID'] = $currency->reportingCurrency;
 
         $input['companyID'] = $company->CompanyID;
         $input['serialNo'] = $serialNo;
@@ -478,6 +478,8 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     
         }
 
+        $currencyData = \Helper::companyCurrency($companyId);
+
         $output = array(
             'reportTemplates' => $reportTemplates,
             'yesNoSelection' => $yesNoSelection,
@@ -485,6 +487,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
             'financeYear' => $financeYear,
+            'currencyData' => $currencyData,
             'masterTemplates' => $masterTemplates,
         );
 

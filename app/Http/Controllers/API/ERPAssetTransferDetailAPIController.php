@@ -113,7 +113,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
-       $valuesOfAsset = array_filter(array_column($input, 'assetDropTransferID'), function($n){ 
+       $valuesOfAsset = array_filter(array_column($input, 'assetDropTransferIDDropVal'), function($n){ 
             return $n >0;
         });
         
