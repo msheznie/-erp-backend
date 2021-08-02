@@ -5028,7 +5028,7 @@ ORDER BY
             case 'APSS':
                 if ($request->reportTypeID == 'SS') {
 
-                    $html = $this->supplierStatementPdf($request);
+                    $html = $this->supplierStatementPdf($request->all());
 
                     $pdf = \App::make('dompdf.wrapper');
                     $pdf->loadHTML($html);
@@ -5041,9 +5041,9 @@ ORDER BY
         }
     }
 
-    public function supplierStatementPdf($request)
+    public function supplierStatementPdf($request, $sentEmail = false)
     {
-        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+        $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID', 'controlAccountsSystemID'));
 
         $checkIsGroup = Company::find($request->companySystemID);
 
@@ -5070,7 +5070,7 @@ ORDER BY
         }
 
 
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => $sentEmail);
 
         return $html = view('print.supplier_statement', $dataArr);
     }
@@ -5079,90 +5079,100 @@ ORDER BY
     {
         $input = $request->all();
 
-        if (isset($input['suppliers']) && count($input['suppliers']) != 1) {
-            return $this->sendError("supplier Statement cannot be sent to multiple suppliers",500);
+        if (!isset($input['suppliers'])) {
+            return $this->sendError("suppliers not found");
         }
 
-        $html = $this->supplierStatementPdf($request);
+        $suplliers = $input['suppliers'];
+        $errorMessage = [];
+        foreach ($suplliers as $key => $value) {
+            $input['suppliers'] = [];
+            $input['suppliers'][] = $value;
 
-        $pdf = \App::make('dompdf.wrapper');
-        $path = public_path().'/uploads/emailAttachment';
+            $html = $this->supplierStatementPdf($input, true);
 
-        if (!file_exists($path)) {
-            File::makeDirectory($path, 0777, true, true);
-        }
-        $nowTime = time();
+            $pdf = \App::make('dompdf.wrapper');
+            $path = public_path().'/uploads/emailAttachment';
 
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime . '.pdf');
-
-        $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-
-        $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
-            ->get();
-
-        $supplierMaster = SupplierMaster::find($supplierID);
-
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        $emailSentTo = 0;
-
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
-        
-        if ($fetchSupEmail) {
-            foreach ($fetchSupEmail as $row) {
-                if (!empty($row->contactPersonEmail)) {
-                    $emailSentTo = 1;
-                    $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                    $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                    $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
-
-                    $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
-
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Supplier statement report from " . $company->CompanyName;
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
-                    if (!$sendEmail["success"]) {
-                        return $this->sendError($sendEmail["message"], 500);
-                    }
-                }
+            if (!file_exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
             }
-        }
+            $nowTime = time();
 
-        if ($emailSentTo == 0) {
-            if ($supplierMaster) {
-                if (!empty($supplierMaster->supEmail)) {
-                    $emailSentTo = 1;
-                    $dataEmail['empEmail'] = $supplierMaster->supEmail;
+            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime . '.pdf');
 
-                    $dataEmail['companySystemID'] = $input['companySystemID'];
+            $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
 
-                    $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
+            $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
+                ->get();
 
-                    $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
+            $supplierMaster = SupplierMaster::find($supplierID);
 
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Supplier statement report " . $company->CompanyName;
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
-                    if (!$sendEmail["success"]) {
-                        return $this->sendError($sendEmail["message"], 500);
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            $emailSentTo = 0;
+
+            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+                "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+                "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            
+            if ($fetchSupEmail) {
+                foreach ($fetchSupEmail as $row) {
+                    if (!empty($row->contactPersonEmail)) {
+                        $emailSentTo = 1;
+                        $dataEmail['empEmail'] = $row->contactPersonEmail;
+
+                        $dataEmail['companySystemID'] = $input['companySystemID'];
+
+                        $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
+
+                        $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
+
+                        $dataEmail['isEmailSend'] = 0;
+                        $dataEmail['attachmentFileName'] = $pdfName;
+                        $dataEmail['alertMessage'] = "Supplier statement report from " . $company->CompanyName;
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        if (!$sendEmail["success"]) {
+                            $errorMessage[] = $sendEmail["message"];
+                        }
                     }
                 }
             }
 
+            if ($emailSentTo == 0) {
+                if ($supplierMaster) {
+                    if (!empty($supplierMaster->supEmail)) {
+                        $emailSentTo = 1;
+                        $dataEmail['empEmail'] = $supplierMaster->supEmail;
+
+                        $dataEmail['companySystemID'] = $input['companySystemID'];
+
+                        $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
+
+                        $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
+
+                        $dataEmail['isEmailSend'] = 0;
+                        $dataEmail['attachmentFileName'] = $pdfName;
+                        $dataEmail['alertMessage'] = "Supplier statement report " . $company->CompanyName;
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        if (!$sendEmail["success"]) {
+                            $errorMessage[] = $sendEmail["message"];
+                        }
+                    }
+                }
+
+            }
+
+            if ($emailSentTo == 0) {
+                $errorMessage[] = "Supplier email is not updated for ".$supplierMaster->supplierName.". report is not sent";
+            } 
         }
 
-        if ($emailSentTo == 0) {
-            return $this->sendError('Supplier email is not updated. report is not sent', 500);
+        if (count($errorMessage) > 0) {
+            return $this->sendError($errorMessage,500);
         } else {
-            return $this->sendResponse($emailSentTo, 'Supplier statement report sent');
-
+            return $this->sendResponse([], 'Supplier statement report sent');
         }
     }
 
