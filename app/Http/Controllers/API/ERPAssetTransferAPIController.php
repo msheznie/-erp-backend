@@ -8,13 +8,16 @@ use App\Models\ERPAssetTransfer;
 use App\Repositories\ERPAssetTransferRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\AssetTransferReferredback;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ERPAssetTransferDetail;
+use App\Models\ERPAssetTransferDetailsRefferedback;
 use App\Models\FixedAssetMaster;
 use App\Models\Location;
 use App\Models\PurchaseOrderDetails;
@@ -771,6 +774,70 @@ class ERPAssetTransferAPIController extends AppBaseController
         AuditTrial::createAuditTrial(103,$id,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($assetTransfer->toArray(), 'Asset Transfer reopened successfully');
+    }
+
+    public function amendAssetTrasfer(Request $request)
+    {
+        $input = $request->all();
+
+        $assetTransferAutoID = $input['assetTransferID'];
+
+        $assetTransferMasterData = ERPAssetTransfer::find($assetTransferAutoID);
+        if (empty($assetTransferMasterData)) {
+            return $this->sendError('Asset Transfer not found');
+        }
+
+        if ($assetTransferMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this asset transfer');
+        }
+
+        $assetTransferArray = $assetTransferMasterData->toArray(); 
+        $assetTransferArray = \array_diff_key($assetTransferArray, ["transfer_type" => "Transfer Type", "document_date_formatted" => "Document Date Formatted"]);
+        $storeAssetTransferHistory = AssetTransferReferredback::insert($assetTransferArray);
+
+        $assetTransferDetailRec = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id', $assetTransferAutoID)->get();
+
+        if (!empty($assetTransferDetailRec)) {
+            foreach ($assetTransferDetailRec as $assetTrans) {
+                $assetTrans['timesReferred'] = $assetTransferMasterData->timesReferred;
+            }
+        } 
+
+        $assetTransferDetailArray = $assetTransferDetailRec->toArray();
+
+        $storeAssetTransferDetailHistory = ERPAssetTransferDetailsRefferedback::insert($assetTransferDetailArray);
+
+         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $assetTransferAutoID)
+            ->where('companySystemID', $assetTransferMasterData->company_id)
+            ->where('documentSystemID', $assetTransferMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $assetTransferMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $assetTransferAutoID)
+            ->where('companySystemID', $assetTransferMasterData->company_id)
+            ->where('documentSystemID', $assetTransferMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $assetTransferMasterData->refferedBackYN = 0;
+            $assetTransferMasterData->confirmed_yn = 0;
+            $assetTransferMasterData->confirmed_by_emp_id = null;
+            $assetTransferMasterData->confirmedByName = null;
+            $assetTransferMasterData->confirmedByEmpID = null;
+            $assetTransferMasterData->confirmed_date = null;
+            $assetTransferMasterData->current_level_no = 1;
+            $assetTransferMasterData->save();
+        } 
+        return $this->sendResponse($assetTransferMasterData->toArray(), 'Asset Transfer amend successfully');
     }
 
 }

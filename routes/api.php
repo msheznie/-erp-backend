@@ -2119,9 +2119,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('asset-location-value', 'ERPAssetTransferDetailAPIController@getAssetLocationValue');
         Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord');
         Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen');
-        
+        Route::post('amendAssetTrasfer', 'ERPAssetTransferAPIController@amendAssetTrasfer');
+        Route::post('getAssetTransferAmendHistory', 'AssetTransferReferredbackAPIController@getAssetTransferAmendHistory');
+        Route::get('fetch-asset-transfer-master-amend/{id}', 'AssetTransferReferredbackAPIController@fetchAssetTransferMasterAmend');
+        Route::get('get-employee-asset-transfer-details-amend/{id}', 'ERPAssetTransferDetailsRefferedbackAPIController@get_employee_asset_transfer_details_amend');
+        Route::post('amendAssetVerification', 'AssetVerificationAPIController@amendAssetVerification');
         Route::post('budgetAdditionReopen', 'ErpBudgetAdditionAPIController@budgetAdditionReopen');
         Route::get('getBudgetAdditionAudit', 'ErpBudgetAdditionAPIController@getBudgetAdditionAudit');
+        Route::post('getAssetVerificationAmendHistory', 'ERPAssetVerificationReferredbackAPIController@getAssetVerificationAmendHistory');
+        Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
+        Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2213,5 +2220,4 @@ Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
 
 
 
-Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
-
+Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController'); 
