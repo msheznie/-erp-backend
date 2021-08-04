@@ -208,6 +208,7 @@ class ErpBudgetAddition extends Model
         'companyID' => 'string',
         'id' => 'integer',
         'serialNo' => 'integer',
+        'companyFinanceYearID' => 'integer',
         'year' => 'integer',
         'additionVoucherNo' => 'string',
         'createdDate' => 'datetime',

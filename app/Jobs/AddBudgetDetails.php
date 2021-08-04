@@ -17,16 +17,18 @@ class AddBudgetDetails implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $budget;
     protected $glData;
+    protected $monthArray;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($budget, $glData)
+    public function __construct($budget, $glData, $monthArray)
     {
         $this->budget = $budget;
         $this->glData = $glData;
+        $this->monthArray = $monthArray;
     }
 
     /**
@@ -38,12 +40,11 @@ class AddBudgetDetails implements ShouldQueue
     {
         $budgetMasters = $this->budget;
         $glData = $this->glData;
+        $months = $this->monthArray;
         Log::useFiles(storage_path() . '/logs/budget_details_jobs.log');
         Log::info('Budget Details Jobs Start');
         if ($budgetMasters) {
             Log::info('Inside the if Start');
-
-            $months = Months::all();
 
             foreach ($months as $month) {
                 foreach ($glData as $gl) {
@@ -58,8 +59,8 @@ class AddBudgetDetails implements ShouldQueue
                         'chartOfAccountID' => $gl['glAutoID'],
                         'glCode' => $gl['chart_of_account']['AccountCode'],
                         'glCodeType' => $gl['chart_of_account']['controlAccounts'],
-                        'Year' => $budgetMasters->Year,
-                        'month' => $month->monthID, //$budgetMasters->month,
+                        'Year' => $month['year'],
+                        'month' => $month['monthID'], //$budgetMasters->month,
                         'budjetAmtLocal' => 0,
                         'budjetAmtRpt' => 0,
                         'createdByUserSystemID' => $budgetMasters->createdByUserSystemID,

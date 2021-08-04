@@ -6,18 +6,9 @@
 		    	<th>Sub Category</th>
 		    	<th>Account Code</th>
 		    	<th>Account Description</th>
-		    	<th>January</th>
-		    	<th>February</th>
-		    	<th>March</th>
-		    	<th>April</th>
-		    	<th>May</th>
-		    	<th>June</th>
-		    	<th>July</th>
-		    	<th>August</th>
-		    	<th>September</th>
-		    	<th>October</th>
-		    	<th>November</th>
-		    	<th>December</th>
+	 			@foreach ($monthArray as $month)
+			    	<th>{{$month['monthName']}} - {{$month['year']}}</th>
+		    	@endforeach
 	    	</tr>
 	    </thead>
 	 	<tbody>

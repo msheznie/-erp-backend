@@ -10,6 +10,7 @@ use App\Models\SegmentMaster;
 use App\Models\Year;
 use App\Models\Company;
 use App\Models\DocumentMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\TemplatesMaster;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\YesNoSelection;
@@ -21,6 +22,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class ContingencyBudgetPlanController
@@ -127,7 +129,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $input['createdDate'] = now();
 
         $validator = \Validator::make($input, [
-            'year' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
             'comments' => 'required',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'templateMasterID' => 'required|numeric|min:1',
@@ -138,6 +140,13 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $serialNo = DB::table('erp_budget_contingency')->where('companySystemID',$input['companySystemID'])->max('serialNo');
         $serialNo = $serialNo + 1;
+
+        $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
 
         $input['documentSystemID'] = 100;
         $input['documentID'] = 'CBP'; 
@@ -292,7 +301,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
 
         $validator = \Validator::make($input, [ 
-            'year' => 'required|numeric|min:1', 
+            'companyFinanceYearID' => 'required|numeric|min:1', 
             'comments' => 'required', 
             'serviceLineSystemID' => 'required|numeric|min:1', 
             'templateMasterID' => 'required|numeric|min:1', 
@@ -310,6 +319,14 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         if($check_recExist != 'success'){ 
             return $this->sendError($check_recExist, 500); 
         } 
+
+
+        $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
 
         if ($contingencyBudgetPlan->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -440,6 +457,8 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
+        $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
         $segments = SegmentMaster::where("companySystemID", $companyId)
                                  ->where('isActive', 1)->get();
 
@@ -456,10 +475,10 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $reportTemplates = [];
         
-        if (isset($input['Year']) && !is_null($input['Year']) && $input['Year'] != 'null' && isset($input['serviceLineSystemID']) && !is_null($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != 'null') {
+        if (isset($input['companyFinanceYearID']) && !is_null($input['companyFinanceYearID']) && $input['companyFinanceYearID'] != 'null' && isset($input['serviceLineSystemID']) && !is_null($input['serviceLineSystemID']) && $input['serviceLineSystemID'] != 'null') {
             
             $checkBudget = BudgetMaster::where('companySystemID', $companyId)
-                                            ->where(['Year' => $input['Year'], 'serviceLineSystemID' =>  $input['serviceLineSystemID']])
+                                            ->where(['companyFinanceYearID' => $input['companyFinanceYearID'], 'serviceLineSystemID' =>  $input['serviceLineSystemID']])
                                             ->with(['template_master'])
                                             ->groupBy('templateMasterID')
                                             ->get();
@@ -486,6 +505,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
+            'financeYears' => $financeYears,
             'financeYear' => $financeYear,
             'currencyData' => $currencyData,
             'masterTemplates' => $masterTemplates,
@@ -686,7 +706,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
  
     public function check_validation($id=0,$input){ 
  
-        $check_valid = ContingencyBudgetPlan::where(['year' => $input['year'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']]) 
+        $check_valid = ContingencyBudgetPlan::where(['companyFinanceYearID' => $input['companyFinanceYearID'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']]) 
                                             ->select('ID','year','budgetID','templateMasterID','contingencyBudgetNo'); 
         if($id != 0){ 
             $check_valid = $check_valid->where('ID', '!=', $id); 

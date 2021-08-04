@@ -179,5 +179,16 @@ class CompanyFinanceYear extends Model
         
     ];
 
-    
+    public static function financeYearID($budgetYear, $companySystemID)
+    {
+        $companyFinanceYear = CompanyFinanceYear::whereYear('bigginingDate', $budgetYear)
+                                                ->where('companySystemID', $companySystemID)
+                                                ->first();
+
+        if ($companyFinanceYear) {
+            return $companyFinanceYear->companyFinanceYearID;
+        } else {
+            return null;
+        }
+    }
 }

@@ -17,6 +17,7 @@ use App\Models\Months;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Models\ReportTemplate;
 use App\Models\SegmentMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -29,6 +30,8 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
 use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
+use Carbon\Carbon;
+
 /**
  * Class ErpBudgetAdditionController
  *
@@ -159,7 +162,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $validator = \Validator::make($input, [
-            'year' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
             'comments' => 'required',
             'templatesMasterAutoID' => 'required|numeric|min:1'
         ]);
@@ -167,6 +170,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
 
         $input['documentSystemID'] = 102;
         $input['documentID'] = 'BDA';
@@ -545,6 +555,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
+        $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
+
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
 
@@ -572,6 +585,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'financeYears' => $financeYears,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
             'masterTemplates' => $masterTemplates,
