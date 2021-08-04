@@ -36,18 +36,18 @@
 			 			<td>
 			 				{{$row->glDescription}}
 			 			</td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
-			 			<td></td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
+			 			<td>0</td>
 			 		</tr>
 		 		@endforeach
 	 		@endforeach

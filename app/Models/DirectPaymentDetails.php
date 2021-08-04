@@ -293,6 +293,7 @@ class DirectPaymentDetails extends Model
         'glCodeDes',
         'glCodeIsBank',
         'comments',
+        'deductionType',
         'supplierTransCurrencyID',
         'supplierTransER',
         'DPAmountCurrency',
@@ -349,6 +350,7 @@ class DirectPaymentDetails extends Model
         'glCodeDes' => 'string',
         'glCodeIsBank' => 'integer',
         'comments' => 'string',
+        'deductionType' => 'integer',
         'supplierTransCurrencyID' => 'integer',
         'supplierTransER' => 'float',
         'DPAmountCurrency' => 'integer',
@@ -391,7 +393,7 @@ class DirectPaymentDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function segment()
@@ -412,5 +414,10 @@ class DirectPaymentDetails extends Model
     public function budget_detail()
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'chartOfAccountSystemID','chartOfAccountID');
+    }
+
+    public function monthly_deduction_det()
+    {
+        return $this->belongsTo(MonthlyDeclarationsTypes::class, 'deductionType', 'monthlyDeclarationID');
     }
 }

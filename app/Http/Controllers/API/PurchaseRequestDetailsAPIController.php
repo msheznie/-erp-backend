@@ -570,6 +570,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 //checking if item category is same or not
                 $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                     ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                    ->whereNotNull('itemFinanceCategoryID')
                     ->first();
 
                 if ($pRDetailExistSameItem) {

@@ -1239,7 +1239,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "supplierConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
                 break;
-             case 86:
+            case 86:
                 $docInforArr["tableName"] = 'registeredsupplier';
                 $docInforArr["modelName"] = 'RegisteredSupplier';
                 $docInforArr["primarykey"] = 'supplierName';
@@ -1817,6 +1817,12 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
+                            // create monthly deduction
+                            if ($input["documentSystemID"] == 4) {
+                                $monthly_ded = new HrMonthlyDeductionService( $input['documentSystemCode'] );
+                                $monthly_ded->create_monthly_deduction();
+                            }
+
                             if ($input["documentSystemID"] == 99) { // asset verification
                                 $verified_date = $isConfirmed['documentDate'];
                                 AssetVerificationDetail::where('verification_id', $isConfirmed['id'])->get()->each(function ($asset) use ($verified_date) {
@@ -2067,6 +2073,7 @@ class Helper
                                 }
                             }
 
+
                             // generate asset costing
                             if ($input["documentSystemID"] == 22) {
                                 $assetCosting = self::generateAssetCosting($sourceModel);
@@ -2091,7 +2098,8 @@ class Helper
                                 $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
 
-                        } else {
+                        }
+                        else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }
@@ -2224,13 +2232,22 @@ class Helper
             } else {
                 return ['success' => false, 'message' => 'No records found'];
             }
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollback();
             //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
-            return ['success' => false, 'message' => 'Error Occurred'];
-            // return ['success' => false, 'message' => $e->getMessage()];
+
+
+            $msg = 'Error Occurred';
+            if( in_array($e->getCode(), [404, 500]) ){
+                $msg = $e->getMessage();
+            }
+
+            return ['success' => false, 'message' => $msg];
+            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
+
         }
     }
 

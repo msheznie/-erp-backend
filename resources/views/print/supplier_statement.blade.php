@@ -159,23 +159,35 @@
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $val)
             <tr style="width:100%">
-                <td colspan="10"><span style="font-size: 11px; font-weight: bold">{{$key}}</span></td>
+                @if(!$sentEmail)
+                    <td colspan="10"><span style="font-size: 11px; font-weight: bold">{{$key}}</span></td>
+                @endif
+                @if($sentEmail)
+                    <td colspan="9"><span style="font-size: 11px; font-weight: bold">{{$key}}</span></td>
+                @endif
             </tr>
             @foreach ($val as $key2 => $val2)
                 <tr style="width:100%">
-                    <td colspan="10"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
+                    @if(!$sentEmail)
+                        <td colspan="10"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
+                    @endif
+                    @if($sentEmail)
+                        <td colspan="9"><span style="font-size: 9px; font-weight: bold">{{$key2}}</span></td>
+                    @endif
                 </tr>
                 <tr style="width:100%">
-                    <th style="width:5%">Doc ID</th>
-                    <th style="width:10%">Document Code</th>
-                    <th style="width:7%">Doc Date</th>
-                    <th style="width:31%">Narration</th>
-                    <th style="width:9%">Invoice Number</th>
-                    <th style="width:7%">Invoice Date</th>
-                    <th style="width:5%">Currency</th>
-                    <th style="width:6%">Age Days</th>
-                    <th style="width:10%">Doc Amount</th>
-                    <th style="width:10%">BalanceAmount</th>
+                    <th>Doc ID</th>
+                    <th>Document Code</th>
+                    <th>Doc Date</th>
+                    @if(!$sentEmail)
+                        <th>Narration</th>
+                    @endif
+                    <th>Invoice Number</th>
+                    <th>Invoice Date</th>
+                    <th>Currency</th>
+                    <th>Age Days</th>
+                    <th>Doc Amount</th>
+                    <th>BalanceAmount</th>
                 </tr>
                 <tbody>
                 {{ $lineTotal = 0 }}
@@ -184,7 +196,9 @@
                         <td>{{ $det2->documentID }}</td>
                         <td>{{ $det2->documentCode }}</td>
                         <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
-                        <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
+                         @if(!$sentEmail)
+                            <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
+                         @endif
                         <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
                         <td>{{ $det2->documentCurrency }}</td>
@@ -195,8 +209,14 @@
                     {{$lineTotal += $det2->balanceAmount}}
                 @endforeach
                 <tr width="100%">
-                    <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
-                        class="text-right"><b>Total:</b></td>
+                    @if(!$sentEmail)
+                        <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
+                            class="text-right"><b>Total:</b></td>
+                    @endif
+                    @if($sentEmail)
+                        <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
+                            class="text-right"><b>Total:</b></td>
+                    @endif
                     <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
                 </tr>
                 </tbody>
@@ -204,8 +224,14 @@
         @endforeach
         <tfoot>
         <tr width="100%">
-            <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
-                class="text-right"><b>Grand Total:</b></td>
+            @if(!$sentEmail)
+                <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
+                    class="text-right"><b>Grand Total:</b></td>
+            @endif
+            @if($sentEmail)
+                <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
+                    class="text-right"><b>Grand Total:</b></td>
+            @endif
             <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>
         </tr>
         </tfoot>

@@ -804,7 +804,9 @@ class SrpEmployeeDetails extends Model
 {
 
     public $table = 'srp_employeesdetails';
-    
+
+    protected $primaryKey = 'EIdNo';
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -1113,8 +1115,12 @@ class SrpEmployeeDetails extends Model
      * @var array
      */
     public static $rules = [
-        'LocalPOSUserType' => 'required'
+
     ];
 
+    public function currency()
+    {
+        return $this->belongsTo(CurrencyMaster::class, 'payCurrencyID', 'currencyID');
+    }
     
 }

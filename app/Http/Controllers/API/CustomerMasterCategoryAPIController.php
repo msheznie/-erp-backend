@@ -156,6 +156,22 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 $input['createdPCID'] = gethostname();
                 $input['createdUserID'] = $employee->empID;
                 $customerMasterCategories = $this->customerMasterCategoryRepository->create($input);
+
+
+                $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $customerMasterCategories->categoryID, 'customerCategory');
+                if ($validatorResult['success']) {
+                    $createData = [
+                        'customerMasterCategoryID' => $customerMasterCategories->categoryID,
+                        'companySystemID' => $input['companySystemID'],
+                        'categoryDescription' => $input['categoryDescription'],
+                        'createdUserID' => $employee->empID,
+                        'isAssigned' => 1,
+                        'isActive' => 1,
+                    ];
+
+                    $customerMasterCategoryAssigned = CustomerMasterCategoryAssigned::create($createData);
+                }
+
             }
         }
         return $this->sendResponse($input, trans('custom.save', ['attribute' => trans('custom.customer_master_categories')]));
