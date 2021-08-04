@@ -218,6 +218,7 @@ class ContingencyBudgetPlan extends Model
         'confirmedYN',
         'confirmedDate',
         'confirmedByEmpSystemID',
+        'companyFinanceYearID',
         'confirmedByEmpID',
         'confirmedByEmpName',
         'approvedYN',
@@ -249,6 +250,7 @@ class ContingencyBudgetPlan extends Model
     protected $casts = [
         'ID' => 'integer',
         'documentSystemID' => 'integer',
+        'companyFinanceYearID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',

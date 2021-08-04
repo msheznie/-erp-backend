@@ -60,7 +60,9 @@ class BudgetAdditionAdjustment implements ShouldQueue
                      $Value = Budjetdetails::where('companySystemID', $budgetAddition->companySystemID)
                      ->where('serviceLineSystemID', $item['serviceLineSystemID'])
                      ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
-                     ->where('Year', $item['year'])
+                     ->whereHas('budget_master', function($query) use ($item) {
+                        $query->where('Year', $item['year']);
+                     })
                      ->sum('budjetAmtRpt');
                     
                     $newValue = ($Value + ($item['adjustmentAmountRpt'] * $conversion)) * $conversion;
@@ -85,8 +87,13 @@ class BudgetAdditionAdjustment implements ShouldQueue
                      $BudgetDetails = Budjetdetails::where('companySystemID', $budgetAddition->companySystemID)
                      ->where('serviceLineSystemID', $item['serviceLineSystemID'])
                      ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
-                     ->where('Year', $budgetAddition->year)
-                     ->where('month','>=', date("m"))
+                     ->whereHas('budget_master', function($query) use ($budgetAddition) {
+                            $query->where('Year', $budgetAddition->year);
+                        })
+                        ->where(function($query) {
+                            $query->where('month','>=', date("m"))
+                                  ->orWhere('Year','>', date("Y"));
+                        })
                      ->get();
 
                     $TotalCount = count($BudgetDetails); 

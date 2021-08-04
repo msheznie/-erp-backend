@@ -46,6 +46,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class BudgetTransferFormController
@@ -152,7 +153,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $input['createdDate'] = now();
 
         $validator = \Validator::make($input, [
-            'year' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
             'comments' => 'required',
             'templatesMasterAutoID' => 'required|numeric|min:1'
         ]);
@@ -160,6 +161,13 @@ class BudgetTransferFormAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
 
         $input['documentSystemID'] = 46;
         $input['documentID'] = 'BTN';
@@ -625,7 +633,9 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $years = Year::orderBy('year','desc')->get();
+        $yearsArray = Year::orderBy('year','desc')->get();
+        $years = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
@@ -651,6 +661,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'yearsArray' => $yearsArray,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
             'masterTemplates' => $masterTemplates,
@@ -1015,6 +1026,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                 $saveData['createdUserSystemID'] = $employee->employeeSystemID;
                 $saveData['createdDate'] = now();
                 $saveData['year'] = $budgetYears[0];
+                $saveData['companyFinanceYearID'] = CompanyFinanceYear::financeYearID($budgetYears[0], $input['companySystemID']);
                 $saveData['comments'] = $commentAndDoc['comment'];
                 $saveData['companySystemID'] = $input['companySystemID'];
                 $saveData['templatesMasterAutoID'] = $value;
@@ -1121,6 +1133,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                 $saveData['modifiedUser'] = \Helper::getEmployeeID();
                 $saveData['modifiedPc'] = gethostname();
                 $saveData['year'] = $budgetYears[0];
+                $saveData['companyFinanceYearID'] = CompanyFinanceYear::financeYearID($budgetYears[0], $input['companySystemID']);
                 $saveData['comments'] = $commentAndDoc['comment'];
                 $saveData['companySystemID'] = $input['companySystemID'];
                 $saveData['templatesMasterAutoID'] = $value;
