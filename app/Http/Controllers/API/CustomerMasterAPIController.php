@@ -387,7 +387,7 @@ class CustomerMasterAPIController extends AppBaseController
             unset($input['gl_account']);
         }
 
-        if (isset($input['unbilled_account'])) {
+        if (array_key_exists('unbilled_account', $input)) {
             unset($input['unbilled_account']);
         }
 
