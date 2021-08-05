@@ -19,6 +19,7 @@ use App\Http\Requests\API\UpdatePurchaseRequestDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
+use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
 use App\Models\SegmentAllocatedItem;
@@ -195,8 +196,19 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+
+            if ($item->financeCategoryMaster == 3) {
+                $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
+                if (!$assetCategory) {
+                    return $this->sendError('Asset category not assigned for the selected item.');
+                }
+                $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
+                $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
+            } else {
+                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            }
+
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
             
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -551,8 +563,18 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+
+         if ($item->financeCategoryMaster == 3) {
+            $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
+            if (!$assetCategory) {
+                return $this->sendError('Asset category not assigned for the selected item.');
+            }
+            $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
+            $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
+        } else {
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+        }
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
