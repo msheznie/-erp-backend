@@ -319,7 +319,9 @@ class AssetRequestDetailAPIController extends AppBaseController
     public function getAssetDropData(Request $request){ 
         $input = $request->all();
         $companyID = $input['companyId'];
-        $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)->get();
+        $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)
+        ->where('approved',-1)
+        ->get();
         return $this->sendResponse($assetMaster->toArray(), 'Asset master data retrieved successfully');
     }
    
