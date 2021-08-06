@@ -238,6 +238,7 @@ class BudgetConsumptionService
 	    }
 
 	    $budgetFormData['departmentWiseCheckBudgetPolicy'] = $departmentWiseCheckBudgetPolicy;
+	    $budgetFormData['glCodes'] = [];
 	    $budgetData = [];
 	    $validateArray = [];
 
