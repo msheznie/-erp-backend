@@ -112,7 +112,8 @@ class AssetFinanceCategory extends Model
         'currentSerialNumber',
         'modifiedPc',
         'modifiedUser',
-        'timestamp'
+        'timestamp',
+        'serializationBasedOn' 
     ];
 
     /**
@@ -140,7 +141,8 @@ class AssetFinanceCategory extends Model
         'formula' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'serializationBasedOn' => 'integer'
     ];
 
     /**

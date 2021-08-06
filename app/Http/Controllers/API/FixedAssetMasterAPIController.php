@@ -251,8 +251,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                     if ($grvDetails->noQty < 1) {
                         // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
 
-                        $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
-
+                        $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
+                        
                         if ($documentCodeData['status']) {
                             $documentCode = $documentCodeData['documentCode'];
                             $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
@@ -335,8 +335,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                             foreach ($qtyRange as $key => $qty) {
                                 // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
 
-                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
-
+                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
+                                
                                 if ($documentCodeData['status']) {
                                     $documentCode = $documentCodeData['documentCode'];
                                     $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
@@ -523,7 +523,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
-            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID']);
+            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
 
             if ($documentCodeData['status']) {
                 $documentCode = $documentCodeData['documentCode'];

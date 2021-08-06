@@ -139,10 +139,11 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         return $this->sendResponse($assetFinanceCategories->toArray(), trans('custom.save', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
-    private function getAccountCode($id){
+    private function getAccountCode($id)
+    {
 
         $data = ChartOfAccount::find($id);
-        if(empty($data)){
+        if (empty($data)) {
             return '';
         }
 
@@ -250,8 +251,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input = $request->all();
         $formula = isset($input['formula']) ? $input['formula'] : null;
         $input = $this->convertArrayToValue($input);
+        $serializationBasedOn = $input['serializationBasedOn']; 
 
-        $input['faFinanceCatID'] = isset($input['faFinanceCatID'])?$input['faFinanceCatID']:0;
+        $input['faFinanceCatID'] = isset($input['faFinanceCatID']) ? $input['faFinanceCatID'] : 0;
         /** @var AssetFinanceCategory $assetFinanceCategory */
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->findOrFail($input['faFinanceCatID']);
 
@@ -282,6 +284,33 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+
+        if($serializationBasedOn == 0){ 
+            return $this->sendError('Please select a serialization', 500);
+        }
+
+        $companyDepLevelValidate = AssetFinanceCategory::where('faFinanceCatID', '!=', $input['faFinanceCatID'])
+            ->where('serializationBasedOn', '=', 1)
+            ->orWhere('serializationBasedOn', '=', 2)
+            ->get();  
+
+        if (count($companyDepLevelValidate) > 0) {
+            $companyDepLevelArray = array("1","2"); 
+            if (!in_array($serializationBasedOn,$companyDepLevelArray)) {
+              return $this->sendError('You cannot create this serialization configuration , because finance categories are configured with company or department level ', 500);
+            }
+        }
+
+        $otherSerializationBasedOn = AssetFinanceCategory::where('faFinanceCatID', '!=', $input['faFinanceCatID'])
+        ->WhereNotNull('serializationBasedOn')
+        ->where('serializationBasedOn', '!=', 1)
+        ->Where('serializationBasedOn', '!=', 2)
+        ->get();   
+
+        if((($serializationBasedOn == 1) || $serializationBasedOn == 2) && count($otherSerializationBasedOn) > 0){ 
+            return $this->sendError('You cannot create this serialization configuration , because different categories has been configured to other categories ', 500);
+        }
+
         $input['COSTGLCODE'] = $this->getAccountCode($input['COSTGLCODESystemID']);
         $input['ACCDEPGLCODE'] = $this->getAccountCode($input['ACCDEPGLCODESystemID']);
         $input['DEPGLCODE'] = $this->getAccountCode($input['DEPGLCODESystemID']);
@@ -297,8 +326,8 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         if (isset($input['DT_Row_Index'])) {
             unset($input['DT_Row_Index']);
         }
-        
-        $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID',$input['faFinanceCatID'])->update($input);
+
+        $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID', $input['faFinanceCatID'])->update($input);
 
         return $this->sendResponse($assetFinanceCategory, trans('custom.update', ['attribute' => trans('custom.asset_finance_categories')]));
     }
@@ -355,7 +384,8 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_finance_categories')]));
     }
 
-    public function getAllAssetFinanceCategory(Request $request){
+    public function getAllAssetFinanceCategory(Request $request)
+    {
 
         $input = $request->all();
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -365,7 +395,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         }
 
         $assetFinanceCategories = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)
-                                                       ->orderBy('faFinanceCatID',$sort);
+            ->orderBy('faFinanceCatID', $sort);
 
         $search = $request->input('search.value');
 
@@ -392,9 +422,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
 
 
-        $chartOfAccounts = ChartOfAccountsAssigned::where('companySystemID',$companyId)
-                                                    ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
-                                                    ->get();
+        $chartOfAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+            ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
+            ->get();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -403,5 +433,4 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
-
 }
