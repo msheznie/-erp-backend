@@ -1833,7 +1833,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
     public function customerStatementExportPdf($request, $sentTo = false)
     {
-         if ($request->reportTypeID == 'CSA') {
+        if ($request->reportTypeID == 'CSA') {
             $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
             $checkIsGroup = Company::find($request->companySystemID);
             $customerName = CustomerMaster::find($request->singleCustomer);
@@ -1920,6 +1920,67 @@ class AccountsReceivableReportAPIController extends AppBaseController
         }
     }
 
+     public function customerLedgerExportPdf($request, $sentTo = false)
+    {
+        $reportTypeID = $request['reportTypeID'];
+        if ($reportTypeID == 'CLT1') { //customer ledger template 1
+
+            $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID'));
+            $checkIsGroup = Company::find($request->companySystemID);
+
+            $companyLogo = $checkIsGroup->logo_url;
+            $output = $this->getCustomerLedgerTemplate1QRY($request);
+
+            $outputArr = array();
+            $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+            $invoiceAmount = array_sum($invoiceAmount);
+
+            $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+            $paidAmount = array_sum($paidAmount);
+
+            $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+            $balanceAmount = array_sum($balanceAmount);
+
+            $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+            $decimalPlace = array_unique($decimalPlace);
+
+            if ($output) {
+                foreach ($output as $val) {
+                    $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
+                }
+            }
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($request->fromDate),'companyLogo' => $companyLogo);
+
+            $html = view('print.customer_ledger_template_one', $dataArr);
+
+            return ['html' => $html, 'output' => $output];
+        } else {
+            $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID'));
+            $checkIsGroup = Company::find($request->companySystemID);
+
+            $companyLogo = $checkIsGroup->logo_url;
+            $output = $this->getCustomerLedgerTemplate2QRY($request);
+
+            $outputArr = array();
+            $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+            $invoiceAmount = array_sum($invoiceAmount);
+
+            $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+            $decimalPlace = array_unique($decimalPlace);
+
+            if ($output) {
+                foreach ($output as $val) {
+                    $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
+                }
+            }
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate),'companyLogo' => $companyLogo);
+
+            $html = view('print.customer_ledger_template_two', $dataArr);
+
+            return ['html' => $html, 'output' => $output];
+        }
+    }
+
     public function sentCustomerStatement(Request $request)
     {
         $input = $request->all();
@@ -1982,6 +2043,80 @@ class AccountsReceivableReportAPIController extends AppBaseController
             return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
         } else {
             return $this->sendResponse($emailSentTo, 'Customer statement report sent');
+        }
+    }
+
+    public function sentCustomerLedger(Request $request)
+    {
+        $input = $request->all();
+
+        $customers = $input['customers'];
+        $errorMessage = [];
+        foreach ($customers as $key => $value) {
+            $input['customers'] = [];
+            $input['customers'][] = $value;
+
+            $htmlRes = $this->customerLedgerExportPdf($input, true);
+            if (isset($htmlRes['output']) && count($htmlRes['output']) > 0) {
+                $html = $htmlRes['html'];
+                $pdf = \App::make('dompdf.wrapper');
+                $path = public_path().'/uploads/emailAttachment';
+
+                if (!file_exists($path)) {
+                    File::makeDirectory($path, 0777, true, true);
+                }
+                $nowTime = time();
+
+                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_ledger_' . $nowTime . '.pdf');
+
+                $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];
+
+                $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+                                                       ->get();
+
+                $customerMaster = CustomerMaster::find($customerCodeSystem);
+
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                $emailSentTo = 0;
+
+                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+                    "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+                    "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+                
+                if ($fetchCusEmail) {
+                    foreach ($fetchCusEmail as $row) {
+                        if (!empty($row->contactPersonEmail)) {
+                            $emailSentTo = 1;
+                            $dataEmail['empEmail'] = $row->contactPersonEmail;
+
+                            $dataEmail['companySystemID'] = $input['companySystemID'];
+
+                            $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
+
+                            $pdfName = realpath("uploads/emailAttachment/customer_ledger_" . $nowTime . ".pdf");
+
+                            $dataEmail['isEmailSend'] = 0;
+                            $dataEmail['attachmentFileName'] = $pdfName;
+                            $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
+                            $dataEmail['emailAlertMessage'] = $temp;
+                            $sendEmail = \Email::sendEmailErp($dataEmail);
+                            if (!$sendEmail["success"]) {
+                                $errorMessage[] = $sendEmail["message"];
+                            }
+                        }
+                    }
+                }
+
+                if ($emailSentTo == 0) {
+                    $errorMessage[] = "Customer email is not updated for ".$customerMaster->CustomerName.". report is not sent";
+                } 
+            }
+        }
+
+        if (count($errorMessage) > 0) {
+            return $this->sendError($errorMessage,500);
+        } else {
+            return $this->sendResponse([], 'Customer ledger report sent');
         }
     }
 

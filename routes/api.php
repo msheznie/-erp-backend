@@ -2009,7 +2009,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
         Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
+        Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger');
         Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
+        Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
         Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
 
