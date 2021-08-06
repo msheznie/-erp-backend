@@ -202,6 +202,7 @@ SELECT
 	2 as DecimalPlaces ,
 	'' AS DocumentCurrency,
 	0 AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	- 1 AS documentType 
 FROM
@@ -244,6 +245,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_purchaseordermaster.poTotalSupplierTransactionCurrency AS DocumentValue,
+	erp_purchaseordermaster.amended AS amended,
 	erp_documentapproved.approvedYN,
 	- 1 AS documentType 
 FROM
@@ -287,6 +289,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
 FROM
@@ -329,6 +332,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_bookinvsuppmaster.documentType AS documentType 
 FROM
@@ -371,6 +375,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_debitnote.debitAmountTrans AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_debitnote.documentType AS documentType 
 FROM
@@ -412,6 +417,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_custinvoicedirect.bookingAmountTrans + IFNULL(VATAmount,0) AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_custinvoicedirect.documentType AS documentType 
 FROM
@@ -454,6 +460,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_creditnote.creditAmountTrans AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_creditnote.documentType AS documentType 
 FROM
@@ -495,6 +502,7 @@ SELECT
 	currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_quotationmaster.transactionAmount AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_quotationmaster.quotationType AS documentType 
 FROM
@@ -536,6 +544,7 @@ SELECT
 	currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_quotationmaster.transactionAmount AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_quotationmaster.quotationType AS documentType 
 FROM
@@ -577,6 +586,7 @@ SELECT
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	ABS(erp_customerreceivepayment.receivedAmount) AS DocumentValue,
+	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_customerreceivepayment.documentType AS documentType
 FROM
@@ -629,6 +639,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	2 as DecimalPlaces ,
 	'' AS DocumentCurrency,
 	0 AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	- 1 AS documentType 
@@ -682,6 +693,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_purchaseordermaster.poTotalSupplierTransactionCurrency AS DocumentValue,
+	erp_purchaseordermaster.amended AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	- 1 AS documentType 
@@ -736,6 +748,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
@@ -788,6 +801,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_bookinvsuppmaster.documentType AS documentType 
@@ -840,6 +854,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_debitnote.debitAmountTrans AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_debitnote.documentType AS documentType 
@@ -891,6 +906,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_custinvoicedirect.bookingAmountTrans + IFNULL(VATAmount,0) AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_custinvoicedirect.documentType AS documentType 
@@ -943,6 +959,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_creditnote.creditAmountTrans AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_creditnote.documentType AS documentType 
@@ -994,6 +1011,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_quotationmaster.transactionAmount AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_quotationmaster.quotationType AS documentType 
@@ -1045,6 +1063,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_quotationmaster.transactionAmount AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_quotationmaster.quotationType AS documentType 
@@ -1096,6 +1115,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	ABS(erp_customerreceivepayment.receivedAmount) AS DocumentValue,
+	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_customerreceivepayment.documentType AS documentType
