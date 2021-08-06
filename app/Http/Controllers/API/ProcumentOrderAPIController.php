@@ -1796,6 +1796,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.poType_N',
             'erp_purchaseordermaster.budgetYear',
             'erp_purchaseordermaster.rcmActivated',
+            'erp_purchaseordermaster.amended',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -4840,6 +4841,7 @@ ORDER BY
         if ($deleteApproval) {
             $purchaseOrder->refferedBackYN = 0;
             $purchaseOrder->poConfirmedYN = 0;
+            $purchaseOrder->amended = 1;
             $purchaseOrder->poConfirmedByEmpSystemID = null;
             $purchaseOrder->poConfirmedByEmpID = null;
             $purchaseOrder->poConfirmedByName = null;
