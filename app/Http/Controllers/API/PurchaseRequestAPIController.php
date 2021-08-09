@@ -1459,7 +1459,8 @@ class PurchaseRequestAPIController extends AppBaseController
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
-            return $this->sendResponse(array(), $approve["message"]);
+            $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
+            return $this->sendResponse($more_data, $approve["message"]);
         }
 
     }

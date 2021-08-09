@@ -71,6 +71,7 @@ use App\helper\CurrencyConversionService;
 use App\Jobs\BudgetAdditionAdjustment;
 use Illuminate\Support\Facades\Schema;
 use Response;
+use App\Models\CompanyFinanceYear;
 
 class Helper
 {
@@ -1716,10 +1717,12 @@ class Helper
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
 
+
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
             $userMessage = 'Successfully approved the document';
+            $more_data = [];
             $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
@@ -1818,9 +1821,15 @@ class Helper
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
                             // create monthly deduction
-                            if ($input["documentSystemID"] == 4) {
+                            if ($input["documentSystemID"] == 4 &&
+                                $input['createMonthlyDeduction'] == 1 &&
+                                Helper::checkHrmsIntergrated($input['companySystemID'])
+                            ) {
+
                                 $monthly_ded = new HrMonthlyDeductionService( $input['documentSystemCode'] );
-                                $monthly_ded->create_monthly_deduction();
+                                $message = $monthly_ded->create_monthly_deduction();
+
+                                $more_data = ($message != '')? ['custom_message'=> $message]: [];
                             }
 
                             if ($input["documentSystemID"] == 99) { // asset verification
@@ -2225,7 +2234,7 @@ class Helper
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => $userMessage];
+                    return ['success' => true, 'message' => $userMessage, 'data'=> $more_data];
                 } else {
                     return ['success' => false, 'message' => 'Level is already approved'];
                 }
