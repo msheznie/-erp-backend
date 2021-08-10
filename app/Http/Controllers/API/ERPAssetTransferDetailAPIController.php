@@ -136,6 +136,30 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 if (count($erpAsset) > 0) {
                     return $this->sendError('Same asset cannot be link multiple times');
                 }
+
+                $assetExistUnApproved = ERPAssetTransferDetail::with(['assetTransferMaster'])
+                ->where('fa_master_id',$value['assetDropTransferID']) 
+                ->whereHas('assetTransferMaster', function ($query) use ($value) {
+                    $query->where('company_id', $value['company_id'])
+                        ->where('approved_yn', -1);
+                })
+                ->first();  
+                if(!empty($assetExistUnApproved->assetTransferMaster)){ 
+                    return $this->sendError('Asset already pulled to unapproved document '.$assetExistUnApproved->assetTransferMaster->document_code);  
+                }
+
+                $assetExistUnApproved = ERPAssetTransferDetail::where('fa_master_id',$value['assetDropTransferID'])
+                ->whereHas('smePayAsset', function ($query) use ($value) {
+                    $query->where('companyID', $value['company_id'])
+                        ->where('returnStatus', 0);
+                })
+                ->where('receivedYN','=','1')
+                ->first(); 
+                if(!empty($assetExistUnApproved)){ 
+                    return $this->sendError('Asset already acknowledged');  
+                }
+
+                
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
                     'erp_fa_fa_asset_request_id' => $value['erp_fa_fa_asset_request_id'],
