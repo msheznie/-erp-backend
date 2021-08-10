@@ -28,6 +28,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditTrial;
+
 /**
  * Class ERPAssetTransferController
  * @package App\Http\Controllers\API
@@ -181,9 +182,9 @@ class ERPAssetTransferAPIController extends AppBaseController
             $input['budgetYear'] = $input['budgetYear'];
             $input['documentSystemID'] = 103;
             $company = Company::where('companySystemID', $company_id)->first();
-			if ($company) {
-				$input['company_code'] = $company->CompanyID;
-			}
+            if ($company) {
+                $input['company_code'] = $company->CompanyID;
+            }
             $input['updated_user_id'] = \Helper::getEmployeeSystemID();
             $eRPAssetTransfer = $this->eRPAssetTransferRepository->create($input);
             DB::commit();
@@ -577,7 +578,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $assetTransferID =  $request['id'];
         $assetTransferMaster = ERPAssetTransfer::where('company_id', $companyId)->where('id', $assetTransferID)->first();
-      /*   $data['assetMaster_drop'] = DB::select("SELECT faID,
+        /*   $data['assetMaster_drop'] = DB::select("SELECT faID,
         CONCAT(faCode,'-',assetDescription) as asset
         FROM
         `erp_purchaseorderdetails`
@@ -587,20 +588,20 @@ class ERPAssetTransferAPIController extends AppBaseController
         erp_purchaseorderdetails.companySystemID = $companyId 
         AND purchaseRequestID = $assetTransferMaster->purchaseRequestID  
         AND docOriginDocumentID = 'GRV'"); */
-         $data['assetMaster_drop'] =  PurchaseOrderDetails::with(['grvDetails'=> function ($q) {
-            $q->with(['assetMaster'=> function ($q2)  {
-                $q2->where('docOriginDocumentID','GRV')
-                ->where('approved',-1);
+        $data['assetMaster_drop'] =  PurchaseOrderDetails::with(['grvDetails' => function ($q) {
+            $q->with(['assetMaster' => function ($q2) {
+                $q2->where('docOriginDocumentID', 'GRV')
+                    ->where('approved', -1);
             }]);
-        } ])
-        ->whereHas('grvDetails', function($q){
-            $q->whereHas('assetMaster',function ($q2)  {
-                $q2->where('docOriginDocumentID','GRV')
-                ->where('approved',-1);
-            });
-        })
-        ->where('companySystemID',$companyId )
-        ->where('purchaseRequestID',$assetTransferMaster->purchaseRequestID)->get(); 
+        }])
+            ->whereHas('grvDetails', function ($q) {
+                $q->whereHas('assetMaster', function ($q2) {
+                    $q2->where('docOriginDocumentID', 'GRV')
+                        ->where('approved', -1);
+                });
+            })
+            ->where('companySystemID', $companyId)
+            ->where('purchaseRequestID', $assetTransferMaster->purchaseRequestID)->get();
 
         return $data;
     }
@@ -682,7 +683,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         return $this->sendResponse($assetTransfer, 'Data retrieved successfully');
-    } 
+    }
     public function assetTransferReopen(Request $request)
     {
         $input = $request->all();
@@ -706,8 +707,10 @@ class ERPAssetTransferAPIController extends AppBaseController
             return $this->sendError('You cannot reopen this Asset Transfer, it is not confirmed');
         }
 
-        $updateInput = ['confirmed_yn' => 0, 'confirmedByEmpID' => null, 'confirmedByName' => null,
-            'confirmed_by_emp_id' => null, 'confirmed_date' => null, 'current_level_no' => 1];
+        $updateInput = [
+            'confirmed_yn' => 0, 'confirmedByEmpID' => null, 'confirmedByName' => null,
+            'confirmed_by_emp_id' => null, 'confirmed_date' => null, 'current_level_no' => 1
+        ];
 
         $this->eRPAssetTransferRepository->update($updateInput, $id);
 
@@ -731,7 +734,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         if ($documentApproval) {
             if ($documentApproval->approvedYN == 0) {
                 $companyDocument = CompanyDocumentAttachment::where('companySystemID', $assetTransfer->company_id)
-                    ->where('documentSystemID',103)
+                    ->where('documentSystemID', 103)
                     ->first();
 
                 if (empty($companyDocument)) {
@@ -749,12 +752,14 @@ class ERPAssetTransferAPIController extends AppBaseController
 
                 foreach ($approvalList as $da) {
                     if ($da->employee) {
-                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                        $emails[] = array(
+                            'empSystemID' => $da->employee->employeeSystemID,
                             'companySystemID' => $documentApproval->companySystemID,
                             'docSystemID' => $documentApproval->documentSystemID,
                             'alertMessage' => $subject,
                             'emailAlertMessage' => $body,
-                            'docSystemCode' => $documentApproval->documentSystemCode);
+                            'docSystemCode' => $documentApproval->documentSystemCode
+                        );
                     }
                 }
 
@@ -767,11 +772,11 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $assetTransfer->company_id)
-            ->where('documentSystemID',103)
+            ->where('documentSystemID', 103)
             ->delete();
 
         /*Audit entry*/
-        AuditTrial::createAuditTrial(103,$id,$input['reopenComments'],'Reopened');
+        AuditTrial::createAuditTrial(103, $id, $input['reopenComments'], 'Reopened');
 
         return $this->sendResponse($assetTransfer->toArray(), 'Asset Transfer reopened successfully');
     }
@@ -791,7 +796,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             return $this->sendError('You cannot refer back this asset transfer');
         }
 
-        $assetTransferArray = $assetTransferMasterData->toArray(); 
+        $assetTransferArray = $assetTransferMasterData->toArray();
         $assetTransferArray = \array_diff_key($assetTransferArray, ["transfer_type" => "Transfer Type", "document_date_formatted" => "Document Date Formatted"]);
         $storeAssetTransferHistory = AssetTransferReferredback::insert($assetTransferArray);
 
@@ -801,13 +806,13 @@ class ERPAssetTransferAPIController extends AppBaseController
             foreach ($assetTransferDetailRec as $assetTrans) {
                 $assetTrans['timesReferred'] = $assetTransferMasterData->timesReferred;
             }
-        } 
+        }
 
         $assetTransferDetailArray = $assetTransferDetailRec->toArray();
 
         $storeAssetTransferDetailHistory = ERPAssetTransferDetailsRefferedback::insert($assetTransferDetailArray);
 
-         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $assetTransferAutoID)
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $assetTransferAutoID)
             ->where('companySystemID', $assetTransferMasterData->company_id)
             ->where('documentSystemID', $assetTransferMasterData->documentSystemID)
             ->get();
@@ -836,8 +841,55 @@ class ERPAssetTransferAPIController extends AppBaseController
             $assetTransferMasterData->confirmed_date = null;
             $assetTransferMasterData->current_level_no = 1;
             $assetTransferMasterData->save();
-        } 
+        }
         return $this->sendResponse($assetTransferMasterData->toArray(), 'Asset Transfer amend successfully');
     }
 
+    public function assetStatus(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $assetID = $input['assetID'];
+        $data['acknowledgedYN'] = 0;
+
+        $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('receivedYN', 0)
+            ->get();
+
+
+
+        if (count($data['assetRecords']) == 0) {
+            $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                $q->with(['createdUserID']);
+            },'smePayAsset'])
+                ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                    $query->where('company_id', $companyID)
+                        ->where('approved_yn', -1);
+                })
+                 ->whereHas('smePayAsset', function ($query) use ($companyID) {
+                    $query->where('companyID', $companyID)
+                        ->where('returnStatus', 0);
+                })
+                ->where('fa_master_id', $assetID)
+                ->where('receivedYN', 1)
+                ->get();
+
+            $data['acknowledgedYN'] = 1;
+        }
+
+        $data['assetCode'] = isset($data['assetRecords'][0]) ? $data['assetRecords'][0]->assetMaster->asset_code_concat : '-';
+
+        return $data;
+    }
 }
