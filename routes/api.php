@@ -1439,6 +1439,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation');
         Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode');
         Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
+        Route::get('getReportHeaderData', 'ReportTemplateAPIController@getReportHeaderData');
         Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
         Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
         Route::post('assignReportTemplateToGl', 'ReportTemplateLinksAPIController@assignReportTemplateToGl');
