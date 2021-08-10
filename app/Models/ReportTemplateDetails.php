@@ -224,6 +224,4 @@ class ReportTemplateDetails extends Model
     {
         return $this->gllink();
     }
-
-    
 }

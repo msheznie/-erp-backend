@@ -135,6 +135,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         try {
             $validator = \Validator::make($request->all(), [
                 'description' => 'required',
+                'prefix' => 'required',
+                'serialLength' => 'required',
                 'itemType' => 'required',
                 'sortOrder' => 'required',
             ]);
@@ -267,7 +269,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
-        if (isset($input['itemType']) && $input['itemType'] == 2) {
+        if (isset($input['itemType']) && ($input['itemType'] == 2 || $input['itemType'] == 1)) {
             if ($input['serialLength'] == 0) {
                 return $this->sendError("Serial Number length cannot be zero.", 500);
             }

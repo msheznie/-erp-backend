@@ -187,7 +187,7 @@ class DocumentCodeGenerate
 
 	public static function generateAccountCode($detID)
 	{
-		$reportCategoryDetail = ReportTemplateDetails::where('detID', $detID)->first();
+		$reportCategoryDetail = ReportTemplateDetails::with(['master'])->where('detID', $detID)->first();
 
 		if (!$reportCategoryDetail) {
 			return ['status' => false, 'message' => "Category not found", 'data' => ""];
@@ -195,7 +195,7 @@ class DocumentCodeGenerate
 
 		$code = "";
 		if ($reportCategoryDetail->prefix != "") {
-			$code = $reportCategoryDetail->prefix . str_pad($reportCategoryDetail->lastSerialNo + 1, $reportCategoryDetail->serialLength, '0', STR_PAD_LEFT);
+			$code = $reportCategoryDetail->prefix . str_pad($reportCategoryDetail->lastSerialNo + 1, $reportCategoryDetail->master->chartOfAccountSerialLength, '0', STR_PAD_LEFT);
 		}
 
 
