@@ -5190,7 +5190,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 if ($val->fcategory) {
                     $data[$x]['Category'] = $val->fcategory->categoryDescription;
                 } else {
-                    $data[$x]['Category'] = "";
+                    $data[$x]['Category'] = "Other";
                 }
 
                 $data[$x]['Narration'] = ($val->narration == "" || $val->narration == null) ? "-" : $val->narration;
