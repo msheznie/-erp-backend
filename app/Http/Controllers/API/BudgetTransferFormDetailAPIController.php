@@ -20,6 +20,8 @@ use App\Http\Requests\API\CreateBudgetTransferFormDetailAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormDetailAPIRequest;
 use App\Models\BudgetTransferFormDetail;
 use App\Models\Budjetdetails;
+use App\Models\Company;
+use App\Models\BudgetMaster;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\SegmentMaster;
@@ -695,6 +697,9 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
             ->where('templateDetailID',$input['fromTemplateDetailID'])
             ->where('Year',$input['year'])
+            ->whereHas('budget_master', function ($query) use ($input){
+                $query->where('templateMasterID', $input['templatesMasterAutoID']);
+            })
             ->count();
 
 
@@ -702,6 +707,17 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError('Selected account code is not available in the budget. Please allocate and try again.', 500);
         }
 
-        return $this->sendResponse($fromDataBudgetCheck, 'successfully');
+        $budgetAmount = Budjetdetails::where('companySystemID', $input['companySystemID'])
+            ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
+            ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
+            ->where('templateDetailID',$input['fromTemplateDetailID'])
+            ->where('Year',$input['year'])
+             ->whereHas('budget_master', function ($query) use ($input){
+                $query->where('templateMasterID', $input['templatesMasterAutoID']);
+            })
+            ->sum('budjetAmtRpt');
+
+        $companyData = Company::with(['reportingcurrency'])->find($input['companySystemID']);
+        return $this->sendResponse(['budgetAmount' => abs($budgetAmount), 'companyData' => $companyData], 'successfully');
     }
 }
