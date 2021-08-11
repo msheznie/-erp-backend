@@ -267,7 +267,11 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, $reportingCurrencyID, $reportingCurrencyID, $input['budjetAmtRpt']);
 
-        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+        if ($input['budjetAmtRpt'] < 0) {
+            $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
+        }
+
         $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
 
         return $this->sendResponse($budjetdetails->toArray(), trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
@@ -466,9 +470,17 @@ class BudjetdetailsAPIController extends AppBaseController
             if(!$item['budjetAmtRpt']){
                 $item['budjetAmtRpt'] = 0;
             }
-            $currencyConvection = \Helper::currencyConversion($item['companySystemID'], 2, 2, $item['budjetAmtRpt']);
 
-            $item['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+            $companyData = Company::find($budgetDetail->companySystemID);
+
+            $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
+
+            $currencyConvection = \Helper::currencyConversion($item['companySystemID'], $reportingCurrencyID, $reportingCurrencyID, $item['budjetAmtRpt']);
+
+            $item['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+            if ($item['budjetAmtRpt'] < 0) {
+                $item['budjetAmtLocal'] = abs($item['budjetAmtLocal']) * -1;
+            }
             $this->budjetdetailsRepository->update(array_only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
         }
 
@@ -638,7 +650,11 @@ class BudjetdetailsAPIController extends AppBaseController
         $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
 
         $currencyConvection = \Helper::currencyConversion($companySystemID, $reportingCurrencyID, $reportingCurrencyID, $budjetAmtRpt);
-        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+
+        if ($budjetAmtRpt < 0) {
+            $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
+        }
 
         return $input;
     }
