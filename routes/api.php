@@ -1168,6 +1168,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_masters', 'BudgetMasterAPIController');
         Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+        Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack');
         Route::post('getBudgetBlockedDocuments', 'BudgetMasterAPIController@getBudgetBlockedDocuments');
         Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
         Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
@@ -1181,6 +1182,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy');
         Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument');
         Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
+        Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
 
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
@@ -2138,6 +2140,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
         Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
         Route::get('assetStatus', 'ERPAssetTransferAPIController@assetStatus');
+
+        Route::resource('budget_master_reffered_histories', 'BudgetMasterRefferedHistoryAPIController');
+
+        Route::resource('budget_details_reffered_histories', 'BudgetDetailsRefferedHistoryAPIController');
+        Route::post('getBudgetAmendHistory', 'BudgetMasterRefferedHistoryAPIController@getBudgetAmendHistory');
+        Route::post('getDetailsByBudgetRefereback', 'BudgetDetailsRefferedHistoryAPIController@getDetailsByBudgetRefereback');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2247,3 +2255,4 @@ Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIControlle
 Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
 
 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
+
