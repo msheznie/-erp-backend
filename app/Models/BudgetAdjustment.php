@@ -140,6 +140,7 @@ class BudgetAdjustment extends Model
         'companyId',
         'companyFinanceYearID',
         'serviceLineSystemID',
+        'budgetMasterID',
         'serviceLine',
         'adjustedGLCodeSystemID',
         'adjustedGLCode',
@@ -168,6 +169,7 @@ class BudgetAdjustment extends Model
         'companySystemID' => 'integer',
         'companyId' => 'string',
         'companyFinanceYearID' => 'integer',
+        'budgetMasterID' => 'integer',
         'serviceLineSystemID' => 'integer',
         'serviceLine' => 'string',
         'adjustedGLCodeSystemID' => 'integer',
@@ -194,5 +196,13 @@ class BudgetAdjustment extends Model
         
     ];
 
-    
+    public function from_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'fromGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+     public function to_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'toGLCodeSystemID','chartOfAccountSystemID');
+    }
 }
