@@ -2211,7 +2211,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         return 'CRON Job run successfully';
     });
 
-
+    Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
 });
 
 
