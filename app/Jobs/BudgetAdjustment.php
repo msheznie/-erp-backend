@@ -78,6 +78,15 @@ class BudgetAdjustment implements ShouldQueue
                         })
                         ->sum('budjetAmtRpt');
 
+
+                    $fromValueBudget = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
+                        ->where('serviceLineSystemID', $item['fromServiceLineSystemID'])
+                        ->where('chartOfAccountID', $item['fromChartOfAccountSystemID'])
+                        ->whereHas('budget_master', function($query) use ($item) {
+                            $query->where('Year', $item['year']);
+                        })
+                        ->first();
+
                     $newFromValue = ($fromValue * $conversionFrom)  - $item['adjustmentAmountRpt'];
 
                     $toValue = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
@@ -87,6 +96,14 @@ class BudgetAdjustment implements ShouldQueue
                             $query->where('Year', $item['year']);
                         })
                         ->sum('budjetAmtRpt');
+
+                     $toValueBudget = Budjetdetails::where('companySystemID', $budgetTransfer->companySystemID)
+                        ->where('serviceLineSystemID', $item['toServiceLineSystemID'])
+                        ->where('chartOfAccountID', $item['toChartOfAccountSystemID'])
+                        ->whereHas('budget_master', function($query) use ($item) {
+                            $query->where('Year', $item['year']);
+                        })
+                        ->first();
 
                     $newToValue = ($toValue + ($item['adjustmentAmountRpt'] * $conversionTo)) * $conversionTo;
 
@@ -222,6 +239,7 @@ class BudgetAdjustment implements ShouldQueue
 
                     if ($fromAdjustment) {
                         $fromAdjustment['adjustedGLCodeSystemID'] = $item['fromChartOfAccountSystemID'];
+                        $fromAdjustment['budgetMasterID'] = ($fromValueBudget) ? $fromValueBudget->budgetmasterID : null;
                         $fromAdjustment['adjustedGLCode'] = $item['FromGLCode'];
                         $fromAdjustment['adjustmedLocalAmount'] = $item['adjustmentAmountLocal'] * -1;
                         $fromAdjustment['adjustmentRptAmount'] = $item['adjustmentAmountRpt'] * -1;
@@ -229,6 +247,7 @@ class BudgetAdjustment implements ShouldQueue
 
                     if ($toAdjustment) {
                         $toAdjustment['adjustedGLCodeSystemID'] = $item['toChartOfAccountSystemID'];
+                        $toAdjustment['budgetMasterID'] = ($toValueBudget) ? $toValueBudget->budgetmasterID : null;
                         $toAdjustment['adjustedGLCode'] = $item['toGLCode'];
                         $toAdjustment['adjustmedLocalAmount'] = $item['adjustmentAmountLocal'];
                         $toAdjustment['adjustmentRptAmount'] = $item['adjustmentAmountRpt'];

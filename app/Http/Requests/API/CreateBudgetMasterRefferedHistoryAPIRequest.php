@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Requests\API;
+
+use App\Models\BudgetMasterRefferedHistory;
+use InfyOm\Generator\Request\APIRequest;
+
+class CreateBudgetMasterRefferedHistoryAPIRequest extends APIRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        return BudgetMasterRefferedHistory::$rules;
+    }
+}

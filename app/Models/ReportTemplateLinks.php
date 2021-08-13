@@ -212,4 +212,9 @@ class ReportTemplateLinks extends Model
     {
         return $this->hasMany('App\Models\Budjetdetails', ['chartOfAccountID', 'templateDetailID'], ['glAutoID', 'templateDetailID']);
     }
+
+     public function items_refferd()
+    {
+        return $this->hasMany('App\Models\BudgetDetailsRefferedHistory', ['chartOfAccountID', 'templateDetailID'], ['glAutoID', 'templateDetailID']);
+    }
 }

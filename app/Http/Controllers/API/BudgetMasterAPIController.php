@@ -21,6 +21,9 @@ use App\Http\Requests\API\UpdateBudgetMasterAPIRequest;
 use App\Jobs\AddBudgetDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\BudgetMaster;
+use App\Models\BudgetMasterRefferedHistory;
+use App\Models\BudgetDetailsRefferedHistory;
+use App\Models\SegmentRights;
 use App\Models\Budjetdetails;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -31,6 +34,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ReportTemplateDetails;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
+use App\Models\DocumentReferedHistory;
 use App\Models\ReportTemplate;
 use App\Models\ReportTemplateLinks;
 use App\Models\DocumentMaster;
@@ -487,6 +491,21 @@ class BudgetMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $checkSegmentAccess = CompanyDocumentAttachment::companyDocumentAttachemnt($selectedCompanyId, 65);
+        $isServiceLineAccess = false;
+        if ($checkSegmentAccess && $checkSegmentAccess->isServiceLineAccess) {
+            $isServiceLineAccess = true;
+        }
+
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+
+        $accessibleSegments = SegmentRights::where('employeeSystemID', $employeeSystemID)
+                                           ->where('companySystemID', $selectedCompanyId)
+                                           ->get()
+                                           ->pluck('serviceLineSystemID')
+                                           ->toArray();
+
+
         $budgets = BudgetMaster::whereIn('companySystemID', $subCompanies)
                                 ->where('month',1)
                                 ->with(['segment_by', 'template_master', 'finance_year_by'])
@@ -498,6 +517,9 @@ class BudgetMasterAPIController extends AppBaseController
                                 })
                                 ->when(request('companyFinanceYearID') && !is_null($input['companyFinanceYearID']), function ($q) use ($input) {
                                     return $q->where('companyFinanceYearID', $input['companyFinanceYearID']);
+                                })
+                                 ->when(($isServiceLineAccess == true && (!request('serviceLineSystemID') || is_null($input['serviceLineSystemID']))), function ($q) use ($accessibleSegments) {
+                                    return $q->whereIn('serviceLineSystemID', $accessibleSegments);
                                 });
 
         $search = $request->input('search.value');
@@ -867,6 +889,22 @@ class BudgetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyId = $request['companyId'];
+
+
+        $checkSegmentAccess = CompanyDocumentAttachment::companyDocumentAttachemnt($companyId, 65);
+        $isServiceLineAccess = false;
+        if ($checkSegmentAccess && $checkSegmentAccess->isServiceLineAccess) {
+            $isServiceLineAccess = true;
+        }
+
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+
+        $accessibleSegments = SegmentRights::where('employeeSystemID', $employeeSystemID)
+                                           ->where('companySystemID', $companyId)
+                                           ->get()
+                                           ->pluck('serviceLineSystemID')
+                                           ->toArray();
+
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -883,6 +921,9 @@ class BudgetMasterAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->when(request('isFilter') == 0, function ($q) {
                 return $q->where('isActive', 1);
+            })
+            ->when($isServiceLineAccess == true, function ($q) use ($accessibleSegments){
+                return $q->whereIn('serviceLineSystemID', $accessibleSegments);
             })
             ->get();
 
@@ -1469,5 +1510,71 @@ class BudgetMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
+    }
+
+    public function budgetReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $budgetMasterID = $input['budgetMasterID'];
+
+        $budgetMaster = BudgetMaster::find($budgetMasterID);
+        if (empty($budgetMaster)) {
+            return $this->sendError('Budget not found');
+        }
+
+        if ($budgetMaster->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer Back this Budget');
+        }
+
+        $budgetMasterArray = $budgetMaster->toArray();
+
+        $storePOMasterHistory = BudgetMasterRefferedHistory::insert($budgetMasterArray);
+
+        $fetchBudgetDetail = Budjetdetails::where('budgetmasterID', $budgetMasterID)
+            ->get();
+
+
+        if (!empty($fetchBudgetDetail)) {
+            foreach ($fetchBudgetDetail as $poDetail) {
+                $poDetail['timesReferred'] = $budgetMaster->timesReferred;
+            }
+        }
+
+        $budgetDetailArray = $fetchBudgetDetail->toArray();
+
+        $storePODetailHistory = BudgetDetailsRefferedHistory::insert($budgetDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $budgetMasterID)
+            ->where('companySystemID', $budgetMaster->companySystemID)
+            ->where('documentSystemID', $budgetMaster->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $budgetMaster->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $budgetMasterID)
+            ->where('companySystemID', $budgetMaster->companySystemID)
+            ->where('documentSystemID', $budgetMaster->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $budgetMaster->refferedBackYN = 0;
+            $budgetMaster->confirmedYN = 0;
+            $budgetMaster->confirmedByEmpSystemID = null;
+            $budgetMaster->confirmedByEmpID = null;
+            $budgetMaster->confirmedDate = null;
+            $budgetMaster->RollLevForApp_curr = 1;
+            $budgetMaster->save();
+        }
+
+        return $this->sendResponse($budgetMaster->toArray(), 'Budget Amend successfully');
     }
 }
