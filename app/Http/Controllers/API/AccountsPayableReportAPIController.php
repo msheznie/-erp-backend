@@ -5103,9 +5103,9 @@ ORDER BY
                 }
                 $nowTime = time();
 
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime . '.pdf');
-
                 $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
+                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime.$supplierID. '.pdf');
+
 
                 $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
                     ->get();
@@ -5129,7 +5129,7 @@ ORDER BY
 
                             $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
+                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID. ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
@@ -5153,7 +5153,7 @@ ORDER BY
 
                             $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime . ".pdf");
+                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
@@ -5208,9 +5208,9 @@ ORDER BY
                 }
                 $nowTime = time();
 
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_ledger_' . $nowTime . '.pdf');
-
                 $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
+                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_ledger_' . $nowTime.$supplierID . '.pdf');
+
 
                 $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
                     ->get();
@@ -5234,7 +5234,7 @@ ORDER BY
 
                             $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier ledger report has been sent from ' . $company->CompanyName . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime . ".pdf");
+                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
@@ -5258,7 +5258,7 @@ ORDER BY
 
                             $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier ledger report has been sent from ' . $company->CompanyName . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime . ".pdf");
+                            $pdfName = realpath("uploads/emailAttachment/supplier_ledger_" . $nowTime.$supplierID . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;
