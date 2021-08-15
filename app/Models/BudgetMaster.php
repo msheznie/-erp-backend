@@ -112,6 +112,8 @@ class BudgetMaster extends Model
         'confirmedByEmpID',
         'confirmedDate',
         'approvedYN',
+        'refferedBackYN',
+        'timesReferred',
         'approvedByUserID',
         'approvedByUserSystemID',
         'approvedDate',
@@ -126,6 +128,8 @@ class BudgetMaster extends Model
     protected $casts = [
         'budgetmasterID' => 'integer',
         'companySystemID' => 'integer',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'companyID' => 'string',
         'companyFinanceYearID' => 'integer',
         'documentSystemID'  => 'integer',

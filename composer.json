@@ -25,6 +25,7 @@
         "maatwebsite/excel": "~2.1.0",
         "mpdf/mpdf": "^8.0",
         "prettus/l5-repository": "^2.6",
+        "rap2hpoutre/laravel-log-viewer": "^1.7",
         "s-ichikawa/laravel-sendgrid-driver": "^2.0",
         "seguce92/laravel-dompdf": "^2.1",
         "sentry/sentry-laravel": "^1.8",

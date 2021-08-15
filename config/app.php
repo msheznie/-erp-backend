@@ -172,6 +172,7 @@ return [
         App\Providers\HelperServiceProvider::class,
         //Sichikawa\LaravelSendgridDriver\SendgridTransportServiceProvider::class,
         Sichikawa\LaravelSendgridDriver\MailServiceProvider::class,
+        Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
     ],
 

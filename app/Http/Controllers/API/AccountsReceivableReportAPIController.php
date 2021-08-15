@@ -1999,9 +1999,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
         }
         $nowTime = time();
 
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_statement_' . $nowTime . '.pdf');
-
         $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_statement_' . $nowTime.$customerCodeSystem . '.pdf');
+
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
                                                ->get();
@@ -2025,7 +2025,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("uploads/emailAttachment/customer_statement_" . $nowTime . ".pdf");
+                    $pdfName = realpath("uploads/emailAttachment/customer_statement_" . $nowTime.$customerCodeSystem . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
@@ -2067,9 +2067,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 $nowTime = time();
 
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_ledger_' . $nowTime . '.pdf');
-
                 $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];
+                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_ledger_' . $nowTime.$customerCodeSystem . '.pdf');
+
 
                 $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
                                                        ->get();
@@ -2093,7 +2093,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                             $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
 
-                            $pdfName = realpath("uploads/emailAttachment/customer_ledger_" . $nowTime . ".pdf");
+                            $pdfName = realpath("uploads/emailAttachment/customer_ledger_" . $nowTime.$customerCodeSystem . ".pdf");
 
                             $dataEmail['isEmailSend'] = 0;
                             $dataEmail['attachmentFileName'] = $pdfName;

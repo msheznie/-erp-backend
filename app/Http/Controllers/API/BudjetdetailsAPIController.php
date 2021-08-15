@@ -19,6 +19,8 @@ use App\Http\Requests\API\CreateBudjetdetailsAPIRequest;
 use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
+use App\Models\BudgetDetailHistory;
+use App\Models\BudgetAdjustment;
 use App\Models\Company;
 use App\Models\BudgetMaster;
 use App\Models\ReportTemplateLinks;
@@ -708,6 +710,65 @@ class BudjetdetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($budgetMaster->toArray(), 'Budget details synced successfully');
+    }
+
+    public function getBudgetDetailHistory(Request $request)
+    {
+        $input = $request->all();
+        $budgetHistoryData  = [];
+        $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
+
+        if (!$budgetMaster) {
+            return $this->sendError("Budget Master not found");
+        }
+
+        $budgetHistoryData['initialBudget'] = BudgetDetailHistory::where('budgetmasterID', $input['budgetMasterID'])
+                                                                 ->where('chartOfAccountID', $input['glAutoID'])
+                                                                 ->where('templateDetailID', $input['templateDetailID'])
+                                                                 ->sum('budjetAmtRpt');
+
+
+        $budgetHistoryData['currentBudget'] = Budjetdetails::where('budgetmasterID', $input['budgetMasterID'])
+                                                                 ->where('chartOfAccountID', $input['glAutoID'])
+                                                                 ->where('templateDetailID', $input['templateDetailID'])
+                                                                 ->sum('budjetAmtRpt');
+
+
+
+        $budgetHistoryData['budgetOutgoingTransfer'] = BudgetAdjustment::with(['to_account'])
+                                                                     ->where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('fromGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->whereNotNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '<', 0)
+                                                                     ->get();
+
+
+        $budgetHistoryData['budgetIncomingTransfer'] = BudgetAdjustment::with(['from_account'])
+                                                                     ->where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('toGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->whereNotNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '>', 0)
+                                                                     ->get();
+
+        $budgetHistoryData['budgetAddition'] = BudgetAdjustment::where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('toGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                     ->whereNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '>', 0)
+                                                                     ->get();
+
+
+
+        return $this->sendResponse($budgetHistoryData, 'Budget history retrived successfully');
     }
 
 }
