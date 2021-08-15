@@ -239,7 +239,8 @@ class ContingencyBudgetPlan extends Model
         'budgetID',
         'templateMasterID',
         'contingencyPercentage',
-        'budgetAmount'
+        'budgetAmount',
+        'refferedBackYN'
     ];
 
     /**
@@ -285,7 +286,8 @@ class ContingencyBudgetPlan extends Model
         'budgetID' => 'integer',
         'templateMasterID' => 'integer',
         'contingencyPercentage' => 'float',
-        'budgetAmount' => 'float'
+        'budgetAmount' => 'float',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

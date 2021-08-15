@@ -1,30 +1,34 @@
 <?php
-/**
- * =============================================
- * -- File Name : BudgetTransferForm.php
- * -- Project Name : ERP
- * -- Module Name :  Budget
- * -- Author : Fayas
- * -- Create date : 17 - October 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BudgetTransferForm",
+ *      definition="ContingencyBudgetRefferedBack",
  *      required={""},
  *      @SWG\Property(
- *          property="budgetTransferFormAutoID",
- *          description="budgetTransferFormAutoID",
+ *          property="contingencyMasterRefferedBackID",
+ *          description="contingencyMasterRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="ID",
+ *          description="ID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="documentSystemID",
  *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -51,15 +55,39 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="contingencyBudgetNo",
+ *          description="contingencyBudgetNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="currencyID",
+ *          description="currencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contigencyAmount",
+ *          description="contigencyAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
  *          property="year",
  *          description="year",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="transferVoucherNo",
- *          description="transferVoucherNo",
- *          type="string"
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDate",
+ *          description="createdDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="comments",
@@ -71,6 +99,12 @@ use Eloquent as Model;
  *          description="confirmedYN",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedDate",
+ *          description="confirmedDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="confirmedByEmpSystemID",
@@ -95,6 +129,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="approvedDate",
+ *          description="approvedDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
  *          property="approvedByUserSystemID",
  *          description="approvedByUserSystemID",
  *          type="integer",
@@ -111,10 +151,28 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="RollLevForApp_curr",
  *          description="RollLevForApp_curr",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDateTime",
+ *          description="createdDateTime",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="createdUserSystemID",
@@ -131,28 +189,79 @@ use Eloquent as Model;
  *          property="createdPcID",
  *          description="createdPcID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="budgetID",
+ *          description="budgetID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="templateMasterID",
+ *          description="templateMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contingencyPercentage",
+ *          description="contingencyPercentage",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="budgetAmount",
+ *          description="budgetAmount",
+ *          type="number",
+ *          format="number"
  *      )
  * )
  */
-class BudgetTransferForm extends Model
+class ContingencyBudgetRefferedBack extends Model
 {
 
-    public $table = 'erp_budgettransferform';
-    
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timestamp';
+    public $table = 'erp_budget_contingency_referredback';
 
-    protected $primaryKey = 'budgetTransferFormAutoID';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+    protected $primaryKey  = 'contingencyMasterRefferedBackID';
+
 
     public $fillable = [
+        'ID',
         'documentSystemID',
+        'companyFinanceYearID',
         'documentID',
         'companySystemID',
         'companyID',
         'serialNo',
+        'contingencyBudgetNo',
+        'currencyID',
+        'contigencyAmount',
         'year',
-        'companyFinanceYearID',
-        'transferVoucherNo',
+        'serviceLineSystemID',
         'createdDate',
         'comments',
         'confirmedYN',
@@ -166,17 +275,21 @@ class BudgetTransferForm extends Model
         'approvedEmpID',
         'approvedEmpName',
         'timesReferred',
+        'refferedBackYN',
         'RollLevForApp_curr',
         'createdDateTime',
         'createdUserSystemID',
-        'templatesMasterAutoID',
         'createdUserID',
         'createdPcID',
         'modifiedPc',
         'modifiedUser',
         'modifiedUserSystemID',
         'timestamp',
-        'refferedBackYN'
+        'budgetID',
+        'templateMasterID',
+        'contingencyPercentage',
+        'budgetAmount',
+        'contingencyMasterRefferedBackID'
     ];
 
     /**
@@ -185,34 +298,46 @@ class BudgetTransferForm extends Model
      * @var array
      */
     protected $casts = [
-        'budgetTransferFormAutoID' => 'integer',
+        'contingencyMasterRefferedBackID' => 'integer',
+        'ID' => 'integer',
         'documentSystemID' => 'integer',
+        'companyFinanceYearID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serialNo' => 'integer',
-        'companyFinanceYearID' => 'integer',
+        'contingencyBudgetNo' => 'string',
+        'currencyID' => 'integer',
+        'contigencyAmount' => 'float',
         'year' => 'integer',
-        'transferVoucherNo' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'createdDate' => 'datetime',
         'comments' => 'string',
         'confirmedYN' => 'integer',
+        'confirmedDate' => 'datetime',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByEmpName' => 'string',
         'approvedYN' => 'integer',
+        'approvedDate' => 'datetime',
         'approvedByUserSystemID' => 'integer',
         'approvedEmpID' => 'string',
         'approvedEmpName' => 'string',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
-        'templatesMasterAutoID' => 'integer',
+        'createdDateTime' => 'datetime',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'timesReferred' => 'integer',
-        'refferedBackYN' => 'integer'
+        'timestamp' => 'datetime',
+        'budgetID' => 'integer',
+        'templateMasterID' => 'integer',
+        'contingencyPercentage' => 'float',
+        'budgetAmount' => 'float'
     ];
 
     /**
@@ -221,45 +346,24 @@ class BudgetTransferForm extends Model
      * @var array
      */
     public static $rules = [
-        
+        'ID' => 'required'
     ];
 
-    public function created_by()
+    public function segment_by()
     {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
-    public function modified_by()
+
+    public function template_master()
     {
-        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\ReportTemplate', 'templateMasterID', 'companyReportTemplateID');
     }
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
-
-    public function company()
+    public function currency_by()
     {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'budgetTransferFormAutoID');
-    }
-
-
-    public function detail()
-    {
-        return $this->hasMany('App\Models\BudgetTransferFormDetail', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
-    }
-
-    public function audit_trial()
-    {
-        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetTransferFormAutoID')->where('documentSystemID',46);
-    }
-
-    public function from_reviews()
-    {
-        return $this->hasMany('App\Models\BudgetReviewTransferAddition', 'budgetTransferAdditionID', 'budgetTransferFormAutoID')->where('budgetTransferType',1);
+        return $this->hasOne('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
     }
 }

@@ -2138,6 +2138,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
         Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
         Route::get('assetStatus', 'ERPAssetTransferAPIController@assetStatus');
+        Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer');
+        Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory');
+        Route::get('budget_transfer_amend/{id}', 'BudgetTransferFormRefferedBackAPIController@budgetTransferAmend');
+        Route::get('getDetailsByBudgetTransferAmend', 'BudgetTransferFormDetailRefferedBackAPIController@getDetailsByBudgetTransferAmend');
+        Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition');
+        Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory');
+        Route::get('budget_addition_amend/{id}', 'BudgetAdditionRefferedBackAPIController@budget_addition_amend');
+        Route::get('getDetailsByBudgetAdditionAmend', 'BudgetAdditionRefferedBackAPIController@getDetailsByBudgetAdditionAmend');
+        Route::post('amendContingencyBudget', 'ContingencyBudgetPlanAPIController@amendContingencyBudget'); 
+        Route::post('getContingencyAmendHistory', 'ContingencyBudgetRefferedBackAPIController@getContingencyAmendHistory');
+        Route::get('contingencyBudgetAmend/{id}', 'ContingencyBudgetRefferedBackAPIController@contingencyBudgetAmend');
+        
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2246,4 +2258,4 @@ Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIControlle
 
 Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
 
-Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
+Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');  

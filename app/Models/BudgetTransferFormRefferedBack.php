@@ -1,24 +1,22 @@
 <?php
-/**
- * =============================================
- * -- File Name : BudgetTransferForm.php
- * -- Project Name : ERP
- * -- Module Name :  Budget
- * -- Author : Fayas
- * -- Create date : 17 - October 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BudgetTransferForm",
+ *      definition="BudgetTransferFormRefferedBack",
  *      required={""},
  *      @SWG\Property(
- *          property="budgetTransferFormAutoID",
- *          description="budgetTransferFormAutoID",
+ *          property="budgetTransferFormRefferedBackID",
+ *          description="budgetTransferFormRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="templatesMasterAutoID",
+ *          description="templatesMasterAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -45,6 +43,12 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="budgetTransferFormAutoID",
+ *          description="budgetTransferFormAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="serialNo",
  *          description="serialNo",
  *          type="integer",
@@ -57,9 +61,21 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="transferVoucherNo",
  *          description="transferVoucherNo",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDate",
+ *          description="createdDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="comments",
@@ -71,6 +87,12 @@ use Eloquent as Model;
  *          description="confirmedYN",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedDate",
+ *          description="confirmedDate",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="confirmedByEmpSystemID",
@@ -95,6 +117,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="approvedDate",
+ *          description="approvedDate",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
  *          property="approvedByUserSystemID",
  *          description="approvedByUserSystemID",
  *          type="integer",
@@ -111,10 +139,22 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="RollLevForApp_curr",
  *          description="RollLevForApp_curr",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdDateTime",
+ *          description="createdDateTime",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="createdUserSystemID",
@@ -131,27 +171,52 @@ use Eloquent as Model;
  *          property="createdPcID",
  *          description="createdPcID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
  *      )
  * )
  */
-class BudgetTransferForm extends Model
+class BudgetTransferFormRefferedBack extends Model
 {
 
-    public $table = 'erp_budgettransferform';
-    
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timestamp';
+    public $table = 'erp_budgettransferform_referredback';
 
-    protected $primaryKey = 'budgetTransferFormAutoID';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+    protected $primaryKey  = 'budgetTransferFormRefferedBackID';
+
+
 
     public $fillable = [
+        'templatesMasterAutoID',
         'documentSystemID',
         'documentID',
         'companySystemID',
         'companyID',
+        'budgetTransferFormAutoID',
         'serialNo',
         'year',
-        'companyFinanceYearID',
+        'refferedBackYN',
         'transferVoucherNo',
         'createdDate',
         'comments',
@@ -169,14 +234,12 @@ class BudgetTransferForm extends Model
         'RollLevForApp_curr',
         'createdDateTime',
         'createdUserSystemID',
-        'templatesMasterAutoID',
         'createdUserID',
         'createdPcID',
         'modifiedPc',
         'modifiedUser',
         'modifiedUserSystemID',
-        'timestamp',
-        'refferedBackYN'
+        'timestamp'
     ];
 
     /**
@@ -185,34 +248,39 @@ class BudgetTransferForm extends Model
      * @var array
      */
     protected $casts = [
-        'budgetTransferFormAutoID' => 'integer',
+        'budgetTransferFormRefferedBackID' => 'integer',
+        'templatesMasterAutoID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
+        'budgetTransferFormAutoID' => 'integer',
         'serialNo' => 'integer',
-        'companyFinanceYearID' => 'integer',
         'year' => 'integer',
+        'refferedBackYN' => 'integer',
         'transferVoucherNo' => 'string',
+        'createdDate' => 'datetime',
         'comments' => 'string',
         'confirmedYN' => 'integer',
+        'confirmedDate' => 'datetime',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByEmpName' => 'string',
         'approvedYN' => 'integer',
+        'approvedDate' => 'datetime',
         'approvedByUserSystemID' => 'integer',
         'approvedEmpID' => 'string',
         'approvedEmpName' => 'string',
+        'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
-        'templatesMasterAutoID' => 'integer',
+        'createdDateTime' => 'datetime',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'timesReferred' => 'integer',
-        'refferedBackYN' => 'integer'
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -220,9 +288,7 @@ class BudgetTransferForm extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
 
     public function created_by()
     {
@@ -236,7 +302,6 @@ class BudgetTransferForm extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
-
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
@@ -247,19 +312,18 @@ class BudgetTransferForm extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'budgetTransferFormAutoID');
     }
 
-
     public function detail()
     {
-        return $this->hasMany('App\Models\BudgetTransferFormDetail', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
+        return $this->hasMany('App\Models\BudgetTransferFormDetailRefferedBack', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
     }
 
     public function audit_trial()
     {
-        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetTransferFormAutoID')->where('documentSystemID',46);
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'budgetTransferFormAutoID')->where('documentSystemID', 46);
     }
 
     public function from_reviews()
     {
-        return $this->hasMany('App\Models\BudgetReviewTransferAddition', 'budgetTransferAdditionID', 'budgetTransferFormAutoID')->where('budgetTransferType',1);
+        return $this->hasMany('App\Models\BudgetReviewTransferAddition', 'budgetTransferAdditionID', 'budgetTransferFormAutoID')->where('budgetTransferType', 1);
     }
 }
