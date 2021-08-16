@@ -251,7 +251,11 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $input = $request->all();
         $formula = isset($input['formula']) ? $input['formula'] : null;
         $input = $this->convertArrayToValue($input);
-        $serializationBasedOn = $input['serializationBasedOn']; 
+        $serializationBasedOn = $input['serializationBasedOn'];
+        $prefixCount = 0;
+        $prefixCode = '-';
+        $prefixCodeExist = '-';
+        $assetFormulaArr = array();
 
         $input['faFinanceCatID'] = isset($input['faFinanceCatID']) ? $input['faFinanceCatID'] : 0;
         /** @var AssetFinanceCategory $assetFinanceCategory */
@@ -272,6 +276,65 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             }
         }
 
+        if (!is_null($formula)) {
+            if (is_array(($formula))) {
+                $formula_arr = explode('~', $input['formula']);
+            }
+        }
+
+        foreach ($formula_arr as $formula_row) {
+            if (trim($formula_row) != '') {
+                $elementType = $formula_row[0];
+                if ($elementType == '#') {
+                    $elementArr = explode('#', $formula_row);
+                    $prefixCode = $elementArr[1];
+                    $prefixCount += 1;
+                }
+            }
+        }
+
+
+         $assetFormula = AssetFinanceCategory::Select('formula')
+            ->whereNotNull('formula')
+            ->get();
+ 
+        if ($assetFormula) {
+            foreach ($assetFormula as $val) {
+                $formula_arr = explode('~', $val['formula']);
+                 foreach($formula_arr as $formula_row){ 
+                    $elementType = $formula_row[0];
+                    if ($elementType == '#') {
+                        $elementArr = explode('#', $formula_row);
+                        array_push($assetFormulaArr,strtoupper($elementArr[1]));
+                    }
+                 }  
+            }
+        }
+
+
+        $currentPrefix = AssetFinanceCategory::Select('formula')
+        ->where('faFinanceCatID',$input['faFinanceCatID'])
+        ->first();
+
+        $formula_arr_current = explode('~', $currentPrefix['formula']);
+        
+      
+        foreach($formula_arr_current as $formula_row_current){ 
+            $elementType_current = $formula_row_current[0]; 
+            if ($elementType_current == '#') {
+                $elementArr = explode('#', $formula_row_current);
+                $prefixCodeExist = $elementArr[1];
+            }
+        }
+        
+        if(( ($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))){ 
+            return $this->sendError('Prefix '.$prefixCode.' already exist');
+        }
+ 
+        if ($prefixCount > 1) {
+            return $this->sendError('Prefix cannot be add more than once');
+        }
+
         $validator = \Validator::make($input, [
             'COSTGLCODESystemID' => 'required|numeric|min:1',
             'ACCDEPGLCODESystemID' => 'required|numeric|min:1',
@@ -285,29 +348,29 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         }
 
 
-        if($serializationBasedOn == 0){ 
-            return $this->sendError('Please select a serialization', 500);
+        if ($serializationBasedOn == 0) {
+            return $this->sendError('Please select a serialization');
         }
 
         $companyDepLevelValidate = AssetFinanceCategory::where('faFinanceCatID', '!=', $input['faFinanceCatID'])
             ->where('serializationBasedOn', '=', 1)
             ->orWhere('serializationBasedOn', '=', 2)
-            ->get();  
+            ->get();
 
         if (count($companyDepLevelValidate) > 0) {
-            $companyDepLevelArray = array("1","2"); 
-            if (!in_array($serializationBasedOn,$companyDepLevelArray)) {
-              return $this->sendError('You cannot create this serialization configuration , because finance categories are configured with company or department level ', 500);
+            $companyDepLevelArray = array("1", "2");
+            if (!in_array($serializationBasedOn, $companyDepLevelArray)) {
+                return $this->sendError('You cannot create this serialization configuration , because finance categories are configured with company or department level ', 500);
             }
         }
 
         $otherSerializationBasedOn = AssetFinanceCategory::where('faFinanceCatID', '!=', $input['faFinanceCatID'])
-        ->WhereNotNull('serializationBasedOn')
-        ->where('serializationBasedOn', '!=', 1)
-        ->Where('serializationBasedOn', '!=', 2)
-        ->get();   
+            ->WhereNotNull('serializationBasedOn')
+            ->where('serializationBasedOn', '!=', 1)
+            ->Where('serializationBasedOn', '!=', 2)
+            ->get();
 
-        if((($serializationBasedOn == 1) || $serializationBasedOn == 2) && count($otherSerializationBasedOn) > 0){ 
+        if ((($serializationBasedOn == 1) || $serializationBasedOn == 2) && count($otherSerializationBasedOn) > 0) {
             return $this->sendError('You cannot create this serialization configuration , because different categories has been configured to other categories ', 500);
         }
 
