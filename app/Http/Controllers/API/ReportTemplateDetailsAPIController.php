@@ -145,6 +145,12 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            $checkPrefixDuplicate = ReportTemplateDetails::where('prefix', $input['prefix'])
+                                                          ->first();
+            if ($checkPrefixDuplicate) {
+                return $this->sendError("Prefix already exists.", 500);
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
