@@ -222,8 +222,7 @@ class ErpBudgetAddition extends Model
         'approvedDate' => 'datetime',
         'approvedByUserSystemID' => 'integer',
         'approvedEmpID' => 'string',
-        'approvedEmpName' => 'string',
-        'timesReferred' => 'integer',
+        'approvedEmpName' => 'string', 
         'RollLevForApp_curr' => 'integer',
         'createdDateTime' => 'datetime',
         'createdUserSystemID' => 'integer',
@@ -232,7 +231,9 @@ class ErpBudgetAddition extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer'
     ];
 
     /**
