@@ -357,21 +357,38 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             return $this->sendError('Serial number cannot be add more than once');
         }
         if ($companyID > 1) {
-            return $this->sendError('company element cannot be add more than once');
+            return $this->sendError('Company element cannot be add more than once');
         }
         if ($departmentID > 1) {
-            return $this->sendError('department element cannot be add more than once');
+            return $this->sendError('Department element cannot be add more than once');
         }
         if ($assetcategoryID > 1) {
-            return $this->sendError('asset category element cannot be add more than once');
+            return $this->sendError('Asset category element cannot be add more than once');
         }
         if ($assetSubCategoryID > 1) {
-            return $this->sendError('asset sub category element cannot be add more than once');
+            return $this->sendError('Asset sub category element cannot be add more than once');
         }
 
         
+        if($serializationBasedOn == 1 && $companyID == 0){ 
+            return $this->sendError('Company ID element required');
+        }
 
+        if($serializationBasedOn == 2 && $departmentID == 0){ 
+            return $this->sendError('Department ID element required');
+        }
 
+        if($serializationBasedOn == 3 && $prefixCount == 0){ 
+            return $this->sendError('Finance category element required');
+        }
+
+        if($serializationBasedOn == 4 && $assetcategoryID == 0){ 
+            return $this->sendError('Asset category element required');
+        }
+
+        if($serializationBasedOn == 5 && $assetSubCategoryID == 0){ 
+            return $this->sendError('Asset sub category element required');
+        }
 
 
         $validator = \Validator::make($input, [
