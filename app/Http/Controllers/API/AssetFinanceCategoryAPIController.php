@@ -256,6 +256,12 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $prefixCode = '-';
         $prefixCodeExist = '-';
         $assetFormulaArr = array();
+        $elementName = 'N/A';
+        $serialCount = 0;
+        $companyID = 0;
+        $departmentID = 0;
+        $assetcategoryID = 0;
+        $assetSubCategoryID = 0; 
 
         $input['faFinanceCatID'] = isset($input['faFinanceCatID']) ? $input['faFinanceCatID'] : 0;
         /** @var AssetFinanceCategory $assetFinanceCategory */
@@ -289,51 +295,84 @@ class AssetFinanceCategoryAPIController extends AppBaseController
                     $elementArr = explode('#', $formula_row);
                     $prefixCode = $elementArr[1];
                     $prefixCount += 1;
+                } else if ($elementType == '_') {
+                    $serialCount += 1;
+                } else if ($elementType == '$') {
+                    $elementArr = explode('$', $formula_row);
+                    if ($elementArr[1] == 1) {
+                        $companyID += 1; 
+                    }else if($elementArr[1] == 2){ 
+                        $departmentID += 1; 
+                    }else if($elementArr[1] == 3){ 
+                        $assetcategoryID += 1; 
+                    }else if($elementArr[1] == 4){ 
+                        $assetSubCategoryID += 1; 
+                    }
                 }
             }
         }
 
 
-         $assetFormula = AssetFinanceCategory::Select('formula')
+        $assetFormula = AssetFinanceCategory::Select('formula')
             ->whereNotNull('formula')
             ->get();
- 
+
         if ($assetFormula) {
             foreach ($assetFormula as $val) {
                 $formula_arr = explode('~', $val['formula']);
-                 foreach($formula_arr as $formula_row){ 
+                foreach ($formula_arr as $formula_row) {
                     $elementType = $formula_row[0];
                     if ($elementType == '#') {
                         $elementArr = explode('#', $formula_row);
-                        array_push($assetFormulaArr,strtoupper($elementArr[1]));
+                        array_push($assetFormulaArr, strtoupper($elementArr[1]));
                     }
-                 }  
+                }
             }
         }
 
 
         $currentPrefix = AssetFinanceCategory::Select('formula')
-        ->where('faFinanceCatID',$input['faFinanceCatID'])
-        ->first();
+            ->where('faFinanceCatID', $input['faFinanceCatID'])
+            ->first();
 
         $formula_arr_current = explode('~', $currentPrefix['formula']);
-        
-      
-        foreach($formula_arr_current as $formula_row_current){ 
-            $elementType_current = $formula_row_current[0]; 
+
+
+        foreach ($formula_arr_current as $formula_row_current) {
+            $elementType_current = $formula_row_current[0];
             if ($elementType_current == '#') {
                 $elementArr = explode('#', $formula_row_current);
                 $prefixCodeExist = $elementArr[1];
             }
         }
-        
-        if(( ($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))){ 
-            return $this->sendError('Prefix '.$prefixCode.' already exist');
+
+        if ((($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))) {
+            return $this->sendError('Prefix ' . $prefixCode . ' already exist');
         }
- 
+
         if ($prefixCount > 1) {
             return $this->sendError('Prefix cannot be add more than once');
         }
+        if ($serialCount > 1) {
+            return $this->sendError('Serial number cannot be add more than once');
+        }
+        if ($companyID > 1) {
+            return $this->sendError('company element cannot be add more than once');
+        }
+        if ($departmentID > 1) {
+            return $this->sendError('department element cannot be add more than once');
+        }
+        if ($assetcategoryID > 1) {
+            return $this->sendError('asset category element cannot be add more than once');
+        }
+        if ($assetSubCategoryID > 1) {
+            return $this->sendError('asset sub category element cannot be add more than once');
+        }
+
+        
+
+
+
 
         $validator = \Validator::make($input, [
             'COSTGLCODESystemID' => 'required|numeric|min:1',
