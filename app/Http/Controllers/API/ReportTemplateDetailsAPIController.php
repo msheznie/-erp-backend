@@ -288,6 +288,21 @@ class ReportTemplateDetailsAPIController extends AppBaseController
             }
         }
 
+         /** @var ReportTemplateDetails $reportTemplateDetails */
+        $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
+
+        if (empty($reportTemplateDetails)) {
+            return $this->sendError('Report Template Details not found');
+        }
+
+        
+        if (!is_null($reportTemplateDetails->masterID) && isset($input['itemType']) && ($input['itemType'] == 2 || $input['itemType'] == 1)) {
+            $masterData = ReportTemplateDetails::find($reportTemplateDetails->masterID);
+
+            if (floatval($masterData->serialLength) >= floatval($input['serialLength'])) {
+                return $this->sendError("Prefix length cannot be less than or equal to it's parent category length.", 500);
+            }
+        }
 
 
         $firstLevels = ReportTemplateDetails::where('masterID', $id)->get();
@@ -320,12 +335,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
         }
 
 
-        /** @var ReportTemplateDetails $reportTemplateDetails */
-        $reportTemplateDetails = $this->reportTemplateDetailsRepository->findWithoutFail($id);
 
-        if (empty($reportTemplateDetails)) {
-            return $this->sendError('Report Template Details not found');
-        }
+
 
         $reportTemplateDetails = $this->reportTemplateDetailsRepository->update($input, $id);
 
