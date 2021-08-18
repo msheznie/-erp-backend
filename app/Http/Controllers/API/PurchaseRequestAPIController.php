@@ -37,6 +37,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -245,6 +246,8 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0, 'allocateItemToSegment' => 0);
 
@@ -264,15 +267,19 @@ class PurchaseRequestAPIController extends AppBaseController
             $conditions['allocateItemToSegment'] = $allocateItemToSegment->isYesNO;
         }
 
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'financeYears' => $financeYears,
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
+            'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
             'conditions' => $conditions
@@ -1166,6 +1173,15 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input['PRRequestedDate'] = now();
 
+        if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
+            $checkCompanyFinanceYear = CompanyFinanceYear::find($input['budgetYearID']);
+            if ($checkCompanyFinanceYear) {
+                $input['budgetYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+                $input['prBelongsYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+            }
+        }
+
+
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
@@ -1354,6 +1370,16 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['modifiedUser'] = $user->employee['empID'];
 
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+
+
+        if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
+            $checkCompanyFinanceYear = CompanyFinanceYear::find($input['budgetYearID']);
+            if ($checkCompanyFinanceYear) {
+                $input['prBelongsYearID'] = $input['budgetYearID'];
+                $input['budgetYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+                $input['prBelongsYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+            }
+        }
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)

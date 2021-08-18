@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateDirectInvoiceDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
+use App\Models\CompanyFinanceYear;
 use App\Models\DirectInvoiceDetails;
 use App\Models\SegmentMaster;
 use App\Repositories\DirectInvoiceDetailsRepository;
@@ -178,7 +179,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             $finYearExp = explode('-', $BookInvSuppMaster->FYBiggin);
             $input['budgetYear'] = $finYearExp[0];
         } else {
-            $input['budgetYear'] = date("Y");
+            $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $input['companySystemID']);
         }
 
         $isVATEligible = TaxService::checkCompanyVATEligible($BookInvSuppMaster->companySystemID);

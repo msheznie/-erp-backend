@@ -10,7 +10,7 @@
  * -- REVISION HISTORY
  */
 namespace App\Models;
-
+use Carbon\Carbon;
 use Eloquent as Model;
 
 /**
@@ -189,6 +189,20 @@ class CompanyFinanceYear extends Model
             return $companyFinanceYear->companyFinanceYearID;
         } else {
             return null;
+        }
+    }
+
+    public static function budgetYearByDate($date, $companySystemID)
+    {
+        $companyFinanceYear = CompanyFinanceYear::whereDate('bigginingDate','<=', $date)
+                                                ->whereDate('endingDate','>=' ,$date)
+                                                ->where('companySystemID', $companySystemID)
+                                                ->first();
+
+        if ($companyFinanceYear) {
+            return Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
+        } else {
+            return date("Y");;
         }
     }
 }
