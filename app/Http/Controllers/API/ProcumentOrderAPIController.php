@@ -99,6 +99,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
+use App\Models\CompanyFinanceYear;
 use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTerms;
 use App\Models\PoPaymentTermsRefferedback;
@@ -227,6 +228,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
             }
         }
+
+        $poDate = now();
+
+        $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate($poDate, $input['companySystemID']);
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
