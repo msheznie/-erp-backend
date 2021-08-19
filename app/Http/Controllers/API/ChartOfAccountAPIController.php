@@ -684,7 +684,7 @@ class ChartOfAccountAPIController extends AppBaseController
                                     ->get();
 
         /** all allocation Types */
-        $allocationType = AllocationMaster::all();
+        $allocationType = AllocationMaster::where('isActive', 1)->get();
 
         /** all Account Types */
         $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
