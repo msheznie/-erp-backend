@@ -1049,8 +1049,8 @@ GROUP BY
         DB::beginTransaction();
         try {
             $jvDetails['fixed_rate'] = $this->generateSpaceUsageAndFixedRateAllocation($input, $jvMaster->toArray(), $user);
-            $jvDetails['basic_staff'] = $this->generateBasicOfStaffProductLineAllocation($input, $jvMaster->toArray(), $user);
-            $jvDetails['revenue'] = $this->generateRevenueBasicAllocation($input, $jvMaster->toArray(), $user);
+            // $jvDetails['basic_staff'] = $this->generateBasicOfStaffProductLineAllocation($input, $jvMaster->toArray(), $user);
+            // $jvDetails['revenue'] = $this->generateRevenueBasicAllocation($input, $jvMaster->toArray(), $user);
             
             $monthOfJV = Carbon::parse($jvMaster->toArray()['JVdate'])->format('m');
             $yearOfJV = Carbon::parse($jvMaster->toArray()['JVdate'])->format('Y');
@@ -1091,15 +1091,22 @@ GROUP BY
             } else {
                 $generalLedgerAmount = ($gLvalue['generalLedgerTransAmount']);
             }
+
+            $creditFlag = false;
+            if ($generalLedgerAmount < 0) {
+                $creditFlag = true;
+            }
+
             $AccountDescription = $gLvalue['charofaccount']['AccountDescription'];
             foreach ($chartofaccounts as $key => $allocationValue) {
                 if ($gLvalue['chartOfAccountSystemID'] == $allocationValue['chartOfAccountSystemID']) {
                     foreach ($allocationValue['detail'] as $key => $allocationDetailvalue) {
                             $jvAmount = $generalLedgerAmount * ($allocationDetailvalue['percentage'] / 100);
-                            $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue,  $allocationDetailvalue['productLineID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, false);
+                            $jvDetails[] = $this->getJvSaveDetailsArrayForFixedRate($jvMaster, $gLvalue, $allocationValue,  $allocationDetailvalue['productLineID'], abs($jvAmount), $AccountDescription, $user, $generalLedgerAmount, $creditFlag);
                             $this->addAllocationDetailToJvAllocation($allocationDetailvalue, $jvMaster['jvMasterAutoId']);
                     }
-                    $jvDetails[] = $this->getJvSaveDetailsArray($jvMaster, $gLvalue, $allocationValue, $allocationValue['serviceLineSystemID'], $jvAmount, $AccountDescription, $user, $generalLedgerAmount, true);
+                    $jvAmount = $generalLedgerAmount;
+                    $jvDetails[] = $this->getJvSaveDetailsArrayForFixedRate($jvMaster, $gLvalue, $allocationValue, $allocationValue['serviceLineSystemID'], abs($jvAmount), $AccountDescription, $user, $generalLedgerAmount, !$creditFlag);
                 }
             }
         }
@@ -1109,6 +1116,35 @@ GROUP BY
         }
 
         return ['status' => true, 'data' => $jvDetails];
+    }
+
+     public function getJvSaveDetailsArrayForFixedRate($jvMaster, $gLvalue, $allocationValue, $productLineID, $jvAmount, $AccountDescription, $user, $generalLedgerAmount, $creditFlag = false)
+    {
+
+        $serviceline = ServiceLine::where('serviceLineSystemID', $productLineID)->first();
+
+        $temp['jvMasterAutoId'] = $jvMaster['jvMasterAutoId'];
+        $temp['chartOfAccountSystemID'] = $gLvalue['chartOfAccountSystemID'];
+        $temp['companySystemID'] = $allocationValue['companySystemID'];
+        $temp['serviceLineSystemID'] = $productLineID;
+        $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
+        $temp['clientContractID'] = null;
+        $temp['comments'] = $jvMaster['JVNarration'];
+        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
+        $temp['creditAmount'] = (!$creditFlag) ? 0 : \Helper::roundValue($jvAmount);
+        $temp['cuurencyname'] = null;
+        $temp['documentSystemID'] = 17;
+        $temp['documentID'] = "JV";
+        $temp['companyID'] = $allocationValue['companyID'];
+        $temp['glAccount'] = $allocationValue['chartOfAccountCode'];
+        $temp['glAccountDescription'] = $AccountDescription;
+        $temp['currencyID'] = $jvMaster['currencyID'];
+        $temp['currencyER'] = $jvMaster['currencyER'];
+        $temp['createdPcID'] = gethostname();
+        $temp['createdUserID'] = $user->employee['empID'];
+        $temp['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        return $temp;
     }
 
     public function generateRevenueBasicAllocation($input, $jvMaster, $user)
