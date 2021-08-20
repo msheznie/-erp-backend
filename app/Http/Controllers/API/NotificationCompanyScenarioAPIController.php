@@ -11,6 +11,7 @@ use App\Models\NotificationCompanyScenario;
 use App\Repositories\NotificationCompanyScenarioRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\NotificationUserDayCheck;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -284,17 +285,68 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
     }
 
     public function notificatioService(Request $request)
-    {
-        $input = $request->all(); 
-        switch ($input['scenarioID']) {
-            case 1:
-                RolReachedNotification::sendRolReachedNotificationEmail($input['scenarioID']);
-                break;
-            case 4:
-                AdvancePaymentNotification::sendAdvancePaymentNotificationEmail($input['scenarioID']);
-                break;
-            default:
-                return 'Not a valid scenario id';
+    { 
+        $input = $request->all();
+        $companyAssignScenarion = NotificationService::getCompanyScenarioConfiguration($input['scenarioID']);
+        $test = [];
+        $details = [];
+        $emailContent = [];
+        $subject = 'N/A';
+        Log::useFiles(storage_path() . '/logs/notification_service.log');
+        Log::info('------------ Successfully start ' . $companyAssignScenarion[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') .  ' ------------');
+        if (count($companyAssignScenarion) > 0) {
+            foreach ($companyAssignScenarion as $compAssignScenario) {
+                Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+                if (count($compAssignScenario->notification_day_setup) > 0) {
+                    foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
+                        switch ($input['scenarioID']) {
+                            case 1:
+                                $details = RolReachedNotification::getRolReachedNotification($compAssignScenario->companyID, $notDaySetup->beforeAfter);
+                                $subject = 'Inventory stock reaches a minimum order level';
+                                break;
+                            case 4:
+                                $details = AdvancePaymentNotification::getadvancePaymentDetails($compAssignScenario->companyID, $notDaySetup->beforeAfter, $notDaySetup->days);
+                                $subject = 'Advance Payment Notification';
+                                break;
+                            default:
+                                Log::error('Applicable category configuration not exist');
+                                break;
+                        }
+                        if (count($details) > 0) {
+                            $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
+                            if (count($notificationUserSettings['email']) > 0) {
+                                foreach ($notificationUserSettings['email'] as $key => $notificationUserVal) {
+                                    switch ($input['scenarioID']) {
+                                        case 1:
+                                            $emailContent = RolReachedNotification::getRolReachedEmailContent($details, $notificationUserVal[$key]['empName']);
+                                            break;
+                                        case 4:
+                                            $emailContent = AdvancePaymentNotification::getAdvancePaymentEmailContent($details, $notificationUserVal[$key]['empName']);
+                                            break;
+                                        default:
+                                            Log::error('Email content configuration not done');
+                                            break;
+                                    }
+                                    $sendEmail = NotificationService::emailNotification($compAssignScenario->companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
+                                    if (!$sendEmail["success"]) {
+                                        Log::error($sendEmail["message"]);
+                                    }
+                                }
+                            }  
+                            else {
+                                Log::info('No records found');
+                            }
+                        } else {
+                            Log::info('No records found');
+                        }
+                    }
+                } else {
+                    Log::info('Notification day setup not exist');
+                }
+            }
+        } else {
+            Log::info('Notification Company Scenario not exist');
         }
+        Log::info('------------ Successfully end ' . $companyAssignScenarion[0]->notification_scenario->scenarioDescription . ' Service' . date('H:i:s') . ' ------------');
     }
 }

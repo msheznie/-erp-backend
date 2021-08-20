@@ -68,7 +68,7 @@ class NotificationUser extends Model
 {
 
     public $table = 'notificationuser';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -104,9 +104,6 @@ class NotificationUser extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
 
-    
 }
