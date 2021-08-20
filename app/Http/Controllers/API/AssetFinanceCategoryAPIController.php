@@ -336,15 +336,17 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             ->first();
 
         $formula_arr_current = explode('~', $currentPrefix['formula']);
-
-
-        foreach ($formula_arr_current as $formula_row_current) {
-            $elementType_current = $formula_row_current[0];
-            if ($elementType_current == '#') {
-                $elementArr = explode('#', $formula_row_current);
-                $prefixCodeExist = $elementArr[1];
+        
+        if(!empty($formula_arr_current[0])){ 
+            foreach ($formula_arr_current as $formula_row_current) {
+                $elementType_current = $formula_row_current[0];
+                if ($elementType_current == '#') {
+                    $elementArr = explode('#', $formula_row_current);
+                    $prefixCodeExist = $elementArr[1];
+                }
             }
         }
+      
 
         if ((($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))) {
             return $this->sendError('Prefix ' . $prefixCode . ' already exist');
