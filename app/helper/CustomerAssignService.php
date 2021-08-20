@@ -12,15 +12,14 @@ class CustomerAssignService
 	public static function assignCustomer($customerCodeSystem, $companySystemID)
 	{
 
-		 $checkCustomerAssignPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 52)
-					                                    ->where('companySystemID', $companySystemID)
-					                                    ->first();
-
-
-		 if ($checkCustomerAssignPolicy && $checkCustomerAssignPolicy->isYesNO == 1) {
-		 	$customerData = CustomerMaster::find($customerCodeSystem)
+		 $customerData = CustomerMaster::find($customerCodeSystem)
 		 								  ->toArray();
 
+		 $checkCustomerAssignPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 52)
+					                                    ->where('companySystemID', $customerData['primaryCompanySystemID'])
+					                                    ->first();
+
+		 if ($checkCustomerAssignPolicy && $checkCustomerAssignPolicy->isYesNO == 1) {
 
 
 			$allCompanies = Company::where('isGroup', 0)
