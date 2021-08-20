@@ -58,12 +58,24 @@ class NotificationService
                 array_push($notificationUserSettingsArr['email'], $emailNotificationArr);
             }
             if ($notifiUserVal->pushNotification == 1) {
-                $dataPush['token'] =  'asd';
+                switch ($notifiUserVal->notification_user->applicableCategoryID) {
+                    case 1: //Employee 
+                        $employee = Employee::where('employeeSystemID', $notifiUserVal->notification_user->empID)
+                        ->first();
+                        $dataPush['token'] =  'asd';
+                        break;
+                } 
                 array_push($pushNotificationArr, $dataPush);
                 array_push($notificationUserSettingsArr['push'], $pushNotificationArr);
             }
             if ($notifiUserVal->webNotification == 1) {
-                $dataWeb['webToken'] = '123123';
+                switch ($notifiUserVal->notification_user->applicableCategoryID) {
+                    case 1: //Employee 
+                        $employee = Employee::where('employeeSystemID', $notifiUserVal->notification_user->empID)
+                        ->first();
+                        $dataWeb['webToken'] = 'N/A';
+                        break;
+                }  
                 array_push($webNotificationArr, $dataWeb);;
                 array_push($notificationUserSettingsArr['web'], $webNotificationArr);
             }
