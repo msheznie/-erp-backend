@@ -2156,6 +2156,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_details_reffered_histories', 'BudgetDetailsRefferedHistoryAPIController');
         Route::post('getBudgetAmendHistory', 'BudgetMasterRefferedHistoryAPIController@getBudgetAmendHistory');
         Route::post('getDetailsByBudgetRefereback', 'BudgetDetailsRefferedHistoryAPIController@getDetailsByBudgetRefereback');
+
+
+        Route::resource('budget_detail_comments', 'BudgetDetailCommentAPIController');
+        Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2268,3 +2272,4 @@ Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');  
 
 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
+
