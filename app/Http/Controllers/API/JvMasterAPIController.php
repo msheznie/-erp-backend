@@ -201,6 +201,18 @@ class JvMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        if (isset($input['jvType']) && $input['jvType'] == 4) {
+            $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
+                                      ->where('companySystemID', $input['companySystemID'])
+                                      ->where('refferedBackYN', 0)
+                                      ->where('approved', 0)
+                                      ->first();
+
+            if ($checkPendingJv) {
+                return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
+            }
+        }
+
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
                 $input['JVdate'] = new Carbon($input['JVdate']);
