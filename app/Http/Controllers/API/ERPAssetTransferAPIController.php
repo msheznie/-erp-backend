@@ -850,44 +850,41 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyId'];
         $assetID = $input['assetID'];
-        $data['acknowledgedYN'] = 0;
+        $data['acknowledgedYN'] = 1;
 
         $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
             $query->where('company_id', $companyID)
                 ->where('approved_yn', -1);
-        }, 'assetMaster'])
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
             ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
                 $query->where('company_id', $companyID)
                     ->where('approved_yn', -1);
             })
+            ->whereHas('smePayAsset', function ($query) use ($companyID) {
+                $query->where('companyID', $companyID)
+                    ->where('returnStatus', 0);
+            })
             ->where('fa_master_id', $assetID)
-            ->where('receivedYN', 0)
+            ->where('receivedYN', 1)
             ->get();
-
-
 
         if (count($data['assetRecords']) == 0) {
             $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
                 $query->where('company_id', $companyID)
                     ->where('approved_yn', -1);
-            }, 'assetMaster', 'assetRequestDetail' => function ($q) {
-                $q->with(['createdUserID']);
-            },'smePayAsset'])
+            }, 'assetMaster'])
                 ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
                     $query->where('company_id', $companyID)
                         ->where('approved_yn', -1);
                 })
-                 ->whereHas('smePayAsset', function ($query) use ($companyID) {
-                    $query->where('companyID', $companyID)
-                        ->where('returnStatus', 0);
-                })
                 ->where('fa_master_id', $assetID)
-                ->where('receivedYN', 1)
+                ->where('receivedYN', 0)
                 ->get();
-
-            $data['acknowledgedYN'] = 1;
+            $data['acknowledgedYN'] = 0;
         }
-
+        
         $data['assetCode'] = isset($data['assetRecords'][0]) ? $data['assetRecords'][0]->assetMaster->asset_code_concat : '-';
 
         return $data;
