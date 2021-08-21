@@ -401,9 +401,9 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
+
         /** @var MaterielRequestDetails $materielRequestDetails */
         $materielRequestDetails = $this->materielRequestDetailsRepository->findWithoutFail($id);
-
         if (empty($materielRequestDetails)) {
             return $this->sendError('Materiel Request Details not found');
         }
@@ -438,7 +438,14 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
 
             if ((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand) {
-                return $this->sendError("No stock Qty. Please check again.", 500);
+                $diff = ((float)$input['qtyIssuedDefaultMeasure'] - $materielRequestDetails->quantityInHand);
+
+                $data = [
+                    'QntyToMaterialIssue' =>  $materielRequestDetails->quantityInHand,
+                    'QntyToPurchaseRequest' =>  $diff,
+                ];
+
+                return $this->sendError("No stock Qty. Please check again.", 500, $data);
             }
 
             if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
