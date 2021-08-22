@@ -74,6 +74,7 @@ class PurchaseRequestDetails extends Model
 
     public $fillable = [
         'purchaseRequestID',
+        'materialReqeuestID',
         'companySystemID',
         'companyID',
         'itemCategoryID',
@@ -213,4 +214,6 @@ class PurchaseRequestDetails extends Model
     public function allocations(){
         return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseRequestDetailsID');
     }
+
+
 }
