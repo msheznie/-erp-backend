@@ -262,7 +262,8 @@ class MaterielRequest extends Model
         'approvedByUserSystemID',
         'approvedDate',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'isFromPortal'
     ];
 
     /**
@@ -310,7 +311,8 @@ class MaterielRequest extends Model
         'approvedByUserSystemID' => 'integer',
         'approvedDate' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'isFromPortal' => 'integer'
     ];
 
     /**
@@ -364,5 +366,9 @@ class MaterielRequest extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'RequestID')->where('documentSystemID',9);
+    }
+
+    public function purchase_requests() {
+        return $this->hasMany('App\Models\PurchaseRequestDetails','materialReqeuestID','RequestID');
     }
 }

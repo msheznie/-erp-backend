@@ -154,6 +154,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function store(CreateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        
 
         $input = $this->convertArrayToValue($input);
 
