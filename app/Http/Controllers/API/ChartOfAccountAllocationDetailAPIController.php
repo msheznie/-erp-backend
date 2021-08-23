@@ -258,6 +258,16 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.chart_of_account_allocation_details')]));
         }
 
+        $checkAllocationPercentage = ChartOfAccountAllocationDetail::where('chartOfAccountAllocationMasterID', $chartOfAccountAllocationDetail->chartOfAccountAllocationMasterID)
+                                                                    ->where('chartOfAccountAllocationDetailID', '!=', $id)
+                                                                   ->sum('percentage');
+
+        $totalAllocationPercentage = $input['percentage'] + (($checkAllocationPercentage) ? $checkAllocationPercentage : 0);
+
+        if ($totalAllocationPercentage > 100) {
+            return $this->sendError("Total allocation percentage cannot be greater than 100",500);
+        }
+
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->update($input, $id);
 
         return $this->sendResponse($chartOfAccountAllocationDetail->toArray(), trans('custom.update', ['attribute' => trans('custom.chart_of_account_allocation_details')]));

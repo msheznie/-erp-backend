@@ -407,6 +407,18 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['jvType']) && $input['jvType'] == 4) {
+            $checkPendingJv = JvMaster::where('jvType', $input['jvType'])
+                                      ->where('companySystemID', $input['companySystemID'])
+                                      ->where('refferedBackYN', 0)
+                                      ->where('approved', 0)
+                                      ->first();
+
+            if ($checkPendingJv) {
+                return $this->sendError('There is a pending allocation JV, please approve those allocation JVs');
+            }
+        }
+
         $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
