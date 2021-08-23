@@ -559,7 +559,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details saved successfully');
+        $message = 'Materiel Issue Details saved successfully';
+        if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
+            $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
+                ->where('companyPolicyCategoryID', 6)
+                ->first();
+            if (!empty($minQtyPolicy)) {
+                if ($minQtyPolicy->isYesNO == 1) {
+                    $itemIssueDetails->warningMsg = 1;
+                    $message = 'Quantity is falling below the minimum inventory level.';
+                }
+            }
+        }
+
+
+        return $this->sendResponse($itemIssueDetails->toArray(), $message);
     }
 
 
