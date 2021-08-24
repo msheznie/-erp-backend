@@ -133,6 +133,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'uom_default');
         $input = $this->convertArrayToValue($input);
 
+
         $companySystemID = $input['companySystemID'];
 
         $allowItemToTypePolicy = false;
@@ -438,6 +439,8 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
 
             if ((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand) {
+
+
                 $diff = ((float)$input['qtyIssuedDefaultMeasure'] - $materielRequestDetails->quantityInHand);
 
                 $data = [
@@ -561,6 +564,8 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
 
+        $location =  $input['location'];
+
         $items = ItemAssigned::where('companySystemID', $companyId)
                                ->where('financeCategoryMaster',1);
 
@@ -577,6 +582,29 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         $items = $items->take(20)->get();
 
+        foreach($items as $item) {
+            $data = array('companySystemID' => $companyId,
+            'itemCodeSystem' => $item->itemCodeSystem,
+            'wareHouseId' => $location);
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $item['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        }
+
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+
+    public function getItemWarehouseQnty(Request $request) {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $location =  $input['location'];
+
+        $data = array('companySystemID' => $companyId,
+            'itemCodeSystem' => $input['itemCode'],
+            'wareHouseId' => $location);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+       
+        return $this->sendResponse($itemCurrentCostAndQty, 'Data retrieved successfully');
+
     }
 }
