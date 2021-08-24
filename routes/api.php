@@ -595,6 +595,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
         Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
         Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
+        Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
+
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
