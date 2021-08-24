@@ -308,10 +308,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $purchaseOrder->companySystemID)
                 ->first();
-
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
-
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
                     return $this->sendError('Category is not found.', 500);
@@ -532,6 +530,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
+           
 
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {

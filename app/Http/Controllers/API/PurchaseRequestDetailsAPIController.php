@@ -826,6 +826,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function update($id, UpdatePurchaseRequestDetailsAPIRequest $request)
     {
         $input = array_except($request->all(), 'uom');
+
         $input = $this->convertArrayToValue($input);
 
 

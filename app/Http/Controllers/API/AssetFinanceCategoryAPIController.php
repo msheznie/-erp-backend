@@ -261,7 +261,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $companyID = 0;
         $departmentID = 0;
         $assetcategoryID = 0;
-        $assetSubCategoryID = 0; 
+        $assetSubCategoryID = 0;
 
         $input['faFinanceCatID'] = isset($input['faFinanceCatID']) ? $input['faFinanceCatID'] : 0;
         /** @var AssetFinanceCategory $assetFinanceCategory */
@@ -300,13 +300,13 @@ class AssetFinanceCategoryAPIController extends AppBaseController
                 } else if ($elementType == '$') {
                     $elementArr = explode('$', $formula_row);
                     if ($elementArr[1] == 1) {
-                        $companyID += 1; 
-                    }else if($elementArr[1] == 2){ 
-                        $departmentID += 1; 
-                    }else if($elementArr[1] == 3){ 
-                        $assetcategoryID += 1; 
-                    }else if($elementArr[1] == 4){ 
-                        $assetSubCategoryID += 1; 
+                        $companyID += 1;
+                    } else if ($elementArr[1] == 2) {
+                        $departmentID += 1;
+                    } else if ($elementArr[1] == 3) {
+                        $assetcategoryID += 1;
+                    } else if ($elementArr[1] == 4) {
+                        $assetSubCategoryID += 1;
                     }
                 }
             }
@@ -337,14 +337,16 @@ class AssetFinanceCategoryAPIController extends AppBaseController
 
         $formula_arr_current = explode('~', $currentPrefix['formula']);
 
-
-        foreach ($formula_arr_current as $formula_row_current) {
-            $elementType_current = $formula_row_current[0];
-            if ($elementType_current == '#') {
-                $elementArr = explode('#', $formula_row_current);
-                $prefixCodeExist = $elementArr[1];
+        if (!empty($formula_arr_current[0])) {
+            foreach ($formula_arr_current as $formula_row_current) {
+                $elementType_current = $formula_row_current[0];
+                if ($elementType_current == '#') {
+                    $elementArr = explode('#', $formula_row_current);
+                    $prefixCodeExist = $elementArr[1];
+                }
             }
         }
+
 
         if ((($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))) {
             return $this->sendError('Prefix ' . $prefixCode . ' already exist');
@@ -369,27 +371,30 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             return $this->sendError('Asset sub category element cannot be add more than once');
         }
 
-        
-        if($serializationBasedOn == 1 && $companyID == 0){ 
+
+        if ($serializationBasedOn == 1 && $companyID == 0) {
             return $this->sendError('Company ID element required');
         }
 
-        if($serializationBasedOn == 2 && $departmentID == 0){ 
+        if ($serializationBasedOn == 2 && $departmentID == 0) {
             return $this->sendError('Department ID element required');
         }
 
-        if($serializationBasedOn == 3 && $prefixCount == 0){ 
+        if ($serializationBasedOn == 3 && $prefixCount == 0) {
             return $this->sendError('Finance category element required');
         }
 
-        if($serializationBasedOn == 4 && $assetcategoryID == 0){ 
+        if ($serializationBasedOn == 4 && $assetcategoryID == 0) {
             return $this->sendError('Asset category element required');
         }
 
-        if($serializationBasedOn == 5 && $assetSubCategoryID == 0){ 
+        if ($serializationBasedOn == 5 && $assetSubCategoryID == 0) {
             return $this->sendError('Asset sub category element required');
         }
 
+        $serializationCatExist = AssetFinanceCategory::select('serializationBasedOn')
+            ->whereIn('serializationBasedOn', array(1, 2))
+            ->first();
 
         $validator = \Validator::make($input, [
             'COSTGLCODESystemID' => 'required|numeric|min:1',
@@ -408,10 +413,18 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             return $this->sendError('Please select a serialization');
         }
 
+        if (!empty($serializationCatExist) && (($serializationCatExist->serializationBasedOn != $serializationBasedOn))) {
+            return $this->sendError('You can assign this serialization method. because Other category serialization are assigned as Company level/ Department Level');
+        }
+
+
+
         $companyDepLevelValidate = AssetFinanceCategory::where('faFinanceCatID', '!=', $input['faFinanceCatID'])
             ->where('serializationBasedOn', '=', 1)
             ->orWhere('serializationBasedOn', '=', 2)
             ->get();
+
+
 
         if (count($companyDepLevelValidate) > 0) {
             $companyDepLevelArray = array("1", "2");

@@ -210,6 +210,7 @@ class MaterielRequestAPIController extends AppBaseController
             });
         }
 
+
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
@@ -921,5 +922,23 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         return $this->sendResponse($itemRequest->toArray(), 'Request Amend successfully');
+    }
+
+    public function checkPurcahseRequestExist($id) {
+        $materielRequest = MaterielRequest::find($id);
+        if(count($materielRequest->purchase_requests) > 0) {
+            $data = [
+                'status' => true,
+                'data'   => $materielRequest->purchase_requests
+            ];
+            return $this->sendResponse($data, 'Purchase request received successfully');
+        }else {
+            $data = [
+                'status' => false,
+                'data'   => []
+            ];
+            return $this->sendResponse($data, 'No Purchase request found');
+        }
+
     }
 }

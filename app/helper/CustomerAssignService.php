@@ -34,6 +34,12 @@ class CustomerAssignService
             	$supplierAssign = CustomerAssigned::create($customerData);
             }
 
+		 } else {
+		 	$customerData['isAssigned'] = -1;
+        	$customerData['companyID']= $customerData['primaryCompanyID'];
+        	$customerData['companySystemID']= $customerData['primaryCompanySystemID'];
+
+        	$supplierAssign = CustomerAssigned::create($customerData);
 		 }
 		
 		 return ['status' => true];

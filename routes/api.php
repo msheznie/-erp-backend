@@ -580,6 +580,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
         Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
         Route::resource('materiel_requests', 'MaterielRequestAPIController');
+        Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist');
         Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
         Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
         Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
@@ -594,6 +595,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
         Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
         Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
+        Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
+
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
