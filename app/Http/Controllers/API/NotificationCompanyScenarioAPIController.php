@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\AdvancePaymentNotification;
 use App\helper\NotificationService;
+use App\helper\BudgetLimitNotification;
 use App\helper\PurchaseOrderPendingDeliveryNotificationService;
 use App\helper\RolReachedNotification;
 use App\Http\Requests\API\CreateNotificationCompanyScenarioAPIRequest;
@@ -320,6 +321,10 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 $details = AdvancePaymentNotification::getadvancePaymentDetails($compAssignScenario->companyID, $notDaySetup->beforeAfter, $notDaySetup->days);
                                 $subject = 'Advance Payment Notification';
                                 break;
+                            case 5:
+                                $details = BudgetLimitNotification::getBudgetLimitDetails($compAssignScenario->companyID, $notDaySetup->beforeAfter);
+                                $subject = 'Budget Limit Notification';
+                                break;
                             default:
                                 Log::error('Applicable category configuration not exist');
                                 break;
@@ -340,6 +345,9 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                             break;
                                         case 4:
                                             $emailContent = AdvancePaymentNotification::getAdvancePaymentEmailContent($details, $notificationUserVal[$key]['empName']);
+                                            break;
+                                        case 5:
+                                            $emailContent = BudgetLimitNotification::getEmailContent($details, $notificationUserVal[$key]['empName']);
                                             break;
                                         default:
                                             Log::error('Email content configuration not done');
