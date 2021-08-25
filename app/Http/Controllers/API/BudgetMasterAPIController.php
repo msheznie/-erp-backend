@@ -166,12 +166,18 @@ class BudgetMasterAPIController extends AppBaseController
             'serviceLineSystemID' => 'required|numeric|min:1',
             'companySystemID' => 'required',
             'templateMasterID' => 'required|numeric|min:1',
+            'sentNotificationAt' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        if ($input['sentNotificationAt'] > 100) {
+            return $this->sendError('Send Notification at percentage cannot be greater than 100', 500);
+        }
+
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
         if (empty($segment)) {
