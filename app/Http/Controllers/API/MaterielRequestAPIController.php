@@ -25,6 +25,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
@@ -926,10 +927,15 @@ class MaterielRequestAPIController extends AppBaseController
 
     public function checkPurcahseRequestExist($id) {
         $materielRequest = MaterielRequest::find($id);
+
         if(count($materielRequest->purchase_requests) > 0) {
+
+            $items = PurchaseRequestDetails::select('itemCode')->where('purchaseRequestID', $materielRequest->purchase_requests->first()->purchaseRequestID)
+            ->pluck('itemCode')->toArray();
             $data = [
                 'status' => true,
-                'data'   => $materielRequest->purchase_requests
+                'data'   => $items,
+                'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID
             ];
             return $this->sendResponse($data, 'Purchase request received successfully');
         }else {

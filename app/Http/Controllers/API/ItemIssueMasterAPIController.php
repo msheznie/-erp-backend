@@ -1305,7 +1305,8 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->where('approved',0)->get();
 
-        if($fetchDetails) {
+        
+        if(count($fetchDetails) > 0) {
             $data = [
                 "status" => true,
                 "data" => $fetchDetails
