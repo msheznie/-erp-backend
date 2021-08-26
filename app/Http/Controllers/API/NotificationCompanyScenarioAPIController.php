@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\AdvancePaymentNotification;
+use App\helper\HRNotificationService;
 use App\helper\NotificationService;
 use App\helper\BudgetLimitNotification;
 use App\helper\PurchaseOrderPendingDeliveryNotificationService;
@@ -295,7 +296,9 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         $details = [];
         $emailContent = [];
         $subject = 'N/A';
-    
+
+        //dd( $companyAssignScenarion->toArray() );
+
         if (count($companyAssignScenarion) > 0) {
             Log::useFiles(storage_path() . '/logs/notification_service.log');
             Log::info('------------ Successfully start ' . $companyAssignScenarion[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') .  ' ------------');
@@ -303,32 +306,45 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                 Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
                 if (count($compAssignScenario->notification_day_setup) > 0) {
 
+                    $companyID = $compAssignScenario->companyID;
+
                     foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
+                        $beforeAfter = $notDaySetup->beforeAfter;
+                        $days = $notDaySetup->days;
+
                         switch ($input['scenarioID']) {
                             case 1:
-                                $details = RolReachedNotification::getRolReachedNotification($compAssignScenario->companyID, $notDaySetup->beforeAfter);
+                                $details = RolReachedNotification::getRolReachedNotification($companyID, $beforeAfter);
                                 $subject = 'Inventory stock reaches a minimum order level';
                                 break;
                             case 2:
-                                $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($compAssignScenario->companyID, $notDaySetup->beforeAfter, $notDaySetup->days, 1);
+                                $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($companyID, $beforeAfter, $days, 1);
                                 $subject = 'Purchase order pending delivery notification';
                                 break;
                             case 3:
-                                $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($compAssignScenario->companyID, $notDaySetup->beforeAfter, $notDaySetup->days, 5);
+                                $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($companyID, $beforeAfter, $days, 5);
                                 $subject = 'Work order expiry notification';
                                 break;
                             case 4:
-                                $details = AdvancePaymentNotification::getadvancePaymentDetails($compAssignScenario->companyID, $notDaySetup->beforeAfter, $notDaySetup->days);
+                                $details = AdvancePaymentNotification::getadvancePaymentDetails($companyID, $beforeAfter, $days);
                                 $subject = 'Advance Payment Notification';
                                 break;
                             case 5:
-                                $details = BudgetLimitNotification::getBudgetLimitDetails($compAssignScenario->companyID, $notDaySetup->beforeAfter);
+                                $details = BudgetLimitNotification::getBudgetLimitDetails($companyID, $beforeAfter);
                                 $subject = 'Budget Limit Notification';
                                 break;
+
+                            case 6:
+                                $details = HRNotificationService::expired_docs($compAssignScenario, $beforeAfter, $days);
+                                $subject = 'HR document expiry Notification';
+                                break;
+
                             default:
                                 Log::error('Applicable category configuration not exist');
                                 break;
                         }
+
+
                         if (count($details) > 0) {
                             $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                             if (count($notificationUserSettings['email']) > 0) {
@@ -353,7 +369,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                             Log::error('Email content configuration not done');
                                             break;
                                     }
-                                    $sendEmail = NotificationService::emailNotification($compAssignScenario->companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
+                                    $sendEmail = NotificationService::emailNotification($companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
                                     if (!$sendEmail["success"]) {
                                         Log::error($sendEmail["message"]);
                                     }
@@ -361,11 +377,13 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                             } else {
                                 Log::info('No records found');
                             }
-                        } else {
+                        }
+                        else {
                             Log::info('No records found');
                         }
                     }
-                } else {
+                }
+                else {
                     Log::info('Notification day setup not exist');
                 }
             }
