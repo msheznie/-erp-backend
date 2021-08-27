@@ -937,17 +937,18 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         $purchaseRequests = DB::table('erp_documentapproved')
-            ->select(
-                'erp_purchaserequest.*',
-                'employees.empName As created_emp',
-                'financeitemcategorymaster.categoryDescription As financeCategoryDescription',
-                'serviceline.ServiceLineDes As PRServiceLineDes',
-                'erp_location.locationName As PRLocationName',
-                'erp_priority.priorityDescription As PRPriorityDescription',
-                'erp_documentapproved.documentApprovedID',
-                'rollLevelOrder',
-                'approvalLevelID',
-                'documentSystemCode')
+            ->selectRaw(
+                'erp_purchaserequest.*,
+                employees.empName As created_emp,
+                financeitemcategorymaster.categoryDescription As financeCategoryDescription,
+                serviceline.ServiceLineDes As PRServiceLineDes,
+                erp_location.locationName As PRLocationName,
+                erp_priority.priorityDescription As PRPriorityDescription,
+                erp_documentapproved.documentApprovedID,
+                rollLevelOrder,
+                approvalLevelID,
+                currencymaster.CurrencyCode,
+                documentSystemCode, SUM(erp_purchaserequestdetails.totalCost) as totalCost')
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -976,13 +977,18 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('erp_purchaserequest.cancelledYN', 0)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
+            ->join('erp_purchaserequestdetails', function ($query) use ($companyId) {
+                $query->on('erp_purchaserequest.purchaseRequestID', '=', 'erp_purchaserequestdetails.purchaseRequestID');
+            })
             ->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'erp_purchaserequest.currency', '=', 'currencyID')
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
             ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
+            ->groupBy('erp_purchaserequestdetails.purchaseRequestID')
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
 
