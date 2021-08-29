@@ -47,6 +47,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemAssigned;
+use App\Models\ProcumentOrderDetail;
 use App\Models\Location;
 use App\Models\Months;
 use App\Models\PrDetailsReferedHistory;
@@ -2497,5 +2498,66 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Attachments not found', 500);
         }
     }
+
+    public function checkProductExistInIssues($itemCode,$companySystemID) {
+        
+        $fetchDetails = PurchaseRequestDetails::whereHas('purchase_request', function($q)
+        {
+            $q->where('approved', 0);
+        })->where('itemCode', $itemCode)->get();
+
+        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+        ->where('companySystemID', $companySystemID)
+        ->first();
+
+        $checkPOPending = ProcumentOrderDetail::whereHas('productmentOrder', function($q)
+        {
+            $q->where('approved', 0);
+        })->where('itemCode', $itemCode)->get();
+        
+
+
+        if($allowPendingApproval->isYesNO != 0) {
+            $data = [
+                "status" => false,
+                "data" => [],
+                "policy" => false
+            ];
+            return $this->sendResponse($data, 'Data not found!');
+        }else {
+            if(count($fetchDetails) > 0) {
+                $data = [
+                    "status" => true,
+                    "data" => $fetchDetails,
+                    "policy" => true,
+                    "message" =>  "This Order has Exisiting Purchase Request"
+                ];
+                return $this->sendResponse($data, 'Data retreived successfully');
+            }else {
+                if(count($checkPOPending) > 0) {
+                    $data = [
+                        "status" => true,
+                        "policy" => true,
+                        "po" => $checkPOPending,
+                        "data" => $fetchDetails,
+                        "message" => "This Order has Exisiting Purchase Order"
+                    ];
+                    return $this->sendResponse($data, 'Data retreived successfully');
+    
+                }else {
+                    $data = [
+                        "status" => false,
+                        "policy" => true,
+                        "data" => []
+                    ];
+                    return $this->sendResponse($data, 'Data not found!');
+                }
+            }
+        }
+
+      
+
+    }
+
 
 }

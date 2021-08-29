@@ -598,6 +598,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
 
 
+        Route::get('material-issue/check/product/{id}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
+        Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
+
+     
+
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
         Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
