@@ -7,12 +7,6 @@ use Carbon\Carbon;
 
 class HRNotificationService
 {
-/*
-   types = [
-       1=> 'Before'   2=> 'After'   0=> 'Same Day
-   ];
- * */
-
     public static function expired_docs($company, $type, $days)
     {
 
@@ -29,23 +23,52 @@ class HRNotificationService
         $expiry_date = $expiry_date->format('Y-m-d');
 
         $data = HRDocumentDescriptionForms::selectRaw('DocDesID, PersonID, documentNo, expireDate, Erp_companyID')
-            ->where('isDeleted', 0)
-            ->where('PersonType', 'E')
             ->where('Erp_companyID', $company)
+            ->where('PersonType', 'E')
+            ->where('isDeleted', 0)
             ->whereDate('expireDate', $expiry_date);
+
+        $data = $data->whereHas('master');
+        $data = $data->whereHas('employee');
 
         $data = $data->with('master:DocDesID,DocDescription');
 
-        $data = $data->with(['employee' => function($q){
-            $q->selectRaw('EIdNo,ECode,Ename2')
-            ->with(['manager'=> function($q){
-               $q->where('active', 1);
-                $q->selectRaw('empID,managerID');
-            }]);
-        }]);//
+        $data = $data->with('employee:EIdNo,ECode,Ename2,EEmail');
 
         $data = $data->get();
         return $data;
         return [];
+    }
+
+    public static function email_body($details)
+    {
+        $fullName = '232';
+
+        $body = "Dear {$fullName},<br/>";
+        $body .= "Following items has been reaches minimum order level <br/><br/>";
+        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;border: 1px solid black;">#</th>
+                        <th style="text-align: center;border: 1px solid black;">Employee</th> 
+                        <th style="text-align: center;border: 1px solid black;">Document Type</th>
+                        <th style="text-align: center;border: 1px solid black;">Document Code</th>                        
+                    </tr>
+                </thead>';
+        $body .= '<tbody>';
+        $x = 1;
+        foreach ($details as $val) {
+            $body .= '<tr>
+                <td style="text-align:left;border: 1px solid black;">' . $x . '</td>  
+                <td style="text-align:left;border: 1px solid black;">' . $val->secondaryItemCode . '</td> 
+                <td style="text-align:left;border: 1px solid black;">' . $val->itemDescription . '</td> 
+                <td style="text-align:left;border: 1px solid black;">' . $val->rolQuantity . '</td> 
+                <td style="text-right:left;border: 1px solid black;">' . $val->INoutQty . '</td> 
+                </tr>';
+            $x++;
+        }
+        $body .= '</tbody>
+        </table>';
+        return $body;
     }
 }

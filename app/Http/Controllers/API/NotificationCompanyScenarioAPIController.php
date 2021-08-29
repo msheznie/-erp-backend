@@ -349,8 +349,6 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
 
                         if (count($details) > 0) {
 
-                            if()
-
 
                             $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                             if (count($notificationUserSettings['email']) > 0) {
