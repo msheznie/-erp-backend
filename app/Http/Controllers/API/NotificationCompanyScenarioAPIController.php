@@ -312,6 +312,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                         $beforeAfter = $notDaySetup->beforeAfter;
                         $days = $notDaySetup->days;
 
+                        //dd($notDaySetup);
                         switch ($input['scenarioID']) {
                             case 1:
                                 $details = RolReachedNotification::getRolReachedNotification($companyID, $beforeAfter);
@@ -335,7 +336,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 break;
 
                             case 6:
-                                $details = HRNotificationService::expired_docs($compAssignScenario, $beforeAfter, $days);
+                                $details = HRNotificationService::expired_docs($companyID, $beforeAfter, $days);
                                 $subject = 'HR document expiry Notification';
                                 break;
 
@@ -344,11 +345,18 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 break;
                         }
 
+                        //return $details;
 
                         if (count($details) > 0) {
+
+                            if()
+
+
                             $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                             if (count($notificationUserSettings['email']) > 0) {
+                                //dd( $notificationUserSettings['email'] );
                                 foreach ($notificationUserSettings['email'] as $key => $notificationUserVal) {
+
                                     switch ($input['scenarioID']) {
                                         case 1:
                                             $emailContent = RolReachedNotification::getRolReachedEmailContent($details, $notificationUserVal[$key]['empName']);
