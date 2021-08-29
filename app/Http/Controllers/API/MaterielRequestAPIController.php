@@ -926,25 +926,27 @@ class MaterielRequestAPIController extends AppBaseController
     }
 
     public function checkPurcahseRequestExist($id) {
-        $materielRequest = MaterielRequest::find($id);
+        $materielRequest = MaterielRequest::findOrFail($id);
 
-        if(count($materielRequest->purchase_requests) > 0) {
-
-            $items = PurchaseRequestDetails::select('itemCode')->where('purchaseRequestID', $materielRequest->purchase_requests->first()->purchaseRequestID)
-            ->pluck('itemCode')->toArray();
-            $data = [
-                'status' => true,
-                'data'   => $items,
-                'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID
-            ];
-            return $this->sendResponse($data, 'Purchase request received successfully');
-        }else {
-            $data = [
-                'status' => false,
-                'data'   => []
-            ];
-            return $this->sendResponse($data, 'No Purchase request found');
-        }
+            if( count($materielRequest->purchase_requests) > 0) {
+                $items = PurchaseRequestDetails::select('itemCode')->where('purchaseRequestID', $materielRequest->purchase_requests->first()->purchaseRequestID)
+                ->pluck('itemCode')->toArray();
+                $data = [
+                    'status' => true,
+                    'data'   => $items,
+                    'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID,
+                    'purchaseReq' => $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode
+                ];
+                return $this->sendResponse($data, 'Purchase request received successfully');
+            }else {
+                $data = [
+                    'status' => false,
+                    'data'   => []
+                ];
+                return $this->sendResponse($data, 'No Purchase request found');
+            }
+            
+            
 
     }
 }

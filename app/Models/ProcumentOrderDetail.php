@@ -270,4 +270,10 @@ class ProcumentOrderDetail extends Model
     {
         return $this->belongsTo(\App\Models\ErpPurchaseordermaster::class);
     }
+
+    public function productmentOrder() {
+        return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
+    }
+    
+
 }

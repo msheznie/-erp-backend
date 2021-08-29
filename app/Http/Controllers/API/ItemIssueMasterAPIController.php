@@ -1324,4 +1324,31 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     }
 
+    public function checkProductExistInIssues($id) {
+
+        $fetchDetails = ItemIssueDetails::whereHas('master', function($q)
+        {
+            $q->where('approved', 0);
+        
+        })->where('itemIssueCode', $id)->get();
+
+        if(count($fetchDetails) > 0) {
+            $data = [
+                "status" => true,
+                "data" => $fetchDetails
+            ];
+
+            return $this->sendResponse($data, 'Data retreived successfully');
+
+        }else{
+            $data = [
+                "status" => false,
+                "data" => []
+            ];
+            return $this->sendResponse($data, 'Data not found!');
+        }
+
+
+    }
+
 }
