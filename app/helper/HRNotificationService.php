@@ -3,24 +3,14 @@
 namespace App\helper;
 
 use App\Models\HRDocumentDescriptionForms;
+use App\Models\SMEEmpContractType;
 use Carbon\Carbon;
 
 class HRNotificationService
 {
-    public static function expired_docs($company, $type, $days)
+    public static function emp_expired_docs($company, $type, $days)
     {
-
-        // for same day $type will be 0 ( zero )
-        $expiry_date = Carbon::now();
-
-        if($type == 1){ //Before
-            $expiry_date = $expiry_date->addDays($days);
-        }
-        elseif ($type == 2 ){ // After
-            $expiry_date = $expiry_date->subDays($days);
-        }
-
-        $expiry_date = $expiry_date->format('Y-m-d');
+        $expiry_date = self::get_expiry_date($type, $days);
 
         $data = HRDocumentDescriptionForms::selectRaw('DocDesID, PersonID, documentNo, expireDate, Erp_companyID')
             ->where('Erp_companyID', $company)
@@ -70,5 +60,34 @@ class HRNotificationService
         $body .= '</tbody>
         </table>';
         return $body;
+    }
+
+    public static function emp_contract_docs($company, $type, $days){
+        $expiry_date = self::get_expiry_date($type, $days);
+
+        $data = SMEEmpContractType::selectRaw('EmpContractTypeID, Description')
+            ->where('typeID', 2)
+            ->where('Erp_CompanyID', $company);
+
+
+        $data = $data->with(['emp_contract'=> function ($q){
+            // $q->where('')
+        }]);
+
+        return $data->get();
+    }
+
+    public static function get_expiry_date($type, $days){
+        // for same day $type will be 0 ( zero )
+        $expiry_date = Carbon::now();
+
+        if($type == 1){ //Before
+            $expiry_date = $expiry_date->addDays($days);
+        }
+        elseif ($type == 2 ){ // After
+            $expiry_date = $expiry_date->subDays($days);
+        }
+
+        return $expiry_date->format('Y-m-d');
     }
 }
