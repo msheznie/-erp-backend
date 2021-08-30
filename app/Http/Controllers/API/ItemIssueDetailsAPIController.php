@@ -305,9 +305,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['itemFinanceCategorySubID'] = $item->itemFinanceCategorySubID;
 
             $input['convertionMeasureVal'] = $item->convertionMeasureVal;
-            $input['qtyRequested'] = $item->quantityRequested;
-            $input['qtyIssued'] = $item->quantityRequested;
-            $input['qtyIssuedDefaultMeasure'] = $item->qtyIssuedDefaultMeasure;
+            $input['qtyRequested'] = ($input['qntyMaterialIssue']) ? $input['qntyMaterialIssue'] :$item->quantityRequested;
+            $input['qtyIssued'] = ($input['qntyMaterialIssue']) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
+            $input['qtyIssuedDefaultMeasure'] =  ($input['qntyMaterialIssue']) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
 

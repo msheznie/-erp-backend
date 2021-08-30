@@ -598,6 +598,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
 
 
+        Route::get('material-issue/check/product/{id}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
+        Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
+
+     
+
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
         Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
@@ -621,6 +626,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
         Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
         Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
+
+        Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo');
+
+
 
         Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
         Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
@@ -2163,6 +2172,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_detail_comments', 'BudgetDetailCommentAPIController');
         Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
+
+
+        Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
+        Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

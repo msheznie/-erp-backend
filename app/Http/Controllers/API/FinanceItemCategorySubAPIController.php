@@ -283,7 +283,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;
             $financeItemCategorySubs->save();
-            $this->financeItemcategorySubAssignedRepository->where(
+
+            $this->financeItemCategorySubAssignedRepository->where(
                 'itemCategorySubID', $input['itemCategorySubID']
             )->update(
                 array(
@@ -339,6 +340,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function update($id, UpdateFinanceItemCategorySubAPIRequest $request)
     {
         $input = $request->all();
+        return $input;
 
         /** @var FinanceItemCategorySub $financeItemCategorySub */
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
@@ -350,6 +352,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
+
+        
 
         $this->financeItemCategorySubRepository->update($input, $id);
 

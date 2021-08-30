@@ -25,6 +25,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
@@ -682,11 +683,21 @@ class MaterielRequestAPIController extends AppBaseController
                                             ->where('companySystemID', $companyId)
                                             ->first();
 
+
         $allowItemToTypePolicy = 0;
         if ($allowItemToType) {
             $allowItemToTypePolicy = $allowItemToType->isYesNO;
         }
 
+
+        $allowToCreatePRfromMR = CompanyPolicyMaster::where('companyPolicyCategoryID', 58)
+                                            ->where('companySystemID', $companyId)
+                                            ->first();
+
+        $allowPRfromMR = 0;
+        if($allowToCreatePRfromMR) {
+            $allowPRfromMR = $allowToCreatePRfromMR->isYesNO;
+        }
 
         $segments = $segments->get();
         $wareHouses = $wareHouses->get();
@@ -712,7 +723,8 @@ class MaterielRequestAPIController extends AppBaseController
             'locations' => $locations,
             'wareHouses' => $wareHouses,
             'allowItemToTypePolicy' => $allowItemToTypePolicy,
-            'units' => $units
+            'units' => $units,
+            'allowPRfromMR' => $allowPRfromMR
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -925,20 +937,27 @@ class MaterielRequestAPIController extends AppBaseController
     }
 
     public function checkPurcahseRequestExist($id) {
-        $materielRequest = MaterielRequest::find($id);
-        if(count($materielRequest->purchase_requests) > 0) {
-            $data = [
-                'status' => true,
-                'data'   => $materielRequest->purchase_requests
-            ];
-            return $this->sendResponse($data, 'Purchase request received successfully');
-        }else {
-            $data = [
-                'status' => false,
-                'data'   => []
-            ];
-            return $this->sendResponse($data, 'No Purchase request found');
-        }
+        $materielRequest = MaterielRequest::findOrFail($id);
+
+            if( count($materielRequest->purchase_requests) > 0) {
+                $items = PurchaseRequestDetails::select('itemCode')->where('purchaseRequestID', $materielRequest->purchase_requests->first()->purchaseRequestID)
+                ->pluck('itemCode')->toArray();
+                $data = [
+                    'status' => true,
+                    'data'   => $items,
+                    'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID,
+                    'purchaseReq' => $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode
+                ];
+                return $this->sendResponse($data, 'Purchase request received successfully');
+            }else {
+                $data = [
+                    'status' => false,
+                    'data'   => []
+                ];
+                return $this->sendResponse($data, 'No Purchase request found');
+            }
+            
+            
 
     }
 }
