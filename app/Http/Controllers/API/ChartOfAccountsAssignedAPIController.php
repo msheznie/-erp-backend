@@ -106,7 +106,8 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                         return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot unassign');
                     }
                 }
-            } else {
+            } 
+            else {
                 if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
                     $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
                                                                ->where('isMasterAccount', 1)
