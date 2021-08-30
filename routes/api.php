@@ -2172,6 +2172,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_detail_comments', 'BudgetDetailCommentAPIController');
         Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
+
+
+        Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
+        Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
