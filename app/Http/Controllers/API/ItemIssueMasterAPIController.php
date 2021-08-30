@@ -1330,7 +1330,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         {
             $q->where('approved', 0);
         
-        })->where('itemIssueCode', $id)->get();
+        })->where('itemCodeSystem', $id)->get();
+
 
         if(count($fetchDetails) > 0) {
             $data = [
