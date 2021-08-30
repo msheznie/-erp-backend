@@ -106,26 +106,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                         return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot unassign');
                     }
                 }
-<<<<<<< Updated upstream
-            } else {
-                if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
-                    $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
-                                                               ->where('isMasterAccount', 1)
-                                                               ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
-                                                                    $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
-                                                                          ->where('isAssigned', -1)
-                                                                          ->where('isActive', 1);
-                                                               })
-                                                               ->first();
-
-                    if (!$checkMasterAccountIsAssigned) {
-                        return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot update');
-                    }
-                }
-            }
-=======
             } 
-            
             // else {
             //     if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
             //         $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
@@ -142,7 +123,6 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             //         }
             //     }
             // }
->>>>>>> Stashed changes
 
             $input = $this->convertArrayToValue($input);
 
