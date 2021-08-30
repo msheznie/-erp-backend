@@ -886,7 +886,7 @@ class BudgetMasterAPIController extends AppBaseController
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
 
         $data = array('entity' => $budgetMaster->toArray(), 'reportData' => $reportData,
-            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt, 'rptCurrency' => $rptCurrency);
 
         return $this->sendResponse($data, 'details retrieved successfully');
     }
