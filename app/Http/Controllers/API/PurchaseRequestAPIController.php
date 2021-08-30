@@ -2530,7 +2530,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     "status" => true,
                     "data" => $fetchDetails,
                     "policy" => true,
-                    "message" =>  "This Order has Exisiting Purchase Request"
+                    "message" =>  "PR / PO available for these items"
                 ];
                 return $this->sendResponse($data, 'Data retreived successfully');
             }else {
@@ -2540,7 +2540,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         "policy" => true,
                         "po" => $checkPOPending,
                         "data" => $fetchDetails,
-                        "message" => "This Order has Exisiting Purchase Order"
+                        "message" => "PR / PO available for these items"
                     ];
                     return $this->sendResponse($data, 'Data retreived successfully');
     
