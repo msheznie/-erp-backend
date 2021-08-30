@@ -336,12 +336,12 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 break;
 
                             case 6:
-                                $details = HRNotificationService::emp_expired_docs($companyID, $beforeAfter, $days);
-                                $subject = 'HR document expiry Notification';
+                                $hr_doc = new HRNotificationService($companyID, $notDaySetup);
+                                $details = $hr_doc->emp_expired_docs();
                                 break;
 
                             case 7:
-                                $details = HRNotificationService::emp_contract_docs($companyID, $beforeAfter, $days);
+                                $details = []; //HRNotificationService::emp_contract_docs($companyID, $beforeAfter, $days);
                                 $subject = 'HR contract expiry Notification';
                                 break;
 
@@ -350,8 +350,10 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 break;
                         }
 
+                        /*echo $details;exit;
+                        dd($details);
                         dd($details->toArray());
-                        return $details;
+                        return $details;*/
 
                         if (count($details) > 0) {
 
