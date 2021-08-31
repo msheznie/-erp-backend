@@ -990,7 +990,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Company ID'] = $val->companyID;
                         $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = $val->documentDate != '1970-01-01' ? \Helper::dateFormat($val->documentDate) : null;
+                        $data[$x]['Posted Date'] = $val->documentSystemCode != '1970-01-01' ? \Helper::dateFormat($val->documentDate) : null;
                         $data[$x]['Supplier Code'] = $val->SupplierCode;
                         $data[$x]['Supplier Name'] = $val->suppliername;
                         $data[$x]['Invoice Number'] = $val->invoiceNumber;

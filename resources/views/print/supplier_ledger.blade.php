@@ -176,7 +176,11 @@
                 @foreach ($val2 as $det2)
                     <tr style="width:100%">
                         <td>{{ $det2->documentCode }}</td>
-                        <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
+                        <td>
+                            @if($det2->documentSystemCode != '1970-01-01')
+                                {{ \App\helper\Helper::dateFormat($det2->documentDate)}}
+                            @endif
+                        </td>
                         <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
                         <td>{{ $det2->documentNarration }}</td>
