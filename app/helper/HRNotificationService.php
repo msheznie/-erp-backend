@@ -5,8 +5,8 @@ namespace App\helper;
 use App\Models\HRDocumentDescriptionForms;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
-use App\Models\SMEEmpContractType;
 use App\Models\SrpEmployeeDetails;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class HRNotificationService
@@ -15,8 +15,11 @@ class HRNotificationService
     private $comScenarioID;
     private $type;
     private $days;
+    private $expiry_date = [];
     private $expired_docs = [];
     private $mail_subject = "HR document expiry remainder";
+    private $debug = false;
+    private $sent_mail_count = 0;
 
 
     public function __construct($company, $setup){
@@ -30,13 +33,13 @@ class HRNotificationService
 
     public function emp_expired_docs()
     {
-        $expiry_date = NotificationService::get_filter_date($this->type, $this->days);
+        $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
 
         $expired_docs = HRDocumentDescriptionForms::selectRaw('DocDesID, PersonID, documentNo, expireDate, Erp_companyID')
             ->where('Erp_companyID', $this->company)
             ->where('PersonType', 'E')
             ->where('isDeleted', 0)
-            ->whereDate('expireDate', $expiry_date);
+            ->whereDate('expireDate', $this->expiry_date);
 
         $expired_docs = $expired_docs->whereHas('master');
         $expired_docs = $expired_docs->whereHas('employee');
@@ -51,21 +54,25 @@ class HRNotificationService
             $log = "Expiry HR documents does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on class: " . __CLASS__ ." \tline no :".__LINE__;
             Log::error($log);
-            return [];
+            return false;
         }
+
+        $expired_docs = $expired_docs->toArray();
+        $this->expired_docs = $expired_docs;
+
+        Log::info( count($expired_docs)." expired documents found. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
         if(empty($users_setup)){
             Log::error("User's not configured for Expiry HR documents. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
-            return [];
+            return false;
         }
 
-        $expired_docs = $expired_docs->toArray();
 
-        $this->expired_docs = $expired_docs;
+        if($this->debug){
+            echo '<pre> <h3>Expired Documents</h3>'; print_r($expired_docs); echo '</pre>';
+        }
 
-        //dd($expired_docs);
-        //dd( $users_setup->toArray() );
         foreach ($users_setup as $row){
             switch ($row->applicableCategoryID){
                 case 1: //Employee
@@ -86,6 +93,9 @@ class HRNotificationService
             }
         }
 
+
+        Log::info( $this->sent_mail_count. " expired document mails send \t on class: " . __CLASS__ ." \tline no :".__LINE__ );
+
         return true;
     }
 
@@ -94,18 +104,24 @@ class HRNotificationService
 
         if(empty($mail_to)){
             Log::error("Employee Not found \t on class: " . __CLASS__ ." \tline no :".__LINE__);
-            return true;
+            return false;
         }
 
         $mail_body = "Dear {$mail_to->Ename2},<br/>";
-        $mail_body .= $this->email_body($this->expired_docs);
+        $mail_body .= $this->email_body(1 );
+        $mail_body .= $this->expiry_table($this->expired_docs);
 
         $empEmail = $mail_to->EEmail;
         $subject = $this->mail_subject;
 
         NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
 
-        //echo $mail_body; exit;
+        $this->sent_mail_count++;
+
+        if($this->debug){
+            echo '<br/><h3> to_specific_employee line no '. __LINE__ .' </h3><br/>';
+            echo $mail_body;
+        }
 
         return true;
     }
@@ -113,13 +129,14 @@ class HRNotificationService
     public function to_document_owner(){
         $data = collect( $this->expired_docs )->groupBy('PersonID')->toArray();
 
-        $mn = '';
+        $mail_body_str = '';
         foreach ($data as $row){
 
             $mail_to = $row[0]['employee'];
 
             $mail_body = "Dear {$mail_to['Ename2']},<br/>";
-            $mail_body .= $this->email_body($row, true);
+            $mail_body .= $this->email_body(9 );
+            $mail_body .= $this->expiry_table($row, true);
 
 
             $empEmail = $mail_to['EEmail'];
@@ -127,10 +144,17 @@ class HRNotificationService
 
             NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
 
-            $mn .= '<br/><br/>'. $mail_body;
+            $this->sent_mail_count++;
+
+            if($this->debug) { $mail_body_str .= '<br/><br/>' . $mail_body; }
         }
 
-        return '';
+        if($this->debug){
+            echo '<br/> <h3>to_document_owner line no '. __LINE__.'</h3> <br/>';
+            echo $mail_body_str;
+        }
+
+        return true;
     }
 
     public function to_reporting_manager(){
@@ -146,14 +170,18 @@ class HRNotificationService
 
         if(empty($manager)){
             Log::error("Manager details not found for Expiry HR documents. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
-            return [];
+            return false;
+        }
+
+        if($this->debug){
+            echo '<pre> <h3>Manager :</h3>'; print_r($manager->toArray()); echo '</pre>';
         }
 
         $manager = collect( $manager->toArray() )->groupBy('managerID')->toArray();
 
         $emp_wise_docs = collect( $this->expired_docs )->groupBy('PersonID')->toArray();
 
-        $s = '';
+        $mail_body_str = '';
         foreach ($manager as $row){
             $manager_info = $row[0]['info'];
 
@@ -169,32 +197,38 @@ class HRNotificationService
             $my_reporting_data = $my_reporting_data->toArray();
 
             $mail_body = "Dear {$manager_info['Ename2']},<br/>";
-            $mail_body .= $this->email_body( $my_reporting_data );
+            $mail_body .= $this->email_body(7 );
+            $mail_body .= $this->expiry_table( $my_reporting_data );
 
             $empEmail = $manager_info['EEmail'];
             $subject = $this->mail_subject;
 
             NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
 
-            //$s .= '<br/><br/>' .$mail_body;
+            $this->sent_mail_count++;
+
+            if($this->debug) { $mail_body_str .= '<br/><br/>' . $mail_body; }
         }
 
-        //echo $s; exit;
+        if($this->debug){
+            echo '<br/> <h3>to_reporting_manager line no '. __LINE__.'</h3> <br/>';
+            echo $mail_body_str;
+        }
+
+        return true;
     }
 
-    public function email_body($data, $is_owner=false)
+    public function expiry_table($data, $is_owner=false)
     {
         $emp_column = (!$is_owner)? '<th style="text-align: center;border: 1px solid black;">Employee</th>': '';
 
-        $body = $this->email_title();
-
-        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+        $body = '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                 <thead>
                     <tr>
                         <th style="text-align: center;border: 1px solid black;">#</th>
                         '.$emp_column.'
                         <th style="text-align: center;border: 1px solid black;">Document Type</th>
-                        <th style="text-align: center;border: 1px solid black;">Document no</th>                        
+                        <th style="text-align: center;border: 1px solid black;">Document no</th>                                            
                     </tr>
                 </thead>';
         $body .= '<tbody>';
@@ -204,8 +238,7 @@ class HRNotificationService
             $emp_name = '';
 
             if(!$is_owner){
-                $employee = $row['employee'];
-                $emp_name = $employee['ECode'] .' | '. $employee['Ename2'];
+                $emp_name = $row['employee']['ECode'] .' | '. $row['employee']['Ename2'];
                 $emp_name = '<td style="text-align:left;border: 1px solid black;">' . $emp_name . '</td>';
             }
 
@@ -224,47 +257,27 @@ class HRNotificationService
         return $body;
     }
 
-    public function email_title(){
+    public function email_body( $for ){
 
-        $str = "Following HR documents ";
+        $str = "<br/>";
 
-        switch ($this->type){
-            case 0: //same day
-                $str .= " expire today.<br/><br/>";
-                break;
+        switch ($for){
+            case 1: //Employee
+                $str .= "HR documents expiry details as follow";
+            break;
 
-            case 1: //before
-                $str .= "will be expired in {$this->days} day/s.<br/><br/>";
-                break;
+            case 7: //Reporting manager
+                $str .= "HR documents of your reporting employees expiry details as follow";
+            break;
 
-            case 2: // after
-                $str .= "had expired {$this->days} day/s ago.<br/><br/>";
-                break;
+            case 9: //Applicable Employee
+                $str .= "Your HR documents expiry details as follow";
+            break;
         }
+
+        $str .= ".<br/><b> Expiry date </b> : " . $this->expiry_date;
+        $str .= ' ( '. Carbon::parse( $this->expiry_date )->diffForHumans() . " ) <br/><br/><br/>";
 
         return $str;
     }
-
-    public static function emp_contract_docs($company, $type, $days){
-        $expiry_date = NotificationService::get_filter_date($type, $days);
-
-        $data = SMEEmpContractType::selectRaw('EmpContractTypeID, Description')
-            ->where('typeID', 2)
-            ->where('Erp_CompanyID', $company);
-
-        $data = $data->whereHas('emp_contract', function ($q) use ($company, $expiry_date){
-            $q->where('companyID', $company)
-                ->whereDate('contractEndDate', $expiry_date)
-                ->where('isCurrent', 1);
-        });
-
-        $data = $data->with(['emp_contract'=> function ($q) use ($company, $expiry_date){
-            $q->where('companyID', $company)
-                ->whereDate('contractEndDate', $expiry_date)
-                ->where('isCurrent', 1);
-        }]);
-
-        return $data->get();
-    }
-
 }

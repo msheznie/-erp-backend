@@ -109,7 +109,7 @@ class NotificationService
         elseif ($type == 2 ){ // After
             $filter_date = $filter_date->subDays($days);
         }
-        //return '2021-09-01';
+
         return $filter_date->format('Y-m-d');
     }
 
