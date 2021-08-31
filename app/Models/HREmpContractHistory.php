@@ -6,58 +6,58 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="SMEEmpContractType",
+ *      definition="HREmpContractHistory",
  *      required={""},
  *      @SWG\Property(
- *          property="EmpContractTypeID",
- *          description="EmpContractTypeID",
+ *          property="contractID",
+ *          description="contractID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="Description",
- *          description="Description",
+ *          property="empID",
+ *          description="empID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contactTypeID",
+ *          description="contactTypeID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractStartDate",
+ *          description="contractStartDate",
+ *          type="string",
+ *          format="date"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractEndDate",
+ *          description="contractEndDate",
+ *          type="string",
+ *          format="date"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractRefNo",
+ *          description="contractRefNo",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="typeID",
- *          description="srp_erp_systememployeetype => employeeTypeID",
+ *          property="isCurrent",
+ *          description="isCurrent",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="probation_period",
- *          description="probation_period",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="period",
- *          description="in month",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="is_open_contract",
- *          description="is_open_contract",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="SchMasterID",
- *          description="SchMasterID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="BranchID",
- *          description="BranchID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="Erp_CompanyID",
- *          description="Erp_CompanyID",
+ *          property="previousContractID",
+ *          description="previousContractID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -83,22 +83,22 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="Timestamp",
- *          description="Timestamp",
- *          type="string",
- *          format="date-time"
- *      ),
- *      @SWG\Property(
  *          property="ModifiedPC",
  *          description="ModifiedPC",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timestamp",
+ *          description="timestamp",
+ *          type="string",
+ *          format="date-time"
  *      )
  * )
  */
-class SMEEmpContractType extends Model
+class HREmpContractHistory extends Model
 {
 
-    public $table = 'srp_empcontracttypes';
+    public $table = 'srp_erp_empcontracthistory';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -107,20 +107,20 @@ class SMEEmpContractType extends Model
 
 
     public $fillable = [
-        'Description',
-        'typeID',
-        'probation_period',
-        'period',
-        'is_open_contract',
-        'SchMasterID',
-        'BranchID',
-        'Erp_CompanyID',
+        'empID',
+        'contactTypeID',
+        'companyID',
+        'contractStartDate',
+        'contractEndDate',
+        'contractRefNo',
+        'isCurrent',
+        'previousContractID',
         'CreatedUserName',
         'CreatedDate',
         'CreatedPC',
         'ModifiedUserName',
-        'Timestamp',
-        'ModifiedPC'
+        'ModifiedPC',
+        'timestamp'
     ];
 
     /**
@@ -129,21 +129,21 @@ class SMEEmpContractType extends Model
      * @var array
      */
     protected $casts = [
-        'EmpContractTypeID' => 'integer',
-        'Description' => 'string',
-        'typeID' => 'integer',
-        'probation_period' => 'integer',
-        'period' => 'integer',
-        'is_open_contract' => 'integer',
-        'SchMasterID' => 'integer',
-        'BranchID' => 'integer',
-        'Erp_CompanyID' => 'integer',
+        'contractID' => 'integer',
+        'empID' => 'integer',
+        'contactTypeID' => 'integer',
+        'companyID' => 'integer',
+        'contractStartDate' => 'date',
+        'contractEndDate' => 'date',
+        'contractRefNo' => 'string',
+        'isCurrent' => 'integer',
+        'previousContractID' => 'integer',
         'CreatedUserName' => 'string',
         'CreatedDate' => 'datetime',
         'CreatedPC' => 'string',
         'ModifiedUserName' => 'string',
-        'Timestamp' => 'datetime',
-        'ModifiedPC' => 'string'
+        'ModifiedPC' => 'string',
+        'timestamp' => 'datetime'
     ];
 
     /**
@@ -152,12 +152,10 @@ class SMEEmpContractType extends Model
      * @var array
      */
     public static $rules = [
-        'Description' => 'required',
-        'Timestamp' => 'required'
+        'empID' => 'required',
+        'companyID' => 'required',
+        'contractStartDate' => 'required'
     ];
 
-    function emp_contract(){
-        return $this->hasMany(HREmpContractHistory::class, 'contactTypeID', 'EmpContractTypeID');
-    }
     
 }
