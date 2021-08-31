@@ -132,7 +132,7 @@ class HrmsEmployeeManager extends Model
 
     public function getEmpNameAttribute()
     {
-        return '';
+        //return '';
 
         /* By : Nasik
          * On : 2021-08-30
