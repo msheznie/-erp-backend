@@ -126,8 +126,17 @@ class HrmsEmployeeManager extends Model
         
     ];
 
+    public function info(){
+        return $this->belongsTo(SrpEmployeeDetails::class, 'managerID', 'EIdNo');
+    }
+
     public function getEmpNameAttribute()
     {
+        //return '';
+
+        /* By : Nasik
+         * On : 2021-08-30
+         * Do not use the below query it is causing N+1 query issue */
         $employee = Employee::find($this->managerID);
 
         return (isset($employee)) ? $employee->empName : '';

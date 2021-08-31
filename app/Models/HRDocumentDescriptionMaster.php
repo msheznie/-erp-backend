@@ -6,40 +6,22 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="SMEEmpContractType",
+ *      definition="HRDocumentDescriptionMaster",
  *      required={""},
  *      @SWG\Property(
- *          property="EmpContractTypeID",
- *          description="EmpContractTypeID",
+ *          property="DocDesID",
+ *          description="DocDesID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="Description",
- *          description="Description",
+ *          property="DocDescription",
+ *          description="DocDescription",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="typeID",
- *          description="srp_erp_systememployeetype => employeeTypeID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="probation_period",
- *          description="probation_period",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="period",
- *          description="in month",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="is_open_contract",
- *          description="is_open_contract",
+ *          property="systemTypeID",
+ *          description="FK => srp_erp_system_document_types.id",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -56,8 +38,14 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="Erp_CompanyID",
- *          description="Erp_CompanyID",
+ *          property="Erp_companyID",
+ *          description="Erp_companyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="isDeleted",
+ *          description="isDeleted",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -65,6 +53,12 @@ use Eloquent as Model;
  *          property="CreatedUserName",
  *          description="CreatedUserName",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="CreatedDate",
@@ -76,6 +70,12 @@ use Eloquent as Model;
  *          property="CreatedPC",
  *          description="CreatedPC",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserID",
+ *          description="modifiedUserID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="ModifiedUserName",
@@ -92,13 +92,19 @@ use Eloquent as Model;
  *          property="ModifiedPC",
  *          description="ModifiedPC",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="SortOrder",
+ *          description="SortOrder",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class SMEEmpContractType extends Model
+class HRDocumentDescriptionMaster extends Model
 {
 
-    public $table = 'srp_empcontracttypes';
+    public $table = 'srp_documentdescriptionmaster';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -107,20 +113,21 @@ class SMEEmpContractType extends Model
 
 
     public $fillable = [
-        'Description',
-        'typeID',
-        'probation_period',
-        'period',
-        'is_open_contract',
+        'DocDescription',
+        'systemTypeID',
         'SchMasterID',
         'BranchID',
-        'Erp_CompanyID',
+        'Erp_companyID',
+        'isDeleted',
         'CreatedUserName',
+        'createdUserID',
         'CreatedDate',
         'CreatedPC',
+        'modifiedUserID',
         'ModifiedUserName',
         'Timestamp',
-        'ModifiedPC'
+        'ModifiedPC',
+        'SortOrder'
     ];
 
     /**
@@ -129,21 +136,22 @@ class SMEEmpContractType extends Model
      * @var array
      */
     protected $casts = [
-        'EmpContractTypeID' => 'integer',
-        'Description' => 'string',
-        'typeID' => 'integer',
-        'probation_period' => 'integer',
-        'period' => 'integer',
-        'is_open_contract' => 'integer',
+        'DocDesID' => 'integer',
+        'DocDescription' => 'string',
+        'systemTypeID' => 'integer',
         'SchMasterID' => 'integer',
         'BranchID' => 'integer',
-        'Erp_CompanyID' => 'integer',
+        'Erp_companyID' => 'integer',
+        'isDeleted' => 'integer',
         'CreatedUserName' => 'string',
+        'createdUserID' => 'integer',
         'CreatedDate' => 'datetime',
         'CreatedPC' => 'string',
+        'modifiedUserID' => 'integer',
         'ModifiedUserName' => 'string',
         'Timestamp' => 'datetime',
-        'ModifiedPC' => 'string'
+        'ModifiedPC' => 'string',
+        'SortOrder' => 'integer'
     ];
 
     /**
@@ -152,12 +160,8 @@ class SMEEmpContractType extends Model
      * @var array
      */
     public static $rules = [
-        'Description' => 'required',
-        'Timestamp' => 'required'
+        
     ];
 
-    function emp_contract(){
-        return $this->hasMany(HREmpContractHistory::class, 'contactTypeID', 'EmpContractTypeID');
-    }
     
 }

@@ -2290,3 +2290,10 @@ Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPICont
 
 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
 
+
+
+Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPIController');
+
+Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
+
+Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
