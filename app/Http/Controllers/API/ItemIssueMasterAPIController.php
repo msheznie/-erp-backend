@@ -27,6 +27,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
+use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -1303,7 +1304,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $id = $input['refNo'];
 
-        $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->where('approved',0)->get();
+        $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->get();
 
         
         if(count($fetchDetails) > 0) {
@@ -1324,7 +1325,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     }
 
-    public function checkProductExistInIssues($id) {
+    public function checkProductExistInIssues($id,$companySystemID) {
 
         $fetchDetails = ItemIssueDetails::whereHas('master', function($q)
         {
@@ -1332,6 +1333,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         
         })->where('itemCodeSystem', $id)->get();
 
+        
 
         if(count($fetchDetails) > 0) {
             $data = [

@@ -598,7 +598,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
 
 
-        Route::get('material-issue/check/product/{id}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
+        Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
 
      
@@ -2290,3 +2290,10 @@ Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPICont
 
 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
 
+
+
+Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPIController');
+
+Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
+
+Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');

@@ -106,4 +106,12 @@ class NotificationUser extends Model
      */
     public static $rules = [];
 
+    public static function get_notification_users_setup($comScenarioID){
+        $setup = NotificationUser::selectRaw('empID, applicableCategoryID')
+            ->where('companyScenarionID', $comScenarioID)
+            ->where('isActive', 1);
+
+        return $setup->get();
+    }
+
 }

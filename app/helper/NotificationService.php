@@ -4,7 +4,9 @@ namespace App\helper;
 
 use App\Models\Employee;
 use App\Models\NotificationCompanyScenario;
+use App\Models\NotificationUser;
 use App\Models\NotificationUserDayCheck;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 class NotificationService
@@ -14,6 +16,7 @@ class NotificationService
         $companyScenarioConfiguration = NotificationCompanyScenario::with(['notification_Scenario' => function ($query) {
             $query->where('isActive', '=', 1);
         }, 'notification_day_setup' => function ($query) {
+            $query->selectRaw('id,companyScenarionID,beforeAfter,days');
             $query->where('isActive', '=', 1);
         }, 'company'])
             ->whereHas('notification_Scenario', function ($query) {
@@ -28,6 +31,7 @@ class NotificationService
 
         return $companyScenarioConfiguration;
     }
+
     public static function notificationUserSettings($notificationDaySetupID)
     {
         $notificationUserSettingsArr = [
@@ -82,6 +86,7 @@ class NotificationService
         }
         return $notificationUserSettingsArr;
     }
+
     public static function emailNotification($companyID, $subject, $userEmail, $body)
     {
         $emails = [
@@ -93,4 +98,19 @@ class NotificationService
         $sendEmail = \Email::sendEmailErp($emails);
         return $sendEmail;
     }
+
+    public static function get_filter_date($type, $days){
+        // for same day $type will be 0 ( zero )
+        $filter_date = Carbon::now();
+
+        if($type == 1){ //Before
+            $filter_date = $filter_date->addDays($days);
+        }
+        elseif ($type == 2 ){ // After
+            $filter_date = $filter_date->subDays($days);
+        }
+
+        return $filter_date->format('Y-m-d');
+    }
+
 }
