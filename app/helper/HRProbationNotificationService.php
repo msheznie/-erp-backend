@@ -2,14 +2,13 @@
 
 namespace App\helper;
 
-use App\Models\HREmpContractHistory;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class HRContractNotificationService
+class HRProbationNotificationService
 {
     private $company;
     private $comScenarioID;
@@ -17,8 +16,8 @@ class HRContractNotificationService
     private $days;
     private $expiry_date = [];
     private $expired_docs = [];
-    private $mail_subject = "Employee contract expiry remainder";
-    private $debug = false;
+    private $mail_subject = "End of employee probation period remainder";
+    private $debug = true;
     private $sent_mail_count = 0;
 
 
@@ -34,34 +33,14 @@ class HRContractNotificationService
     public function expired_doc(){
         $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
 
-        $data = HREmpContractHistory::selectRaw('empID, contactTypeID, contractEndDate, contractRefNo')
-            ->where('companyID', $this->company)
-            ->whereDate('contractEndDate', $this->expiry_date)
-            ->where('isCurrent', 1);
-
-        $data = $data->whereHas('contract_type', function ($q){
-            $q->where('typeID', 2)
-                ->where('Erp_CompanyID', $this->company);
-        });
-
-        $data = $data->with(['contract_type'=> function ($q){
-            $q->selectRaw('EmpContractTypeID, Description')
-                ->where('typeID', 2)
-                ->where('Erp_CompanyID', $this->company);
-        }]);
-
-        $data = $data->whereHas('employee', function($q){
-            $q->where('isDischarged', 0);
-        });
-        $data = $data->with(['employee'=> function($q){
-            $q->selectRaw('EIdNo,ECode,Ename2,EEmail')
-                ->where('isDischarged', 0);
-        }]);
-
-        $data = $data->get();
+        $data = SrpEmployeeDetails::selectRaw('EIdNo,ECode,Ename2,EEmail,probationPeriod')
+            ->where('Erp_CompanyID', $this->company)
+            ->where('isDischarged', 0)
+            ->whereDate('probationPeriod', $this->expiry_date)
+            ->get();
 
         if(empty($data)){
-            $log = "Expiry HR contract does not exist for type: {$this->type} and days: {$this->days}";
+            $log = "End of probation employees does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on class: " . __CLASS__ ." \tline no :".__LINE__;
             Log::error($log);
             return false;
@@ -69,11 +48,12 @@ class HRContractNotificationService
 
         $this->expired_docs = $data->toArray();
 
-        Log::info( count($this->expired_docs)." expired contracts found. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info( count($this->expired_docs)." end of probation employees found. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
         if(empty($users_setup)){
-            Log::error("User's not configured for Expiry HR contract. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("User's not configured for end of probation employees. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
@@ -82,21 +62,22 @@ class HRContractNotificationService
             print_r($this->expired_docs); echo '</pre>';
         }
 
+
         foreach ($users_setup as $row){
 
             switch ($row->applicableCategoryID) {
                 case 1: //Employee
                     $mail_to = $row->empID;
                     $this->to_specific_employee($mail_to);
-                break;
+                    break;
 
                 case 7: //Reporting manager
                     $this->to_reporting_manager();
-                break;
+                    break;
 
                 case 9: //Applicable Employee
                     $this->to_document_owner();
-                break;
+                    break;
 
                 default:
                     Log::error("Unknown Applicable Category \t on class: " . __CLASS__ ." \tline no :".__LINE__);
@@ -105,7 +86,7 @@ class HRContractNotificationService
         }
 
 
-        Log::info( $this->sent_mail_count. " expired employee contract mails send \t on class: " . __CLASS__ ." \tline no :".__LINE__ );
+        Log::info( $this->sent_mail_count. " expired contract mails send \t on class: " . __CLASS__ ." \tline no :".__LINE__ );
 
         return true;
     }
@@ -125,7 +106,7 @@ class HRContractNotificationService
         $empEmail = $mail_to->EEmail;
         $subject = $this->mail_subject;
 
-        NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
+        //NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
 
         $this->sent_mail_count++;
 
@@ -169,7 +150,7 @@ class HRContractNotificationService
     }
 
     public function to_reporting_manager(){
-        $emp_list = array_column($this->expired_docs, 'empID');
+        $emp_list = array_column($this->expired_docs, 'EIdNo');
         $emp_list = array_unique($emp_list);
 
         $manager = HrmsEmployeeManager::selectRaw('empID,managerID')
@@ -180,7 +161,7 @@ class HRContractNotificationService
             ->get();
 
         if(empty($manager)){
-            Log::error("Manager details not found for expiry employee contract. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("Manager details not found for end of probation period . \t on class: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
@@ -190,7 +171,7 @@ class HRContractNotificationService
 
         $manager = collect( $manager->toArray() )->groupBy('managerID')->toArray();
 
-        $emp_wise_docs = collect( $this->expired_docs )->groupBy('empID')->toArray();
+        $emp_wise_docs = collect( $this->expired_docs )->groupBy('EIdNo')->toArray();
 
         $mail_body_str = '';
 
@@ -232,19 +213,19 @@ class HRContractNotificationService
 
     public function email_body( $for ){
 
-        $str = "<br/>";
+        $str = "<br/>"; //End of employee probation period
 
         switch ($for){
             case 1: //Employee
-                $str .= "Employee contract expiry details as follow";
+                $str .= "End of employee probation period details as follow";
                 break;
 
             case 7: //Reporting manager
-                $str .= "Contract of your reporting employees expiry details as follow";
+                $str .= "Probation period of your reporting employees expiry details as follow";
                 break;
 
             case 9: //Applicable Employee
-                $str .= "Your contract expiry details as follow";
+                $str .= "End of your probation period details as follow";
                 break;
         }
 
@@ -254,35 +235,25 @@ class HRContractNotificationService
         return $str;
     }
 
-    public function expiry_table($data, $is_owner=false)
+    public function expiry_table($data)
     {
-        $emp_column = (!$is_owner)? '<th style="text-align: center;border: 1px solid black;">Employee</th>': '';
 
         $body = '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                 <thead>
                     <tr>
                         <th style="text-align: center;border: 1px solid black;">#</th>
-                        '.$emp_column.'
-                        <th style="text-align: center;border: 1px solid black;">Contract type</th>
-                        <th style="text-align: center;border: 1px solid black;">Contract no</th>                                            
+                        <th style="text-align: center;border: 1px solid black;">Employee</th>                         
                     </tr>
                 </thead>';
         $body .= '<tbody>';
 
         $x = 1;
         foreach ($data as $row) {
-            $emp_name = '';
-
-            if(!$is_owner){
-                $emp_name = $row['employee']['ECode'] .' | '. $row['employee']['Ename2'];
-                $emp_name = '<td style="text-align:left;border: 1px solid black;">' . $emp_name . '</td>';
-            }
+            $emp_name = $row['ECode'] .' | '. $row['Ename2'];
 
             $body .= '<tr>
                 <td style="text-align:left;border: 1px solid black;">' . $x . '</td>  
-                '.$emp_name.'
-                <td style="text-align:left;border: 1px solid black;">' . $row['contract_type']['Description'] . '</td> 
-                <td style="text-align:left;border: 1px solid black;">' . $row['contractRefNo'] . '</td>                 
+                <td style="text-align:left;border: 1px solid black;">' . $emp_name . '</td>    
                 </tr>';
             $x++;
         }
@@ -291,3 +262,4 @@ class HRContractNotificationService
         return $body;
     }
 }
+
