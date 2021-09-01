@@ -2297,3 +2297,9 @@ Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPI
 Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
 
 Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
+
+Route::resource('module_masters', 'ModuleMasterAPIController');
+
+Route::resource('sub_module_masters', 'SubModuleMasterAPIController');
+
+Route::resource('module_assigneds', 'ModuleAssignedAPIController');
