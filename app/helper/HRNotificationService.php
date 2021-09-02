@@ -15,7 +15,7 @@ class HRNotificationService
     private $comScenarioID;
     private $type;
     private $days;
-    private $expiry_date = [];
+    private $expiry_date;
     private $expired_docs = [];
     private $mail_subject = "HR document expiry remainder";
     private $debug = false;
@@ -42,10 +42,15 @@ class HRNotificationService
             ->whereDate('expireDate', $this->expiry_date);
 
         $expired_docs = $expired_docs->whereHas('master');
-        $expired_docs = $expired_docs->whereHas('employee');
+        $expired_docs = $expired_docs->whereHas('employee', function($q){
+            $q->where('isDischarged', 0);
+        });
 
         $expired_docs = $expired_docs->with('master:DocDesID,DocDescription');
-        $expired_docs = $expired_docs->with('employee:EIdNo,ECode,Ename2,EEmail');
+        $expired_docs = $expired_docs->with(['employee'=>  function($q){
+            $q->selectRaw('EIdNo,ECode,Ename2,EEmail')
+                ->where('isDischarged', 0);
+        }]);
 
 
         $expired_docs = $expired_docs->get();
@@ -78,15 +83,15 @@ class HRNotificationService
                 case 1: //Employee
                     $mail_to = $row->empID;
                     $this->to_specific_employee($mail_to);
-                break;
+                    break;
 
                 case 7: //Reporting manager
                     $this->to_reporting_manager();
-                break;
+                    break;
 
                 case 9: //Applicable Employee
                     $this->to_document_owner();
-                break;
+                    break;
 
                 default:
                     Log::error("Unknown Applicable Category \t on class: " . __CLASS__ ." \tline no :".__LINE__);
@@ -264,15 +269,15 @@ class HRNotificationService
         switch ($for){
             case 1: //Employee
                 $str .= "HR documents expiry details as follow";
-            break;
+                break;
 
             case 7: //Reporting manager
                 $str .= "HR documents of your reporting employees expiry details as follow";
-            break;
+                break;
 
             case 9: //Applicable Employee
                 $str .= "Your HR documents expiry details as follow";
-            break;
+                break;
         }
 
         $str .= ".<br/><b> Expiry date </b> : " . $this->expiry_date;
