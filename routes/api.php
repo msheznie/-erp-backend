@@ -2303,3 +2303,5 @@ Route::resource('module_masters', 'ModuleMasterAPIController');
 Route::resource('sub_module_masters', 'SubModuleMasterAPIController');
 
 Route::resource('module_assigneds', 'ModuleAssignedAPIController');
+
+Route::resource('pdc_logs', 'PdcLogAPIController');
