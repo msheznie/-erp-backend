@@ -17,7 +17,7 @@ class HRProbationNotificationService
     private $expiry_date = [];
     private $expired_docs = [];
     private $mail_subject = "End of employee probation period remainder";
-    private $debug = true;
+    private $debug = false;
     private $sent_mail_count = 0;
 
 
@@ -33,11 +33,13 @@ class HRProbationNotificationService
     public function expired_doc(){
         $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
 
-        $data = SrpEmployeeDetails::selectRaw('EIdNo,ECode,Ename2,EEmail,probationPeriod')
+        $data = SrpEmployeeDetails::selectRaw('EIdNo,ECode,Ename2,EEmail,probationPeriod,EmpDesignationId')
             ->where('Erp_CompanyID', $this->company)
             ->where('isDischarged', 0)
-            ->whereDate('probationPeriod', $this->expiry_date)
-            ->get();
+            ->whereDate('probationPeriod', $this->expiry_date);
+
+        $data = $data->with('designation:DesignationID,DesDescription');
+        $data = $data->get();
 
         if(empty($data)){
             $log = "End of probation employees does not exist for type: {$this->type} and days: {$this->days}";
@@ -106,7 +108,7 @@ class HRProbationNotificationService
         $empEmail = $mail_to->EEmail;
         $subject = $this->mail_subject;
 
-        //NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
+        NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
 
         $this->sent_mail_count++;
 
@@ -119,16 +121,15 @@ class HRProbationNotificationService
     }
 
     public function to_document_owner(){
-        $data = collect( $this->expired_docs )->groupBy('empID')->toArray();
+        $data = collect( $this->expired_docs )->groupBy('EIdNo')->toArray();
 
         $mail_body_str = '';
         foreach ($data as $row){
 
-            $mail_to = $row[0]['employee'];
+            $mail_to = $row[0];
 
             $mail_body = "Dear {$mail_to['Ename2']},<br/>";
             $mail_body .= $this->email_body(9 );
-            $mail_body .= $this->expiry_table($row, true);
 
 
             $empEmail = $mail_to['EEmail'];
@@ -218,19 +219,27 @@ class HRProbationNotificationService
         switch ($for){
             case 1: //Employee
                 $str .= "End of employee probation period details as follow";
-                break;
+            break;
 
             case 7: //Reporting manager
-                $str .= "Probation period of your reporting employees expiry details as follow";
-                break;
+                $str .= "End of probation period of your reporting employees details as follow";
+            break;
 
             case 9: //Applicable Employee
-                $str .= "End of your probation period details as follow";
-                break;
+                $str .= "Your probation period end details as follow ";
+            break;
         }
 
         $str .= ".<br/><b> Expiry date </b> : " . $this->expiry_date;
-        $str .= ' ( '. Carbon::parse( $this->expiry_date )->diffForHumans() . " ) <br/><br/><br/>";
+
+        $expiry_date_frm = Carbon::parse( $this->expiry_date )->format('Y-m-d');
+        $to_day = Carbon::now()->format('Y-m-d');
+
+        if( $expiry_date_frm != $to_day ){
+            $str .= ' ( '. Carbon::parse( $this->expiry_date )->diffForHumans() . " ) ";
+        }
+
+        $str .= "<br/><br/><br/>";
 
         return $str;
     }
@@ -243,6 +252,7 @@ class HRProbationNotificationService
                     <tr>
                         <th style="text-align: center;border: 1px solid black;">#</th>
                         <th style="text-align: center;border: 1px solid black;">Employee</th>                         
+                        <th style="text-align: center;border: 1px solid black;">Designation</th>                         
                     </tr>
                 </thead>';
         $body .= '<tbody>';
@@ -251,9 +261,12 @@ class HRProbationNotificationService
         foreach ($data as $row) {
             $emp_name = $row['ECode'] .' | '. $row['Ename2'];
 
+            $designation = array_key_exists('designation', $row)? $row['designation']['DesDescription']: '';
+
             $body .= '<tr>
-                <td style="text-align:left;border: 1px solid black;">' . $x . '</td>  
-                <td style="text-align:left;border: 1px solid black;">' . $emp_name . '</td>    
+                <td style="text-align:left;border: 1px solid black;vertical-align: top">' . $x . '</td>  
+                <td style="text-align:left;border: 1px solid black;vertical-align: top">' . $emp_name . '</td>    
+                <td style="text-align:left;border: 1px solid black;vertical-align: top">' . $designation . '</td>    
                 </tr>';
             $x++;
         }
