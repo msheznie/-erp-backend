@@ -1123,6 +1123,11 @@ class SrpEmployeeDetails extends Model
         return $this->belongsTo(CurrencyMaster::class, 'payCurrencyID', 'currencyID');
     }
 
+    public function designation()
+    {
+        return $this->belongsTo(HrmsDesignation::class, 'EmpDesignationId', 'DesignationID');
+    }
+
     public function manager()
     {
         return $this->hasOne(HrmsEmployeeManager::class, 'empID', 'EIdNo');

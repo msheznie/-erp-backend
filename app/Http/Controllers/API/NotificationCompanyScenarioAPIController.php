@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\AdvancePaymentNotification;
+use App\helper\HRContractNotificationService;
 use App\helper\HRNotificationService;
+use App\helper\HRProbationNotificationService;
 use App\helper\NotificationService;
 use App\helper\BudgetLimitNotification;
 use App\helper\PurchaseOrderPendingDeliveryNotificationService;
@@ -342,8 +344,15 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
                                 break;
 
                             case 7:
-                                $details = []; //HRNotificationService::emp_contract_docs($companyID, $beforeAfter, $days);
-                                $subject = 'HR contract expiry Notification';
+                                $contract = new HRContractNotificationService($companyID, $notDaySetup);
+                                $contract->expired_doc();
+                                $details = [];
+                                break;
+
+                            case 8:
+                                $probation = new HRProbationNotificationService($companyID, $notDaySetup);
+                                $probation->expired_doc();
+                                $details = [];
                                 break;
 
                             default:
