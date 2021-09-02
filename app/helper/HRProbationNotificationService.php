@@ -14,7 +14,7 @@ class HRProbationNotificationService
     private $comScenarioID;
     private $type;
     private $days;
-    private $expiry_date = [];
+    private $expiry_date;
     private $expired_docs = [];
     private $mail_subject = "End of employee probation period remainder";
     private $debug = false;

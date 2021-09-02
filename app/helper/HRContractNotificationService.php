@@ -15,7 +15,7 @@ class HRContractNotificationService
     private $comScenarioID;
     private $type;
     private $days;
-    private $expiry_date = [];
+    private $expiry_date;
     private $expired_docs = [];
     private $mail_subject = "Employee contract expiry remainder";
     private $debug = false;
