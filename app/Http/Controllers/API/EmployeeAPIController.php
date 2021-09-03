@@ -122,7 +122,7 @@ class EmployeeAPIController extends AppBaseController
     public function update($id, UpdateEmployeeAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['desi_master','manager','emp_company']);
+        $input = array_except($input, ['desi_master', 'manager', 'emp_company', 'hr_emp', 'manager_hrms']);
         $input = $this->convertArrayToValue($input);
         /** @var Employee $employee */
         $employee = $this->employeeRepository->findWithoutFail($id);
