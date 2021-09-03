@@ -2309,3 +2309,5 @@ Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMaster
 
 Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
 
+Route::get('get-all-cheques', 'PdcLogAPIController@getIssuedAndReceivedCheques');
+

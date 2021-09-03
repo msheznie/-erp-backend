@@ -91,6 +91,7 @@ class PdcLog extends Model
 
 
 
+    protected $appends = ['chequeStatusValue'];
 
     public $fillable = [
         'documentSystemID',
@@ -115,7 +116,7 @@ class PdcLog extends Model
     protected $casts = [
         'id' => 'integer',
         'documentSystemID' => 'integer',
-        'documentmasterAutoID' => 'integer',
+        'documentmasterAutoID' => 'string',
         'paymentBankID' => 'integer',
         'companySystemID' => 'integer',
         'currencyID' => 'integer',
@@ -128,14 +129,31 @@ class PdcLog extends Model
         'timestamp' => 'datetime'
     ];
 
+    protected $statuses = array(
+        "0" => 'Draft',
+        "1" => 'Deposited',
+        "2" => 'Returned',
+        "3" => 'Done'
+    );
+
     /**
      * Validation rules
      *
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function getChequeStatusValueAttribute() {
+       return $this->statuses[$this->chequeStatus];
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster','currencyID',  'currencyID');
+    }
+
+
+
 }
