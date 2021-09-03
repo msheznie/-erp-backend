@@ -319,6 +319,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
+
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             $input['createdPcID'] = gethostname();
@@ -588,13 +594,21 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
+
             $warningMessage = '';
 
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
                 $input['chequePaymentYN'] = 0;
-                $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
+                    $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+                }
             }
 
             $input['BPVdate'] = new Carbon($input['BPVdate']);
