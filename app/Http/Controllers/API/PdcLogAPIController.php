@@ -63,7 +63,7 @@ class PdcLogAPIController extends AppBaseController
     {
         $this->pdcLogRepository->pushCriteria(new RequestCriteria($request));
         $this->pdcLogRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $pdcLogs = $this->pdcLogRepository->all();
+        $pdcLogs = $this->pdcLogRepository->with('currency')->all();
 
         return $this->sendResponse($pdcLogs->toArray(), 'Pdc Logs retrieved successfully');
     }
@@ -277,5 +277,19 @@ class PdcLogAPIController extends AppBaseController
         $pdcLog->delete();
 
         return $this->sendSuccess('Pdc Log deleted successfully');
+    }
+
+    public function getIssuedAndReceivedCheques() {
+        $receivedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 21])->all();
+
+        $issuedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 4])->all();
+
+        $data = [
+            "receivedCheques" => $receivedCheques,
+            "issuedCheques"   => $issuedCheques
+        ];
+        return $this->sendResponse($data, 'Data received successfully');
+
+
     }
 }
