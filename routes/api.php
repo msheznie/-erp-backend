@@ -781,6 +781,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController',['except' => ['index','store']]);
         Route::post('addPVDetailsByInterCompany', 'DirectPaymentDetailsAPIController@addPVDetailsByInterCompany');
         Route::post('pv-md-deduction-type', 'DirectPaymentDetailsAPIController@updat_monthly_deduction');
+        Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -2176,6 +2177,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
         Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+
+        Route::resource('module_masters', 'ModuleMasterAPIController');
+
+        Route::resource('sub_module_masters', 'SubModuleMasterAPIController');
+
+        Route::resource('module_assigneds', 'ModuleAssignedAPIController');
+
+        Route::resource('pdc_logs', 'PdcLogAPIController');
+        Route::post('getPdcCheques', 'PdcLogAPIController@getPdcCheques');
+        Route::post('deleteAllPDC', 'PdcLogAPIController@deleteAllPDC');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2298,10 +2309,3 @@ Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMaster
 
 Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
 
-Route::resource('module_masters', 'ModuleMasterAPIController');
-
-Route::resource('sub_module_masters', 'SubModuleMasterAPIController');
-
-Route::resource('module_assigneds', 'ModuleAssignedAPIController');
-
-Route::resource('pdc_logs', 'PdcLogAPIController');

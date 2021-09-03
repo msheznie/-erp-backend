@@ -27,6 +27,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\BankMemoPayee;
 use App\Models\ChartOfAccount;
@@ -1172,6 +1173,55 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function generatePdcForPv(Request $request)
+    {
+        $input = $request->all();
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
+
+        if (empty($paySupplierInvoiceMaster)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
+    
+            $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
+
+            for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
+                $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
+
+                if (!$res['status']) {
+                    return $this->sendError($res['message'], 500);
+                }
+
+                $pdcLogData = [
+                    'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
+                    'documentmasterAutoID' => $input['PayMasterAutoId'],
+                    'paymentBankID' => $bankAccount->bankmasterAutoID,
+                    'companySystemID' => $paySupplierInvoiceMaster->companySystemID,
+                    'currencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+                    'chequeRegisterAutoID' => $res['chequeRegisterAutoID'],
+                    'chequeNo' => $res['nextChequeNo'],
+                    'chequeStatus' => 0,
+                    'amount' => $amount,
+                ];
+
+                $resPdc = PdcLog::create($pdcLogData);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], "PDC cheques generated successfully");
+        } catch
+        (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 
     /**
