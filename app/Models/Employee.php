@@ -319,4 +319,9 @@ class Employee extends Model
     {
         return $this->hasMany('App\Models\CustomReportEmployees','user_id','employeeSystemID');
     }
+
+    public function hr_emp()
+    {
+        return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'employeeSystemID');
+    }
 }

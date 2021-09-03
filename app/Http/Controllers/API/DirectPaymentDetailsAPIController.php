@@ -19,6 +19,7 @@ use App\Http\Requests\API\UpdateDirectPaymentDetailsAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
+use App\Models\CompanyFinanceYear;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyConversion;
@@ -254,7 +255,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $finYearExp = explode('-', $payMaster->FYBiggin);
             $input['budgetYear'] = $finYearExp[0];
         } else {
-            $input['budgetYear'] = date("Y");
+            $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $input['companySystemID']);
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->create($input);

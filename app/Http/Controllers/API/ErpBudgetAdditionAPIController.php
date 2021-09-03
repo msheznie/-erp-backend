@@ -17,6 +17,7 @@ use App\Models\Months;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Models\ReportTemplate;
 use App\Models\SegmentMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -25,10 +26,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\BudgetConsumptionService;
+use App\Models\BudgetAdditionDetailRefferedBack;
+use App\Models\BudgetAdditionRefferedBack;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
+use Carbon\Carbon;
+
 /**
  * Class ErpBudgetAdditionController
  *
@@ -159,7 +165,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $validator = \Validator::make($input, [
-            'year' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
             'comments' => 'required',
             'templatesMasterAutoID' => 'required|numeric|min:1'
         ]);
@@ -167,6 +173,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        $companyFinanceYear = CompanyFinanceYear::find($input['companyFinanceYearID']);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $input['year'] = Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
 
         $input['documentSystemID'] = 102;
         $input['documentID'] = 'BDA';
@@ -321,10 +334,11 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
             if (!$checkBudgetFromReview['status']) {
-               return $this->sendError("You cannot confirm this document.", 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
+                return $this->sendError("You cannot confirm this document.", 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
             }
 
-            $params = array('autoID' => $id,
+            $params = array(
+                'autoID' => $id,
                 'company' => $erpBudgetAddition->companySystemID,
                 'document' => $erpBudgetAddition->documentSystemID,
                 'segment' => 0,
@@ -346,9 +360,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
     public function validateBudgetFormReview($budgetTransferFormAutoID, $budgetTransferForm, $details)
     {
         $checkFormReview = BudgetReviewTransferAddition::where('budgetTransferAdditionID', $budgetTransferFormAutoID)
-                                                       ->where('budgetTransferType', 2)
-                                                       ->with(['purchase_order', 'purchase_request'])
-                                                       ->get();
+            ->where('budgetTransferType', 2)
+            ->with(['purchase_order', 'purchase_request'])
+            ->get();
 
         $currency = \Helper::companyCurrency($budgetTransferForm->companySystemID);
 
@@ -363,7 +377,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                     foreach ($res['data'] as $key1 => $value1) {
                         $consumptionData[] = $value1;
                         $temp['budgetData'] = $value1;
-                        if (in_array($value['documentSystemID'], [2,5,52])) {
+                        if (in_array($value['documentSystemID'], [2, 5, 52])) {
                             $temp['docCode'] = $value['purchase_order']['purchaseOrderCode'];
                         } else {
                             $temp['docCode'] = $value['purchase_request']['purchaseRequestCode'];
@@ -375,13 +389,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             }
 
             $checkBudgetBasedOnGL = CompanyPolicyMaster::where('companyPolicyCategoryID', 55)
-                                        ->where('companySystemID', $budgetTransferForm->companySystemID)
-                                        ->first();
+                ->where('companySystemID', $budgetTransferForm->companySystemID)
+                ->first();
 
             $departmentWiseCheckBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 33)
-                                    ->where('companySystemID', $budgetTransferForm->companySystemID)
-                                    ->first();
-            
+                ->where('companySystemID', $budgetTransferForm->companySystemID)
+                ->first();
+
             $departmentWiseCheckBudgetPolicy = false;
             if ($departmentWiseCheckBudget && $departmentWiseCheckBudget->isYesNO == 1) {
                 $departmentWiseCheckBudgetPolicy = true;
@@ -392,8 +406,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             if ($checkBudgetBasedOnGL && $checkBudgetBasedOnGL->isYesNO == 0) {
                 if ($departmentWiseCheckBudgetPolicy) {
                     $groupByDetail = collect($consumptionData)->groupBy(function ($item, $key) {
-                                        return $item['templateDetailID'].$item['serviceLineSystemID'];
-                                    });
+                        return $item['templateDetailID'] . $item['serviceLineSystemID'];
+                    });
                 } else {
                     $groupByDetail = collect($consumptionData)->groupBy('templateDetailID')->all();
                 }
@@ -404,34 +418,34 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                         $documents = $this->getDocumentsForErrorMessageOfTransferConfirm($value[0]['templateDetailID'], $consumptionDataWithPoPr);
 
                         $transferedAmount = ErpBudgetAdditionDetail::where('templateDetailID', $value[0]['templateDetailID'])
-                                                                    ->when($departmentWiseCheckBudgetPolicy == true, function($query) use ($value){
-                                                                        $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
-                                                                    })
-                                                                    ->sum('adjustmentAmountRpt');
+                            ->when($departmentWiseCheckBudgetPolicy == true, function ($query) use ($value) {
+                                $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
+                            })
+                            ->sum('adjustmentAmountRpt');
 
                         // return $budgetAmountToUnBlock;
                         $differentAmount = $budgetAmountToUnBlock - $transferedAmount;
                         $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
                         if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->description." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
-                                $errorMasg[] = $templateDetailData->description." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->description . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         } else if ($transferedAmount == 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->description." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
-                                $errorMasg[] = $templateDetailData->description." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->description . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         }
                     }
                 }
             } else {
-                 if ($departmentWiseCheckBudgetPolicy) {
+                if ($departmentWiseCheckBudgetPolicy) {
                     $groupByDetail = collect($consumptionData)->groupBy(function ($item, $key) {
-                                        return $item['templateDetailID'].$item['serviceLineSystemID'];
-                                    });
+                        return $item['templateDetailID'] . $item['serviceLineSystemID'];
+                    });
                 } else {
                     $groupByDetail = collect($consumptionData)->groupBy('templateDetailID')->all();
                 }
@@ -442,25 +456,25 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                         $documents = $this->getDocumentsForErrorMessageOfTransferConfirm($value[0]['templateDetailID'], $consumptionDataWithPoPr);
 
                         $transferedAmount = ErpBudgetAdditionDetail::where('chartOfAccountSystemID', $value[0]['templateDetailID'])
-                                                                    ->when($departmentWiseCheckBudgetPolicy == true, function($query) use ($value){
-                                                                        $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
-                                                                    })
-                                                                    ->sum('adjustmentAmountRpt');
+                            ->when($departmentWiseCheckBudgetPolicy == true, function ($query) use ($value) {
+                                $query->where('serviceLineSystemID', $value[0]['serviceLineSystemID']);
+                            })
+                            ->sum('adjustmentAmountRpt');
 
                         // return $budgetAmountToUnBlock;
                         $differentAmount = $budgetAmountToUnBlock - $transferedAmount;
                         $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
                         if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
-                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         } else if ($transferedAmount == 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." of ".$value[0]['serviceLine']." service line need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
-                                $errorMasg[] = $templateDetailData->AccountCode." - ".$templateDetailData->AccountDescription." need ".$currency->reportingcurrency->CurrencyCode." ".number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces)." to unblock the documents ".$documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         }
                     }
@@ -545,6 +559,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
+        $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
+
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
 
@@ -558,10 +575,10 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
 
         $budgetMasters = BudgetMaster::where([
-                                            'companySystemID' => $companyId,
-                                            'Year' => $financeYear
-                                        ])->groupBy('templateMasterID')
-                                        ->get();
+            'companySystemID' => $companyId,
+            'Year' => $financeYear
+        ])->groupBy('templateMasterID')
+            ->get();
 
         $templateIds = collect($budgetMasters)->pluck('templateMasterID')->toArray();
 
@@ -572,6 +589,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'financeYears' => $financeYears,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
             'masterTemplates' => $masterTemplates,
@@ -626,7 +644,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
+                'documentSystemCode'
+            )
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -726,7 +745,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
+                'documentSystemCode'
+            )
             ->join('erp_budgetaddition', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                     ->where('erp_budgetaddition.companySystemID', $companyId)
@@ -793,7 +813,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         foreach ($consumptionDataWithPoPr as $key => $value) {
             if ($value['budgetData']['templateDetailID'] == $templateDetailID) {
                 if (!in_array($value['docCode'], $addedArray)) {
-                    $comment .= (($comment == "") ? " " : ", ").$value['docCode']; 
+                    $comment .= (($comment == "") ? " " : ", ") . $value['docCode'];
                     $addedArray[] = $value['docCode'];
                 }
             }
@@ -825,8 +845,10 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             return $this->sendError('You cannot reopen this Budget Addition, it is not confirmed');
         }
 
-        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-            'confirmedByEmpName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+        $updateInput = [
+            'confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByEmpName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1
+        ];
 
         $this->erpBudgetAdditionRepository->update($updateInput, $id);
 
@@ -868,12 +890,14 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
                 foreach ($approvalList as $da) {
                     if ($da->employee) {
-                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                        $emails[] = array(
+                            'empSystemID' => $da->employee->employeeSystemID,
                             'companySystemID' => $documentApproval->companySystemID,
                             'docSystemID' => $documentApproval->documentSystemID,
                             'alertMessage' => $subject,
                             'emailAlertMessage' => $body,
-                            'docSystemCode' => $documentApproval->documentSystemCode);
+                            'docSystemCode' => $documentApproval->documentSystemCode
+                        );
                     }
                 }
 
@@ -890,9 +914,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             ->delete();
 
         /*Audit entry*/
-        AuditTrial::createAuditTrial($budgetAddition->documentSystemID,$id,$input['reopenComments'],'Reopened');
+        AuditTrial::createAuditTrial($budgetAddition->documentSystemID, $id, $input['reopenComments'], 'Reopened');
 
-        return $this->sendResponse($budgetAddition->toArray(),'Budget Addition reopened successfully');
+        return $this->sendResponse($budgetAddition->toArray(), 'Budget Addition reopened successfully');
     }
     public function getBudgetAdditionAudit(Request $request)
     {
@@ -904,5 +928,65 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         return $this->sendResponse($budgetAddition, 'Budget Addition audit detailed retrived');
+    }
+    public function amendBudgetAddition(Request $request)
+    {
+        $input =  $request->all();
+        $budgetAdditionID = $input['budgetAdditionID'];
+        $budgetAdditionMasterData = ErpBudgetAddition::find($budgetAdditionID);
+
+        if (empty($budgetAdditionMasterData)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        if ($budgetAdditionMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this budget addition');
+        }
+
+        $budgetAdditionArray = $budgetAdditionMasterData->toArray();
+        $storeBudgetAdditionHistory = BudgetAdditionRefferedBack::insert($budgetAdditionArray);
+
+        $budgetAdditionDetailRec = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $budgetAdditionID)->get();
+
+        if (!empty($budgetAdditionDetailRec)) {
+            foreach ($budgetAdditionDetailRec as $budgetAdds) {
+                $budgetAdds['timesReferred'] = $budgetAdditionMasterData->timesReferred;
+            }
+        }
+
+        $budgetAdditionDetailArray = $budgetAdditionDetailRec->toArray();
+        $storeAssetTransferDetailHistory = BudgetAdditionDetailRefferedBack::insert($budgetAdditionDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $budgetAdditionID)
+            ->where('companySystemID', $budgetAdditionMasterData->companySystemID)
+            ->where('documentSystemID', $budgetAdditionMasterData->documentSystemID)
+            ->get();
+
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $budgetAdditionMasterData->timesReferred;
+            }
+        }
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $budgetAdditionID)
+            ->where('companySystemID', $budgetAdditionMasterData->companySystemID)
+            ->where('documentSystemID', $budgetAdditionMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $budgetAdditionMasterData->refferedBackYN = 0;
+            $budgetAdditionMasterData->confirmedYN = 0;
+            $budgetAdditionMasterData->confirmedDate = null;
+            $budgetAdditionMasterData->confirmedByEmpSystemID = null;
+            $budgetAdditionMasterData->confirmedByEmpID = null;
+            $budgetAdditionMasterData->confirmedByEmpName = null;
+            $budgetAdditionMasterData->RollLevForApp_curr = 1;
+            $budgetAdditionMasterData->save();
+        }
+        return $this->sendResponse($budgetAdditionMasterData->toArray(), 'Budget Addition amend successfully');
     }
 }

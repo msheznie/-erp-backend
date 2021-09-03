@@ -12,12 +12,14 @@ class SupplierAssignService
 	public static function assignSupplier($supplierCodeSystem, $companySystemID)
 	{
 
-		 $checkSupplierAssignPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 51)
-					                                    ->where('companySystemID', $companySystemID)
-					                                    ->first();
 
 		 $supplierMaster = SupplierMaster::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,
 		 									primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,markupPercentage,isMarkupPercentage,NOW() as timeStamp,jsrsNo,jsrsExpiry')->find($supplierCodeSystem);
+
+		 $checkSupplierAssignPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 51)
+					                                    ->where('companySystemID', $supplierMaster->companySystemID)
+					                                    ->first();
+
 
          $supData = array_except($supplierMaster->toArray(),'isSUPDAmendAccess');
 		 if ($checkSupplierAssignPolicy && $checkSupplierAssignPolicy->isYesNO == 1) {

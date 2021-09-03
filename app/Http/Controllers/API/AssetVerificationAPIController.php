@@ -11,7 +11,11 @@ use App\Models\AssetVerificationDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
+use App\Models\ERPAssetVerificationDetailReferredback;
+use App\Models\ERPAssetVerificationReferredback;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetMaster;
 use App\Models\YesNoSelection;
@@ -116,9 +120,8 @@ class AssetVerificationAPIController extends AppBaseController
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('id', $input['order'][0]['dir']);
                     }
                 }
@@ -323,7 +326,7 @@ class AssetVerificationAPIController extends AppBaseController
         if ($assetVerification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
             $isDetailsExists = AssetVerificationDetail::where('verification_id', $id)->exists();
-            if(!$isDetailsExists){
+            if (!$isDetailsExists) {
                 return $this->sendError('Asset verification details not found');
             }
 
@@ -508,7 +511,8 @@ class AssetVerificationAPIController extends AppBaseController
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
+                'documentSystemCode'
+            )
             ->join('erp_fa_asset_verification', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                     ->where('erp_fa_asset_verification.companySystemID', $companyId)
@@ -534,7 +538,6 @@ class AssetVerificationAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-
     }
 
     public function getAllCostingByCompanyForVerification(Request $request)
@@ -625,5 +628,64 @@ class AssetVerificationAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+    public function amendAssetVerification(Request $request)
+    {
+        $input = $request->all();
+        $assetVerificationAutoID = $input['assetVerificationID'];
 
+        $assetVerificationMasterData = AssetVerification::find($assetVerificationAutoID);
+        if (empty($assetVerificationMasterData)) {
+            return $this->sendError('Asset Verification not found');
+        }
+
+        if ($assetVerificationMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this asset verification');
+        }
+        $assetVerificationArray = $assetVerificationMasterData->toArray();
+        $storeAssetVerificationHistory = ERPAssetVerificationReferredback::insert($assetVerificationArray);
+
+        $assetVerificationDetailRec = AssetVerificationDetail::where('verification_id', $assetVerificationAutoID)->get();
+
+        if (!empty($assetVerificationDetailRec)) {
+            foreach ($assetVerificationDetailRec as $assetVery) {
+                $assetVery['timesReferred'] = $assetVerificationMasterData->timesReferred;
+            }
+        } 
+
+        $assetVerificationDetailArray = $assetVerificationDetailRec->toArray(); 
+        $storeAssetTransferDetailHistory = ERPAssetVerificationDetailReferredback::insert($assetVerificationDetailArray);
+
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $assetVerificationAutoID)
+            ->where('companySystemID', $assetVerificationMasterData->companySystemID)
+            ->where('documentSystemID', $assetVerificationMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $assetVerificationMasterData->timesReferred;
+            }
+        }
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $assetVerificationAutoID)
+            ->where('companySystemID',  $assetVerificationMasterData->companySystemID)
+            ->where('documentSystemID', $assetVerificationMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $assetVerificationMasterData->refferedBackYN = 0;
+            $assetVerificationMasterData->confirmedYN = 0;
+            $assetVerificationMasterData->confirmedByEmpSystemID = null;
+            $assetVerificationMasterData->confirmedByName = null;
+            $assetVerificationMasterData->confirmedByEmpID = null;
+            $assetVerificationMasterData->confirmedDate = null;
+            $assetVerificationMasterData->RollLevForApp_curr = 1;
+            $assetVerificationMasterData->save();
+        } 
+
+        return $this->sendResponse($assetVerificationMasterData->toArray(), 'Asset Verification amend successfully');
+    }
 }

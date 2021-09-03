@@ -362,6 +362,7 @@ class StockAdjustmentAPIController extends AppBaseController
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
 
         $input = $this->convertArrayToValue($input);
+        $confirm_validate = array('type' => 'confirm_validate');
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -462,6 +463,38 @@ class StockAdjustmentAPIController extends AppBaseController
             if ($checkQuantity > 0) {
                 //return $this->sendError('Every item should have at least one minimum Qty requested', 500);
             }
+
+            $details = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                                                ->get();
+
+            $errorMessage = [];
+            foreach ($details as $key => $value) {
+                $data = array('companySystemID' => $stockAdjustment->companySystemID,
+                    'itemCodeSystem' => $value->itemCodeSystem,
+                    'wareHouseId' => $stockAdjustment->location);
+
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                $currenctStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+
+                $balanceQty = $currenctStockQty + $value->noQty;
+
+                if ($balanceQty < 0) {
+                      if ($itemCurrentCostAndQty['currentWareHouseStockQty'] != $value->currenctStockQty) {
+
+                            $errorMessage[] = $value->itemPrimaryCode.' - Current stock quantity has been updated from '.$value->currenctStockQty.' to '.$itemCurrentCostAndQty['currentWareHouseStockQty'].'. Adjusted quantity cannot be less than current stock quantity';
+                      } else {
+                            $errorMessage[] = $value->itemPrimaryCode.' - Adjusted quantity cannot be less than current stock quantity';
+                      }
+                } 
+
+                $stockAdjustmentDetailsRes = StockAdjustmentDetails::where('stockAdjustmentDetailsAutoID', $value->stockAdjustmentDetailsAutoID)->update(['currenctStockQty' => $currenctStockQty]);
+            }
+
+            if (count($errorMessage) > 0) {
+                return $this->sendError($errorMessage, 500, $confirm_validate);
+            }
+
 
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,

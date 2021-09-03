@@ -218,6 +218,7 @@ class ContingencyBudgetPlan extends Model
         'confirmedYN',
         'confirmedDate',
         'confirmedByEmpSystemID',
+        'companyFinanceYearID',
         'confirmedByEmpID',
         'confirmedByEmpName',
         'approvedYN',
@@ -238,7 +239,8 @@ class ContingencyBudgetPlan extends Model
         'budgetID',
         'templateMasterID',
         'contingencyPercentage',
-        'budgetAmount'
+        'budgetAmount',
+        'refferedBackYN'
     ];
 
     /**
@@ -249,6 +251,7 @@ class ContingencyBudgetPlan extends Model
     protected $casts = [
         'ID' => 'integer',
         'documentSystemID' => 'integer',
+        'companyFinanceYearID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -283,7 +286,8 @@ class ContingencyBudgetPlan extends Model
         'budgetID' => 'integer',
         'templateMasterID' => 'integer',
         'contingencyPercentage' => 'float',
-        'budgetAmount' => 'float'
+        'budgetAmount' => 'float',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

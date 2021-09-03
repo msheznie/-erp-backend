@@ -19,10 +19,14 @@ use App\Http\Requests\API\CreateBudjetdetailsAPIRequest;
 use App\Http\Requests\API\UpdateBudjetdetailsAPIRequest;
 use App\Models\Budjetdetails;
 use App\Models\TemplatesDetails;
+use App\Models\BudgetDetailHistory;
+use App\Models\BudgetAdjustment;
 use App\Models\Company;
 use App\Models\BudgetMaster;
 use App\Models\ReportTemplateLinks;
 use App\Models\TemplatesGLCode;
+use App\Models\Months;
+use App\Models\CompanyFinanceYear;
 use App\Models\ReportTemplateDetails;
 use App\Repositories\BudgetMasterRepository;
 use App\Repositories\BudjetdetailsRepository;
@@ -34,6 +38,7 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AddBudgetDetails;
+use Carbon\CarbonPeriod;
 
 /**
  * Class BudjetdetailsController
@@ -264,7 +269,11 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, $reportingCurrencyID, $reportingCurrencyID, $input['budjetAmtRpt']);
 
-        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+        if ($input['budjetAmtRpt'] < 0) {
+            $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
+        }
+
         $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
 
         return $this->sendResponse($budjetdetails->toArray(), trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
@@ -338,6 +347,23 @@ class BudjetdetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
         }
 
+
+
+        $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
+        $monthArray = [];
+        foreach ($result as $dt) {
+            $temp['year'] = $dt->format("Y");
+            $temp['monthID'] = floatval($dt->format("m"));
+            $temp['monthName'] = (Months::find(floatval($dt->format("m")))) ? Months::find(floatval($dt->format("m")))->monthDes : "";
+
+            $monthArray[] = $temp;
+        }
+
         $finalArray = ReportTemplateDetails::selectRaw('*,0 as expanded')
                                          ->with(['subcategory' => function ($q) use ($budgetMaster){
                                             $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster){
@@ -346,17 +372,17 @@ class BudjetdetailsAPIController extends AppBaseController
                                                           ->withCount(['items' => function($query) use ($budgetMaster) {
                                                                 $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                       ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                      ->where('Year', $budgetMaster->Year);
+                                                                      ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                           }])
                                                           ->with(['items' => function($query) use ($budgetMaster) {
                                                                 $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                       ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                      ->where('Year', $budgetMaster->Year);
+                                                                      ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                           }])
                                                           ->whereHas('items', function($query) use ($budgetMaster) {
                                                                 $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                       ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                      ->where('Year', $budgetMaster->Year);
+                                                                      ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                           });
                                                     }, 'subcategory' => function ($q) use ($budgetMaster) {
                                                         $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
@@ -365,17 +391,17 @@ class BudjetdetailsAPIController extends AppBaseController
                                                               ->withCount(['items' => function($query) use ($budgetMaster) {
                                                                     $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                           ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                          ->where('Year', $budgetMaster->Year);
+                                                                          ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                               }])
                                                               ->with(['items' => function($query) use ($budgetMaster) {
                                                                     $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                           ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                          ->where('Year', $budgetMaster->Year);
+                                                                          ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                               }])
                                                               ->whereHas('items', function($query) use ($budgetMaster) {
                                                                     $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                           ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                          ->where('Year', $budgetMaster->Year);
+                                                                          ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                               });
                                                         }, 'subcategory' => function ($q) use ($budgetMaster) {
                                                             $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
@@ -384,17 +410,17 @@ class BudjetdetailsAPIController extends AppBaseController
                                                                   ->withCount(['items' => function($query) use ($budgetMaster) {
                                                                         $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                               ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                              ->where('Year', $budgetMaster->Year);
+                                                                              ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                   }])
                                                                   ->with(['items' => function($query) use ($budgetMaster) {
                                                                         $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                               ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                              ->where('Year', $budgetMaster->Year);
+                                                                              ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                   }])
                                                                   ->whereHas('items', function($query) use ($budgetMaster) {
                                                                         $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                               ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                              ->where('Year', $budgetMaster->Year);
+                                                                              ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                   });
                                                             }, 'subcategory' => function ($q) use ($budgetMaster) {
                                                                 $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
@@ -403,17 +429,17 @@ class BudjetdetailsAPIController extends AppBaseController
                                                                       ->withCount(['items' => function($query) use ($budgetMaster) {
                                                                             $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                                   ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                                  ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                       }])
                                                                       ->with(['items' => function($query) use ($budgetMaster) {
                                                                             $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                                   ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                                  ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                       }])
                                                                       ->whereHas('items', function($query) use ($budgetMaster) {
                                                                             $query->where('companySystemID', $budgetMaster->companySystemID)
                                                                                   ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
-                                                                                  ->where('Year', $budgetMaster->Year);
+                                                                                  ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
                                                                       });
                                                                 }]);
                                                                 $q->orderBy('sortOrder', 'asc');
@@ -428,7 +454,7 @@ class BudjetdetailsAPIController extends AppBaseController
                                         }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
 
 
-        return $this->sendResponse($finalArray, trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+        return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
     public function bulkUpdateBudgetDetails(Request $request)
@@ -446,9 +472,17 @@ class BudjetdetailsAPIController extends AppBaseController
             if(!$item['budjetAmtRpt']){
                 $item['budjetAmtRpt'] = 0;
             }
-            $currencyConvection = \Helper::currencyConversion($item['companySystemID'], 2, 2, $item['budjetAmtRpt']);
 
-            $item['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+            $companyData = Company::find($budgetDetail->companySystemID);
+
+            $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
+
+            $currencyConvection = \Helper::currencyConversion($item['companySystemID'], $reportingCurrencyID, $reportingCurrencyID, $item['budjetAmtRpt']);
+
+            $item['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+            if ($item['budjetAmtRpt'] < 0) {
+                $item['budjetAmtLocal'] = abs($item['budjetAmtLocal']) * -1;
+            }
             $this->budjetdetailsRepository->update(array_only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
         }
 
@@ -508,6 +542,21 @@ class BudjetdetailsAPIController extends AppBaseController
                 return $this->sendError('Budget Master not found', 500);
             }
 
+            $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
+            if (empty($companyFinanceYear)) {
+                return $this->sendError('Selected financial year is not found.', 500);
+            }
+
+            $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
+            $monthArray = [];
+            foreach ($result as $dt) {
+                $temp['year'] = $dt->format("Y");
+                $temp['monthID'] = floatval($dt->format("m"));
+                $temp['monthName'] = (Months::find(floatval($dt->format("m")))) ? Months::find(floatval($dt->format("m")))->monthDes : "";
+
+                $monthArray[] = $temp;
+            }
+
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -530,16 +579,10 @@ class BudjetdetailsAPIController extends AppBaseController
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             $validateExcel = false;
-            $validateData = false;
-            // $totalItemCount = 0;
 
             foreach ($uniqueData as $key => $value) {
                if (isset($value['account_code']) && isset($value['account_description']) && isset($value['main_category']) && isset($value['sub_category'])) {
                    $validateExcel = true;
-               }
-
-               if ((isset($value['april']) && !is_null($value['april'])) || (isset($value['august']) && !is_null($value['august'])) || (isset($value['december']) && !is_null($value['december'])) || (isset($value['february']) && !is_null($value['february'])) || (isset($value['january']) && !is_null($value['january'])) || (isset($value['july']) && !is_null($value['july'])) || (isset($value['june']) && !is_null($value['june'])) || (isset($value['march']) && !is_null($value['march'])) || (isset($value['may']) && !is_null($value['may'])) || (isset($value['november']) && !is_null($value['november'])) || (isset($value['october']) && !is_null($value['october'])) || (isset($value['september']) && !is_null($value['september']))) {
-                   $validateData = true;
                }
             }
 
@@ -547,13 +590,20 @@ class BudjetdetailsAPIController extends AppBaseController
                 return $this->sendError('Excel is not valid, template deafult fields are modified', 500);
             }
 
-            if (!$validateData) {
-                return $this->sendError('Detail values are null, you cannot upload these excel', 500);
+            $selectArray = [];
+            foreach ($monthArray as $key => $month) {
+                $monthName = strtolower($month['monthName']).'_'.$month['year'];
+
+                $selectArray[] = $monthName;
             }
 
+            $selectArray[] = 'account_code';
+            $selectArray[] = 'account_description';
+            $selectArray[] = 'main_category';
+            $selectArray[] = 'sub_category';
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('account_code', 'account_description', 'april', 'august', 'december', 'february', 'january', 'july', 'june', 'main_category', 'march', 'may', 'november', 'october', 'september', 'sub_category'))->get()->toArray();
+            })->select($selectArray)->get()->toArray();
 
             $filteredRecords = array_filter(collect($record)->toArray());
             $cdcd = '-xs';
@@ -568,129 +618,20 @@ class BudjetdetailsAPIController extends AppBaseController
                                                        ->first();
 
                      if ($templateDetail) {
-                        if (isset($value['january']) && !is_null($value['january']) && (abs(floatval($value['january'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['january'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 1)
-                                                      ->update($amounts);
-                        }
-
-
-                        if (isset($value['february']) && !is_null($value['february']) && (abs(floatval($value['february'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['february'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 2)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['march']) && !is_null($value['march']) && (abs(floatval($value['march'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['march'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 3)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['april']) && !is_null($value['april']) && (abs(floatval($value['april'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['april'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 4)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['may']) && !is_null($value['may']) && (abs(floatval($value['may'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['may'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 5)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['june']) && !is_null($value['june']) && (abs(floatval($value['june'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['june'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 6)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['july']) && !is_null($value['july']) && (abs(floatval($value['july'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['july'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 7)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['august']) && !is_null($value['august']) && (abs(floatval($value['august'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['august'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 8)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['september']) && !is_null($value['september']) && (abs(floatval($value['september'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['september'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 9)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['october']) && !is_null($value['october']) && (abs(floatval($value['october'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['october'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 10)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['november']) && !is_null($value['november']) && (abs(floatval($value['november'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['november'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 11)
-                                                      ->update($amounts);
-                        }
-
-                        if (isset($value['december']) && !is_null($value['december']) && (abs(floatval($value['december'])) > 0)) {
-                            $amounts = $this->setBudgetRptAndLocalAmount($value['december'], $budgetMaster->companySystemID);
-
-                            $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
-                                                      ->where('budgetmasterID', $input['budgetMasterID'])
-                                                      ->where('glCode', $value['account_code'])
-                                                      ->where('month', 12)
-                                                      ->update($amounts);
+                        foreach ($monthArray as $key1 => $month) {
+                            $monthName = strtolower($month['monthName']).'_'.$month['year'];
+                            if (isset($value[$monthName]) && !is_null($value[$monthName]) && (abs(floatval($value[$monthName])) > 0)) {
+                                $amounts = $this->setBudgetRptAndLocalAmount($value[$monthName], $budgetMaster->companySystemID);
+                                $updateRes = Budjetdetails::where('templateDetailID', $templateDetail->detID)
+                                                          ->where('budgetmasterID', $input['budgetMasterID'])
+                                                          ->where('glCode', $value['account_code'])
+                                                          ->where('month', $month['monthID'])
+                                                          ->where('Year', $month['year'])
+                                                          ->update($amounts);
+                            }
                         }
                     }
                 }
-               
             }
 
             Storage::disk($disk)->delete('app/' . $originalFileName);
@@ -711,7 +652,11 @@ class BudjetdetailsAPIController extends AppBaseController
         $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
 
         $currencyConvection = \Helper::currencyConversion($companySystemID, $reportingCurrencyID, $reportingCurrencyID, $budjetAmtRpt);
-        $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
+        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+
+        if ($budjetAmtRpt < 0) {
+            $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
+        }
 
         return $input;
     }
@@ -724,6 +669,20 @@ class BudjetdetailsAPIController extends AppBaseController
         $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
         if (!$budgetMaster) {
             return $this->sendError("Budget master not fouund", 500);
+        }
+
+        $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
+        $monthArray = [];
+        foreach ($result as $dt) {
+            $temp['year'] = $dt->format("Y");
+            $temp['monthID'] = floatval($dt->format("m"));
+
+            $monthArray[] = $temp;
         }
 
         $glData = ReportTemplateLinks::where('templateMasterID', $budgetMaster->templateMasterID)
@@ -747,10 +706,69 @@ class BudjetdetailsAPIController extends AppBaseController
                                     ->get();
 
         if (count($glData)) {
-            AddBudgetDetails::dispatch($budgetMaster,$glData);
+            AddBudgetDetails::dispatch($budgetMaster,$glData, $monthArray);
         }
 
         return $this->sendResponse($budgetMaster->toArray(), 'Budget details synced successfully');
+    }
+
+    public function getBudgetDetailHistory(Request $request)
+    {
+        $input = $request->all();
+        $budgetHistoryData  = [];
+        $budgetMaster = BudgetMaster::find($input['budgetMasterID']);
+
+        if (!$budgetMaster) {
+            return $this->sendError("Budget Master not found");
+        }
+
+        $budgetHistoryData['initialBudget'] = BudgetDetailHistory::where('budgetmasterID', $input['budgetMasterID'])
+                                                                 ->where('chartOfAccountID', $input['glAutoID'])
+                                                                 ->where('templateDetailID', $input['templateDetailID'])
+                                                                 ->sum('budjetAmtRpt');
+
+
+        $budgetHistoryData['currentBudget'] = Budjetdetails::where('budgetmasterID', $input['budgetMasterID'])
+                                                                 ->where('chartOfAccountID', $input['glAutoID'])
+                                                                 ->where('templateDetailID', $input['templateDetailID'])
+                                                                 ->sum('budjetAmtRpt');
+
+
+
+        $budgetHistoryData['budgetOutgoingTransfer'] = BudgetAdjustment::with(['to_account'])
+                                                                     ->where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('fromGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->whereNotNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '<', 0)
+                                                                     ->get();
+
+
+        $budgetHistoryData['budgetIncomingTransfer'] = BudgetAdjustment::with(['from_account'])
+                                                                     ->where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('toGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->whereNotNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '>', 0)
+                                                                     ->get();
+
+        $budgetHistoryData['budgetAddition'] = BudgetAdjustment::where('companySystemID', $budgetMaster->companySystemID)
+                                                                     ->where('toGLCodeSystemID', $input['glAutoID'])
+                                                                     ->where('budgetMasterID', $input['budgetMasterID'])
+                                                                     ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID)
+                                                                     ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                                                     ->whereNull('fromGLCodeSystemID')
+                                                                     ->whereNotNull('toGLCodeSystemID')
+                                                                     ->where('adjustmentRptAmount', '>', 0)
+                                                                     ->get();
+
+
+
+        return $this->sendResponse($budgetHistoryData, 'Budget history retrived successfully');
     }
 
 }

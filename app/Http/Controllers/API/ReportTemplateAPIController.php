@@ -134,11 +134,17 @@ class ReportTemplateAPIController extends AppBaseController
         try {
             $validator = \Validator::make($request->all(), [
                 'description' => 'required',
+                'chartOfAccountSerialLength' => 'required',
                 'reportID' => 'required',
             ]);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
+            }
+
+
+            if (isset($input['chartOfAccountSerialLength']) && ($input['chartOfAccountSerialLength'] < 0 || $input['chartOfAccountSerialLength'] == 0 || $input['chartOfAccountSerialLength'] == null)) {
+                return $this->sendError('Serial Length should be greater than zero', 500);
             }
 
             $company = Company::find($input['companySystemID']);
@@ -320,10 +326,14 @@ class ReportTemplateAPIController extends AppBaseController
             return $this->sendError('Report Template not found');
         }
 
+        if (isset($input['chartOfAccountSerialLength']) && ($input['chartOfAccountSerialLength'] < 0 || $input['chartOfAccountSerialLength'] == 0 || $input['chartOfAccountSerialLength'] == null)) {
+            return $this->sendError('Serial Length should be greater than zero', 500);
+        }
+
 
         $reportTemplate = $this->reportTemplateRepository->update($input, $id);
 
-        if ($input['isDefault']) {
+        if (isset($input['isDefault']) && $input['isDefault']) {
             $updateOtherDefault = ReportTemplate::where('reportID', $input['reportID'])
                                                 ->where('companyReportTemplateID', '!=', $input['companyReportTemplateID'])
                                                 ->update(['isDefault' => 0]);
@@ -517,5 +527,15 @@ class ReportTemplateAPIController extends AppBaseController
         return $this->sendResponse($employees, 'Report Template retrieved successfully');
     }
 
+    public function getReportHeaderData(Request $request)
+    {
+        $input = $request->all();
 
+        $templateData = ReportTemplateDetails::with(['subcategory' => function ($query) {
+                                                $query->where('itemType', 2)
+                                                      ->orderBy('serialLength', 'sortOrder');
+                                            }])->find($input['templateDetailID']);
+
+        return $this->sendResponse($templateData, 'Report Template retrieved successfully');
+    }
 }

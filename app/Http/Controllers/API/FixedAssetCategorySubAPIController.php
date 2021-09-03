@@ -120,7 +120,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             'isActive' => 'required|numeric|min:0',
             'catDescription' => 'required',
             'faCatID' => 'required',
-        ],$this->messages);
+        ], $this->messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -130,6 +130,20 @@ class FixedAssetCategorySubAPIController extends AppBaseController
 
         if (empty($fixedAssetCategory)) {
             return $this->sendError('Asset Category not found');
+        }
+
+        $assetCatCodeSubExist = FixedAssetCategorySub::select('faCatSubID')
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('suCatCode', '=', $input['suCatCode'])->first();
+        if (!empty($assetCatCodeSubExist)) {
+            return $this->sendError('Asset sub code ' . $input['suCatCode'] . ' already exists');
+        }
+
+        $assetCatDesSubExist = FixedAssetCategorySub::select('faCatSubID')
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catDescription', '=', $input['catDescription'])->first();
+        if (!empty($assetCatDesSubExist)) {
+            return $this->sendError('Asset sub category description ' . $input['catDescription'] . ' already exists');
         }
 
         $input['mainCatDescription'] = $fixedAssetCategory->catDescription;
@@ -256,7 +270,7 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             'isActive' => 'required|numeric|min:0',
             'catDescription' => 'required',
             'faCatID' => 'required',
-        ],$this->messages);
+        ], $this->messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -268,12 +282,28 @@ class FixedAssetCategorySubAPIController extends AppBaseController
             return $this->sendError('Asset Category not found');
         }
 
+        $assetCatCodeSubExist = FixedAssetCategorySub::select('faCatSubID')
+            ->where('faCatSubID', '!=', $id)
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('suCatCode', '=', $input['suCatCode'])->first();
+        if (!empty($assetCatCodeSubExist)) {
+            return $this->sendError('Asset sub code ' . $input['suCatCode'] . ' already exists');
+        }
+
+        $assetCatDesSubExist = FixedAssetCategorySub::select('faCatSubID')
+            ->where('faCatSubID', '!=', $id)
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catDescription', '=', $input['catDescription'])->first();
+        if (!empty($assetCatDesSubExist)) {
+            return $this->sendError('Asset sub category description ' . $input['catDescription'] . ' already exists');
+        }
+
         $input['mainCatDescription'] = $fixedAssetCategory->catDescription;
         $input['companySystemID'] = $fixedAssetCategory->companySystemID;
         $input['companyID'] = $fixedAssetCategory->companyID;
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = Helper::getEmployeeID();
-        $fixedAssetCategorySub = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->where('faCatSubID',$id)->update($input);
+        $fixedAssetCategorySub = FixedAssetCategorySub::withoutGlobalScope(ActiveScope::class)->where('faCatSubID', $id)->update($input);
 
         return $this->sendResponse($fixedAssetCategorySub, 'Asset Sub Category updated successfully');
     }
@@ -330,12 +360,13 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         return $this->sendResponse($id, 'Asset Sub Category deleted successfully');
     }
 
-    public function getAllAssetSubCategoryByMain(Request $request){
+    public function getAllAssetSubCategoryByMain(Request $request)
+    {
 
 
         $input = $request->all();
-        $selectedCompanyId = isset($input['companyId'])?$input['companyId']:0;
-        $id = isset($input['id'])?$input['id']:0;
+        $selectedCompanyId = isset($input['companyId']) ? $input['companyId'] : 0;
+        $id = isset($input['id']) ? $input['id'] : 0;
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
             $subCompanies = Helper::getGroupCompany($selectedCompanyId);
@@ -350,10 +381,10 @@ class FixedAssetCategorySubAPIController extends AppBaseController
         }
 
         $assetCategories = FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)
-                                                ->with(['company'])
-                                                ->orderBy('faCatSubID',$sort);
+            ->with(['company'])
+            ->orderBy('faCatSubID', $sort);
 
-        if(isset($input['isAll']) && !$input['isAll']){
+        if (isset($input['isAll']) && !$input['isAll']) {
             $assetCategories = $assetCategories->ofCompany($subCompanies);
         }
 

@@ -112,7 +112,8 @@ class FixedAssetCategory extends Model
         'modifiedPc',
         'modifiedUserSystemID',
         'modifiedUser',
-        'timestamp'
+        'timestamp',
+        'catCode'
     ];
 
     /**
@@ -124,6 +125,7 @@ class FixedAssetCategory extends Model
         'faCatID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
+        'catCode' => 'string',
         'catDescription' => 'string',
         'isActive' => 'integer',
         'createdPcID' => 'string',

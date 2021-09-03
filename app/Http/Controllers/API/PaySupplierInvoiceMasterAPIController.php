@@ -1316,7 +1316,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 ->orderby('year', 'desc')
                 ->get();
 
-            $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
+            $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2);
+
+            if(Helper::checkHrmsIntergrated($companyId)){
+                $payee = $payee->whereHas('hr_emp', function($q){
+                    $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+                });
+            }
+
+            $payee = $payee->get();
 
             $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
 

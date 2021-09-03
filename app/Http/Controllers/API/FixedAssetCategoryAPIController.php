@@ -125,9 +125,25 @@ class FixedAssetCategoryAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $assetCatCodeExist = FixedAssetCategory::select('faCatID')
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catCode', '=', $input['catCode'])->first();
+        if (!empty($assetCatCodeExist)) {
+            return $this->sendError('Asset code ' . $input['catCode'] . ' already exists');
+        }
+
+        $assetCatDesExist = FixedAssetCategory::select('faCatID')
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catDescription', '=', $input['catDescription'])->first();
+        if (!empty($assetCatDesExist)) {
+            return $this->sendError('Asset category description ' . $input['catDescription'] . ' already exists');
+        }
+
+
+
         $company = Company::find($input['companySystemID']);
 
-        if(empty($company)){
+        if (empty($company)) {
             return $this->sendError('Company not found');
         }
 
@@ -259,9 +275,26 @@ class FixedAssetCategoryAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $assetCatCodeExist = FixedAssetCategory::select('faCatID')
+            ->where('faCatID', '!=', $id)
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catCode', '=', $input['catCode'])->first();
+        if (!empty($assetCatCodeExist)) {
+            return $this->sendError('Asset code ' . $input['catCode'] . ' already exists');
+        }
+
+        $assetCatDesExist = FixedAssetCategory::select('faCatID')
+            ->where('faCatID', '!=', $id)
+            ->where('companySystemID', '=', $input['companySystemID'])
+            ->where('catDescription', '=', $input['catDescription'])->first();
+        if (!empty($assetCatDesExist)) {
+            return $this->sendError('Asset category description ' . $input['catDescription'] . ' already exists');
+        }
+
+
         $company = Company::find($input['companySystemID']);
 
-        if(empty($company)){
+        if (empty($company)) {
             return $this->sendError('Company not found');
         }
 
@@ -270,7 +303,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         $input['modifiedUser'] = Helper::getEmployeeID();
 
-        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('faCatID',$id)->update($input);
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->where('faCatID', $id)->update($input);
 
         return $this->sendResponse($fixedAssetCategory, 'Asset Category updated successfully');
     }
@@ -329,11 +362,12 @@ class FixedAssetCategoryAPIController extends AppBaseController
         return $this->sendResponse($id, 'Asset Category deleted successfully');
     }
 
-    public function getAllAssetCategory(Request $request){
+    public function getAllAssetCategory(Request $request)
+    {
 
 
         $input = $request->all();
-        $selectedCompanyId = isset($input['companyId'])?$input['companyId']:0;
+        $selectedCompanyId = isset($input['companyId']) ? $input['companyId'] : 0;
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
             $subCompanies = Helper::getGroupCompany($selectedCompanyId);
@@ -348,11 +382,11 @@ class FixedAssetCategoryAPIController extends AppBaseController
         }
 
         $assetCategories = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)
-                                                ->with(['company'])
-                                                ->orderBy('faCatID',$sort);
+            ->with(['company'])
+            ->orderBy('faCatID', $sort);
 
-        if(isset($input['isAll']) && !$input['isAll']){
-            $assetCategories = $assetCategories->whereIn('companySystemID',$subCompanies);
+        if (isset($input['isAll']) && !$input['isAll']) {
+            $assetCategories = $assetCategories->whereIn('companySystemID', $subCompanies);
         }
 
         $search = $request->input('search.value');
@@ -382,7 +416,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companies = Company::whereIn('companySystemID',$subCompanies)
+        $companies = Company::whereIn('companySystemID', $subCompanies)
             ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
             ->get();
 

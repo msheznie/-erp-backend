@@ -151,6 +151,7 @@ class BudgetTransferForm extends Model
         'companyID',
         'serialNo',
         'year',
+        'companyFinanceYearID',
         'transferVoucherNo',
         'createdDate',
         'comments',
@@ -174,7 +175,8 @@ class BudgetTransferForm extends Model
         'modifiedPc',
         'modifiedUser',
         'modifiedUserSystemID',
-        'timestamp'
+        'timestamp',
+        'refferedBackYN'
     ];
 
     /**
@@ -189,6 +191,7 @@ class BudgetTransferForm extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serialNo' => 'integer',
+        'companyFinanceYearID' => 'integer',
         'year' => 'integer',
         'transferVoucherNo' => 'string',
         'comments' => 'string',
@@ -208,7 +211,8 @@ class BudgetTransferForm extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

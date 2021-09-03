@@ -44,7 +44,8 @@ class HrMonthlyDeductionService
         }
 
         if( empty($this->pv_master->createMonthlyDeduction) ){
-            return true;
+            $msg = "No need to create the Monthly deduction document for this PV";
+            return ['status'=> true, 'message'=> $msg];
         }
 
         $this->is_document_created();
@@ -59,7 +60,17 @@ class HrMonthlyDeductionService
 
         $this->create_header();
 
-        return true;
+        $msg = "Payment voucher is approved. <br>";
+        $msg .= "Monthly Deduction <strong class='text-dark'>[ $this->md_code ]</strong> is successfully created";
+
+        $pv_date = Carbon::parse( $this->pv_master->BPVdate )->format('Y-m-d');
+
+        if($pv_date != $this->document_date ){
+            $msg .= " for ". Carbon::parse($this->document_date )->format('Y - F');
+            $msg .= ",<br>Since the payroll processed on selected month";
+        }
+
+        return $msg;
     }
 
     function create_header(){

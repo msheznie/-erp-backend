@@ -97,6 +97,7 @@ class FixedAssetCategorySub extends Model
     public $fillable = [
         'companySystemID',
         'companyID',
+        'suCatCode',
         'catDescription',
         'faCatID',
         'mainCatDescription',
@@ -120,6 +121,7 @@ class FixedAssetCategorySub extends Model
         'faCatSubID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
+        'suCatCode' => 'string',
         'catDescription' => 'string',
         'faCatID' => 'integer',
         'mainCatDescription' => 'string',

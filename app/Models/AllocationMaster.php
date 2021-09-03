@@ -50,6 +50,7 @@ class AllocationMaster extends Model
 
     public $fillable = [
         'Desciption',
+        'isActive',
         'DesCode',
         'timesstamp'
     ];
@@ -61,6 +62,7 @@ class AllocationMaster extends Model
      */
     protected $casts = [
         'AutoID' => 'integer',
+        'isActive' => 'integer',
         'Desciption' => 'string',
         'DesCode' => 'string',
         'timesstamp' => 'datetime'

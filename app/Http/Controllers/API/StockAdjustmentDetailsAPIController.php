@@ -217,16 +217,16 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
-        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
-        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
+        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
 
 
         $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
             $item->wacValueReportingCurrencyID,
             $item->wacValueReportingCurrencyID,
-            $itemCurrentCostAndQty['wacValueReporting']);
+            $itemCurrentCostAndQty['wacValueReportingWarehouse']);
 
         $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
         $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
@@ -402,6 +402,27 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             $input['noQty'] = 0;
         }
 
+        $data = array('companySystemID' => $stockAdjustment->companySystemID,
+            'itemCodeSystem' => $input['itemCodeSystem'],
+            'wareHouseId' => $stockAdjustment->location);
+
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+
+        if ($stockAdjustmentDetails->noQty != $input['noQty']) {
+            $balanceQty = $input['currenctStockQty'] + $input['noQty'];
+
+            if ($balanceQty < 0) {
+                  if ($itemCurrentCostAndQty['currentWareHouseStockQty'] != $stockAdjustmentDetails->currenctStockQty) {
+                        $stockAdjustmentDetailsRes = $this->stockAdjustmentDetailsRepository->update(['currenctStockQty' => $input['currenctStockQty']], $id);
+
+                        return $this->sendError('Current stock quantity has been updated from '.$stockAdjustmentDetails->currenctStockQty.' to '.$itemCurrentCostAndQty['currentWareHouseStockQty'].'. Adjusted quantity cannot be less than current stock quantity');
+                  } else {
+                        return $this->sendError('Adjusted quantity cannot be less than current stock quantity');
+                  }
+            } 
+        }
 
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->update($input, $id);
 
