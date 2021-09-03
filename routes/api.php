@@ -1067,6 +1067,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController',['only' => ['show', 'destroy']]);
         Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
         Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
+        Route::post('generatePdcForReceiptVoucher', 'CustomerReceivePaymentAPIController@generatePdcForReceiptVoucher');
 
 
         Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');

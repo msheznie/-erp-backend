@@ -2333,8 +2333,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
-                                        $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                        $data['glCode'] = $masterData->bank->glCodeLinked;
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                         $data['glAccountType'] = 'BS';
                                         $data['glAccountTypeID'] = 1;
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2358,8 +2358,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
-                                        $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                        $data['glCode'] = $masterData->bank->glCodeLinked;
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                         $data['glAccountType'] = 'BS';
                                         $data['glAccountTypeID'] = 1;
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2456,8 +2456,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
-                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                    $data['glCode'] = $masterData->bank->glCodeLinked;
+                                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2480,8 +2480,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $masterRpt = $masterData->payAmountCompRpt;
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
-                                $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                $data['glCode'] = $masterData->bank->glCodeLinked;
+                                $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
                                 $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
