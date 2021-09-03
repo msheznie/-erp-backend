@@ -2,20 +2,18 @@
 
 namespace App\helper;
 
-use Illuminate\Support\Facades\Schema;
+use App\Models\NavigationMenus;
+use App\Models\SrpErpTemplates;
 use App\Repositories\SMECompanyPolicyMasterRepository;
 use App\Repositories\CurrencyMasterRepository;
 use App\Repositories\SMECompanyPolicyRepository;
 use App\Repositories\SMECompanyPolicyValueRepository;
 use App\Repositories\SMECompanyRepository;
-use App\Repositories\SMECountryMasterRepository;
-use App\Repositories\SMECountryRepository;
 use App\Repositories\SMEDocumentCodeMasterRepository;
 use App\Repositories\SMEDocumentCodesRepository;
 use App\Repositories\SMEEmpContractTypeRepository;
 use App\Repositories\SMELaveGroupRepository;
 use App\Repositories\SMELaveTypeRepository;
-use App\Repositories\SMENationalityRepository;
 use App\Repositories\SMEOertimeGroupMasterRepository;
 use App\Repositories\SMEReligionRepository;
 use App\Repositories\SMESystemEmployeeTypeRepository;
@@ -30,9 +28,6 @@ class hrCompany
     private $sMETitleRepository;
     private $sMECompanyPolicyValueRepository;
     private $sMEReligionRepository;
-    private $sMECountryMasterRepository;
-    private $sMECountryRepository;
-    private $sMENationalityRepository;
     private $sMESystemEmployeeTypeRepository;
     private $sMEEmpContractTypeRepository;
     private $sMECompanyPolicyMasterRepository;
@@ -43,15 +38,14 @@ class hrCompany
     private $sMELaveTypeRepository;
     private $sMELaveGroupRepository;
 
+    private $date_time;
+
     public function __construct(
         SMECompanyRepository $smeCompanyRepo,
         CurrencyMasterRepository $currencyRepo,
         SMETitleRepository $smeTitleRepo,
         SMECompanyPolicyValueRepository $sMECompanyPolicyValueRepo,
         SMEReligionRepository $sMEReligionRepo,
-        SMECountryMasterRepository $sMECountryMasterRepo,
-        SMECountryRepository $sMECountryRepo,
-        SMENationalityRepository $sMENationalityRepo,
         SMESystemEmployeeTypeRepository $sMESystemEmployeeTypeRepo,
         SMEEmpContractTypeRepository $sMEEmpContractTypeRepo,
         SMECompanyPolicyMasterRepository $sMECompanyPolicyMasterRepo,
@@ -66,9 +60,6 @@ class hrCompany
         $this->currencyRepository = $currencyRepo;
         $this->sMETitleRepository = $smeTitleRepo;
         $this->sMECompanyPolicyValueRepository = $sMECompanyPolicyValueRepo;
-        $this->sMECountryMasterRepository = $sMECountryMasterRepo;
-        $this->sMECountryRepository = $sMECountryRepo;
-        $this->sMENationalityRepository = $sMENationalityRepo;
         $this->sMEReligionRepository = $sMEReligionRepo;
         $this->sMESystemEmployeeTypeRepository = $sMESystemEmployeeTypeRepo;
         $this->sMEEmpContractTypeRepository = $sMEEmpContractTypeRepo;
@@ -79,6 +70,7 @@ class hrCompany
         $this->sMEOertimeGroupMasterRepository = $sMEOertimeGroupMasterRepo;
         $this->sMELaveTypeRepository = $sMELaveTypeRepo;
         $this->sMELaveGroupRepository = $sMELaveGroupRepo;
+        $this->date_time = Carbon::now();
     }
 
     public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
@@ -93,9 +85,7 @@ class hrCompany
         /* following tables get update in company creation
             - srp_titlemaster
             - srp_erp_companypolicymaster_value
-            - srp_nationality
             - srp_religion
-            - srp_countrymaster
             - srp_empcontracttypes
             - srp_erp_companypolicy
             - srp_erp_documentcodemaster
@@ -123,12 +113,14 @@ class hrCompany
                         
             'countryID'=> $det['companyCountry'], 'createdPCID'=> $det['createdPcID'], 'createdUserID'=> $det['createdUserID'],
 
-            'timestamp'=> Carbon::now()
+            'confirmedYN'=> 1, 'timestamp'=> $this->date_time
         ];
 
         $this->sMECompanyRepository->insert($data); 
     
         $this->update_basic_tables($company_id, $det['CompanyID']);
+
+        $this->add_navigation_templates($company_id);
 
         return true;
     }
@@ -226,6 +218,44 @@ class hrCompany
             ['description' => 'Permanent Employees', 'companyID' => $company_id],
             ['description' => 'Temporary Employees', 'companyID' => $company_id]
         ]);
+
+        return true;
+    }
+
+    public function add_navigation_templates($company_id){
+        $menus = NavigationMenus::selectRaw('navigationMenuID, description')
+            ->where('isPortalYN', 3)
+            ->whereHas('form_category', function($q) {
+                $q->whereHas('template', function ($q1) {
+                    $q1->where('isdefault', 1);
+                });
+            })
+            ->with(['form_category'=> function($q){
+                $q->with(['template'=> function($q1){
+                    $q1->selectRaw('TempMasterID, FormCatID')
+                        ->where('isdefault', 1);
+                }]);
+            }])
+            ->get();
+
+        if(empty($menus)){
+            return true;
+        }
+
+        $menus = $menus->toArray();
+
+
+        $tem_det = [];
+        foreach ($menus as $menu ){
+            $tem_det[] = [
+                'companyID'=> $company_id,
+                'navigationMenuID'=> $menu['navigationMenuID'],
+                'FormCatID'=> $menu['form_category']['FormCatID'],
+                'TempMasterID'=> $menu['form_category']['template']['TempMasterID']
+            ];
+        }
+
+        SrpErpTemplates::insert($tem_det);
 
         return true;
     }

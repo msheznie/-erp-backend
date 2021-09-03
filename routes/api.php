@@ -2303,3 +2303,13 @@ Route::resource('module_masters', 'ModuleMasterAPIController');
 Route::resource('sub_module_masters', 'SubModuleMasterAPIController');
 
 Route::resource('module_assigneds', 'ModuleAssignedAPIController');
+
+Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
+
+Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
+
+
+
+Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
+Route::get('check', 'CompanyAPIController@test');

@@ -655,4 +655,9 @@ class CompanyAPIController extends AppBaseController
         
         return true;
     }
+
+    function test(){
+        $hrCompany = app()->make(hrCompany::class);
+        $hrCompany->add_navigation_templates(100);
+    }
 }
