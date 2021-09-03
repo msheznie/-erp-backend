@@ -36,6 +36,7 @@ use App\Models\Months;
 use App\Models\ErpDocumentTemplate;
 use App\Models\CustomerAssigned;
 use App\Models\DocumentMaster;
+use App\Models\ModuleAssigned;
 use App\Models\DocumentApproved;
 use App\Models\EmployeesDepartment;
 use App\Models\CompanyDocumentAttachment;
@@ -492,15 +493,22 @@ class CreditNoteAPIController extends AppBaseController
                         ->orwhereRaw('creditAmount IS NULL OR creditAmount =""');
                 });
 
+            $isOperationIntergrated = ModuleAssigned::where('moduleID', 3)->where('companySystemID', $creditNote->companySystemID)->exists();
+
             if (!empty($detailValidation->get()->toArray())) {
                 foreach ($detailValidation->get()->toArray() as $item) {
 
-                    $validators = \Validator::make($item, [
+                    $validations = [
                         'serviceLineSystemID' => 'required|numeric|min:1',
                         'serviceLineCode' => 'required|min:1',
-                        'contractUID' => 'required|numeric|min:1',
                         'creditAmount' => 'required|numeric|min:1'
-                    ], [
+                    ];
+
+                    if ($isOperationIntergrated) {
+                        $validations['contractUID'] = 'required|numeric|min:1';
+                    }
+
+                    $validators = \Validator::make($item, $validations, [
 
                         'serviceLineSystemID.required' => 'Department is required.',
                         'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
@@ -519,7 +527,11 @@ class CreditNoteAPIController extends AppBaseController
             $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
             if (count($groupby) != 0) {
                 if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                    return $this->sendError('You cannot continue. Multiple service line or contract exist in details.', 500);
+                    if ($isOperationIntergrated) {
+                        return $this->sendError('You cannot continue. Multiple service line or contract exist in details.', 500);
+                    } else {
+                        return $this->sendError('You cannot continue. Multiple service line exist in details.', 500);
+                    }
                 }
             } else {
                 return $this->sendError('Credit note details not found.', 500);
@@ -732,7 +744,6 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
-
                 break;
             case 'editAmend' :
                 $id = $input['id'];
@@ -758,7 +769,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
         }
 
-
+        $output['isOperationIntergrated'] = ModuleAssigned::where('moduleID', 3)->where('companySystemID', $companySystemID)->exists();
         return $this->sendResponse($output, 'Form data');
     }
 

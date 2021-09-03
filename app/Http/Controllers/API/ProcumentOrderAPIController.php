@@ -99,6 +99,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
+use App\Models\CompanyFinanceYear;
 use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTerms;
 use App\Models\PoPaymentTermsRefferedback;
@@ -227,6 +228,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
             }
         }
+
+        $poDate = now();
+
+        $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate($poDate, $input['companySystemID']);
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
@@ -1796,6 +1801,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.poType_N',
             'erp_purchaseordermaster.budgetYear',
             'erp_purchaseordermaster.rcmActivated',
+            'erp_purchaseordermaster.amended',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -4840,6 +4846,7 @@ ORDER BY
         if ($deleteApproval) {
             $purchaseOrder->refferedBackYN = 0;
             $purchaseOrder->poConfirmedYN = 0;
+            $purchaseOrder->amended = 1;
             $purchaseOrder->poConfirmedByEmpSystemID = null;
             $purchaseOrder->poConfirmedByEmpID = null;
             $purchaseOrder->poConfirmedByName = null;
@@ -5188,7 +5195,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 if ($val->fcategory) {
                     $data[$x]['Category'] = $val->fcategory->categoryDescription;
                 } else {
-                    $data[$x]['Category'] = "";
+                    $data[$x]['Category'] = "Other";
                 }
 
                 $data[$x]['Narration'] = ($val->narration == "" || $val->narration == null) ? "-" : $val->narration;

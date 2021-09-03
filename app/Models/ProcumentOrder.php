@@ -174,6 +174,7 @@ class ProcumentOrder extends Model
         'documentID',
         'documentSystemID',
         'purchaseOrderCode',
+        'amended',
         'serialNumber',
         'supplierID',
         'supplierPrimaryCode',
@@ -319,6 +320,7 @@ class ProcumentOrder extends Model
     protected $casts = [
         'purchaseOrderID' => 'integer',
         'allocateItemToSegment' => 'integer',
+        'amended' => 'integer',
         'poProcessId' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',

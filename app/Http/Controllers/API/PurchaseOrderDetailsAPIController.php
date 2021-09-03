@@ -27,6 +27,7 @@ use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
+use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
@@ -307,10 +308,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $purchaseOrder->companySystemID)
                 ->first();
-
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
-
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
                     return $this->sendError('Category is not found.', 500);
@@ -341,8 +340,17 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+        if ($item->financeCategoryMaster == 3) {
+            $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
+            if (!$assetCategory) {
+                return $this->sendError('Asset category not assigned for the selected item.');
+            }
+            $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
+            $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
+        } else {
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+        }
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         $input['budgetYear'] = $purchaseOrder->budgetYear;
 
@@ -522,6 +530,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
+           
 
             if ($policy == 0) {
                 if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {

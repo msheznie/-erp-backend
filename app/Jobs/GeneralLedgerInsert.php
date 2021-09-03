@@ -61,6 +61,7 @@ use App\Models\SupplierAssigned;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\SalesReturn;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SalesReturnDetail;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -568,11 +569,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 if ($masterData->interCompanyTransferYN == -1) {
-                                    $data['chartOfAccountSystemID'] = 747;
-                                    $data['glCode'] = '20023';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
                                 } else {
-                                    $data['chartOfAccountSystemID'] = 605;
-                                    $data['glCode'] = '9999988';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
                                 }
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
@@ -645,11 +646,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 if ($masterData->interCompanyTransferYN == -1) {
-                                    $data['chartOfAccountSystemID'] = 747;
-                                    $data['glCode'] = '20023';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 3);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 3);
                                 } else {
-                                    $data['chartOfAccountSystemID'] = 605;
-                                    $data['glCode'] = '9999988';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 4);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 4);
                                 }
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
@@ -1186,8 +1187,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                                 if (!empty($taxConfigData)) {
-                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
-                                        ->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)
+                                    $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                        ->where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                                        ->where('companySystemID', $masterData->companySystemID)
                                         ->first();
                                     if (!empty($taxGL)) {
                                         foreach ($erp_taxdetail as $tax) {
@@ -1230,8 +1232,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $taxConfigData2 = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
                                 if (!empty($taxConfigData2)) {
-                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                    $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
                                         ->where('chartOfAccountSystemID', $taxConfigData2->outputVatTransferGLAccountAutoID)
+                                        ->where('companySystemID', $taxConfigData2->companySystemID)
                                         ->first();
                                     if (!empty($taxGL)) {
                                         foreach ($erp_taxdetail as $tax) {

@@ -106,5 +106,10 @@ class AssetRequestDetail extends Model
         
     ];
 
+    public function createdUserID()
+    {
+        return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'created_user_id');
+    }
+
     
 }

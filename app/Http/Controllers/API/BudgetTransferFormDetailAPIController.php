@@ -20,6 +20,8 @@ use App\Http\Requests\API\CreateBudgetTransferFormDetailAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormDetailAPIRequest;
 use App\Models\BudgetTransferFormDetail;
 use App\Models\Budjetdetails;
+use App\Models\Company;
+use App\Models\BudgetMaster;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\SegmentMaster;
@@ -469,8 +471,9 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkBalance)) {
-            if ($input['adjustmentAmountRpt'] > ($checkBalance->balance)) {
-                $msg = "You cannot transfer more than the balance amount, Balance amount is {$checkBalance->balance}";
+            if ($input['adjustmentAmountRpt'] > abs($checkBalance->balance)) {
+                $balanceShow = abs($checkBalance->balance);
+                $msg = "You cannot transfer more than the balance amount, Balance amount is {$balanceShow}";
                 throw new \Exception($msg, 500);
             }
         }
@@ -695,6 +698,9 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
             ->where('templateDetailID',$input['fromTemplateDetailID'])
             ->where('Year',$input['year'])
+            ->whereHas('budget_master', function ($query) use ($input){
+                $query->where('templateMasterID', $input['templatesMasterAutoID']);
+            })
             ->count();
 
 
@@ -702,6 +708,56 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError('Selected account code is not available in the budget. Please allocate and try again.', 500);
         }
 
-        return $this->sendResponse($fromDataBudgetCheck, 'successfully');
+        $checkBalance = Budjetdetails::select(DB::raw("
+                                       (SUM(budjetAmtLocal) * -1) as totalLocal,
+                                       (SUM(budjetAmtRpt) * -1) as totalRpt,
+                                       chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
+                                       erp_companyreporttemplatedetails.description as templateDetailDescription,
+                                       erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
+                                       erp_budjetdetails.*
+                                       ,ifnull(ca.consumed_amount,0) as consumed_amount
+                                       ,ifnull(ppo.rptAmt,0) as pending_po_amount,
+                                       ((SUM(budjetAmtRpt)*-1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance
+                                       "))
+            ->where('erp_budjetdetails.companySystemID', $input['companySystemID'])
+            ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
+            ->where('erp_budjetdetails.Year', $input['year'])
+            ->where('erp_budjetdetails.templateDetailID', $input['fromTemplateDetailID'])
+            ->where('erp_companyreporttemplatedetails.companyReportTemplateID', $input['templatesMasterAutoID'])
+            ->where('erp_budjetdetails.chartOfAccountID', $input['fromChartOfAccountSystemID'])
+            ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
+            ->leftJoin('erp_companyreporttemplatedetails', 'templateDetailID', '=', 'detID')
+            ->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID,
+                                                erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year, 
+                                                Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
+                                                erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 
+                                                GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
+                                                erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year) as ca'),
+                function ($join) {
+                    $join->on('erp_budjetdetails.companySystemID', '=', 'ca.companySystemID')
+                        ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ca.serviceLineSystemID')
+                        ->on('erp_budjetdetails.Year', '=', 'ca.Year')
+                        ->on('erp_budjetdetails.chartOfAccountID', '=', 'ca.chartOfAccountID');
+                })
+            ->leftJoin(DB::raw('(SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, 
+                               erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
+                               Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseorderdetails.budgetYear FROM 
+                               erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
+                               AND ((erp_purchaseordermaster.poCancelledYN)=0))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                               (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
+                function ($join) {
+                    $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
+                        ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ppo.serviceLineSystemID')
+                        ->on('erp_budjetdetails.Year', '=', 'ppo.budgetYear')
+                        ->on('erp_budjetdetails.chartOfAccountID', '=', 'ppo.financeGLcodePLSystemID');
+                })
+            ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
+                'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
+            ->first();
+
+        $budgetAmount = (!empty($checkBalance)) ? $checkBalance->balance : 0;
+
+        $companyData = Company::with(['reportingcurrency'])->find($input['companySystemID']);
+        return $this->sendResponse(['budgetAmount' => abs($budgetAmount), 'companyData' => $companyData], 'successfully');
     }
 }

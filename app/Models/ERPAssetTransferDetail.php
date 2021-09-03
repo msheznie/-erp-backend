@@ -156,4 +156,12 @@ class ERPAssetTransferDetail extends Model
     {
         return $this->hasOne(AssetRequest::class,'id','erp_fa_fa_asset_request_id');
     }
+    public function assetTransferMaster()
+    {
+        return $this->hasOne(ERPAssetTransfer::class,'id','erp_fa_fa_asset_transfer_id');
+    }
+    public function smePayAsset()
+    {
+        return $this->hasOne(SMEPayAsset::class,'masterID','srp_erp_pay_assets_id');
+    }
 }

@@ -8,6 +8,7 @@ use App\Models\BudgetDetailHistory;
 use App\Models\CompanyPolicyMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\PurchaseRequest;
+use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ReportTemplateDetails;
@@ -1824,6 +1825,7 @@ class BudgetConsumptionService
                         "chartOfAccountID" => 9,
                         "GLCode" => 10000,
                         "year" => $value->budgetYear,
+                        "companyFinanceYearID" => CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                         "month" => $poMaster["month"],
                         "consumedLocalCurrencyID" => $value->localCurrencyID,
                         "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
@@ -1852,6 +1854,7 @@ class BudgetConsumptionService
                             "chartOfAccountID" => $value->financeGLcodePLSystemID,
                             "GLCode" => $value->financeGLcodePL,
                             "year" => $value->budgetYear,
+                            "companyFinanceYearID" => CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                             "month" => $poMaster["month"],
                             "consumedLocalCurrencyID" => $value->localCurrencyID,
                             "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
@@ -1890,6 +1893,7 @@ class BudgetConsumptionService
                             "chartOfAccountID" => $value->chartOfAccountSystemID,
                             "GLCode" => $value->glCode,
                             "year" => $value->budgetYear,
+                            "companyFinanceYearID" => CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                             "month" => $siMaster["month"],
                             "consumedLocalCurrencyID" => $value->localCurrency,
                             "consumedLocalAmount" => $value->netAmountLocal,
@@ -1927,6 +1931,7 @@ class BudgetConsumptionService
                             "chartOfAccountID" => $value->chartOfAccountSystemID,
                             "GLCode" => $value->glCode,
                             "year" => $value->budgetYear,
+                            "companyFinanceYearID" => CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                             "month" => $siMaster["month"],
                             "consumedLocalCurrencyID" => $value->localCurrency,
                             "consumedLocalAmount" => $value->localAmount,

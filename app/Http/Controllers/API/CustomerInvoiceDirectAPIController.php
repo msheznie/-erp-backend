@@ -184,7 +184,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+
+
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
+        if (!isset($input['custTransactionCurrencyID']) || (isset($input['custTransactionCurrencyID']) && ($input['custTransactionCurrencyID'] == 0 || $input['custTransactionCurrencyID'] == null))) {
+            return $this->sendError('Please select a currency', 500);
+        }
         $companyFinanceYearID = $input['companyFinanceYearID'];
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
 

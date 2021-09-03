@@ -82,9 +82,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         }else{
             $childCompanies = [$companyId];
         }
-
-        $search = $request->input('search.value');
-
+        $search = $request->input('search.value'); 
         $companyPolicyMasters = CompanyPolicyMaster::with(['company','policyCategory' => function($q) use($search){
             $q->where('isActive',-1)
               ->when($search, function ($q) use ($search) {
@@ -105,6 +103,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         if (array_key_exists('companyPolicyCategoryID', $input)) {
             $companyPolicyMasters = $companyPolicyMasters->where('companyPolicyCategoryID', $input['companyPolicyCategoryID']);
         }
+
 
 
         return \DataTables::eloquent($companyPolicyMasters)

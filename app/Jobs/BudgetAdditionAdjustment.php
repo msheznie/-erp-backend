@@ -60,7 +60,9 @@ class BudgetAdditionAdjustment implements ShouldQueue
                      $Value = Budjetdetails::where('companySystemID', $budgetAddition->companySystemID)
                      ->where('serviceLineSystemID', $item['serviceLineSystemID'])
                      ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
-                     ->where('Year', $item['year'])
+                     ->whereHas('budget_master', function($query) use ($item) {
+                        $query->where('Year', $item['year']);
+                     })
                      ->sum('budjetAmtRpt');
                     
                     $newValue = ($Value + ($item['adjustmentAmountRpt'] * $conversion)) * $conversion;
@@ -83,22 +85,26 @@ class BudgetAdditionAdjustment implements ShouldQueue
                     $auditTrailRepo->create($auditTrail);
                    
                      $BudgetDetails = Budjetdetails::where('companySystemID', $budgetAddition->companySystemID)
-                     ->where('serviceLineSystemID', $item['serviceLineSystemID'])
-                     ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
-                     ->where('Year', $budgetAddition->year)
-                     ->where('month','>=', date("m"))
-                     ->get();
+                                                 ->where('serviceLineSystemID', $item['serviceLineSystemID'])
+                                                 ->where('chartOfAccountID', $item['chartOfAccountSystemID'])
+                                                 ->whereHas('budget_master', function($query) use ($budgetAddition) {
+                                                        $query->where('Year', $budgetAddition->year);
+                                                    })
+                                                    ->where(function($query) {
+                                                        $query->where('month','>=', date("m"))
+                                                              ->orWhere('Year','>', date("Y"));
+                                                    })
+                                                 ->get();
 
                     $TotalCount = count($BudgetDetails); 
 
-                 
                     Log::info('Budget Details Total Count ' .$TotalCount);
                     Log::info('serviceLineSystemID ' .$item['serviceLineSystemID']);
                     Log::info('chartOfAccountID ' .$item['chartOfAccountSystemID']);
                     Log::info('Year ' .$budgetAddition->year);
                     Log::info('month ' . date("m"));
                     Log::info('conversion ' .  $conversion);
-
+                    $budgetmasterID = null;
                     if($TotalCount > 0){
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),2);
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$TotalCount),3);
@@ -106,7 +112,7 @@ class BudgetAdditionAdjustment implements ShouldQueue
                         foreach ($BudgetDetails as $BudgetDetailVal){
                             Log::info('budjetAmtLocal conversion ' .  ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion));
                             Log::info('To Amount Local ' .  $toAddAmountLocal);
-
+                            $budgetmasterID = $BudgetDetailVal['budgetmasterID'];
                             $budjetdetailsRepo->update([
                                 'budjetAmtLocal' => ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion) ,
                                 'budjetAmtRpt' => ((($BudgetDetailVal['budjetAmtRpt'] * $conversion) + $toAddAmountRpt) * $conversion)
@@ -119,6 +125,7 @@ class BudgetAdditionAdjustment implements ShouldQueue
                     ->whereYear('bigginingDate', '=', $budgetAddition->year)
                     ->first();
                 
+                    Log::info('budgetmasterID ' .  $budgetmasterID);
                 $financeYearId = 0; 
                 
                 if (!empty($companyFinanceYear)) {
@@ -129,6 +136,7 @@ class BudgetAdditionAdjustment implements ShouldQueue
                     'companySystemID' => $budgetAddition->companySystemID,
                     'companyId' => $budgetAddition->companyID,
                     'companyFinanceYearID' => $financeYearId,
+                    'budgetMasterID' => $budgetmasterID,
                     'serviceLineSystemID' => $item['serviceLineSystemID'],
                     'serviceLine' => $item['serviceLineCode'],
                     'toGLCodeSystemID' => $item['chartOfAccountSystemID'],

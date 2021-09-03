@@ -27,6 +27,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
+use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -154,6 +155,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function store(CreateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        
 
         $input = $this->convertArrayToValue($input);
 
@@ -1294,6 +1296,62 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($itemIssue->toArray(), 'Materiel Issue Amend successfully');
+    }
+
+    public function getMaterialIssueByRefNo(Request $request) {
+
+        $input = $request->all();
+
+        $id = $input['refNo'];
+
+        $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->get();
+
+        
+        if(count($fetchDetails) > 0) {
+            $data = [
+                "status" => true,
+                "data" => $fetchDetails
+            ];
+
+            return $this->sendResponse($data, 'Data retreived successfully');
+
+        }else{
+            $data = [
+                "status" => false,
+                "data" => []
+            ];
+            return $this->sendResponse($data, 'Data not found!');
+        }
+
+    }
+
+    public function checkProductExistInIssues($id,$companySystemID) {
+
+        $fetchDetails = ItemIssueDetails::whereHas('master', function($q)
+        {
+            $q->where('approved', 0);
+        
+        })->where('itemCodeSystem', $id)->get();
+
+        
+
+        if(count($fetchDetails) > 0) {
+            $data = [
+                "status" => true,
+                "data" => $fetchDetails
+            ];
+
+            return $this->sendResponse($data, 'Data retreived successfully');
+
+        }else{
+            $data = [
+                "status" => false,
+                "data" => []
+            ];
+            return $this->sendResponse($data, 'Data not found!');
+        }
+
+
     }
 
 }

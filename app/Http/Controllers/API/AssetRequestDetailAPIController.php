@@ -286,7 +286,7 @@ class AssetRequestDetailAPIController extends AppBaseController
         $id = $request['id'];
         $companyID = $request['companyId']; 
         $data['assetRequestDetail'] = AssetRequestDetail::where('company_id', $companyID)->where('erp_fa_fa_asset_request_id', $id)->get();
-        $data['assetRequestMaster'] = AssetRequest::where('company_id', $companyID)->where('id', $id)->first();
+        $data['assetRequestMaster'] = AssetRequest::with(['company','confirmed_by','approved_by','employee'])->where('company_id', $companyID)->where('id', $id)->first();
         return $this->sendResponse($data, 'Asset Request data');
     }
     public function getAssetRequestMaster(Request $request)
@@ -319,7 +319,9 @@ class AssetRequestDetailAPIController extends AppBaseController
     public function getAssetDropData(Request $request){ 
         $input = $request->all();
         $companyID = $input['companyId'];
-        $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)->get();
+        $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)
+        ->where('approved',-1)
+        ->get();
         return $this->sendResponse($assetMaster->toArray(), 'Asset master data retrieved successfully');
     }
    

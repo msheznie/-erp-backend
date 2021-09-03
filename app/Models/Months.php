@@ -33,6 +33,8 @@ class Months extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $primaryKey = 'monthID';
+
 
     public $fillable = [
         'monthDes'
