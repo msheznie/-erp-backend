@@ -18,6 +18,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CompanyService;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateEmployeeAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeAPIRequest;
@@ -49,6 +50,7 @@ class EmployeeAPIController extends AppBaseController
 {
     /** @var  EmployeeRepository */
     private $employeeRepository;
+
 
     public function __construct(EmployeeRepository $employeeRepo)
     {
@@ -234,8 +236,6 @@ class EmployeeAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        //$input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
-
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -254,33 +254,50 @@ class EmployeeAPIController extends AppBaseController
         $empMaster = Employee::whereIn('empCompanySystemID', $childCompanies);
 
         if (isset($request['discharegedYN'])) {
-            $empMaster = $empMaster->where('discharegedYN',$request['discharegedYN']);
+            $empMaster = $empMaster->where('discharegedYN', $request['discharegedYN']);
         }
 
         if (isset($request['ActivationFlag'])) {
-            $empMaster = $empMaster->where('ActivationFlag',$request['ActivationFlag']);
+            $empMaster = $empMaster->where('ActivationFlag', $request['ActivationFlag']);
         }
 
         if (isset($request['isLock'])) {
             if($request['isLock'] === 0){
-                $empMaster = $empMaster->where('isLock',$request['isLock']);
+                $empMaster = $empMaster->where('isLock', $request['isLock']);
             }else{
-                $empMaster = $empMaster->where('isLock','!=',0);
+                $empMaster = $empMaster->where('isLock', '!=', 0);
             }
 
         }
 
         if (isset($request['empActive'])) {
-            $empMaster = $empMaster->where('empActive',$request['empActive']);
+            $empMaster = $empMaster->where('empActive', $request['empActive']);
         }
 
         if (isset($request['empLoginActive'])) {
-            $empMaster = $empMaster->where('empLoginActive',$request['empLoginActive']);
+            $empMaster = $empMaster->where('empLoginActive', $request['empLoginActive']);
         }
 
         $empMaster->with(['emp_company', 'manager', 'desi_master' => function ($query) {
             $query->with('designation');
         }]);
+
+        $hrIntegrated_count = CompanyService::hrIntegrated_company_count($childCompanies);
+
+        if($hrIntegrated_count > 0){
+            $empMaster->with(['manager_hrms'=> function($q){
+                $q->selectRaw('empID,managerID')
+                    ->where('active', 1)
+                    ->with('info:EIdNo,ECode,Ename2');
+            }]);
+
+            $empMaster->with(['hr_emp'=> function($q) use ($childCompanies){
+                $q->selectRaw('EIdNo, ECode, Ename2, EmpDesignationId')
+                    ->whereIn('Erp_companyID', $childCompanies)
+                    ->with('designation:DesignationID,DesDescription');
+            }]);
+        }
+
 
         $empMaster = $empMaster->select(
             ['employees.employeeSystemID',
@@ -338,27 +355,19 @@ class EmployeeAPIController extends AppBaseController
 
     public function getDesignationName($row)
     {
-        if (Helper::checkHrmsIntergrated($row->empCompanySystemID)) {
-            $empData = Employee::with(['desi_master_hrms' => function ($query) {
-                                    $query->with('designation');
-                                }])
-                                ->where('employeeSystemID', $row->employeeSystemID)
-                                ->first();
-            return isset($empData->desi_master_hrms->designation->designation) ? $empData->desi_master_hrms->designation->designation : '';
+        if ( $row->emp_company->isHrmsIntergrated ) {
+            return $row->hr_emp->designation->designation ?? '';
         } else {
-            return isset($row->desi_master->designation->designation) ? $row->desi_master->designation->designation : '';
+            return $row->desi_master->designation->designation ?? '';
         }
     }
 
      public function getManagerName($row)
     {
-        if (Helper::checkHrmsIntergrated($row->empCompanySystemID)) {
-            $empData = Employee::with(['manager'])
-                                ->where('employeeSystemID', $row->employeeSystemID)
-                                ->first();
-            return isset($empData->manager_hrms->empName) ? $empData->manager_hrms->empName : '';
+        if ( $row->emp_company->isHrmsIntergrated ) {
+            return $row->manager_hrms->info->Ename2 ?? '';
         } else {
-            return isset($row->manager->empName) ? $row->manager->empName : '';
+            return $row->manager->empName ?? '';
         }
     }
 
