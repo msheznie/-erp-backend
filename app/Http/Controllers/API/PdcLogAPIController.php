@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class PdcLogController
@@ -279,15 +280,23 @@ class PdcLogAPIController extends AppBaseController
         return $this->sendSuccess('Pdc Log deleted successfully');
     }
 
-    public function getIssuedAndReceivedCheques() {
-        $receivedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 21])->all();
+    public function getIssuedAndReceivedCheques(Request $request) {
 
-        $issuedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 4])->all();
+
+        $input = $request;
+        $fromDate = Carbon::parse(trim($input['fromDate'],'"'));
+        $toDate = Carbon::parse(trim($input['toDate'],'"'));
+
+
+        $receivedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('documentSystemID',21)->with('currency')->get();
+
+        $issuedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('documentSystemID',4)->with('currency')->get();
 
         $data = [
             "receivedCheques" => $receivedCheques,
             "issuedCheques"   => $issuedCheques
         ];
+        
         return $this->sendResponse($data, 'Data received successfully');
 
 
