@@ -305,17 +305,19 @@ class CompanyAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $companies = $this->companyRepository->create($input);
+            $companies = $companies->toArray();
 
-            [ $companySystemID, $CompanyID ] = $companies;
+            [ 'companySystemID'=> $company_id, 'CompanyID'=> $company_code ] = $companies;
 
-            CompanyService::assign_policies($companySystemID, $CompanyID);
-            CompanyService::assign_document_attachments($companySystemID, $CompanyID);
+
+            CompanyService::assign_policies($company_id, $company_code);
+            CompanyService::assign_document_attachments($company_id, $company_code);
 
             $hrCompany = app()->make(hrCompany::class);
             $hrCompany->store($companies);
  
             DB::commit();
-            return $this->sendResponse($companies->toArray(), 'Company saved successfully');
+            return $this->sendResponse($companies, 'Company saved successfully');
         }
         catch(Exception $ex){
             DB::rollback();
