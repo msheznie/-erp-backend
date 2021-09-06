@@ -40,6 +40,7 @@ class SystemGlCodeScenario extends Model
 
     public $fillable = [
         'documentSystemID',
+        'isActive',
         'description'
     ];
 
@@ -50,6 +51,7 @@ class SystemGlCodeScenario extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'isActive' => 'integer',
         'documentSystemID' => 'integer',
         'description' => 'string'
     ];
