@@ -2313,3 +2313,4 @@ Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController
 
 Route::get('get-all-cheques', 'PdcLogAPIController@getIssuedAndReceivedCheques');
 
+Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');

@@ -338,17 +338,31 @@ class PdcLogAPIController extends AppBaseController
         return $this->sendResponse([], 'Pdc cheques deleted successfully');
     }
 
-    public function getIssuedAndReceivedCheques() {
-        $receivedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 21])->all();
+    public function getIssuedAndReceivedCheques(Request $request) {
 
-        $issuedCheques = $this->pdcLogRepository->with('currency')->findWhere(['documentSystemID' => 4])->all();
+
+        $input = $request;
+        $fromDate = Carbon::parse(trim($input['fromDate'],'"'));
+        $toDate = Carbon::parse(trim($input['toDate'],'"'));
+        $bank = $input['bank'];
+
+
+        $receivedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',21)->with('currency')->get();
+
+        $issuedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',4)->with('currency')->get();
 
         $data = [
             "receivedCheques" => $receivedCheques,
             "issuedCheques"   => $issuedCheques
         ];
+        
         return $this->sendResponse($data, 'Data received successfully');
 
+    }
 
+    public function getAllBanks(Request $request) {
+        $pdcLogs =  PdcLog::all()->pluck('bank')->unique();
+
+        return $pdcLogs;
     }
 }

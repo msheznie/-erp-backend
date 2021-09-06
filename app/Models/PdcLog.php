@@ -154,6 +154,10 @@ class PdcLog extends Model
         return $this->belongsTo('App\Models\CurrencyMaster','currencyID',  'currencyID');
     }
 
+    public function bank() {
+        return $this->belongsTo('App\Models\BankMaster','paymentBankID',  'bankmasterAutoID');
+    }
+
 
 
 }
