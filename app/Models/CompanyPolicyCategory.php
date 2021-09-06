@@ -103,5 +103,8 @@ class CompanyPolicyCategory extends Model
         
     ];
 
+    function company_policy_master(){
+        return $this->hasOne(CompanyPolicyMaster::class, 'companyPolicyCategoryID');
+    }
     
 }

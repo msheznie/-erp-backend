@@ -73,13 +73,13 @@ class hrCompany
         $this->date_time = Carbon::now();
     }
 
-    public static function isHRSysIntegrated(){ /* Check Standerd HR integrated */ 
+    public static function isHRSysIntegrated(){ /* Check Standard HR integrated */
 
         $table_exists = DB::select("SHOW TABLES LIKE 'srp_erp_company'");
         return ($table_exists)? true: false;
         /*
         We can not use Schema::hasTable('srp_erp_company') since we are changing the 
-        DB connection basd on sub-domain
+        DB connection based on sub-domain
         */        
 
         /* following tables get update in company creation
@@ -224,7 +224,7 @@ class hrCompany
 
     public function add_navigation_templates($company_id){
         $menus = NavigationMenus::selectRaw('navigationMenuID, description')
-            ->where('isPortalYN', 3)
+            ->whereIn('isPortalYN', [3, 4]) /* 3=> HR | 4=> Manufacturing*/
             ->whereHas('form_category', function($q) {
                 $q->whereHas('template', function ($q1) {
                     $q1->where('isdefault', 1);

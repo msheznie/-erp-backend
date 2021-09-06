@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CompanyService;
 use App\helper\Helper;
 use App\helper\hrCompany;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
@@ -304,8 +305,11 @@ class CompanyAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $companies = $this->companyRepository->create($input);
-            
-            $this->addCompayPolicies($companies['companySystemID'], $companies['CompanyID']);
+
+            [ $companySystemID, $CompanyID ] = $companies;
+
+            CompanyService::assign_policies($companySystemID, $CompanyID);
+            CompanyService::assign_document_attachments($companySystemID, $CompanyID);
 
             $hrCompany = app()->make(hrCompany::class);
             $hrCompany->store($companies);
@@ -634,30 +638,4 @@ class CompanyAPIController extends AppBaseController
         }
     }
 
-    public function addCompayPolicies($companyID, $companyCode){ 
-        $policyCat = $this->policyCategoryRepository->selectRaw("companyPolicyCategoryID,documentID,isActive")->get()->toArray();
-
-        $policy_arr = [];
-        foreach ($policyCat as $value) {
-            $policy_arr[] = [
-                'companySystemID' => $companyID, 
-                'companyID' => $companyCode,
-                'companyPolicyCategoryID' => $value['companyPolicyCategoryID'],                
-                'documentID' => $value['documentID'], 
-                'isYesNO' => 0,
-                'policyValue' => null
-            ];
-        }
-
-        if($policy_arr){
-            $this->policyMasterRepository->insert($policy_arr);
-        }
-        
-        return true;
-    }
-
-    function test(){
-        $hrCompany = app()->make(hrCompany::class);
-        $hrCompany->add_navigation_templates(100);
-    }
 }

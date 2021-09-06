@@ -62,4 +62,8 @@ class DocumentMaster extends Model
     public function approval_levels(){
         return $this->hasMany('App\Models\ApprovalLevel','documentSystemID','documentSystemID');
     }
+
+    function company_document_attachment(){
+        return $this->hasOne(CompanyDocumentAttachment::class, 'documentSystemID');
+    }
 }

@@ -2312,4 +2312,4 @@ Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 
-Route::get('check', 'CompanyAPIController@test');
+
