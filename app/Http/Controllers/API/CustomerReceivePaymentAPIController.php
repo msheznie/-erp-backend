@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
@@ -40,6 +41,7 @@ use App\Models\CustomerCurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
+use App\Models\PdcLog;
 use App\Models\CustomerReceivePaymentRefferedHistory;
 use App\Models\CustReceivePaymentDetRefferedHistory;
 use App\Models\DirectReceiptDetailsRefferedHistory;
@@ -430,6 +432,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
+
+        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+            $input['custChequeNo'] = null;            
+        }
 
         $customValidation = CustomValidation::validation($customerReceivePayment->documentSystemID, $customerReceivePayment, 2, $input);
         if (!$customValidation["success"]) {
@@ -1203,6 +1209,63 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             unset($input['confirmedByEmpID']);
             unset($input['confirmedByName']);
             unset($input['confirmedDate']);
+
+
+            if ($input['pdcChequeYN']) {
+                $pdcLogValidation = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                                      ->where('documentmasterAutoID', $id)
+                                      ->whereNull('chequeDate')
+                                      ->first();
+
+                if ($pdcLogValidation) {
+                    return $this->sendError('PDC Cheque date cannot be empty', 500); 
+                }
+
+                $pdcLogValidationChequeNo = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                                      ->where('documentmasterAutoID', $id)
+                                      ->whereNull('chequeNo')
+                                      ->first();
+
+                if ($pdcLogValidationChequeNo) {
+                    return $this->sendError('PDC Cheque no cannot be empty', 500); 
+                }
+
+
+                $totalAmountForPDC = 0;
+                if ($input['documentType'] == 13) {
+                    $detailAllRecordsSum = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                                                    ->sum('receiveAmountTrans');
+                    $bankTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+
+                    $totalAmountForPDC = $detailAllRecordsSum + $bankTotal;
+                } else if ($input['documentType'] == 14) {
+                    $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+                } else if ($input['documentType'] == 15) {
+                    $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+                }
+
+                $pdcLog = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
+                                      ->where('documentmasterAutoID', $id)
+                                      ->get();
+
+                if (count($pdcLog) == 0) {
+                    return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                } 
+
+                $pdcLogAmount = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
+                                      ->where('documentmasterAutoID', $id)
+                                      ->sum('amount');
+
+                if (($totalAmountForPDC - $pdcLogAmount) > 0.001 ) {
+                    return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
+                }
+
+                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 6);
+
+                if (is_null($checkPlAccount)) {
+                    return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
+                } 
+            }
 
 
             $params = array('autoID' => $id,
@@ -2335,6 +2398,49 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 AND ( ( erp_salesorderadvpayment.fullyPaid ) <> 2 ) 
                                 );');
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function generatePdcForReceiptVoucher(Request $request)
+    {
+        $input = $request->all();
+
+        $receipt = CustomerReceivePayment::find($input['custReceivePaymentAutoID']);
+
+        if (empty($receipt)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $bankAccount = BankAccount::find($receipt->bankAccount);
+    
+            $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
+
+            for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
+                $pdcLogData = [
+                    'documentSystemID' => $receipt->documentSystemID,
+                    'documentmasterAutoID' => $input['custReceivePaymentAutoID'],
+                    'paymentBankID' => $bankAccount->bankmasterAutoID,
+                    'companySystemID' => $receipt->companySystemID,
+                    'currencyID' => $receipt->custTransactionCurrencyID,
+                    'chequeRegisterAutoID' => null,
+                    'chequeNo' => null,
+                    'chequeStatus' => 0,
+                    'amount' => $amount,
+                ];
+
+                $resPdc = PdcLog::create($pdcLogData);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], "PDC cheques generated successfully");
+        } catch
+        (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 
 }

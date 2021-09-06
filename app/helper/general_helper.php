@@ -2011,7 +2011,9 @@ class Helper
                                         return ['success' => false, 'message' => $jobPV["message"]];
                                     }
                                 } else {
-                                    $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                    if ($sourceModel->pdcChequeYN == 0) {
+                                        $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                    }
                                 }
                             }
 
