@@ -2308,3 +2308,4 @@ Route::resource('pdc_logs', 'PdcLogAPIController');
 
 Route::get('get-all-cheques', 'PdcLogAPIController@getIssuedAndReceivedCheques');
 
+Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
