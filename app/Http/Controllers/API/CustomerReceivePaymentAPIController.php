@@ -1221,14 +1221,27 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError('PDC Cheque date cannot be empty', 500); 
                 }
 
+                $pdcLogValidationChequeNo = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                                      ->where('documentmasterAutoID', $id)
+                                      ->whereNull('chequeNo')
+                                      ->first();
+
+                if ($pdcLogValidationChequeNo) {
+                    return $this->sendError('PDC Cheque no cannot be empty', 500); 
+                }
+
 
                 $totalAmountForPDC = 0;
                 if ($input['documentType'] == 13) {
+                    $detailAllRecordsSum = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                                                    ->sum('receiveAmountTrans');
+                    $bankTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
 
+                    $totalAmountForPDC = $detailAllRecordsSum + $bankTotal;
                 } else if ($input['documentType'] == 14) {
                     $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
                 } else if ($input['documentType'] == 15) {
-                    // $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('DPAmount');
+                    $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
                 }
 
                 $pdcLog = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
