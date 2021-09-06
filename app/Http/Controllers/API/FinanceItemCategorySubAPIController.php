@@ -340,7 +340,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function update($id, UpdateFinanceItemCategorySubAPIRequest $request)
     {
         $input = $request->all();
-        return $input;
 
         /** @var FinanceItemCategorySub $financeItemCategorySub */
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);
