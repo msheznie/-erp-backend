@@ -13,6 +13,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CompanyService;
 use App\helper\Helper;
 use App\helper\hrCompany;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
@@ -304,14 +305,19 @@ class CompanyAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $companies = $this->companyRepository->create($input);
-            
-            $this->addCompayPolicies($companies['companySystemID'], $companies['CompanyID']);
+            $companies = $companies->toArray();
+
+            [ 'companySystemID'=> $company_id, 'CompanyID'=> $company_code ] = $companies;
+
+
+            CompanyService::assign_policies($company_id, $company_code);
+            CompanyService::assign_document_attachments($company_id, $company_code);
 
             $hrCompany = app()->make(hrCompany::class);
             $hrCompany->store($companies);
  
             DB::commit();
-            return $this->sendResponse($companies->toArray(), 'Company saved successfully');
+            return $this->sendResponse($companies, 'Company saved successfully');
         }
         catch(Exception $ex){
             DB::rollback();
@@ -634,25 +640,4 @@ class CompanyAPIController extends AppBaseController
         }
     }
 
-    public function addCompayPolicies($companyID, $companyCode){ 
-        $policyCat = $this->policyCategoryRepository->selectRaw("companyPolicyCategoryID,documentID,isActive")->get()->toArray();
-
-        $policy_arr = [];
-        foreach ($policyCat as $value) {
-            $policy_arr[] = [
-                'companySystemID' => $companyID, 
-                'companyID' => $companyCode,
-                'companyPolicyCategoryID' => $value['companyPolicyCategoryID'],                
-                'documentID' => $value['documentID'], 
-                'isYesNO' => 0,
-                'policyValue' => null
-            ];
-        }
-
-        if($policy_arr){
-            $this->policyMasterRepository->insert($policy_arr);
-        }
-        
-        return true;
-    }
 }

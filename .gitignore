@@ -15,3 +15,5 @@ yarn-error.log
 /.scannerwork
 /public/tmp/
 composer.lock
+
+public/logos/

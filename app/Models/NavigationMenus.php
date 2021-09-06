@@ -66,7 +66,7 @@ class NavigationMenus extends Model
         'addonDetails',
         'isCoreModule',
         'isGroup',
-         'isPortalYN',
+        'isPortalYN',
         'externalLink'
     ];
 
@@ -111,5 +111,7 @@ class NavigationMenus extends Model
         return $this->hasMany(CompanyNavigationMenus::class,'masterID','navigationMenuID');
     }
 
-    
+    public function form_category(){
+        return $this->hasOne(SrpErpFormCategory::class, 'navigationMenuID', 'navigationMenuID');
+    }
 }
