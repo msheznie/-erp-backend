@@ -338,7 +338,7 @@ class PdcLogAPIController extends AppBaseController
         return $this->sendResponse([], 'Pdc cheques deleted successfully');
     }
 
-    public function getIssuedAndReceivedCheques(Request $request) {
+    public function getIssuedCheques(Request $request) {
 
 
         $input = $request;
@@ -346,23 +346,65 @@ class PdcLogAPIController extends AppBaseController
         $toDate = Carbon::parse(trim($input['toDate'],'"'));
         $bank = $input['bank'];
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
 
-        $receivedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',21)->with('currency')->get();
 
-        $issuedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',4)->with('currency')->get();
+        $issuedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',4)->with('currency');
 
-        $data = [
-            "receivedCheques" => $receivedCheques,
-            "issuedCheques"   => $issuedCheques
-        ];
-        
-        return $this->sendResponse($data, 'Data received successfully');
+        return \DataTables::eloquent($issuedCheques)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getAllReceivedCheques(Request $request) {
+        $input = $request->all();
+        $fromDate = Carbon::parse(trim($input['fromDate'],'"'));
+        $toDate = Carbon::parse(trim($input['toDate'],'"'));
+        $bank = $input['bank'];
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $receivedCheques = PdcLog::whereBetween('chequeDate',[$fromDate,$toDate])->where('paymentBankID',$bank)->where('documentSystemID',21)->with('currency');
+
+
+        return \DataTables::eloquent($receivedCheques)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+
+
 
     }
 
     public function getAllBanks(Request $request) {
         $pdcLogs =  PdcLog::all()->pluck('bank')->unique();
 
-        return $pdcLogs;
+        return $this->sendResponse($pdcLogs->toArray(), 'Banks received successfully');
     }
 }
