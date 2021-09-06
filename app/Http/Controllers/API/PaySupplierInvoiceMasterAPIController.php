@@ -598,6 +598,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
                 $input['chequePaymentYN'] = 0;
+                $input['expenseClaimOrPettyCash'] = null;
             } else {
                 $input['pdcChequeYN'] = 0;
             }
