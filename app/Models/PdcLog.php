@@ -85,9 +85,9 @@ class PdcLog extends Model
 {
 
     public $table = 'erp_pdc_logs';
-
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
 
 
@@ -101,6 +101,7 @@ class PdcLog extends Model
         'currencyID',
         'chequeRegisterAutoID',
         'chequeNo',
+        'comments',
         'chequeDate',
         'chequeStatus',
         'amount',
@@ -121,6 +122,7 @@ class PdcLog extends Model
         'currencyID' => 'integer',
         'chequeRegisterAutoID' => 'integer',
         'chequeNo' => 'string',
+        'comments' => 'string',
         'chequeDate' => 'datetime',
         'chequeStatus' => 'integer',
         'amount' => 'float',

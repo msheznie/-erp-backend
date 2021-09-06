@@ -308,7 +308,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->where('controllAccountYN', 0)
             ->where('controlAccountsSystemID', '<>', 1)
-            ->where('isActive', 1);
+            ->where('isActive', 1)
+            ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15), function ($query) {
+                $query->where('isBank',0);
+            });
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];

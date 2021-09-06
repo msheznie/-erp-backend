@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePdcLogAPIRequest;
 use App\Http\Requests\API\UpdatePdcLogAPIRequest;
 use App\Models\PdcLog;
+use App\Models\ChequeRegisterDetail;
 use App\Repositories\PdcLogRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -223,6 +224,10 @@ class PdcLogAPIController extends AppBaseController
             return $this->sendError('Pdc Log not found');
         }
 
+        if (isset($input['chequeDate'])) {
+            $input['chequeDate'] = Carbon::parse($input['chequeDate']);
+        }
+
         $pdcLog = $this->pdcLogRepository->update($input, $id);
 
         return $this->sendResponse($pdcLog->toArray(), 'PdcLog updated successfully');
@@ -275,9 +280,62 @@ class PdcLogAPIController extends AppBaseController
             return $this->sendError('Pdc Log not found');
         }
 
+        if (!is_null($pdcLog->chequeRegisterAutoID)) {
+            $update_array = [
+                'document_id' => null,
+                'document_master_id' => null,
+                'status' => 0,
+            ];
+
+            ChequeRegisterDetail::where('id', $pdcLog->chequeRegisterAutoID)->update($update_array);
+        }
+
         $pdcLog->delete();
 
-        return $this->sendSuccess('Pdc Log deleted successfully');
+        return $this->sendResponse([], 'Pdc Log deleted successfully');
+    }
+
+    public function getPdcCheques(Request $request)
+    {
+        $input = $request->all();
+
+        $cheques = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                         ->where('documentmasterAutoID', $input['documentAutoID'])
+                         ->get();
+
+        return $this->sendResponse($cheques, 'Pdc cheques retrieved successfully');
+    }
+
+    public function deleteAllPDC(Request $request)
+    {
+        $input = $request->all();
+
+        $cheques = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                         ->where('documentmasterAutoID', $input['documentAutoID'])
+                         ->get();
+
+        if (count($cheques) == 0) {
+             return $this->sendError('Pdc cheques not found', 500);
+        }
+
+        $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
+
+
+        if (count($chequeRegisterAutoIDs) > 0) {
+            $update_array = [
+                'document_id' => null,
+                'document_master_id' => null,
+                'status' => 0,
+            ];
+
+            ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
+        }
+
+        $chequesDelete = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                         ->where('documentmasterAutoID', $input['documentAutoID'])
+                         ->delete();
+
+        return $this->sendResponse([], 'Pdc cheques deleted successfully');
     }
 
     public function getIssuedAndReceivedCheques(Request $request) {
