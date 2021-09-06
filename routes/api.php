@@ -2311,6 +2311,10 @@ Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMaster
 
 Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
 
-Route::get('get-all-cheques', 'PdcLogAPIController@getIssuedAndReceivedCheques');
+Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques');
+
+Route::post('get-all-received-cheques', 'PdcLogAPIController@getAllReceivedCheques');
 
 Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
+
+
