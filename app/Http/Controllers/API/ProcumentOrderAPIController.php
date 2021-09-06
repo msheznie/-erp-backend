@@ -1633,6 +1633,17 @@ class ProcumentOrderAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+
+    public function getProjectsBySegment(Request $request)
+    {
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+
+        $projects = ErpProjectMaster::where('companySystemID', $serviceLineSystemID)->get();
+
+        return $this->sendResponse($projects, 'Segments Projects retrieved successfully');
+    }
+
     public function getItemsOptionForProcumentOrder(Request $request)
     {
         $input = $request->all();

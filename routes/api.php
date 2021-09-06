@@ -302,6 +302,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('procurement-order', 'ProcumentOrderAPIController');
         Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
         Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
+        Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment');
         Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
         Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
         Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
