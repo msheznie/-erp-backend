@@ -130,7 +130,7 @@ class PdcLog extends Model
     ];
 
     protected $statuses = array(
-        "0" => 'Draft',
+        "0" => 'Open',
         "1" => 'Deposited',
         "2" => 'Returned',
         "3" => 'Done'
