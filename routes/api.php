@@ -2197,6 +2197,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
 
         Route::post('deleteAllPDC', 'PdcLogAPIController@deleteAllPDC');
+        Route::post('changePdcChequeStatus', 'PdcLogAPIController@changePdcChequeStatus');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
