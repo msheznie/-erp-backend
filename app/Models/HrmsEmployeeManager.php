@@ -132,10 +132,10 @@ class HrmsEmployeeManager extends Model
 
     public function getEmpNameAttribute()
     {
-        //return '';
+        return '';
 
         /* By : Nasik
-         * On : 2021-08-30
+         * On : 2021-09-03
          * Do not use the below query it is causing N+1 query issue */
         $employee = Employee::find($this->managerID);
 

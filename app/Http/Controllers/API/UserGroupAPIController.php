@@ -87,6 +87,7 @@ class UserGroupAPIController extends AppBaseController
 
            $userGroups->save();
         }else{
+            $input['isActive'] = 1;
             $userGroups = $this->userGroupRepository->create($input);
         }
         return $this->sendResponse($userGroups, 'User Group saved successfully');
