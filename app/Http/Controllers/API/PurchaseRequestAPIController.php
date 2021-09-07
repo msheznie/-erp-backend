@@ -949,6 +949,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 rollLevelOrder,
                 approvalLevelID,
                 currencymaster.CurrencyCode,
+                currencymaster.DecimalPlaces As DecimalPlaces,
                 documentSystemCode, SUM(erp_purchaserequestdetails.totalCost) as totalCost')
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
