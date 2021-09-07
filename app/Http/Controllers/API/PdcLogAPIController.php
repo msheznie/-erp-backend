@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePdcLogAPIRequest;
 use App\Http\Requests\API\UpdatePdcLogAPIRequest;
 use App\Models\PdcLog;
+use App\helper\Helper;
+use App\Jobs\PdcDoubleEntry;
 use App\Models\ChequeRegisterDetail;
 use App\Repositories\PdcLogRepository;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class PdcLogController
@@ -417,5 +420,34 @@ class PdcLogAPIController extends AppBaseController
         $pdcLogs =  PdcLog::all()->pluck('bank')->unique();
 
         return $this->sendResponse($pdcLogs->toArray(), 'Banks received successfully');
+    }
+
+    public function changePdcChequeStatus(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['documentSystemID']) || (isset($input['documentSystemID']) && is_null($input['documentSystemID']))) {
+            return $this->sendError("Document ID not found", 500);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $empInfo = Helper::getEmployeeInfo();
+
+            $masterData = ['documentSystemID' => $input['documentSystemID'], 'autoID' => $input['documentmasterAutoID'], 'companySystemID' => $input['companySystemID'], 'employeeSystemID' => $empInfo->employeeSystemID];
+
+            if ($input['newStatus'] == 1 || $input['newStatus'] == 2) {
+                $jobGL = PdcDoubleEntry::dispatch($masterData, $input);
+            }
+
+            $updateChequeStatus = PdcLog::where('id', $input['id'])->update(['chequeStatus' => $input['newStatus']]);
+
+            DB::commit();
+            return $this->sendResponse([], "Cheque status changed successfully");
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError("Error occured", 500);            
+        }
     }
 }

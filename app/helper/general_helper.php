@@ -1993,7 +1993,9 @@ class Helper
 
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
-                                $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                                if ($sourceModel->pdcChequeYN == 0) {
+                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                                }
                             }
 
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
