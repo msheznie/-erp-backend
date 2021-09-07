@@ -2188,6 +2188,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('pdc_logs', 'PdcLogAPIController');
         Route::post('getPdcCheques', 'PdcLogAPIController@getPdcCheques');
+        
+        Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques');
+
+        Route::post('get-all-received-cheques', 'PdcLogAPIController@getAllReceivedCheques');
+
+        Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
+
         Route::post('deleteAllPDC', 'PdcLogAPIController@deleteAllPDC');
     });
 
@@ -2310,11 +2317,3 @@ Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPI
 Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
 
 Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
-
-Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques');
-
-Route::post('get-all-received-cheques', 'PdcLogAPIController@getAllReceivedCheques');
-
-Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
-
-
