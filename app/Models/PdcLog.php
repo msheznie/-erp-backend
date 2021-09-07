@@ -158,6 +158,14 @@ class PdcLog extends Model
         return $this->belongsTo('App\Models\BankMaster','paymentBankID',  'bankmasterAutoID');
     }
 
+    public function pay_supplier() {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','chequeRegisterAutoID',  'PayMasterAutoId');
+    }
+
+    public function customer_receive() {
+        return $this->belongsTo('App\Models\CustomerReceivePayment','chequeRegisterAutoID',  'custReceivePaymentAutoID');
+    }
+
 
 
 }

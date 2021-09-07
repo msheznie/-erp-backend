@@ -358,7 +358,7 @@ class PdcLogAPIController extends AppBaseController
                                 ->when(!empty($input['bank']), function ($q) use ($input) {
                                     return $q->where('paymentBankID', $input['bank']);
                                 })
-                                ->with('currency');
+                                ->with(['currency','bank','pay_supplier','customer_receive']);
 
         return \DataTables::eloquent($issuedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -393,7 +393,7 @@ class PdcLogAPIController extends AppBaseController
                                 ->when(!empty($input['bank']), function ($q) use ($input) {
                                     return $q->where('paymentBankID', $input['bank']);
                                 })
-                                ->with('currency');
+                                ->with(['currency','bank','pay_supplier','customer_receive']);
 
         return \DataTables::eloquent($receivedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
