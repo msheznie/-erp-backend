@@ -848,8 +848,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
         }
 
-        if (empty($input['quantityRequested'])) {
-            $input['quantityRequested'] = 0;
+        if (!empty($input['purchase_issue_qnty'])) {
+            $input['quantityRequested'] = $input['purchase_issue_qnty'];
+        }else {
+            if (empty($input['quantityRequested'])) {
+                $input['quantityRequested'] = 0;
+            }
         }
 
         if (empty($input['estimatedCost'])) {
