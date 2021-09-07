@@ -486,6 +486,61 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');
     }
 
+    public function updateQtyOnOrder(request $request){
+        $itemCode = $request[0];
+        $companySystemID = PurchaseRequestDetails::select('companySystemID')->where('itemCode', $itemCode)->first();
+        $group_companies = Helper::getSimilarGroupCompanies($companySystemID->companySystemID);
+            $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
+                $query->whereIn('companySystemID', $group_companies)
+                    ->where('approved', -1)
+                    ->where('poType_N', '!=',5)// poType_N = 5 =>work order
+                    ->where('poCancelledYN', 0)
+                    ->where('manuallyClosed', 0);
+                 })
+                ->where('itemCode', $itemCode)
+                ->where('manuallyClosed',0)
+                ->groupBy('erp_purchaseorderdetails.itemCode')
+                ->select(
+                    [
+                        'erp_purchaseorderdetails.companySystemID',
+                        'erp_purchaseorderdetails.itemCode',
+                        'erp_purchaseorderdetails.itemPrimaryCode'
+                    ]
+                )
+                ->sum('noQty');
+
+            // $quantityInHand = ErpItemLedger::where('itemSystemCode', $itemCode)
+            //     ->where('companySystemID', $companySystemID)
+            //     ->groupBy('itemSystemCode')
+            //     ->sum('inOutQty');
+
+            $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
+                $query->whereIn('companySystemID', $group_companies)
+                    ->where('grvTypeID', 2)
+                    ->where('approved', -1)
+                    ->groupBy('erp_grvmaster.companySystemID');
+            })->whereHas('po_detail', function ($query){
+                $query->where('manuallyClosed',0)
+                ->whereHas('order', function ($query){
+                    $query->where('manuallyClosed',0);
+                });
+            })
+                ->where('itemCode', $itemCode)
+                ->groupBy('erp_grvdetails.itemCode')
+                ->select(
+                    [
+                        'erp_grvdetails.companySystemID',
+                        'erp_grvdetails.itemCode'
+                    ])
+                ->sum('noQty');
+
+            $quantityOnOrder = $poQty - $grvQty;
+            $updateQtyOnOrder = PurchaseRequestDetails::where('itemCode', $itemCode)->update(['quantityOnOrder'=> $quantityOnOrder]);
+            return $this->sendResponse($updateQtyOnOrder, 'Quantity On Order updated successfully');
+
+            
+    }
+
 
     public function mapLineItemPr(Request $request)
     {

@@ -1669,6 +1669,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
         Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
+        Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
 
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
