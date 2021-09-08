@@ -139,6 +139,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         }
 
+
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
             ->first();
 
