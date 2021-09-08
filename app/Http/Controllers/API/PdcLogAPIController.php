@@ -234,6 +234,15 @@ class PdcLogAPIController extends AppBaseController
             return $this->sendError('Pdc Log not found');
         }
 
+        $checkPdcChequeDuplicate = PdcLog::where('documentmasterAutoID', $input['documentmasterAutoID'])
+                                         ->where('id','!=', $id)
+                                         ->where('chequeNo', $input['chequeNo'])
+                                         ->first();
+
+        if ($checkPdcChequeDuplicate) {
+            return $this->sendError('Cheque no cannot be duplicated', 500);
+        }
+
         if (isset($input['chequeDate'])) {
             $input['chequeDate'] = Carbon::parse($input['chequeDate']);
         }
