@@ -161,11 +161,11 @@ class PdcLog extends Model
     }
 
     public function pay_supplier() {
-        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','chequeRegisterAutoID',  'PayMasterAutoId');
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentmasterAutoID',  'PayMasterAutoId');
     }
 
     public function customer_receive() {
-        return $this->belongsTo('App\Models\CustomerReceivePayment','chequeRegisterAutoID',  'custReceivePaymentAutoID');
+        return $this->belongsTo('App\Models\CustomerReceivePayment','documentmasterAutoID',  'custReceivePaymentAutoID');
     }
 
     // public function scopeDocument($query) {
