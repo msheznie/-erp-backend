@@ -1991,14 +1991,14 @@ class Helper
                                 }
                             }
 
+
+                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
                                 if ($sourceModel->pdcChequeYN == 0) {
                                     $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
                                 }
                             }
-
-                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
                                 $jobCI = CreateStockReceive::dispatch($sourceModel);
                             }
