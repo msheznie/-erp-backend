@@ -8,6 +8,8 @@ use App\Models\PdcLog;
 use App\helper\Helper;
 use App\Jobs\PdcDoubleEntry;
 use App\Models\ChequeRegisterDetail;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PdcLogRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -353,6 +355,9 @@ class PdcLogAPIController extends AppBaseController
         }
 
         $issuedCheques = PdcLog::where('documentSystemID',4)
+                                ->whereHas('pay_supplier', function ($query) {
+                                    $query->where('approved', -1);
+                                })
                                 ->when(!empty($input['fromDate']) && !empty($input['toDate']), function ($q) use ($input) {
                                     $fromDate = Carbon::parse(trim($input['fromDate'],'"'));
                                     $toDate = Carbon::parse(trim($input['toDate'],'"'));
@@ -361,7 +366,7 @@ class PdcLogAPIController extends AppBaseController
                                 ->when(!empty($input['bank']), function ($q) use ($input) {
                                     return $q->where('paymentBankID', $input['bank']);
                                 })
-                                ->with(['currency','bank','pay_supplier','customer_receive']);
+                                ->with(['currency','bank']);
 
         return \DataTables::eloquent($issuedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -380,6 +385,7 @@ class PdcLogAPIController extends AppBaseController
 
     public function getAllReceivedCheques(Request $request) {
         $input = $request->all();
+
         
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -388,6 +394,9 @@ class PdcLogAPIController extends AppBaseController
         }
 
         $receivedCheques = PdcLog::where('documentSystemID',21)
+                                ->whereHas('customer_receive', function ($query){
+                                    $query->where('approved', -1);
+                                })
                                 ->when(!empty($input['fromDate']) && !empty($input['toDate']), function ($q) use ($input) {
                                     $fromDate = Carbon::parse(trim($input['fromDate'],'"'));
                                     $toDate = Carbon::parse(trim($input['toDate'],'"'));
@@ -396,7 +405,8 @@ class PdcLogAPIController extends AppBaseController
                                 ->when(!empty($input['bank']), function ($q) use ($input) {
                                     return $q->where('paymentBankID', $input['bank']);
                                 })
-                                ->with(['currency','bank','pay_supplier','customer_receive']);
+                                ->with(['currency','bank']);
+
 
         return \DataTables::eloquent($receivedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -411,15 +421,30 @@ class PdcLogAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
-
-
-
     }
 
     public function getAllBanks(Request $request) {
-        $pdcLogs =  PdcLog::all()->pluck('bank')->unique();
+        $banks =  PdcLog::all()->pluck('bank')->unique();
 
-        return $this->sendResponse($pdcLogs->toArray(), 'Banks received successfully');
+        return $this->sendResponse($banks->toArray(), 'Banks received successfully');
+    }
+
+    public function getFormData(Request $request) {
+        $banks =  PdcLog::all()->pluck('bank')->unique();
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $data = [
+            'banks' => $banks,
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus
+        ];
+
+        return $this->sendResponse($data, 'FromData received successfully');
+
     }
 
     public function changePdcChequeStatus(Request $request)

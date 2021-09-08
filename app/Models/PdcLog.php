@@ -166,6 +166,13 @@ class PdcLog extends Model
         return $this->belongsTo('App\Models\CustomerReceivePayment','chequeRegisterAutoID',  'custReceivePaymentAutoID');
     }
 
-
+    // public function scopeDocument($query) {
+    //     return $query
+    //     ->when($this->documentSystemID == 4,function($q){
+    //         return $q->with('pay_supplier');
+    //    },function($q){
+    //         return $q->with('customer_receive');
+    //    });
+    // }
 
 }
