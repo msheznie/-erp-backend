@@ -367,9 +367,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             }
 
 
-            if ((($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))) {
-                return $this->sendError('Prefix ' . $prefixCode . ' already exist');
-            }
+            // if ((($prefixCode) != ($prefixCodeExist)) && in_array(strtoupper($prefixCode), array_unique($assetFormulaArr))) {
+            //     return $this->sendError('Prefix ' . $prefixCode . ' already exist');
+            // }
 
             if ($prefixCount > 1) {
                 return $this->sendError('Prefix cannot be add more than once');

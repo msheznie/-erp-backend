@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
+use App\Models\ChequeRegisterDetail;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
@@ -1282,6 +1283,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+            $input['custChequeDate'] = null;
+            $input['custChequeNo'] = null;
+        }
+
         $employee = \Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
@@ -2413,6 +2419,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
+            $deleteAllPDC = $this->deleteAllPDC($receipt->documentSystemID, $input['custReceivePaymentAutoID']);
             $bankAccount = BankAccount::find($receipt->bankAccount);
     
             $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
@@ -2441,6 +2448,35 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
 
+    }
+
+    public function deleteAllPDC($documentSystemID, $documentAutoID)
+    {
+        $cheques = PdcLog::where('documentSystemID', $documentSystemID)
+                         ->where('documentmasterAutoID', $documentAutoID)
+                         ->get();
+
+        if (count($cheques) > 0) {
+            $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
+
+
+            if (count($chequeRegisterAutoIDs) > 0) {
+                $update_array = [
+                    'document_id' => null,
+                    'document_master_id' => null,
+                    'status' => 0,
+                ];
+
+                ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
+            }
+
+            $chequesDelete = PdcLog::where('documentSystemID', $documentSystemID)
+                             ->where('documentmasterAutoID', $documentAutoID)
+                             ->delete();
+
+        }
+        
+        return ['status' => true];
     }
 
 }
