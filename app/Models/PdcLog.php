@@ -105,6 +105,7 @@ class PdcLog extends Model
         'chequeDate',
         'chequeStatus',
         'amount',
+        'referenceChequeID',
         'timestamp'
     ];
 
@@ -116,6 +117,7 @@ class PdcLog extends Model
     protected $casts = [
         'id' => 'integer',
         'documentSystemID' => 'integer',
+        'referenceChequeID' => 'integer',
         'documentmasterAutoID' => 'string',
         'paymentBankID' => 'integer',
         'companySystemID' => 'integer',

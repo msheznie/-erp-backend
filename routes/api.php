@@ -2200,6 +2200,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('deleteAllPDC', 'PdcLogAPIController@deleteAllPDC');
         Route::post('changePdcChequeStatus', 'PdcLogAPIController@changePdcChequeStatus');
+        Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
+        Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
+        Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

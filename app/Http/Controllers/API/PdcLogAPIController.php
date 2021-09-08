@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePdcLogAPIRequest;
 use App\Http\Requests\API\UpdatePdcLogAPIRequest;
 use App\Models\PdcLog;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\BankAccount;
 use App\helper\Helper;
 use App\Jobs\PdcDoubleEntry;
 use App\Models\ChequeRegisterDetail;
@@ -18,6 +20,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 
 /**
  * Class PdcLogController
@@ -28,10 +31,12 @@ class PdcLogAPIController extends AppBaseController
 {
     /** @var  PdcLogRepository */
     private $pdcLogRepository;
+    private $paySupplierInvoiceMasterRepository;
 
-    public function __construct(PdcLogRepository $pdcLogRepo)
+    public function __construct(PdcLogRepository $pdcLogRepo, PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
     {
         $this->pdcLogRepository = $pdcLogRepo;
+        $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
     }
 
     /**
@@ -474,5 +479,89 @@ class PdcLogAPIController extends AppBaseController
             DB::rollback();
             return $this->sendError("Error occured", 500);            
         }
+    }
+
+    public function getNextChequeNo(Request $request)
+    {
+        $input = $request->all();
+
+         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
+
+        if (empty($paySupplierInvoiceMaster)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
+
+        $chequeRegisterAutoID = null;
+        $nextChequeNo = 1;
+        if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
+            $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
+
+            if (!$res['status']) {
+                return $this->sendError($res['message'], 500);
+            }
+
+            $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
+            $nextChequeNo = $res['nextChequeNo'];
+        } else {
+            $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoiceMaster->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
+            if ($chkCheque) {
+                $nextChequeNo = $chkCheque->BPVchequeNo + 1;
+            } else {
+                $nextChequeNo = 1;
+            }
+        }
+
+        $pdcLogData = [
+            'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
+            'documentmasterAutoID' => $input['PayMasterAutoId'],
+            'paymentBankID' => $bankAccount->bankmasterAutoID,
+            'companySystemID' => $paySupplierInvoiceMaster->companySystemID,
+            'currencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+            'chequeRegisterAutoID' => $chequeRegisterAutoID,
+            'chequeNo' => $nextChequeNo,
+            'chequeStatus' => 0
+        ];
+
+        return $this->sendResponse($pdcLogData, "Cheque data retrived successfully");
+    }
+
+    public function reverseGeneratedChequeNo(Request $request)
+    {
+        $input = $request->all();
+
+        if (!is_null($input['chequeRegisterAutoID'])) {
+            $update_array = [
+                'document_id' => null,
+                'document_master_id' => null,
+                'status' => 0,
+            ];
+
+            ChequeRegisterDetail::where('id', $input['chequeRegisterAutoID'])->update($update_array);
+        }
+
+        return $this->sendResponse([], "Generated Cheque reversed successfully");
+    }
+
+    public function issueNewCheque(Request $request)
+    {
+        $input = $request->all();
+
+        $refereceID = $input['referenceChequeID'];
+
+        $input['chequeDate'] = Carbon::parse($input['chequeDate']);
+
+        if (isset($input['referenceChequeID'])) {
+            unset($input['referenceChequeID']);
+        }
+
+        $createRes = PdcLog::create($input);
+
+        if ($createRes) {
+            PdcLog::where('id', $refereceID)->update(['referenceChequeID' => $createRes->id]);
+        }
+
+        return $this->sendResponse([], "Generated Cheque reversed successfully");
     }
 }
