@@ -174,15 +174,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
-            $validator = \Validator::make($request->all(), [
+            $conditions = [
                 'invoiceType' => 'required',
                 'supplierTransCurrencyID' => 'required',
                 'BPVNarration' => 'required',
                 'BPVbank' => 'required',
                 'BPVAccount' => 'required',
                 'BPVdate' => 'required|date',
-                'BPVchequeDate' => 'required|date',
-            ]);
+            ];
+ 
+            if (isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) {
+                $conditions['BPVchequeDate'] = 'required|date';               
+            }
+
+            $validator = \Validator::make($request->all(), $conditions);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
@@ -323,6 +328,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
                 $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
             } else {
                 $input['pdcChequeYN'] = 0;
             }
@@ -598,6 +604,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
                 $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
+                $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
             } else {
                 $input['pdcChequeYN'] = 0;
@@ -656,7 +664,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                           ->where('documentmasterAutoID', $id)
                                           ->sum('amount');
 
-                    if (($totalAmountForPDC - $pdcLogAmount) > 0.001 ) {
+                    $checkingAmount = $totalAmountForPDC - $pdcLogAmount;
+
+                    if ($checkingAmount > 0.001 || $checkingAmount < 0) {
                         return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
                     }
 
@@ -1117,6 +1127,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['BPVchequeNo'] = 1;
                     }
                 }
+
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                    $input['chequePaymentYN'] = 0;
+                    $input['BPVchequeDate'] = null;
+                    $input['BPVchequeNo'] = null;
+                    $input['expenseClaimOrPettyCash'] = null;
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
@@ -1238,6 +1255,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
+            $deleteAllPDC = $this->deleteAllPDC($paySupplierInvoiceMaster->documentSystemID, $input['PayMasterAutoId']);
+
             $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
     
             $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
@@ -1286,6 +1305,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
 
+    }
+
+
+    public function deleteAllPDC($documentSystemID, $documentAutoID)
+    {
+        $cheques = PdcLog::where('documentSystemID', $documentSystemID)
+                         ->where('documentmasterAutoID', $documentAutoID)
+                         ->get();
+
+        if (count($cheques) > 0) {
+            $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
+
+
+            if (count($chequeRegisterAutoIDs) > 0) {
+                $update_array = [
+                    'document_id' => null,
+                    'document_master_id' => null,
+                    'status' => 0,
+                ];
+
+                ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
+            }
+
+            $chequesDelete = PdcLog::where('documentSystemID', $documentSystemID)
+                             ->where('documentmasterAutoID', $documentAutoID)
+                             ->delete();
+
+        }
+        
+        return ['status' => true];
     }
 
     /**
