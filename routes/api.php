@@ -2178,8 +2178,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
 
 
+        /* Chart Of Account Scenario configuration */
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
         Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+        Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies');
+        Route::post('coa-config-scenarios', 'SystemGlCodeScenarioAPIController@list_config_scenarios');
 
         Route::resource('module_masters', 'ModuleMasterAPIController');
 

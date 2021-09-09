@@ -31,4 +31,8 @@ class SystemGlCodeScenarioRepository extends BaseRepository
     {
         return SystemGlCodeScenario::class;
     }
+
+    public function fetch_company_data($company_list, $search){
+        //$this->model
+    }
 }
