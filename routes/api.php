@@ -1037,6 +1037,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
         Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
         Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
+        Route::post('updatePrintAhliChequeItems', 'BankLedgerAPIController@updatePrintAhliChequeItems');
 
 
         Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
