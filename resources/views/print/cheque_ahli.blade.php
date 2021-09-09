@@ -27,7 +27,7 @@
         #bpv_code_div {
             position: absolute;
             top: 5.5cm;
-            left: 20.5cm;
+            left: 22.5cm;
         }
 
         #top_supplier_div {
@@ -39,7 +39,7 @@
         #top_date_div {
             position: absolute;
             top: 6.5cm;
-            left: 20.5cm;
+            left: 22.5cm;
         }
 
         #reference_table_div {
@@ -103,9 +103,13 @@
 </head>
 <body onload="window.print();window.close()" >
 <div class="content header-content-div">
-    <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
+    {{-- <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
             {{$entity->BPVcode}}
+    </div> --}}
+    <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
+        00003860
     </div>
+    
     <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
         {{$entity->nameOnCheque}}
     </div>
@@ -128,9 +132,11 @@
                 @if($entity->invoiceType == 2)
                     @foreach ($entity->details as $item)
                         <tr >
-                            <td style="width: 1.5cm">{{ \App\helper\Helper::dateFormat($item->bookingInvoiceDate)}}</td>
-                            <td valign="top" style="width: 10cm">{{$item->bookingInvDocCode}}</td>
-                            <td valign="top" style="width: 7cm">{{$item->supplierInvoiceNo}}</td>
+                            <td style="width: 10.5cm">Gutec Reference</td>
+                            {{-- <td style="width: 7.5cm"></td> --}}
+                            {{-- <td style="width: 8.5cm">{{ \App\helper\Helper::dateFormat($item->bookingInvoiceDate)}}</td> --}}
+                            <td valign="top" style="width: 15cm">{{$item->bookingInvDocCode}}</td>
+                            <td valign="top" style="width: 12cm">{{$item->supplierInvoiceNo}}</td>
                             <td valign="top" class="text-right" style="width: 2.4cm" >
                                 {{number_format($item->supplierInvoiceAmount,$entity->decimalPlaces)}}
                             </td>
