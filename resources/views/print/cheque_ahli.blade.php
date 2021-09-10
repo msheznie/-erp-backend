@@ -132,11 +132,11 @@
                 @if($entity->invoiceType == 2)
                     @foreach ($entity->details as $item)
                         <tr >
-                            <td style="width: 10.5cm">Gutec Reference</td>
+                            <td style="width: 10.5cm">{{$item->bookingInvDocCode}}</td>
                             {{-- <td style="width: 7.5cm"></td> --}}
                             {{-- <td style="width: 8.5cm">{{ \App\helper\Helper::dateFormat($item->bookingInvoiceDate)}}</td> --}}
-                            <td valign="top" style="width: 15cm">{{$item->bookingInvDocCode}}</td>
-                            <td valign="top" style="width: 12cm">{{$item->supplierInvoiceNo}}</td>
+                            <td valign="top" style="width: 15cm">{{$item->supplierInvoiceNo}}</td>
+                            <td valign="top" style="width: 12cm"></td>
                             <td valign="top" class="text-right" style="width: 2.4cm" >
                                 {{number_format($item->supplierInvoiceAmount,$entity->decimalPlaces)}}
                             </td>
