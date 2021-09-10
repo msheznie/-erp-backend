@@ -227,6 +227,7 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
     public function update($id, UpdateSystemGlCodeScenarioDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var SystemGlCodeScenarioDetail $systemGlCodeScenarioDetail */
         $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->findWithoutFail($id);
