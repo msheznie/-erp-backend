@@ -309,7 +309,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('controllAccountYN', 0)
             ->where('controlAccountsSystemID', '<>', 1)
             ->where('isActive', 1)
-            ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15), function ($query) {
+            ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] == 15), function ($query) {
+                $query->where('isBank',1);
+            })
+            ->when((!isset($input['expenseClaimOrPettyCash']) || (isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15)), function ($query) {
                 $query->where('isBank',0);
             });
 
