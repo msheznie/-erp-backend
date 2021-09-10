@@ -32,7 +32,13 @@ class SystemGlCodeScenarioRepository extends BaseRepository
         return SystemGlCodeScenario::class;
     }
 
-    public function fetch_company_data($company_list, $search){
-        //$this->model
+    public function un_assign_scenario($company_id){
+        $data = $this->model->where('isActive', 1);
+        $data = $data->whereDoesntHave('company_scenario', function ($q) use ($company_id){
+            $q->where('companySystemID', $company_id);
+        });
+
+        return $data->get();
     }
+
 }

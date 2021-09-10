@@ -2180,9 +2180,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         /* Chart Of Account Scenario configuration */
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
-        Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+        Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
+        Route::post('coa-config-scenario-assign', 'SystemGlCodeScenarioAPIController@scenario_assign');
         Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies');
-        Route::post('coa-config-scenarios', 'SystemGlCodeScenarioAPIController@list_config_scenarios');
+        Route::post('coa-config-scenarios', 'SystemGlCodeScenarioDetailAPIController@list_config_scenarios');
 
         Route::resource('module_masters', 'ModuleMasterAPIController');
 

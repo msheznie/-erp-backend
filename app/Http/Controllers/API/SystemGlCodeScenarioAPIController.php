@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CompanyService;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateSystemGlCodeScenarioAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioAPIRequest;
 use App\Models\Company;
 use App\Models\SystemGlCodeScenario;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\SystemGlCodeScenarioRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Class SystemGlCodeScenarioController
@@ -282,19 +284,45 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         return $this->sendSuccess('System Gl Code Scenario deleted successfully');
     }
 
-    function get_company_list( $companyId ){
-        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
-            return  Helper::getGroupCompany($companyId);
+    public function scenario_assign(Request $request){
+        $current_companyId = $request['current_companyId'];
+        $company_list = CompanyService::get_company_with_sub($current_companyId);
+
+        $date_time = Carbon::now();
+        $user_id = 0;
+        $un_assign = [];
+        foreach ($company_list as $company_id){
+           $scenarios = $this->systemGlCodeScenarioRepository->un_assign_scenario($company_id);
+
+           if($scenarios){
+               foreach ($scenarios as $item){
+                   $un_assign[] = [
+                       'systemGlScenarioID' => $item['id'],
+                       'companySystemID' => $company_id,
+                       'chartOfAccountSystemID' => null,
+                       'serviceLineSystemID' => null,
+                       'created_by' => &$user_id,
+                       'created_at' => $date_time
+                   ];
+               }
+           }
         }
 
-        return  [$companyId];
+        if($un_assign){
+            $user_id = Helper::getEmployeeInfo()->employeeSystemID;
+
+            SystemGlCodeScenarioDetail::insert( $un_assign );
+
+            return $this->sendResponse([], trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+        }
+
+        $this->sendResponse([], trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
     public function coa_config_companies(Request $request){
         $current_companyId = $request['current_companyId'];
-        $subCompanies = $this->get_company_list($current_companyId);
+        $subCompanies = CompanyService::get_company_with_sub($current_companyId);
 
         $company_list = Company::selectRaw("companySystemID AS value, CONCAT(CompanyID, ' - ', CompanyName) AS label")
             ->whereIn("companySystemID", $subCompanies)->get();
@@ -304,28 +332,5 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $data['company_list'] = $company_list;
 
         return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
-    }
-
-    public function list_config_scenarios(Request $request){
-        $input = $request->all();
-
-        $sort = Helper::dataTableSortOrder($input);
-        $search = $request->input('search.value');
-
-        $companyId = $input['companyId'];
-        $company_list = $this->get_company_list($companyId); dd($company_list);
-
-        $qry = $this->systemGlCodeScenarioRepository->fetch_company_data($company_list, $search);
-        return DataTables::eloquent($qry)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->make(true);
     }
 }

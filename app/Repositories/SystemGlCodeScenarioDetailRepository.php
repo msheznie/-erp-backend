@@ -34,4 +34,13 @@ class SystemGlCodeScenarioDetailRepository extends BaseRepository
     {
         return SystemGlCodeScenarioDetail::class;
     }
+
+    public function fetch_company_scenarios($company_list, $search){
+        $data = $this->model;
+        $data = $data->with('master');
+        $data = $data->with('chart_of_account:chartOfAccountSystemID,AccountCode,AccountDescription');
+        $data = $data->with('company:companySystemID,CompanyID,CompanyName');
+
+        return $data;
+    }
 }

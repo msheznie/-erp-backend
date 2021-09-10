@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CompanyService;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSystemGlCodeScenarioDetailAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioDetailAPIRequest;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -11,6 +13,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Class SystemGlCodeScenarioDetailController
@@ -156,13 +159,21 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SystemGlCodeScenarioDetail $systemGlCodeScenarioDetail */
-        $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->findWithoutFail($id);
+        $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository
+            ->has('master')
+            ->has('company')
+            ->with('master:id,description')
+            ->with('company:companySystemID,CompanyID,CompanyName')
+            ->with('chart_of_account:chartOfAccountSystemID,AccountCode,AccountDescription')
+            ->findWithoutFail($id);
 
         if (empty($systemGlCodeScenarioDetail)) {
             return $this->sendError('System Gl Code Scenario Detail not found');
         }
 
-        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'System Gl Code Scenario Detail retrieved successfully');
+        $data['company_scenario'] = $systemGlCodeScenarioDetail->toArray();
+
+        return $this->sendResponse($data, 'System Gl Code Scenario Detail retrieved successfully');
     }
 
     /**
@@ -222,9 +233,11 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             return $this->sendError('System Gl Code Scenario Detail not found');
         }
 
+        $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
+
         $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->update($input, $id);
 
-        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'SystemGlCodeScenarioDetail updated successfully');
+        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'Gl code updated successfully');
     }
 
     /**
@@ -277,5 +290,28 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
         $systemGlCodeScenarioDetail->delete();
 
         return $this->sendSuccess('System Gl Code Scenario Detail deleted successfully');
+    }
+
+    public function list_config_scenarios(Request $request){
+        $input = $request->all();
+
+        $sort = Helper::dataTableSortOrder($input);
+        $search = $request->input('search.value');
+
+        $companyId = $input['companyId'];
+        $company_list = CompanyService::get_company_with_sub($companyId);
+
+        $qry = $this->systemGlCodeScenarioDetailRepository->fetch_company_scenarios($company_list, $search);
+        return DataTables::eloquent($qry)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }
