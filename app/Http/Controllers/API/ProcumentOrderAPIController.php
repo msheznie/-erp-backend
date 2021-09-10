@@ -1639,7 +1639,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $serviceLineSystemID = $request['serviceLineSystemID'];
 
-        $projects = ErpProjectMaster::where('companySystemID', $serviceLineSystemID)->get();
+        $projects = ErpProjectMaster::where('serviceLineSystemID', $serviceLineSystemID)->get();
 
         return $this->sendResponse($projects, 'Segments Projects retrieved successfully');
     }
