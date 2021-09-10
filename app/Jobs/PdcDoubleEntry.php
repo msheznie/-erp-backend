@@ -599,6 +599,10 @@ class PdcDoubleEntry implements ShouldQueue
 
                                     $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $pdcData['amount']);
 
+                                    $pdcAmount = ($custReceivePayment->bankAmount > 0) ?  $pdcData['amount'] : $pdcData['amount'] * -1;
+                                    $pdcAmountLocalAmount = ($custReceivePayment->bankAmount > 0) ?  $currencyConvertionData['localAmount'] : $currencyConvertionData['localAmount'] * -1;
+                                    $pdcAmountReportingAmount = ($custReceivePayment->bankAmount > 0) ?  $currencyConvertionData['reportingAmount'] : $currencyConvertionData['reportingAmount'] * -1;
+
                                     $data['companySystemID'] = $custReceivePayment->companySystemID;
                                     $data['companyID'] = $custReceivePayment->companyID;
                                     $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -629,10 +633,10 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
                                     $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
                                     $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-                                    $data['payAmountBank'] = $custReceivePayment->bankAmount;
-                                    $data['payAmountSuppTrans'] = ($pdcData['newStatus'] == 1) ? $pdcData['amount'] : $pdcData['amount'] * -1;
-                                    $data['payAmountCompLocal'] = ($pdcData['newStatus'] == 1) ? $currencyConvertionData['localAmount'] : $currencyConvertionData['localAmount'] * -1;
-                                    $data['payAmountCompRpt'] = ($pdcData['newStatus'] == 1) ? $currencyConvertionData['reportingAmount'] : $currencyConvertionData['reportingAmount'] * -1;
+                                    $data['payAmountBank'] = ($pdcData['newStatus'] == 1) ? $pdcAmount : $pdcAmount * -1;
+                                    $data['payAmountSuppTrans'] = ($pdcData['newStatus'] == 1) ? $pdcAmount : $pdcAmount * -1;
+                                    $data['payAmountCompLocal'] = ($pdcData['newStatus'] == 1) ? $pdcAmountLocalAmount : $pdcAmountLocalAmount * -1;
+                                    $data['payAmountCompRpt'] = ($pdcData['newStatus'] == 1) ? $pdcAmountReportingAmount : $pdcAmountReportingAmount * -1;
                                     $data['invoiceType'] = $custReceivePayment->documentType;
                                     $data['chequePaymentYN'] = -1;
 

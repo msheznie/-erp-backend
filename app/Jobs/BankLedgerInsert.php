@@ -60,6 +60,7 @@ class BankLedgerInsert implements ShouldQueue
 
                             $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
 
+                            $masterData->payAmountBank = $masterModel['pdcAmount'];
                             $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
                             $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
                             $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
@@ -97,7 +98,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['localCurrencyER'] = $masterData->localCurrencyER;
                         $data['companyRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['companyRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['payAmountBank'] = $masterData->payAmountBank;
+                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountBank * -1 : $masterData->payAmountBank;
                         $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 : $masterData->payAmountSuppTrans;
                         $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 : $masterData->payAmountCompLocal;
                         $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 : $masterData->payAmountCompRpt;
