@@ -114,6 +114,7 @@ class TaxVatCategories extends Model
         'createdDateTime',
         'modifiedPCID',
         'modifiedUserID',
+        'subCatgeoryType',
         'modifiedUserSystemID',
         'isDefault',
         'timestamp'
@@ -139,6 +140,7 @@ class TaxVatCategories extends Model
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
+        'subCatgeoryType' => 'integer',
         'isDefault' => 'boolean',
         'timestamp' => 'datetime'
     ];

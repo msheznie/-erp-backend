@@ -1979,6 +1979,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
         Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
 
+        Route::resource('vat_return_filling_masters', 'VatReturnFillingMasterAPIController');
+        Route::post('getVatReturnFillings', 'VatReturnFillingMasterAPIController@getVatReturnFillings');
+
+        Route::resource('vat_return_filling_categories', 'VatReturnFillingCategoryAPIController');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2062,3 +2067,8 @@ Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
 
 
 Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
+
+
+
+
+Route::resource('vat_return_filled_categories', 'VatReturnFilledCategoryAPIController');
