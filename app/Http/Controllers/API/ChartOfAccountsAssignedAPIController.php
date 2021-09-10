@@ -269,8 +269,14 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
         $from_master = false;
+        $isFromConfig = false;
+
         if(array_key_exists('from_master', $input)){
             $from_master = ($input['from_master'] == 'true');
+        }
+
+        if(array_key_exists('isFromConfig', $input)){
+            $isFromConfig = ($input['isFromConfig'] == 'true');
         }
 
 
@@ -281,11 +287,21 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 ->where('isAssigned', -1);
         }
 
-        $items = $items->where('controllAccountYN', 0);
+        if(!$isFromConfig){
+            $items = $items->where('controllAccountYN', 0);
 
-        if (isset($input['controllAccountYN'])) {
-            $items = $items->where('controllAccountYN', $input['controllAccountYN']);
+            if (isset($input['controllAccountYN'])) {
+                $items = $items->where('controllAccountYN', $input['controllAccountYN']);
+            }
         }
+        else{
+
+            if (isset($input['controllAccountYN'])) {
+                $controllAccountYN = ($input['controllAccountYN'])? 1: 0;
+                $items = $items->where('controllAccountYN', $controllAccountYN);
+            }
+        }
+
 
         if (isset($input['isBank'])) {
             $items = $items->where('isBank', $input['isBank']);
