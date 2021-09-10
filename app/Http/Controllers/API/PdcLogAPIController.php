@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreatePdcLogAPIRequest;
 use App\Http\Requests\API\UpdatePdcLogAPIRequest;
 use App\Models\PdcLog;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\BankMaster;
 use App\Models\BankAccount;
 use App\helper\Helper;
 use App\Jobs\PdcDoubleEntry;
@@ -449,9 +450,10 @@ class PdcLogAPIController extends AppBaseController
     }
 
     public function getFormData(Request $request) {
-        $banks =  PdcLog::all()->pluck('bank')->unique();
+        $bankIds =  PdcLog::whereNotNull('paymentBankID')->get()->pluck('paymentBankID')->unique();
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
+        $banks = BankMaster::whereIn('bankmasterAutoID', $bankIds)->get();
 
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();

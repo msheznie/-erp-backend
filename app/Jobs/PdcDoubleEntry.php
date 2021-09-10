@@ -388,6 +388,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $masterModel['pdcFlag'] = true;
                                     $masterModel['pdcAmount'] = $pdcData['amount'];
                                     $masterModel['pdcDate'] = $pdcData['date'];
+                                    $masterModel['pdcChequeDate'] = $pdcData['chequeDate'];
+                                    $masterModel['pdcChequeNo'] = $pdcData['chequeNo'];
                                 if ($pdcData['newStatus'] == 1) {
                                     $bankLedger = BankLedgerInsert::dispatch($masterModel);
                                 } else if ($pdcData['newStatus'] == 2) {
@@ -616,8 +618,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['bankAccountID'] = $custReceivePayment->bankAccount;
                                     $data['bankCurrency'] = $custReceivePayment->bankCurrency;
                                     $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
-                                    $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
-                                    $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
+                                    $data['documentChequeNo'] = $pdcData['chequeNo'];
+                                    $data['documentChequeDate'] = Carbon::parse($pdcData['chequeDate']);
                                     $data['payeeID'] = $custReceivePayment->customerID;
 
                                     $payee = CustomerMaster::find($custReceivePayment->customerID);
