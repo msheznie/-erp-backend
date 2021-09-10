@@ -508,12 +508,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     ]
                 )
                 ->sum('noQty');
-
-            // $quantityInHand = ErpItemLedger::where('itemSystemCode', $itemCode)
-            //     ->where('companySystemID', $companySystemID)
-            //     ->groupBy('itemSystemCode')
-            //     ->sum('inOutQty');
-
             $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
                 $query->whereIn('companySystemID', $group_companies)
                     ->where('grvTypeID', 2)
