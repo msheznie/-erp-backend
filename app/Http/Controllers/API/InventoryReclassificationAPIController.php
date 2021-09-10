@@ -442,6 +442,12 @@ class InventoryReclassificationAPIController extends AppBaseController
                 }
             }
 
+            $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, 7);
+
+            if (is_null($checkPlAccount)) {
+                return $this->sendError('Please configure BS account for inventory recalssification', 500);
+            }
+
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);

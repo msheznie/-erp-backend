@@ -1257,7 +1257,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                       ->where('documentmasterAutoID', $id)
                                       ->sum('amount');
 
-                if ((round($totalAmountForPDC, 3) - round($pdcLogAmount, 3)) > 0.001 ) {
+                $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
+
+                if ($checkingAmount > 0.001 || $checkingAmount < 0) {
                     return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
                 }
 
