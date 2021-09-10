@@ -237,6 +237,7 @@ class PdcLogAPIController extends AppBaseController
         $checkPdcChequeDuplicate = PdcLog::where('documentmasterAutoID', $input['documentmasterAutoID'])
                                          ->where('id','!=', $id)
                                          ->where('chequeNo', $input['chequeNo'])
+                                         ->whereNotNull('chequeNo')
                                          ->first();
 
         if ($checkPdcChequeDuplicate) {

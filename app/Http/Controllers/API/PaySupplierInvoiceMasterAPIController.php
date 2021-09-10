@@ -1258,6 +1258,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $deleteAllPDC = $this->deleteAllPDC($paySupplierInvoiceMaster->documentSystemID, $input['PayMasterAutoId']);
 
             $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
+
+            if (!$bankAccount) {
+                return $this->sendError('Bank Account not selected');
+            }
     
             $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
 

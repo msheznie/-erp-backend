@@ -2413,7 +2413,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $receipt = CustomerReceivePayment::find($input['custReceivePaymentAutoID']);
 
         if (empty($receipt)) {
-                return $this->sendError('Pay Supplier Invoice Master not found');
+            return $this->sendError('Pay Supplier Invoice Master not found');
         }
 
         DB::beginTransaction();
@@ -2421,6 +2421,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             $deleteAllPDC = $this->deleteAllPDC($receipt->documentSystemID, $input['custReceivePaymentAutoID']);
             $bankAccount = BankAccount::find($receipt->bankAccount);
+
+            if (!$bankAccount) {
+                return $this->sendError('Bank Account not selected');
+            }
     
             $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
 
