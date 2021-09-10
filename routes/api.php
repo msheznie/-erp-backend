@@ -1259,6 +1259,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
         Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+        Route::post('asset_disposal_type_config', 'AssetDisposalTypeAPIController@config_list');
         Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
         Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
         Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
