@@ -361,7 +361,7 @@ class PdcLogAPIController extends AppBaseController
 
 
         $input = $request;
-        $companyId = $input['companyId'];
+        $companyId = (isset($input['companyId'])) ? $input['companyId'] : '';
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -401,7 +401,7 @@ class PdcLogAPIController extends AppBaseController
 
     public function getAllReceivedCheques(Request $request) {
         $input = $request->all();
-        $companyId = $input['companyId'];
+        $companyId = (isset($input['companyId'])) ? $input['companyId'] : '';
 
         
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
