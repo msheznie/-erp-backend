@@ -664,7 +664,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                           ->where('documentmasterAutoID', $id)
                                           ->sum('amount');
 
-                    $checkingAmount = $totalAmountForPDC - $pdcLogAmount;
+                    $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
 
                     if ($checkingAmount > 0.001 || $checkingAmount < 0) {
                         return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
@@ -1268,6 +1268,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
                 $chequeRegisterAutoID = null;
                 $nextChequeNo = null;
+                $chequeGenrated = false;
                 if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
                     $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
 
@@ -1277,6 +1278,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
                     $nextChequeNo = $res['nextChequeNo'];
+                    $chequeGenrated = $res['chequeGenrated'];
                 } 
 
                 $pdcLogData = [
@@ -1295,7 +1297,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], "PDC cheques generated successfully");
+            return $this->sendResponse(['chequeGenrated' => $chequeGenrated], "PDC cheques generated successfully");
         } catch
         (\Exception $exception) {
             DB::rollBack();

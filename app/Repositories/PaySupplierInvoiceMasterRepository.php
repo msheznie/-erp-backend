@@ -323,8 +323,9 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         $nextChequeNo = null;
         $chequeRegisterAutoID = null;
+        $chequeGenrated = false;
         if (!empty($is_exist_policy_GCNFCR)) {
-
+            $chequeGenrated = true;
             $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
 
             $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
@@ -356,7 +357,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             }
         } 
 
-        return ['status' => true, 'nextChequeNo' => $nextChequeNo, 'chequeRegisterAutoID' => $chequeRegisterAutoID];
+        return ['status' => true, 'nextChequeNo' => $nextChequeNo, 'chequeRegisterAutoID' => $chequeRegisterAutoID, 'chequeGenrated' => $chequeGenrated];
     }
 
 }
