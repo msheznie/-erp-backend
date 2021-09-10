@@ -65,5 +65,7 @@ class SystemGlCodeScenario extends Model
         
     ];
 
-    
+    public function company_scenario(){
+        return $this->hasOne(SystemGlCodeScenarioDetail::class, 'systemGlScenarioID', 'id');
+    }
 }

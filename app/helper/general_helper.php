@@ -5419,4 +5419,14 @@ class Helper
 
         return $headerDetail;
     }
+
+    public static function dataTableSortOrder($input): string
+    {
+        $sort = 'desc';
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        }
+
+        return $sort;
+    }
 }

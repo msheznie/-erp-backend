@@ -268,12 +268,20 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
+        $from_master = false;
+        if(array_key_exists('from_master', $input)){
+            $from_master = ($input['from_master'] == 'true');
+        }
 
 
-        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
-            ->where('controllAccountYN', 0)
-            ->where('isAssigned', -1)
-            ->where('isActive', 1);
+        if($from_master){
+            $items = ChartOfAccount::where('isActive', 1);
+        }else{
+            $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+                ->where('isAssigned', -1);
+        }
+
+        $items = $items->where('controllAccountYN', 0);
 
         if (isset($input['controllAccountYN'])) {
             $items = $items->where('controllAccountYN', $input['controllAccountYN']);
