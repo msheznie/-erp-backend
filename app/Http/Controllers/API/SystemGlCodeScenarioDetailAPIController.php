@@ -8,8 +8,10 @@ use App\Http\Requests\API\CreateSystemGlCodeScenarioDetailAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioDetailAPIRequest;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\SystemGlCodeScenarioDetailRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -235,9 +237,63 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
 
-        $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
 
-        return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'Gl code updated successfully');
+            $systemGlCodeScenarioDetail = $this->systemGlCodeScenarioDetailRepository->update($input, $id);
+
+            $hr_scenarios = [7, 8];
+            if(in_array($systemGlCodeScenarioDetail->systemGlScenarioID, $hr_scenarios)){
+                $this->update_hr_config($systemGlCodeScenarioDetail);
+            }
+
+            DB::commit();
+            return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), 'Gl code updated successfully');
+        }catch(\Exception $e){
+            DB::rollBack();
+            return $this->sendError($e->getMessage(), 500);
+        }
+
+    }
+
+    function update_hr_config($data){
+
+        switch ($data->systemGlScenarioID){
+            case 7: //SPC
+                $glTypeCode = 'SPC';
+            break;
+
+            case 8: //IOU
+                $glTypeCode = 'IOU';
+            break;
+
+            default:
+                return true;
+        }
+
+        $id = DB::table('hrms_otherglcode')
+            ->selectRaw('otherglcodeID')
+            ->where('glTypeCode', $glTypeCode)
+            ->where('companySystemID', $data->companySystemID)
+            ->first();
+
+        if($id){
+            $id = $id->otherglcodeID;
+
+            DB::table('hrms_otherglcode')
+                ->where('otherglcodeID', $id)
+                ->update(['glCode'=> $data->chartOfAccountSystemID]);
+        }
+        else{
+            DB::table('hrms_otherglcode')->insert([
+                'glTypeCode'=> $glTypeCode,
+                'glCode'=> $data->chartOfAccountSystemID,
+                'companySystemID'=> $data->companySystemID,
+                'timestamp'=> Carbon::now()
+            ]);
+        }
+
+        return true;
     }
 
     /**
