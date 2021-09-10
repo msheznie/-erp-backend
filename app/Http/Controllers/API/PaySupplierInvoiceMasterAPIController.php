@@ -1263,7 +1263,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
                 $chequeRegisterAutoID = null;
-                $nextChequeNo = 1;
+                $nextChequeNo = null;
                 if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
                     $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
 
@@ -1273,14 +1273,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
                     $nextChequeNo = $res['nextChequeNo'];
-                } else {
-                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoiceMaster->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
-                    if ($chkCheque) {
-                        $nextChequeNo = $chkCheque->BPVchequeNo + 1;
-                    } else {
-                        $nextChequeNo = 1;
-                    }
-                }
+                } 
 
                 $pdcLogData = [
                     'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
@@ -1525,6 +1518,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
                     ->get();
 
+            $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
+                ->where('companyPolicyCategoryID', 35)
+                ->where('isYesNO', 1)
+                ->first();
+
             $output = array(
                 'financialYears' => $financialYears,
                 'companyFinanceYear' => $companyFinanceYear,
@@ -1533,6 +1531,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'month' => $month,
                 'years' => $years,
                 'supplier' => $supplier,
+                'chequeRegistryPolicy' => $is_exist_policy_GCNFCR ? true : false,
                 'payee' => $payee,
                 'bank' => $bank,
                 'currency' => $currency,

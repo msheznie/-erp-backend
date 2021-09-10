@@ -321,7 +321,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 ->where('isYesNO', 1)
                 ->first();
 
-        $nextChequeNo = 0;
+        $nextChequeNo = null;
         $chequeRegisterAutoID = null;
         if (!empty($is_exist_policy_GCNFCR)) {
 
@@ -354,15 +354,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             } else {
                 return ['status' => false, 'message' => "Could not found unassigned cheques to generate PDC Cheques. Please add cheques to cheque registry"];
             }
-
-        } else {
-            $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
-
-            if ($bankAccount->isPrintedActive == 1) {
-                $bankAccount->chquePrintedStartingNo = $nextChequeNo;
-                $bankAccount->save();
-            }
-        }
+        } 
 
         return ['status' => true, 'nextChequeNo' => $nextChequeNo, 'chequeRegisterAutoID' => $chequeRegisterAutoID];
     }
