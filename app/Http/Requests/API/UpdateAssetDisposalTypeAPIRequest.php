@@ -24,6 +24,15 @@ class UpdateAssetDisposalTypeAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return AssetDisposalType::$rules;
+        return [
+            'chartOfAccountID' => 'required',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'chartOfAccountID.required' => 'Chart Of Account field is required',
+        ];
     }
 }

@@ -296,6 +296,34 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
     }
 
+    public function gl_code_search(request $request){
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $from_master_tbl = $input['from_master_tbl'];
+        $from_master_tbl =($from_master_tbl == 'true');
+
+
+        if($from_master_tbl){
+            $data = ChartOfAccount::where('isActive', 1);
+        }
+        else{
+            $data = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        }
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $data = $data->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = $data->take(20)->get();
+        return $this->sendResponse($data->toArray(), 'Data retrieved successfully');
+    }
+
     public function getPaymentVoucherGL(request $request)
     {
         $input = $request->all();

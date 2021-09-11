@@ -34,7 +34,10 @@ class AssetDisposalType extends Model
     public $fillable = [
         'typeDescription',
         'activeYN',
-        'chartOfAccountID'
+        'chartOfAccountID',
+        'glCode',
+        'updated_by',
+        'updated_at'
     ];
 
     /**
@@ -46,6 +49,7 @@ class AssetDisposalType extends Model
         'disposalTypesID' => 'integer',
         'activeYN' => 'integer',
         'chartOfAccountID' => 'integer',
+        'glCode' => 'string',
         'typeDescription' => 'string'
     ];
 

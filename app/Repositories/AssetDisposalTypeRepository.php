@@ -30,4 +30,23 @@ class AssetDisposalTypeRepository extends BaseRepository
     {
         return AssetDisposalType::class;
     }
+
+    public function fetch_data($search){
+        $data = $this->model
+            ->with('chartofaccount:chartOfAccountSystemID,AccountCode,AccountDescription')
+            ->where('activeYN', 1);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $data = $data->where(function ($query) use ($search) {
+                $query->where('typeDescription', 'LIKE', "%{$search}%");
+                $query->orWhereHas('chartofaccount',function ($q) use($search){
+                    $q->where('AccountCode', 'LIKE', "%{$search}%")
+                        ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return $data;
+    }
 }

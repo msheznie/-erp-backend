@@ -83,4 +83,14 @@ class CompanyService
             ->orderBy('documentSystemID')
             ->get();
     }
+
+    public static function get_company_with_sub( $company_id ){
+        $isGroup = Helper::checkIsCompanyGroup($company_id);
+
+        if($isGroup){
+            return  Helper::getGroupCompany($company_id);
+        }
+
+        return  [$company_id];
+    }
 }

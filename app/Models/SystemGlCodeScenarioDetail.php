@@ -50,10 +50,6 @@ class SystemGlCodeScenarioDetail extends Model
 {
 
     public $table = 'system_gl_code_scenario_details';
-    
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
-
 
 
 
@@ -62,7 +58,10 @@ class SystemGlCodeScenarioDetail extends Model
         'companySystemID',
         'chartOfAccountSystemID',
         'serviceLineSystemID',
-        'timestamp'
+        'created_by',
+        'updated_by',
+        'created_at',
+        'updated_at'
     ];
 
     /**
@@ -91,6 +90,11 @@ class SystemGlCodeScenarioDetail extends Model
     public function master()
     {
         return $this->belongsTo('App\Models\SystemGlCodeScenario', 'systemGlScenarioID', 'id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'companySystemID');
     }
 
     public function chart_of_account()

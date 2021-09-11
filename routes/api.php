@@ -901,6 +901,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
         Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
         Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+        Route::get('gl-code-search', 'ChartOfAccountsAssignedAPIController@gl_code_search');
         Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts');
         Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
         Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
@@ -1260,6 +1261,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
         Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+        Route::post('asset_disposal_type_config', 'AssetDisposalTypeAPIController@config_list');
         Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
         Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
         Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
@@ -2179,8 +2181,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
 
 
+        /* Chart Of Account Scenario configuration */
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
-        Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+        Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
+        Route::post('coa-config-scenario-assign', 'SystemGlCodeScenarioAPIController@scenario_assign');
+        Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies');
+        Route::post('coa-config-scenarios', 'SystemGlCodeScenarioDetailAPIController@list_config_scenarios');
 
         Route::resource('module_masters', 'ModuleMasterAPIController');
 
