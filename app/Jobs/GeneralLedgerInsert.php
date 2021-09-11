@@ -720,8 +720,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
 
-                                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 7);
-                                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 7);
+                                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
+                                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;

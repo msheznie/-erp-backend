@@ -20,6 +20,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\EmployeesDepartment;
 use App\Models\InventoryReclassification;
 use App\Models\InventoryReclassificationDetail;
@@ -442,7 +443,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 }
             }
 
-            $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, 7);
+            $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($inventoryReclassification->companySystemID, $inventoryReclassification->documentSystemID, 9);
 
             if (is_null($checkPlAccount)) {
                 return $this->sendError('Please configure BS account for inventory recalssification', 500);
