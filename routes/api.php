@@ -901,6 +901,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
         Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
         Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+        Route::get('gl-code-search', 'ChartOfAccountsAssignedAPIController@gl_code_search');
         Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts');
         Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
         Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');

@@ -35,6 +35,7 @@ class AssetDisposalType extends Model
         'typeDescription',
         'activeYN',
         'chartOfAccountID',
+        'glCode',
         'updated_by',
         'updated_at'
     ];
@@ -48,6 +49,7 @@ class AssetDisposalType extends Model
         'disposalTypesID' => 'integer',
         'activeYN' => 'integer',
         'chartOfAccountID' => 'integer',
+        'glCode' => 'string',
         'typeDescription' => 'string'
     ];
 

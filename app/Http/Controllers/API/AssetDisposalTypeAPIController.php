@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateAssetDisposalTypeAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalTypeAPIRequest;
 use App\Models\AssetDisposalType;
+use App\Models\ChartOfAccount;
 use App\Repositories\AssetDisposalTypeRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -227,6 +228,7 @@ class AssetDisposalTypeAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
         }
 
+        $input['glCode'] = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountID'])->value('AccountCode');
         $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
         $assetDisposalType = $this->assetDisposalTypeRepository->update($input, $id);
 

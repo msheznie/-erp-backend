@@ -268,40 +268,16 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $from_master = false;
-        $isFromConfig = false;
 
-        if(array_key_exists('from_master', $input)){
-            $from_master = ($input['from_master'] == 'true');
+
+        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+
+        if (isset($input['controllAccountYN'])) {
+            $items = $items->where('controllAccountYN', $input['controllAccountYN']);
         }
-
-        if(array_key_exists('isFromConfig', $input)){
-            $isFromConfig = ($input['isFromConfig'] == 'true');
-        }
-
-
-        if($from_master){
-            $items = ChartOfAccount::where('isActive', 1);
-        }else{
-            $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
-                ->where('isAssigned', -1);
-        }
-
-        if(!$isFromConfig){
-            $items = $items->where('controllAccountYN', 0);
-
-            if (isset($input['controllAccountYN'])) {
-                $items = $items->where('controllAccountYN', $input['controllAccountYN']);
-            }
-        }
-        else{
-
-            if (isset($input['controllAccountYN'])) {
-                $controllAccountYN = ($input['controllAccountYN'])? 1: 0;
-                $items = $items->where('controllAccountYN', $controllAccountYN);
-            }
-        }
-
 
         if (isset($input['isBank'])) {
             $items = $items->where('isBank', $input['isBank']);
@@ -318,6 +294,34 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function gl_code_search(request $request){
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $from_master_tbl = $input['from_master_tbl'];
+        $from_master_tbl =($from_master_tbl == 'true');
+
+
+        if($from_master_tbl){
+            $data = ChartOfAccount::where('isActive', 1);
+        }
+        else{
+            $data = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        }
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $data = $data->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = $data->take(20)->get();
+        return $this->sendResponse($data->toArray(), 'Data retrieved successfully');
     }
 
     public function getPaymentVoucherGL(request $request)
