@@ -105,10 +105,7 @@ class SystemGlCodeScenarioDetail extends Model
 
     public static function getGlByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
     {
-        $res = SystemGlCodeScenarioDetail::whereHas('master', function($query) use ($documentSystemID) {
-                                            $query->where('documentSystemID', $documentSystemID);
-                                        })
-                                        ->where('companySystemID', $companySystemID)
+        $res = SystemGlCodeScenarioDetail::where('companySystemID', $companySystemID)
                                         ->where('systemGlScenarioID', $systemGlScenarioID)
                                         ->first();
 
@@ -117,10 +114,7 @@ class SystemGlCodeScenarioDetail extends Model
 
     public static function getGlCodeByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
     {
-        $res = SystemGlCodeScenarioDetail::whereHas('master', function($query) use ($documentSystemID) {
-                                            $query->where('documentSystemID', $documentSystemID);
-                                        })
-                                        ->with(['chart_of_account'])
+        $res = SystemGlCodeScenarioDetail::with(['chart_of_account'])
                                         ->whereHas('chart_of_account')
                                         ->where('companySystemID', $companySystemID)
                                         ->where('systemGlScenarioID', $systemGlScenarioID)
