@@ -387,4 +387,12 @@ class ErpProjectMasterAPIController extends AppBaseController
         ];
         return $this->sendResponse($data, '');
     }
+
+    public function segmentsByCompany(Request $request)
+    {
+
+        $companySystemID = $request['companySystemID'];
+        $serviceLines = ServiceLine::where('companySystemID', $companySystemID)->get();
+        return $this->sendResponse($serviceLines, 'Segments Projects retrieved successfully');
+    }
 }
