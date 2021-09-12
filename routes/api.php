@@ -2117,6 +2117,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
         Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
+        Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany');
         Route::get('erp_project_masters/{id}', 'ErpProjectMasterAPIController@show');
         Route::put('erp_project_masters/{id}', 'ErpProjectMasterAPIController@update');
 
