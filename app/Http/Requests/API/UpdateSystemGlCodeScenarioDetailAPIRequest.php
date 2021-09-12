@@ -24,8 +24,15 @@ class UpdateSystemGlCodeScenarioDetailAPIRequest extends APIRequest
      */
     public function rules()
     {
-        $rules = SystemGlCodeScenarioDetail::$rules;
-        
-        return $rules;
+        return [
+            'chartOfAccountSystemID' => 'required',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'chartOfAccountSystemID.required' => 'Chart Of Account field is required',
+        ];
     }
 }

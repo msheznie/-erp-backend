@@ -946,7 +946,7 @@ class MaterielRequestAPIController extends AppBaseController
                     'status' => true,
                     'data'   => $items,
                     'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID,
-                    'purchaseReq' => $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode
+                    'purchaseReq' => ($materielRequest->purchase_requests->first()->purchase_request) ? $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode: ""
                 ];
                 return $this->sendResponse($data, 'Purchase request received successfully');
             }else {

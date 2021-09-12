@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateAssetDisposalTypeAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalTypeAPIRequest;
 use App\Models\AssetDisposalType;
+use App\Models\ChartOfAccount;
 use App\Repositories\AssetDisposalTypeRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Class AssetDisposalTypeController
@@ -156,7 +159,9 @@ class AssetDisposalTypeAPIController extends AppBaseController
     public function show($id)
     {
         /** @var AssetDisposalType $assetDisposalType */
-        $assetDisposalType = $this->assetDisposalTypeRepository->findWithoutFail($id);
+        $assetDisposalType = $this->assetDisposalTypeRepository
+            ->with('chartofaccount:chartOfAccountSystemID,AccountCode,AccountDescription')
+            ->findWithoutFail($id);
 
         if (empty($assetDisposalType)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
@@ -214,6 +219,7 @@ class AssetDisposalTypeAPIController extends AppBaseController
     public function update($id, UpdateAssetDisposalTypeAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var AssetDisposalType $assetDisposalType */
         $assetDisposalType = $this->assetDisposalTypeRepository->findWithoutFail($id);
@@ -222,6 +228,8 @@ class AssetDisposalTypeAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_types')]));
         }
 
+        $input['glCode'] = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountID'])->value('AccountCode');
+        $input['updated_by'] = Helper::getEmployeeInfo()->employeeSystemID;
         $assetDisposalType = $this->assetDisposalTypeRepository->update($input, $id);
 
         return $this->sendResponse($assetDisposalType->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_types')]));
@@ -277,5 +285,25 @@ class AssetDisposalTypeAPIController extends AppBaseController
         $assetDisposalType->delete();
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.asset_disposal_types')]));
+    }
+
+    function config_list(Request $request){
+        $input = $request->all();
+
+        $sort = Helper::dataTableSortOrder($input);
+        $search = $request->input('search.value');
+
+        $qry = $this->assetDisposalTypeRepository->fetch_data($search);
+        return DataTables::eloquent($qry)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('disposalTypesID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

@@ -50,10 +50,6 @@ class SystemGlCodeScenarioDetail extends Model
 {
 
     public $table = 'system_gl_code_scenario_details';
-    
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
-
 
 
 
@@ -62,7 +58,10 @@ class SystemGlCodeScenarioDetail extends Model
         'companySystemID',
         'chartOfAccountSystemID',
         'serviceLineSystemID',
-        'timestamp'
+        'created_by',
+        'updated_by',
+        'created_at',
+        'updated_at'
     ];
 
     /**
@@ -93,6 +92,11 @@ class SystemGlCodeScenarioDetail extends Model
         return $this->belongsTo('App\Models\SystemGlCodeScenario', 'systemGlScenarioID', 'id');
     }
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'companySystemID');
+    }
+
     public function chart_of_account()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID', 'chartOfAccountSystemID');
@@ -101,10 +105,7 @@ class SystemGlCodeScenarioDetail extends Model
 
     public static function getGlByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
     {
-        $res = SystemGlCodeScenarioDetail::whereHas('master', function($query) use ($documentSystemID) {
-                                            $query->where('documentSystemID', $documentSystemID);
-                                        })
-                                        ->where('companySystemID', $companySystemID)
+        $res = SystemGlCodeScenarioDetail::where('companySystemID', $companySystemID)
                                         ->where('systemGlScenarioID', $systemGlScenarioID)
                                         ->first();
 
@@ -113,10 +114,7 @@ class SystemGlCodeScenarioDetail extends Model
 
     public static function getGlCodeByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
     {
-        $res = SystemGlCodeScenarioDetail::whereHas('master', function($query) use ($documentSystemID) {
-                                            $query->where('documentSystemID', $documentSystemID);
-                                        })
-                                        ->with(['chart_of_account'])
+        $res = SystemGlCodeScenarioDetail::with(['chart_of_account'])
                                         ->whereHas('chart_of_account')
                                         ->where('companySystemID', $companySystemID)
                                         ->where('systemGlScenarioID', $systemGlScenarioID)

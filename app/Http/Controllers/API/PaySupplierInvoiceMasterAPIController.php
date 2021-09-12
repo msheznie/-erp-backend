@@ -27,8 +27,10 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\BankMemoPayee;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegister;
 use App\Models\ChequeRegisterDetail;
@@ -172,15 +174,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
-            $validator = \Validator::make($request->all(), [
+            $conditions = [
                 'invoiceType' => 'required',
                 'supplierTransCurrencyID' => 'required',
                 'BPVNarration' => 'required',
                 'BPVbank' => 'required',
                 'BPVAccount' => 'required',
                 'BPVdate' => 'required|date',
-                'BPVchequeDate' => 'required|date',
-            ]);
+            ];
+ 
+            if (isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) {
+                $conditions['BPVchequeDate'] = 'required|date';               
+            }
+
+            $validator = \Validator::make($request->all(), $conditions);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
@@ -317,6 +324,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             } else {
                 $input['chequePaymentYN'] = 0;
+            }
+
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
+            } else {
+                $input['pdcChequeYN'] = 0;
             }
 
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
@@ -588,19 +602,80 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
+                $input['BPVchequeNo'] = null;
+                $input['expenseClaimOrPettyCash'] = null;
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
+
             $warningMessage = '';
 
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
                 $input['chequePaymentYN'] = 0;
-                $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
+                    $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+                }
             }
 
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+                if ($input['pdcChequeYN']) {
+                    
+
+                    $pdcLogValidation = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                          ->where('documentmasterAutoID', $id)
+                                          ->whereNull('chequeDate')
+                                          ->first();
+
+                    if ($pdcLogValidation) {
+                        return $this->sendError('PDC Cheque date cannot be empty', 500); 
+                    }
+
+
+                    $totalAmountForPDC = 0;
+                    if ($paySupplierInvoiceMaster->invoiceType == 2) {
+                        $totalAmountForPDC = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                        ->sum('supplierPaymentAmount');
+
+                    } else if ($paySupplierInvoiceMaster->invoiceType == 5) {
+                        $totalAmountForPDC = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                                                                    ->sum('paymentAmount');
+                    } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                        $totalAmountForPDC = DirectPaymentDetails::where('directPaymentAutoID', $id)->sum('DPAmount');
+                    }
+
+                    $pdcLog = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                          ->where('documentmasterAutoID', $id)
+                                          ->get();
+
+                    if (count($pdcLog) == 0) {
+                        return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                    } 
+
+                    $pdcLogAmount = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                          ->where('documentmasterAutoID', $id)
+                                          ->sum('amount');
+
+                    $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
+
+                    if ($checkingAmount > 0.001 || $checkingAmount < 0) {
+                        return $this->sendError('PDC Cheque amount should equal to PV total amount', 500); 
+                    }
+
+                    $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $paySupplierInvoiceMaster->documentSystemID, 5);
+
+                    if (is_null($checkPlAccount)) {
+                        return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
+                    } 
+                }
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
@@ -1052,6 +1127,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['BPVchequeNo'] = 1;
                     }
                 }
+
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                    $input['chequePaymentYN'] = 0;
+                    $input['BPVchequeDate'] = null;
+                    $input['BPVchequeNo'] = null;
+                    $input['expenseClaimOrPettyCash'] = null;
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
@@ -1158,6 +1240,100 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function generatePdcForPv(Request $request)
+    {
+        $input = $request->all();
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
+
+        if (empty($paySupplierInvoiceMaster)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $deleteAllPDC = $this->deleteAllPDC($paySupplierInvoiceMaster->documentSystemID, $input['PayMasterAutoId']);
+
+            $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);
+
+            if (!$bankAccount) {
+                return $this->sendError('Bank Account not selected');
+            }
+    
+            $amount = floatval($input['totalAmount']) / floatval($input['noOfCheques']);
+
+            for ($i=0; $i < floatval($input['noOfCheques']); $i++) { 
+                $chequeRegisterAutoID = null;
+                $nextChequeNo = null;
+                $chequeGenrated = false;
+                if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->localCurrencyID && $paySupplierInvoiceMaster->supplierTransCurrencyID == $paySupplierInvoiceMaster->localCurrencyID) {
+                    $res =  $this->paySupplierInvoiceMasterRepository->getChequeNoForPDC($paySupplierInvoiceMaster->companySystemID, $bankAccount, $input['PayMasterAutoId'], $paySupplierInvoiceMaster->documentSystemID);
+
+                    if (!$res['status']) {
+                        return $this->sendError($res['message'], 500);
+                    }
+
+                    $chequeRegisterAutoID = $res['chequeRegisterAutoID'];
+                    $nextChequeNo = $res['nextChequeNo'];
+                    $chequeGenrated = $res['chequeGenrated'];
+                } 
+
+                $pdcLogData = [
+                    'documentSystemID' => $paySupplierInvoiceMaster->documentSystemID,
+                    'documentmasterAutoID' => $input['PayMasterAutoId'],
+                    'paymentBankID' => $bankAccount->bankmasterAutoID,
+                    'companySystemID' => $paySupplierInvoiceMaster->companySystemID,
+                    'currencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+                    'chequeRegisterAutoID' => $chequeRegisterAutoID,
+                    'chequeNo' => $nextChequeNo,
+                    'chequeStatus' => 0,
+                    'amount' => $amount,
+                ];
+
+                $resPdc = PdcLog::create($pdcLogData);
+            }
+
+            DB::commit();
+            return $this->sendResponse(['chequeGenrated' => $chequeGenrated], "PDC cheques generated successfully");
+        } catch
+        (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+    }
+
+
+    public function deleteAllPDC($documentSystemID, $documentAutoID)
+    {
+        $cheques = PdcLog::where('documentSystemID', $documentSystemID)
+                         ->where('documentmasterAutoID', $documentAutoID)
+                         ->get();
+
+        if (count($cheques) > 0) {
+            $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
+
+
+            if (count($chequeRegisterAutoIDs) > 0) {
+                $update_array = [
+                    'document_id' => null,
+                    'document_master_id' => null,
+                    'status' => 0,
+                ];
+
+                ChequeRegisterDetail::whereIn('id', $chequeRegisterAutoIDs)->update($update_array);
+            }
+
+            $chequesDelete = PdcLog::where('documentSystemID', $documentSystemID)
+                             ->where('documentmasterAutoID', $documentAutoID)
+                             ->delete();
+
+        }
+        
+        return ['status' => true];
     }
 
     /**
@@ -1348,6 +1524,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
                     ->get();
 
+            $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companyId)
+                ->where('companyPolicyCategoryID', 35)
+                ->where('isYesNO', 1)
+                ->first();
+
             $output = array(
                 'financialYears' => $financialYears,
                 'companyFinanceYear' => $companyFinanceYear,
@@ -1356,6 +1537,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'month' => $month,
                 'years' => $years,
                 'supplier' => $supplier,
+                'chequeRegistryPolicy' => $is_exist_policy_GCNFCR ? true : false,
                 'payee' => $payee,
                 'bank' => $bank,
                 'currency' => $currency,
