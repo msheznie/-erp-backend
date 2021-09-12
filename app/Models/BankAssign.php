@@ -109,7 +109,7 @@ class BankAssign extends Model
     ];
 
     public function company(){
-        return $this->belongsTo('App\Models\Company','companyID','CompanyID');
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
     

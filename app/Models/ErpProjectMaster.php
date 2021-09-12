@@ -238,4 +238,11 @@ class ErpProjectMaster extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
+    public function currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'projectCurrencyID', 'currencyID');
+    }
+
+    public function service_line(){
+        return $this->belongsTo('App\Models\ServiceLine', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
 }

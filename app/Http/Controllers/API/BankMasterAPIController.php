@@ -259,6 +259,7 @@ class BankMasterAPIController extends AppBaseController
         }
 
         $itemCompanies = BankAssign::with(['company'])
+                                   ->whereHas('company')
                                    ->where('bankmasterAutoID',$bankId)
                                    ->whereIn("companySystemID",$subCompanies);
 
