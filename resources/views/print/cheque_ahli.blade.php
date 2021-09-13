@@ -32,19 +32,19 @@
 
         #top_supplier_div {
             position: absolute;
-            top: 5.5cm;
+            top: 6.5cm;
             left: 4.5cm;
         }
         
         #top_date_div {
             position: absolute;
-            top: 6.5cm;
+            top: 7.5cm;
             left: 22.5cm;
         }
 
         #reference_table_div {
             position: absolute;
-            top: 8.5cm;
+            top: 9.5cm;
             left: 1.85cm;
 
         }
@@ -57,7 +57,7 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 26.3cm;
+            top: 28.8cm;
             left: 21.5cm;
         }
 
@@ -69,13 +69,13 @@
 
         #cheque_amount_no {
             position: absolute;
-            top: 29cm;
+            top: 31cm;
             left: 21.5cm;
         }
 
         #cheque_payee {
             position: absolute;
-            top: 27.7cm;
+            top: 30.2cm;
             left: 5cm;
         }
 
@@ -88,6 +88,7 @@
 
         #cheque_amount_word_para {
             line-height: 1cm;
+            top: 32.7cm;
 
         }
 
@@ -106,9 +107,9 @@
     {{-- <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
             {{$entity->BPVcode}}
     </div> --}}
-    <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
+    {{-- <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
         00003860
-    </div>
+    </div> --}}
     
     <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
         {{$entity->nameOnCheque}}
@@ -132,7 +133,7 @@
                 @if($entity->invoiceType == 2)
                     @foreach ($entity->details as $item)
                         <tr >
-                            <td style="width: 10.5cm">{{$item->bookingInvDocCode}}</td>
+                            <td style="width: 10cm">{{$item->bookingInvDocCode}}</td>
                             {{-- <td style="width: 7.5cm"></td> --}}
                             {{-- <td style="width: 8.5cm">{{ \App\helper\Helper::dateFormat($item->bookingInvoiceDate)}}</td> --}}
                             <td valign="top" style="width: 15cm">{{$item->supplierInvoiceNo}}</td>
@@ -146,7 +147,7 @@
                     @endforeach
                 @endif
 
-                @if($entity->invoiceType == 5)
+                {{-- @if($entity->invoiceType == 5)
                     @foreach ($entity->details as $item)
                         <tr >
                             <td style="width: 1.5cm"></td>
@@ -158,9 +159,9 @@
                             <td style="width: 1.5cm"></td>
                         </tr>
                     @endforeach
-                @endif
+                @endif --}}
 
-                @if($entity->invoiceType == 3)
+                {{-- @if($entity->invoiceType == 3)
                     @foreach ($entity->details as $item)
                         <tr >
                             <td style="width: 1.5cm"></td>
@@ -172,12 +173,12 @@
                             <td style="width: 1.5cm"></td>
                         </tr>
                     @endforeach
-                @endif
+                @endif --}}
             @endif
         </table>
     </div>
 
-    <div id="total_amount_div">
+    {{-- <div id="total_amount_div">
         <table class="header-part paper_size" >
             <tr >
                 <td style="width: 18.5cm"></td>
@@ -187,13 +188,13 @@
                 <td style="width: 1.5cm"></td>
             </tr>
         </table>
-    </div>
+    </div> --}}
 </div>
 
 <div class="footer" >
     <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
     <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->nameOnCheque}}</div>
-    <div style="font-size: 16px !important;" id="cheque_no_bottom" >00003860</div>
+    {{-- <div style="font-size: 16px !important;" id="cheque_no_bottom" >00003860</div> --}}
 
     <table id="word_amount_table" class="header-part" >
         <tr >
