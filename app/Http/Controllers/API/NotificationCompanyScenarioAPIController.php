@@ -293,7 +293,7 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $companyAssignScenarion = NotificationService::getCompanyScenarioConfiguration($input['scenarioID']); 
+        $companyAssignScenarion = NotificationService::getCompanyScenarioConfiguration($input['scenarioID']);
         $test = [];
         $details = [];
         $emailContent = [];
@@ -412,5 +412,11 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
             Log::info('Notification Company Scenario not exist');
         }
         
+    }
+
+    public function check_notification(){
+        $scenario_id = 6;
+        $res = NotificationService::notification($scenario_id);
+        return $res;
     }
 }
