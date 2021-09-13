@@ -8,9 +8,149 @@ use App\Models\NotificationUser;
 use App\Models\NotificationUserDayCheck;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
+    public static function hr_scenarios(){
+        return [
+            6, //HR document expiry
+            7, //HR - Employee contract expiry
+            8 //HR - Employee end of probation
+        ];
+    }
+
+    public static function notification($scenarioID){
+        Log::useFiles(storage_path() . '/logs/notification_service.log');
+
+        $com_assign_scenarios = NotificationService::getCompanyScenarioConfiguration($scenarioID);
+        $emailContent = [];
+        $subject = 'N/A';
+
+        //dd( $com_assign_scenarios->toArray() );
+
+        if (count($com_assign_scenarios) == 0) {
+            Log::info('Notification Company Scenario not exist');
+            return true;
+        }
+
+        Log::info('------------ Successfully start ' . $com_assign_scenarios[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') .  ' ------------');
+
+        foreach ($com_assign_scenarios as $compAssignScenario) {
+            Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+
+            if (count($compAssignScenario->notification_day_setup) == 0) {
+                Log::info('Notification day setup not exist');
+                continue;
+            }
+
+            $companyID = $compAssignScenario->companyID;
+
+            foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
+                $beforeAfter = $notDaySetup->beforeAfter;
+                $days = $notDaySetup->days;
+
+                $details = [];
+
+                switch ($scenarioID) {
+                    case 1:
+                        $details = RolReachedNotification::getRolReachedNotification($companyID, $beforeAfter);
+                        $subject = 'Inventory stock reaches a minimum order level';
+                        break;
+                    case 2:
+                        $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($companyID, $beforeAfter, $days, 1);
+                        $subject = 'Purchase order pending delivery notification';
+                        break;
+                    case 3:
+                        $details = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderPendingDelivery($companyID, $beforeAfter, $days, 5);
+                        $subject = 'Work order expiry notification';
+                        break;
+                    case 4:
+                        $details = AdvancePaymentNotification::getadvancePaymentDetails($companyID, $beforeAfter, $days);
+                        $subject = 'Advance Payment Notification';
+                        break;
+                    case 5:
+                        $details = BudgetLimitNotification::getBudgetLimitDetails($companyID, $beforeAfter);
+                        $subject = 'Budget Limit Notification';
+                        break;
+
+                    case 6:
+                        $hr_doc = new HRNotificationService($companyID, $notDaySetup);
+                        $hr_doc->emp_expired_docs();
+                        $details = [];
+                        break;
+
+                    case 7:
+                        $contract = new HRContractNotificationService($companyID, $notDaySetup);
+                        $contract->expired_doc();
+                        $details = [];
+                        break;
+
+                    case 8:
+                        $probation = new HRProbationNotificationService($companyID, $notDaySetup);
+                        $probation->expired_doc();
+                        $details = [];
+                        break;
+
+                    default:
+                        Log::error('Applicable category configuration not exist');
+
+                        break;
+                }
+
+                $hr_scenarios = self::hr_scenarios();
+                if(!in_array($scenarioID, $hr_scenarios)) {
+                    continue;
+                }
+
+                if (count($details) == 0) {
+                    Log::info('No records found for scenario id '. $scenarioID);
+                    continue;
+                }
+
+                $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
+                if (count($notificationUserSettings['email']) == 0) {
+                    Log::info('User setup not found for scenario id '. $scenarioID);
+                    continue;
+                }
+
+                foreach ($notificationUserSettings['email'] as $key => $notificationUserVal) {
+
+                    switch ($scenarioID) {
+                        case 1:
+                            $emailContent = RolReachedNotification::getRolReachedEmailContent($details, $notificationUserVal[$key]['empName']);
+                            break;
+                        case 2:
+                            $emailContent = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderEmailContent($details, $notificationUserVal[$key]['empName'], 1);
+                            break;
+                        case 3:
+                            $emailContent = PurchaseOrderPendingDeliveryNotificationService::getPurchaseOrderEmailContent($details, $notificationUserVal[$key]['empName'], 5);
+                            break;
+                        case 4:
+                            $emailContent = AdvancePaymentNotification::getAdvancePaymentEmailContent($details, $notificationUserVal[$key]['empName']);
+                            break;
+                        case 5:
+                            $emailContent = BudgetLimitNotification::getEmailContent($details, $notificationUserVal[$key]['empName']);
+                            break;
+                        default:
+                            Log::error('Email content configuration not done');
+                            break;
+                    }
+
+
+                    $sendEmail = NotificationService::emailNotification($companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
+
+                    if (!$sendEmail["success"]) {
+                        Log::error($sendEmail["message"]);
+                    }
+                }
+            }
+
+        }
+
+        Log::info('------------ Successfully end ' . $com_assign_scenarios[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') . ' ------------');
+    }
+
     public static function getCompanyScenarioConfiguration($scenarioID)
     {
         $companyScenarioConfiguration = NotificationCompanyScenario::with(['notification_Scenario' => function ($query) {
