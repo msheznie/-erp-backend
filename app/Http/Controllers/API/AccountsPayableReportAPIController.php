@@ -4071,12 +4071,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_generalledger.documentCode,
                 sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
                 sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierCodeSystem,SupplierForInvoice.supplierCodeSystem) ) AS supplierID,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.primarySupplierCode,SupplierForInvoice.primarySupplierCode)) AS supplierCode,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierName,SupplierForInvoice.supplierName)) AS supplierName,
+                erp_generalledger.supplierCodeSystem AS supplierID,
+                SupplierForGeneralLedger.primarySupplierCode AS supplierCode,
+                SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
                 MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
             FROM
@@ -4090,9 +4087,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN erp_purchasereturnmaster ON erp_generalledger.documentSystemID = erp_purchasereturnmaster.documentSystemID
                 AND erp_generalledger.companySystemID = erp_purchasereturnmaster.companySystemID
                 AND erp_generalledger.documentSystemCode = erp_purchasereturnmaster.purhaseReturnAutoID
-                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForPRN ON erp_purchasereturnmaster.supplierID = SupplierForPRN.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForGeneralLedger ON erp_generalledger.supplierCodeSystem = SupplierForGeneralLedger.supplierCodeSystem
                 LEFT JOIN (
                 (
             SELECT
@@ -4167,7 +4162,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             GROUP BY
                 erp_generalledger.companySystemID,
                 erp_generalledger.documentSystemID,
-                erp_generalledger.documentSystemCode 
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.supplierCodeSystem  
                 ) AS finalUnbilled
                 LEFT JOIN (
             SELECT
