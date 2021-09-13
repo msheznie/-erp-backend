@@ -4,6 +4,7 @@ namespace App\helper;
 
 use App\Models\Employee;
 use App\Models\NotificationCompanyScenario;
+use App\Models\NotificationScenarios;
 use App\Models\NotificationUser;
 use App\Models\NotificationUserDayCheck;
 use Carbon\Carbon;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
+    public static function log_file(){
+        return storage_path() . '/logs/notification_service.log';
+    }
+
     public static function hr_scenarios(){
         return [
             6, //HR document expiry
@@ -20,13 +25,19 @@ class NotificationService
         ];
     }
 
-    public static function notification($scenarioID){
-        Log::useFiles(storage_path() . '/logs/notification_service.log');
+    public static function all_active_scenarios(){
+        return NotificationScenarios::where('isActive', 1)->get();
+    }
+
+    public static function process($scenarioID){
+        $log_file = self::log_file();
+        Log::useFiles($log_file);
 
         $com_assign_scenarios = NotificationService::getCompanyScenarioConfiguration($scenarioID);
         $emailContent = [];
         $subject = 'N/A';
 
+        //Log::info($com_assign_scenarios);
         //dd( $com_assign_scenarios->toArray() );
 
         if (count($com_assign_scenarios) == 0) {

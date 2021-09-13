@@ -12,6 +12,7 @@ use App\helper\PurchaseOrderPendingDeliveryNotificationService;
 use App\helper\RolReachedNotification;
 use App\Http\Requests\API\CreateNotificationCompanyScenarioAPIRequest;
 use App\Http\Requests\API\UpdateNotificationCompanyScenarioAPIRequest;
+use App\Jobs\NotificationInitiate;
 use App\Models\NotificationCompanyScenario;
 use App\Repositories\NotificationCompanyScenarioRepository;
 use Illuminate\Http\Request;
@@ -415,8 +416,11 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
     }
 
     public function check_notification(){
+        NotificationInitiate::dispatch();
+        return 'true';
+
         $scenario_id = 6;
-        $res = NotificationService::notification($scenario_id);
+        $res = NotificationService::process($scenario_id);
         return $res;
     }
 }
