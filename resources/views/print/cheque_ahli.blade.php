@@ -38,7 +38,7 @@
         
         #top_date_div {
             position: absolute;
-            top: 7.5cm;
+            top: 7.7cm;
             left: 22.5cm;
         }
 
@@ -57,7 +57,7 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 29.3cm;
+            top: 29cm;
             left: 21.5cm;
         }
 
@@ -75,7 +75,7 @@
 
         #cheque_payee {
             position: absolute;
-            top: 30.9cm;
+            top: 30.7cm;
             left: 5cm;
         }
 
