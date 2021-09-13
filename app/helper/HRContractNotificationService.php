@@ -62,18 +62,18 @@ class HRContractNotificationService
 
         if(empty($data)){
             $log = "Expiry HR contract does not exist for type: {$this->type} and days: {$this->days}";
-            $log .= "\t on class: " . __CLASS__ ." \tline no :".__LINE__;
+            $log .= "\t on file: " . __CLASS__ ." \tline no :".__LINE__;
             Log::error($log);
             return false;
         }
 
         $this->expired_docs = $data->toArray();
 
-        Log::info( count($this->expired_docs)." expired contracts found. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info( count($this->expired_docs)." expired contracts found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
         if(empty($users_setup)){
-            Log::error("User's not configured for Expiry HR contract. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("User's not configured for Expiry HR contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
@@ -99,13 +99,13 @@ class HRContractNotificationService
                 break;
 
                 default:
-                    Log::error("Unknown Applicable Category \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+                    Log::error("Unknown Applicable Category \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             }
 
         }
 
 
-        Log::info( $this->sent_mail_count. " expired employee contract mails send \t on class: " . __CLASS__ ." \tline no :".__LINE__ );
+        Log::info( $this->sent_mail_count. " expired employee contract mails send \t on file: " . __CLASS__ ." \tline no :".__LINE__ );
 
         return true;
     }
@@ -114,7 +114,7 @@ class HRContractNotificationService
         $mail_to = SrpEmployeeDetails::selectRaw('Ename2, EEmail')->find( $mail_to_emp );
 
         if(empty($mail_to)){
-            Log::error("Employee Not found \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("Employee Not found \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
@@ -180,7 +180,7 @@ class HRContractNotificationService
             ->get();
 
         if(empty($manager)){
-            Log::error("Manager details not found for expiry employee contract. \t on class: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("Manager details not found for expiry employee contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
