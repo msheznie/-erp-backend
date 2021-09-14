@@ -35,7 +35,8 @@ class HRNotificationService
     {
         $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
 
-        $expired_docs = HRDocumentDescriptionForms::selectRaw('DocDesID, PersonID, documentNo, expireDate, Erp_companyID')
+        $expired_docs = HRDocumentDescriptionForms::
+            selectRaw('DocDesFormID,DocDesID, PersonID, documentNo, expireDate, Erp_companyID')
             ->where('Erp_companyID', $this->company)
             ->where('PersonType', 'E')
             ->where('isDeleted', 0)
@@ -55,9 +56,12 @@ class HRNotificationService
 
         $expired_docs = $expired_docs->get();
 
-        if(empty($expired_docs)){
+        if(count($expired_docs) == 0){
             $log = "Expiry HR documents does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ ." \tline no :".__LINE__;
+
+            if($this->debug){ echo "<pre>$log</pre>";}
+
             Log::error($log);
             return false;
         }
@@ -68,7 +72,11 @@ class HRNotificationService
         Log::info( count($expired_docs)." expired documents found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
-        if(empty($users_setup)){
+        if(count($users_setup) == 0){
+            if($this->debug){
+                echo "<pre>User's not configured for Expiry HR documents. \t on file: {__CLASS__} \tline no : {__LINE_} </pre>";
+            }
+
             Log::error("User's not configured for Expiry HR documents. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
@@ -173,7 +181,7 @@ class HRNotificationService
             ->with('info:EIdNo,Ename2,EEmail')
             ->get();
 
-        if(empty($manager)){
+        if(count($manager) == 0){
             Log::error("Manager details not found for Expiry HR documents. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }

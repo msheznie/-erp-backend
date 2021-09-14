@@ -60,10 +60,14 @@ class HRContractNotificationService
 
         $data = $data->get();
 
-        if(empty($data)){
+        if(count($data) == 0){
             $log = "Expiry HR contract does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ ." \tline no :".__LINE__;
+
+            if($this->debug){ echo "<pre>$log</pre>";}
+
             Log::error($log);
+
             return false;
         }
 
@@ -72,7 +76,7 @@ class HRContractNotificationService
         Log::info( count($this->expired_docs)." expired contracts found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
-        if(empty($users_setup)){
+        if(count($users_setup) == 0){
             Log::error("User's not configured for Expiry HR contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
@@ -179,7 +183,7 @@ class HRContractNotificationService
             ->with('info:EIdNo,Ename2,EEmail')
             ->get();
 
-        if(empty($manager)){
+        if(count($manager) == 0){
             Log::error("Manager details not found for expiry employee contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }

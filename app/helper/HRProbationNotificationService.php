@@ -41,9 +41,12 @@ class HRProbationNotificationService
         $data = $data->with('designation:DesignationID,DesDescription');
         $data = $data->get();
 
-        if(empty($data)){
+        if(count($data) == 0){
             $log = "End of probation employees does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ ." \tline no :".__LINE__;
+
+            if($this->debug){ echo "<pre>$log</pre>";}
+
             Log::error($log);
             return false;
         }
@@ -54,7 +57,7 @@ class HRProbationNotificationService
 
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
-        if(empty($users_setup)){
+        if(count($users_setup) == 0){
             Log::error("User's not configured for end of probation employees. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
@@ -161,7 +164,7 @@ class HRProbationNotificationService
             ->with('info:EIdNo,Ename2,EEmail')
             ->get();
 
-        if(empty($manager)){
+        if(count($manager) == 0){
             Log::error("Manager details not found for end of probation period . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
