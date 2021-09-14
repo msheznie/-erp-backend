@@ -164,20 +164,23 @@ class NotificationService
 
     public static function getCompanyScenarioConfiguration($scenarioID)
     {
-        $companyScenarioConfiguration = NotificationCompanyScenario::with(['notification_Scenario' => function ($query) {
-            $query->where('isActive', '=', 1);
-        }, 'notification_day_setup' => function ($query) {
-            $query->selectRaw('id,companyScenarionID,beforeAfter,days');
-            $query->where('isActive', '=', 1);
-        }, 'company'])
+        $companyScenarioConfiguration = NotificationCompanyScenario::where('isActive', '=', 1)
+            ->where('scenarioID', '=', $scenarioID)
+            ->has('company')
+            ->with(['notification_Scenario' => function ($query) {
+                $query->where('isActive', '=', 1);
+            },
+            'notification_day_setup' => function ($query) {
+                $query->selectRaw('id,companyScenarionID,beforeAfter,days');
+                $query->where('isActive', '=', 1);
+            },
+            'company'])
             ->whereHas('notification_Scenario', function ($query) {
                 $query->where('isActive', '=', 1);
             })
             ->whereHas('notification_day_setup', function ($query) {
                 $query->where('isActive', '=', 1);
             })
-            ->where('isActive', '=', 1)
-            ->where('scenarioID', '=', $scenarioID)
             ->get();
 
         return $companyScenarioConfiguration;

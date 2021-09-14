@@ -44,13 +44,17 @@ class NotificationInitiate implements ShouldQueue
         }
 
 
+        $seconds = 10;
         foreach ($active_scenarios as $scenario){
             $id = $scenario->id;
             $description = $scenario->scenarioDescription;
 
             Log::info("{$description} added to queue . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
-            NotificationScenario::dispatch($id, $description);
+            NotificationScenario::dispatch($id, $description)
+                ->delay( now()->addSecond($seconds) );
+
+            $seconds += 10;
         }
     }
 }
