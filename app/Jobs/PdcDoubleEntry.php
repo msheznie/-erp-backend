@@ -384,18 +384,18 @@ class PdcDoubleEntry implements ShouldQueue
                                 }
                             }
 
-                            if ($masterData->invoiceType != 3) {
-                                    $masterModel['pdcFlag'] = true;
-                                    $masterModel['pdcAmount'] = $pdcData['amount'];
-                                    $masterModel['pdcDate'] = $pdcData['date'];
-                                    $masterModel['pdcChequeDate'] = $pdcData['chequeDate'];
-                                    $masterModel['pdcChequeNo'] = $pdcData['chequeNo'];
-                                if ($pdcData['newStatus'] == 1) {
-                                    $bankLedger = BankLedgerInsert::dispatch($masterModel);
-                                } else if ($pdcData['newStatus'] == 2) {
-                                    $masterModel['reversePdc'] = true;
-                                    $bankLedger = BankLedgerInsert::dispatch($masterModel);
-                                }
+                            $masterModel['pdcFlag'] = true;
+                            $masterModel['pdcAmount'] = $pdcData['amount'];
+                            $masterModel['pdcDate'] = $pdcData['date'];
+                            $masterModel['pdcChequeDate'] = $pdcData['chequeDate'];
+                            $masterModel['pdcChequeNo'] = $pdcData['chequeNo'];
+                            Log::info($pdcData);
+                            Log::info($masterModel);
+                            if ($pdcData['newStatus'] == 1) {
+                                $bankLedger = BankLedgerInsert::dispatch($masterModel);
+                            } else if ($pdcData['newStatus'] == 2) {
+                                $masterModel['reversePdc'] = true;
+                                $bankLedger = BankLedgerInsert::dispatch($masterModel);
                             }
                         }
                         break;
