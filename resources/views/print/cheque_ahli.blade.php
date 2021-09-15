@@ -45,7 +45,7 @@
         #reference_table_div {
             position: absolute;
             top: 10cm;
-            left: 1.35cm;
+            left: 0.35cm;
 
         }
 
@@ -57,7 +57,7 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 28.7cm;
+            top: 28.5cm;
             left: 21.5cm;
         }
 
@@ -69,7 +69,7 @@
 
         #cheque_amount_no {
             position: absolute;
-            top: 32.5cm;
+            top: 32.3cm;
             left: 21.5cm;
         }
 
