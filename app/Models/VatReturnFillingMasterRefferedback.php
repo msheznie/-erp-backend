@@ -6,13 +6,24 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="VatReturnFillingMaster",
+ *      definition="VatReturnFillingMasterRefferedback",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
  *          description="id",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="returnFillingID",
+ *          description="returnFillingID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="returnFillingCode",
+ *          description="returnFillingCode",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="companySystemID",
@@ -117,13 +128,19 @@ use Eloquent as Model;
  *          description="RollLevForApp_curr",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class VatReturnFillingMaster extends Model
+class VatReturnFillingMasterRefferedback extends Model
 {
 
-    public $table = 'vat_return_filling_master';
+    public $table = 'vat_return_filling_master_refferedback';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -132,12 +149,12 @@ class VatReturnFillingMaster extends Model
 
 
     public $fillable = [
-        'companySystemID',
+        'returnFillingID',
         'returnFillingCode',
+        'companySystemID',
         'documentSystemID',
         'date',
         'comment',
-        'serialNo',
         'confirmedYN',
         'confirmedDate',
         'confirmedByEmpSystemID',
@@ -149,7 +166,8 @@ class VatReturnFillingMaster extends Model
         'approvedEmpID',
         'refferedBackYN',
         'timesReferred',
-        'RollLevForApp_curr'
+        'RollLevForApp_curr',
+        'serialNo'
     ];
 
     /**
@@ -159,9 +177,10 @@ class VatReturnFillingMaster extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'returnFillingID' => 'integer',
+        'returnFillingCode' => 'string',
         'companySystemID' => 'integer',
         'documentSystemID' => 'integer',
-        'serialNo' => 'integer',
         'date' => 'datetime',
         'comment' => 'string',
         'confirmedYN' => 'integer',
@@ -169,14 +188,14 @@ class VatReturnFillingMaster extends Model
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByEmpName' => 'string',
-        'returnFillingCode' => 'string',
         'approvedYN' => 'integer',
         'approvedDate' => 'datetime',
         'approvedByUserSystemID' => 'integer',
         'approvedEmpID' => 'string',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
-        'RollLevForApp_curr' => 'integer'
+        'RollLevForApp_curr' => 'integer',
+        'serialNo' => 'integer'
     ];
 
     /**
@@ -188,12 +207,5 @@ class VatReturnFillingMaster extends Model
         
     ];
 
-    public function filled_master_categories(){
-        return $this->hasMany('App\Models\VatReturnFilledCategory', 'vatReturnFillingID','id');
-    }
-
-     public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
+    
 }

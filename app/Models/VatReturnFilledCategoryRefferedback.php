@@ -6,11 +6,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="VatReturnFilledCategory",
+ *      definition="VatReturnFilledCategoryRefferedback",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
  *          description="id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="returnFilledCategoryID",
+ *          description="returnFilledCategoryID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -40,10 +46,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class VatReturnFilledCategory extends Model
+class VatReturnFilledCategoryRefferedback extends Model
 {
 
-    public $table = 'vat_returned_filled_catgeories';
+    public $table = 'vat_returned_filled_catgeories_refferedback';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -52,6 +58,7 @@ class VatReturnFilledCategory extends Model
 
 
     public $fillable = [
+        'returnFilledCategoryID',
         'categoryID',
         'vatReturnFillingID'
     ];
@@ -63,6 +70,7 @@ class VatReturnFilledCategory extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'returnFilledCategoryID' => 'integer',
         'categoryID' => 'integer',
         'vatReturnFillingID' => 'integer'
     ];
@@ -76,11 +84,5 @@ class VatReturnFilledCategory extends Model
         
     ];
 
-    public function filled_details(){
-        return $this->hasMany('App\Models\VatReturnFillingDetail', 'vatReturnFilledCategoryID','id');
-    }
-
-    public function category(){
-        return $this->belongsTo('App\Models\VatReturnFillingCategory', 'categoryID','id');
-    }
+    
 }

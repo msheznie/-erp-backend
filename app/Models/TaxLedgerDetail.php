@@ -328,6 +328,7 @@ class TaxLedgerDetail extends Model
         'createdUserSystemID',
         'rcmApplicableYN',
         'recovertabilityPercentage',
+        'returnFilledDetailID',
         'recoverabilityAmount',
         'createdDateTime'
     ];
@@ -385,6 +386,7 @@ class TaxLedgerDetail extends Model
         'companySystemID' => 'integer',
         'createdPCID' => 'string',
         'createdUserSystemID' => 'integer',
+        'returnFilledDetailID' => 'integer',
         'createdDateTime' => 'datetime'
     ];
 
@@ -397,5 +399,19 @@ class TaxLedgerDetail extends Model
         
     ];
 
-    
+    public function sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategoryID','taxVatSubCategoriesAutoID');
+    } 
+
+    public function supplier(){
+        return $this->belongsTo('App\Models\SupplierMaster', 'partyAutoID','supplierCodeSystem');
+    }
+
+    public function document_master(){
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID','documentSystemID');
+    }
+
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster', 'partyAutoID','customerCodeSystem');
+    }
 }
