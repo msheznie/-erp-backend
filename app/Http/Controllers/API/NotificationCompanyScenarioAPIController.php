@@ -12,12 +12,11 @@ use App\helper\PurchaseOrderPendingDeliveryNotificationService;
 use App\helper\RolReachedNotification;
 use App\Http\Requests\API\CreateNotificationCompanyScenarioAPIRequest;
 use App\Http\Requests\API\UpdateNotificationCompanyScenarioAPIRequest;
-use App\Jobs\NotificationInitiate;
 use App\Models\NotificationCompanyScenario;
 use App\Repositories\NotificationCompanyScenarioRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use App\Models\NotificationUserDayCheck;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -415,12 +414,14 @@ class NotificationCompanyScenarioAPIController extends AppBaseController
         
     }
 
-    public function check_notification(){
-        NotificationInitiate::dispatch();
-        return 'true';
+    function job_check(){
+        $log = DB::table('jobs')->get();
 
-        $scenario_id = 6;
-        $res = NotificationService::process($scenario_id);
-        return $res;
+        foreach ($log as $row){
+            $payload = json_decode($row->payload);
+            $data = unserialize($payload->data->command);
+
+            echo '<pre>'; print_r($data); echo '</pre>';
+        }
     }
 }

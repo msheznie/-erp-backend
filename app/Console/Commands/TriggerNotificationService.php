@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\helper\NotificationService;
 use App\Jobs\NotificationInitiate;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class TriggerNotificationService extends Command
 {
@@ -12,7 +14,7 @@ class TriggerNotificationService extends Command
      *
      * @var string
      */
-    protected $signature = 'trigger:notification_service';
+    protected $signature = 'notification_service';
 
     /**
      * The console command description.
@@ -38,6 +40,22 @@ class TriggerNotificationService extends Command
      */
     public function handle()
     {
-        NotificationInitiate::dispatch();
+        Log::useFiles( NotificationService::log_file() );
+
+        $tenants = NotificationService::get_tenant_details();
+        if(count($tenants) == 0){
+            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        }
+
+        $seconds = 1;
+        foreach ($tenants as $tenant){
+            $tenant_database = $tenant->database;
+
+            Log::info("{$tenant_database} DB added to queue for notification initiate . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+            NotificationInitiate::dispatch($tenant_database); //->delay( now()->addSecond($seconds) );
+
+            //$seconds += 10;
+        }
     }
 }

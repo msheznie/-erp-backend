@@ -14,18 +14,22 @@ class NotificationInitiate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $dispatch_db;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($dispatch_db)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
             self::onConnection('database');
         }
+
+        $this->dispatch_db = $dispatch_db;
     }
 
     /**
@@ -36,6 +40,8 @@ class NotificationInitiate implements ShouldQueue
     public function handle()
     {
 
+        NotificationService::db_switch( $this->dispatch_db );
+
         Log::useFiles( NotificationService::log_file() );
         $active_scenarios = NotificationService::all_active_scenarios();
 
@@ -44,17 +50,17 @@ class NotificationInitiate implements ShouldQueue
         }
 
 
-        $seconds = 10;
+        $seconds = 1;
         foreach ($active_scenarios as $scenario){
             $id = $scenario->id;
             $description = $scenario->scenarioDescription;
 
             Log::info("{$description} added to queue . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
-            NotificationScenario::dispatch($id, $description)
-                ->delay( now()->addSecond($seconds) );
+            NotificationScenario::dispatch($this->dispatch_db, $id, $description);
+                //->delay( now()->addSecond($seconds) );
 
-            $seconds += 10;
+            //$seconds += 10;
         }
     }
 }

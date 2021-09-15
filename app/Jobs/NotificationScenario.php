@@ -20,10 +20,11 @@ class NotificationScenario implements ShouldQueue
      * @return void
      */
 
+    public $dispatch_db;
     public $scenario_id;
     public $scenario;
 
-    public function __construct($scenario_id, $scenario)
+    public function __construct($dispatch_db, $scenario_id, $scenario)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -31,6 +32,7 @@ class NotificationScenario implements ShouldQueue
             self::onConnection('database');
         }
 
+        $this->dispatch_db = $dispatch_db;
         $this->scenario_id = $scenario_id;
         $this->scenario = $scenario;
     }
@@ -45,6 +47,7 @@ class NotificationScenario implements ShouldQueue
         Log::useFiles( NotificationService::log_file() );
         Log::info("Processing {$this->scenario} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
+        NotificationService::db_switch( $this->dispatch_db );
 
         NotificationService::process($this->scenario_id);
     }

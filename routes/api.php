@@ -2278,7 +2278,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
     Route::get('notificatioService', 'NotificationCompanyScenarioAPIController@notificatioService');
-    Route::get('check-notification-ser', 'NotificationCompanyScenarioAPIController@check_notification');
 });
 
 
@@ -2290,6 +2289,7 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
+Route::get('job-check', 'NotificationCompanyScenarioAPIController@job_check');
 
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
