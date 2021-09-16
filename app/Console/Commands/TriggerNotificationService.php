@@ -47,15 +47,13 @@ class TriggerNotificationService extends Command
             Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
-        $seconds = 1;
+
         foreach ($tenants as $tenant){
             $tenant_database = $tenant->database;
 
             Log::info("{$tenant_database} DB added to queue for notification initiate . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
-            NotificationInitiate::dispatch($tenant_database); //->delay( now()->addSecond($seconds) );
-
-            //$seconds += 10;
+            NotificationInitiate::dispatch($tenant_database);
         }
     }
 }

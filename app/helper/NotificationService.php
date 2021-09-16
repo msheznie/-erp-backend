@@ -49,8 +49,6 @@ class NotificationService
         $emailContent = [];
         $subject = 'N/A';
 
-        //Log::info($com_assign_scenarios);
-        //dd( $com_assign_scenarios->toArray() );
 
         if (count($com_assign_scenarios) == 0) {
             Log::info('Notification Company Scenario not exist');
@@ -172,6 +170,8 @@ class NotificationService
         }
 
         Log::info('------------ Successfully end ' . $com_assign_scenarios[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') . ' ------------');
+
+        return true;
     }
 
     public static function getCompanyScenarioConfiguration($scenarioID)

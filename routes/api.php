@@ -2277,7 +2277,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     });
 
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
-    Route::get('notificatioService', 'NotificationCompanyScenarioAPIController@notificatioService');
+    Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
 });
 
 
