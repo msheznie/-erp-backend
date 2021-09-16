@@ -38,8 +38,8 @@
         
         #top_date_div {
             position: absolute;
-            top: 7.2cm;
-            left: 22.5cm;
+            top: 6.7cm;
+            left: 20.5cm;
         }
 
         #reference_table_div {
@@ -57,8 +57,8 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 27.5cm;
-            left: 21.5cm;
+            top: 26.5cm;
+            left: 20cm;
         }
 
         #cheque_no_bottom {
@@ -69,13 +69,13 @@
 
         #cheque_amount_no {
             position: absolute;
-            top: 31.3cm;
-            left: 21.5cm;
+            top: 29.8cm;
+            left: 21cm;
         }
 
         #cheque_payee {
             position: absolute;
-            top: 29.6cm;
+            top: 28.6cm;
             left: 5.5cm;
         }
 
@@ -89,7 +89,7 @@
         #cheque_amount_word_para {
             line-height: 1cm;
             position: absolute;
-            top: 1.8cm;
+            top: 0.8cm;
             left: 1cm;
 
         }
