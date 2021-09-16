@@ -89,7 +89,7 @@
         #cheque_amount_word_para {
             line-height: 1cm;
             position: absolute;
-            top: 0.8cm;
+            top: 0.6cm;
             left: 1cm;
 
         }
