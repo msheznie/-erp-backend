@@ -32,18 +32,16 @@ class PurchaseOrderPendingDeliveryNotificationService
     public static function getPurchaseOrderEmailContent($details, $fullName, $documentID)
     {
         $body = "Dear {$fullName},<br/>";
-        if ($documentID == 5) {
-            $body .= "Work order expiry notification<br/><br/>";
-        } else {
-            $body .= "Advance payment notification<br/><br/>";
-        }
+        $body .= "Following purchase order delivery dates are as follow :<br/><br/>";
+
+
         $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                     <thead>
                         <tr>
                             <th style="text-align: center;border: 1px solid black;">#</th>
-                            <th style="text-align: center;border: 1px solid black;">PO Code</th> 
+                            <th style="text-align: center;border: 1px solid black;">Document Code</th> 
                             <th style="text-align: center;border: 1px solid black;">Expected Delivery Date</th>
-                            <th style="text-align: center;border: 1px solid black;">PO Status</th> 
+                            <th style="text-align: center;border: 1px solid black;">Status</th> 
                         </tr>
                     </thead>';
         $body .= '<tbody>';
