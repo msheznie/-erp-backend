@@ -1291,6 +1291,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
 
+    
+
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
         Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
@@ -2189,6 +2191,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         /* Chart Of Account Scenario configuration */
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
+        Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+
+          /* Master Datas Bulk Upload */
+        Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate');
+        Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload');
         Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
         Route::post('coa-config-scenario-assign', 'SystemGlCodeScenarioAPIController@scenario_assign');
         Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies');
