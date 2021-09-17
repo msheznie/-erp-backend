@@ -456,6 +456,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
         Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
 
+        
+        Route::post('advancePaymentTermCancel', 'PoAdvancePaymentAPIController@advancePaymentTermCancel');
+
         Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
         Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
