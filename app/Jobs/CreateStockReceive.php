@@ -9,6 +9,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\DocumentMaster;
 use App\Models\GeneralLedger;
 use App\Models\SegmentMaster;
@@ -151,6 +152,8 @@ class CreateStockReceive implements ShouldQueue
                             $customerInvoiceData['custTransactionCurrencyER'] = 1;
                         }
 
+                        $revenuePercentageForInterCompanyInventoryTransfer = ($fromCompany) ? $fromCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
+
                         $bookingAmountLocal = 0;
                         $bookingAmountRpt = 0;
                         $totalLocal = 0;
@@ -160,14 +163,14 @@ class CreateStockReceive implements ShouldQueue
                         $totalQty = 0;
 
                         foreach ($stDetails as $new) {
-                            $bookingAmountLocal = $bookingAmountLocal + (($new['unitCostLocal'] * 1.03) * $new['qty']);
-                            $bookingAmountRpt = $bookingAmountRpt + (($new['unitCostRpt'] * 1.03) * $new['qty']);
+                            $bookingAmountLocal = $bookingAmountLocal + (($new['unitCostLocal'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100)) * $new['qty']);
+                            $bookingAmountRpt = $bookingAmountRpt + (($new['unitCostRpt'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100)) * $new['qty']);
 
                             $totalLocal = $totalLocal + (($new['unitCostLocal']) * $new['qty']);
                             $totalRpt = $totalRpt + (($new['unitCostRpt']) * $new['qty']);
 
-                            $revenueTotalLocal = $revenueTotalLocal + (($new['unitCostLocal'] * 0.03) * $new['qty']);
-                            $revenueTotalRpt = $revenueTotalRpt + (($new['unitCostRpt'] * 0.03) * $new['qty']);
+                            $revenueTotalLocal = $revenueTotalLocal + (($new['unitCostLocal'] * ($revenuePercentageForInterCompanyInventoryTransfer/100)) * $new['qty']);
+                            $revenueTotalRpt = $revenueTotalRpt + (($new['unitCostRpt'] * ($revenuePercentageForInterCompanyInventoryTransfer/100)) * $new['qty']);
 
                             $totalQty = $totalQty + $new['qty'];
                         }
@@ -217,18 +220,18 @@ class CreateStockReceive implements ShouldQueue
                         $glBS = $cusInvoiceDetails;
                         $glPL = $cusInvoiceDetails;
 
-                        $glPL['glCode'] = '91582';
-                        $glPL['glSystemID'] = 693;
-                        $glPL['glCodeDes'] = 'Product Revenue -Intercompany';
+                        $glPL['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 10);
+                        $glPL['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 10);
+                        $glPL['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 10);
                         $glPL['accountType'] = 'PL';
                         $glPL['invoiceAmount'] = $revenueTotalRpt;
                         $glPL['unitCost'] = $revenueTotalRpt;
                         $glPL['localAmount'] = $revenueTotalLocal;
                         $glPL['comRptAmount'] = $revenueTotalRpt;
 
-                        $glBS['glCode'] = '20023';
-                        $glBS['glSystemID'] = 747;
-                        $glBS['glCodeDes'] = 'Intercompany stock transfer';
+                        $glBS['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 1);
+                        $glBS['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 1);
+                        $glBS['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 1);
                         $glBS['accountType'] = 'BS';
                         $glBS['invoiceAmount'] = $totalRpt;
                         $glBS['unitCost'] = $totalRpt;
@@ -285,7 +288,7 @@ class CreateStockReceive implements ShouldQueue
                             $glPL = $data;
 
                             if ($customerInvoiceDetailBS) {
-                                $glBS['chartOfAccountSystemID'] = 747;
+                                $glBS['chartOfAccountSystemID'] = $customerInvoiceDetailBS->glSystemID;
                                 $glBS['glCode'] = $customerInvoiceDetailBS->glCode;
                                 $glBS['glAccountType'] = $customerInvoiceDetailBS->accountType;
                                 $glBS['glAccountTypeID'] = 1;
@@ -302,7 +305,7 @@ class CreateStockReceive implements ShouldQueue
                             }
 
                             if ($customerInvoiceDetailPL) {
-                                $glPL['chartOfAccountSystemID'] = 693;
+                                $glPL['chartOfAccountSystemID'] = $customerInvoiceDetailPL->glSystemID;
                                 $glPL['glCode'] = $customerInvoiceDetailPL->glCode;
                                 $glPL['glAccountType'] = $customerInvoiceDetailPL->accountType;
                                 $glPL['glAccountTypeID'] = 2;
@@ -459,7 +462,7 @@ class CreateStockReceive implements ShouldQueue
                             $stockReceive->save();
 
                             $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
-
+                            $revenuePercentageForInterCompanyInventoryTransfer = ($toCompany) ? $toCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
                             foreach ($stDetails as $new) {
 
                                 $item = array();
@@ -479,7 +482,7 @@ class CreateStockReceive implements ShouldQueue
                                 $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                                 $item['localCurrencyID'] = $toCompany->localCurrencyID;
                                 // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
-                                $temUnitCostRpt = $new['unitCostRpt'] * 1.03;
+                                $temUnitCostRpt = $new['unitCostRpt'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100);
                                 $convertCurrencyConversion = \Helper::currencyConversion($stMaster->companyToSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, $temUnitCostRpt);
                                 $item['unitCostLocal'] = $convertCurrencyConversion['localAmount'];
                                 $item['reportingCurrencyID'] = $toCompany->reportingCurrency;

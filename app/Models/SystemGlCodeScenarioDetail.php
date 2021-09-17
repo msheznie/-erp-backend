@@ -102,11 +102,20 @@ class SystemGlCodeScenarioDetail extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID', 'chartOfAccountSystemID');
     }
 
+    public function chart_of_account_assigned()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccountsAssigned', 'chartOfAccountSystemID', 'chartOfAccountSystemID');
+    }
+
 
     public static function getGlByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
     {
         $res = SystemGlCodeScenarioDetail::where('companySystemID', $companySystemID)
                                         ->where('systemGlScenarioID', $systemGlScenarioID)
+                                        ->whereHas('chart_of_account_assigned', function($query) use ($companySystemID) {
+                                            $query->where('companySystemID', $companySystemID)
+                                                  ->where('isAssigned', -1);
+                                        })
                                         ->first();
 
         return (($res) ? $res->chartOfAccountSystemID : null);
@@ -121,5 +130,16 @@ class SystemGlCodeScenarioDetail extends Model
                                         ->first();
 
         return (($res) ? $res->chart_of_account->AccountCode : null);
+    }
+
+    public static function getGlDescriptionByScenario($companySystemID, $documentSystemID, $systemGlScenarioID)
+    {
+        $res = SystemGlCodeScenarioDetail::with(['chart_of_account'])
+                                        ->whereHas('chart_of_account')
+                                        ->where('companySystemID', $companySystemID)
+                                        ->where('systemGlScenarioID', $systemGlScenarioID)
+                                        ->first();
+
+        return (($res) ? $res->chart_of_account->AccountDescription : null);
     }
 }
