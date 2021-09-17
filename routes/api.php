@@ -1280,6 +1280,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
 
+    
+
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
         Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
@@ -2176,6 +2178,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
         Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
+
+
+          /* Master Datas Bulk Upload */
+        Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate');
+        Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
