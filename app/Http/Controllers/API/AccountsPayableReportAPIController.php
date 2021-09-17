@@ -2705,21 +2705,21 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountTrans, 1 )";
+            $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  )";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountLocal, 1 )";
+            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  )";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal<0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountRpt, 1 )";
+            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
 
@@ -4071,12 +4071,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_generalledger.documentCode,
                 sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
                 sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierCodeSystem,SupplierForInvoice.supplierCodeSystem) ) AS supplierID,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.primarySupplierCode,SupplierForInvoice.primarySupplierCode)) AS supplierCode,
-            IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierName,SupplierForInvoice.supplierName)) AS supplierName,
+                erp_generalledger.supplierCodeSystem AS supplierID,
+                SupplierForGeneralLedger.primarySupplierCode AS supplierCode,
+                SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
                 MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
             FROM
@@ -4090,9 +4087,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN erp_purchasereturnmaster ON erp_generalledger.documentSystemID = erp_purchasereturnmaster.documentSystemID
                 AND erp_generalledger.companySystemID = erp_purchasereturnmaster.companySystemID
                 AND erp_generalledger.documentSystemCode = erp_purchasereturnmaster.purhaseReturnAutoID
-                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForPRN ON erp_purchasereturnmaster.supplierID = SupplierForPRN.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForGeneralLedger ON erp_generalledger.supplierCodeSystem = SupplierForGeneralLedger.supplierCodeSystem
                 LEFT JOIN (
                 (
             SELECT
@@ -4167,7 +4162,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             GROUP BY
                 erp_generalledger.companySystemID,
                 erp_generalledger.documentSystemID,
-                erp_generalledger.documentSystemCode 
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.supplierCodeSystem  
                 ) AS finalUnbilled
                 LEFT JOIN (
             SELECT
@@ -4352,12 +4348,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_generalledger.documentCode,
                 sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
                 sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
-               IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierCodeSystem,SupplierForInvoice.supplierCodeSystem) ) AS supplierID,
-               IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.primarySupplierCode,SupplierForInvoice.primarySupplierCode)) AS supplierCode,
-               IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierName,SupplierForInvoice.supplierName)) AS supplierName,
+                erp_generalledger.supplierCodeSystem AS supplierID,
+                SupplierForGeneralLedger.primarySupplierCode AS supplierCode,
+                SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
                 MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
             FROM
@@ -4371,9 +4364,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN erp_purchasereturnmaster ON erp_generalledger.documentSystemID = erp_purchasereturnmaster.documentSystemID
                 AND erp_generalledger.companySystemID = erp_purchasereturnmaster.companySystemID
                 AND erp_generalledger.documentSystemCode = erp_purchasereturnmaster.purhaseReturnAutoID
-                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForPRN ON erp_purchasereturnmaster.supplierID = SupplierForPRN.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForGeneralLedger ON erp_generalledger.supplierCodeSystem = SupplierForGeneralLedger.supplierCodeSystem
                 LEFT JOIN (
                 (
             SELECT
@@ -4448,7 +4439,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             GROUP BY
                 erp_generalledger.companySystemID,
                 erp_generalledger.documentSystemID,
-                erp_generalledger.documentSystemCode 
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.supplierCodeSystem 
                 ) AS finalUnbilled
                 LEFT JOIN (
             SELECT
@@ -4584,12 +4576,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 erp_generalledger.documentCode,
                 sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
                 sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
-                IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierCodeSystem,SupplierForInvoice.supplierCodeSystem) ) AS supplierID,
-                IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.primarySupplierCode,SupplierForInvoice.primarySupplierCode)) AS supplierCode,
-                IF
-                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName,IF(erp_generalledger.documentSystemID = 24,SupplierForPRN.supplierName,SupplierForInvoice.supplierName)) AS supplierName,
+                erp_generalledger.supplierCodeSystem AS supplierID,
+                SupplierForGeneralLedger.primarySupplierCode AS supplierCode,
+                SupplierForGeneralLedger.supplierName AS supplierName,
                 MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
                 MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
             FROM
@@ -4603,9 +4592,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN erp_purchasereturnmaster ON erp_generalledger.documentSystemID = erp_purchasereturnmaster.documentSystemID
                 AND erp_generalledger.companySystemID = erp_purchasereturnmaster.companySystemID
                 AND erp_generalledger.documentSystemCode = erp_purchasereturnmaster.purhaseReturnAutoID
-                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
-                LEFT JOIN suppliermaster AS SupplierForPRN ON erp_purchasereturnmaster.supplierID = SupplierForPRN.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForGeneralLedger ON erp_generalledger.supplierCodeSystem = SupplierForGeneralLedger.supplierCodeSystem
                 LEFT JOIN (
                 (
             SELECT
@@ -4680,7 +4667,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             GROUP BY
                 erp_generalledger.companySystemID,
                 erp_generalledger.documentSystemID,
-                erp_generalledger.documentSystemCode 
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.supplierCodeSystem
                 ) AS finalUnbilled
                 LEFT JOIN (
             SELECT
@@ -5116,8 +5104,8 @@ ORDER BY
                 $emailSentTo = 0;
 
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-                    "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+                    "monitoring this inbox.</font>";
                 
                 if ($fetchSupEmail) {
                     foreach ($fetchSupEmail as $row) {
@@ -5221,8 +5209,8 @@ ORDER BY
                 $emailSentTo = 0;
 
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-                    "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+                    "monitoring this inbox.</font>";
                 
                 if ($fetchSupEmail) {
                     foreach ($fetchSupEmail as $row) {

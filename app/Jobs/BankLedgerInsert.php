@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class BankLedgerInsert implements ShouldQueue
 {
@@ -53,6 +54,18 @@ class BankLedgerInsert implements ShouldQueue
                         if ($masterData->financeperiod_by->isActive == -1) {
                             $masterDocumentDate = $masterData->BPVdate;
                         }
+                        if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
+                            $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
+
+                            $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
+
+                            $masterData->payAmountBank = $masterModel['pdcAmount'];
+                            $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
+                            $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
+                            $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
+                        }
+
+                       
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['documentSystemID'] = $masterData->documentSystemID;
@@ -66,8 +79,8 @@ class BankLedgerInsert implements ShouldQueue
                         $data['bankAccountID'] = $masterData->BPVAccount;
                         $data['bankCurrency'] = $masterData->BPVbankCurrency;
                         $data['bankCurrencyER'] = $masterData->BPVbankCurrencyER;
-                        $data['documentChequeNo'] = $masterData->BPVchequeNo;
-                        $data['documentChequeDate'] = $masterData->BPVchequeDate;
+                        $data['documentChequeNo'] = (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) ? $masterModel['pdcChequeNo'] : $masterData->BPVchequeNo;
+                        $data['documentChequeDate'] = (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) ? $masterModel['pdcChequeDate'] : $masterData->BPVchequeDate;
                         $data['payeeID'] = $masterData->BPVsupplierID;
 
                         $payee = SupplierMaster::find($masterData->BPVsupplierID);
@@ -85,10 +98,10 @@ class BankLedgerInsert implements ShouldQueue
                         $data['localCurrencyER'] = $masterData->localCurrencyER;
                         $data['companyRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['companyRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['payAmountBank'] = $masterData->payAmountBank;
-                        $data['payAmountSuppTrans'] = $masterData->payAmountSuppTrans;
-                        $data['payAmountCompLocal'] = $masterData->payAmountCompLocal;
-                        $data['payAmountCompRpt'] = $masterData->payAmountCompRpt;
+                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountBank * -1 : $masterData->payAmountBank;
+                        $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 : $masterData->payAmountSuppTrans;
+                        $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 : $masterData->payAmountCompLocal;
+                        $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 : $masterData->payAmountCompRpt;
 
                         if ($masterData->chequePaymentYN == 0) {
                             $data['chequePaymentYN'] = -1;
@@ -116,7 +129,18 @@ class BankLedgerInsert implements ShouldQueue
 
                         if ($masterData->invoiceType == 3) {
                             $custReceivePayment = CustomerReceivePayment::where('companySystemID', $masterData->companySystemID)->where('documentSystemID', $masterData->documentSystemID)->where('PayMasterAutoId', $masterModel["autoID"])->first();
+
+
                             if ($custReceivePayment) {
+                                if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
+                                    $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
+                                    $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $masterModel['pdcAmount']);
+
+                                    $custReceivePayment->bankAmount = $masterModel['pdcAmount'];
+                                    $custReceivePayment->localAmount = $currencyConvertionData['localAmount'];
+                                    $custReceivePayment->companyRptAmount = $currencyConvertionData['reportingAmount'];
+                                }
+                                
                                 $data['companySystemID'] = $custReceivePayment->companySystemID;
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -149,10 +173,10 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
                                 $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
                                 $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-                                $data['payAmountBank'] = ABS($custReceivePayment->bankAmount) * -1;
-                                $data['payAmountSuppTrans'] = ABS($custReceivePayment->bankAmount) * -1;
-                                $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
-                                $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
+                                $data['payAmountBank'] = ABS($custReceivePayment->bankAmount);
+                                $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->bankAmount) : ABS($custReceivePayment->bankAmount) * -1;
+                                $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->localAmount) : ABS($custReceivePayment->localAmount) * -1;
+                                $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->companyRptAmount) : ABS($custReceivePayment->companyRptAmount) * -1;
                                 $data['chequePaymentYN'] = -1;
 
                                 if ($custReceivePayment->trsCollectedYN == 0) {

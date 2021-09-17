@@ -1633,6 +1633,17 @@ class ProcumentOrderAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+
+    public function getProjectsBySegment(Request $request)
+    {
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+
+        $projects = ErpProjectMaster::where('serviceLineSystemID', $serviceLineSystemID)->get();
+
+        return $this->sendResponse($projects, 'Segments Projects retrieved successfully');
+    }
+
     public function getItemsOptionForProcumentOrder(Request $request)
     {
         $input = $request->all();
@@ -2187,6 +2198,23 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
                 }
                 BudgetConsumedData::destroy($idsDeleted);
+            }
+        }
+
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
+                                              ->where('LCPaymentYN', 2)
+                                              ->first();
+
+        if ($poAdvancePaymentType) {
+            $advancePayment = PoAdvancePayment::where('poTermID', $poAdvancePaymentType->paymentTermID)->first();
+
+            if ($advancePayment && isset($advancePayment->selectedToPayment) && $advancePayment->selectedToPayment == 0) {
+                $advancePayment->cancelledYN = 1; 
+                $advancePayment->cancelledComment = $input['cancelComments']; 
+                $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+                $advancePayment->cancelledDate = Carbon::now(); 
+
+                $advancePayment->save();
             }
         }
 

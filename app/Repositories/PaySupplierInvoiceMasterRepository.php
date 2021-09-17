@@ -314,4 +314,50 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         return $data;
     }
 
+    public function getChequeNoForPDC($companySystemID, $bankAccount, $documentID, $documentSystemID)
+    {
+        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $companySystemID)
+                ->where('companyPolicyCategoryID', 35)
+                ->where('isYesNO', 1)
+                ->first();
+
+        $nextChequeNo = null;
+        $chequeRegisterAutoID = null;
+        $chequeGenrated = false;
+        if (!empty($is_exist_policy_GCNFCR)) {
+            $chequeGenrated = true;
+            $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                                                    $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                                                        ->where('company_id', $companySystemID);
+                                                })
+                                                ->where('status', 0)
+                                                ->where(function ($q) use ($usedCheckID) {
+                                                    if ($usedCheckID) {
+                                                        $q->where('id', '>', $usedCheckID);
+                                                    }
+                                                })
+                                                ->orderBy('id', 'ASC')
+                                                ->first();
+
+            if (!empty($unUsedCheque)) {
+                $nextChequeNo = $unUsedCheque->cheque_no;
+                $chequeRegisterAutoID = $unUsedCheque->id;
+
+                $update_array = [
+                    'document_id' => $documentID,
+                    'document_master_id' => $documentSystemID,
+                    'status' => 1,
+                ];
+                ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
+
+            } else {
+                return ['status' => false, 'message' => "Could not found unassigned cheques to generate PDC Cheques. Please add cheques to cheque registry"];
+            }
+        } 
+
+        return ['status' => true, 'nextChequeNo' => $nextChequeNo, 'chequeRegisterAutoID' => $chequeRegisterAutoID, 'chequeGenrated' => $chequeGenrated];
+    }
+
 }

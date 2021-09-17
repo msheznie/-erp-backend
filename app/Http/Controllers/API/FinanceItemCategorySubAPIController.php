@@ -36,14 +36,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     /** @var  FinanceItemCategorySubRepository */
     private $financeItemCategorySubRepository;
     private $userRepository;
-    private $financeItemCategorySubAssignedRepository;
+    private $financeItemcategorySubAssignedRepository;
 
     public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo,UserRepository $userRepo,
                                 FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
     {
         $this->financeItemCategorySubRepository = $financeItemCategorySubRepo;
         $this->userRepository = $userRepo;
-        $this->financeItemCategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+        $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
     }
 
     /**
@@ -340,7 +340,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function update($id, UpdateFinanceItemCategorySubAPIRequest $request)
     {
         $input = $request->all();
-        return $input;
 
         /** @var FinanceItemCategorySub $financeItemCategorySub */
         $financeItemCategorySub = $this->financeItemCategorySubRepository->findWithoutFail($id);

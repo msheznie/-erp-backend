@@ -37,7 +37,7 @@ use App\Repositories\BankReconciliationRepository;
 use App\Repositories\PaymentBankTransferRepository;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
-
+use App\Repositories\PdcLogRepository;
 class TransactionsExportExcel extends AppBaseController
 {
     private $gRVMasterRepository;
@@ -71,6 +71,7 @@ class TransactionsExportExcel extends AppBaseController
     private $paymentBankTransferRepository;
     private $fixedAssetMasterRepository;
     private $fixedAssetDepreciationMasterRepository;
+    private $pdcLogRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -103,7 +104,8 @@ class TransactionsExportExcel extends AppBaseController
         BankReconciliationRepository $bankReconciliationRepo,
         PaymentBankTransferRepository $paymentBankTransferRepo,
         FixedAssetMasterRepository $fixedAssetMasterRepo,
-        FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo
+        FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
+        PdcLogRepository $pdcLogRepository
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -137,6 +139,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
         $this->fixedAssetMasterRepository = $fixedAssetMasterRepo;
         $this->fixedAssetDepreciationMasterRepository = $fixedAssetDepreciationMasterRepo;
+        $this->pdcLogRepository = $pdcLogRepository;
     }
 
     public function exportRecord(Request $request) { 
@@ -151,6 +154,7 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
                 $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
+
                 break;
 
             case '50':
@@ -352,7 +356,10 @@ class TransactionsExportExcel extends AppBaseController
                 $dataQry = $this->stockCountRepository->stockCountListQuery($request, $input, $search);
                 $data = $this->stockCountRepository->setExportExcelData($dataQry);
                 break;
-
+            case '58':
+                $dataQry = $this->pdcLogRepository->pdcIssuedListQuery($request, $input, $search);
+                $data = $this->pdcLogRepository->setExportExcelData($dataQry,$input);
+                break;
             default:
                 return $this->sendResponse(array(), 'export failed');
         }

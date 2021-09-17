@@ -157,5 +157,12 @@ class HREmpContractHistory extends Model
         'contractStartDate' => 'required'
     ];
 
+    function contract_type(){
+        return $this->belongsTo(SMEEmpContractType::class, 'contactTypeID', 'EmpContractTypeID');
+    }
+
+    function employee(){
+        return $this->belongsTo(SrpEmployeeDetails::class, 'empID', 'EIdNo');
+    }
     
 }
