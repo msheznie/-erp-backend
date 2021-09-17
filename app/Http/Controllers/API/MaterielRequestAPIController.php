@@ -116,7 +116,7 @@ class MaterielRequestAPIController extends AppBaseController
     {
 
          $input = $request->all();
-         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved','cancelledYN'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -125,9 +125,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
         
         $search = $request->input('search.value');
-
         $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
-
         return \DataTables::eloquent($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -362,7 +360,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $validator = \Validator::make($input, [
             'serviceLineSystemID' => 'required|numeric|min:1',
-            'location' => 'required|numeric|min:1',
+            // 'location' => 'required|numeric|min:1',
             'priority' => 'required|numeric|min:1',
             'comments' => 'required'
         ]);
@@ -956,8 +954,86 @@ class MaterielRequestAPIController extends AppBaseController
                 ];
                 return $this->sendResponse($data, 'No Purchase request found');
             }
-            
-            
-
     }
+
+
+    public function cancelMaterielRequest(Request $request) {
+
+        $input = $request->all();
+
+        $requestID = $input['RequestID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
+        }
+
+        if ($materielRequest->cancelledYN == -1) {
+            return $this->sendError('You cannot cancel this request as it is already cancelled');
+        }
+
+        if(count($materielRequest->materialIssue) > 0) {
+            return $this->sendError('Cannot cancel. Materiel Issue is created for this request');
+        }
+
+        if(count($materielRequest->purchase_requests) > 0) {
+            return $this->sendError('Cannot cancel. Purchase Request is created for this request');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+
+        $materielRequest->cancelledYN = -1;
+        $materielRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
+        $materielRequest->cancelledByEmpID = $employee->empID;
+        $materielRequest->cancelledByEmpName = $employee->empName;
+        $materielRequest->cancelledComments = $input['cancelledComments'];
+        $materielRequest->cancelledDate = now();
+        $materielRequest->save();
+
+        AuditTrial::createAuditTrial($materielRequest->documentSystemID,$input['RequestID'],$input['cancelledComments'],'cancelled');
+
+        
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is cancelled';
+
+        if ($materielRequest->ConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $materielRequest->ConfirmedBySystemID,
+                'companySystemID' => $materielRequest->companySystemID,
+                'docSystemID' => $materielRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $materielRequest->RequestID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $materielRequest->companySystemID)
+            ->where('documentSystemCode', $materielRequest->RequestID)
+            ->where('documentSystemID', $materielRequest->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $materielRequest->companySystemID,
+                'docSystemID' => $materielRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $materielRequest->RequestID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
+    }
+    
 }

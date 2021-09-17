@@ -213,11 +213,12 @@ class MaterielRequest extends Model
 {
 
     public $table = 'erp_request';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'RequestID';
 
+    protected $appends = ['materialIssueStatusValue'];
 
     public $fillable = [
         'companySystemID',
@@ -263,7 +264,13 @@ class MaterielRequest extends Model
         'approvedDate',
         'refferedBackYN',
         'timesReferred',
-        'isFromPortal'
+        'isFromPortal',
+        'cancelledYN',
+        'cancelledByEmpSystemID',
+        'cancelledByEmpID',
+        'cancelledByEmpName',
+        'cancelledComments',
+        'cancelledDate',
     ];
 
     /**
@@ -312,7 +319,13 @@ class MaterielRequest extends Model
         'approvedDate' => 'string',
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
-        'isFromPortal' => 'integer'
+        'isFromPortal' => 'integer',
+        'cancelledYN' => 'integer',
+        'cancelledByEmpSystemID' => 'integer',
+        'cancelledByEmpID' => 'string',
+        'cancelledByEmpName' => 'string',
+        'cancelledComments' => 'string',
+        'cancelledDate' => 'string',
     ];
 
     /**
@@ -368,7 +381,36 @@ class MaterielRequest extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'RequestID')->where('documentSystemID',9);
     }
 
+    public function materialIssue()
+    {
+        return $this->hasMany('App\Models\ItemIssueMaster', 'reqDocID', 'RequestID');
+    }
+
     public function purchase_requests() {
         return $this->hasMany('App\Models\PurchaseRequestDetails','materialReqeuestID','RequestID');
+    }
+
+    public function getMaterialIssueStatusValueAttribute() {
+        
+
+        $materielIssues = $this->materialIssue;
+
+        if($this->cancelledYN == -1) {
+            return "canceled";
+        }else {
+            if(count($this->materialIssue) > 0) {
+                $sumQntyRequested = 0;
+                foreach($materielIssues as $materielIssue) {
+                    $sumQntyRequested += $materielIssue->details->first()->qtyRequested;
+                }
+                if($this->details->first()->quantityRequested == $sumQntyRequested) {
+                    return "fully_issued";
+                }else {
+                    return "partially_issued";
+                }
+            }else{
+                return "Pending";
+            }
+        }
     }
 }
