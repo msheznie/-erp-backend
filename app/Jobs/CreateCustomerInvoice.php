@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CustomerMaster;
 use App\Models\SegmentMaster;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
@@ -188,7 +189,8 @@ class CreateCustomerInvoice implements ShouldQueue
             SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
 
                     if ($disposalDetail) {
-                        $chartofAccount = ChartOfAccount::find(557);
+                        $accID = SystemGlCodeScenarioDetail::getGlCodeByScenario($dpMaster->companySystemID, $dpMaster->documentSystemID, 11);
+                        $chartofAccount = ChartOfAccount::find($accID);
                         $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
                         foreach ($disposalDetail as $val) {
                             $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
@@ -198,7 +200,7 @@ class CreateCustomerInvoice implements ShouldQueue
                             if ($customer) {
                                 $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                             }
-                            $cusInvoiceDetails['glSystemID'] = 557;
+                            $cusInvoiceDetails['glSystemID'] = $accID;
                             $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
                             $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
                             $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
