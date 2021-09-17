@@ -156,6 +156,10 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (in_array('advance_payment_request', $input)) {
+            unset($input['advance_payment_request']);
+        }
+
         $input = $this->convertArrayToValue($input);
 
         $purchaseOrderID = $input['poID'];
@@ -234,7 +238,6 @@ class PoPaymentTermsAPIController extends AppBaseController
         //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
         //$input['comAmount'] = round($calculatePer, 8);
 
-
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 
         return $this->sendResponse($poPaymentTerms->toArray(), 'PoPaymentTerms updated successfully');
@@ -268,6 +271,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $input = $request->all();
 
         $poAdvancePaymentType = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
+            ->with(['advance_payment_request'])
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 

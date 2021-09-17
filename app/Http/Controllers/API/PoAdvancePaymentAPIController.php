@@ -259,7 +259,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
+        $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->with(['cancelled_by'])->first();
 
         if (empty($AdvancePayment)) {
             return $this->sendError('Po Payment Terms not found');
@@ -678,6 +678,7 @@ ORDER BY
             ->where('erp_purchaseordermaster.poConfirmedYN', 1)
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseordermaster.poCancelledYN', 0)
+            ->where('erp_purchaseorderadvpayment.cancelledYN', 0)
             ->whereDate('erp_purchaseorderadvpayment.reqDate','<=', $asOfDate)
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
@@ -844,5 +845,29 @@ ORDER BY
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
+    }
+
+    public function advancePaymentTermCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $advancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
+
+        if (empty($advancePayment)) {
+            return $this->sendError('Advance Payment Terms not found');
+        }
+
+        if ($advancePayment->selectedToPayment == -1) {
+            return $this->sendError('Advance payment request is slected for payment voucher, therefore cannot cancel', 500);
+        }
+
+        $advancePayment->cancelledYN = 1; 
+        $advancePayment->cancelledComment = $input['comment']; 
+        $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+        $advancePayment->cancelledDate = Carbon::now(); 
+
+        $advancePayment->save();
+
+        return $this->sendResponse([], 'Successfully cancelled');
     }
 }
