@@ -661,7 +661,7 @@ class StockTransferAPIController extends AppBaseController
             }
 
             if ($stockTransfer->interCompanyTransferYN == -1) {
-                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlCodeByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 10);
+                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 10);
                 
                 if (is_null($checkRevenueAc)) {
                     return $this->sendError('Please configure Inter Company stock transfer revenue account', 500);
