@@ -189,7 +189,7 @@ class CreateCustomerInvoice implements ShouldQueue
             SUM(if(ROUND(netBookValueRpt,2) = 0,costUnitRpt + costUnitRpt * (revenuePercentage/100),netBookValueRpt + (netBookValueRpt * (revenuePercentage/100)))) as comRptAmountDetail,SUM(sellingPriceLocal) as sellingPriceLocal,SUM(sellingPriceRpt) as sellingPriceRpt')->OfMaster($dpMaster->assetdisposalMasterAutoID)->groupBy('serviceLineSystemID')->get();
 
                     if ($disposalDetail) {
-                        $accID = SystemGlCodeScenarioDetail::getGlCodeByScenario($dpMaster->companySystemID, $dpMaster->documentSystemID, 11);
+                        $accID = SystemGlCodeScenarioDetail::getGlByScenario($dpMaster->companySystemID, $dpMaster->documentSystemID, 11);
                         $chartofAccount = ChartOfAccount::find($accID);
                         $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
                         foreach ($disposalDetail as $val) {

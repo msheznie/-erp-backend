@@ -456,7 +456,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.assigned_supplier')]), 500, ['type' => 'confirm']);
                     }
 
-                    $checkRevenueAc = SystemGlCodeScenarioDetail::getGlCodeByScenario($assetDisposalMaster->companySystemID, $assetDisposalMaster->documentSystemID, 11);
+                    $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($assetDisposalMaster->companySystemID, $assetDisposalMaster->documentSystemID, 11);
                 
                     if (is_null($checkRevenueAc)) {
                         return $this->sendError('Please configure income from sales', 500);
