@@ -24,6 +24,7 @@ class LeaveAccrualService
     public $pending_accruals = [];
     public $header_data = [];
     public $finance_year;
+    public $accrualMasterID = null;
 
     public function __construct($company_data, $header_data)
     {
@@ -32,6 +33,7 @@ class LeaveAccrualService
         $this->company_name = $company_data['name'];
         $this->date_time = Carbon::now();
         $this->date = $this->date_time->format('Y-m-d');
+
 
         if($header_data){
             $this->header_data = $header_data;
@@ -87,6 +89,11 @@ class LeaveAccrualService
             $str = "COUNT(EIdNo) AS emp_count";
         }
 
+        //when preparing for the data no need to check with a master id,
+        //but when creating the details we have to check this
+        //condition
+        $master_id_filter = ($this->accrualMasterID) ? " AND mas.leaveaccrualMasterID != $this->accrualMasterID": '';
+
         $sql = "SELECT {$str}
             FROM srp_employeesdetails AS emp
             JOIN (
@@ -96,8 +103,9 @@ class LeaveAccrualService
             WHERE NOT EXISTS ( 
                 SELECT * FROM srp_erp_leaveaccrualdetail AS det
                 JOIN srp_erp_leaveaccrualmaster AS mas ON mas.leaveaccrualMasterID = det.leaveaccrualMasterID
-                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} 
-                AND {$year_date_filter} GROUP BY empID
+                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} AND {$year_date_filter}
+                {$master_id_filter}
+                GROUP BY empID
             ) AND emp.leaveGroupID = {$leaveGroupID} AND isDischarged != 1 AND Erp_companyID={$this->company_id}";
 
         $emp_arr = DB::select($sql);
@@ -139,7 +147,7 @@ class LeaveAccrualService
                 return false;
             }
 
-            $this->create_details( $master_data['id'] );
+            $this->create_details();
 
             DB::commit();
 
@@ -185,21 +193,22 @@ class LeaveAccrualService
             'confirmedDate' => $this->date_time,
         ];
 
-
         $master = LeaveAccrualMaster::create($data);
+
+        $this->accrualMasterID = $master->leaveaccrualMasterID;
 
         return [
             'status'=> true,
-            'id'=> $master->leaveaccrualMasterID,
             'doc_code'=> $doc_code,
         ];
 
     }
 
-    function create_details($master_id, $dailyAccrualYN=true){
+    function create_details($dailyAccrualYN=true){
         $group_id = $this->header_data['leaveGroupID'];
-        $financeYear = $this->finance_year['startDate'];
-        $financeYearEnd = $this->finance_year['endDate'];
+        $financeYear = Carbon::parse( $this->finance_year['startDate'] )->format('Y');
+        $financeYearEnd = Carbon::parse( $this->finance_year['endDate'] )->format('Y');
+
 
         $detail = array();
 
@@ -213,7 +222,7 @@ class LeaveAccrualService
 
 
             $detail[] = array(
-                'leaveaccrualMasterID' => $master_id,
+                'leaveaccrualMasterID' => $this->accrualMasterID,
                 'empID' => $val->EIdNo,
                 'leaveGroupID' => $group_id,
                 'leaveType' => $val->leaveTypeID,
@@ -229,7 +238,7 @@ class LeaveAccrualService
         }
 
         if (!empty($detail)) {
-            LeaveAccrualDetail::create($detail);
+            LeaveAccrualDetail::insert($detail);
         }
 
     }
@@ -241,8 +250,4 @@ class LeaveAccrualService
         return " $this->company_code | $this->company_name \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
     }
 
-    /*
-     *
-   php artisan infyom:api_scaffold LeaveAccrualDetail --fromTable --tableName=srp_erp_leaveaccrualdetail --skip=scaffold_controller,scaffold_requests,scaffold_routes,views
-     * */
 }

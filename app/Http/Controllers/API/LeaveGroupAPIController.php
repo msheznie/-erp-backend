@@ -282,8 +282,6 @@ class LeaveGroupAPIController extends AppBaseController
     }
 
     function accrual_service(){
-        /*$data = CompanyFinanceYear::active_finance_year(1, '2021-09-04');
-        echo '<pre>'; print_r($data); echo '</pre>';*/
         LeaveAccrualInitiate::dispatch();
 
         return 'true';

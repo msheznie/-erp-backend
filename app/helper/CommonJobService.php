@@ -3,8 +3,9 @@
 namespace App\helper;
 
 use App\Models\Company;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
-use League\Flysystem\Config;
+use Illuminate\Support\Facades\Config;
 
 class CommonJobService
 {
@@ -23,9 +24,13 @@ class CommonJobService
         }
     }
 
+    public static function tenant_list(){
+        return Tenant::get();
+    }
+
+
     public static function company_list(){
         return Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')
-            ->whereIn('companySystemID', [1])
             ->get();
     }
 

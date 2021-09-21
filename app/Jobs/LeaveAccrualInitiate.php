@@ -16,18 +16,22 @@ class LeaveAccrualInitiate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $dispatch_db;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($dispatch_db)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
             self::onConnection('database');
         }
+
+        $this->dispatch_db = $dispatch_db;
     }
 
     /**
@@ -40,11 +44,14 @@ class LeaveAccrualInitiate implements ShouldQueue
         $path = CommonJobService::get_specific_log_file('leave-accrual');
         Log::useFiles($path);
 
+        $db = $this->dispatch_db;
+
+        CommonJobService::db_switch( $db );
+
         $company_list = CommonJobService::company_list();
 
         if($company_list->count() == 0){
-            $db = Config::get("database.connections.mysql.database");
-            Log::error("Company details not fount on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
         else{
 
@@ -82,7 +89,7 @@ class LeaveAccrualInitiate implements ShouldQueue
 
                 if($groups){
                     foreach ($groups as $group){
-                        LeaveAccrualProcess::dispatch($company, $group);
+                        LeaveAccrualProcess::dispatch($db, $company, $group);
                             //->delay(now()->addSecond(2));
                     }
                 }

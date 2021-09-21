@@ -24,7 +24,7 @@ class LeaveAccrualProcess implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($company_det, $group)
+    public function __construct($dispatch_db, $company_det, $group)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -32,6 +32,7 @@ class LeaveAccrualProcess implements ShouldQueue
             self::onConnection('database');
         }
 
+        $this->dispatch_db = $dispatch_db;
         $this->company = $company_det;
         $this->group = $group;
 
@@ -50,6 +51,8 @@ class LeaveAccrualProcess implements ShouldQueue
         ['code'=> $company_code, 'name'=> $company_name] = $this->company;
 
         Log::info("Processing the leave accrual for {$company_code} | {$company_name}");
+
+        CommonJobService::db_switch( $this->dispatch_db );
 
         $ser = new LeaveAccrualService($this->company, $this->group);
         $ser->create_accrual();
