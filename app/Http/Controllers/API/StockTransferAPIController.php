@@ -660,6 +660,14 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError('Please configure PL account for stock transfer', 500);
             }
 
+            if ($stockTransfer->interCompanyTransferYN == -1) {
+                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 10);
+                
+                if (is_null($checkRevenueAc)) {
+                    return $this->sendError('Please configure Inter Company stock transfer revenue account', 500);
+                }
+            }
+
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
             $confirm = \Helper::confirmDocument($params);

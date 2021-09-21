@@ -2201,6 +2201,23 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }
         }
 
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
+                                              ->where('LCPaymentYN', 2)
+                                              ->first();
+
+        if ($poAdvancePaymentType) {
+            $advancePayment = PoAdvancePayment::where('poTermID', $poAdvancePaymentType->paymentTermID)->first();
+
+            if ($advancePayment && isset($advancePayment->selectedToPayment) && $advancePayment->selectedToPayment == 0) {
+                $advancePayment->cancelledYN = 1; 
+                $advancePayment->cancelledComment = $input['cancelComments']; 
+                $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+                $advancePayment->cancelledDate = Carbon::now(); 
+
+                $advancePayment->save();
+            }
+        }
+
         AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $input['cancelComments'], 'cancelled');
 
         $emails = array();
