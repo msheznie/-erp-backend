@@ -2278,6 +2278,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
     Route::get('notificatioService', 'NotificationCompanyScenarioAPIController@notificatioService');
+
+    Route::get('leave/accrual/service', 'LeaveGroupAPIController@accrual_service');
 });
 
 
@@ -2338,3 +2340,14 @@ Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController')
 Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
+
+Route::get('job-check', function(){
+    \App\helper\CommonJobService::job_check();
+    return '';
+});
+
+
+Route::resource('leave_accrual_masters', 'LeaveAccrualMasterAPIController');
+
+Route::resource('leave_accrual_details', 'LeaveAccrualDetailAPIController');
