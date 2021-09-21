@@ -400,14 +400,31 @@ class MaterielRequest extends Model
         }else {
             if(count($this->materialIssue) > 0) {
                 $sumQntyRequested = 0;
+                $sumQntyIssued = 0;
                 foreach($materielIssues as $materielIssue) {
-                    $sumQntyRequested += $materielIssue->details->first()->qtyRequested;
+                        $materialIssueDetails = $materielIssue->details;
+
+                        foreach($materialIssueDetails as$materialIssueDetail) {
+                            $sumQntyIssued += $materialIssueDetail->qtyRequested;
+                        }
                 }
-                if($this->details->first()->quantityRequested == $sumQntyRequested) {
-                    return "fully_issued";
+
+                $materielDetails = $this->details;
+
+                foreach($materielDetails as $materielDetail ) {
+                    $sumQntyRequested += $materielDetail->quantityRequested;
+                }
+
+                if($sumQntyRequested != 0 && $sumQntyIssued != 0 ) {
+                    if(($sumQntyRequested == $sumQntyRequested)) {
+                        return "fully_issued";
+                    }else {
+                        return "partially_issued";
+                    }
                 }else {
-                    return "partially_issued";
+                    return "Pending";
                 }
+
             }else{
                 return "Pending";
             }
