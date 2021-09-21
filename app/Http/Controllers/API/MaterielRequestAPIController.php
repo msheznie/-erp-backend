@@ -34,6 +34,9 @@ use App\Models\Priority;
 use App\Models\RequestDetailsRefferedBack;
 use App\Models\RequestRefferedBack;
 use App\Models\SegmentMaster;
+use App\Models\PurchaseOrderDetails;
+use App\Models\ErpItemLedger;
+use App\Models\GRVDetails;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -359,7 +362,7 @@ class MaterielRequestAPIController extends AppBaseController
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $validator = \Validator::make($input, [
-            'serviceLineSystemID' => 'required|numeric|min:1',
+            // 'serviceLineSystemID' => 'required|numeric|min:1',
             // 'location' => 'required|numeric|min:1',
             'priority' => 'required|numeric|min:1',
             'comments' => 'required'
@@ -1034,6 +1037,74 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
+    }
+
+
+    public function updateQntyByLocation(Request $request) {
+        $input = $request->all();
+
+        $location = $input['location'];
+        $requestID = $input['RequestID'];
+        $companySystemID =  $input['companySystemID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+
+        if($location !=  $materielRequest->location) {
+
+           $itemDetails = $materielRequest->details;
+            foreach($itemDetails as $item) {
+
+                    $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID,$materielRequest,$location) {
+                        $query->where('companySystemID', $companySystemID)
+                            ->where('poLocation', $location)
+                            ->where('approved', -1)
+                            ->where('poCancelledYN', 0);
+                    })
+                    ->where('itemCode', $item->itemCode)
+                    ->groupBy('erp_purchaseorderdetails.companySystemID',
+                        'erp_purchaseorderdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_purchaseorderdetails.companySystemID',
+                            'erp_purchaseorderdetails.itemCode',
+                            'erp_purchaseorderdetails.itemPrimaryCode'
+                        ]
+                    )
+                    ->sum('noQty');
+
+                    $quantityInHand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('wareHouseSystemCode', $location)
+                        ->groupBy('itemSystemCode')
+                        ->sum('inOutQty');
+
+                    $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID,$item,$location) {
+                    $query->where('companySystemID', $companySystemID)
+                        ->where('grvTypeID', 2)
+                        ->where('grvLocation', $location)
+                        ->groupBy('erp_grvmaster.companySystemID');
+                    })
+                    ->where('itemCode', $item->itemCode)
+                    ->groupBy('erp_grvdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_grvdetails.companySystemID',
+                            'erp_grvdetails.itemCode'
+                        ])
+                    ->sum('noQty');
+
+                    $quantityOnOrder = $poQty - $grvQty;
+                    $item['quantityOnOrder'] = $quantityOnOrder;
+                    $item['quantityInHand']  = $quantityInHand;
+                    $item->save();
+            }
+
+            $materielRequest->location = $location;
+            $materielRequest->save();
+        }
+
+        return $this->sendResponse($materielRequest,'Materiel Details Updated!');
+
     }
     
 }
