@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\ProjectGlDetail;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -381,6 +382,40 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function getGlAccounts(request $request){
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $items = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+            $q->where('isApproved', 1);
+        })->where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isBank', 0)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+        $items = $items->take(20)->get();
+
+        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+                                    ->where('projectID' , $projectID)->get();
+        
+        $data = array(
+            'items'=>$items, 
+            'glDetails'=>$glDetails,
+        );
+        if (empty($data)) {
+            return $this->sendError('Data not found');
+        }                         
+        return $this->sendResponse($data, 'Data retrieved successfully');
     }
 
     public function getAssignedChartOfAccounts(request $request)
