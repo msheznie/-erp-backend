@@ -4250,7 +4250,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                 AND erp_grvmaster.approved =- 1  
                 AND erp_grvmaster.grvTotalSupplierTransactionCurrency > 0  
                 AND erp_grvdetails.logisticsChargest_RptCur > 0  
-                AND If(erp_grvmaster.supplierID=erp_unbilledgrvgroupby.supplierID,0,1)= 1
                 AND erp_grvmaster.companySystemID IN (' . join(',', $companyID) . ')
                 AND STR_TO_DATE( DATE_FORMAT( erp_grvmaster.grvDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
                 AND erp_unbilledgrvgroupby.supplierID IN (' . join(',', $supplierSystemID) . ')
