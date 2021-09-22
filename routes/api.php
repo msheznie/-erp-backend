@@ -2279,7 +2279,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
     Route::get('notificatioService', 'NotificationCompanyScenarioAPIController@notificatioService');
 
-    Route::get('leave/accrual/service', 'LeaveGroupAPIController@accrual_service');
+    Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
 });
 
 
@@ -2346,8 +2346,3 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
-
-
-Route::resource('leave_accrual_masters', 'LeaveAccrualMasterAPIController');
-
-Route::resource('leave_accrual_details', 'LeaveAccrualDetailAPIController');

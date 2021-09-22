@@ -4,8 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateLeaveGroupAPIRequest;
 use App\Http\Requests\API\UpdateLeaveGroupAPIRequest;
-use App\Jobs\LeaveAccrualInitiate;
-use App\Models\CompanyFinanceYear;
 use App\Models\LeaveGroup;
 use App\Repositories\LeaveGroupRepository;
 use Illuminate\Http\Request;
@@ -279,11 +277,5 @@ class LeaveGroupAPIController extends AppBaseController
         $leaveGroup->delete();
 
         return $this->sendSuccess('Leave Group deleted successfully');
-    }
-
-    function accrual_service(){
-        LeaveAccrualInitiate::dispatch();
-
-        return 'true';
     }
 }
