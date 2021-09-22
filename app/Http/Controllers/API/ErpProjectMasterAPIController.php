@@ -62,6 +62,12 @@ class ErpProjectMasterAPIController extends AppBaseController
      *      )
      * )
      */
+    
+     public function get_projects(){
+        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')->get();
+        return $this->sendResponse($projectMaster, 'Projects retrieved successfully');
+    }
+
     public function index(Request $request)
     {
         $input = $request->all();

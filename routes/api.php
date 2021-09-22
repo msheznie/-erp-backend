@@ -646,6 +646,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
+        Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
@@ -2122,6 +2123,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
 
         Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
+        Route::post('get_projects', 'ErpProjectMasterAPIController@get_projects');
         Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
         Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany');
