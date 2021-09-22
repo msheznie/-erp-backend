@@ -415,7 +415,7 @@ class MaterielRequest extends Model
                 }
 
                 if($sumQntyRequested != 0 && $sumQntyIssued != 0 ) {
-                    if(($sumQntyRequested == $sumQntyRequested)) {
+                    if(($sumQntyRequested == $sumQntyIssued)) {
                         return "fully_issued";
                     }else {
                         return "partially_issued";
