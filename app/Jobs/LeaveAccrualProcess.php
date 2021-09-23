@@ -18,13 +18,14 @@ class LeaveAccrualProcess implements ShouldQueue
     public $dispatch_db;
     public $company;
     public $group;
+    public $accrual_type_det;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $company_det, $group)
+    public function __construct($dispatch_db, $company_det, $accrual_type_det, $group)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -34,6 +35,7 @@ class LeaveAccrualProcess implements ShouldQueue
 
         $this->dispatch_db = $dispatch_db;
         $this->company = $company_det;
+        $this->accrual_type_det = $accrual_type_det;
         $this->group = $group;
 
     }
@@ -50,11 +52,14 @@ class LeaveAccrualProcess implements ShouldQueue
 
         ['code'=> $company_code, 'name'=> $company_name] = $this->company;
 
-        Log::info("Processing the leave accrual for {$company_code} | {$company_name}");
+        $acc_des = $this->accrual_type_det['description'];
+        $leave_group = $this->group['description'];
+        $msg = "Processing the {$acc_des} | {$leave_group} (leave group) for {$company_code} | {$company_name}";
+        Log::info($msg . " on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         CommonJobService::db_switch( $this->dispatch_db );
 
-        $ser = new LeaveAccrualService($this->company, $this->group);
+        $ser = new LeaveAccrualService($this->company, $this->accrual_type_det, $this->group);
         $ser->create_accrual();
     }
 }

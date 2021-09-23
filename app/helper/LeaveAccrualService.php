@@ -61,15 +61,18 @@ class LeaveAccrualService
 
         foreach ($this->leave_groups as $group){
             $group_id = $group['leaveGroupID'];
+            $leave_group = $group['description'];
 
-            $status = $this->get_employee_list($group_id, true);
+            $status = $this->get_employee_list($group_id, $leave_group,true);
 
             if($status){
                 $this->pending_accruals[] = $group;
             }
         }
 
-        Log::info( $this->pending_accruals );
+        if($this->debug){
+            Log::info( $this->pending_accruals );
+        }
 
         return $this->pending_accruals;
     }
@@ -91,7 +94,7 @@ class LeaveAccrualService
         return true;
     }
 
-    function get_employee_list($leaveGroupID, $getCount): bool
+    function get_employee_list($leaveGroupID, $leave_group, $getCount): bool
     {
         $str = "EIdNo, ECode, Ename2, emp.leaveGroupID, gd.leaveTypeID, noOfDays";
         if($getCount){
@@ -113,7 +116,9 @@ class LeaveAccrualService
 
         if($getCount) {
             $count = $emp_arr[0]->emp_count;
-            Log::info("{$count} employees found for the accrual ". $this->log_suffix());
+            if($this->debug) {
+                Log::info("{$count} employees found for {$leave_group} (leave group) ". $this->log_suffix());
+            }
             return ($count > 0);
         }
 
@@ -183,7 +188,8 @@ class LeaveAccrualService
             }
 
             $group_id = $this->header_data['leaveGroupID'];
-            $status = $this->get_employee_list($group_id, false);
+            $leave_group = $this->header_data['description'];
+            $status = $this->get_employee_list($group_id, $leave_group, false);
 
             if(!$status){
                 Log::error("Employees not found for the accrual ". $this->log_suffix());
