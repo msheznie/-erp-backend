@@ -39,6 +39,7 @@ use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateNumbers;
 use App\Models\SegmentMaster;
+use App\Models\BudgetConsumedData;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -273,6 +274,15 @@ class FinancialReportAPIController extends AppBaseController
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function validatePUReport(Request $request){
+        $fromDate = $request->fromDate;
+        $toDate = $request->toDate;
+        $projectID = $request->projectID;
+
+        return $budgetConsumedData = BudgetConsumedData::where('projectID',$projectID)->get();
+
     }
 
     /*generate report according to each report id*/
