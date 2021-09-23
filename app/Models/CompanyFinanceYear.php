@@ -205,4 +205,12 @@ class CompanyFinanceYear extends Model
             return date("Y");;
         }
     }
+
+    public static function active_finance_year($company, $date){
+        return CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
+            ->where('companySystemID', $company)
+            ->where('isActive', -1)
+            ->whereRaw("( '{$date}' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ) ")
+            ->first();
+    }
 }

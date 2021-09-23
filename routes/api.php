@@ -2296,7 +2296,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     });
 
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
+    Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
 });
 
 
@@ -2308,7 +2310,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
-Route::get('job-check', 'NotificationCompanyScenarioAPIController@job_check');
 
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
@@ -2360,3 +2361,7 @@ Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 
 
+Route::get('job-check', function(){
+    \App\helper\CommonJobService::job_check();
+    return '';
+});
