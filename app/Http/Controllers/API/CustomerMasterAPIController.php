@@ -2489,24 +2489,10 @@ class CustomerMasterAPIController extends AppBaseController
                             $item_data['documentSystemID'] = $document->documentSystemID;
                             $item_data['documentID'] = $document->documentID;
                             $item_data['isActive'] = 1;
-                            $item_data['isPOSItem'] = '0';
+                            $item_data['isPOSItem'] = 0;
 
 
-                            if ($item_data['isPOSItem'] == 1) {
-                                $item_data['itemConfirmedYN'] = 1;
-                                $item_data['itemConfirmedByEMPSystemID'] = $employee->employeeSystemID;
-                                $item_data['itemConfirmedByEMPID'] = $employee->empID;
-                                $item_data['itemConfirmedByEMPName'] = $employee->empName;
-                                $item_data['itemConfirmedDate'] = now();
-                    
-                                $item_data['itemApprovedBySystemID'] = $employee->employeeSystemID;
-                                $item_data['itemApprovedBy'] = $employee->empID;
-                                $item_data['itemApprovedYN'] = 1;
-                                $item_data['itemApprovedDate'] = now();
-                                $item_data['itemApprovedComment'] = '';
-                            }
-
-
+                  
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
                             {
                              
