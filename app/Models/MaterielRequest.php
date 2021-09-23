@@ -392,7 +392,8 @@ class MaterielRequest extends Model
 
     public function getMaterialIssueStatusValueAttribute() {
         
-        $materielIssues = $this->materialIssue;
+        $materielIssues = $this->materialIssue->where('approved',-1);
+
 
         if($this->cancelledYN == -1) {
             return "canceled";
@@ -404,7 +405,7 @@ class MaterielRequest extends Model
                         $materialIssueDetails = $materielIssue->details;
 
                         foreach($materialIssueDetails as$materialIssueDetail) {
-                            $sumQntyIssued += $materialIssueDetail->qtyRequested;
+                            $sumQntyIssued += $materialIssueDetail->qtyIssued;
                         }
                 }
 
