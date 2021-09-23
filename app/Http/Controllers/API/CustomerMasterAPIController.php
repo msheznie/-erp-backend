@@ -2311,7 +2311,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['finance_category']) && !is_null($value['finance_category'])) )
                             {
                              
-                                $financeCategoryMaster = FinanceItemCategoryMaster::where('categoryDescription', $value['finance_category'])->select('itemCategoryID','categoryDescription')->first();
+                                $financeCategoryMaster = FinanceItemCategoryMaster::where('categoryDescription', $value['finance_category'])->select('itemCategoryID','categoryDescription','lastSerialOrder','itemCodeDef','numberOfDigits')->first();
 
                              
                                 if(isset($financeCategoryMaster))
@@ -2504,7 +2504,10 @@ class CustomerMasterAPIController extends AppBaseController
                        
                                 $itemMasters = $this->itemMasterRepository->create($item_data);
         
-                              
+                                $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+                                $financeCategoryMaster->modifiedPc = gethostname();
+                                $financeCategoryMaster->modifiedUser = $employee->empID;
+                                $financeCategoryMaster->save();
                                 $succesfully_created++;
                             }
                             
