@@ -1057,6 +1057,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
             //->where("selectedForIssue", 0);
             ->where("approved", -1)
+            ->where("cancelledYN", 0)
             ->where("serviceLineSystemID", $request['serviceLineSystemID'])
             ->where("location", $request['wareHouseFrom']);
 

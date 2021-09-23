@@ -601,6 +601,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
+        Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
 
 
         
@@ -646,6 +647,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
+        Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
@@ -909,6 +911,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('gl-code-search', 'ChartOfAccountsAssignedAPIController@gl_code_search');
         Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts');
         Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
+
+        Route::post('erp_project_masters/get_gl_accounts','ChartOfAccountsAssignedAPIController@getGlAccounts');
+        Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
+        
         Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
         Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
         Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
@@ -2122,6 +2128,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
 
         Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
+        Route::post('get_projects', 'ErpProjectMasterAPIController@get_projects');
         Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
         Route::get('erp_project_masters/form', 'ErpProjectMasterAPIController@formData');
         Route::get('erp_project_masters/segments_by_company', 'ErpProjectMasterAPIController@segmentsByCompany');
@@ -2351,3 +2358,5 @@ Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController')
 Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
+
