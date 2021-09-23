@@ -3,6 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\ChequeRegisterDetail;
+use App\Models\AdvancePaymentDetails;
+use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PurchaseOrderDetails;
+use App\Models\PoAddons;
+use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use InfyOm\Generator\Common\BaseRepository;
@@ -358,6 +363,64 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         } 
 
         return ['status' => true, 'nextChequeNo' => $nextChequeNo, 'chequeRegisterAutoID' => $chequeRegisterAutoID, 'chequeGenrated' => $chequeGenrated];
+    }
+
+    public function validatePoPayment($purchaseOrderID, $PayMasterAutoId)
+    {
+
+        $procumentOrder = ProcumentOrder::with(['transactioncurrency'])->find($purchaseOrderID);
+
+        if ($procumentOrder) {
+            $poMasterSum = PurchaseOrderDetails::selectRaw('COALESCE(SUM(netAmount),0) as masterTotalSum')
+                                                ->where('purchaseOrderMasterID', $purchaseOrderID)
+                                                ->first();
+
+            // po total vat
+            $poMasterVATSum = PurchaseOrderDetails::selectRaw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum')
+                                                ->where('purchaseOrderMasterID', $purchaseOrderID)
+                                                ->first();
+
+            //getting addon Total for PO
+            $poAddonMasterSum = PoAddons::selectRaw('COALESCE(SUM(amount),0) as addonTotalSum')
+                                        ->where('poId', $purchaseOrderID)
+                                        ->first();
+
+
+            $poTotalAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'];
+
+            $totalAdavancePayment =  AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
+                                                          ->whereHas('advancepaymentmaster', function($query) {
+                                                                $query->where('cancelledYN', 0);
+                                                          })
+                                                          ->whereHas('pay_invoice', function($query) {
+                                                                $query->where('refferedBackYN', 0);
+                                                          })
+                                                          ->sum('paymentAmount');
+
+
+            $totalSupplierPayment = PaySupplierInvoiceDetail::where('purchaseOrderID', $purchaseOrderID)
+                                                            ->whereHas('payment_master', function($query) {
+                                                                    $query->where('refferedBackYN', 0);
+                                                            })
+                                                            ->sum('supplierPaymentAmount');
+
+
+            $totalPayment = $totalAdavancePayment + $totalSupplierPayment;
+
+
+            $decimalPlcaes = isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2;
+            $currencyCode = isset($procumentOrder->transactioncurrency->CurrencyCode) ? $procumentOrder->transactioncurrency->CurrencyCode : "USD";
+
+
+            if (floatval($totalPayment) > floatval($poTotalAmount)) {
+                $message = "Purchase Order ".$procumentOrder->purchaseOrderCode." has over payment. Purchase Order Amount : ".$currencyCode." ".number_format($poTotalAmount, $decimalPlcaes).", Supplier Payment : ".$currencyCode." ".number_format($totalSupplierPayment, $decimalPlcaes).", Advance Payment : ".$currencyCode." ".number_format($totalAdavancePayment, $decimalPlcaes);
+                return ['status' => false, 'message' => $message];
+            }
+
+        }
+
+        return ['status' => true];
+
     }
 
 }
