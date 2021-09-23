@@ -64,6 +64,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Unit;
 use App\Repositories\ItemMasterRepository;
+use App\Models\SupplierMaster;
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -1546,7 +1547,7 @@ class CustomerMasterAPIController extends AppBaseController
                         $employee = \Helper::getEmployeeInfo();
                    
                         $count++;
-                    
+                        
                        
                         if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
                             || (isset($value['supplier_name']) && !is_null($value['supplier_name'])) 
@@ -1619,7 +1620,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 array_push($supplier_error['Primary Company'], $name.',line number '.$count.' null value');
 
                             }
-
+                      
 
                             //check gl liabilityAccountSysemID validation
                             if ( (isset($value['liability_account']) && !is_null($value['liability_account'])) )
@@ -1635,7 +1636,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                             }
 
-
+                            
                             //check gl UnbilledGRVAccountSystemID validation
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
@@ -1650,11 +1651,11 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                             }
 
-                            
+                       
                             //check supplier name validation
                             if ( (isset($value['supplier_name']) && !is_null($value['supplier_name'])) )
                             {
-                                 $supplier_data['Supplier Name'] = $value['supplier_name'];
+                                 $supplier_data['supplierName'] = $value['supplier_name'];
                                                                
                             }
                             else
@@ -1681,7 +1682,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 array_push($supplier_error['Check Name'], $name.',line number '.$count.' null value');
                             }
 
-                            
+                      
 
                             //check address validation
                             if ( (isset($value['address']) && !is_null($value['address'])) )
@@ -1780,7 +1781,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                             array_push($supplier_error['Category'], $name.',line number '.$count.' null value');
                         }
-     
+                        
                         //check telephone validation
                         if ( (isset($value['telephone']) && !is_null($value['telephone'])) )
                         {
@@ -1807,7 +1808,9 @@ class CustomerMasterAPIController extends AppBaseController
                             $supplier_data['fax'] = $value['fax'];
                                                             
                         }
-                
+                        
+                   
+               
 
                         //check email validation
                         if ( (isset($value['email']) && !is_null($value['email'])) )
@@ -1889,7 +1892,7 @@ class CustomerMasterAPIController extends AppBaseController
                             array_push($supplier_error['Currency'], $name.',line number '.$count.' null value');
                         }
 
-
+                   
                         //check supplier importance validation
                         if ( (isset($value['importance']) && !is_null($value['importance'])) )
                         {
@@ -2143,17 +2146,21 @@ class CustomerMasterAPIController extends AppBaseController
                     $supplier_data['isActive'] = 1;
                     
 
-              
-               
+            
                     
                     if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$currency_not_valid && !$notValid)
                     {
-                     
+                       
                
                         $supplierMasters = $this->supplierMasterRepository->create($supplier_data);
 
-                        if (isset($value['currency']) && $value['currency'] > 0) {
-
+                        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
+                        $updateSupplierMasters->primarySupplierCode = 'S0' . strval($supplierMasters->supplierCodeSystem);
+                
+                        $updateSupplierMasters->save();
+                    
+                        if (isset($supplier_data['currency']) && $supplier_data['currency'] > 0) {
+                     
                             if(!$currency_not_valid)
                             {
                                 $id = Auth::id();
@@ -2163,11 +2170,13 @@ class CustomerMasterAPIController extends AppBaseController
                     
                                 $supplierCurrency = new SupplierCurrency();
                                 $supplierCurrency->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
-                                $supplierCurrency->currencyID = $value['currency'];
+                                $supplierCurrency->currencyID = $supplier_data['currency'];
                                 $supplierCurrency->isAssigned = -1;
                                 $supplierCurrency->isDefault = -1;
                                 $supplierCurrency->save();
-                    
+                                
+                         
+
                                 $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
                     
                                 foreach ($companyDefaultBankMemos as $value1) {
