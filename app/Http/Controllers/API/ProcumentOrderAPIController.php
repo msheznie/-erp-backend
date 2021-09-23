@@ -5208,9 +5208,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $data[$x]['Order Code'] = $val->purchaseOrderCode;
                 if ($val->segment) {
-                    $data[$x]['Service Line'] = $val->segment->ServiceLineDes;
+                    $data[$x]['Segment'] = $val->segment->ServiceLineDes;
                 } else {
-                    $data[$x]['Service Line'] = "";
+                    $data[$x]['Segment'] = "";
                 }
 
                 $data[$x]['Created at'] = \Helper::dateFormat($val->createdDateTime);
