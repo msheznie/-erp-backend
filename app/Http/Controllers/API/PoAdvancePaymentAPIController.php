@@ -590,8 +590,8 @@ ORDER BY
             return $this->sendError($validator->messages(), 422);
         }
 
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
-
+        
+        $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -607,7 +607,7 @@ ORDER BY
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
+                        // $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -695,10 +695,7 @@ ORDER BY
             })
             ->leftJoin('erp_paysupplierinvoicemaster', 'details.PayMasterAutoId', 'erp_paysupplierinvoicemaster.PayMasterAutoId');
 
-        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
-            $advancePaymentRequest = $advancePaymentRequest->having('status', $input['invoiceType']);
-        }
-
+        
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $advancePaymentRequest = $advancePaymentRequest->where(function ($query) use ($search) {
@@ -708,7 +705,15 @@ ORDER BY
             });
         }
 
-        return $advancePaymentRequest;
+        $advancePaymentRequest = $advancePaymentRequest->get();
+
+        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
+            $invoiceID = collect($input['invoiceType']);
+           $getInvoiceID = $invoiceID->pluck('id')->toArray();
+           $advancePaymentRequest = collect($advancePaymentRequest)->whereIn('status', $getInvoiceID)->all();
+       }
+
+       return $advancePaymentRequest;
     }
 
 
@@ -726,7 +731,7 @@ ORDER BY
         }
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -735,7 +740,7 @@ ORDER BY
         }
 
             $search = $request->input('search.value');
-            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search)->orderBy('poAdvPaymentID',$sort)->get();
+            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
             $type = $request->type;
 
             if ($advancePaymentRequest) {
