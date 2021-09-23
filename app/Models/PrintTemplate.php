@@ -89,6 +89,8 @@ class PrintTemplate extends Model
         'template_url',
         'editable_template_url',
         'template_photo_url',
+        'parent_id',
+        'type',
         'is_predefined',
         'is_default',
         'status'
@@ -106,6 +108,8 @@ class PrintTemplate extends Model
         'template_url' => 'string',
         'editable_template_url' => 'string',
         'template_photo_url' => 'string',
+        'parent_id' => 'integer',
+        'type' => 'string',
         'is_predefined' => 'boolean',
         'is_default' => 'boolean',
         'status' => 'boolean'
