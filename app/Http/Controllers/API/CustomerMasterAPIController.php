@@ -1150,7 +1150,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['gl_account']) && !is_null($value['gl_account'])) )
                             {
                          
-                                $gl_account = ChartOfAccount::where([['AccountCode', $value['gl_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $gl_account = ChartOfAccount::where('AccountCode', $value['gl_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(!isset($gl_account))
                                 {
@@ -1224,7 +1224,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
 
-                                $unbilled_account = ChartOfAccount::where([['AccountCode', $value['unbilled_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                            
                                 if(isset($unbilled_account))
                                 {
@@ -1626,7 +1626,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['liability_account']) && !is_null($value['liability_account'])) )
                             {
                         
-                                $lib_account = ChartOfAccount::where([['AccountCode', $value['liability_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $lib_account = ChartOfAccount::where('AccountCode', $value['liability_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
@@ -1641,7 +1641,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
                         
-                                $unbilled_account = ChartOfAccount::where([['AccountCode', $value['unbilled_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
