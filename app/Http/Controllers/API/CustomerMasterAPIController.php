@@ -2317,9 +2317,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 if(isset($financeCategoryMaster))
                                 {
 
-                                    // if ($financeCategoryMaster->itemCategoryID != 3) {
-                                    //     $item_data['faFinanceCatID'] = null;
-                                    // }
+                                 
                                     $item_data['faFinanceCatID'] = null;
                                     $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
                                     $code = $financeCategoryMaster->itemCodeDef;
@@ -2394,7 +2392,18 @@ class CustomerMasterAPIController extends AppBaseController
    
                             if ( (isset($value['mfg._part_no']) && !is_null($value['mfg._part_no'])) )
                             {
+                                
+                                $secondary_Exists = $this->itemMasterRepository->where('secondaryItemCode','=',$value['mfg._part_no'])->select('itemCodeSystem','secondaryItemCode')->first();
+                                if(isset($secondary_Exists))
+                                {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Mfg. Part No'], 'line number '.$count.' Mfg. Part No already exists');
+                                }
+                                else
+                                {
                                     $item_data['secondaryItemCode'] = $value['mfg._part_no'];
+
+                                }
                           
                             } 
                              else
