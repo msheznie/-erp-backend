@@ -1001,9 +1001,9 @@ class CustomerMasterAPIController extends AppBaseController
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
         
-            //$originalFileName = 'item_template.xlsx';
-          
-
+            //$originalFileName = 'supplier_template.xlsx';
+            
+         
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
               
             })->get();
@@ -1011,12 +1011,15 @@ class CustomerMasterAPIController extends AppBaseController
 
 
   
-
+           
             //  $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             // })->select(array('company', 'secondary_code', 'customer_name', 'report_title','gl_account','country','credit_limit_usd','credit_period'))->get()->toArray();
 
          
              $total_count = count($uniqueData);
+
+
+        
 
              $supplier_error = array(
               'Primary Company' => array(),
@@ -1068,6 +1071,8 @@ class CustomerMasterAPIController extends AppBaseController
             switch ($document_id) {
                 case '58':
                     $count = 1;
+
+             
                     foreach ($formatChk as $key => $value)
                      {
                         $customer_data = [];
@@ -1144,13 +1149,23 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                                 array_push($customer_error['Primary Company'], $name.',line number '.$count.' null value');
                             }
-                      
+                         
 
                             //check gl account validation
                             if ( (isset($value['gl_account']) && !is_null($value['gl_account'])) )
                             {
                          
-                                $gl_account = ChartOfAccount::where('AccountCode', $value['gl_account'])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $gl_account = ChartOfAccount::where('AccountCode', $value['gl_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                         ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                  ->where('isAssigned', -1)    
+                                                  ->where('isActive', 1);    
+                                         })
+                                        ->where('controlAccountsSystemID',3)
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
+
                             
                                 if(!isset($gl_account))
                                 {
@@ -1224,7 +1239,16 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
 
-                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                   $query->where('companySystemID', $input['companySystemID'])
+                                         ->where('isAssigned', -1)    
+                                         ->where('isActive', 1);    
+                                })
+                               ->where('controlAccountsSystemID',3)
+                               ->where('catogaryBLorPL', '=', 'BS')
+                               ->select('chartOfAccountSystemID','AccountCode')->first();
                            
                                 if(isset($unbilled_account))
                                 {
@@ -1239,8 +1263,28 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['category']) && !is_null($value['category'])) )
                             {
 
-                                $category = CustomerMasterCategory::where([['companySystemID','=', $companySystemID],['categoryDescription','=',$value['category']]])->select('categoryID')->first();
-                            
+                                $category = CustomerMasterCategory::where([['companySystemID','=', $companySystemID],['categoryDescription','=',$value['category']]])
+                                                        ->whereHas('category_assigned', function ($query) use ($input) {
+                                                        $query->when(isset($input['companySystemID']), function($query) use ($input){
+                                                                $query->where('companySystemID', $input['companySystemID']);
+                                                            })
+                                                            ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
+                                                                $companyId = $input['companySystemIDFilter'];
+
+                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+                                                                if ($isGroup) {
+                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                } else {
+                                                                    $childCompanies = [$companyId];
+                                                                }
+
+                                                                $query->whereIn('companySystemID', $childCompanies);
+                                                            });
+                                                    })->select('categoryID')
+                                                    ->first();
+
+
                                 if(isset($category))
                                 {
                                     
@@ -1249,7 +1293,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 
                             }
                             
-
+                            
                             //check Vat Eligible validation
                             if ( (isset($value['vat_eligible']) && !is_null($value['vat_eligible'])) )
                             {
@@ -1270,6 +1314,7 @@ class CustomerMasterAPIController extends AppBaseController
                           
                              
                             }
+                            
                             //check customer short code
                             if ( (isset($value['secondary_code']) && !is_null($value['secondary_code'])) )
                             {
@@ -1290,8 +1335,22 @@ class CustomerMasterAPIController extends AppBaseController
                             //check customer name validation
                             if ( (isset($value['customer_name']) && !is_null($value['customer_name'])) )
                             {
+                                if (!is_numeric($value['customer_name']))
+                                {
+                                    $customer_data['CustomerName'] = $value['customer_name'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
 
-                                $customer_data['CustomerName'] = $value['customer_name'];
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Customer Name'], 'line number '.$count.' not only numeric value');
+                                }
+                                
                             }
                             else
                             {
@@ -1304,7 +1363,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                                 array_push($customer_error['Customer Name'], 'line number '.$count.' null value');
                             }
-
+                            
                             //check report title
                             if ( (isset($value['report_title']) && !is_null($value['report_title'])) )
                             {
@@ -1325,14 +1384,24 @@ class CustomerMasterAPIController extends AppBaseController
                             //check address 1
                             if ( (isset($value['address_1']) && !is_null($value['address_1'])) )
                             {
-                                $customer_data['customerAddress1'] = $value['address_1'];
+                               
+                                if (!is_numeric($value['address_1']))
+                                {
+                                    $customer_data['customerAddress1'] = $value['address_1'];
+                                }
+                             
+                               
                             }
-
+                      
 
                             //check address 2
                             if ( (isset($value['address_2']) && !is_null($value['address_2'])) )
                             {
-                                $customer_data['customerAddress2'] = $value['address_2'];
+                                if (!is_numeric($value['address_2']))
+                                {
+                                    $customer_data['customerAddress2'] = $value['address_2'];
+                                }
+                               
                             }
 
                             //check city
@@ -1353,7 +1422,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 $customer_data['webAddress'] = $value['web_address'];
                             }
 
-
+                            
                             //check Credit Limit
                             if ( (isset($value['credit_limit_usd']) && !is_null($value['credit_limit_usd'])) )
                             {
@@ -1404,7 +1473,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' null value');
                             }  
 
-
+                            
                             //check Credit Period
                             if ( (isset($value['credit_period']) && !is_null($value['credit_period'])) )
                             {
@@ -1452,14 +1521,29 @@ class CustomerMasterAPIController extends AppBaseController
                             //check vatNumber
                             if ( (isset($value['vat_number']) && !is_null($value['vat_number'])) )
                             {
-                                $customer_data['vatNumber'] = $value['vat_number'];
+                               
+                                if (is_numeric($value['vat_number'])){
+
+                                    if($value['vat_number'] >= 0)
+                                    {
+                                        $customer_data['vatNumber'] = $value['vat_number'];
+                                    }
+                                }
                             }
 
                                        
                             //check vatPercentage
                             if ( (isset($value['vat_percentage']) && !is_null($value['vat_percentage'])) )
                             {
-                                $customer_data['vatPercentage'] = $value['vat_percentage'];
+                               
+                                if (is_numeric($value['vat_percentage'])){
+
+                                    if($value['vat_percentage'] >= 0)
+                                    {
+                                        $customer_data['vatPercentage'] = $value['vat_percentage'];
+                                    }
+                                }
+                                
                             }
 
                             $document_info = DocumentMaster::where('documentID', 'CUSTM')->first();
@@ -1480,7 +1564,7 @@ class CustomerMasterAPIController extends AppBaseController
                             $customer_data['createdUserID'] = $empId;
                             $customer_data['isCustomerActive'] = 1;
                             
-
+                         
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse  && !$notValid)
                             {
                                 $customerMasters = $this->customerMasterRepository->create($customer_data);
@@ -1547,7 +1631,8 @@ class CustomerMasterAPIController extends AppBaseController
                         $employee = \Helper::getEmployeeInfo();
                    
                         $count++;
-                        
+
+                   
                        
                         if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
                             || (isset($value['supplier_name']) && !is_null($value['supplier_name'])) 
@@ -1626,7 +1711,11 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['liability_account']) && !is_null($value['liability_account'])) )
                             {
                         
-                                $lib_account = ChartOfAccount::where('AccountCode', $value['liability_account'])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $lib_account = ChartOfAccount::where('AccountCode', $value['liability_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->where('controlAccountsSystemID', 4)
+                                ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
@@ -1641,7 +1730,11 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
                         
-                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->where('controlAccountsSystemID', 4)
+                                ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
@@ -1655,7 +1748,23 @@ class CustomerMasterAPIController extends AppBaseController
                             //check supplier name validation
                             if ( (isset($value['supplier_name']) && !is_null($value['supplier_name'])) )
                             {
-                                 $supplier_data['supplierName'] = $value['supplier_name'];
+                                 
+
+                                 if (!is_numeric($value['supplier_name']))
+                                 {
+                                    $supplier_data['supplierName'] = $value['supplier_name'];
+                                 }
+                                 else
+                                 {
+                                     $notValid = true;
+ 
+                                     $name = 'N/A';
+                                     if(isset($value['supplier_name']))
+                                     {
+                                         $name = $value['supplier_name'];
+                                     }
+                                     array_push($supplier_error['Supplier Name'],'line number '.$count.' not only numeric value');
+                                 }
                                                                
                             }
                             else
@@ -1687,7 +1796,23 @@ class CustomerMasterAPIController extends AppBaseController
                             //check address validation
                             if ( (isset($value['address']) && !is_null($value['address'])) )
                             {
-                                $supplier_data['address'] = $value['address'];
+                               
+
+                                if (!is_numeric($value['address']))
+                                {
+                                    $supplier_data['address'] = $value['address'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Address'],'line number '.$count.' not only numeric value');
+                                }
                                                                 
                             }
                             else
@@ -1782,10 +1907,47 @@ class CustomerMasterAPIController extends AppBaseController
                             array_push($supplier_error['Category'], $name.',line number '.$count.' null value');
                         }
                         
+
+                      
                         //check telephone validation
                         if ( (isset($value['telephone']) && !is_null($value['telephone'])) )
                         {
-                            $supplier_data['telephone'] = $value['telephone'];
+                           
+                           
+                          
+                            if (is_numeric($value['telephone'])){
+                                if($value['telephone'] >= 0)
+                                {
+                                    $supplier_data['telephone'] = $value['telephone'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                            
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should positive');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+
+                            
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should be numbers');
+                            }
+                            //return $this->sendResponse($value['telephone'], 'Added succefully');
+                            
+                           
                                                             
                         }
                         else
@@ -1805,12 +1967,20 @@ class CustomerMasterAPIController extends AppBaseController
                         //check fax
                         if ( (isset($value['fax']) && !is_null($value['fax'])) )
                         {
-                            $supplier_data['fax'] = $value['fax'];
+                           
+
+                            if (is_numeric($value['fax'])){
+                                if($value['fax'] >= 0)
+                                {
+                                    $supplier_data['fax'] = $value['fax'];
+                                }
+                              
+                            }
                                                             
                         }
                         
                    
-               
+                  
 
                         //check email validation
                         if ( (isset($value['email']) && !is_null($value['email'])) )
@@ -2039,7 +2209,35 @@ class CustomerMasterAPIController extends AppBaseController
                         if ( (isset($value['registration_number']) && !is_null($value['registration_number'])) )
                         {
 
-                            $supplier_data['registrationNumber'] = $value['registration_number'];
+                            
+
+
+                            if (is_numeric($value['registration_number'])){
+
+                                if($value['registration_number'] >= 0)
+                                {
+                                    $supplier_data['registrationNumber'] = $value['registration_number'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Register Number'], $name.',line number '.$count.' register number must positive');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Register Number'], $name.',line number '.$count.' only numeric value allowed');
+                            }
+
                          
                             
                         }
