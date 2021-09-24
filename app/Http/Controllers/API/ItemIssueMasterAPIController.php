@@ -187,7 +187,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'issueDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
@@ -199,7 +199,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
@@ -250,11 +250,14 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
+        // if(isset($input['customerSystemID'])) {
+        //     $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if (!empty($customer)) {
-            $input["customerID"] = $customer->CutomerCode;
-        }
+        //     if (!empty($customer)) {
+        //         $input["customerID"] = $customer->CutomerCode;
+        //     }
+        // }
+
 
         // get last serial number by company financial year
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
@@ -525,7 +528,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
