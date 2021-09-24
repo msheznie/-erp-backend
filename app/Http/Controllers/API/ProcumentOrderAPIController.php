@@ -3107,7 +3107,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             Log::error($e);
             Log::debug('=============== END PRINT TEMPLATE ERROR ==============');
 
-            abort(500);
+            // if failed to show dynamically created template then show static template
+            $html = view('print.purchase_order_print_pdf', $order);
         }
 
         $pdf = \App::make('dompdf.wrapper');
