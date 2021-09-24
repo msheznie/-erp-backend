@@ -4,7 +4,9 @@ namespace App\helper;
 use App\helper\Helper;
 use Carbon\Carbon;
 use App\Models\Budjetdetails;
+use App\Models\Company;
 use App\Models\BudgetDetailHistory;
+use App\Models\CurrencyMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\PurchaseRequest;
@@ -64,15 +66,17 @@ class BudgetConsumptionService
                         	$userMessageE .= "<br>";
                         }
 
-                        $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, 2) ;
+                        $currencyDecimal = isset($budgetData['rptCurrency']) ? $budgetData['rptCurrency']['DecimalPlaces'] : 2;
+
+                        $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], 2) ;
+                        $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Consumed Amount : " . round($value['consumedAmount'], 2) ;
+                        $userMessageE .= "Consumed Amount : " . round($value['consumedAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Pending Document Amount : " . round($value['pendingDocumentAmount'], 2) ;
+                        $userMessageE .= "Pending Document Amount : " . round($value['pendingDocumentAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, 2);
+                        $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, $currencyDecimal);
 					}
 				}
 
@@ -222,6 +226,10 @@ class BudgetConsumptionService
 		$budgetFormData['documentSystemID'] = $documentSystemID;
 		$budgetFormData['documentSystemCode'] = $documentSystemCode;
 
+		$company = Company::where('companySystemID', $budgetFormData['companySystemID'])->first();
+
+        $rptCurrency = CurrencyMaster::where('currencyID', $company->reportingCurrency)->first();
+
 
 		$checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
 	                                    ->where('companySystemID', $budgetFormData['companySystemID'])
@@ -271,7 +279,7 @@ class BudgetConsumptionService
 	    		$budgetFormData['glColumnName'] = "financeGLcodebBSSystemID";
 	    	}
 	    	$budgetData = self::budgetConsumptionByProject($budgetFormData);
-	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'checkBudgetBasedOnGLPolicyProject' => $checkBudgetBasedOnGLPolicyProject];
+	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'checkBudgetBasedOnGLPolicyProject' => $checkBudgetBasedOnGLPolicyProject, 'rptCurrency' => $rptCurrency];
 	    }
 
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && $documentLevelCheckBudget && !is_null($budgetFormData['financeCategory'])) {
@@ -297,7 +305,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes']];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
