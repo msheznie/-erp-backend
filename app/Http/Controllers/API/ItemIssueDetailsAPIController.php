@@ -155,14 +155,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
             $validator = \Validator::make($itemIssue->toArray(), [
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
             ]);
         }else {
             $validator = \Validator::make($itemIssue->toArray(), [
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
             ]);
         }
