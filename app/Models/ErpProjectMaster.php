@@ -245,4 +245,8 @@ class ErpProjectMaster extends Model
     public function service_line(){
         return $this->belongsTo('App\Models\ServiceLine', 'serviceLineSystemID', 'serviceLineSystemID');
     }
+
+    public function gl_details(){
+        return $this->hasMany('App\Models\ProjectGlDetail', 'projectID', 'id');
+    }
 }
