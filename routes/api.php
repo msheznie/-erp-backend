@@ -2290,11 +2290,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
-    Route::get('runCronJob/{cron}', function ($cron) {
-        Artisan::call($cron);
-        return 'CRON Job run successfully';
-    });
-
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
@@ -2360,6 +2355,11 @@ Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 
+
+Route::get('runCronJob/{cron}', function ($cron) {
+    Artisan::call($cron);
+    return 'CRON Job run successfully';
+});
 
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();

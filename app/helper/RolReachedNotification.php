@@ -3,6 +3,7 @@
 namespace App\helper;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RolReachedNotification
 {
@@ -19,6 +20,9 @@ class RolReachedNotification
                 ->where('financeCategoryMaster', '=', 1)
                 ->whereRaw('ledger.INoutQty <= minimumQty')->get();
         }
+
+        Log::info( count($records). " Items found for re-order level" );
+
         return $records;
     }
 
