@@ -152,16 +152,16 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Materiel Issue not found', 500);
         }
 
-        if(isset($input['type']) && $input["type"] != "MRFROMMI") {  
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
             $validator = \Validator::make($itemIssue->toArray(), [
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'wareHouseFrom' => 'required|numeric|min:1',
                 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
             ]);
         }else {
             $validator = \Validator::make($itemIssue->toArray(), [
                 'serviceLineSystemID' => 'required|numeric|min:1',
+                'wareHouseFrom' => 'required|numeric|min:1',
                 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
             ]);
@@ -322,13 +322,16 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] =  (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
-
-        if(isset($input['type']) && $input["type"] != "MRFROMMI") {  
+      
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
+           
+        }else {
             $data = array('companySystemID' => $companySystemID,
             'itemCodeSystem' => $input['itemCodeSystem'],
             'wareHouseId' => $itemIssue->wareHouseFrom);
 
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
 
             $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
             $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
