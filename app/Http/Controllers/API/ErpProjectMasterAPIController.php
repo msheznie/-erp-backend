@@ -10,6 +10,7 @@ use App\Models\CurrencyMaster;
 use App\Models\ErpProjectMaster;
 use App\Models\ServiceLine;
 use App\Models\ProjectGlDetail;
+use App\Models\SegmentMaster;
 use App\Repositories\ErpProjectMasterRepository;
 use Error;
 use Illuminate\Http\Request;
@@ -407,7 +408,7 @@ class ErpProjectMasterAPIController extends AppBaseController
     {
 
         $companySystemID = $request['companySystemID'];
-        $serviceLines = ServiceLine::where('companySystemID', $companySystemID)->get();
+        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->get();
         return $this->sendResponse($serviceLines, 'Segments Projects retrieved successfully');
     }
 }
