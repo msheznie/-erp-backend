@@ -395,6 +395,51 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isBank', 0)
             ->where('isAssigned', -1)
             ->where('isActive', 1);
+        $items = $items->get();
+
+        if (empty($items)) {
+            return $this->sendError('Data not found');
+        } 
+        return $this->sendResponse($items, 'Data retrieved successfully');
+    }
+
+    public function getglDetails(request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+                                    ->where('projectID' , $projectID)->get();
+
+        if (empty($glDetails)) {
+                return $this->sendError('Data not found');
+            } 
+                                                            
+        // return \DataTables::eloquent($glDetails)
+        //     ->addIndexColumn()->order(function ($query) use ($input) {
+        //         if (request()->has('order') ) {
+        //             if($input['order'][0]['column'] == 0)
+        //             {
+        //                 $query->orderBy('id', $input['order'][0]['dir']);
+        //             }
+        //         }
+        //     })
+        //     ->with('orderCondition', $sort)
+        //     ->make(true);
+
+        return \DataTables::of($glDetails)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+>>>>>>> Stashed changes
+=======
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -418,6 +463,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         return $this->sendResponse($data, 'Data retrieved successfully');
     }
 
+>>>>>>> sprint-10
     public function getAssignedChartOfAccounts(request $request)
     {
         $input = $request->all();
