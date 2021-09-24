@@ -246,14 +246,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
             $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
                                     ->where('companySystemID', $companySystemID)
-                                    ->where('wareHouseSystemCode', $materielRequest->location)
                                     ->groupBy('itemSystemCode')
                                     ->sum('inOutQty');
 
             $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID,$materielRequest) {
                                 $query->where('companySystemID', $companySystemID)
                                     ->where('grvTypeID', 2)
-                                    ->where('grvLocation', $materielRequest->location)
                                     ->groupBy('erp_grvmaster.companySystemID');
                                  })
                                 ->where('itemCode', $input['itemCode'])
