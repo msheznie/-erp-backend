@@ -21,8 +21,6 @@ class RolReachedNotification
                 ->whereRaw('ledger.INoutQty <= minimumQty')->get();
         }
 
-        Log::info( count($records). " Items found for re-order level" );
-
         return $records;
     }
 
