@@ -284,7 +284,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financeItemCategorySubs->modifiedUser = $empId;
             $financeItemCategorySubs->save();
 
-            $this->financeItemCategorySubAssignedRepository->where(
+            $this->financeItemcategorySubAssignedRepository->where(
                 'itemCategorySubID', $input['itemCategorySubID']
             )->update(
                 array(
