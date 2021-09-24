@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\ProjectGlDetail;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -383,8 +384,6 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
     }
 
-<<<<<<< Updated upstream
-=======
     public function getGlAccounts(request $request){
         $input = $request->all();
         $companyID = $input['companySystemID'];
@@ -440,6 +439,31 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     }
 
 >>>>>>> Stashed changes
+=======
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+        $items = $items->take(20)->get();
+
+        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+                                    ->where('projectID' , $projectID)->get();
+        
+        $data = array(
+            'items'=>$items, 
+            'glDetails'=>$glDetails,
+        );
+        if (empty($data)) {
+            return $this->sendError('Data not found');
+        }                         
+        return $this->sendResponse($data, 'Data retrieved successfully');
+    }
+
+>>>>>>> sprint-10
     public function getAssignedChartOfAccounts(request $request)
     {
         $input = $request->all();

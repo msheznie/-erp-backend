@@ -64,6 +64,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Unit;
 use App\Repositories\ItemMasterRepository;
+use App\Models\SupplierMaster;
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -1149,7 +1150,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['gl_account']) && !is_null($value['gl_account'])) )
                             {
                          
-                                $gl_account = ChartOfAccount::where([['AccountCode', $value['gl_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $gl_account = ChartOfAccount::where('AccountCode', $value['gl_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(!isset($gl_account))
                                 {
@@ -1223,7 +1224,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
 
-                                $unbilled_account = ChartOfAccount::where([['AccountCode', $value['unbilled_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                            
                                 if(isset($unbilled_account))
                                 {
@@ -1546,7 +1547,7 @@ class CustomerMasterAPIController extends AppBaseController
                         $employee = \Helper::getEmployeeInfo();
                    
                         $count++;
-                    
+                        
                        
                         if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
                             || (isset($value['supplier_name']) && !is_null($value['supplier_name'])) 
@@ -1619,13 +1620,13 @@ class CustomerMasterAPIController extends AppBaseController
                                 array_push($supplier_error['Primary Company'], $name.',line number '.$count.' null value');
 
                             }
-
+                      
 
                             //check gl liabilityAccountSysemID validation
                             if ( (isset($value['liability_account']) && !is_null($value['liability_account'])) )
                             {
                         
-                                $lib_account = ChartOfAccount::where([['AccountCode', $value['liability_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $lib_account = ChartOfAccount::where('AccountCode', $value['liability_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
@@ -1635,12 +1636,12 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                             }
 
-
+                            
                             //check gl UnbilledGRVAccountSystemID validation
                             if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
                             {
                         
-                                $unbilled_account = ChartOfAccount::where([['AccountCode', $value['unbilled_account']],['documentSystemID','=', $document_id] ])->select('chartOfAccountSystemID','AccountCode')->first();
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])->select('chartOfAccountSystemID','AccountCode')->first();
                             
                                 if(isset($lib_account))
                                 {
@@ -1650,11 +1651,11 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                             }
 
-                            
+                       
                             //check supplier name validation
                             if ( (isset($value['supplier_name']) && !is_null($value['supplier_name'])) )
                             {
-                                 $supplier_data['Supplier Name'] = $value['supplier_name'];
+                                 $supplier_data['supplierName'] = $value['supplier_name'];
                                                                
                             }
                             else
@@ -1681,7 +1682,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 array_push($supplier_error['Check Name'], $name.',line number '.$count.' null value');
                             }
 
-                            
+                      
 
                             //check address validation
                             if ( (isset($value['address']) && !is_null($value['address'])) )
@@ -1780,7 +1781,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                             array_push($supplier_error['Category'], $name.',line number '.$count.' null value');
                         }
-     
+                        
                         //check telephone validation
                         if ( (isset($value['telephone']) && !is_null($value['telephone'])) )
                         {
@@ -1807,7 +1808,9 @@ class CustomerMasterAPIController extends AppBaseController
                             $supplier_data['fax'] = $value['fax'];
                                                             
                         }
-                
+                        
+                   
+               
 
                         //check email validation
                         if ( (isset($value['email']) && !is_null($value['email'])) )
@@ -1889,7 +1892,7 @@ class CustomerMasterAPIController extends AppBaseController
                             array_push($supplier_error['Currency'], $name.',line number '.$count.' null value');
                         }
 
-
+                   
                         //check supplier importance validation
                         if ( (isset($value['importance']) && !is_null($value['importance'])) )
                         {
@@ -2143,17 +2146,21 @@ class CustomerMasterAPIController extends AppBaseController
                     $supplier_data['isActive'] = 1;
                     
 
-              
-               
+            
                     
                     if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$currency_not_valid && !$notValid)
                     {
-                     
+                       
                
                         $supplierMasters = $this->supplierMasterRepository->create($supplier_data);
 
-                        if (isset($value['currency']) && $value['currency'] > 0) {
-
+                        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
+                        $updateSupplierMasters->primarySupplierCode = 'S0' . strval($supplierMasters->supplierCodeSystem);
+                
+                        $updateSupplierMasters->save();
+                    
+                        if (isset($supplier_data['currency']) && $supplier_data['currency'] > 0) {
+                     
                             if(!$currency_not_valid)
                             {
                                 $id = Auth::id();
@@ -2163,11 +2170,13 @@ class CustomerMasterAPIController extends AppBaseController
                     
                                 $supplierCurrency = new SupplierCurrency();
                                 $supplierCurrency->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
-                                $supplierCurrency->currencyID = $value['currency'];
+                                $supplierCurrency->currencyID = $supplier_data['currency'];
                                 $supplierCurrency->isAssigned = -1;
                                 $supplierCurrency->isDefault = -1;
                                 $supplierCurrency->save();
-                    
+                                
+                         
+
                                 $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
                     
                                 foreach ($companyDefaultBankMemos as $value1) {
@@ -2302,15 +2311,13 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['finance_category']) && !is_null($value['finance_category'])) )
                             {
                              
-                                $financeCategoryMaster = FinanceItemCategoryMaster::where('categoryDescription', $value['finance_category'])->select('itemCategoryID','categoryDescription')->first();
+                                $financeCategoryMaster = FinanceItemCategoryMaster::where('categoryDescription', $value['finance_category'])->select('itemCategoryID','categoryDescription','lastSerialOrder','itemCodeDef','numberOfDigits')->first();
 
                              
                                 if(isset($financeCategoryMaster))
                                 {
 
-                                    // if ($financeCategoryMaster->itemCategoryID != 3) {
-                                    //     $item_data['faFinanceCatID'] = null;
-                                    // }
+                                 
                                     $item_data['faFinanceCatID'] = null;
                                     $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
                                     $code = $financeCategoryMaster->itemCodeDef;
@@ -2385,7 +2392,18 @@ class CustomerMasterAPIController extends AppBaseController
    
                             if ( (isset($value['mfg._part_no']) && !is_null($value['mfg._part_no'])) )
                             {
+                                
+                                $secondary_Exists = $this->itemMasterRepository->where('secondaryItemCode','=',$value['mfg._part_no'])->select('itemCodeSystem','secondaryItemCode')->first();
+                                if(isset($secondary_Exists))
+                                {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Mfg. Part No'], 'line number '.$count.' Mfg. Part No already exists');
+                                }
+                                else
+                                {
                                     $item_data['secondaryItemCode'] = $value['mfg._part_no'];
+
+                                }
                           
                             } 
                              else
@@ -2471,23 +2489,10 @@ class CustomerMasterAPIController extends AppBaseController
                             $item_data['documentSystemID'] = $document->documentSystemID;
                             $item_data['documentID'] = $document->documentID;
                             $item_data['isActive'] = 1;
-                            $item_data['isPOSItem'] = '0';
+                            $item_data['isPOSItem'] = 0;
 
 
-                            if ($item_data['isPOSItem'] == 1) {
-                                $item_data['itemConfirmedYN'] = 1;
-                                $item_data['itemConfirmedByEMPSystemID'] = $employee->employeeSystemID;
-                                $item_data['itemConfirmedByEMPID'] = $employee->empID;
-                                $item_data['itemConfirmedByEMPName'] = $employee->empName;
-                                $item_data['itemConfirmedDate'] = now();
-                    
-                                $item_data['itemApprovedBySystemID'] = $employee->employeeSystemID;
-                                $item_data['itemApprovedBy'] = $employee->empID;
-                                $item_data['itemApprovedYN'] = 1;
-                                $item_data['itemApprovedDate'] = now();
-                                $item_data['itemApprovedComment'] = '';
-                            }
-
+                  
 
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
                             {
@@ -2495,7 +2500,10 @@ class CustomerMasterAPIController extends AppBaseController
                        
                                 $itemMasters = $this->itemMasterRepository->create($item_data);
         
-                              
+                                $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+                                $financeCategoryMaster->modifiedPc = gethostname();
+                                $financeCategoryMaster->modifiedUser = $employee->empID;
+                                $financeCategoryMaster->save();
                                 $succesfully_created++;
                             }
                             

@@ -392,26 +392,39 @@ class MaterielRequest extends Model
 
     public function getMaterialIssueStatusValueAttribute() {
         
-        $materielIssues = $this->materialIssue;
+        $materielIssues = $this->materialIssue->where('approved',-1);
+
 
         if($this->cancelledYN == -1) {
             return "canceled";
         }else {
             if(count($materielIssues) > 0) {
                 $sumQntyRequested = 0;
+                $sumQntyIssued = 0;
                 foreach($materielIssues as $materielIssue) {
-                    $sumQntyRequested += ($materielIssue->details) ? $materielIssue->details->first()->qtyRequested : 0;
+                        $materialIssueDetails = $materielIssue->details;
+
+                        foreach($materialIssueDetails as$materialIssueDetail) {
+                            $sumQntyIssued += $materialIssueDetail->qtyIssued;
+                        }
                 }
 
-                if($this->details) {
-                    if($this->details->first()->quantityRequested == $sumQntyRequested) {
-                        return "fully_issued";
-                    }else {
+                $materielDetails = $this->details;
+
+                foreach($materielDetails as $materielDetail ) {
+                    $sumQntyRequested += $materielDetail->quantityRequested;
+                }
+
+                if($sumQntyRequested != 0 && $sumQntyIssued != 0 ) {
+                    if(($sumQntyRequested >  $sumQntyIssued)) {
                         return "partially_issued";
+                    }else {
+                        return "fully_issued";
                     }
                 }else {
                     return "Pending";
                 }
+
             }else{
                 return "Pending";
             }

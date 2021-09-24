@@ -601,9 +601,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
+        Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
 
 
-        
+        Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
 
@@ -910,14 +911,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('gl-code-search', 'ChartOfAccountsAssignedAPIController@gl_code_search');
         Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts');
         Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
-<<<<<<< Updated upstream
-=======
+
 
         Route::post('getglDetails','ChartOfAccountsAssignedAPIController@getglDetails');
         Route::post('erp_project_masters/get_gl_accounts','ChartOfAccountsAssignedAPIController@getGlAccounts');
         Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
         
->>>>>>> Stashed changes
+
+
+        Route::post('erp_project_masters/get_gl_accounts','ChartOfAccountsAssignedAPIController@getGlAccounts');
+        Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
+        
+
         Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
         Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
         Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
@@ -2293,13 +2298,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
-    Route::get('runCronJob/{cron}', function ($cron) {
-        Artisan::call($cron);
-        return 'CRON Job run successfully';
-    });
-
     Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
+    Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
 });
 
 
@@ -2311,7 +2313,6 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
 
-Route::get('job-check', 'NotificationCompanyScenarioAPIController@job_check');
 
 
 Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
@@ -2361,3 +2362,14 @@ Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController')
 Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
+
+Route::get('runCronJob/{cron}', function ($cron) {
+    Artisan::call($cron);
+    return 'CRON Job run successfully';
+});
+
+Route::get('job-check', function(){
+    \App\helper\CommonJobService::job_check();
+    return '';
+});

@@ -523,7 +523,7 @@ class PurchaseRequestAPIController extends AppBaseController
             foreach ($output as $value) {
                 $data[$x]['Company ID'] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['Service Line'] = $value->serviceLineCode;
+                $data[$x]['Segment'] = $value->serviceLineCode;
                 $data[$x]['PR Number'] = $value->purchaseRequestCode;
 
                 if ($value->confirmed_by) {
@@ -549,7 +549,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             $x++;
                             $data[$x]['Company ID'] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Service Line'] = '';
+                            $data[$x]['Segment'] = '';
                             $data[$x]['PR Number'] = '';
                             $data[$x]['Processed By'] = '';
                             $data[$x]['PR Date'] = '';
@@ -581,7 +581,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $x++;
                                     $data[$x]['Company ID'] = '';
                                     //$data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Service Line'] = '';
+                                    $data[$x]['Segment'] = '';
                                     $data[$x]['PR Number'] = '';
                                     $data[$x]['Processed By'] = '';
                                     $data[$x]['PR Date'] = '';
@@ -655,7 +655,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $x++;
                                             $data[$x]['Company ID'] = '';
                                             //$data[$x]['Company Name'] = $val->CompanyName;
-                                            $data[$x]['Service Line'] = '';
+                                            $data[$x]['Segment'] = '';
                                             $data[$x]['PR Number'] = '';
                                             $data[$x]['Processed By'] = '';
                                             $data[$x]['PR Date'] = '';
