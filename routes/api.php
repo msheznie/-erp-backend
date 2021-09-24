@@ -604,7 +604,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
 
 
-        
+        Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
 
