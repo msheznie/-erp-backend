@@ -330,13 +330,29 @@ class FcmTokenAPIController extends AppBaseController
                         ])->delete();
             }
 
+
+            $scheme = request()->secure() ? 'https' : 'http';
+
+            $url = $request->getHttpHost();
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+            if ($subDomain == 'www') {
+                $subDomain = $url_array[1];
+            }
+
+            if ($subDomain != 'localhost:8000') {
+                 $logoutUrl = $scheme."://".$subDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
+            } else {
+                 $logoutUrl = null;
+            }
+
             $resp = [];
             $logged = Auth::check();
             if ($logged) {
                 $resp = $request->user()->token()->revoke();
             }
 
-            return $this->sendResponse([$resp, $logged], 'User logged out Successfully');
+            return $this->sendResponse([$resp, $logged, 'logoutUrl' => $logoutUrl], 'User logged out Successfully');
         } catch (\Exception $exception) {
             return $this->sendError('Something went wrong');
         }

@@ -150,8 +150,8 @@ class LeaveAccrualService
             WHERE NOT EXISTS ( 
                 SELECT * FROM srp_erp_leaveaccrualdetail AS det
                 JOIN srp_erp_leaveaccrualmaster AS m ON m.leaveaccrualMasterID = det.leaveaccrualMasterID
-                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} AND {$year_date_filter}
-                {$master_id_filter}
+                WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} AND mas.dailyAccrualYN = {$dailyBasisYN}
+                AND {$year_date_filter} {$master_id_filter}
                 GROUP BY empID
             ) AND emp.leaveGroupID = {$leaveGroupID} AND isDischarged != 1 AND Erp_companyID={$this->company_id}";
     }

@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\StockReceive;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\StockReceiveDetails;
 use App\Models\SupplierMaster;
 use App\Repositories\AccountsPayableLedgerRepository;
@@ -251,8 +252,8 @@ class CreateSupplierInvoice implements ShouldQueue
                         }
 
                         if ($glINC) {
-                            $glINC['chartOfAccountSystemID'] = 747;
-                            $glINC['glCode'] = '20023';
+                            $glINC['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($srMaster->companySystemID, $srMaster->documentSystemID, 1);
+                            $glINC['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($srMaster->companySystemID, $srMaster->documentSystemID, 1);
                             $glINC['glAccountType'] = 'BS';
                             $glINC['glAccountTypeID'] = 1;
                             $glINC['documentLocalAmount'] = ABS($bookingAmountLocal);

@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\ProjectGlDetail;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -381,6 +382,60 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function getGlAccounts(request $request){
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $items = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+            $q->where('isApproved', 1);
+        })->where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isBank', 0)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+        $items = $items->get();
+
+        if (empty($items)) {
+            return $this->sendError('Data not found');
+        } 
+        return $this->sendResponse($items, 'Data retrieved successfully');
+    }
+
+    public function getglDetails(request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+                                    ->where('projectID' , $projectID)->get();
+
+        if (empty($glDetails)) {
+                return $this->sendError('Data not found');
+            } 
+                                                            
+        // return \DataTables::eloquent($glDetails)
+        //     ->addIndexColumn()->order(function ($query) use ($input) {
+        //         if (request()->has('order') ) {
+        //             if($input['order'][0]['column'] == 0)
+        //             {
+        //                 $query->orderBy('id', $input['order'][0]['dir']);
+        //             }
+        //         }
+        //     })
+        //     ->with('orderCondition', $sort)
+        //     ->make(true);
+
+        return \DataTables::of($glDetails)
+            ->addIndexColumn()
+            ->make(true);
     }
 
     public function getAssignedChartOfAccounts(request $request)

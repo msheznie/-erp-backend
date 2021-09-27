@@ -28,6 +28,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:queuework')->everyMinute()->withoutOverlapping();
         $schedule->command('invoiceDueReminder')->daily()->withoutOverlapping();
         $schedule->command('notification_service')->daily()->withoutOverlapping();
+        $schedule->command('leave_accrual_schedule')->daily()->withoutOverlapping();
+
     }
 
     /**

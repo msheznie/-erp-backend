@@ -55,7 +55,9 @@ class NotificationService
             return true;
         }
 
-        Log::info('------------ Successfully start ' . $com_assign_scenarios[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') .  ' ------------');
+        $scenario_des = $com_assign_scenarios[0]->notification_scenario->scenarioDescription;
+
+        Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
 
         foreach ($com_assign_scenarios as $compAssignScenario) {
             Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
@@ -114,24 +116,24 @@ class NotificationService
                         break;
 
                     default:
-                        Log::error('Applicable category configuration not exist');
+                        Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
 
                         break;
                 }
 
                 $hr_scenarios = self::hr_scenarios();
-                if(!in_array($scenarioID, $hr_scenarios)) {
+                if(in_array($scenarioID, $hr_scenarios)) {
                     continue;
                 }
 
                 if (count($details) == 0) {
-                    Log::info('No records found for scenario id '. $scenarioID);
+                    Log::info("No records found for scenario {$scenario_des} ");
                     continue;
                 }
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info('User setup not found for scenario id '. $scenarioID);
+                    Log::info("User setup not found for scenario {$scenario_des}");
                     continue;
                 }
 
@@ -154,7 +156,7 @@ class NotificationService
                             $emailContent = BudgetLimitNotification::getEmailContent($details, $notificationUserVal[$key]['empName']);
                             break;
                         default:
-                            Log::error('Email content configuration not done');
+                            Log::error("Email content configuration not done for scenario {$scenario_des}");
                             break;
                     }
 
@@ -169,7 +171,7 @@ class NotificationService
 
         }
 
-        Log::info('------------ Successfully end ' . $com_assign_scenarios[0]->notification_scenario->scenarioDescription . ' Service ' . date('H:i:s') . ' ------------');
+        Log::info('------------ Successfully end ' . $scenario_des . ' Service ' . date('H:i:s') . ' ------------');
 
         return true;
     }

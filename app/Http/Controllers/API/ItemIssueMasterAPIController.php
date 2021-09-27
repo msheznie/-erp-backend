@@ -180,17 +180,33 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
-        $validator = \Validator::make($input, [
-            'companyFinancePeriodID' => 'required|numeric|min:1',
-            'companyFinanceYearID' => 'required|numeric|min:1',
-            'issueDate' => 'required|date|before_or_equal:today',
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            'wareHouseFrom' => 'required|numeric|min:1',
-            'customerSystemID' => 'required|numeric|min:1',
-            'issueType' => 'required|numeric|min:1',
-            'issueRefNo' => 'required',
-            'comment' => 'required',
-        ]);
+
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'issueDate' => 'required|date|before_or_equal:today',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
+                'issueRefNo' => 'required',
+                'comment' => 'required',
+            ]);
+        }else {
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'issueDate' => 'required|date|before_or_equal:today',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'wareHouseFrom' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
+                'issueRefNo' => 'required',
+                'comment' => 'required',
+            ]);
+        }
+
+       
 
 
         if ($validator->fails()) {
@@ -220,22 +236,28 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['wareHouseFrom'])->first();
-        if ($warehouse) {
-            $input['wareHouseFromCode'] = $warehouse->wareHouseCode;
-            $input['wareHouseFromDes'] = $warehouse->wareHouseDescription;
+        if(isset($input['type']) && $input["type"] != "MRFROMMI") { 
+            $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['wareHouseFrom'])->first();
+            if ($warehouse) {
+                $input['wareHouseFromCode'] = $warehouse->wareHouseCode;
+                $input['wareHouseFromDes'] = $warehouse->wareHouseDescription;
+            }
         }
+
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
+        // if(isset($input['customerSystemID'])) {
+        //     $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if (!empty($customer)) {
-            $input["customerID"] = $customer->CutomerCode;
-        }
+        //     if (!empty($customer)) {
+        //         $input["customerID"] = $customer->CutomerCode;
+        //     }
+        // }
+
 
         // get last serial number by company financial year
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
@@ -506,7 +528,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
-                'customerSystemID' => 'required|numeric|min:1',
+                // 'customerSystemID' => 'required|numeric|min:1',
                 'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
@@ -1057,8 +1079,9 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
             //->where("selectedForIssue", 0);
             ->where("approved", -1)
-            ->where("serviceLineSystemID", $request['serviceLineSystemID'])
-            ->where("location", $request['wareHouseFrom']);
+            ->where("cancelledYN", 0)
+            ->where("serviceLineSystemID", $request['serviceLineSystemID']);
+            // ->where("location", $request['wareHouseFrom']);
 
         $search = $input['search'];
 
@@ -1351,6 +1374,48 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendResponse($data, 'Data not found!');
         }
 
+
+    }
+
+
+    public function updateQntyByLocation(Request $request) {
+        $input = $request->all();
+
+        $location = $input['location'];
+        $requestID = $input['RequestID'];
+        $companySystemID =  $input['companySystemID'];
+
+        $itemIssue = ItemIssueMaster::find($requestID);
+
+        if($itemIssue) {
+
+            if($itemIssue->details) {
+                $issueDetails = $itemIssue->details;
+
+                foreach($issueDetails as $issueDetail) {
+                    $data = array('companySystemID' => $companySystemID,
+                    'itemCodeSystem' => $issueDetail->itemCodeSystem,
+                    'wareHouseId' => $location);
+        
+                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                    $issueDetail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+                    $issueDetail['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                    $issueDetail['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                    $issueDetail['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                    $issueDetail['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+                    $issueDetail['issueCostLocalTotal'] = $issueDetail['issueCostLocal'] * $issueDetail['qtyIssuedDefaultMeasure'];
+                    $issueDetail['issueCostRptTotal'] = $issueDetail['issueCostRpt'] * $issueDetail['qtyIssuedDefaultMeasure'];
+                           
+                    $issueDetail->save();
+                    
+                }
+            }
+        }else {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        return $itemIssue->details;
 
     }
 

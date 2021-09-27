@@ -40,6 +40,10 @@ use App\Models\TicketMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
 use App\Models\ChartOfAccount;
+use App\Models\SupplierCategoryMaster;
+use App\Models\SupplierImportance;
+use App\Models\SupplierType;
+use App\Models\suppliernature;
 use App\Repositories\CustomerMasterRepository;
 use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
@@ -50,7 +54,17 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use App\Repositories\SupplierMasterRepository;
+use App\Models\SupplierCurrency;
+use App\Models\BankMemoTypes;
+use App\Models\BankMemoSupplier;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemCategorySub;
+use App\Models\Unit;
+use App\Repositories\ItemMasterRepository;
+use App\Models\SupplierMaster;
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -60,11 +74,14 @@ class CustomerMasterAPIController extends AppBaseController
     /** @var  CustomerMasterRepository */
     private $customerMasterRepository;
     private $userRepository;
-
-    public function __construct(CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
+    private $supplierMasterRepository;
+    private $itemMasterRepository;
+    public function __construct(ItemMasterRepository $itemMasterRepo,SupplierMasterRepository $supplierMasterRepo,CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
     {
         $this->customerMasterRepository = $customerMasterRepo;
         $this->userRepository = $userRepo;
+        $this->supplierMasterRepository = $supplierMasterRepo;
+        $this->itemMasterRepository = $itemMasterRepo;
     }
 
     /**
@@ -380,9 +397,10 @@ class CustomerMasterAPIController extends AppBaseController
      */
     public function store(CreateCustomerMasterAPIRequest $request)
     {
-
+       
         $input = $request->all();
 
+       
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);
         }
@@ -391,7 +409,7 @@ class CustomerMasterAPIController extends AppBaseController
             unset($input['unbilled_account']);
         }
 
-
+ 
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
                 if (count($input[$key]) > 0) {
@@ -402,10 +420,14 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
+
+   
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
+
+
 
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
@@ -531,6 +553,8 @@ class CustomerMasterAPIController extends AppBaseController
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = $empId;
             $input['isCustomerActive'] = 1;
+       
+    
             $customerMasters = $this->customerMasterRepository->create($input);
         }
 
@@ -920,5 +944,1830 @@ class CustomerMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reopen["message"]);
         }
+    }
+
+    
+    public function downloadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $document_id = $input['document_id'];
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+
+        if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
+            return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
+    }
+
+    public function masterBulkUpload(request $request)
+    {
+        try {
+
+            
+           
+            $input = $request->all();
+            $document_id = $input['documnet_id'];
+            $companySystemID = $input['companySystemID'];
+            $excelUpload = $input['itemExcelUpload'];
+
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file'],true);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+      
+            $allowedExtensions = ['xlsx','xls'];
+
+       
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+            $empId = $user->employee['empID'];
+            $empName = $user->employee['empName'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+          
+           
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+        
+            //$originalFileName = 'supplier_template.xlsx';
+            
+         
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+              
+            })->get();
+             $uniqueData = array_filter(collect($formatChk)->toArray());
+
+
+  
+           
+            //  $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            // })->select(array('company', 'secondary_code', 'customer_name', 'report_title','gl_account','country','credit_limit_usd','credit_period'))->get()->toArray();
+
+         
+             $total_count = count($uniqueData);
+
+
+        
+
+             $supplier_error = array(
+              'Primary Company' => array(),
+              'Supplier Name' => array(),
+              'Check Name' => array(),
+              'Address' => array(),
+              'Country'=> array(),
+              'Category'=>array(),
+              'Mobile'=>array(),
+              'Email'=>array(),
+              'Currency' =>array(),
+              'Credit Limit'=>array(),
+              'Credit Period'=>array(),
+              'Register Number'=>array(),
+              'Register Expire'=>array()
+           );
+            
+
+            $customer_error = array(
+                'Primary Company' => array(),
+                'Secondary Code' => array(),
+                'Customer Name' => array(),
+                'Report title' => array(),
+                'GL Account'=> array(),
+                'Country'=>array(),
+                'Credit Limit (USD)'=>array(),
+                'Credit Period'=>array()
+            );
+
+            $item_error = array(
+                'Primary Company' => array(),
+                'Finance Category' => array(),
+                'Finance Sub Category' => array(),
+                'Mfg. Part No' => array(),
+                'Item Description'=> array(),
+                'Unit of Measure'=>array()
+            );
+    
+          
+       
+             $totalItemCount = 0;
+             $valueNotExit = false;
+             $groupOfComapnyFalse = false;
+             $nullValue = false;
+             $succesfully_created = 0;
+             $notValid = false;
+             $current_date = date('Y-m-d H:i:s');
+
+            switch ($document_id) {
+                case '58':
+                    $count = 1;
+
+             
+                    foreach ($formatChk as $key => $value)
+                     {
+                        $customer_data = [];
+                        $company_group_msg = '';
+
+                        $supplier_data = [];
+                        $company_group_msg = '';
+
+                        $employee = \Helper::getEmployeeInfo();
+                   
+                        $count++;
+                       
+                        if ( (isset($value['company']) && !is_null($value['company'])) 
+                            || (isset($value['secondary_code']) && !is_null($value['secondary_code'])) 
+                            || (isset($value['customer_name']) && !is_null($value['customer_name'])) 
+                            || (isset($value['report_title']) && !is_null($value['report_title'])) 
+                            || (isset($value['gl_account']) && !is_null($value['gl_account'])) 
+                            || (isset($value['country']) && !is_null($value['country'])) 
+                            || (isset($value['credit_limit_usd']) && !is_null($value['credit_limit_usd'])) 
+                            || (isset($value['credit_period']) && !is_null($value['credit_period'])) 
+                            )
+                            {
+                              $totalItemCount++;
+                            }
+                            //check companu validation
+                            if ( (isset($value['company']) && !is_null($value['company'])) )
+                            {
+
+                                $company = Company::where('CompanyID', $value['company'])->select('companySystemID','companyID')->first();
+
+                             
+                                if(isset($company))
+                                {
+                                    $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+
+                                    if (!$validatorResult['success']) {
+                                            $groupOfComapnyFalse = true;
+                                            $company_group_msg = $validatorResult['message'];
+                                            $name = 'N/A';
+                                            if(isset($value['customer_name']))
+                                            {
+                                                $name = $value['customer_name'];
+                                            }
+                                            array_push($customer_error['Primary Company'], $name.',line number '.$count.' company not exist');
+                                    }
+                                    else
+                                    {
+                                        $customer_data['primaryCompanySystemID'] = $company->companySystemID;
+                                        $customer_data['primaryCompanyID'] = $company->companyID;
+                                    }
+                            
+                                }
+                                else
+                                {
+                                    $valueNotExit = true;
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Primary Company'], $name.',line number '.$count.' company not exist');
+
+                                    
+                                }
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Primary Company'], $name.',line number '.$count.' null value');
+                            }
+                         
+
+                            //check gl account validation
+                            if ( (isset($value['gl_account']) && !is_null($value['gl_account'])) )
+                            {
+                         
+                                $gl_account = ChartOfAccount::where('AccountCode', $value['gl_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                         ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                            $query->where('companySystemID', $input['companySystemID'])
+                                                  ->where('isAssigned', -1)    
+                                                  ->where('isActive', 1);    
+                                         })
+                                        ->where('controlAccountsSystemID',3)
+                                        ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
+
+                            
+                                if(!isset($gl_account))
+                                {
+                                    $valueNotExit = true;
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['GL Account'], $name.',line number '.$count.' value invalid');
+                            
+                                }else
+                                {
+                                    $customer_data['custGLAccountSystemID'] = $gl_account->chartOfAccountSystemID;
+                                    $customer_data['custGLaccount'] = $gl_account->AccountCode;
+                                }
+                               
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['GL Account'], $name.',line number '.$count.' null value');
+                            }
+
+
+                            //check country account validation
+                            if ( (isset($value['country']) && !is_null($value['country'])) )
+                            {
+
+                                $country = CountryMaster::where('countryName','=', $value['country'])->select('countryID','countryName')->first();
+                              
+                                if(!isset($country))
+                                {
+                                    $valueNotExit = true;
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Country'], $name.',line number '.$count.' invalid country');
+                            
+                                }
+                                else
+                                {
+                                    $customer_data['customerCountry'] = $country->countryID;
+                                }
+                                
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                           
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                         
+                                array_push($customer_error['Country'], $name.',line number '.$count.' null value');
+
+                             
+                            }
+                      
+                            //check Unbilled Account validation
+                            if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
+                            {
+
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                                   $query->where('companySystemID', $input['companySystemID'])
+                                         ->where('isAssigned', -1)    
+                                         ->where('isActive', 1);    
+                                })
+                               ->where('controlAccountsSystemID',3)
+                               ->where('catogaryBLorPL', '=', 'BS')
+                               ->select('chartOfAccountSystemID','AccountCode')->first();
+                           
+                                if(isset($unbilled_account))
+                                {
+                                    
+                                    $customer_data['custUnbilledAccountSystemID'] = $unbilled_account->chartOfAccountSystemID;
+                                    $customer_data['custUnbilledAccount'] = $unbilled_account->AccountCode;
+                                }
+                                
+                            }
+
+                            //check category Account validation
+                            if ( (isset($value['category']) && !is_null($value['category'])) )
+                            {
+
+                                $category = CustomerMasterCategory::where([['companySystemID','=', $companySystemID],['categoryDescription','=',$value['category']]])
+                                                        ->whereHas('category_assigned', function ($query) use ($input) {
+                                                        $query->when(isset($input['companySystemID']), function($query) use ($input){
+                                                                $query->where('companySystemID', $input['companySystemID']);
+                                                            })
+                                                            ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
+                                                                $companyId = $input['companySystemIDFilter'];
+
+                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+                                                                if ($isGroup) {
+                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                } else {
+                                                                    $childCompanies = [$companyId];
+                                                                }
+
+                                                                $query->whereIn('companySystemID', $childCompanies);
+                                                            });
+                                                    })->select('categoryID')
+                                                    ->first();
+
+
+                                if(isset($category))
+                                {
+                                    
+                                    $customer_data['customerCategoryID'] = $category->categoryID;
+                                }
+                                
+                            }
+                            
+                            
+                            //check Vat Eligible validation
+                            if ( (isset($value['vat_eligible']) && !is_null($value['vat_eligible'])) )
+                            {
+
+                             
+                                if ( $value['vat_eligible'] == 'Yes' || $value['vat_eligible'] == 'No') 
+                                {
+                                    if($value['vat_eligible'] == 'No')
+                                    {
+                                        $vat_el = '0';
+                                    }
+                                    else
+                                    {
+                                        $vat_el = '1';
+                                    }
+                                    $customer_data['vatEligible'] = $vat_el;
+                                }
+                          
+                             
+                            }
+                            
+                            //check customer short code
+                            if ( (isset($value['secondary_code']) && !is_null($value['secondary_code'])) )
+                            {
+                                $customer_data['customerShortCode'] = $value['secondary_code'];
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Secondary Code'], $name.',line number '.$count.' null value');
+                            }
+                     
+                            //check customer name validation
+                            if ( (isset($value['customer_name']) && !is_null($value['customer_name'])) )
+                            {
+                                if (!is_numeric($value['customer_name']))
+                                {
+                                    $customer_data['CustomerName'] = $value['customer_name'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Customer Name'], 'line number '.$count.' not only numeric value');
+                                }
+                                
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Customer Name'], 'line number '.$count.' null value');
+                            }
+                            
+                            //check report title
+                            if ( (isset($value['report_title']) && !is_null($value['report_title'])) )
+                            {
+                                $customer_data['ReportTitle'] = $value['report_title'];
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Report title'], $name.',line number '.$count.' null value');
+                            }  
+                            
+                            //check address 1
+                            if ( (isset($value['address_1']) && !is_null($value['address_1'])) )
+                            {
+                               
+                                if (!is_numeric($value['address_1']))
+                                {
+                                    $customer_data['customerAddress1'] = $value['address_1'];
+                                }
+                             
+                               
+                            }
+                      
+
+                            //check address 2
+                            if ( (isset($value['address_2']) && !is_null($value['address_2'])) )
+                            {
+                                if (!is_numeric($value['address_2']))
+                                {
+                                    $customer_data['customerAddress2'] = $value['address_2'];
+                                }
+                               
+                            }
+
+                            //check city
+                            if ( (isset($value['city']) && !is_null($value['city'])) )
+                            {
+                                $customer_data['customerCity'] = $value['city'];
+                            }
+
+                            //check logo
+                            if ( (isset($value['logo']) && !is_null($value['logo'])) )
+                            {
+                                $customer_data['customerLogo'] = $value['logo'];
+                            }
+
+                           //check webaddress
+                            if ( (isset($value['web_address']) && !is_null($value['web_address'])) )
+                            {
+                                $customer_data['webAddress'] = $value['web_address'];
+                            }
+
+                            
+                            //check Credit Limit
+                            if ( (isset($value['credit_limit_usd']) && !is_null($value['credit_limit_usd'])) )
+                            {
+                               
+
+
+                                if (is_numeric($value['credit_limit_usd'])){
+
+                                    if($value['credit_limit_usd'] >= 0)
+                                    {
+                                        $customer_data['creditLimit'] = $value['credit_limit_usd'];
+                                    }
+                                    else
+                                    {
+                                        $notValid = true;
+
+                                        $name = 'N/A';
+                                        if(isset($value['customer_name']))
+                                        {
+                                            $name = $value['customer_name'];
+                                        }
+                                        array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' not a positive value');
+                                    }
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' not numeric value');
+                                }
+
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Credit Limit (USD)'], $name.',line number '.$count.' null value');
+                            }  
+
+                            
+                            //check Credit Period
+                            if ( (isset($value['credit_period']) && !is_null($value['credit_period'])) )
+                            {
+
+
+                                if (is_numeric($value['credit_period'])){
+
+                                    if($value['credit_period'] >= 0)
+                                    {
+                                        $customer_data['creditDays'] = $value['credit_period'];
+                                    }
+                                    else
+                                    {
+                                        $notValid = true;
+                                        $name = 'N/A';
+                                        if(isset($value['customer_name']))
+                                        {
+                                            $name = $value['customer_name'];
+                                        }
+                                        array_push($customer_error['Credit Period'], $name.',line number '.$count.' not positive value');
+                                    }
+                                }
+                                else
+                                {
+                                    $notValid = true;
+                                    $name = 'N/A';
+                                    if(isset($value['customer_name']))
+                                    {
+                                        $name = $value['customer_name'];
+                                    }
+                                    array_push($customer_error['Credit Period'], $name.',line number '.$count.' not numeric value');
+                                }
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                $name = 'N/A';
+                                if(isset($value['customer_name']))
+                                {
+                                    $name = $value['customer_name'];
+                                }
+                                array_push($customer_error['Credit Period'], $name.',line number '.$count.' null value');
+                            }  
+
+                            //check vatNumber
+                            if ( (isset($value['vat_number']) && !is_null($value['vat_number'])) )
+                            {
+                               
+                                if (is_numeric($value['vat_number'])){
+
+                                    if($value['vat_number'] >= 0)
+                                    {
+                                        $customer_data['vatNumber'] = $value['vat_number'];
+                                    }
+                                }
+                            }
+
+                                       
+                            //check vatPercentage
+                            if ( (isset($value['vat_percentage']) && !is_null($value['vat_percentage'])) )
+                            {
+                               
+                                if (is_numeric($value['vat_percentage'])){
+
+                                    if($value['vat_percentage'] >= 0)
+                                    {
+                                        $customer_data['vatPercentage'] = $value['vat_percentage'];
+                                    }
+                                }
+                                
+                            }
+
+                            $document_info = DocumentMaster::where('documentID', 'CUSTM')->first();
+                            $customer_data['documentSystemID'] = $document_info->documentSystemID;
+                            $customer_data['documentID'] = $document_info->documentID;
+
+                            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
+                            $lastSerialOrder = 1;
+                            if(!empty($lastCustomer)){
+                                $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+                            }
+                
+                            $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
+                
+                            $customer_data['lastSerialOrder'] = $lastSerialOrder;
+                            $customer_data['CutomerCode'] = $customerCode;
+                            $customer_data['createdPcID'] = gethostname();
+                            $customer_data['createdUserID'] = $empId;
+                            $customer_data['isCustomerActive'] = 1;
+                            
+                         
+                            if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse  && !$notValid)
+                            {
+                                $customerMasters = $this->customerMasterRepository->create($customer_data);
+                                $succesfully_created++;
+                            }
+                         
+
+           
+                            
+
+                    }
+               
+                            if($total_count == 0 )
+                            {
+                                Storage::disk($disk)->delete($originalFileName);
+                                return $this->sendError('No Records found!', 500);
+                            }
+                            else
+                            {
+                                
+                                if ($succesfully_created == $totalItemCount) {
+                                    $message = "All record Upload successfully";
+                                    $msg_detail = [];
+                                    $is_success = true;
+                                   
+                                } 
+                                else if($succesfully_created == 0)
+                                {
+                                    $message = "Nothing uploaded !try agian";
+                                    $msg_detail = $customer_error;
+                                    $is_success = false;
+                                }
+                                 else {
+                                    $message = "Successfully uploadedf ".$succesfully_created." customers out of ".$totalItemCount.".";
+        
+                                   
+                                    $msg_detail = $customer_error;
+                                    $is_success = true;
+                               
+                              
+                                    
+                                   
+                                    }
+                             
+                            }
+                          ;
+                            $details['message'] = $message;
+                            $details['msg_detail'] = $msg_detail;
+                            $details['success'] = $is_success;
+                            //Storage::disk($disk)->delete($originalFileName);
+                             return $this->sendResponse($details, 'Added succefully');
+                        
+                
+                    break;
+                case '56':
+                    $count = 1;
+                    foreach ($formatChk as $key => $value)
+                    {
+
+                        $supplier_data = [];
+                        $company_group_msg = '';
+                        $currency_not_valid = false;
+
+                        $employee = \Helper::getEmployeeInfo();
+                   
+                        $count++;
+
+                   
+                       
+                        if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
+                            || (isset($value['supplier_name']) && !is_null($value['supplier_name'])) 
+                            || (isset($value['address']) && !is_null($value['address'])) 
+                            || (isset($value['supplier_country']) && !is_null($value['supplier_country'])) 
+                            || (isset($value['name_on_the_cheque']) && !is_null($value['name_on_the_cheque'])) 
+                            || (isset($value['supplier_main_category']) && !is_null($value['supplier_main_category'])) 
+                            || (isset($value['telephone']) && !is_null($value['telephone'])) 
+                            || (isset($value['email']) && !is_null($value['email'])) 
+                            || (isset($value['currency']) && !is_null($value['currency'])) 
+                            || (isset($value['credit_limit']) && !is_null($value['credit_limit'])) 
+                            || (isset($value['credit_period']) && !is_null($value['credit_period'])) 
+                            || (isset($value['registration_number']) && !is_null($value['registration_number'])) 
+                            || (isset($value['registration_expiry']) && !is_null($value['registration_expiry'])) 
+                            )
+                            {
+                              $totalItemCount++;
+                            }
+
+                      
+                            //check companu validation
+                            if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) )
+                            {
+
+                                $company = Company::where('CompanyID', $value['primary_company'])->select('companySystemID','companyID')->first();
+
+                             
+                                if(isset($company))
+                                {
+                                    $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+
+                                    if (!$validatorResult['success']) {
+                                            $groupOfComapnyFalse = true;
+                                            $company_group_msg = $validatorResult['message'];
+                                            $name = 'N/A';
+                                            if(isset($value['supplier_name']))
+                                            {
+                                                $name = $value['supplier_name'];
+                                            }
+                                            array_push($supplier_error['Primary Company'], $name.',line number '.$count.' company not valid');
+                                    }
+                                    else
+                                    {
+                                        $supplier_data['primaryCompanySystemID'] = $company->companySystemID;
+                                        $supplier_data['primaryCompanyID'] = $company->companyID;
+                                    }
+                            
+                                }
+                                else
+                                {
+                                    $valueNotExit = true;
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Primary Company'], $name.',line number '.$count.' company not exist');
+
+                                }
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Primary Company'], $name.',line number '.$count.' null value');
+
+                            }
+                      
+
+                            //check gl liabilityAccountSysemID validation
+                            if ( (isset($value['liability_account']) && !is_null($value['liability_account'])) )
+                            {
+                        
+                                $lib_account = ChartOfAccount::where('AccountCode', $value['liability_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->where('controlAccountsSystemID', 4)
+                                ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
+                            
+                                if(isset($lib_account))
+                                {
+                                    $supplier_data['liabilityAccountSysemID'] = $lib_account->chartOfAccountSystemID;
+                                    $supplier_data['liabilityAccount'] = $lib_account->AccountCode;
+                            
+                                }
+                            }
+
+                            
+                            //check gl UnbilledGRVAccountSystemID validation
+                            if ( (isset($value['unbilled_account']) && !is_null($value['unbilled_account'])) )
+                            {
+                        
+                                $unbilled_account = ChartOfAccount::where('AccountCode', $value['unbilled_account'])
+                                ->where('controllAccountYN', '=', 1)
+                                ->where('controlAccountsSystemID', 4)
+                                ->where('catogaryBLorPL', '=', 'BS')
+                                ->select('chartOfAccountSystemID','AccountCode')->first();
+                            
+                                if(isset($lib_account))
+                                {
+                                    $supplier_data['UnbilledGRVAccountSystemID'] = $unbilled_account->chartOfAccountSystemID;
+                                    $supplier_data['UnbilledGRVAccount'] = $unbilled_account->AccountCode;
+                            
+                                }
+                            }
+
+                       
+                            //check supplier name validation
+                            if ( (isset($value['supplier_name']) && !is_null($value['supplier_name'])) )
+                            {
+                                 
+
+                                 if (!is_numeric($value['supplier_name']))
+                                 {
+                                    $supplier_data['supplierName'] = $value['supplier_name'];
+                                 }
+                                 else
+                                 {
+                                     $notValid = true;
+ 
+                                     $name = 'N/A';
+                                     if(isset($value['supplier_name']))
+                                     {
+                                         $name = $value['supplier_name'];
+                                     }
+                                     array_push($supplier_error['Supplier Name'],'line number '.$count.' not only numeric value');
+                                 }
+                                                               
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                array_push($supplier_error['Supplier Name'],'line number '.$count.' null value');
+                            }
+
+                            //check payment check name validation
+                            if ( (isset($value['name_on_the_cheque']) && !is_null($value['name_on_the_cheque'])) )
+                            {
+                                $supplier_data['nameOnPaymentCheque'] = $value['name_on_the_cheque'];
+                                                                
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Check Name'], $name.',line number '.$count.' null value');
+                            }
+
+                      
+
+                            //check address validation
+                            if ( (isset($value['address']) && !is_null($value['address'])) )
+                            {
+                               
+
+                                if (!is_numeric($value['address']))
+                                {
+                                    $supplier_data['address'] = $value['address'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Address'],'line number '.$count.' not only numeric value');
+                                }
+                                                                
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Address'], $name.',line number '.$count.' null value');
+                            }
+
+                            //check supplier country validation
+                            if ( (isset($value['supplier_country']) && !is_null($value['supplier_country'])) )
+                            {
+
+                                $country = CountryMaster::where('countryName','=', $value['supplier_country'])->select('countryID','countryName')->first();
+                                
+                                if(!isset($country))
+                                {
+                                    $valueNotExit = true;
+
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Country'], $name.',line number '.$count.' country not valid');
+                            
+                                }
+                                else
+                                {
+                                    $supplier_data['supplierCountryID'] = $country->countryID;
+                                    $supplier_data['countryID'] = $country->countryID;
+                                }
+                                
+                            }
+                            else
+                            {
+                                $nullValue = true;
+
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Country'], $name.',line number '.$count.' null value');
+                                
+
+
+                            }
+
+
+
+                        //check supplier category validation
+                        if ( (isset($value['supplier_main_category']) && !is_null($value['supplier_main_category'])) )
+                        {
+
+                            $supplier_cat = SupplierCategoryMaster::where('categoryCode','=', $value['supplier_main_category'])->select('supCategoryMasterID','categoryCode')->first();
+                            
+                            if(!isset($supplier_cat))
+                            {
+                                $valueNotExit = true;
+
+                                
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Category'], $name.',line number '.$count.' category not exist');
+                        
+                            }
+                            else
+                            {
+                                $supplier_data['supCategoryMasterID'] = $supplier_cat->supCategoryMasterID;
+                            }
+                            
+                        }
+                        else
+                        {
+                            $nullValue = true;
+
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Category'], $name.',line number '.$count.' null value');
+                        }
+                        
+
+                      
+                        //check telephone validation
+                        if ( (isset($value['telephone']) && !is_null($value['telephone'])) )
+                        {
+                           
+                           
+                          
+                            if (is_numeric($value['telephone'])){
+                                if($value['telephone'] >= 0)
+                                {
+                                    $supplier_data['telephone'] = $value['telephone'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+
+                            
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should positive');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+
+                            
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Mobile'], $name.',line number '.$count.' mobile should be numbers');
+                            }
+                            //return $this->sendResponse($value['telephone'], 'Added succefully');
+                            
+                           
+                                                            
+                        }
+                        else
+                        {
+                            $nullValue = true;
+
+                            
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Mobile'], $name.',line number '.$count.' null value');
+                        }
+
+
+                        //check fax
+                        if ( (isset($value['fax']) && !is_null($value['fax'])) )
+                        {
+                           
+
+                            if (is_numeric($value['fax'])){
+                                if($value['fax'] >= 0)
+                                {
+                                    $supplier_data['fax'] = $value['fax'];
+                                }
+                              
+                            }
+                                                            
+                        }
+                        
+                   
+                  
+
+                        //check email validation
+                        if ( (isset($value['email']) && !is_null($value['email'])) )
+                        {
+                        
+                         
+                            $email = $value['email'];
+                           
+                            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                               
+                               $notValid = true;
+                               $name = 'N/A';
+                               if(isset($value['supplier_name']))
+                               {
+                                   $name = $value['supplier_name'];
+                               }
+                               array_push($supplier_error['Email'], $name.',line number '.$count.' email not valid');
+                            }
+                            else
+                            {
+                                $supplier_data['supEmail'] = $value['email'];
+                            }
+                                
+                        }
+                        else
+                        {
+                            $nullValue = true;
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Email'], $name.',line number '.$count.' null value');
+                        }
+                      
+                        //check web address validation
+                        if ( (isset($value['web_address']) && !is_null($value['web_address'])) )
+                        {
+                            $supplier_data['webAddress'] = $value['web_address'];
+                                                            
+                        }
+        
+     
+
+                        //check currency validation
+                        if ( (isset($value['currency']) && !is_null($value['currency'])) )
+                        {
+
+                            $currency_check = CurrencyMaster::where('CurrencyCode','=', $value['currency'])->select('currencyID','CurrencyCode')->first();
+                            
+                            if(!isset($currency_check))
+                            {
+                                $valueNotExit = true;
+                                $currency_not_valid = true;
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Currency'], $name.',line number '.$count.' currency not valid');
+                                
+                        
+                            }
+                            else
+                            {
+                                $supplier_data['currency'] = $currency_check->currencyID;
+                            }
+                            
+                        }
+                        else
+                        {
+                            $nullValue = true;
+
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Currency'], $name.',line number '.$count.' null value');
+                        }
+
+                   
+                        //check supplier importance validation
+                        if ( (isset($value['importance']) && !is_null($value['importance'])) )
+                        {
+
+                            $importance_check = SupplierImportance::where('importanceDescription','=', $value['importance'])->first();
+                            
+                            if(isset($importance_check))
+                            {
+                                $supplier_data['supplierImportanceID'] = $importance_check->supplierImportanceID;
+                        
+                            }
+                     
+                        }
+
+                        
+
+                        //check supplier nature validation
+                        if ( (isset($value['nature']) && !is_null($value['nature'])) )
+                        {
+
+                            $nature_check = suppliernature::where('natureDescription','=', $value['nature'])->first();
+                            
+                            if(isset($nature_check))
+                            {
+                                $supplier_data['supplierNatureID'] = $nature_check->supplierNatureID;
+                        
+                            }
+                         
+                            
+                        }
+
+
+                        //check supplier type validation
+                        if ( (isset($value['type']) && !is_null($value['type'])) )
+                        {
+
+                            $typecheck = SupplierType::where('typeDescription','=', $value['type'])->first();
+                            
+                            if(isset($typecheck))
+                            {
+                                $supplier_data['supplierTypeID'] = $typecheck->supplierTypeID;
+                        
+                            }
+                           
+                            
+                        }
+
+
+                        //check Credit Limit validation
+                        if ( (isset($value['credit_limit']) && !is_null($value['credit_limit'])) )
+                        {
+
+
+                            if (is_numeric($value['credit_limit'])){
+
+                                if($value['credit_limit'] >= 0)
+                                {
+                                    $supplier_data['creditLimit'] = $value['credit_limit'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Credit Limit'], $name.',line number '.$count.' not valid');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['credit_limit'], $name.'-line number '.$count.'not valid');
+                            }
+
+                        }
+                        else
+                        {
+                            $nullValue = true;
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Credit Limit'], $name.',line number '.$count.' null value');
+                        }
+
+                        
+
+
+                        //check creditPeriod validation
+                        if ( (isset($value['credit_period']) && !is_null($value['credit_period'])) )
+                        {
+
+
+                            if (is_numeric($value['credit_period'])){
+
+                                if($value['credit_period'] >= 0)
+                                {
+                                    $supplier_data['creditPeriod'] = $value['credit_period'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Credit Period'], $name.',line number '.$count.' not valid');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['credit_period'], $name.'-line number '.$count.' not valid');
+                            }
+                         
+                            
+                        }
+                        else
+                        {
+                            $nullValue = true;
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Credit Period'], $name.',line number '.$count.' null value');
+                        }
+
+
+
+
+                        //check Registration Number validation
+                        if ( (isset($value['registration_number']) && !is_null($value['registration_number'])) )
+                        {
+
+                            
+
+
+                            if (is_numeric($value['registration_number'])){
+
+                                if($value['registration_number'] >= 0)
+                                {
+                                    $supplier_data['registrationNumber'] = $value['registration_number'];
+                                }
+                                else
+                                {
+                                    $notValid = true;
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Register Number'], $name.',line number '.$count.' register number must positive');
+                                }
+                            }
+                            else
+                            {
+                                $notValid = true;
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Register Number'], $name.',line number '.$count.' only numeric value allowed');
+                            }
+
+                         
+                            
+                        }
+                        else
+                        {
+                            $nullValue = true;
+                            $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Register Number'], $name.',line number '.$count.' null value');
+                        }
+
+                        
+
+                         //check registration expiry
+                        if ( (isset($value['registration_expiry']) && !is_null($value['registration_expiry'])) )
+                        {
+
+                            if(!strtotime($value['registration_expiry']))
+                            {
+                                $notValid = true;
+                                $name = 'N/A';
+                                if(isset($value['supplier_name']))
+                                {
+                                    $name = $value['supplier_name'];
+                                }
+                                array_push($supplier_error['Register Expire'], $name.',line number '.$count.' not valid');
+                            }
+                            else
+                            {
+                               
+                                $expire_date = date('Y-m-d H:i:s', strtotime($value['registration_expiry']));
+                                if($current_date > $expire_date)
+                                {
+                                    $notValid = true;
+                                    $name = 'N/A';
+                                    if(isset($value['supplier_name']))
+                                    {
+                                        $name = $value['supplier_name'];
+                                    }
+                                    array_push($supplier_error['Register Expire'], $name.',line number '.$count.' not valid');
+                                }
+                                else
+                                {
+                                    $supplier_data['registrationExprity'] = $expire_date;
+                                }
+    
+                            }
+    
+                            
+                        }
+                        else
+                        {     $name = 'N/A';
+                            if(isset($value['supplier_name']))
+                            {
+                                $name = $value['supplier_name'];
+                            }
+                            array_push($supplier_error['Register Expire'], $name.',line number '.$count.' null value');
+                            $nullValue = true;
+                        }
+
+
+                        //check JSRS Number validation
+                        if ( (isset($value['jsrs_number']) && !is_null($value['jsrs_number'])) )
+                        {
+
+                            $supplier_data['jsrsNo'] = $value['jsrs_number'];
+                        
+                            
+                        }
+                 
+
+                    //check JSRS expiry
+                    if ( (isset($value['jsrs_expiry']) && !is_null($value['jsrs_expiry'])) )
+                    {
+
+                        if(strtotime($value['jsrs_expiry']))
+                        {
+                                
+                            $expire_date_jers = date('Y-m-d H:i:s', strtotime($value['jsrs_expiry']));
+                            if($current_date<> $expire_date_jers)
+                            {
+                                $supplier_data['jsrsExpiry'] = $expire_date_jers;
+                            }
+                          
+                        }
+                      
+
+                        
+                    }
+
+                
+                    $supplier_data['createdPcID'] = gethostname();
+                    $supplier_data['createdUserID'] = $employee->empID;
+                    $supplier_data['createdUserSystemID'] = $employee->employeeSystemID;
+                    $supplier_data['uniqueTextcode'] = "S";
+
+                    
+                    $document_info = DocumentMaster::where('documentID', 'SUPM')->first();
+                    $supplier_data['documentSystemID'] = $document_info->documentSystemID;
+                    $supplier_data['documentID'] = $document_info->documentID;
+                    $supplier_data['isActive'] = 1;
+                    
+
+            
+                    
+                    if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$currency_not_valid && !$notValid)
+                    {
+                       
+               
+                        $supplierMasters = $this->supplierMasterRepository->create($supplier_data);
+
+                        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
+                        $updateSupplierMasters->primarySupplierCode = 'S0' . strval($supplierMasters->supplierCodeSystem);
+                
+                        $updateSupplierMasters->save();
+                    
+                        if (isset($supplier_data['currency']) && $supplier_data['currency'] > 0) {
+                     
+                            if(!$currency_not_valid)
+                            {
+                                $id = Auth::id();
+                                $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+                                $empId = $user->employee['empID'];
+                                $empName = $user->employee['empName'];
+                    
+                                $supplierCurrency = new SupplierCurrency();
+                                $supplierCurrency->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
+                                $supplierCurrency->currencyID = $supplier_data['currency'];
+                                $supplierCurrency->isAssigned = -1;
+                                $supplierCurrency->isDefault = -1;
+                                $supplierCurrency->save();
+                                
+                         
+
+                                $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
+                    
+                                foreach ($companyDefaultBankMemos as $value1) {
+                                    $temBankMemo = new BankMemoSupplier();
+                                    $temBankMemo->memoHeader = $value1['bankMemoHeader'];
+                                    $temBankMemo->bankMemoTypeID = $value1['bankMemoTypeID'];
+                                    $temBankMemo->memoDetail = '';
+                                    $temBankMemo->supplierCodeSystem = $supplierMasters->supplierCodeSystem;
+                                    $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+                                    $temBankMemo->updatedByUserID = $empId;
+                                    $temBankMemo->updatedByUserName = $empName;
+                                    $temBankMemo->save();
+                                }
+                            }
+                         
+                        }
+                        $succesfully_created++;
+                    }
+                   
+                    }
+
+                    
+                
+                   
+                    if($total_count == 0 )
+                    {
+                        Storage::disk($disk)->delete($originalFileName);
+                        return $this->sendError('No Records found!', 500);
+                    }
+                    else
+                    {
+                        if ($succesfully_created == $totalItemCount) {
+                            $message = "All record Upload successfully";
+                            $msg_detail = [];
+                            $is_success = true;
+                           
+                        } 
+                        else if($succesfully_created == 0)
+                        {
+                            $message = "Nothing uploaded !try agian";
+                            $msg_detail = $supplier_error;
+                            $is_success = false;
+                        }
+                         else {
+                            $message = "Successfully uploadedf ".$succesfully_created." suppliers out of ".$totalItemCount.".";
+
+                           
+                            $msg_detail = $supplier_error;
+                            $is_success = true;
+                       
+                      
+                            
+                           
+                            }
+                    
+                    }
+                    $details['message'] = $message;
+                    $details['msg_detail'] = $msg_detail;
+                    $details['success'] = $is_success;
+                    Storage::disk($disk)->delete($originalFileName);
+                    return $this->sendResponse($details, 'Added succefully');
+
+
+
+                    break;
+                case '57':
+
+                 
+                
+                        $count = 1;
+                    
+                  
+                  
+                    foreach($formatChk as $key=>$value)
+                    {   
+                        $item_data = [];
+                        $company_group_msg = '';
+
+                        $employee = \Helper::getEmployeeInfo();
+                        $count++;
+                           
+                                if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
+                                || (isset($value['finance_category']) && !is_null($value['finance_category'])) 
+                                || (isset($value['finance_sub_category']) && !is_null($value['finance_sub_category'])) 
+                                || (isset($value['mfg._part_no']) && !is_null($value['mfg._part_no'])) 
+                                || (isset($value['item_description']) && !is_null($value['item_description'])) 
+                                || (isset($value['unit_of_measure']) && !is_null($value['unit_of_measure'])) 
+                                )
+                                {
+                                  $totalItemCount++;
+                                }
+
+                                      //check companu validation
+                            if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) )
+                            {
+
+                                $company = Company::where('CompanyID', $value['primary_company'])->select('companySystemID','companyID')->first();
+
+                             
+                                if(isset($company))
+                                {
+                                    $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+
+                                    if (!$validatorResult['success']) {
+                                            $groupOfComapnyFalse = true;
+                                            $company_group_msg = $validatorResult['message'];
+
+                                        
+                                            array_push($item_error['Primary Company'], 'line number '.$count.' company not valid');
+                                    }
+                                    else
+                                    {
+                                        $item_data['primaryCompanySystemID'] = $company->companySystemID;
+                                        $item_data['primaryCompanyID'] = $company->companyID;
+                                    }
+                            
+                                }
+                                else
+                                {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Primary Company'], 'line number '.$count.' company not valid');
+                                }
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                array_push($item_error['Primary Company'], 'line number '.$count.' null value');
+                            }
+
+                            //check finance category master
+                            if ( (isset($value['finance_category']) && !is_null($value['finance_category'])) )
+                            {
+                             
+                                $financeCategoryMaster = FinanceItemCategoryMaster::where('categoryDescription', $value['finance_category'])->select('itemCategoryID','categoryDescription','lastSerialOrder','itemCodeDef','numberOfDigits')->first();
+
+                             
+                                if(isset($financeCategoryMaster))
+                                {
+
+                                 
+                                    $item_data['faFinanceCatID'] = null;
+                                    $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
+                                    $code = $financeCategoryMaster->itemCodeDef;
+                                    $count_dig = $financeCategoryMaster->numberOfDigits;
+                                    $primaryCode = $code . str_pad($runningSerialOrder, $count_dig, '0', STR_PAD_LEFT);
+                                    $item_data['runningSerialOrder'] = $runningSerialOrder;
+                                    $item_data['primaryCode'] = $primaryCode;
+                                    $item_data['primaryItemCode'] = $code;
+                                    if(!(isset($input['barcode']) && $input['barcode'] != null)){
+                                        $item_data['barcode'] = $primaryCode;
+                                    }
+                                    $item_data['financeCategoryMaster'] = $financeCategoryMaster->itemCategoryID;
+
+
+
+                                    if ( (isset($value['finance_sub_category']) && !is_null($value['finance_sub_category'])) )
+                                    {
+                                        $financeCategorySub = FinanceItemCategorySub::where('categoryDescription', $value['finance_sub_category'])->first();
+
+                                        if(isset($financeCategorySub))
+                                        {
+                                            $fina_cate_sub_id = $financeCategorySub->itemCategorySubID;
+                                            $item_categoryID = $financeCategorySub->itemCategoryID;
+                                            if($item_categoryID == $financeCategoryMaster->itemCategoryID)
+                                            {
+                                                $item_data['financeCategorySub'] = $fina_cate_sub_id;
+                                            }
+                                            else
+                                            {
+                                                $valueNotExit = true;
+                                                array_push($item_error['Finance Sub Category'], 'line number '.$count.' subgetory not found for this category'); 
+                                            }
+
+                                         
+                                        }
+                                        else
+                                        {
+                                            $valueNotExit = true;
+                                            array_push($item_error['Finance Sub Category'], 'line number '.$count.' value not valid');
+                                        }
+                                       
+
+                                        
+
+                                    }
+                                    else
+                                    {
+                                   
+
+                                        $nullValue = true;
+                                        array_push($item_error['Finance Sub Category'], 'line number '.$count.' null'); 
+                                    }
+                                 
+                            
+                                }
+                                else
+                                {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Finance Category'], 'line number '.$count.' value not valid');
+                                }
+
+                            }
+                            else
+                            {
+                                $nullValue = true;
+                                array_push($item_error['Finance Category'], 'line number '.$count.' null value');
+                            }
+
+
+                       
+                            //check secondory code validation
+   
+                            if ( (isset($value['mfg._part_no']) && !is_null($value['mfg._part_no'])) )
+                            {
+                                
+                                $secondary_Exists = $this->itemMasterRepository->where('secondaryItemCode','=',$value['mfg._part_no'])->select('itemCodeSystem','secondaryItemCode')->first();
+                                if(isset($secondary_Exists))
+                                {
+                                    $valueNotExit = true;
+                                    array_push($item_error['Mfg. Part No'], 'line number '.$count.' Mfg. Part No already exists');
+                                }
+                                else
+                                {
+                                    $item_data['secondaryItemCode'] = $value['mfg._part_no'];
+
+                                }
+                          
+                            } 
+                             else
+                            {
+                                $nullValue = true;
+                                array_push($item_error['Mfg. Part No'], 'line number '.$count.' null value');
+                            }
+
+
+                               //check item description
+                               if ( (isset($value['item_description']) && !is_null($value['item_description'])) )
+                               {
+                                       $item_data['itemDescription'] = $value['item_description'];
+                             
+                               } 
+                                else
+                               {
+                                   $nullValue = true;
+                                   array_push($item_error['Item Description'], 'line number '.$count.' null value');
+                               }
+
+
+                               //check unit 
+
+
+                               if ( (isset($value['unit_of_measure']) && !is_null($value['unit_of_measure'])) )
+                               {
+   
+                                   $units_code = Unit::where('UnitShortCode', $value['unit_of_measure'])->first();
+                                
+                                
+                                   if(isset($units_code))
+                                   {
+                                        $item_data['unit'] = $units_code->UnitID;
+                                   }
+                                   else
+                                   {
+                                       $valueNotExit = true;
+                                       array_push($item_error['Unit of Measure'], 'line number '.$count.' unit not valid');
+                                   }
+   
+                               }
+                               else
+                               {
+                                   $nullValue = true;
+                                   array_push($item_error['Unit of Measure'], 'line number '.$count.' null value');
+                               }
+
+
+                       
+
+
+
+
+                         
+                            //check short description
+                            if ( (isset($value['item_short_description']) && !is_null($value['item_short_description'])) )
+                            {
+                                    $item_data['itemShortDescription'] = $value['item_short_description'];
+                          
+                            }
+                            //check item url
+                            if ( (isset($value['item_url']) && !is_null($value['item_url'])) )
+                            {
+                                    $item_data['itemUrl'] = $value['item_url'];
+                          
+                            }
+
+                            //check barcode url
+                            if ( (isset($value['barcode']) && !is_null($value['barcode'])) )
+                            {
+                                    $item_data['barcode'] = $value['barcode'];
+                            
+                            }
+        
+                            $employee = Helper::getEmployeeInfo();
+                            $item_data['createdPcID'] = gethostname();
+                            $item_data['createdUserID'] = $employee->empID;
+                            $item_data['createdUserSystemID'] = $employee->employeeSystemID;
+
+                            
+                            $document = DocumentMaster::where('documentID', 'ITMM')->first();
+                            $item_data['documentSystemID'] = $document->documentSystemID;
+                            $item_data['documentID'] = $document->documentID;
+                            $item_data['isActive'] = 1;
+                            $item_data['isPOSItem'] = 0;
+
+
+                  
+
+                            if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
+                            {
+                             
+                       
+                                $itemMasters = $this->itemMasterRepository->create($item_data);
+        
+                                $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+                                $financeCategoryMaster->modifiedPc = gethostname();
+                                $financeCategoryMaster->modifiedUser = $employee->empID;
+                                $financeCategoryMaster->save();
+                                $succesfully_created++;
+                            }
+                            
+                    }
+
+
+                       
+                    if($total_count == 0 )
+                    {
+                        Storage::disk($disk)->delete($originalFileName);
+                        return $this->sendError('No Records found!', 500);
+                    }
+                    else
+                    {
+                        if ($succesfully_created == $totalItemCount) {
+                            $message = "All record Upload successfully";
+                            $msg_detail = [];
+                            $is_success = true;
+                           
+                        } 
+                        else if($succesfully_created == 0)
+                        {
+                            $message = "Nothing uploaded !try agian";
+                            $msg_detail = $item_error;
+                            $is_success = false;
+                        }
+                         else {
+                            $message = "Successfully uploaded ".$succesfully_created." items out of ".$totalItemCount.".";
+
+                           
+                            $msg_detail = $item_error;
+                            $is_success = true;
+                       
+                      
+                            
+                           
+                            }
+                    
+                    }
+                    $details['message'] = $message;
+                    $details['msg_detail'] = $msg_detail;
+                    $details['success'] = $is_success;
+                    Storage::disk($disk)->delete($originalFileName);
+                    return $this->sendResponse($details, 'Added succefully');
+                     
+                    break;
+                default:
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.document')]));
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+        } catch (\Exception $exception) {
+           
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 }
