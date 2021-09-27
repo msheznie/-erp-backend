@@ -413,7 +413,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
 
             if (floatval($totalPayment) > floatval($poTotalAmount)) {
-                $message = "Purchase Order ".$procumentOrder->purchaseOrderCode." has over payment. Purchase Order Amount : ".$currencyCode." ".number_format($poTotalAmount, $decimalPlcaes).", Supplier Payment : ".$currencyCode." ".number_format($totalSupplierPayment, $decimalPlcaes).", Advance Payment : ".$currencyCode." ".number_format($totalAdavancePayment, $decimalPlcaes);
+                $message = "Purchase Order ".$procumentOrder->purchaseOrderCode." will be overpaid. Purchase Order Amount : ".$currencyCode." ".number_format($poTotalAmount, $decimalPlcaes).", Supplier Payment : ".$currencyCode." ".number_format($totalSupplierPayment, $decimalPlcaes).", Advance Payment : ".$currencyCode." ".number_format($totalAdavancePayment, $decimalPlcaes);
                 return ['status' => false, 'message' => $message];
             }
 
