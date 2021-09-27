@@ -748,6 +748,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if (!$bank->chartOfAccountSystemID) {
                     return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
                 }
+
+                $overPaymentErrorMessage = [];
                 // po payment
                 if ($paySupplierInvoiceMaster->invoiceType == 2) {
                     $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
@@ -804,6 +806,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
                                 $error_count++;
                             }
+                        }
+
+                        $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($val->purchaseOrderID, $id);
+
+                        if (!$resValidate['status']) {
+                            $overPaymentErrorMessage[] = $resValidate['message'];
                         }
                     }
 
@@ -910,8 +918,19 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $advancePayment->fullyPaid = 1;
                             $advancePayment->save();
                         }
+
+                        $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($val->purchaseOrderID, $id);
+
+                        if (!$resValidate['status']) {
+                            $overPaymentErrorMessage[] = $resValidate['message'];
+                        }
                     }
 
+                }
+
+                if (count($overPaymentErrorMessage) > 0) {
+                    $confirmErrorOverPay = array('type' => 'confirm_error_over_payment', 'data' => $overPaymentErrorMessage);
+                    return $this->sendError("You cannot confirm this document.", 500, $confirmErrorOverPay);
                 }
 
                 // Direct payment
