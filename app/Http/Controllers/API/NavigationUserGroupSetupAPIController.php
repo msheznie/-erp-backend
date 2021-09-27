@@ -24,7 +24,7 @@ use App\Criteria\FilterParentMenuCriteria;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\UserGroup;
 /**
  * Class NavigationUserGroupSetupController
  * @package App\Http\Controllers\API
@@ -81,6 +81,8 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                          ->where('companyID',$request['companyId'])
                          ->first();
 
+               
+
         if($userGroup){
             $request['userGroupId'] = $userGroup->userGroupID;
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
@@ -89,7 +91,24 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
             return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
                 ->paginate(50);
         }else{
-            return $this->sendResponse([],'not found any menu');
+
+            $userGroupExist = UserGroup::where('companyID',$request['companyId'])
+                                         ->where('flag',true)       
+                                         ->first();
+            if($userGroupExist)
+            {
+            $request['userGroupId'] = $userGroupExist->userGroupID;
+            //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
+            $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
+            $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
+            return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
+                ->paginate(50);
+            }  
+             else
+             {
+                return $this->sendResponse([],'not found any menu');
+             }                          
+           
         }
     }
 
