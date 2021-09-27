@@ -60,9 +60,13 @@ class UserGroupAPIController extends AppBaseController
      * @return Response
      */
     public function store(CreateUserGroupAPIRequest $request)
-    {
+    {   
+     
         $input = $request->all();
         $userGroups = "";
+
+       
+    
         if (isset($request->userGroupID))
         {
             $id = $request->userGroupID;
@@ -71,6 +75,24 @@ class UserGroupAPIController extends AppBaseController
             if (empty($userGroups)) {
                 return $this->sendError('User Group not found');
             }
+            if($input["flag"])
+            {
+                $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("flag", true)->count();
+                if($userGroupsCheck == 0)
+                {
+                    $userGroupsDefault = UserGroup::where("companyID", $input["companyID"])->where("flag", true)->first();
+
+                
+                    if (isset($userGroupsDefault)) {
+                        return $this->sendError('already there is a defailt user group exit');
+                    }
+                }
+    
+            }
+            
+
+        
+
             unset($input['company']);
             foreach ($input as $key => $value) {
                 if (is_array($input[$key])){
@@ -84,11 +106,23 @@ class UserGroupAPIController extends AppBaseController
             $userGroups->companyID = $input["companyID"];
             $userGroups->description = $input["description"];
             $userGroups->isActive = 1;
+            $userGroups->flag = $input["flag"];
 
            $userGroups->save();
         }else{
             $input['isActive'] = 1;
+
+            if($input["flag"])
+            {
+                $userGroups = UserGroup::where("companyID", $input["companyID"])->where("flag", true)->first();
+                if(isset($userGroups))
+                {
+                    return $this->sendError('The Company has already default user group');
+                }
+            }
+        
             $userGroups = $this->userGroupRepository->create($input);
+        
         }
         return $this->sendResponse($userGroups, 'User Group saved successfully');
     }
