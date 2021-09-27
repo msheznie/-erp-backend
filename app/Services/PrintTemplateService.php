@@ -119,7 +119,7 @@ class PrintTemplateService
             $html = view(str_replace('/',  '.', ($this->tempTemplateFile.$identifyName)), $data)->render();
 
             // after getting rendered html with data we stored that on a $file variable then remove that temp file
-            // $this->removeFile($this->tempTemplateFile.$fileName);
+            $this->removeFile($this->tempTemplateFile.$fileName);
 
             return $html;
         }
