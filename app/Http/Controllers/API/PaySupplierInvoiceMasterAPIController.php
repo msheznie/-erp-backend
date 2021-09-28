@@ -1767,6 +1767,7 @@ WHERE
 	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' ) 
 	AND ( ( erp_purchaseorderadvpayment.currencyID ) = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' )
 	AND ( ( erp_purchaseorderadvpayment.selectedToPayment ) = 0 ) 
+    AND ( ( erp_purchaseorderadvpayment.cancelledYN ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poCancelledYN ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poConfirmedYN ) = 1 ) 
 	AND ( ( erp_purchaseordermaster.approved ) =- 1 ) 

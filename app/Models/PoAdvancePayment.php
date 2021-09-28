@@ -96,10 +96,14 @@ class PoAdvancePayment extends Model
         'reqAmountInPOTransCur',
         'reqAmountInPOLocalCur',
         'reqAmountInPORptCur',
+        'cancelledYN',
+        'cancelledByEmployeeSystemID',
+        'cancelledDate',
         'createdDateTime',
         'vatSubCategoryID',
         'VATAmount',
         'VATPercentage',
+        'cancelledComment',
         'VATAmountLocal',
         'addVatOnPO',
         'VATAmountRpt',
@@ -114,6 +118,8 @@ class PoAdvancePayment extends Model
     protected $casts = [
         'poAdvPaymentID' => 'integer',
         'companySystemID' => 'integer',
+        'cancelledYN' => 'integer',
+        'cancelledByEmployeeSystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineID' => 'string',
@@ -123,6 +129,7 @@ class PoAdvancePayment extends Model
         'poTermID' => 'integer',
         'supplierID' => 'integer',
         'SupplierPrimaryCode' => 'string',
+        'cancelledComment' => 'string',
         'liabilityAccountSysemID' => 'integer',
         'liabilityAccount'  => 'string',
         'UnbilledGRVAccountSystemID' => 'integer',
@@ -227,6 +234,11 @@ class PoAdvancePayment extends Model
     public function vat_sub_category()
     {
         return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategoryID', 'taxVatSubCategoriesAutoID');
+    }
+
+     public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmployeeSystemID', 'employeeSystemID');
     }
 
 }

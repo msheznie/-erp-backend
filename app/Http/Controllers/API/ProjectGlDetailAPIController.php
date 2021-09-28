@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateLeaveGroupAPIRequest;
-use App\Http\Requests\API\UpdateLeaveGroupAPIRequest;
-use App\Models\LeaveGroup;
-use App\Repositories\LeaveGroupRepository;
+use App\Http\Requests\API\CreateProjectGlDetailAPIRequest;
+use App\Http\Requests\API\UpdateProjectGlDetailAPIRequest;
+use App\Models\ProjectGlDetail;
+use App\Repositories\ProjectGlDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class LeaveGroupController
+ * Class ProjectGlDetailController
  * @package App\Http\Controllers\API
  */
 
-class LeaveGroupAPIController extends AppBaseController
+class ProjectGlDetailAPIController extends AppBaseController
 {
-    /** @var  LeaveGroupRepository */
-    private $leaveGroupRepository;
+    /** @var  ProjectGlDetailRepository */
+    private $projectGlDetailRepository;
 
-    public function __construct(LeaveGroupRepository $leaveGroupRepo)
+    public function __construct(ProjectGlDetailRepository $projectGlDetailRepo)
     {
-        $this->leaveGroupRepository = $leaveGroupRepo;
+        $this->projectGlDetailRepository = $projectGlDetailRepo;
     }
 
     /**
@@ -32,10 +32,10 @@ class LeaveGroupAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/leaveGroups",
-     *      summary="Get a listing of the LeaveGroups.",
-     *      tags={"LeaveGroup"},
-     *      description="Get all LeaveGroups",
+     *      path="/projectGlDetails",
+     *      summary="Get a listing of the ProjectGlDetails.",
+     *      tags={"ProjectGlDetail"},
+     *      description="Get all ProjectGlDetails",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +49,7 @@ class LeaveGroupAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/LeaveGroup")
+     *                  @SWG\Items(ref="#/definitions/ProjectGlDetail")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +61,29 @@ class LeaveGroupAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->leaveGroupRepository->pushCriteria(new RequestCriteria($request));
-        $this->leaveGroupRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $leaveGroups = $this->leaveGroupRepository->all();
+        $this->projectGlDetailRepository->pushCriteria(new RequestCriteria($request));
+        $this->projectGlDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $projectGlDetails = $this->projectGlDetailRepository->all();
 
-        return $this->sendResponse($leaveGroups->toArray(), 'Leave Groups retrieved successfully');
+        return $this->sendResponse($projectGlDetails->toArray(), 'Project Gl Details retrieved successfully');
     }
 
     /**
-     * @param CreateLeaveGroupAPIRequest $request
+     * @param CreateProjectGlDetailAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/leaveGroups",
-     *      summary="Store a newly created LeaveGroup in storage",
-     *      tags={"LeaveGroup"},
-     *      description="Store LeaveGroup",
+     *      path="/projectGlDetails",
+     *      summary="Store a newly created ProjectGlDetail in storage",
+     *      tags={"ProjectGlDetail"},
+     *      description="Store ProjectGlDetail",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="LeaveGroup that should be stored",
+     *          description="ProjectGlDetail that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/LeaveGroup")
+     *          @SWG\Schema(ref="#/definitions/ProjectGlDetail")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +96,7 @@ class LeaveGroupAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveGroup"
+     *                  ref="#/definitions/ProjectGlDetail"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +106,13 @@ class LeaveGroupAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateLeaveGroupAPIRequest $request)
+    public function store(CreateProjectGlDetailAPIRequest $request)
     {
         $input = $request->all();
 
-        $leaveGroup = $this->leaveGroupRepository->create($input);
+        $projectGlDetail = $this->projectGlDetailRepository->create($input);
 
-        return $this->sendResponse($leaveGroup->toArray(), 'Leave Group saved successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), 'Project Gl Detail saved successfully');
     }
 
     /**
@@ -120,14 +120,14 @@ class LeaveGroupAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/leaveGroups/{id}",
-     *      summary="Display the specified LeaveGroup",
-     *      tags={"LeaveGroup"},
-     *      description="Get LeaveGroup",
+     *      path="/projectGlDetails/{id}",
+     *      summary="Display the specified ProjectGlDetail",
+     *      tags={"ProjectGlDetail"},
+     *      description="Get ProjectGlDetail",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveGroup",
+     *          description="id of ProjectGlDetail",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +143,7 @@ class LeaveGroupAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveGroup"
+     *                  ref="#/definitions/ProjectGlDetail"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +155,30 @@ class LeaveGroupAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var LeaveGroup $leaveGroup */
-        $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
+        /** @var ProjectGlDetail $projectGlDetail */
+        $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
-        if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+        if (empty($projectGlDetail)) {
+            return $this->sendError('Project Gl Detail not found');
         }
 
-        return $this->sendResponse($leaveGroup->toArray(), 'Leave Group retrieved successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), 'Project Gl Detail retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateLeaveGroupAPIRequest $request
+     * @param UpdateProjectGlDetailAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/leaveGroups/{id}",
-     *      summary="Update the specified LeaveGroup in storage",
-     *      tags={"LeaveGroup"},
-     *      description="Update LeaveGroup",
+     *      path="/projectGlDetails/{id}",
+     *      summary="Update the specified ProjectGlDetail in storage",
+     *      tags={"ProjectGlDetail"},
+     *      description="Update ProjectGlDetail",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveGroup",
+     *          description="id of ProjectGlDetail",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +186,9 @@ class LeaveGroupAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="LeaveGroup that should be updated",
+     *          description="ProjectGlDetail that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/LeaveGroup")
+     *          @SWG\Schema(ref="#/definitions/ProjectGlDetail")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +201,7 @@ class LeaveGroupAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/LeaveGroup"
+     *                  ref="#/definitions/ProjectGlDetail"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +211,20 @@ class LeaveGroupAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateLeaveGroupAPIRequest $request)
+    public function update($id, UpdateProjectGlDetailAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var LeaveGroup $leaveGroup */
-        $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
+        /** @var ProjectGlDetail $projectGlDetail */
+        $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
-        if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+        if (empty($projectGlDetail)) {
+            return $this->sendError('Project Gl Detail not found');
         }
 
-        $leaveGroup = $this->leaveGroupRepository->update($input, $id);
+        $projectGlDetail = $this->projectGlDetailRepository->update($input, $id);
 
-        return $this->sendResponse($leaveGroup->toArray(), 'LeaveGroup updated successfully');
+        return $this->sendResponse($projectGlDetail->toArray(), 'ProjectGlDetail updated successfully');
     }
 
     /**
@@ -232,14 +232,14 @@ class LeaveGroupAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/leaveGroups/{id}",
-     *      summary="Remove the specified LeaveGroup from storage",
-     *      tags={"LeaveGroup"},
-     *      description="Delete LeaveGroup",
+     *      path="/projectGlDetails/{id}",
+     *      summary="Remove the specified ProjectGlDetail from storage",
+     *      tags={"ProjectGlDetail"},
+     *      description="Delete ProjectGlDetail",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of LeaveGroup",
+     *          description="id of ProjectGlDetail",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,15 +267,16 @@ class LeaveGroupAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var LeaveGroup $leaveGroup */
-        $leaveGroup = $this->leaveGroupRepository->findWithoutFail($id);
+        /** @var ProjectGlDetail $projectGlDetail */
+        $projectGlDetail = $this->projectGlDetailRepository->findWithoutFail($id);
 
-        if (empty($leaveGroup)) {
-            return $this->sendError('Leave Group not found');
+        if (empty($projectGlDetail)) {
+            return $this->sendError('Project Gl Detail not found');
         }
 
-        $leaveGroup->delete();
+        $projectGlDetail->delete();
 
-        return $this->sendSuccess('Leave Group deleted successfully');
+        // return $this->sendSuccess('Project Gl Detail deleted successfully');
+        return $this->sendResponse([], 'Project Gl Detail deleted successfully');
     }
 }

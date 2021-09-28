@@ -54,7 +54,6 @@ class BankLedgerInsert implements ShouldQueue
                         if ($masterData->financeperiod_by->isActive == -1) {
                             $masterDocumentDate = $masterData->BPVdate;
                         }
-
                         if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
                             $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
 
@@ -66,6 +65,7 @@ class BankLedgerInsert implements ShouldQueue
                             $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
                         }
 
+                       
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['documentSystemID'] = $masterData->documentSystemID;
@@ -130,17 +130,17 @@ class BankLedgerInsert implements ShouldQueue
                         if ($masterData->invoiceType == 3) {
                             $custReceivePayment = CustomerReceivePayment::where('companySystemID', $masterData->companySystemID)->where('documentSystemID', $masterData->documentSystemID)->where('PayMasterAutoId', $masterModel["autoID"])->first();
 
-                            if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
-                                $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
-
-                                $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $masterModel['pdcAmount']);
-
-                                $custReceivePayment->bankAmount = $masterModel['pdcAmount'];
-                                $custReceivePayment->localAmount = $currencyConvertionData['localAmount'];
-                                $custReceivePayment->companyRptAmount = $currencyConvertionData['reportingAmount'];
-                            }
 
                             if ($custReceivePayment) {
+                                if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
+                                    $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
+                                    $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $masterModel['pdcAmount']);
+
+                                    $custReceivePayment->bankAmount = $masterModel['pdcAmount'];
+                                    $custReceivePayment->localAmount = $currencyConvertionData['localAmount'];
+                                    $custReceivePayment->companyRptAmount = $currencyConvertionData['reportingAmount'];
+                                }
+                                
                                 $data['companySystemID'] = $custReceivePayment->companySystemID;
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;

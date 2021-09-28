@@ -28,15 +28,22 @@ class CommonJobService
         return Tenant::get();
     }
 
-
     public static function company_list(){
         return Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')
             ->get();
     }
 
+    public static function leave_accrual_service_types(){
+        return [
+            ['policy'=> 1, 'dailyBasis'=> false, 'description'=> 'Annual accrual'],
+            ['policy'=> 1, 'dailyBasis'=> true, 'description'=> 'Annual daily basis accrual'],
+            ['policy'=> 3, 'dailyBasis'=> false, 'description'=> 'Monthly accrual'],
+        ];
+    }
+
     public static function job_check(){
 
-        $log = DB::table('jobs')->get(); //failed_jobs | jobs
+        $log = DB::table('failed_jobs')->get(); //failed_jobs | jobs
         //echo '<pre>'; print_r($log); echo '</pre>'; exit;
 
         foreach ($log as $row){

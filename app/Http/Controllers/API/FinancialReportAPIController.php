@@ -39,6 +39,9 @@ use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateNumbers;
 use App\Models\SegmentMaster;
+use App\Models\BudgetConsumedData;
+use App\Models\ProjectGlDetail;
+use App\Models\ErpProjectMaster;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -273,6 +276,32 @@ class FinancialReportAPIController extends AppBaseController
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function validatePUReport(Request $request){
+        $fromDate = $request->fromDate;
+        $toDate = $request->toDate;
+        $projectID = $request->projectID;
+        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+
+        $budgetConsumedData = BudgetConsumedData::where('projectID',$projectID)->get();
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $projectAmount = collect($getProjectAmounts)->sum('amount');
+        if($projectAmount>0){
+            $projectAmount= $projectAmount;
+        } else {
+            $projectAmount=0;
+        }
+
+        $output = array(
+            'projectDetail' => $projectDetail,
+            'projectAmount' => $projectAmount,
+            'budgetConsumedData' => $budgetConsumedData
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
     }
 
     /*generate report according to each report id*/

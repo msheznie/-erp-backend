@@ -57,7 +57,14 @@ class MaterielRequestRepository extends BaseRepository
         'approved',
         'ClosedYN',
         'issueTrackID',
-        'timeStamp'
+        'timeStamp',
+        'isFromPortal' => 'integer',
+        'cancelledYN' => 'integer',
+        'cancelledByEmpSystemID' => 'integer',
+        'cancelledByEmpID' => 'string',
+        'cancelledByEmpName' => 'string',
+        'cancelledComments' => 'string',
+        'cancelledDate' => 'string',
     ];
 
     /**
@@ -93,8 +100,6 @@ class MaterielRequestRepository extends BaseRepository
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
                                     ->with(['created_by', 'priority_by', 'warehouse_by','segment_by']);
 
-
-
         if (array_key_exists('ConfirmedYN', $input)) {
 
             if(($input['ConfirmedYN'] == 0 || $input['ConfirmedYN'] == 1)  && !is_null($input['ConfirmedYN'])) {
@@ -114,6 +119,12 @@ class MaterielRequestRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('cancelledYN', $input)) {
+            if(($input['cancelledYN'] == 0 || $input['cancelledYN'] == -1) && !is_null($input['cancelledYN'])) {
+                $materielRequests->where('cancelledYN', $input['cancelledYN']);
+            }
+        }
+
 
         $materielRequests = $materielRequests->select(
             ['erp_request.RequestID',
@@ -126,7 +137,8 @@ class MaterielRequestRepository extends BaseRepository
                 'erp_request.approved',
                 'erp_request.serviceLineSystemID',
                 'erp_request.documentSystemID',
-                'erp_request.refferedBackYN'
+                'erp_request.refferedBackYN',
+                'erp_request.cancelledYN'
             ]);
 
         $search = $request->input('search.value');
@@ -165,4 +177,5 @@ class MaterielRequestRepository extends BaseRepository
 
         return $data;
     }
+
 }

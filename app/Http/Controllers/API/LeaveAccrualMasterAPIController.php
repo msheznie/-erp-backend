@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CommonJobService;
+use App\helper\LeaveAccrualService;
 use App\Http\Requests\API\CreateLeaveAccrualMasterAPIRequest;
 use App\Http\Requests\API\UpdateLeaveAccrualMasterAPIRequest;
+use App\Jobs\LeaveAccrualInitiate;
+use App\Models\Company;
 use App\Models\LeaveAccrualMaster;
 use App\Repositories\LeaveAccrualMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -277,5 +282,39 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         $leaveAccrualMaster->delete();
 
         return $this->sendSuccess('Leave Accrual Master deleted successfully');
+    }
+
+    function accrual_service_test(Request $request){
+        //LeaveAccrualInitiate::dispatch(); return 'true';
+
+        $policy = $request->input('policy');
+        $dailyBasis = $request->input('dailyBasis');
+        $dailyBasis = ($dailyBasis == 'true');
+
+        $company = Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')->find(1);
+
+        $company = $company->toArray();
+        $accrual_type_det = ['policy'=> $policy, 'dailyBasis'=> $dailyBasis];
+        //echo '<pre>'; print_r($company); echo '</pre>'; //exit;
+
+        $path = CommonJobService::get_specific_log_file('leave-accrual');
+        Log::useFiles($path);
+
+        $ser_per = new LeaveAccrualService($company, $accrual_type_det, []);
+        $groups = $ser_per->prepare_for_accrual();
+
+        echo '<pre>'; print_r($groups); echo '</pre>'; // exit;
+        //return 'true';
+
+        if(count($groups) == 0){
+            return 'false';
+        }
+
+        foreach ($groups as $group){
+            $ser = new LeaveAccrualService($company, $accrual_type_det, $group);
+            $ser->create_accrual();
+        }
+
+        return 'true';
     }
 }

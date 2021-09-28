@@ -37,14 +37,14 @@ class AdvancePaymentNotification
     public static function getAdvancePaymentEmailContent($details, $fullName)
     {
         $body = "Dear {$fullName},<br/>";
-        $body .= "Purchase order pending delivery notification<br/><br/>";
+        $body .= "Following purchase order advance payment expiry dates are as follow :<br/><br/>";
         $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
         <thead>
             <tr>
                 <th style="text-align: center;border: 1px solid black;">#</th>
                 <th style="text-align: center;border: 1px solid black;">PO Code</th> 
-                <th style="text-align: center;border: 1px solid black;">commitment date</th>
-                <th style="text-align: center;border: 1px solid black;">amount </th> 
+                <th style="text-align: center;border: 1px solid black;">Commitment Date</th>
+                <th style="text-align: center;border: 1px solid black;">Amount </th> 
             </tr>
         </thead>';
         $body .= '<tbody>';

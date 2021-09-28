@@ -4,7 +4,9 @@ namespace App\helper;
 use App\helper\Helper;
 use Carbon\Carbon;
 use App\Models\Budjetdetails;
+use App\Models\Company;
 use App\Models\BudgetDetailHistory;
+use App\Models\CurrencyMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\BudgetConsumedData;
 use App\Models\PurchaseRequest;
@@ -15,6 +17,7 @@ use App\Models\ReportTemplateDetails;
 use App\Models\ProcumentOrder;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\Models\ProjectGlDetail;
 use App\Models\SegmentAllocatedItem;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\DirectPaymentDetails;
@@ -57,15 +60,23 @@ class BudgetConsumptionService
                         	$userMessageE .= "Service Line : ". $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
-                        $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, 2) ;
+                        
+                        if (isset($budgetData['checkBudgetBasedOnGLPolicyProject']) && $budgetData['checkBudgetBasedOnGLPolicyProject'] &&  (isset($budgetData['projectBased']) && $budgetData['projectBased'])) {
+                        	$userMessageE .= "GL Account : ". $value['serviceLine'] ;
+                        	$userMessageE .= "<br>";
+                        }
+
+                        $currencyDecimal = isset($budgetData['rptCurrency']) ? $budgetData['rptCurrency']['DecimalPlaces'] : 2;
+
+                        $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], 2) ;
+                        $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Consumed Amount : " . round($value['consumedAmount'], 2) ;
+                        $userMessageE .= "Consumed Amount : " . round($value['consumedAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Pending Document Amount : " . round($value['pendingDocumentAmount'], 2) ;
+                        $userMessageE .= "Pending Document Amount : " . round($value['pendingDocumentAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, 2);
+                        $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, $currencyDecimal);
 					}
 				}
 
@@ -215,6 +226,10 @@ class BudgetConsumptionService
 		$budgetFormData['documentSystemID'] = $documentSystemID;
 		$budgetFormData['documentSystemCode'] = $documentSystemCode;
 
+		$company = Company::where('companySystemID', $budgetFormData['companySystemID'])->first();
+
+        $rptCurrency = CurrencyMaster::where('currencyID', $company->reportingCurrency)->first();
+
 
 		$checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
 	                                    ->where('companySystemID', $budgetFormData['companySystemID'])
@@ -247,8 +262,24 @@ class BudgetConsumptionService
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && (!is_null($budgetFormData['projectID']) && $budgetFormData['projectID'] != 0))
 	    {
 	    	$budgetCheckPolicy = true;
+	    	$checkBudgetOnGlCode = CompanyPolicyMaster::where('companyPolicyCategoryID', 59)
+						                                    ->where('companySystemID', $budgetFormData['companySystemID'])
+						                                    ->first();
+
+			$checkBudgetBasedOnGLPolicyProject = false;
+		    if ($checkBudgetOnGlCode && $checkBudgetOnGlCode->isYesNO == 1) {
+		    	$checkBudgetBasedOnGLPolicyProject = true;
+		    }
+		    $budgetFormData['checkBudgetBasedOnGLPolicyProject'] = $checkBudgetBasedOnGLPolicyProject;
+		    if ($budgetFormData['financeCategory'] != 3) {
+	    		$budgetFormData['glCodes'] = $budgetFormData['financeGLcodePLSystemIDs'];
+	    		$budgetFormData['glColumnName'] = "financeGLcodePLSystemID";
+	    	} else {
+	    		$budgetFormData['glCodes'] = $budgetFormData['financeGLcodebBSSystemIDs'];
+	    		$budgetFormData['glColumnName'] = "financeGLcodebBSSystemID";
+	    	}
 	    	$budgetData = self::budgetConsumptionByProject($budgetFormData);
-	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy];
+	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'checkBudgetBasedOnGLPolicyProject' => $checkBudgetBasedOnGLPolicyProject, 'rptCurrency' => $rptCurrency];
 	    }
 
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && $documentLevelCheckBudget && !is_null($budgetFormData['financeCategory'])) {
@@ -274,35 +305,85 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes']];
+	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
 	{
 		$projectData = ErpProjectMaster::find($budgetFormData['projectID']);
-
+		$finalData = [];
 		if ($projectData) {
-			$currencyConversionRptAmount = Helper::currencyConversion($projectData->companySystemID, $projectData->projectCurrencyID, $projectData->projectCurrencyID, $projectData->estimatedAmount);
-			$budgetRptAmount = $currencyConversionRptAmount['reportingAmount'];
-			$budgetLocalAmount = $currencyConversionRptAmount['localAmount'];
-
+			$projectBudget = ProjectGlDetail::selectRaw('SUM(amount) AS projectBudgetAmount, projectID, chartOfAccountSystemID')
+												  ->where('projectID', $budgetFormData['projectID'])
+												  ->when($budgetFormData['checkBudgetBasedOnGLPolicyProject'] == true, function($query) use ($budgetFormData) {
+												  	$query->whereIn('chartOfAccountSystemID', $budgetFormData['glCodes'])
+												  		  ->groupBy('chartOfAccountSystemID');
+												  })
+												  ->get();
+			
 			$consumedAmount = self::consumedProjectBudgetAmountQry($budgetFormData);
 
 			$pendingPoAmounts = self::pendingProjectPoQry($budgetFormData);
-
+			
 			$documentAmount = self::documentAmountQryOfProjectBasedPo($budgetFormData);
 
-			$finalData['budgetAmount'] = $budgetRptAmount;
-			$finalData['templateCategory'] = $projectData->description;
-			$finalData['currenctDocumentConsumption'] = (isset($documentAmount->rptAmt) && $documentAmount->rptAmt > 0) ? $documentAmount->rptAmt : 0;
-			$finalData['pendingDocumentAmount'] = (isset($pendingPoAmounts->rptAmt) && $pendingPoAmounts->rptAmt > 0) ? $pendingPoAmounts->rptAmt : 0;
-			$finalData['consumedAmount'] = ($consumedAmount) ? $consumedAmount->ConsumedRptAmount : 0;
 
-			$totalConsumedAmount = $finalData['currenctDocumentConsumption'] +  $finalData['consumedAmount'] + $finalData['pendingDocumentAmount'];
+			if ($budgetFormData['checkBudgetBasedOnGLPolicyProject']) {
+				foreach ($budgetFormData['glCodes'] as $key => $value) {
+					$chartOfAcData = ChartOfAccount::find($value);
 
-			$finalData['availableAmount'] = $finalData['budgetAmount'] - $totalConsumedAmount;
+					$budgetAmountData = collect($projectBudget)->firstWhere('chartOfAccountSystemID', $value);
+					$consumedAmountData = collect($consumedAmount)->firstWhere('chartOfAccountID', $value);
+					$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('chartOfAccountID', $value);
+					$documentAmountData = collect($documentAmount)->firstWhere('chartOfAccountID', $value);
 
-			return [$finalData];
+					$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $budgetAmountData->projectBudgetAmount);
+					$budgetRptAmount = $currencyConversionRptAmount['reportingAmount'];
+					$budgetLocalAmount = $currencyConversionRptAmount['localAmount'];
+					
+					$finalData[$value]['budgetAmount'] = $budgetRptAmount;
+					$finalData[$value]['templateCategory'] = ($projectData) ? $projectData->description : "";
+					$finalData[$value]['serviceLine'] = ($chartOfAcData) ? $chartOfAcData->AccountCode.' - '.$chartOfAcData->AccountDescription : "";
+					$finalData[$value]['currenctDocumentConsumption'] = (isset($documentAmountData->rptAmt) && $documentAmountData->rptAmt > 0) ? $documentAmountData->rptAmt : 0;
+					$finalData[$value]['pendingDocumentAmount'] = (isset($pendingPoAmountsData->rptAmt) && $pendingPoAmountsData->rptAmt > 0) ? $pendingPoAmountsData->rptAmt : 0;
+					$finalData[$value]['consumedAmount'] = ($consumedAmountData) ? $consumedAmountData->ConsumedRptAmount : 0;
+
+					$totalConsumedAmount = $finalData[$value]['currenctDocumentConsumption'] +  $finalData[$value]['consumedAmount'] + $finalData[$value]['pendingDocumentAmount'];
+
+					$finalData[$value]['availableAmount'] = $finalData[$value]['budgetAmount'] - $totalConsumedAmount;
+				}
+
+
+				$finalResData = [];
+				foreach ($finalData as $key => $value) {
+					$finalResData[] = $value;
+				}
+
+				return $finalResData;
+			} else {
+
+				$budgetAmountData = collect($projectBudget)->first();
+				$consumedAmountData = collect($consumedAmount)->first();
+				$pendingPoAmountsData = collect($pendingPoAmounts)->first();
+				$documentAmountData = collect($documentAmount)->first();
+
+				$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $budgetAmountData->projectBudgetAmount);
+				$budgetRptAmount = $currencyConversionRptAmount['reportingAmount'];
+				$budgetLocalAmount = $currencyConversionRptAmount['localAmount'];
+				
+				$finalData['budgetAmount'] = $budgetRptAmount;
+				$finalData['templateCategory'] = ($projectData) ? $projectData->description : "";
+				$finalData['currenctDocumentConsumption'] = (isset($documentAmountData->rptAmt) && $documentAmountData->rptAmt > 0) ? $documentAmountData->rptAmt : 0;
+				$finalData['pendingDocumentAmount'] = (isset($pendingPoAmountsData->rptAmt) && $pendingPoAmountsData->rptAmt > 0) ? $pendingPoAmountsData->rptAmt : 0;
+				$finalData['consumedAmount'] = ($consumedAmountData) ? $consumedAmountData->ConsumedRptAmount : 0;
+
+				$totalConsumedAmount = $finalData['currenctDocumentConsumption'] +  $finalData['consumedAmount'] + $finalData['pendingDocumentAmount'];
+
+				$finalData['availableAmount'] = $finalData['budgetAmount'] - $totalConsumedAmount;
+
+				return [$finalData];
+			}
+
 		} else {
 			return [];
 		}
@@ -691,14 +772,8 @@ class BudgetConsumptionService
 
 	public static function pendingProjectPoQry($budgetFormData)
 	{
-		$pendingPoQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitLocalCur * noQty) AS localAmt, SUM(GRVcostPerUnitComRptCur * noQty) AS rptAmt, companySystemID, serviceLineSystemID')
+		$pendingPoQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitLocalCur * noQty) AS localAmt, SUM(GRVcostPerUnitComRptCur * noQty) AS rptAmt, companySystemID, serviceLineSystemID,'.$budgetFormData["glColumnName"].' as chartOfAccountID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
-								 		 //     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-											 // 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
-											 // 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
-											 // 					  ->whereIn('documentSystemID', [1,50,51]);
-												//  	});
-											 // })
 	 										 ->whereHas('order', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
 	 										 		  ->where('poCancelledYN', 0)
@@ -709,22 +784,24 @@ class BudgetConsumptionService
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [2,5,52]), function($query) use ($budgetFormData) {
 	 										 	$query->where('purchaseOrderMasterID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
-											 ->first();
+	 										 ->when(($budgetFormData['checkBudgetBasedOnGLPolicyProject'] == true), function($query) use ($budgetFormData) {
+									 				$query->whereIn($budgetFormData['glColumnName'], $budgetFormData['glCodes'])
+									 					  ->groupBy($budgetFormData['glColumnName']);
+											 })
+											 ->get();
 
 		return $pendingPoQry;
 	}
 
 	public static function documentAmountQryOfProjectBasedPo($budgetFormData)
 	{
-		$pendingPoQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitLocalCur * noQty) AS localAmt, SUM(GRVcostPerUnitComRptCur * noQty) AS rptAmt, companySystemID, serviceLineSystemID')
-								 		 //     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-											 // 	$query->whereHas('allocations', function($query) use ($budgetFormData) {
-											 // 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID'])
-											 // 					  ->whereIn('documentSystemID', [1,50,51]);
-												//  	});
-											 // })
+		$pendingPoQry = PurchaseOrderDetails::selectRaw('SUM(GRVcostPerUnitLocalCur * noQty) AS localAmt, SUM(GRVcostPerUnitComRptCur * noQty) AS rptAmt, companySystemID, serviceLineSystemID,'.$budgetFormData["glColumnName"].' as chartOfAccountID')
+								 		     ->when(($budgetFormData['checkBudgetBasedOnGLPolicyProject'] == true), function($query) use ($budgetFormData) {
+									 				$query->whereIn($budgetFormData['glColumnName'], $budgetFormData['glCodes'])
+									 					  ->groupBy($budgetFormData['glColumnName']);
+											 })
 	 										 ->where('purchaseOrderMasterID',$budgetFormData['documentSystemCode'])
-											 ->first();
+											 ->get();
 		return $pendingPoQry;
 	}
 
@@ -1319,11 +1396,14 @@ class BudgetConsumptionService
 						 		     ->where('year', $budgetFormData['budgetYear'])
 						 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 						 		     ->where('projectID', $budgetFormData['projectID'])
-						 		 //     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-									 // 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-									 // })
-									 ->groupBy('projectID')
-									 ->first();
+									 ->when(($budgetFormData['checkBudgetBasedOnGLPolicyProject'] == true), function($query) use ($budgetFormData) {
+									 	$query->whereIn('chartOfAccountID', $budgetFormData['glCodes'])
+									 		 ->groupBy('chartOfAccountID');
+									 })
+									 ->when(($budgetFormData['checkBudgetBasedOnGLPolicyProject'] == false), function($query) use ($budgetFormData) {
+									 	$query->groupBy('projectID');
+									 })
+									 ->get();
 
 		return $consumedAmount;
 	}

@@ -3961,7 +3961,9 @@ class Helper
             }
             Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
             $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
-            $jobPV = BankLedgerInsert::dispatch($masterData);
+            if ($pvMaster->pdcChequeYN == 0) {
+                $jobPV = BankLedgerInsert::dispatch($masterData);
+            }
         }
         return ['success' => true, 'message' => "Customer receive voucher created successfully"];
     }
