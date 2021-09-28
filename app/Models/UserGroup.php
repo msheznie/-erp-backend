@@ -42,7 +42,7 @@ class UserGroup extends Model
         'description',
         'isActive',
         'timestamp',
-        'flag'
+        'defaultYN'
     ];
 
     /**
@@ -55,7 +55,7 @@ class UserGroup extends Model
         'companyID' => 'integer',
         'description' => 'string',
         'isActive' => 'integer',
-        'flag' => 'boolean'
+        'defaultYN' => 'boolean'
     ];
 
     /**

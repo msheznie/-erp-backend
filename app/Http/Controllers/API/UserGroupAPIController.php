@@ -75,16 +75,16 @@ class UserGroupAPIController extends AppBaseController
             if (empty($userGroups)) {
                 return $this->sendError('User Group not found');
             }
-            if($input["flag"])
+            if($input["defaultYN"])
             {
-                $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("flag", true)->count();
+                $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("defaultYN", true)->count();
                 if($userGroupsCheck == 0)
                 {
-                    $userGroupsDefault = UserGroup::where("companyID", $input["companyID"])->where("flag", true)->first();
+                    $userGroupsDefault = UserGroup::where("companyID", $input["companyID"])->where("defaultYN", true)->first();
 
                 
                     if (isset($userGroupsDefault)) {
-                        return $this->sendError('already there is a defailt user group exit');
+                        return $this->sendError('The company have already a default user group');
                     }
                 }
     
@@ -106,15 +106,15 @@ class UserGroupAPIController extends AppBaseController
             $userGroups->companyID = $input["companyID"];
             $userGroups->description = $input["description"];
             $userGroups->isActive = 1;
-            $userGroups->flag = $input["flag"];
+            $userGroups->defaultYN = $input["defaultYN"];
 
            $userGroups->save();
         }else{
             $input['isActive'] = 1;
 
-            if($input["flag"])
+            if($input["defaultYN"])
             {
-                $userGroups = UserGroup::where("companyID", $input["companyID"])->where("flag", true)->first();
+                $userGroups = UserGroup::where("companyID", $input["companyID"])->where("defaultYN", true)->first();
                 if(isset($userGroups))
                 {
                     return $this->sendError('The Company has already default user group');
