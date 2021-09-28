@@ -88,5 +88,10 @@ class PoPaymentTerms extends Model
     public function purchase_order_master(){ 
         return $this->hasOne(ProcumentOrder::class, 'purchaseOrderID', 'poID');
     }
+
+    public function advance_payment_request()
+    {
+        return $this->belongsTo('App\Models\PoAdvancePayment', 'paymentTermID', 'poTermID');
+    }
     
 }

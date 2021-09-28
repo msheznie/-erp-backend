@@ -259,7 +259,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
+        $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->with(['cancelled_by'])->first();
 
         if (empty($AdvancePayment)) {
             return $this->sendError('Po Payment Terms not found');
@@ -590,8 +590,8 @@ ORDER BY
             return $this->sendError($validator->messages(), 422);
         }
 
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
-
+        
+        $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -607,7 +607,7 @@ ORDER BY
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
+                        // $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -678,6 +678,7 @@ ORDER BY
             ->where('erp_purchaseordermaster.poConfirmedYN', 1)
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseordermaster.poCancelledYN', 0)
+            ->where('erp_purchaseorderadvpayment.cancelledYN', 0)
             ->whereDate('erp_purchaseorderadvpayment.reqDate','<=', $asOfDate)
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
@@ -695,10 +696,7 @@ ORDER BY
             })
             ->leftJoin('erp_paysupplierinvoicemaster', 'details.PayMasterAutoId', 'erp_paysupplierinvoicemaster.PayMasterAutoId');
 
-        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
-            $advancePaymentRequest = $advancePaymentRequest->having('status', $input['invoiceType']);
-        }
-
+        
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $advancePaymentRequest = $advancePaymentRequest->where(function ($query) use ($search) {
@@ -708,7 +706,15 @@ ORDER BY
             });
         }
 
-        return $advancePaymentRequest;
+        $advancePaymentRequest = $advancePaymentRequest->get();
+
+        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
+            $invoiceID = collect($input['invoiceType']);
+           $getInvoiceID = $invoiceID->pluck('id')->toArray();
+           $advancePaymentRequest = collect($advancePaymentRequest)->whereIn('status', $getInvoiceID)->all();
+       }
+
+       return $advancePaymentRequest;
     }
 
 
@@ -726,7 +732,7 @@ ORDER BY
         }
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invoiceType','currencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -735,7 +741,7 @@ ORDER BY
         }
 
             $search = $request->input('search.value');
-            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search)->orderBy('poAdvPaymentID',$sort)->get();
+            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
             $type = $request->type;
 
             if ($advancePaymentRequest) {
@@ -844,5 +850,29 @@ ORDER BY
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
             })->download($type);
+    }
+
+    public function advancePaymentTermCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $advancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
+
+        if (empty($advancePayment)) {
+            return $this->sendError('Advance Payment Terms not found');
+        }
+
+        if ($advancePayment->selectedToPayment == -1) {
+            return $this->sendError('Advance payment request is slected for payment voucher, therefore cannot cancel', 500);
+        }
+
+        $advancePayment->cancelledYN = 1; 
+        $advancePayment->cancelledComment = $input['comment']; 
+        $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+        $advancePayment->cancelledDate = Carbon::now(); 
+
+        $advancePayment->save();
+
+        return $this->sendResponse([], 'Successfully cancelled');
     }
 }

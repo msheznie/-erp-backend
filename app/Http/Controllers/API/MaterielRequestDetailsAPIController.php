@@ -226,8 +226,9 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
 
-             $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
+             $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID,$materielRequest) {
                                                 $query->where('companySystemID', $companySystemID)
+                                                    ->where('poLocation', $materielRequest->location)
                                                     ->where('approved', -1)
                                                     ->where('poCancelledYN', 0);
                                          })
@@ -248,7 +249,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                     ->groupBy('itemSystemCode')
                                     ->sum('inOutQty');
 
-            $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+            $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID,$materielRequest) {
                                 $query->where('companySystemID', $companySystemID)
                                     ->where('grvTypeID', 2)
                                     ->groupBy('erp_grvmaster.companySystemID');

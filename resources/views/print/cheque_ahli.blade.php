@@ -32,20 +32,20 @@
 
         #top_supplier_div {
             position: absolute;
-            top: 6.5cm;
+            top: 6cm;
             left: 4.5cm;
         }
         
         #top_date_div {
             position: absolute;
-            top: 7.7cm;
-            left: 22.5cm;
+            top: 6.7cm;
+            left: 20.5cm;
         }
 
         #reference_table_div {
             position: absolute;
             top: 10cm;
-            left: 1.35cm;
+            left: 0.35cm;
 
         }
 
@@ -57,8 +57,8 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 29cm;
-            left: 21.5cm;
+            top: 26.5cm;
+            left: 20cm;
         }
 
         #cheque_no_bottom {
@@ -69,14 +69,14 @@
 
         #cheque_amount_no {
             position: absolute;
-            top: 32.5cm;
-            left: 21.5cm;
+            top: 29.8cm;
+            left: 21cm;
         }
 
         #cheque_payee {
             position: absolute;
-            top: 30.7cm;
-            left: 5cm;
+            top: 28.6cm;
+            left: 5.5cm;
         }
 
         #word_amount_table {
@@ -89,7 +89,7 @@
         #cheque_amount_word_para {
             line-height: 1cm;
             position: absolute;
-            top: 2.9cm;
+            top: 0.6cm;
             left: 1cm;
 
         }
@@ -105,14 +105,7 @@
       </style>
 </head>
 <body onload="window.print();window.close()" >
-<div class="content header-content-div">
-    {{-- <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
-            {{$entity->BPVcode}}
-    </div> --}}
-    {{-- <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
-        00003860
-    </div> --}}
-    
+<div class="content header-content-div" style="font-weight: bold;">   
     <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
         {{$entity->nameOnCheque}}
     </div>
@@ -122,25 +115,14 @@
 
     <div id="reference_table_div">
         <table class="header-part paper_size" >
-{{--            <tr >--}}
-{{--                <td style="width: 1.5cm"></td>--}}
-{{--                <td valign="top" style="width: 10cm">{{$entity->BPVNarration}}</td>--}}
-{{--                <td valign="top" style="width: 7cm"></td>--}}
-{{--                <td valign="top" class="text-right" style="width: 2.4cm" >--}}
-{{--                    <b >{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>--}}
-{{--                </td>--}}
-{{--                <td style="width: 1.5cm"></td>--}}
-{{--            </tr>--}}
             @if($entity->details)
                 @if($entity->invoiceType == 2)
                     @foreach ($entity->details as $item)
                         <tr >
-                            <td style="width: 10cm">{{$item->bookingInvDocCode}}</td>
-                            {{-- <td style="width: 7.5cm"></td> --}}
-                            {{-- <td style="width: 8.5cm">{{ \App\helper\Helper::dateFormat($item->bookingInvoiceDate)}}</td> --}}
-                            <td valign="top" style="width: 15cm">{{$item->supplierInvoiceNo}}</td>
-                            <td valign="top" style="width: 12cm"></td>
-                            <td valign="top" class="text-right" style="width: 2.4cm" >
+                            <td style="width: 10cm; font-weight: bold;">{{$item->bookingInvDocCode}}</td>
+                            <td valign="top" style="width: 15cm; font-weight: bold;">{{$item->supplierInvoiceNo}}</td>
+                            <td valign="top" style="width: 12cm; font-weight: bold;"></td>
+                            <td valign="top" class="text-right" style="width: 2.4cm; font-weight: bold;" >
                                 {{number_format($item->supplierInvoiceAmount,$entity->decimalPlaces)}}
                             </td>
                             
@@ -148,55 +130,14 @@
                         </tr>
                     @endforeach
                 @endif
-
-                {{-- @if($entity->invoiceType == 5)
-                    @foreach ($entity->details as $item)
-                        <tr >
-                            <td style="width: 1.5cm"></td>
-                            <td valign="top" style="width: 10cm">{{$item->purchaseOrderCode}}</td>
-                            <td valign="top" style="width: 7cm"></td>
-                            <td valign="top" class="text-right" style="width: 2.4cm" >
-                                {{number_format($item->supplierTransAmount,$entity->decimalPlaces)}}
-                            </td>
-                            <td style="width: 1.5cm"></td>
-                        </tr>
-                    @endforeach
-                @endif --}}
-
-                {{-- @if($entity->invoiceType == 3)
-                    @foreach ($entity->details as $item)
-                        <tr >
-                            <td style="width: 1.5cm"></td>
-                            <td valign="top" style="width: 10cm">{{$item->glCode}}</td>
-                            <td valign="top" style="width: 7cm"></td>
-                            <td valign="top" class="text-right" style="width: 2.4cm" >
-                                {{number_format($item->DPAmount,$entity->decimalPlaces)}}
-                            </td>
-                            <td style="width: 1.5cm"></td>
-                        </tr>
-                    @endforeach
-                @endif --}}
             @endif
         </table>
     </div>
-
-    {{-- <div id="total_amount_div">
-        <table class="header-part paper_size" >
-            <tr >
-                <td style="width: 18.5cm"></td>
-                <td  valign="top" class="text-right" style="width: 2.4cm; font-size: 16px !important;" >
-                    {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}
-                </td>
-                <td style="width: 1.5cm"></td>
-            </tr>
-        </table>
-    </div> --}}
 </div>
 
 <div class="footer" >
     <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
     <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->nameOnCheque}}</div>
-    {{-- <div style="font-size: 16px !important;" id="cheque_no_bottom" >00003860</div> --}}
 
     <table id="word_amount_table" class="header-part" >
         <tr >

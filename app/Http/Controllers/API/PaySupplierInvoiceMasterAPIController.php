@@ -29,6 +29,7 @@ use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\PdcLog;
 use App\Models\BankLedger;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\BankMemoPayee;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
@@ -937,6 +938,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         'bank_account_reporting_currency_er_not_updated' => array(),
                         'bank_account_reporting_currency_amount_not_updated' => array(),
                         'inter_company_gl_code_not_created' => array(),
+                        'from_comany_not_configured_in_to_company' => array(),
                         'monthly_deduction_not_updated' => [],
                     );
 
@@ -959,6 +961,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         }
 
                         if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+
+                            $toRelatedAccounts = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) use ($paySupplierInvoiceMaster){
+                                                                            $q->where('isApproved', 1)
+                                                                              ->where('interCompanySystemID', $paySupplierInvoiceMaster->companySystemID);
+                                                                        })
+                                                                        ->where('isAssigned', -1)
+                                                                        ->where('companySystemID', $paySupplierInvoiceMaster->interCompanyToSystemID)
+                                                                        ->where('controllAccountYN', 0)
+                                                                        ->where('controlAccountsSystemID', '<>', 1)
+                                                                        ->where('isActive', 1)
+                                                                        ->first();
+
+                            $fromCompanyData = Company::find($paySupplierInvoiceMaster->companySystemID);
+                            $toCompanyData = Company::find($paySupplierInvoiceMaster->interCompanyToSystemID);
+
+                            $fromCompanyName = isset($fromCompanyData->CompanyName) ? $fromCompanyData->CompanyName : "";
+                            $toCompanyName = isset($toCompanyData->CompanyName) ? $toCompanyData->CompanyName : "";
+
+                            if (!$toRelatedAccounts) {
+                                array_push($finalError['from_comany_not_configured_in_to_company'], $fromCompanyName . ' to ' . $toCompanyName);
+                                $error_count++;
+                            }
 
                             if (!$item->toBankID) {
                                 array_push($finalError['bank_not_updated'], $item->glCode . ' | ' . $item->glCodeDes);
@@ -1743,6 +1767,7 @@ WHERE
 	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' ) 
 	AND ( ( erp_purchaseorderadvpayment.currencyID ) = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' )
 	AND ( ( erp_purchaseorderadvpayment.selectedToPayment ) = 0 ) 
+    AND ( ( erp_purchaseorderadvpayment.cancelledYN ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poCancelledYN ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poConfirmedYN ) = 1 ) 
 	AND ( ( erp_purchaseordermaster.approved ) =- 1 ) 

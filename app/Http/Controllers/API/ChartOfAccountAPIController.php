@@ -322,6 +322,16 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
+                    if ($input['relatedPartyYN'] == 1) {
+                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])
+                                                                         ->where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
+                                                                         ->first();
+
+                        if ($checkAlreadyInterCompanyCreated) {
+                            return $this->sendError("Related party account is already created for this company.");
+                        }                        
+                    }
+
                     $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                     $confirm = \Helper::confirmDocument($params);
                     if (!$confirm["success"]) {
@@ -725,7 +735,7 @@ class ChartOfAccountAPIController extends AppBaseController
         if (isset($input['primaryCompanySystemID'])) {
             $allCompanies = Company::where('isGroup', 0)
                 ->where('isActive', 1)
-                ->where('companySystemID', '!=', $input['primaryCompanySystemID'])
+                // ->where('companySystemID', '!=', $input['primaryCompanySystemID'])
                 ->get();
         } else {
             $allCompanies = [];
