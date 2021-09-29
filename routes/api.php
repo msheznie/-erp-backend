@@ -2365,6 +2365,13 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+Route::get('cache-clear', function () {
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+
+    return 'Cache (cache/config) cleared successfully';
+});
+
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
