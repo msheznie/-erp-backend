@@ -649,9 +649,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
+
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
+        Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
