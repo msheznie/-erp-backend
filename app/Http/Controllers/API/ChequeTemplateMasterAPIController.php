@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\ChequeTemplateBank;
 use App\Criteria\FilterActiveRecordsCriteria;
 /**
  * Class ChequeTemplateMasterController
@@ -65,6 +66,13 @@ class ChequeTemplateMasterAPIController extends AppBaseController
         $this->chequeTemplateMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $this->chequeTemplateMasterRepository->pushCriteria(new FilterActiveRecordsCriteria($request));
         $chequeTemplateMasters = $this->chequeTemplateMasterRepository->all();
+
+        // foreach($chequeTemplateMasters as $key=>$val)
+        // {
+        //     $template_bank = ChequeTemplateBank::
+        //     return $val->id;
+        //     die();
+        // }
 
         return $this->sendResponse($chequeTemplateMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.templates')]));
     }
