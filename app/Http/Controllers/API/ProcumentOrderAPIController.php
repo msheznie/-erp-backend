@@ -596,7 +596,8 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-        $newlyUpdatedPoTotalAmount = $poMasterSumRounded + $poAddonMasterSumRounded + $poVATMasterSumRounded;
+        $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
+        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
             return $this->sendError('Discount Amount should be less than order amount.', 500);
@@ -1028,11 +1029,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
             //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
 
-            //return $poMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
-            if (abs(($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+            // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
+
+            $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
+
+            if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
             } else {
                 return $this->sendError('Payment terms total is not matching with the PO total');
             }
+
 
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
@@ -1044,9 +1049,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']));
-
-                    if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
+                    $payAdCompAmount = $payment['comAmount'];
+                    if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
