@@ -57,7 +57,8 @@ class Tenant extends Model
     public $fillable = [
         'name',
         'sub_domain',
-        'database'
+        'database',
+        'is_active'
     ];
 
     /**
@@ -69,7 +70,8 @@ class Tenant extends Model
         'id' => 'integer',
         'name' => 'string',
         'sub_domain' => 'string',
-        'database' => 'string'
+        'database' => 'string',
+        'is_active' => 'integer'
     ];
 
     /**
