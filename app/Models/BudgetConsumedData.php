@@ -210,4 +210,9 @@ class BudgetConsumedData extends Model
     {
         return $this->belongsTo('App\Models\Budjetdetails', ['chartOfAccountID', 'year'], ['chartOfAccountID', 'Year']);
     }
+
+     public function purchase_order()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
+    }
 }
