@@ -2657,4 +2657,90 @@ class BudgetConsumptionService
 
 		return $finalData;
 	}
+
+	public static function getCommitedConsumedAmount($detail, $DLBCPolicy)
+    {
+        $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
+                                                $query->where('grvRecieved', '!=', 2);
+                                            }])
+                                            ->where('consumeYN', -1)
+                                            ->where('companySystemID', $detail->companySystemID)
+                                            ->when($DLBCPolicy, function($query) use ($detail){
+                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
+                                            })
+                                            ->where('chartOfAccountID', $detail->chartOfAccountID)
+                                            ->where('companyFinanceYearID', $detail->companyFinanceYearID)
+                                            ->where('documentSystemID', 2)
+                                            ->whereHas('purchase_order', function ($query) {
+                                                $query->where('grvRecieved', '!=', 2);
+                                            })
+                                            ->get();
+
+        $committedAmount = 0;
+        $partiallyReceivedAmount = 0;
+        foreach ($consumedAmountOfPO as $key => $value) {
+            if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
+                $committedAmount += $value->consumedRptAmount;
+            } else {
+                if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
+                    $glColumnName = 'financeGLcodePLSystemID';
+                } else {
+                    $glColumnName = 'financeGLcodebBSSystemID';
+                }
+
+                $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->where($glColumnName, $detail->chartOfAccountID)
+                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                    ->when($DLBCPolicy, function($query) use ($detail) {
+		                                            	$query->where('segment_allocated_items.serviceLineSystemID', $detail->serviceLineSystemID);
+		                                            })
+                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                    ->groupBy('purchaseOrderMasterID')
+                                                    ->first();
+
+                if ($notRecivedPo) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                    $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+
+
+                    $currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->receivedAmount);
+                    $partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
+                }
+            }
+        }
+
+        $actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
+
+        $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $detail->companySystemID)
+                                                            ->when($DLBCPolicy, function($query) use ($detail) {
+				                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
+				                                            })
+                                                            ->where('chartOfAccountSystemID', $detail->chartOfAccountID)
+                                                            ->whereHas('supplier_invoice_master', function($query) use ($detail) {
+                                                                $query->where('approved', 0)
+                                                                      ->where('cancelYN', 0)
+                                                                      ->where('documentType', 1)
+                                                                      ->where('companySystemID', $detail->companySystemID);
+                                                             })
+                                                            ->sum('netAmountRpt');
+
+        $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $detail->companySystemID)
+                                                ->when($DLBCPolicy, function($query) use ($detail) {
+	                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
+	                                            })
+                                                ->where('chartOfAccountSystemID', $detail->chartOfAccountID)
+                                                ->whereHas('master', function($query) use ($detail) {
+                                                    $query->where('approved', 0)
+                                                          ->where('cancelYN', 0)
+                                                          ->where('invoiceType', 3)
+                                                          ->where('companySystemID', $detail->companySystemID);
+                                                 })
+                                                ->sum('comRptAmount');
+        
+        $pendingDocumentAmount = $detail->pending_po_amount + $pendingSupplierInvoiceAmount + $pendingPvAmount;
+
+        return ['pendingDocumentAmount' => $pendingDocumentAmount, 'actuallConsumptionAmount' => $actuallConsumptionAmount, 'committedAmount' => $committedAmount];
+
+    }
 }
