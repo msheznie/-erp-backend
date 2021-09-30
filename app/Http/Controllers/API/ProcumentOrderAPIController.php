@@ -129,12 +129,15 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\UserRepository;
+use App\Services\PrintTemplateService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -150,12 +153,14 @@ class ProcumentOrderAPIController extends AppBaseController
     private $procumentOrderRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    private $printTemplateService;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, PrintTemplateService $printTemplateService)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->printTemplateService = $printTemplateService;
     }
 
     /**
@@ -3035,7 +3040,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
      *
      * @param int $request
      *
-     * @return Response
+     * @return string
+     * @throws \Throwable
      */
 
     public function getProcumentOrderPrintPDF(Request $request)
@@ -3118,10 +3124,31 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'termsCond' => $typeID,
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons
-
         );
 
-        $html = view('print.purchase_order_print_pdf', $order);
+        try {
+            // check document type has set template as default, then get rendered html with data
+            $data = $this->printTemplateService->getDefaultTemplateSource($procumentOrder['documentSystemID'], $order);
+
+            if($data){
+                $html = $data;
+            }else{
+                $html = view('print.purchase_order_print_pdf', $order);
+            }
+        }catch(\Exception $e) {
+            Log::debug('=============== START PRINT TEMPLATE ERROR ==============');
+            Log::info([
+                'function' => 'getProcumentOrderPrintPDF->getDefaultTemplateSource',
+                'request' => $request->all(),
+                'data' => $order
+            ]);
+            Log::error($e);
+            Log::debug('=============== END PRINT TEMPLATE ERROR ==============');
+
+            // if failed to show dynamically created template then show static template
+            $html = view('print.purchase_order_print_pdf', $order);
+        }
+
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
