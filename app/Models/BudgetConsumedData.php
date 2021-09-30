@@ -15,6 +15,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Awobaz\Compoships\Compoships;
+use Carbon\Carbon;
 
 /**
  * @SWG\Definition(
@@ -139,7 +140,6 @@ class BudgetConsumedData extends Model
     const UPDATED_AT = NULL; //'timestamp';
 
     protected $primaryKey = 'budgetConsumedDataAutoID';
-
     public $fillable = [
         'companySystemID',
         'companyID',
@@ -211,7 +211,7 @@ class BudgetConsumedData extends Model
         return $this->belongsTo('App\Models\Budjetdetails', ['chartOfAccountID', 'year'], ['chartOfAccountID', 'Year']);
     }
 
-     public function purchase_order()
+    public function purchase_order()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
     }

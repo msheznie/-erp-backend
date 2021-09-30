@@ -187,7 +187,8 @@ class Company extends Model
         'logoPath',
         'qhseApiKey',
         'taxCardNo',
-        'timeStamp'
+        'timeStamp',
+        'helpDeskApiKey'
     ];
 
     /**
@@ -274,7 +275,8 @@ class Company extends Model
         'taxCardNo' => 'string',
         'logoPath' => 'string',
         'isHrmsIntergrated' => 'boolean',
-        'qhseApiKey' => 'string'
+        'qhseApiKey' => 'string',
+        'helpDeskApiKey' => 'string'
     ];
 
     /**

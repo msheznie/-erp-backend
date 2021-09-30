@@ -83,7 +83,12 @@ return [
             // 'ssl'      => true,
             // 'timeout'  => 30,
         ],
-
+        'resource' => [
+            'driver' => 'local',
+            'root' => resource_path('views'),
+            'url' => env('APP_URL').'',
+            'visibility' => 'public',
+        ],
     ],
 
 ];
