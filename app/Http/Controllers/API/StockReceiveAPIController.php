@@ -22,6 +22,7 @@ use App\Http\Requests\API\UpdateStockReceiveAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -564,6 +565,14 @@ class StockReceiveAPIController extends AppBaseController
                     }
                 }
             }
+
+            $checkPlAccount = ($stockReceive->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockReceive->companySystemID, $stockReceive->documentSystemID, 2);
+
+            if (is_null($checkPlAccount)) {
+                return $this->sendError('Please configure PL account for stock receive', 500);
+            }
+
+
             unset($input['confirmedYN']);
             unset($input['confirmedByEmpSystemID']);
             unset($input['confirmedByEmpID']);

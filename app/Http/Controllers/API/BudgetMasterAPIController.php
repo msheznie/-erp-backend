@@ -166,12 +166,18 @@ class BudgetMasterAPIController extends AppBaseController
             'serviceLineSystemID' => 'required|numeric|min:1',
             'companySystemID' => 'required',
             'templateMasterID' => 'required|numeric|min:1',
+            'sentNotificationAt' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        if ($input['sentNotificationAt'] > 100) {
+            return $this->sendError('Send Notification at percentage cannot be greater than 100', 500);
+        }
+
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
         if (empty($segment)) {
@@ -880,7 +886,7 @@ class BudgetMasterAPIController extends AppBaseController
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
 
         $data = array('entity' => $budgetMaster->toArray(), 'reportData' => $reportData,
-            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt, 'rptCurrency' => $rptCurrency);
 
         return $this->sendResponse($data, 'details retrieved successfully');
     }
@@ -1441,7 +1447,7 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError($budgetConsumedData['message']);
         }
 
-        return $this->sendResponse(['budgetConsumedData' => $budgetConsumedData['data'], 'validateArray' => (isset($budgetConsumedData['validateArray']) ? $budgetConsumedData['validateArray'] : []), 'checkBudgetBasedOnGLPolicy' => (isset($budgetConsumedData['checkBudgetBasedOnGLPolicy']) ? $budgetConsumedData['checkBudgetBasedOnGLPolicy'] : false),  'departmentWiseCheckBudgetPolicy' => (isset($budgetConsumedData['departmentWiseCheckBudgetPolicy']) ? $budgetConsumedData['departmentWiseCheckBudgetPolicy'] : false)], 'Budget consumption retrieved successfully');
+        return $this->sendResponse(['budgetConsumedData' => $budgetConsumedData['data'], 'validateArray' => (isset($budgetConsumedData['validateArray']) ? $budgetConsumedData['validateArray'] : []), 'checkBudgetBasedOnGLPolicy' => (isset($budgetConsumedData['checkBudgetBasedOnGLPolicy']) ? $budgetConsumedData['checkBudgetBasedOnGLPolicy'] : false),  'departmentWiseCheckBudgetPolicy' => (isset($budgetConsumedData['departmentWiseCheckBudgetPolicy']) ? $budgetConsumedData['departmentWiseCheckBudgetPolicy'] : false), 'checkBudgetBasedOnGLPolicyProject' => (isset($budgetConsumedData['checkBudgetBasedOnGLPolicyProject']) ? $budgetConsumedData['checkBudgetBasedOnGLPolicyProject'] : false), 'currency' => (isset($budgetConsumedData['rptCurrency']) ? $budgetConsumedData['rptCurrency'] : null)], 'Budget consumption retrieved successfully');
     }
 
     public function getBudgetBlockedDocuments(Request $request)

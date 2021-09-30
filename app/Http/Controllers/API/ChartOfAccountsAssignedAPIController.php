@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\ProjectGlDetail;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -106,22 +107,23 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                         return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot unassign');
                     }
                 }
-            } else {
-                if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
-                    $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
-                                                               ->where('isMasterAccount', 1)
-                                                               ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
-                                                                    $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
-                                                                          ->where('isAssigned', -1)
-                                                                          ->where('isActive', 1);
-                                                               })
-                                                               ->first();
+            } 
+            // else {
+            //     if ($input['isActive'] == 1 || $input['isActive'] || $input['isAssigned']) {
+            //         $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
+            //                                                    ->where('isMasterAccount', 1)
+            //                                                    ->whereHas('chartofaccount_assigned', function($query) use ($chartOfAccountsAssigned) {
+            //                                                         $query->where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+            //                                                               ->where('isAssigned', -1)
+            //                                                               ->where('isActive', 1);
+            //                                                    })
+            //                                                    ->first();
 
-                    if (!$checkMasterAccountIsAssigned) {
-                        return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot update');
-                    }
-                }
-            }
+            //         if (!$checkMasterAccountIsAssigned) {
+            //             return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot update');
+            //         }
+            //     }
+            // }
 
             $input = $this->convertArrayToValue($input);
 
@@ -146,20 +148,20 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 return $this->sendError('Chart of Account not found!', 404);
             }
 
-            if ($chartofaccountData->isMasterAccount == 0) {
-                $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
-                                                           ->where('isMasterAccount', 1)
-                                                           ->whereHas('chartofaccount_assigned', function($query) use ($input) {
-                                                                $query->where('companySystemID', $input['companySystemID'])
-                                                                      ->where('isAssigned', -1)
-                                                                      ->where('isActive', 1);
-                                                           })
-                                                           ->first();
+            // if ($chartofaccountData->isMasterAccount == 0) {
+            //     $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
+            //                                                ->where('isMasterAccount', 1)
+            //                                                ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+            //                                                     $query->where('companySystemID', $input['companySystemID'])
+            //                                                           ->where('isAssigned', -1)
+            //                                                           ->where('isActive', 1);
+            //                                                })
+            //                                                ->first();
 
-                if (!$checkMasterAccountIsAssigned) {
-                    return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
-                }
-            }
+            //     if (!$checkMasterAccountIsAssigned) {
+            //         return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
+            //     }
+            // }
 
             $input = $this->convertArrayToValue($input);
             $company = Company::find($input['companySystemID']);
@@ -295,6 +297,34 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
     }
 
+    public function gl_code_search(request $request){
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $from_master_tbl = $input['from_master_tbl'];
+        $from_master_tbl =($from_master_tbl == 'true');
+
+
+        if($from_master_tbl){
+            $data = ChartOfAccount::where('isActive', 1);
+        }
+        else{
+            $data = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+                ->where('isAssigned', -1)
+                ->where('isActive', 1);
+        }
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $data = $data->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = $data->take(20)->get();
+        return $this->sendResponse($data->toArray(), 'Data retrieved successfully');
+    }
+
     public function getPaymentVoucherGL(request $request)
     {
         $input = $request->all();
@@ -307,7 +337,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->where('controllAccountYN', 0)
             ->where('controlAccountsSystemID', '<>', 1)
-            ->where('isActive', 1);
+            ->where('isActive', 1)
+            ->when((isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] == 15), function ($query) {
+                $query->where('isBank',1);
+            })
+            ->when((!isset($input['expenseClaimOrPettyCash']) || (isset($input['expenseClaimOrPettyCash']) && $input['expenseClaimOrPettyCash'] != 15)), function ($query) {
+                $query->where('isBank',0);
+            });
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -346,6 +382,60 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function getGlAccounts(request $request){
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $items = ChartOfAccountsAssigned::whereHas('chartofaccount', function ($q) {
+            $q->where('isApproved', 1);
+        })->where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isBank', 0)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+        $items = $items->get();
+
+        if (empty($items)) {
+            return $this->sendError('Data not found');
+        } 
+        return $this->sendResponse($items, 'Data retrieved successfully');
+    }
+
+    public function getglDetails(request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $input['companySystemID'];
+        $projectID = $input['projectID'];
+        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+                                    ->where('projectID' , $projectID)->get();
+
+        if (empty($glDetails)) {
+                return $this->sendError('Data not found');
+            } 
+                                                            
+        // return \DataTables::eloquent($glDetails)
+        //     ->addIndexColumn()->order(function ($query) use ($input) {
+        //         if (request()->has('order') ) {
+        //             if($input['order'][0]['column'] == 0)
+        //             {
+        //                 $query->orderBy('id', $input['order'][0]['dir']);
+        //             }
+        //         }
+        //     })
+        //     ->with('orderCondition', $sort)
+        //     ->make(true);
+
+        return \DataTables::of($glDetails)
+            ->addIndexColumn()
+            ->make(true);
     }
 
     public function getAssignedChartOfAccounts(request $request)

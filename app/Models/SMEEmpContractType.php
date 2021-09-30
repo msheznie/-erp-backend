@@ -156,5 +156,8 @@ class SMEEmpContractType extends Model
         'Timestamp' => 'required'
     ];
 
+    function emp_contract(){
+        return $this->hasMany(HREmpContractHistory::class, 'contactTypeID', 'EmpContractTypeID');
+    }
     
 }

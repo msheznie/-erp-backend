@@ -9,7 +9,10 @@ use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\ErpProjectMaster;
 use App\Models\ServiceLine;
+use App\Models\ProjectGlDetail;
+use App\Models\SegmentMaster;
 use App\Repositories\ErpProjectMasterRepository;
+use Error;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Response;
@@ -62,6 +65,12 @@ class ErpProjectMasterAPIController extends AppBaseController
      *      )
      * )
      */
+    
+     public function get_projects(){
+        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')->get();
+        return $this->sendResponse($projectMaster, 'Projects retrieved successfully');
+    }
+
     public function index(Request $request)
     {
         $input = $request->all();
@@ -72,7 +81,7 @@ class ErpProjectMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName')->select(['id', 'projectCode', 'description', 'start_date', 'end_date','companySystemID']);
+        $projectMaster = ErpProjectMaster::where('companySystemID',$input['companyId'])->with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')->select(['id', 'projectCode', 'description', 'start_date', 'end_date','companySystemID','projectCurrencyID', 'serviceLineSystemID', 'estimatedAmount']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -152,6 +161,13 @@ class ErpProjectMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $projectCode = $input['projectCode'];
+        $checkProjectCode = ErpProjectMaster::where('projectCode',$projectCode)->first();
+
+        if($checkProjectCode){
+            return $this->sendError('Project Code Already Exist', 500);
+        }
+
         if (isset($input['companySystemID'])) {
 
             $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -225,7 +241,7 @@ class ErpProjectMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ErpProjectMaster $erpProjectMaster */
-        $erpProjectMaster = $this->erpProjectMasterRepository->findWithoutFail($id);
+       $erpProjectMaster = $this->erpProjectMasterRepository->with('gl_details')->findWithoutFail($id);
 
         if (empty($erpProjectMaster)) {
             return $this->sendError('Erp Project Master not found');
@@ -386,5 +402,13 @@ class ErpProjectMasterAPIController extends AppBaseController
             'serviceLines' => $serviceLines,
         ];
         return $this->sendResponse($data, '');
+    }
+
+    public function segmentsByCompany(Request $request)
+    {
+
+        $companySystemID = $request['companySystemID'];
+        $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->get();
+        return $this->sendResponse($serviceLines, 'Segments Projects retrieved successfully');
     }
 }

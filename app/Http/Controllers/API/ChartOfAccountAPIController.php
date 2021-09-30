@@ -96,7 +96,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
 
         if (!isset($input['reportTemplateCategory'])) {
-             return $this->sendError("Report template category cannot be empty", 500);
+            return $this->sendError("Report template category cannot be empty", 500);
         }
 
         $messages = array(
@@ -131,16 +131,16 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendError($validatorResult['message']);
         }
 
-        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
-        if($company){
+        if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
         }
 
         if (isset($input['interCompanySystemID'])) {
-              $interCompanySystemID = Company::where('companySystemID',$input['interCompanySystemID'])->first();
+            $interCompanySystemID = Company::where('companySystemID', $input['interCompanySystemID'])->first();
 
-            if($interCompanySystemID){
+            if ($interCompanySystemID) {
                 $input['interCompanyID'] = $interCompanySystemID->CompanyID;
             }
         }
@@ -150,30 +150,30 @@ class ChartOfAccountAPIController extends AppBaseController
             $input['interCompanySystemID'] = null;
         }
 
-        $isMasterAc = (isset($input['isMasterAccount']) && ($input['isMasterAccount'] == true || $input['isMasterAccount'] == 1)) ? 1 : 0; 
+        $isMasterAc = (isset($input['isMasterAccount']) && ($input['isMasterAccount'] == TRUE || $input['isMasterAccount'] == 1)) ? 1 : 0;
         if (isset($input['masterAccount']) && $input['masterAccount'] != null && !$isMasterAc) {
             $checkMasterAccountValidity = ChartOfAccount::where('isMasterAccount', 1)
-                                                    ->where('isApproved', 1)
-                                                    ->where('AccountCode', $input['masterAccount'])
-                                                    ->where('catogaryBLorPLID', $input['catogaryBLorPLID'])
-                                                    ->where('controlAccountsSystemID', $input['controlAccountsSystemID'])
-                                                    ->whereHas('chartofaccount_assigned', function($query) use ($input){
-                                                        $query->where('companySystemID', $input['primaryCompanySystemID'])
-                                                              ->where('isActive', 1)
-                                                              ->where('isAssigned', -1);
-                                                    })
-                                                    ->first();      
+                ->where('isApproved', 1)
+                ->where('AccountCode', $input['masterAccount'])
+                ->where('catogaryBLorPLID', $input['catogaryBLorPLID'])
+                ->where('controlAccountsSystemID', $input['controlAccountsSystemID'])
+                ->whereHas('chartofaccount_assigned', function ($query) use ($input) {
+                    $query->where('companySystemID', $input['primaryCompanySystemID'])
+                        ->where('isActive', 1)
+                        ->where('isAssigned', -1);
+                })
+                ->first();
 
             if (!$checkMasterAccountValidity) {
                 return $this->sendError('Selected Master Account not match with sub ledger account');
-            }             
+            }
         }
 
         if (isset($input['isMasterAccount']) && $input['isMasterAccount']) {
             $input['masterAccount'] = $accountCode;
-        } 
+        }
 
-        
+
         DB::beginTransaction();
         try {
             if (array_key_exists('chartOfAccountSystemID', $input)) {
@@ -188,12 +188,12 @@ class ChartOfAccountAPIController extends AppBaseController
                 $input = $this->convertArrayToValue($input);
 
                 if ($chartOfAccount->reportTemplateCategory != $input['reportTemplateCategory']) {
-                    $availability = false;
+                    $availability = FALSE;
                     while (!$availability) {
                         $accountCode = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory'])['data'];
                         $chartOfAccountSystemID = isset($input['chartOfAccountSystemID']) ? $input['chartOfAccountSystemID'] : null;
                         $availability = ChartOfAccount::checkAccountCode($accountCode, $chartOfAccountSystemID);
-                        if($availability) {
+                        if ($availability) {
                             DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
                         } else {
                             break;
@@ -201,27 +201,27 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
 
 
-                    DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);               
+                    DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
                 }
 
                 $input['AccountCode'] = $accountCode;
 
-                $isActiveAc = ($input['isActive'] == true || $input['isActive'] == 1) ? 1 : 0; 
+                $isActiveAc = ($input['isActive'] == TRUE || $input['isActive'] == 1) ? 1 : 0;
 
-                $checkSubLedgerAccount = ChartOfAccount::where('chartOfAccountSystemID', '!=',$input['chartOfAccountSystemID'])
-                                                       ->where('masterAccount', $chartOfAccount->AccountCode)
-                                                       ->first();
+                $checkSubLedgerAccount = ChartOfAccount::where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
+                    ->where('masterAccount', $chartOfAccount->AccountCode)
+                    ->first();
 
                 if ($checkSubLedgerAccount) {
-                    if (($isMasterAc !=  $chartOfAccount->isMasterAccount) && $isMasterAc == 0) {
+                    if (($isMasterAc != $chartOfAccount->isMasterAccount) && $isMasterAc == 0) {
                         return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot change master account as sub ledger account');
                     }
-                
+
                     if ($chartOfAccount->isMasterAccount && !$isActiveAc) {
-                        $checkForDeactiveAccounts = ChartOfAccount::where('chartOfAccountSystemID', '!=',$input['chartOfAccountSystemID'])
-                                                       ->where('masterAccount', $chartOfAccount->AccountCode)
-                                                       ->where('isActive', 1)
-                                                       ->first();
+                        $checkForDeactiveAccounts = ChartOfAccount::where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
+                            ->where('masterAccount', $chartOfAccount->AccountCode)
+                            ->where('isActive', 1)
+                            ->first();
 
                         if ($checkForDeactiveAccounts) {
                             return $this->sendError('This account is already assigned to sub ledger accounts, therefore cannot deactivate this account');
@@ -240,8 +240,8 @@ class ChartOfAccountAPIController extends AppBaseController
                 if ($chartOfAccount->isApproved == 1) {
 
                     //check policy 8
-                    $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],8);
-                    if($policy){
+                    $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 8);
+                    if ($policy) {
                         $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
                         if ($checkChartOfAccountUsed && ($chartOfAccount->AccountDescription != $input['AccountDescription'])) {
@@ -254,16 +254,16 @@ class ChartOfAccountAPIController extends AppBaseController
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
 
-                        if($updateChartOfAccount){
+                        if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
-                            $old_array = array_only($chartOfAccountOld,['AccountDescription']);
-                            $modified_array = array_only($input,['AccountDescription']);
+                            $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
+                            $modified_array = array_only($input, ['AccountDescription']);
                             // update in to user log table
-                            foreach ($old_array as $key => $old){
-                                if($old != $modified_array[$key]){
-                                    $description = $employee->empName." Updated chart of account (".$chartOfAccount->chartOfAccountSystemID.") from ".$old." To ".$modified_array[$key]."";
-                                    UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$chartOfAccount->documentSystemID,$chartOfAccount->primaryCompanySystemID,$chartOfAccount->chartOfAccountSystemID,$description,$modified_array[$key],$old,$key);
+                            foreach ($old_array as $key => $old) {
+                                if ($old != $modified_array[$key]) {
+                                    $description = $employee->empName . " Updated chart of account (" . $chartOfAccount->chartOfAccountSystemID . ") from " . $old . " To " . $modified_array[$key] . "";
+                                    UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID, $chartOfAccount->documentSystemID, $chartOfAccount->primaryCompanySystemID, $chartOfAccount->chartOfAccountSystemID, $description, $modified_array[$key], $old, $key);
                                 }
                             }
                         }
@@ -271,31 +271,31 @@ class ChartOfAccountAPIController extends AppBaseController
 
 
                     //check policy 10
-                    $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],10);
-                    if($policyCAc){
+                    $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 10);
+                    if ($policyCAc) {
                         $updateData = [
                             'controllAccountYN' => $input['controllAccountYN']
                         ];
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
 
-                        if($updateChartOfAccount){
+                        if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
-                            $old_array = array_only($chartOfAccountOld,['controllAccountYN']);
-                            $modified_array = array_only($input,['controllAccountYN']);
+                            $old_array = array_only($chartOfAccountOld, ['controllAccountYN']);
+                            $modified_array = array_only($input, ['controllAccountYN']);
                             // update in to user log table
-                            foreach ($old_array as $key => $old){
-                                if($old != $modified_array[$key]){
-                                    $description = $employee->empName." Updated chart of account (".$chartOfAccount->chartOfAccountSystemID.") from ".$old." To ".(($modified_array[$key]) ? 1:0)."";
-                                    UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$chartOfAccount->documentSystemID,$chartOfAccount->primaryCompanySystemID,$chartOfAccount->chartOfAccountSystemID,$description,$modified_array[$key],$old,$key);
+                            foreach ($old_array as $key => $old) {
+                                if ($old != $modified_array[$key]) {
+                                    $description = $employee->empName . " Updated chart of account (" . $chartOfAccount->chartOfAccountSystemID . ") from " . $old . " To " . (($modified_array[$key]) ? 1 : 0) . "";
+                                    UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID, $chartOfAccount->documentSystemID, $chartOfAccount->primaryCompanySystemID, $chartOfAccount->chartOfAccountSystemID, $description, $modified_array[$key], $old, $key);
                                 }
                             }
                         }
 
                     }
 
-                    if($policyCAc || $policy){
+                    if ($policyCAc || $policy) {
                         return $this->sendResponse([], 'Chart Of Account updated successfully');
                     }
 
@@ -303,7 +303,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 }
 
                 // $input = array_except($input,['currency_master']); // uses only in sub sub tables
-                
+
 
                 /** Validation : Edit Unique */
                 $validator = \Validator::make($input, [
@@ -316,37 +316,47 @@ class ChartOfAccountAPIController extends AppBaseController
                 /** End of Validation */
 
 
-                $input['modifiedPc']   = gethostname();
+                $input['modifiedPc'] = gethostname();
                 $input['modifiedUser'] = $empId;
-                $input = array_except($input, ['confirmedEmpSystemID','confirmedEmpID','confirmedEmpName','confirmedEmpDate']);
+                $input = array_except($input, ['confirmedEmpSystemID', 'confirmedEmpID', 'confirmedEmpName', 'confirmedEmpDate']);
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
+                    if ($input['relatedPartyYN'] == 1) {
+                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])
+                                                                         ->where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
+                                                                         ->first();
+
+                        if ($checkAlreadyInterCompanyCreated) {
+                            return $this->sendError("Related party account is already created for this company.");
+                        }                        
+                    }
+
                     $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                     $confirm = \Helper::confirmDocument($params);
-                    if(!$confirm["success"]){
+                    if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"]);
                     }
                 }
                 $input = array_except($input, ['confirmedYN']);
-                $this->chartOfAccountRepository->update($input,$input['chartOfAccountSystemID']);
+                $this->chartOfAccountRepository->update($input, $input['chartOfAccountSystemID']);
 
-                if ($isMasterAc !=  $chartOfAccount->isMasterAccount) {
+                if ($isMasterAc != $chartOfAccount->isMasterAccount) {
                     $checkChartOfAcAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
-                                                                     ->first();
+                        ->first();
 
                     if ($checkChartOfAcAssigned) {
                         ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
-                                               ->update(['masterAccount' => $input['masterAccount']]);
+                            ->update(['masterAccount' => $input['masterAccount']]);
                     }
                 }
             } else {
-                $availability = false;
+                $availability = FALSE;
                 while (!$availability) {
                     $accountCode = DocumentCodeGenerate::generateAccountCode($input['reportTemplateCategory'])['data'];
                     $chartOfAccountSystemID = isset($input['chartOfAccountSystemID']) ? $input['chartOfAccountSystemID'] : null;
                     $availability = ChartOfAccount::checkAccountCode($accountCode, $chartOfAccountSystemID);
-                    if($availability) {
+                    if ($availability) {
                         DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
                     } else {
                         break;
@@ -367,7 +377,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 /** End of Validation */
 
 
-                $input['createdPcID']   = gethostname();
+                $input['createdPcID'] = gethostname();
                 $input['createdUserID'] = $empId;
 
                 $chartOfAccount = $this->chartOfAccountRepository->create($input);
@@ -375,11 +385,11 @@ class ChartOfAccountAPIController extends AppBaseController
                 DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
             }
 
-             DB::commit();
+            DB::commit();
             return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage()." Line". $exception->getLine(), 500);
+            return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);
         }
 
 
@@ -400,22 +410,22 @@ class ChartOfAccountAPIController extends AppBaseController
         $selectedCompanyId = $request['selectedCompanyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
         $data = ChartOfAccountsAssigned::where('chartOfAccountSystemID', '=', $chartOfAccountSystemID)
-                                       ->whereIn("companySystemID",$subCompanies)
-                                       ->first();
+            ->whereIn("companySystemID", $subCompanies)
+            ->first();
 
 
         if ($data) {
-            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountSystemID)
-                                                    ->with(['company'])
-                                                    ->whereIn("companySystemID",$subCompanies)
-                                                    ->get();
+            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $chartOfAccountSystemID)
+                ->with(['company'])
+                ->whereIn("companySystemID", $subCompanies)
+                ->get();
         } else {
             $itemCompanies = [];
         }
@@ -423,22 +433,23 @@ class ChartOfAccountAPIController extends AppBaseController
         return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
     }
 
-    public function getNotAssignedCompaniesByChartOfAccount(Request $request){
+    public function getNotAssignedCompaniesByChartOfAccount(Request $request)
+    {
         $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
         $selectedCompanyId = $request['selectedCompanyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
 
-        $companies = Company::whereIn("companySystemID",$subCompanies)
-            ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
+        $companies = Company::whereIn("companySystemID", $subCompanies)
+            ->whereDoesntHave('chartOfAccountAssigned', function ($query) use ($chartOfAccountSystemID) {
                 $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
-            })->where('isGroup',0)
+            })->where('isGroup', 0)
             ->get(['companySystemID',
                 'CompanyID',
                 'CompanyName']);
@@ -451,7 +462,7 @@ class ChartOfAccountAPIController extends AppBaseController
      * Display the specified ChartOfAccount.
      * GET|HEAD /chartOfAccounts/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -471,7 +482,7 @@ class ChartOfAccountAPIController extends AppBaseController
      * Update the specified ChartOfAccount in storage.
      * PUT/PATCH /chartOfAccounts/{id}
      *
-     * @param  int $id
+     * @param int $id
      * @param UpdateChartOfAccountAPIRequest $request
      *
      * @return Response
@@ -496,7 +507,7 @@ class ChartOfAccountAPIController extends AppBaseController
      * Remove the specified ChartOfAccount from storage.
      * DELETE /chartOfAccounts/{id}
      *
-     * @param  int $id
+     * @param int $id
      *
      * @return Response
      */
@@ -517,7 +528,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function getChartOfAccount(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('controlAccountsSystemID','isBank','catogaryBLorPLID'));
+        $input = $this->convertArrayToSelectedValue($input, array('controlAccountsSystemID', 'isBank', 'catogaryBLorPLID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -529,21 +540,21 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
         if ($request['type'] == 'all') {
-            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType','allocation']);
+            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType', 'allocation']);
             // ->whereIn('primaryCompanySystemID',$childCompanies);
-        }else{
-            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType','allocation'])
+        } else {
+            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType', 'allocation'])
                 ->whereIn('CompanySystemID', $childCompanies)
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
-            if(isset($input['isAllocation']) && $input['isAllocation']==1){
-                $chartOfAccount = $chartOfAccount->where('AllocationID','!=',null);
+            if (isset($input['isAllocation']) && $input['isAllocation'] == 1) {
+                $chartOfAccount = $chartOfAccount->where('AllocationID', '!=', null);
             }
         }
 
@@ -573,18 +584,17 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-        if($search){
-            $chartOfAccount =   $chartOfAccount->where(function ($query) use($search) {
-                $query->where('AccountCode','LIKE',"%{$search}%")
+        if ($search) {
+            $chartOfAccount = $chartOfAccount->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
                     ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
             });
         }
         $request->request->remove('search.value');
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
                     }
                 }
@@ -592,7 +602,7 @@ class ChartOfAccountAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
+            ->make(TRUE);
     }
 
     public function getAllChartOfAccountApproval(Request $request)
@@ -608,43 +618,43 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companyID = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companyID = [$companyId];
         }
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
-        $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*','controlaccounts.description as controlaccountdescription','accountstype.description as accountstypedescription','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+        $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*', 'controlaccounts.description as controlaccountdescription', 'accountstype.description as accountstypedescription', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID',59)
-                ->whereIn('employeesdepartments.companySystemID',$companyID)
-                ->where('employeesdepartments.employeeSystemID',$empID)
+                ->where('employeesdepartments.documentSystemID', 59)
+                ->whereIn('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('chartofaccounts',function ($query) use ($companyID,$empID,$search) {
-            $query->on('chartOfAccountSystemID','=','erp_documentapproved.documentSystemCode')
+        })->join('chartofaccounts', function ($query) use ($companyID, $empID, $search) {
+            $query->on('chartOfAccountSystemID', '=', 'erp_documentapproved.documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                ->whereIn('primaryCompanySystemID',$companyID)
+                ->whereIn('primaryCompanySystemID', $companyID)
                 ->where('isApproved', 0)
                 ->where('chartofaccounts.confirmedYN', 1)
-                ->when($search != "", function ($q) use($search){
-                    $q->where(function ($query) use($search) {
-                        $query->where('AccountCode','LIKE',"%{$search}%")
+                ->when($search != "", function ($q) use ($search) {
+                    $q->where(function ($query) use ($search) {
+                        $query->where('AccountCode', 'LIKE', "%{$search}%")
                             ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
                     });
                 });
         })
-            ->leftJoin('controlaccounts','controlaccounts.controlAccountsSystemID','=','chartofaccounts.controlAccountsSystemID')
-            ->leftJoin('accountstype','catogaryBLorPLID','=','accountsType')
+            ->leftJoin('controlaccounts', 'controlaccounts.controlAccountsSystemID', '=', 'chartofaccounts.controlAccountsSystemID')
+            ->leftJoin('accountstype', 'catogaryBLorPLID', '=', 'accountsType')
             ->where('erp_documentapproved.approvedYN', 0)
-            ->where('erp_documentapproved.rejectedYN',0)
-            ->where('erp_documentapproved.documentSystemID',59)
-            ->whereIn('erp_documentapproved.companySystemID',$companyID);
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 59)
+            ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
@@ -663,7 +673,7 @@ class ChartOfAccountAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
+            ->make(TRUE);
     }
 
     /**
@@ -681,10 +691,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
         /** all Account Types */
         $accountsType = AccountsType::where('accountsType', '!=', 3)
-                                    ->get();
+            ->get();
 
         /** all allocation Types */
-        $allocationType = AllocationMaster::all();
+        $allocationType = AllocationMaster::where('isActive', 1)->get();
 
         /** all Account Types */
         $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
@@ -696,15 +706,15 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
-           // $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
-        }else{
+        if ($isGroup) {
+            // $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
         /**  Companies by group  Drop Down */
-        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->where("isGroup",0)->get();
+        $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup", 0)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
@@ -724,9 +734,9 @@ class ChartOfAccountAPIController extends AppBaseController
 
         if (isset($input['primaryCompanySystemID'])) {
             $allCompanies = Company::where('isGroup', 0)
-                                    ->where('isActive', 1)
-                                    ->where('companySystemID', '!=',$input['primaryCompanySystemID'])
-                                    ->get();
+                ->where('isActive', 1)
+                // ->where('companySystemID', '!=', $input['primaryCompanySystemID'])
+                ->get();
         } else {
             $allCompanies = [];
         }
@@ -741,37 +751,39 @@ class ChartOfAccountAPIController extends AppBaseController
         $masterAccounts = [];
         if ((isset($input['primaryCompanySystemID']) && $input['primaryCompanySystemID'] > 0) && (isset($input['catogaryBLorPLID']) && $input['catogaryBLorPLID'] > 0) && (isset($input['controlAccountsSystemID']) && $input['controlAccountsSystemID'] > 0)) {
             $masterAccounts = ChartOfAccount::where('isMasterAccount', 1)
-                                            ->where('isApproved', 1)
-                                            ->where('catogaryBLorPLID', $input['catogaryBLorPLID'])
-                                            ->where('controlAccountsSystemID', $input['controlAccountsSystemID'])
-                                            ->whereHas('chartofaccount_assigned', function($query) use ($input){
-                                                $query->where('companySystemID', $input['primaryCompanySystemID'])
-                                                      ->where('isActive', 1)
-                                                      ->where('isAssigned', -1);
-                                            })
-                                            ->get(['AccountCode', 'AccountDescription']);
-        } 
+                ->where('isApproved', 1)
+                ->where('catogaryBLorPLID', $input['catogaryBLorPLID'])
+                ->where('controlAccountsSystemID', $input['controlAccountsSystemID'])
+                ->whereHas('chartofaccount_assigned', function ($query) use ($input) {
+                    $query->where('companySystemID', $input['primaryCompanySystemID'])
+                        ->where('isActive', 1)
+                        ->where('isAssigned', -1);
+                })
+                ->get(['AccountCode', 'AccountDescription']);
+        }
 
         return $this->sendResponse($masterAccounts, 'Record retrieved successfully');
     }
 
 
-    public function approveChartOfAccount(Request $request){
+    public function approveChartOfAccount(Request $request)
+    {
         $approve = \Helper::approveDocument($request);
-        if(!$approve["success"]){
+        if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
-        }else{
-            return $this->sendResponse(array(),$approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
         }
 
     }
 
-    public function rejectChartOfAccount(Request $request){
+    public function rejectChartOfAccount(Request $request)
+    {
         $reject = \Helper::rejectDocument($request);
-        if(!$reject["success"]){
+        if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
-        }else{
-            return $this->sendResponse(array(),$reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
 
     }
@@ -817,12 +829,12 @@ class ChartOfAccountAPIController extends AppBaseController
 
         if ($deleteApproval) {
             $updateArray = ['refferedBackYN' => 0,
-                            'confirmedYN' => 0,
-                            'confirmedEmpSystemID' => null,
-                            'confirmedEmpID' => null,
-                            'confirmedEmpName' => null,
-                            'confirmedEmpDate' => null,
-                            'RollLevForApp_curr' => 1];
+                'confirmedYN' => 0,
+                'confirmedEmpSystemID' => null,
+                'confirmedEmpID' => null,
+                'confirmedEmpName' => null,
+                'confirmedEmpDate' => null,
+                'RollLevForApp_curr' => 1];
 
             $this->chartOfAccountRepository->update($updateArray, $id);
         }
@@ -846,7 +858,7 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         if (isset($input['catogaryBLorPL'])) {
-            if($input['catogaryBLorPL']) {
+            if ($input['catogaryBLorPL']) {
                 $items = $items->where('catogaryBLorPL', $input['catogaryBLorPL']);
             }
         }
@@ -865,26 +877,26 @@ class ChartOfAccountAPIController extends AppBaseController
     public function exportChartOfAccounts(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('controlAccountsSystemID','isBank','catogaryBLorPLID'));
+        $input = $this->convertArrayToSelectedValue($input, array('controlAccountsSystemID', 'isBank', 'catogaryBLorPLID'));
         $type = $input['type'];
         $companyId = $input['companyId'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
         if ($request['type'] == 'all') {
-            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType','allocation']);
-        }else{
-            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType','allocation'])
+            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType', 'allocation']);
+        } else {
+            $chartOfAccount = ChartOfAccountsAssigned::with(['controlAccount', 'accountType', 'allocation'])
                 ->whereIn('CompanySystemID', $childCompanies)
                 ->where('isAssigned', -1)
                 ->where('isActive', 1);
-            if(isset($input['isAllocation']) && $input['isAllocation']==1){
-                $chartOfAccount = $chartOfAccount->where('AllocationID','!=',null);
+            if (isset($input['isAllocation']) && $input['isAllocation'] == 1) {
+                $chartOfAccount = $chartOfAccount->where('AllocationID', '!=', null);
             }
         }
 
@@ -914,9 +926,9 @@ class ChartOfAccountAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-        if($search){
-            $chartOfAccount =   $chartOfAccount->where(function ($query) use($search) {
-                $query->where('AccountCode','LIKE',"%{$search}%")
+        if ($search) {
+            $chartOfAccount = $chartOfAccount->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
                     ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
             });
         }
@@ -930,17 +942,14 @@ class ChartOfAccountAPIController extends AppBaseController
             foreach ($chartOfAccount as $val) {
                 if ($val->confirmedYN == 1 && $val->isApproved == 0 && $val->refferedBackYN == -1) {
                     $status = "Referred Back";
-                }else if($val->isActive == 0){
-                    $status= "Not Active";
-                }
-                else if(($val->isActive == 1 ||  $val->isActive == -1) && $val->confirmedYN == 0 && $val->isApproved == 0){
-                    $status= "Active Only";
-                }
-                else if(($val->isActive == 1 ||  $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && $val->isApproved == 0){
-                    $status= "Not Approved";
-                }
-                else if(($val->isActive == 1 ||  $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && ($val->isApproved == 1 || $val->isApproved == -1)){
-                    $status= "Fully Approved";
+                } else if ($val->isActive == 0) {
+                    $status = "Not Active";
+                } else if (($val->isActive == 1 || $val->isActive == -1) && $val->confirmedYN == 0 && $val->isApproved == 0) {
+                    $status = "Active Only";
+                } else if (($val->isActive == 1 || $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && $val->isApproved == 0) {
+                    $status = "Not Approved";
+                } else if (($val->isActive == 1 || $val->isActive == -1) && ($val->confirmedYN == 1 || $val->confirmedYN == -1) && ($val->isApproved == 1 || $val->isApproved == -1)) {
+                    $status = "Fully Approved";
                 }
 
                 $data[$x]['Account Code'] = $val->AccountCode;
@@ -957,20 +966,20 @@ class ChartOfAccountAPIController extends AppBaseController
             $data = array();
         }
 
-         \Excel::create('chart_of_accounts_', function ($excel) use ($data) {
+        \Excel::create('chart_of_accounts_', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                $sheet->fromArray($data, null, 'A1', TRUE);
+                $sheet->setAutoSize(TRUE);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(TRUE);
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:H' . $lastrow)->getAlignment()->setWrapText(true);
+            $excel->getActiveSheet()->getStyle('A1:H' . $lastrow)->getAlignment()->setWrapText(TRUE);
         })->download('csv');
 
         return $this->sendResponse(array(), 'successfully export');
     }
 
-     public function chartOfAccountReopen(Request $request)
+    public function chartOfAccountReopen(Request $request)
     {
         $reopen = ReopenDocument::reopenDocument($request);
         if (!$reopen["success"]) {
@@ -979,4 +988,6 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendResponse(array(), $reopen["message"]);
         }
     }
+
+
 }

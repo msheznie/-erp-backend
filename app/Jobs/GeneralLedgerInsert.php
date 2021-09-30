@@ -61,6 +61,7 @@ use App\Models\SupplierAssigned;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\SalesReturn;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SalesReturnDetail;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -568,11 +569,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 if ($masterData->interCompanyTransferYN == -1) {
-                                    $data['chartOfAccountSystemID'] = 747;
-                                    $data['glCode'] = '20023';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
                                 } else {
-                                    $data['chartOfAccountSystemID'] = 605;
-                                    $data['glCode'] = '9999988';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
                                 }
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
@@ -645,11 +646,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 if ($masterData->interCompanyTransferYN == -1) {
-                                    $data['chartOfAccountSystemID'] = 747;
-                                    $data['glCode'] = '20023';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 1);
                                 } else {
-                                    $data['chartOfAccountSystemID'] = 605;
-                                    $data['glCode'] = '9999988';
+                                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
+                                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 2);
                                 }
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
@@ -719,8 +720,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
 
-                                $data['chartOfAccountSystemID'] = 4;
-                                $data['glCode'] = '9000001';
+                                $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
+                                $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 9);
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
@@ -1186,8 +1187,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                                 if (!empty($taxConfigData)) {
-                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
-                                        ->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)
+                                    $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                        ->where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                                        ->where('companySystemID', $masterData->companySystemID)
                                         ->first();
                                     if (!empty($taxGL)) {
                                         foreach ($erp_taxdetail as $tax) {
@@ -1230,8 +1232,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 $taxConfigData2 = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
                                 if (!empty($taxConfigData2)) {
-                                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                                    $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
                                         ->where('chartOfAccountSystemID', $taxConfigData2->outputVatTransferGLAccountAutoID)
+                                        ->where('companySystemID', $taxConfigData2->companySystemID)
                                         ->first();
                                     if (!empty($taxGL)) {
                                         foreach ($erp_taxdetail as $tax) {
@@ -2330,8 +2333,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
-                                        $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                        $data['glCode'] = $masterData->bank->glCodeLinked;
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                         $data['glAccountType'] = 'BS';
                                         $data['glAccountTypeID'] = 1;
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2355,8 +2358,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
-                                        $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                        $data['glCode'] = $masterData->bank->glCodeLinked;
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                         $data['glAccountType'] = 'BS';
                                         $data['glAccountTypeID'] = 1;
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2453,8 +2456,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
-                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                    $data['glCode'] = $masterData->bank->glCodeLinked;
+                                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2477,8 +2480,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $masterRpt = $masterData->payAmountCompRpt;
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
-                                $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                $data['glCode'] = $masterData->bank->glCodeLinked;
+                                $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
+                                $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
                                 $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -2725,8 +2728,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
-                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                    $data['glCode'] = $masterData->bank->glCodeLinked;
+                                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) :$masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $masterData->bankCurrency;
@@ -2791,8 +2794,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                     }
 
 
-                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
-                                    $data['glCode'] = $masterData->bank->glCodeLinked;
+                                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) :$masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;

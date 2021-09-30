@@ -133,6 +133,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'uom_default');
         $input = $this->convertArrayToValue($input);
 
+
         $companySystemID = $input['companySystemID'];
 
         $allowItemToTypePolicy = false;
@@ -225,8 +226,9 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
 
-             $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
+             $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID,$materielRequest) {
                                                 $query->where('companySystemID', $companySystemID)
+                                                    ->where('poLocation', $materielRequest->location)
                                                     ->where('approved', -1)
                                                     ->where('poCancelledYN', 0);
                                          })
@@ -247,7 +249,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                     ->groupBy('itemSystemCode')
                                     ->sum('inOutQty');
 
-            $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+            $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID,$materielRequest) {
                                 $query->where('companySystemID', $companySystemID)
                                     ->where('grvTypeID', 2)
                                     ->groupBy('erp_grvmaster.companySystemID');
@@ -401,9 +403,9 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
+
         /** @var MaterielRequestDetails $materielRequestDetails */
         $materielRequestDetails = $this->materielRequestDetailsRepository->findWithoutFail($id);
-
         if (empty($materielRequestDetails)) {
             return $this->sendError('Materiel Request Details not found');
         }
@@ -438,7 +440,16 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
 
             if ((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand) {
-                return $this->sendError("No stock Qty. Please check again.", 500);
+
+
+                $diff = ((float)$input['qtyIssuedDefaultMeasure'] - $materielRequestDetails->quantityInHand);
+
+                $data = [
+                    'QntyToMaterialIssue' =>  $materielRequestDetails->quantityInHand,
+                    'QntyToPurchaseRequest' =>  $diff,
+                ];
+
+                return $this->sendError("No stock Qty. Please check again.", 500, $data);
             }
 
             if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
@@ -554,6 +565,8 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
 
+        $location =  $input['location'];
+
         $items = ItemAssigned::where('companySystemID', $companyId)
                                ->where('financeCategoryMaster',1);
 
@@ -570,6 +583,29 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         $items = $items->take(20)->get();
 
+        foreach($items as $item) {
+            $data = array('companySystemID' => $companyId,
+            'itemCodeSystem' => $item->itemCodeSystem,
+            'wareHouseId' => $location);
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $item['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        }
+
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+
+    public function getItemWarehouseQnty(Request $request) {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $location =  $input['location'];
+
+        $data = array('companySystemID' => $companyId,
+            'itemCodeSystem' => $input['itemCode'],
+            'wareHouseId' => $location);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+       
+        return $this->sendResponse($itemCurrentCostAndQty, 'Data retrieved successfully');
+
     }
 }

@@ -398,7 +398,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         }
 
 
-        if ($master->custChequeDate == '') {
+        if ($master->custChequeDate == '' && $master->pdcChequeYN == 0) {
             return $this->sendError('Cheque date field is required.', 500);
         }
         $bankGL = BankAccount::select('chartOfAccountSystemID')

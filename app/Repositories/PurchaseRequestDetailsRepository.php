@@ -31,6 +31,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'purchaseRequestID',
+        'materialReqeuestID',
         'companySystemID',
         'companyID',
         'itemCategoryID',

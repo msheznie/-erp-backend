@@ -70,6 +70,7 @@ class CompanyPolicyCategory extends Model
 
     public $fillable = [
         'companyPolicyCategoryDescription',
+        'policyCategoryComment',
         'applicableDocumentID',
         'documentID',
         'impletemed',
@@ -85,6 +86,7 @@ class CompanyPolicyCategory extends Model
     protected $casts = [
         'companyPolicyCategoryID' => 'integer',
         'companyPolicyCategoryDescription' => 'string',
+        'policyCategoryComment' => 'string',
         'applicableDocumentID' => 'string',
         'documentID' => 'string',
         'impletemed' => 'string',
@@ -101,5 +103,8 @@ class CompanyPolicyCategory extends Model
         
     ];
 
+    function company_policy_master(){
+        return $this->hasOne(CompanyPolicyMaster::class, 'companyPolicyCategoryID');
+    }
     
 }

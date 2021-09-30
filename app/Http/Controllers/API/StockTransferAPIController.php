@@ -20,6 +20,7 @@ use App\Http\Requests\API\CreateStockTransferAPIRequest;
 use App\Http\Requests\API\UpdateStockTransferAPIRequest;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
@@ -652,6 +653,21 @@ class StockTransferAPIController extends AppBaseController
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
+
+            $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 2);
+
+            if (is_null($checkPlAccount)) {
+                return $this->sendError('Please configure PL account for stock transfer', 500);
+            }
+
+            if ($stockTransfer->interCompanyTransferYN == -1) {
+                $checkRevenueAc = SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 10);
+                
+                if (is_null($checkRevenueAc)) {
+                    return $this->sendError('Please configure Inter Company stock transfer revenue account', 500);
+                }
+            }
+
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
             $confirm = \Helper::confirmDocument($params);

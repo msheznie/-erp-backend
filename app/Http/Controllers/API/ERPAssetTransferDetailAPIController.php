@@ -141,7 +141,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 ->where('fa_master_id',$value['assetDropTransferID']) 
                 ->whereHas('assetTransferMaster', function ($query) use ($value) {
                     $query->where('company_id', $value['company_id'])
-                        ->where('approved_yn', -1);
+                        ->where('approved_yn', 0);
                 })
                 ->first();  
                 if(!empty($assetExistUnApproved->assetTransferMaster)){ 

@@ -10,7 +10,7 @@
  * -- REVISION HISTORY
  */
 namespace App\Models;
-
+use Carbon\Carbon;
 use Eloquent as Model;
 
 /**
@@ -190,5 +190,27 @@ class CompanyFinanceYear extends Model
         } else {
             return null;
         }
+    }
+
+    public static function budgetYearByDate($date, $companySystemID)
+    {
+        $companyFinanceYear = CompanyFinanceYear::whereDate('bigginingDate','<=', $date)
+                                                ->whereDate('endingDate','>=' ,$date)
+                                                ->where('companySystemID', $companySystemID)
+                                                ->first();
+
+        if ($companyFinanceYear) {
+            return Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
+        } else {
+            return date("Y");;
+        }
+    }
+
+    public static function active_finance_year($company, $date){
+        return CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
+            ->where('companySystemID', $company)
+            ->where('isActive', -1)
+            ->whereRaw("( '{$date}' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ) ")
+            ->first();
     }
 }

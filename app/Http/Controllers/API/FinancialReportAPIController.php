@@ -39,6 +39,10 @@ use App\Models\ReportTemplateDocument;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateNumbers;
 use App\Models\SegmentMaster;
+use App\Models\BudgetConsumedData;
+use App\Models\ProjectGlDetail;
+use App\Models\ErpProjectMaster;
+use App\Models\ProcumentOrder;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -273,6 +277,77 @@ class FinancialReportAPIController extends AppBaseController
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    public function validatePUReport(Request $request){
+        $fromDate = $request->fromDate;
+        $toDate = $request->toDate;
+        $projectID = $request->projectID;
+        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+
+        $budgetConsumedData = BudgetConsumedData::where('projectID',$projectID)->get();
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $projectAmount = collect($getProjectAmounts)->sum('amount');
+        if($projectAmount>0){
+            $projectAmount= $projectAmount;
+        } else {
+            $projectAmount=0;
+        }
+
+        $output = array(
+            'projectDetail' => $projectDetail,
+            'projectAmount' => $projectAmount,
+            'budgetConsumedData' => $budgetConsumedData
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function generateprojectUtilizationReport(Request $request){
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $projectID = $request->projectID;
+        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID',$projectID)->where('documentSystemID', 2)->get();
+
+        // $budgetConsumptionAmount = ProcumentOrder::with(['budget_consumed'=> function($query) {
+        //                                                     $query->selecRaw('sum(consumedRptAmount) as total')
+        //                                                           ->groupBy('documentSystemID');
+        //                                                 }])
+        //                                             ->whereBetween('createdDateTime', [$fromDate, $toDate])
+        //                                             ->where('projectID',$projectID)
+        //                                             ->get();
+
+        $buAm = BudgetConsumedData::where('projectID', $projectID)
+                                  ->where('documentSystemID', 2)
+                                  ->whereHas('purchase_order', function($query) use ($fromDate, $toDate) {
+                                      $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                                  })
+                                  ->sum('consumedRptAmount');
+
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $projectAmount = collect($getProjectAmounts)->sum('amount');
+        if($projectAmount>0){
+            $projectAmount= $projectAmount;
+        } else {
+            $projectAmount=0;
+        }
+
+        $openingBalance = $projectAmount - $buAm;
+        
+
+        $output = array(
+            'projectDetail' => $projectDetail,
+            'projectAmount' => $projectAmount,
+            'budgetConsumedData' => $budgetConsumedData,
+            'budgetConsumptionAmount' => $buAm,
+            'openingBalance' => $openingBalance
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
     /*generate report according to each report id*/
@@ -1066,6 +1141,54 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr, 'firstLevel' => $firstLevel, 'secondLevel' => $secondLevel, 'thirdLevel' => $thirdLevel, 'fourthLevel' => $fourthLevel];
+    }
+
+    public function downloadProjectUtilizationReport(Request $request)
+    {
+        $input = $request->all();
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $projectID = $request->projectID;
+        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID',$projectID)->where('documentSystemID', 2)->get();
+
+        $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
+                                  ->where('documentSystemID', 2)
+                                  ->whereHas('purchase_order', function($query) use ($fromDate, $toDate) {
+                                      $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                                  })
+                                  ->sum('consumedRptAmount');
+
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $projectAmount = collect($getProjectAmounts)->sum('amount');
+        if($projectAmount>0){
+            $projectAmount= $projectAmount;
+        } else {
+            $projectAmount=0;
+        }
+
+        $openingBalance = $projectAmount - $budgetAmount;
+        
+        $closingBalance = $openingBalance - $budgetAmount;
+
+        $output = array(
+            'projectDetail' => $projectDetail,
+            'projectAmount' => $projectAmount,
+            'budgetConsumedData' => $budgetConsumedData,
+            'budgetConsumptionAmount' => $budgetAmount,
+            'openingBalance' => $openingBalance,
+            'closingBalance' => $closingBalance,
+        );
+
+        return \Excel::create('upload_budget_template', function ($excel) use ($output) {
+                     $excel->sheet('New sheet', function($sheet) use ($output) {
+                        $sheet->loadView('export_report.project_utilization_report', $output);
+                    });
+                })->download('xlsx');
+
     }
 
     public function exportReport(Request $request)

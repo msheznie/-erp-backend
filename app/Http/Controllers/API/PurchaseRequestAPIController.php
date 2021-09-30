@@ -37,6 +37,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -46,6 +47,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemAssigned;
+use App\Models\ProcumentOrderDetail;
 use App\Models\Location;
 use App\Models\Months;
 use App\Models\PrDetailsReferedHistory;
@@ -245,6 +247,8 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
+
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'allowItemToType' => 0, 'allocateItemToSegment' => 0);
 
@@ -264,15 +268,19 @@ class PurchaseRequestAPIController extends AppBaseController
             $conditions['allocateItemToSegment'] = $allocateItemToSegment->isYesNO;
         }
 
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'financeYears' => $financeYears,
             'currencies' => $currencies,
             'financeCategories' => $financeCategories,
             'locations' => $locations,
+            'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
             'conditions' => $conditions
@@ -515,7 +523,7 @@ class PurchaseRequestAPIController extends AppBaseController
             foreach ($output as $value) {
                 $data[$x]['Company ID'] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
-                $data[$x]['Service Line'] = $value->serviceLineCode;
+                $data[$x]['Segment'] = $value->serviceLineCode;
                 $data[$x]['PR Number'] = $value->purchaseRequestCode;
 
                 if ($value->confirmed_by) {
@@ -541,7 +549,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             $x++;
                             $data[$x]['Company ID'] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Service Line'] = '';
+                            $data[$x]['Segment'] = '';
                             $data[$x]['PR Number'] = '';
                             $data[$x]['Processed By'] = '';
                             $data[$x]['PR Date'] = '';
@@ -573,7 +581,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $x++;
                                     $data[$x]['Company ID'] = '';
                                     //$data[$x]['Company Name'] = $val->CompanyName;
-                                    $data[$x]['Service Line'] = '';
+                                    $data[$x]['Segment'] = '';
                                     $data[$x]['PR Number'] = '';
                                     $data[$x]['Processed By'] = '';
                                     $data[$x]['PR Date'] = '';
@@ -647,7 +655,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $x++;
                                             $data[$x]['Company ID'] = '';
                                             //$data[$x]['Company Name'] = $val->CompanyName;
-                                            $data[$x]['Service Line'] = '';
+                                            $data[$x]['Segment'] = '';
                                             $data[$x]['PR Number'] = '';
                                             $data[$x]['Processed By'] = '';
                                             $data[$x]['PR Date'] = '';
@@ -930,17 +938,19 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         $purchaseRequests = DB::table('erp_documentapproved')
-            ->select(
-                'erp_purchaserequest.*',
-                'employees.empName As created_emp',
-                'financeitemcategorymaster.categoryDescription As financeCategoryDescription',
-                'serviceline.ServiceLineDes As PRServiceLineDes',
-                'erp_location.locationName As PRLocationName',
-                'erp_priority.priorityDescription As PRPriorityDescription',
-                'erp_documentapproved.documentApprovedID',
-                'rollLevelOrder',
-                'approvalLevelID',
-                'documentSystemCode')
+            ->selectRaw(
+                'erp_purchaserequest.*,
+                employees.empName As created_emp,
+                financeitemcategorymaster.categoryDescription As financeCategoryDescription,
+                serviceline.ServiceLineDes As PRServiceLineDes,
+                erp_location.locationName As PRLocationName,
+                erp_priority.priorityDescription As PRPriorityDescription,
+                erp_documentapproved.documentApprovedID,
+                rollLevelOrder,
+                approvalLevelID,
+                currencymaster.CurrencyCode,
+                currencymaster.DecimalPlaces As DecimalPlaces,
+                documentSystemCode, SUM(erp_purchaserequestdetails.totalCost) as totalCost')
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -969,13 +979,18 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('erp_purchaserequest.cancelledYN', 0)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
+            ->join('erp_purchaserequestdetails', function ($query) use ($companyId) {
+                $query->on('erp_purchaserequest.purchaseRequestID', '=', 'erp_purchaserequestdetails.purchaseRequestID');
+            })
             ->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'erp_purchaserequest.currency', '=', 'currencyID')
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
             ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
+            ->groupBy('erp_purchaserequestdetails.purchaseRequestID')
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
 
@@ -1166,6 +1181,15 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input['PRRequestedDate'] = now();
 
+        if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
+            $checkCompanyFinanceYear = CompanyFinanceYear::find($input['budgetYearID']);
+            if ($checkCompanyFinanceYear) {
+                $input['budgetYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+                $input['prBelongsYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+            }
+        }
+
+
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
@@ -1354,6 +1378,16 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['modifiedUser'] = $user->employee['empID'];
 
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+
+
+        if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
+            $checkCompanyFinanceYear = CompanyFinanceYear::find($input['budgetYearID']);
+            if ($checkCompanyFinanceYear) {
+                $input['prBelongsYearID'] = $input['budgetYearID'];
+                $input['budgetYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+                $input['prBelongsYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+            }
+        }
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -2471,5 +2505,66 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Attachments not found', 500);
         }
     }
+
+    public function checkProductExistInIssues($itemCode,$companySystemID) {
+        
+        $fetchDetails = PurchaseRequestDetails::whereHas('purchase_request', function($q)
+        {
+            $q->where('approved', 0);
+        })->where('itemCode', $itemCode)->get();
+
+        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+        ->where('companySystemID', $companySystemID)
+        ->first();
+
+        $checkPOPending = ProcumentOrderDetail::whereHas('productmentOrder', function($q)
+        {
+            $q->where('approved', 0);
+        })->where('itemCode', $itemCode)->get();
+        
+
+
+        if($allowPendingApproval->isYesNO != 0) {
+            $data = [
+                "status" => false,
+                "data" => [],
+                "policy" => false
+            ];
+            return $this->sendResponse($data, 'Data not found!');
+        }else {
+            if(count($fetchDetails) > 0) {
+                $data = [
+                    "status" => true,
+                    "data" => $fetchDetails,
+                    "policy" => true,
+                    "message" =>  "PR / PO available for these items"
+                ];
+                return $this->sendResponse($data, 'Data retreived successfully');
+            }else {
+                if(count($checkPOPending) > 0) {
+                    $data = [
+                        "status" => true,
+                        "policy" => true,
+                        "po" => $checkPOPending,
+                        "data" => $fetchDetails,
+                        "message" => "PR / PO available for these items"
+                    ];
+                    return $this->sendResponse($data, 'Data retreived successfully');
+    
+                }else {
+                    $data = [
+                        "status" => false,
+                        "policy" => true,
+                        "data" => []
+                    ];
+                    return $this->sendResponse($data, 'Data not found!');
+                }
+            }
+        }
+
+      
+
+    }
+
 
 }

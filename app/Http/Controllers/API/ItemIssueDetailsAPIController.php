@@ -142,36 +142,49 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+
         $companySystemID = $input['companySystemID'];
 
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
+
 
         if (empty($itemIssue)) {
             return $this->sendError('Materiel Issue not found', 500);
         }
 
-        $validator = \Validator::make($itemIssue->toArray(), [
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            'wareHouseFrom' => 'required|numeric|min:1',
-            'customerSystemID' => 'required|numeric|min:1',
-            'issueType' => 'required|numeric|min:1',
-        ]);
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
+            $validator = \Validator::make($itemIssue->toArray(), [
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
+            ]);
+        }else {
+            $validator = \Validator::make($itemIssue->toArray(), [
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'wareHouseFrom' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
+            ]);
+        }
+
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        if ($itemIssue->wareHouseFrom) {
-            $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemIssue->wareHouseFrom)->first();
-            if (empty($wareHouse)) {
-                return $this->sendError('Warehouse not found', 500);
+        if(isset($input['type']) && $input["type"] != "MRFROMMI") {  
+            if ($itemIssue->wareHouseFrom) {
+                $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemIssue->wareHouseFrom)->first();
+    
+                if (empty($wareHouse)) {
+                    return $this->sendError('Warehouse not found', 500);
+                }
+                if ($wareHouse->isActive == 0) {
+                    return $this->sendError('Please select an active warehouse.', 500);
+                }
+            } else {
+                return $this->sendError('Please select a warehouse.', 500);
             }
-            if ($wareHouse->isActive == 0) {
-                return $this->sendError('Please select an active warehouse.', 500);
-            }
-        } else {
-            return $this->sendError('Please select a warehouse.', 500);
         }
+
 
         if ($itemIssue->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
@@ -302,41 +315,48 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['itemFinanceCategorySubID'] = $item->itemFinanceCategorySubID;
 
             $input['convertionMeasureVal'] = $item->convertionMeasureVal;
-            $input['qtyRequested'] = $item->quantityRequested;
-            $input['qtyIssued'] = $item->quantityRequested;
-            $input['qtyIssuedDefaultMeasure'] = $item->qtyIssuedDefaultMeasure;
+            $input['qtyRequested'] = (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] :$item->quantityRequested;
+            $input['qtyIssued'] = (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
+            $input['qtyIssuedDefaultMeasure'] =  (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
-
-        $data = array('companySystemID' => $companySystemID,
+      
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
+           
+        }else {
+            $data = array('companySystemID' => $companySystemID,
             'itemCodeSystem' => $input['itemCodeSystem'],
             'wareHouseId' => $itemIssue->wareHouseFrom);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
-        $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-        $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-        $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-        $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-        $input['issueCostLocalTotal'] = $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
-        $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
 
-        if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+            $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+            $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+            $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+            $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+            $input['issueCostLocalTotal'] = $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
+            $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
+
+
+            if ($input['currentStockQty'] <= 0) {
+                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($input['currentWareHouseStockQty'] <= 0) {
+                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+                return $this->sendError("Cost is 0. You cannot issue.", 500);
+            }
+
+            if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+                return $this->sendError("Cost is negative. You cannot issue.", 500);
+            }
         }
-
-        if ($input['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
-
-        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue.", 500);
-        }
-
-        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue.", 500);
-        }
+        
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
@@ -555,7 +575,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details saved successfully');
+        $message = 'Materiel Issue Details saved successfully';
+        if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
+            $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
+                ->where('companyPolicyCategoryID', 6)
+                ->first();
+            if (!empty($minQtyPolicy)) {
+                if ($minQtyPolicy->isYesNO == 1) {
+                    $itemIssueDetails->warningMsg = 1;
+                    $message = 'Quantity is falling below the minimum inventory level.';
+                }
+            }
+        }
+
+
+        return $this->sendResponse($itemIssueDetails->toArray(), $message);
     }
 
 
@@ -772,9 +806,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $message = "Item updated successfully";
         $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by']);
         $input = $this->convertArrayToValue($input);
-        $qtyError = array('type' => 'qty');
+        $qtyError = array('type' => 'qty','status' => "stock");
         /** @var ItemIssueDetails $itemIssueDetails */
         $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
+
 
         if (empty($itemIssueDetails)) {
             return $this->sendError('Materiel Issue Details not found');
@@ -846,6 +881,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
             $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+            $qtyError = array('type' => 'qty','status' => 'warehouse');
+            $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->currentWareHouseStockQty)];
             return $this->sendError("Current warehouse stock Qty is: " . $itemIssueDetails->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
         }
 
@@ -861,6 +898,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if ($itemIssue->issueType == 2) {
             if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyRequested){
                 $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                // $qtyError['diff_item'] = ["item_id" => $id,"diff_qnty" => ($input['qtyIssuedDefaultMeasure'] - $itemIssueDetails->qtyRequested)];
                 return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
             }
         }
@@ -1016,7 +1054,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             ->with(['uom_default', 'uom_issuing','item_by'])
             ->get();
 
-
+        
         foreach ($items as $item) {
 
             $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();

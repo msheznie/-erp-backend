@@ -1991,12 +1991,14 @@ class Helper
                                 }
                             }
 
-                            if ($input["documentSystemID"] == 21) {
-                                //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
-                                $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
-                            }
 
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            if ($input["documentSystemID"] == 21) {
+                                //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
+                                if ($sourceModel->pdcChequeYN == 0) {
+                                    $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                                }
+                            }
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
                                 $jobCI = CreateStockReceive::dispatch($sourceModel);
                             }
@@ -2011,7 +2013,9 @@ class Helper
                                         return ['success' => false, 'message' => $jobPV["message"]];
                                     }
                                 } else {
-                                    $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                    if ($sourceModel->pdcChequeYN == 0) {
+                                        $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                    }
                                 }
                             }
 
@@ -3957,7 +3961,9 @@ class Helper
             }
             Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
             $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
-            $jobPV = BankLedgerInsert::dispatch($masterData);
+            if ($pvMaster->pdcChequeYN == 0) {
+                $jobPV = BankLedgerInsert::dispatch($masterData);
+            }
         }
         return ['success' => true, 'message' => "Customer receive voucher created successfully"];
     }
@@ -5414,5 +5420,15 @@ class Helper
         }
 
         return $headerDetail;
+    }
+
+    public static function dataTableSortOrder($input): string
+    {
+        $sort = 'desc';
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        }
+
+        return $sort;
     }
 }

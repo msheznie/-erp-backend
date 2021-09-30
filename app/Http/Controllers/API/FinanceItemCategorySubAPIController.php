@@ -36,14 +36,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     /** @var  FinanceItemCategorySubRepository */
     private $financeItemCategorySubRepository;
     private $userRepository;
-    private $financeItemCategorySubAssignedRepository;
+    private $financeItemcategorySubAssignedRepository;
 
     public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo,UserRepository $userRepo,
                                 FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
     {
         $this->financeItemCategorySubRepository = $financeItemCategorySubRepo;
         $this->userRepository = $userRepo;
-        $this->financeItemCategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+        $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
     }
 
     /**
@@ -283,6 +283,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;
             $financeItemCategorySubs->save();
+
             $this->financeItemcategorySubAssignedRepository->where(
                 'itemCategorySubID', $input['itemCategorySubID']
             )->update(
@@ -350,6 +351,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
+
+        
 
         $this->financeItemCategorySubRepository->update($input, $id);
 

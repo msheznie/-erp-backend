@@ -16,3 +16,4 @@ yarn-error.log
 /public/tmp/
 composer.lock
 /resources/views/print-templates/temp
+public/logos/

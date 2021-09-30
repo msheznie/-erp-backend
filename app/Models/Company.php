@@ -181,10 +181,14 @@ class Company extends Model
         'jsrsExpiryDate',
         'vatRegistratonNumber',
         'isHrmsIntergrated',
+        'revenuePercentageForInterCompanyInventoryTransfer',
+        'revenuePercentageForInterCompanyAssetTransfer',
+        'isHrmsIntergrated',
         'logoPath',
         'qhseApiKey',
         'taxCardNo',
-        'timeStamp'
+        'timeStamp',
+        'helpDeskApiKey'
     ];
 
     /**
@@ -229,6 +233,8 @@ class Company extends Model
         'menuInitialSelectedImage' => 'string',
         'policyItemIssueTollerence' => 'float',
         'policyAddonPercentage' => 'float',
+        'revenuePercentageForInterCompanyInventoryTransfer' => 'float',
+        'revenuePercentageForInterCompanyAssetTransfer' => 'float',
         'policyPOAppDayDiff' => 'integer',
         'policyStockAdjWacCurrentYN' => 'integer',
         'policyDepreciationRunDate' => 'integer',
@@ -269,7 +275,8 @@ class Company extends Model
         'taxCardNo' => 'string',
         'logoPath' => 'string',
         'isHrmsIntergrated' => 'boolean',
-        'qhseApiKey' => 'string'
+        'qhseApiKey' => 'string',
+        'helpDeskApiKey' => 'string'
     ];
 
     /**

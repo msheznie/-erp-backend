@@ -99,6 +99,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
+use App\Models\CompanyFinanceYear;
 use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTerms;
 use App\Models\PoPaymentTermsRefferedback;
@@ -232,6 +233,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
             }
         }
+
+        $poDate = now();
+
+        $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate($poDate, $input['companySystemID']);
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
@@ -596,7 +601,8 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-        $newlyUpdatedPoTotalAmount = $poMasterSumRounded + $poAddonMasterSumRounded + $poVATMasterSumRounded;
+        $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
+        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
             return $this->sendError('Discount Amount should be less than order amount.', 500);
@@ -1028,11 +1034,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
             //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
 
-            //return $poMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
-            if (abs(($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+            // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
+
+            $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
+
+            if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
             } else {
                 return $this->sendError('Payment terms total is not matching with the PO total');
             }
+
 
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
@@ -1044,9 +1054,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']));
-
-                    if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
+                    $payAdCompAmount = $payment['comAmount'];
+                    if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
@@ -1633,6 +1643,17 @@ class ProcumentOrderAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+
+    public function getProjectsBySegment(Request $request)
+    {
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+
+        $projects = ErpProjectMaster::where('serviceLineSystemID', $serviceLineSystemID)->get();
+
+        return $this->sendResponse($projects, 'Segments Projects retrieved successfully');
+    }
+
     public function getItemsOptionForProcumentOrder(Request $request)
     {
         $input = $request->all();
@@ -2187,6 +2208,23 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
                 }
                 BudgetConsumedData::destroy($idsDeleted);
+            }
+        }
+
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
+                                              ->where('LCPaymentYN', 2)
+                                              ->first();
+
+        if ($poAdvancePaymentType) {
+            $advancePayment = PoAdvancePayment::where('poTermID', $poAdvancePaymentType->paymentTermID)->first();
+
+            if ($advancePayment && isset($advancePayment->selectedToPayment) && $advancePayment->selectedToPayment == 0) {
+                $advancePayment->cancelledYN = 1; 
+                $advancePayment->cancelledComment = $input['cancelComments']; 
+                $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+                $advancePayment->cancelledDate = Carbon::now(); 
+
+                $advancePayment->save();
             }
         }
 
@@ -5202,9 +5240,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                 $data[$x]['Order Code'] = $val->purchaseOrderCode;
                 if ($val->segment) {
-                    $data[$x]['Service Line'] = $val->segment->ServiceLineDes;
+                    $data[$x]['Segment'] = $val->segment->ServiceLineDes;
                 } else {
-                    $data[$x]['Service Line'] = "";
+                    $data[$x]['Segment'] = "";
                 }
 
                 $data[$x]['Created at'] = \Helper::dateFormat($val->createdDateTime);

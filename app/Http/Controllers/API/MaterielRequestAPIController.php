@@ -25,6 +25,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
@@ -33,6 +34,9 @@ use App\Models\Priority;
 use App\Models\RequestDetailsRefferedBack;
 use App\Models\RequestRefferedBack;
 use App\Models\SegmentMaster;
+use App\Models\PurchaseOrderDetails;
+use App\Models\ErpItemLedger;
+use App\Models\GRVDetails;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -115,7 +119,7 @@ class MaterielRequestAPIController extends AppBaseController
     {
 
          $input = $request->all();
-         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved','cancelledYN'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -124,9 +128,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
         
         $search = $request->input('search.value');
-
         $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
-
         return \DataTables::eloquent($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -209,6 +211,7 @@ class MaterielRequestAPIController extends AppBaseController
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
         }
+
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
@@ -359,8 +362,8 @@ class MaterielRequestAPIController extends AppBaseController
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $validator = \Validator::make($input, [
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            'location' => 'required|numeric|min:1',
+            // 'serviceLineSystemID' => 'required|numeric|min:1',
+            // 'location' => 'required|numeric|min:1',
             'priority' => 'required|numeric|min:1',
             'comments' => 'required'
         ]);
@@ -681,11 +684,21 @@ class MaterielRequestAPIController extends AppBaseController
                                             ->where('companySystemID', $companyId)
                                             ->first();
 
+
         $allowItemToTypePolicy = 0;
         if ($allowItemToType) {
             $allowItemToTypePolicy = $allowItemToType->isYesNO;
         }
 
+
+        $allowToCreatePRfromMR = CompanyPolicyMaster::where('companyPolicyCategoryID', 58)
+                                            ->where('companySystemID', $companyId)
+                                            ->first();
+
+        $allowPRfromMR = 0;
+        if($allowToCreatePRfromMR) {
+            $allowPRfromMR = $allowToCreatePRfromMR->isYesNO;
+        }
 
         $segments = $segments->get();
         $wareHouses = $wareHouses->get();
@@ -711,7 +724,8 @@ class MaterielRequestAPIController extends AppBaseController
             'locations' => $locations,
             'wareHouses' => $wareHouses,
             'allowItemToTypePolicy' => $allowItemToTypePolicy,
-            'units' => $units
+            'units' => $units,
+            'allowPRfromMR' => $allowPRfromMR
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -922,4 +936,175 @@ class MaterielRequestAPIController extends AppBaseController
 
         return $this->sendResponse($itemRequest->toArray(), 'Request Amend successfully');
     }
+
+    public function checkPurcahseRequestExist($id) {
+        $materielRequest = MaterielRequest::findOrFail($id);
+
+            if( count($materielRequest->purchase_requests) > 0) {
+                $items = PurchaseRequestDetails::select('itemCode')->where('purchaseRequestID', $materielRequest->purchase_requests->first()->purchaseRequestID)
+                ->pluck('itemCode')->toArray();
+                $data = [
+                    'status' => true,
+                    'data'   => $items,
+                    'puchaseId' =>  $materielRequest->purchase_requests->first()->purchaseRequestID,
+                    'purchaseReq' => ($materielRequest->purchase_requests->first()->purchase_request) ? $materielRequest->purchase_requests->first()->purchase_request->purchaseRequestCode: ""
+                ];
+                return $this->sendResponse($data, 'Purchase request received successfully');
+            }else {
+                $data = [
+                    'status' => false,
+                    'data'   => []
+                ];
+                return $this->sendResponse($data, 'No Purchase request found');
+            }
+    }
+
+
+    public function cancelMaterielRequest(Request $request) {
+
+        $input = $request->all();
+
+        $requestID = $input['RequestID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
+        }
+
+        if ($materielRequest->cancelledYN == -1) {
+            return $this->sendError('You cannot cancel this request as it is already cancelled');
+        }
+
+        if(count($materielRequest->materialIssue) > 0) {
+            return $this->sendError('Cannot cancel. Materiel Issue is created for this request');
+        }
+
+        if(count($materielRequest->purchase_requests) > 0) {
+            return $this->sendError('Cannot cancel. Purchase Request is created for this request');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+
+        $materielRequest->cancelledYN = -1;
+        $materielRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
+        $materielRequest->cancelledByEmpID = $employee->empID;
+        $materielRequest->cancelledByEmpName = $employee->empName;
+        $materielRequest->cancelledComments = $input['cancelledComments'];
+        $materielRequest->cancelledDate = now();
+        $materielRequest->save();
+
+        AuditTrial::createAuditTrial($materielRequest->documentSystemID,$input['RequestID'],$input['cancelledComments'],'cancelled');
+
+        
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is cancelled';
+
+        if ($materielRequest->ConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $materielRequest->ConfirmedBySystemID,
+                'companySystemID' => $materielRequest->companySystemID,
+                'docSystemID' => $materielRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $materielRequest->RequestID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $materielRequest->companySystemID)
+            ->where('documentSystemCode', $materielRequest->RequestID)
+            ->where('documentSystemID', $materielRequest->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $materielRequest->companySystemID,
+                'docSystemID' => $materielRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $materielRequest->RequestID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
+    }
+
+
+    public function updateQntyByLocation(Request $request) {
+        $input = $request->all();
+
+        $location = $input['location'];
+        $requestID = $input['RequestID'];
+        $companySystemID =  $input['companySystemID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+
+        if($location !=  $materielRequest->location) {
+
+           $itemDetails = $materielRequest->details;
+            foreach($itemDetails as $item) {
+
+                    $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID,$materielRequest,$location) {
+                        $query->where('companySystemID', $companySystemID)
+                            ->where('poLocation', $location)
+                            ->where('approved', -1)
+                            ->where('poCancelledYN', 0);
+                    })
+                    ->where('itemCode', $item->itemCode)
+                    ->groupBy('erp_purchaseorderdetails.companySystemID',
+                        'erp_purchaseorderdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_purchaseorderdetails.companySystemID',
+                            'erp_purchaseorderdetails.itemCode',
+                            'erp_purchaseorderdetails.itemPrimaryCode'
+                        ]
+                    )
+                    ->sum('noQty');
+
+                    $quantityInHand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
+                        ->where('companySystemID', $companySystemID)
+                        ->where('wareHouseSystemCode', $location)
+                        ->groupBy('itemSystemCode')
+                        ->sum('inOutQty');
+
+                    $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID,$item,$location) {
+                    $query->where('companySystemID', $companySystemID)
+                        ->where('grvTypeID', 2)
+                        ->where('grvLocation', $location)
+                        ->groupBy('erp_grvmaster.companySystemID');
+                    })
+                    ->where('itemCode', $item->itemCode)
+                    ->groupBy('erp_grvdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_grvdetails.companySystemID',
+                            'erp_grvdetails.itemCode'
+                        ])
+                    ->sum('noQty');
+
+                    $quantityOnOrder = $poQty - $grvQty;
+                    $item['quantityOnOrder'] = $quantityOnOrder;
+                    $item['quantityInHand']  = $quantityInHand;
+                    $item->save();
+            }
+
+            $materielRequest->location = $location;
+            $materielRequest->save();
+        }
+
+        return $this->sendResponse($materielRequest,'Materiel Details Updated!');
+
+    }
+    
 }
