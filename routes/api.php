@@ -2238,6 +2238,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
         Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
         Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
+        Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
+        Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+
+        Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank');
+
+        Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate');
+
+        Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
+        
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2380,3 +2389,7 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
+
+
+
+

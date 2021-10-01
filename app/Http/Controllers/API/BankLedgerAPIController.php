@@ -56,7 +56,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
-
+use App\Models\ChequeTemplateBank;
 /**
  * Class BankLedgerController
  * @package App\Http\Controllers\API
@@ -1697,11 +1697,56 @@ class BankLedgerAPIController extends AppBaseController
                 }
                 //////////////
                 if($chequeCount>0){
-                    $htmlName='cheque_ahli';
+
+                   
+
+
+
+                    if($input['type'] == 2 && $input['name'] != '')
+                    {
+                        
+                        $htmlName=$input['name'];
+                    }
+                    else if($input['type'] == 1)
+                    {   
+
+
+                      
+                        if(isset($input['bankID']) && ($input['bankID'] != null) && (!empty($input['bankID']) ) )
+                        {
+                          
+                            $templates_bank = ChequeTemplateBank::where('bank_id',$input['bankID'])->with('template')->get();
+                            if(count($templates_bank) == 0)
+                            {
+                                return $this->sendError(trans('custom.no_templates'),500);
+                            }
+                            else if(count($templates_bank) == 1)
+                            {
+                                $htmlName=$templates_bank[0]['template']['view_name'];
+                            
+                            }
+                            else if(count($templates_bank) > 1)
+                            {
+                                $details['is_modal'] = true;
+                                $details['data'] = $templates_bank;
+                                return $this->sendResponse($details, trans('custom.retrieved_successfully'));
+                            }
+                        }
+                        else
+                        {
+                            return $this->sendError(trans('custom.no_bank'),500);
+                        }
+        
+                    
+                    }
+                
+                   
                 }elseif ($transferCount>0){
                     $htmlName='bank_transfer';
                 }
             }
+
+            
 
             $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
 
@@ -1756,7 +1801,7 @@ class BankLedgerAPIController extends AppBaseController
             if (count($bankLedger) == 0) {
                 return $this->sendError(trans('custom.no_items_found_for_print'), 500);
             }
-
+                
             DB::beginTransaction();
             try {
                 $time = strtotime("now");
@@ -1874,7 +1919,7 @@ class BankLedgerAPIController extends AppBaseController
                 }else{
                     $entity = null;
                 }
-
+            
                 $array = array('entity' => $entity, 'date' => now(),'type'=>$htmlName);
                 if ($htmlName) {
                     $html = view('print.' . $htmlName, $array)->render();
@@ -1882,7 +1927,9 @@ class BankLedgerAPIController extends AppBaseController
                     if(isset($input['isPrint']) && $input['isPrint']) {
                         return $this->sendResponse($html, trans('custom.print_successfully'));
                     }else{
-                        return $this->sendResponse($array, trans('custom.retrieved_successfully'));
+                        $details['is_modal'] = false;
+                        $details['data'] = $array;
+                        return $this->sendResponse($details, trans('custom.retrieved_successfully'));
                     }
 
                 } else {
