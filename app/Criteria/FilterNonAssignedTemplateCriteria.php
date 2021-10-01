@@ -22,6 +22,24 @@ class FilterNonAssignedTemplateCriteria implements CriteriaInterface
      */
     public function apply($model, RepositoryInterface $repository)
     {
-        return $model;
+        
+        $is_exist = false;
+        $template_bank = ChequeTemplateBank::get();
+        foreach($template_bank as $template)
+        {
+            if($template->bank_id == $model['id'])
+            {
+                $is_exist = true;
+                break;
+            }
+        }
+        if(!$is_exist)
+        {
+            return $model;
+        }
+        else
+        {
+            return false;
+        }
     }
 }

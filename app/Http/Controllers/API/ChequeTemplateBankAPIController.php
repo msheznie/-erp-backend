@@ -63,7 +63,7 @@ class ChequeTemplateBankAPIController extends AppBaseController
     {
         $this->chequeTemplateBankRepository->pushCriteria(new RequestCriteria($request));
         $this->chequeTemplateBankRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $chequeTemplateBanks = $this->chequeTemplateBankRepository->all();
+        $chequeTemplateBanks = $this->chequeTemplateBankRepository->with('template')->get();
 
         return $this->sendResponse($chequeTemplateBanks->toArray(), 'Cheque Template Banks retrieved successfully');
     }
@@ -114,7 +114,7 @@ class ChequeTemplateBankAPIController extends AppBaseController
         $input['created_at'] = date("Y-m-d h:i:s");
         $chequeTemplateBank = $this->chequeTemplateBankRepository->create($input);
 
-        return $this->sendResponse($chequeTemplateBank->toArray(), 'Cheque Template Bank saved successfully');
+        return $this->sendResponse($chequeTemplateBank->toArray(), trans('custom.save', ['attribute' => trans('custom.templates')]));
     }
 
     /**
@@ -278,6 +278,58 @@ class ChequeTemplateBankAPIController extends AppBaseController
 
         $chequeTemplateBank->delete();
 
-        return $this->sendSuccess('Cheque Template Bank deleted successfully');
+;
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.templates')]));
+    }
+
+    public function assignedTemplatesByBank(Request $request)
+    {
+       
+        $bankId = $request['bankmasterAutoID'];
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $itemCompanies = ChequeTemplateBank::with(['template'])
+                                           ->whereHas('template')
+                                           ->where('bank_id','=',$bankId);
+
+
+        // return $this->sendResponse($itemCompanies, 'ChequeTemplateBank updated successfully');
+        // die();
+
+        return \DataTables::of($itemCompanies)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('erp_cheque_template_bank.id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    public function updateBankAssingTemplate(Request $request)
+    {
+        $id = $request->get('id');
+        $input = $request->all();
+        $data['is_active'] = $input['is_active'];
+        $chequeTemplateBank = $this->chequeTemplateBankRepository->update($data, $id);
+
+        return $this->sendResponse($chequeTemplateBank->toArray(), trans('custom.update', ['attribute' => trans('custom.templates')]));
+    }
+
+    public function getBankTemplates()
+    {
+        
     }
 }

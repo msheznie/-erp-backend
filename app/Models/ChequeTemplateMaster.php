@@ -81,5 +81,9 @@ class ChequeTemplateMaster extends Model
         
     ];
 
-    
+    public function templateBank()
+    {
+        return $this->hasMany('App\Models\ChequeTemplateBank','bank_id','id');
+    }
+
 }

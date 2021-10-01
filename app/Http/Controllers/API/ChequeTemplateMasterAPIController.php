@@ -13,6 +13,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ChequeTemplateBank;
 use App\Criteria\FilterActiveRecordsCriteria;
+use App\Criteria\FilterNonAssignedTemplateCriteria;
 /**
  * Class ChequeTemplateMasterController
  * @package App\Http\Controllers\API
@@ -62,19 +63,44 @@ class ChequeTemplateMasterAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
+        $bank_id = $request->get('bank_id');
         $this->chequeTemplateMasterRepository->pushCriteria(new RequestCriteria($request));
         $this->chequeTemplateMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $this->chequeTemplateMasterRepository->pushCriteria(new FilterActiveRecordsCriteria($request));
-        $chequeTemplateMasters = $this->chequeTemplateMasterRepository->all();
+        $chequeTemplateMasters = $this->chequeTemplateMasterRepository->get()->toArray();
 
-        // foreach($chequeTemplateMasters as $key=>$val)
-        // {
-        //     $template_bank = ChequeTemplateBank::
-        //     return $val->id;
-        //     die();
-        // }
+        $tr = false;
 
-        return $this->sendResponse($chequeTemplateMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.templates')]));
+   
+
+        foreach($chequeTemplateMasters as $key=>$val)
+        {
+
+      
+            $template_banks = ChequeTemplateBank::get();
+            foreach($template_banks as $template_bank)
+            {
+               if($template_bank->cheque_template_master_id == $val['id'] && $template_bank->bank_id == $bank_id)
+               {
+                unset($chequeTemplateMasters[$key]);
+        
+                // array_splice($chequeTemplateMasters, $key, 1);
+                // break;
+               
+               }
+
+            }
+      
+        }
+        $data = [];
+        foreach($chequeTemplateMasters as $chequeTemplateMaster)
+        {
+            array_push($data,$chequeTemplateMaster);
+
+        }
+      
+
+        return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.templates')]));
     }
 
     /**

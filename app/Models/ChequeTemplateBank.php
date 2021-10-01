@@ -53,7 +53,8 @@ class ChequeTemplateBank extends Model
 
     public $fillable = [
         'cheque_template_master_id',
-        'bank_id'
+        'bank_id',
+        'is_active'
     ];
 
     /**
@@ -62,9 +63,10 @@ class ChequeTemplateBank extends Model
      * @var array
      */
     protected $casts = [
-        'id' => 'integer',
+        'id' => 'string',
         'cheque_template_master_id' => 'integer',
-        'bank_id' => 'integer'
+        'bank_id' => 'integer',
+        'is_active' => 'integer'
     ];
 
     /**
@@ -75,6 +77,11 @@ class ChequeTemplateBank extends Model
     public static $rules = [
         
     ];
+
+    public function template()
+    {
+        return $this->belongsTo('App\Models\ChequeTemplateMaster', 'cheque_template_master_id');
+    }
 
     
 }
