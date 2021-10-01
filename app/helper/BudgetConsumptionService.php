@@ -337,7 +337,9 @@ class BudgetConsumptionService
 					$pendingPoAmountsData = collect($pendingPoAmounts)->firstWhere('chartOfAccountID', $value);
 					$documentAmountData = collect($documentAmount)->firstWhere('chartOfAccountID', $value);
 
-					$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $budgetAmountData->projectBudgetAmount);
+					$projectBudgetAmount = isset($budgetAmountData->projectBudgetAmount) ? $budgetAmountData->projectBudgetAmount : 0;
+
+					$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $projectBudgetAmount);
 					$budgetRptAmount = $currencyConversionRptAmount['reportingAmount'];
 					$budgetLocalAmount = $currencyConversionRptAmount['localAmount'];
 					
@@ -367,7 +369,9 @@ class BudgetConsumptionService
 				$pendingPoAmountsData = collect($pendingPoAmounts)->first();
 				$documentAmountData = collect($documentAmount)->first();
 
-				$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $budgetAmountData->projectBudgetAmount);
+				$projectBudgetAmount = isset($budgetAmountData->projectBudgetAmount) ? $budgetAmountData->projectBudgetAmount : 0;
+
+				$currencyConversionRptAmount = Helper::currencyConversion($budgetFormData['companySystemID'], $projectData->projectCurrencyID, $projectData->projectCurrencyID, $projectBudgetAmount);
 				$budgetRptAmount = $currencyConversionRptAmount['reportingAmount'];
 				$budgetLocalAmount = $currencyConversionRptAmount['localAmount'];
 				
