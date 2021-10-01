@@ -159,6 +159,19 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['grvLocation'])
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->first();
+
+        if (!$warehouse) {
+            return $this->sendError('Location not found', 500);
+        }
+
+        if ($warehouse->manufacturingYN == 1 && is_null($warehouse->WIPGLCode)) {
+            return $this->sendError('WIP GL code of selected location is not configured', 500);
+        }
+
+
         $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
