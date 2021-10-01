@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\ChartOfAccount;
 
 /**
  * Class WarehouseMaster
@@ -120,6 +121,41 @@ class WarehouseMaster extends Model
 
     public function sub_levels(){
         return $this->hasMany(WarehouseSubLevels::class, 'warehouse_id');
+    }
+
+    public static function checkManuefactoringWareHouse($wareHouseSystemCode)
+    {
+        $wareHouse = WarehouseMaster::find($wareHouseSystemCode);
+
+        if ($wareHouse) {
+            return ($wareHouse->manufacturingYN == 1) ? true : false;
+        } else {
+            return false;
+        }
+    } 
+
+    public static function getWIPGLSystemID($wareHouseSystemCode)
+    {
+        $wareHouse = WarehouseMaster::find($wareHouseSystemCode);
+
+        if ($wareHouse) {
+            return $wareHouse->WIPGLCode;
+        } else {
+            return null;
+        }
+    }
+
+
+    public static function getWIPGLCode($wareHouseSystemCode)
+    {
+        $wareHouse = WarehouseMaster::find($wareHouseSystemCode);
+
+        if ($wareHouse) {
+            $chartOfAccount = ChartOfAccount::find($wareHouse->WIPGLCode);
+            return (isset($chartOfAccount->AccountCode) ? $chartOfAccount->AccountCode : null);
+        } else {
+            return null;
+        }
     }
 
 }

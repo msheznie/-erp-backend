@@ -812,12 +812,24 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['itemCode'] = $new['itemCode'];
                         $GRVDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                         $GRVDetail_arr['itemDescription'] = $new['itemDescription'];
+                        if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                            $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                            $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                            $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
+                            $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
+                        } else if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                            $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                            $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                            $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                        } else {
+                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                            $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                            $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
+                            $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
+                        }
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                         $GRVDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                        $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
-                        $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
-                        $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
-                        $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
                         $GRVDetail_arr['includePLForGRVYN'] = $new['includePLForGRVYN'];
                         $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                         $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
