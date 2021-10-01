@@ -59,6 +59,7 @@ use App\Models\UnbilledGRV;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
@@ -167,8 +168,15 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Location not found', 500);
         }
 
-        if ($warehouse->manufacturingYN == 1 && is_null($warehouse->WIPGLCode)) {
-            return $this->sendError('WIP GL code of selected location is not configured', 500);
+        if ($warehouse->manufacturingYN == 1) {
+            if (is_null($warehouse->WIPGLCode)) {
+                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+            } else {
+                $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
+                if (!$checkGLIsAssigned) {
+                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                }
+            }
         }
 
 
@@ -387,6 +395,17 @@ class GRVMasterAPIController extends AppBaseController
 
         if (empty($warehouse)) {
             return $this->sendError('Selected location is not active. Please select an active location');
+        }
+
+        if ($warehouse->manufacturingYN == 1) {
+            if (is_null($warehouse->WIPGLCode)) {
+                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+            } else {
+                $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
+                if (!$checkGLIsAssigned) {
+                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                }
+            }
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
