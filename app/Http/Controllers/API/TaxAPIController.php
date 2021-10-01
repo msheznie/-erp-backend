@@ -87,14 +87,14 @@ class TaxAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
-                'taxShortCode' => 'required',
+               // 'taxShortCode' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
                 'outputVatGLAccountAutoID' => 'required|numeric|min:1',
                 'inputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
                 'outputVatTransferGLAccountAutoID' => 'required|numeric|min:1',
-                'taxReferenceNo' => 'required'
+                //'taxReferenceNo' => 'required'
 
             ], $messages);
         }elseif ($taxCategory == 3){
@@ -107,11 +107,11 @@ class TaxAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
-                'taxShortCode' => 'required',
+               // 'taxShortCode' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1',
                 'inputVatGLAccountAutoID' => 'required|numeric|min:1',
-                'taxReferenceNo' => 'required'
+                //'taxReferenceNo' => 'required'
 
             ], $messages);
         }else{
@@ -123,7 +123,7 @@ class TaxAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
-                'taxShortCode' => 'required',
+                //'taxShortCode' => 'required',
                 'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1'
