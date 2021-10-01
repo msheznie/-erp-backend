@@ -93,7 +93,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         }else{
 
             $userGroupExist = UserGroup::where('companyID',$request['companyId'])
-                                         ->where('flag',true)       
+                                         ->where('defaultYN',true)       
                                          ->first();
             if($userGroupExist)
             {

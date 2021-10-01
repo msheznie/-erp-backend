@@ -84,7 +84,9 @@ class UserGroupAPIController extends AppBaseController
 
                 
                     if (isset($userGroupsDefault)) {
-                        return $this->sendError('The company have already a default user group');
+                        //return $this->sendError('The company have already a default user group');
+                        return $this->sendError(trans('custom.company_has_default_user_group'), 500);
+
                     }
                 }
     
@@ -117,7 +119,7 @@ class UserGroupAPIController extends AppBaseController
                 $userGroups = UserGroup::where("companyID", $input["companyID"])->where("defaultYN", true)->first();
                 if(isset($userGroups))
                 {
-                    return $this->sendError('The Company has already default user group');
+                    return $this->sendError(trans('custom.company_has_default_user_group'), 500);
                 }
             }
         

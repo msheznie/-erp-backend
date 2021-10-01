@@ -649,9 +649,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
+
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
+        Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
@@ -2372,6 +2376,13 @@ Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 Route::get('runCronJob/{cron}', function ($cron) {
     Artisan::call($cron);
     return 'CRON Job run successfully';
+});
+
+Route::get('cache-clear', function () {
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+
+    return 'Cache (cache/config) cleared successfully';
 });
 
 Route::get('job-check', function(){
