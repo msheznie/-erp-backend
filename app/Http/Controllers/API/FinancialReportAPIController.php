@@ -65,7 +65,7 @@ class FinancialReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup',0)->get();
+        $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup', 0)->get();
 
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear,bigginingDate,endingDate"));
         $companyFinanceYear = $companyFinanceYear->whereIn('companySystemID', $companiesByGroup);
@@ -78,16 +78,18 @@ class FinancialReportAPIController extends AppBaseController
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
-        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
-            'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get([
+            'chartOfAccountSystemID',
+            'AccountCode', 'AccountDescription', 'catogaryBLorPL'
+        ]);
 
         $contracts = Contract::whereIN('companySystemID', $companiesByGroup)->get(['contractUID', 'ContractNumber', 'contractDescription']);
 
         $accountType = AccountsType::all();
 
         $templateType = ReportTemplate::where('isActive', 1)
-                                      ->whereIN('companySystemID', $companiesByGroup)
-                                      ->get();
+            ->whereIN('companySystemID', $companiesByGroup)
+            ->get();
 
 
         $financePeriod = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod,companyFinanceYearID,dateFrom,dateTo"));
@@ -279,72 +281,106 @@ class FinancialReportAPIController extends AppBaseController
         }
     }
 
-    public function validatePUReport(Request $request){
-        $fromDate = $request->fromDate;
-        $toDate = $request->toDate;
-        $projectID = $request->projectID;
-        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
-
-        $budgetConsumedData = BudgetConsumedData::where('projectID',$projectID)->get();
-
-        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
-        $projectAmount = collect($getProjectAmounts)->sum('amount');
-        if($projectAmount>0){
-            $projectAmount= $projectAmount;
-        } else {
-            $projectAmount=0;
-        }
-
-        $output = array(
-            'projectDetail' => $projectDetail,
-            'projectAmount' => $projectAmount,
-            'budgetConsumedData' => $budgetConsumedData
-        );
-
-        return $this->sendResponse($output, 'Record retrieved successfully');
-    }
-
-    public function generateprojectUtilizationReport(Request $request){
+    public function validatePUReport(Request $request)
+    {
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
-        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID',$projectID)->where('documentSystemID', 2)->get();
-
-        // $budgetConsumptionAmount = ProcumentOrder::with(['budget_consumed'=> function($query) {
-        //                                                     $query->selecRaw('sum(consumedRptAmount) as total')
-        //                                                           ->groupBy('documentSystemID');
-        //                                                 }])
-        //                                             ->whereBetween('createdDateTime', [$fromDate, $toDate])
-        //                                             ->where('projectID',$projectID)
-        //                                             ->get();
-
-        $buAm = BudgetConsumedData::where('projectID', $projectID)
-                                  ->where('documentSystemID', 2)
-                                  ->whereHas('purchase_order', function($query) use ($fromDate, $toDate) {
-                                      $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
-                                  })
-                                  ->sum('consumedRptAmount');
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
 
-        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            })
+            ->sum('consumedRptAmount');
+
+            $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            }])
+                ->where('projectID', $projectID)
+                ->where('documentSystemID', 2)
+                ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
+                ->groupBy('documentSystemCode')
+                ->get();
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        if($projectAmount>0){
-            $projectAmount= $projectAmount;
+        if ($projectAmount > 0) {
+            $projectAmount = $projectAmount;
         } else {
-            $projectAmount=0;
+            $projectAmount = 0;
         }
 
-        $openingBalance = $projectAmount - $buAm;
-        
+        $openingBalance = $projectAmount - $budgetAmount;
+
+
+        $closingBalance = $openingBalance - $budgetAmount;
 
         $output = array(
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
-            'budgetConsumptionAmount' => $buAm,
-            'openingBalance' => $openingBalance
+            'budgetConsumptionAmount' => $budgetAmount,
+            'openingBalance' => $openingBalance,
+            'closingBalance' => $closingBalance,
+            'detailsPOWise' => $detailsPOWise
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function generateprojectUtilizationReport(Request $request)
+    {
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $projectID = $request->projectID;
+        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
+
+        $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
+            $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+        }])
+            ->where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
+            ->groupBy('documentSystemCode')
+            ->get();
+
+        $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            })
+            ->sum('consumedRptAmount');
+
+
+        $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
+        $projectAmount = collect($getProjectAmounts)->sum('amount');
+        if ($projectAmount > 0) {
+            $projectAmount = $projectAmount;
+        } else {
+            $projectAmount = 0;
+        }
+
+        $openingBalance = $projectAmount - $budgetAmount;
+
+
+        $closingBalance = $openingBalance - $budgetAmount;
+
+        $output = array(
+            'projectDetail' => $projectDetail,
+            'projectAmount' => $projectAmount,
+            'budgetConsumedData' => $budgetConsumedData,
+            'budgetConsumptionAmount' => $budgetAmount,
+            'openingBalance' => $openingBalance,
+            'closingBalance' => $closingBalance,
+            'detailsPOWise' => $detailsPOWise
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -402,7 +438,8 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('documentLocalAmountCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('documentRptAmountDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
-                return array('reportData' => $output,
+                return array(
+                    'reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
@@ -448,7 +485,8 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
-                return array('reportData' => $output,
+                return array(
+                    'reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
@@ -497,17 +535,17 @@ class FinancialReportAPIController extends AppBaseController
                 $sort = 'asc';
 
                 return \DataTables::of($output)
-                            ->addIndexColumn()
-                            ->with('companyName', $checkIsGroup->CompanyName)
-                            ->with('isGroup', $checkIsGroup->isGroup)
-                            ->with('total', $total)
-                            ->with('decimalPlaceLocal', $decimalPlaceLocal)
-                            ->with('decimalPlaceRpt', $decimalPlaceRpt)
-                            ->with('currencyLocal', $requestCurrencyLocal->CurrencyCode)
-                            ->with('currencyRpt', $requestCurrencyRpt->CurrencyCode)
-                            ->addIndexColumn()
-                           // ->with('orderCondition', $sort)
-                            ->make(true);
+                    ->addIndexColumn()
+                    ->with('companyName', $checkIsGroup->CompanyName)
+                    ->with('isGroup', $checkIsGroup->isGroup)
+                    ->with('total', $total)
+                    ->with('decimalPlaceLocal', $decimalPlaceLocal)
+                    ->with('decimalPlaceRpt', $decimalPlaceRpt)
+                    ->with('currencyLocal', $requestCurrencyLocal->CurrencyCode)
+                    ->with('currencyRpt', $requestCurrencyRpt->CurrencyCode)
+                    ->addIndexColumn()
+                    // ->with('orderCondition', $sort)
+                    ->make(true);
 
                 /*return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
@@ -527,7 +565,8 @@ class FinancialReportAPIController extends AppBaseController
 
                 $total = array();
 
-                return array('reportData' => $output,
+                return array(
+                    'reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
@@ -690,7 +729,7 @@ class FinancialReportAPIController extends AppBaseController
                                                     foreach ($detailLevelFour as $key5 => $val5) {
                                                         if ($val5->isFinalLevel == 1) {
                                                             $val5->glCodes = $outputDetail->where('templateDetailID', $val5->detID)->sortBy('sortOrder')->values();
-                                                        } 
+                                                        }
                                                     }
                                                 }
                                             }
@@ -721,7 +760,8 @@ class FinancialReportAPIController extends AppBaseController
 
                 $grandTotal = ($columnTemplateID == 1) ? collect($companyWiseGrandTotalArray)->toArray() : $grandTotal[0];
 
-                return array('reportData' => $headers,
+                return array(
+                    'reportData' => $headers,
                     'template' => $template,
                     'company' => $company,
                     'companyCurrency' => $companyCurrency,
@@ -778,7 +818,8 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('debitAmountRpt')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('creditAmountRpt')->toArray());
 
-                return array('reportData' => $output,
+                return array(
+                    'reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
@@ -851,7 +892,6 @@ class FinancialReportAPIController extends AppBaseController
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND erp_jvmaster.jvType IN (' . join(',', $jvType) . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
-
         }
         if ($request->reportTypeID == 'JVDS') {
             $query = 'SELECT
@@ -1094,7 +1134,7 @@ class FinancialReportAPIController extends AppBaseController
                                         }
                                         if ($val11['isFinalLevel'] == 1) {
                                             $temp5['glCodes'] = collect($newOutputDetail)->where('templateDetailID', $val11['detID'])->sortBy('sortOrder')->values();
-                                        } 
+                                        }
                                         $temp4['detail'][] = $temp5;
                                     }
                                 }
@@ -1150,28 +1190,36 @@ class FinancialReportAPIController extends AppBaseController
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
-        $projectDetail = ErpProjectMaster::with('currency','service_line')->where('id',$projectID)->first();
+        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID',$projectID)->where('documentSystemID', 2)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
-                                  ->where('documentSystemID', 2)
-                                  ->whereHas('purchase_order', function($query) use ($fromDate, $toDate) {
-                                      $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
-                                  })
-                                  ->sum('consumedRptAmount');
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            })
+            ->sum('consumedRptAmount');
 
+        $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
+            $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+        }])
+            ->where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
+            ->groupBy('documentSystemCode')
+            ->get();
 
-        $getProjectAmounts = ProjectGlDetail::where('projectID',$projectID)->get();
+        $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        if($projectAmount>0){
-            $projectAmount= $projectAmount;
+        if ($projectAmount > 0) {
+            $projectAmount = $projectAmount;
         } else {
-            $projectAmount=0;
+            $projectAmount = 0;
         }
 
         $openingBalance = $projectAmount - $budgetAmount;
-        
+
         $closingBalance = $openingBalance - $budgetAmount;
 
         $output = array(
@@ -1181,14 +1229,14 @@ class FinancialReportAPIController extends AppBaseController
             'budgetConsumptionAmount' => $budgetAmount,
             'openingBalance' => $openingBalance,
             'closingBalance' => $closingBalance,
+            'detailsPOWise' => $detailsPOWise
         );
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {
-                     $excel->sheet('New sheet', function($sheet) use ($output) {
-                        $sheet->loadView('export_report.project_utilization_report', $output);
-                    });
-                })->download('xlsx');
-
+            $excel->sheet('New sheet', function ($sheet) use ($output) {
+                $sheet->loadView('export_report.project_utilization_report', $output);
+            });
+        })->download('xlsx');
     }
 
     public function exportReport(Request $request)
@@ -1230,7 +1278,6 @@ class FinancialReportAPIController extends AppBaseController
                                 $x++;
                             }
                         }
-
                     } else {
                         $output = $this->getTrialBalance($request);
 
@@ -1344,7 +1391,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                 }
-                 \Excel::create('trial_balance', function ($excel) use ($data) {
+                \Excel::create('trial_balance', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1414,7 +1461,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('trial_balance_details', function ($excel) use ($data) {
+                \Excel::create('trial_balance_details', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1495,7 +1542,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Document Narration'] = 'Document Narration';
                             $data[$x]['Service Line'] = 'Service Line';
                             $data[$x]['Contract'] = 'Contract';
-                            
+
                             if (in_array('confi_name', $extraColumns)) {
                                 $data[$x]['Confirmed By'] = 'Confirmed By';
                             }
@@ -1535,7 +1582,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['Document Narration'] = $val->documentNarration;
                                     $data[$x]['Service Line'] = $val->serviceLineCode;
                                     $data[$x]['Contract'] = $val->clientContractID;
-                                    
+
                                     if (in_array('confi_name', $extraColumns)) {
                                         $data[$x]['Confirmed By'] = $val->confirmedBy;
                                     }
@@ -1576,8 +1623,8 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Document Narration'] = '';
                                 $data[$x]['Service Line'] = '';
                                 $data[$x]['Contract'] = '';
-                                
-                                 if (in_array('confi_name', $extraColumns)) {
+
+                                if (in_array('confi_name', $extraColumns)) {
                                     $data[$x]['Confirmed By'] = '';
                                 }
 
@@ -1630,7 +1677,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Document Narration'] = '';
                         $data[$x]['Service Line'] = '';
                         $data[$x]['Contract'] = '';
-                       
+
                         if (in_array('confi_name', $extraColumns)) {
                             $data[$x]['Confirmed By'] = '';
                         }
@@ -1646,7 +1693,7 @@ class FinancialReportAPIController extends AppBaseController
                         if (in_array('app_date', $extraColumns)) {
                             $data[$x]['Approved Date'] = '';
                         }
-                         $data[$x]['Supplier/Customer'] = 'Grand Total';
+                        $data[$x]['Supplier/Customer'] = 'Grand Total';
                         if ($checkIsGroup->isGroup == 0) {
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
                             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
@@ -1699,7 +1746,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('general_ledger', function ($excel) use ($data) {
+                \Excel::create('general_ledger', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1767,7 +1814,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('trial_balance_details', function ($excel) use ($data) {
+                \Excel::create('trial_balance_details', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1779,7 +1826,7 @@ class FinancialReportAPIController extends AppBaseController
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
-            case 'JVD' :
+            case 'JVD':
 
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
@@ -1844,7 +1891,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('jv_detail', function ($excel) use ($data) {
+                \Excel::create('jv_detail', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -2043,7 +2090,6 @@ class FinancialReportAPIController extends AppBaseController
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
-
     }
 
     public function getTrialBalanceMonthWise($request)
@@ -2097,7 +2143,8 @@ class FinancialReportAPIController extends AppBaseController
             'Dece'
         );
 
-        $defaultMonthSum = array("IF
+        $defaultMonthSum = array(
+            "IF
                     ( MONTH ( erp_generalledger.documentDate ) = 1, " . $currencyClm . ", 0 ) AS Jan",
             " IF
                     ( MONTH ( erp_generalledger.documentDate ) = 2, " . $currencyClm . ", 0 ) AS Feb",
@@ -2120,7 +2167,8 @@ class FinancialReportAPIController extends AppBaseController
             " IF
                     ( MONTH ( erp_generalledger.documentDate ) = 11, " . $currencyClm . ", 0 ) AS Nov",
             " IF
-                    ( MONTH ( erp_generalledger.documentDate ) = 12, " . $currencyClm . ", 0 ) AS Dece");
+                    ( MONTH ( erp_generalledger.documentDate ) = 12, " . $currencyClm . ", 0 ) AS Dece"
+        );
 
         $monthClosing = array(); //'sum(Opening + Jan) AS JanClosing';
 
@@ -2147,8 +2195,6 @@ class FinancialReportAPIController extends AppBaseController
         foreach ($availableMonth as $value) {
             array_push($monthSum, 'sum(' . $value . ') as ' . $value);
             array_push($monthZero, '0 as ' . $value);
-
-
         }
 
         foreach ($availableMonth as $key => $value) {
@@ -2477,7 +2523,6 @@ class FinancialReportAPIController extends AppBaseController
         $output = \DB::select($finalQry);
         //dd(DB::getQueryLog());
         return array('data' => $output, 'headers' => $availableMonth);
-
     }
 
     public function getTrialBalanceDetails($request)
@@ -2533,7 +2578,6 @@ class FinancialReportAPIController extends AppBaseController
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
-
     }
 
     public
@@ -2710,7 +2754,6 @@ class FinancialReportAPIController extends AppBaseController
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
-
     }
 
 
@@ -3025,7 +3068,6 @@ class FinancialReportAPIController extends AppBaseController
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
-
     }
 
     public
@@ -3141,8 +3183,6 @@ AND MASTER .canceledYN = 0';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
-
-
     }
 
     public
@@ -3178,7 +3218,7 @@ AND MASTER .canceledYN = 0';
                     $currencyIdRpt = $decimalPlaceUniqueRpt[0];
                 }
 
-                 $extraColumns = [];
+                $extraColumns = [];
                 if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
                     $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
                 }
@@ -4404,7 +4444,7 @@ GROUP BY
         }
 
 
-         \Excel::create('trial_balance', function ($excel) use ($data) {
+        \Excel::create('trial_balance', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -4591,7 +4631,6 @@ GROUP BY
                         $columnArray[$val->shortCode] = "0";
                     }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode;
-
                 }
 
                 if ($val->shortCode == 'BYTD') {
@@ -4748,7 +4787,8 @@ GROUP BY
             'budgetQuery' => $budgetQuery,
             'budgetWhereQuery' => $budgetWhereQuery,
             'columnTemplateID' => $columnTemplateID,
-            'currencyColumn' => $currencyColumn];
+            'currencyColumn' => $currencyColumn
+        ];
     }
 
     public function getTBUnmatchedData(Request $request)
@@ -4758,11 +4798,11 @@ GROUP BY
         $toDate = $toDate->format('Y-m-d');
 
         $unmatchedData = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
-                                      ->where('companySystemID', $input['companySystemID'])
-                                      ->whereDate('documentDate','<=', $toDate)
-                                      ->groupBy('companySystemID', 'documentSystemCode','documentSystemID')
-                                      ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
-                                      ->get();
+            ->where('companySystemID', $input['companySystemID'])
+            ->whereDate('documentDate', '<=', $toDate)
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
+            ->get();
 
         $respondData = [
             'unMatchedData' => $unmatchedData
@@ -4782,7 +4822,7 @@ GROUP BY
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $companies = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup',0)->get();
+        $companies = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup', 0)->get();
 
         $years = CompanyFinanceYear::select(DB::raw("YEAR(bigginingDate) as year"))
             ->whereIn('companySystemID', $companiesByGroup)
@@ -4822,7 +4862,7 @@ GROUP BY
                     return $this->sendError($validator->messages(), 422);
                 }
 
-            break;
+                break;
             case 'ICFT':
                 $validator = \Validator::make($request->all(), [
                     'reportID' => 'required',
@@ -4847,7 +4887,7 @@ GROUP BY
 
         $output = $this->getICReportQuery($request);
 
-        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output, 'companyReportingCurrencyID');
 
         $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
         $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
@@ -4906,47 +4946,47 @@ GROUP BY
         $transferTypes = [];
         $fromDate = null;
         $toDate = null;
-        if(isset($request->companies)){
+        if (isset($request->companies)) {
             $companies = (array)$request->companies;
             $companyIDs = array_filter(collect($companies)->pluck('companySystemID')->toArray());
         }
 
-        if(isset($request->years)){
+        if (isset($request->years)) {
             $years = (array)$request->years;
             $yearIDs = array_filter(collect($years)->pluck('year')->toArray());
         }
 
-        if(isset($request->months)){
+        if (isset($request->months)) {
             $months = (array)$request->months;
             $monthsIDs = array_filter(collect($months)->pluck('monthID')->toArray());
         }
 
-        if(isset($request->transferType)){
+        if (isset($request->transferType)) {
             $transferType = (array)$request->transferType;
             $transferTypes = array_filter(collect($transferType)->pluck('expenseClaimTypeID')->toArray());
         }
 
-        if(isset($request->fromDate)){
+        if (isset($request->fromDate)) {
             $fromDate = new Carbon($request->fromDate);
             $fromDate = $fromDate->format('Y-m-d');
         }
 
-        if(isset($request->toDate)){
+        if (isset($request->toDate)) {
             $toDate = new Carbon($request->toDate);
             $toDate = $toDate->format('Y-m-d');
         }
 
-        switch ($reportTypeID){
+        switch ($reportTypeID) {
 
             case 'ICR':
 
-                if(count($companyIDs)){
+                if (count($companyIDs)) {
                     $where .= 'AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyIDs) . ')';
                 }
-                if(count($yearIDs)){
+                if (count($yearIDs)) {
                     $where .= 'AND YEAR(det.grvDate) IN (' . join(',', $yearIDs) . ')';
                 }
-                if(count($monthsIDs)){
+                if (count($monthsIDs)) {
                     $where .= 'AND MONTH(det.grvDate) IN (' . join(',', $monthsIDs) . ')';
                 }
 
@@ -5066,7 +5106,7 @@ GROUP BY
                     WHERE 
                         erp_purchaseordermaster.approved = - 1
                     AND supplierassigned.liabilityAccount = 9999963
-                    '.$where.'
+                    ' . $where . '
                     GROUP BY
                         erp_purchaseordermaster.purchaseOrderID
                     ORDER BY erp_purchaseordermaster.companyID,erp_purchaseordermaster.purchaseOrderID ASC';
@@ -5074,13 +5114,13 @@ GROUP BY
 
             case 'ICST':
 
-                if(count($companyIDs)){
+                if (count($companyIDs)) {
                     $where .= 'AND erp_stocktransfer.companyFromSystemID IN (' . join(',', $companyIDs) . ')';
                 }
-                if(count($yearIDs)){
+                if (count($yearIDs)) {
                     $where .= 'AND YEAR(erp_stocktransfer.tranferDate) IN (' . join(',', $yearIDs) . ')';
                 }
-                if(count($monthsIDs)){
+                if (count($monthsIDs)) {
                     $where .= 'AND MONTH(erp_stocktransfer.tranferDate) IN (' . join(',', $monthsIDs) . ')';
                 }
 
@@ -5145,20 +5185,20 @@ GROUP BY
                             WHERE
                                  erp_stockreceive.interCompanyTransferYN =- 1   
                                 ) AS str ON erp_custinvoicedirect.bookingInvCode = str.refNo 
-                            WHERE erp_stocktransfer.interCompanyTransferYN  =- 1  AND erp_stocktransfer.approved =- 1 ".$where."
+                            WHERE erp_stocktransfer.interCompanyTransferYN  =- 1  AND erp_stocktransfer.approved =- 1 " . $where . "
                             GROUP BY erp_stocktransfer.stockTransferAutoID,str.stockReceiveAutoID,str.bookingSuppMasInvAutoID
                             ORDER BY erp_stocktransfer.companyFrom,stockTransferCode ASC";
                 break;
 
             case 'ICAT':
 
-                if(count($companyIDs)){
+                if (count($companyIDs)) {
                     $where .= 'AND erp_fa_asset_disposalmaster.companySystemID IN (' . join(',', $companyIDs) . ')';
                 }
-                if(count($yearIDs)){
+                if (count($yearIDs)) {
                     $where .= 'AND YEAR(erp_fa_asset_disposalmaster.disposalDocumentDate) IN (' . join(',', $yearIDs) . ')';
                 }
-                if(count($monthsIDs)){
+                if (count($monthsIDs)) {
                     $where .= 'AND MONTH(erp_fa_asset_disposalmaster.disposalDocumentDate) IN (' . join(',', $monthsIDs) . ')';
                 }
 
@@ -5196,20 +5236,20 @@ GROUP BY
                                 GROUP BY grvAutoID
                         ) AS dtl ON erp_grvmaster.grvAutoID = dtl.grvAutoID
                         WHERE 
-                            erp_fa_asset_disposalmaster.disposalType=1 AND erp_grvmaster.interCompanyTransferYN=-1 ".$where;
+                            erp_fa_asset_disposalmaster.disposalType=1 AND erp_grvmaster.interCompanyTransferYN=-1 " . $where;
                 break;
 
             case 'ICFT':
                 $whereCompany2 = '';
                 $whereDate = '';
-                if(count($companyIDs)){
+                if (count($companyIDs)) {
                     $where .= 'AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyIDs) . ')';
                     $whereCompany2 .= 'AND erp_jvmaster.companySystemID IN (' . join(',', $companyIDs) . ')';
                 }
-                if(count($transferTypes)){
+                if (count($transferTypes)) {
                     $where .= 'AND erp_paysupplierinvoicemaster.expenseClaimOrPettyCash IN (' . join(',', $transferTypes) . ')';
                 }
-                if($fromDate != null && $toDate != null){
+                if ($fromDate != null && $toDate != null) {
                     $where .= ' AND DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
                     $whereDate .= 'DATE(erp_jvmaster.JVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
                 }
@@ -5239,7 +5279,7 @@ GROUP BY
                                 )
                             INNER JOIN erp_customerreceivepayment ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_customerreceivepayment.intercompanyPaymentID
                             WHERE
-                            erp_paysupplierinvoicemaster.approved =- 1 ".$where."
+                            erp_paysupplierinvoicemaster.approved =- 1 " . $where . "
                             UNION
                             
                             SELECT
@@ -5280,18 +5320,16 @@ GROUP BY
                                 erp_jvmaster.approved,
                                 chartofaccounts.relatedPartyYN
                             
-                            HAVING (".$whereDate.")
+                            HAVING (" . $whereDate . ")
                                 AND erp_jvmaster.approved = - 1
-                                AND chartofaccounts.relatedPartyYN = 1 ".$whereCompany2;
+                                AND chartofaccounts.relatedPartyYN = 1 " . $whereCompany2;
                 break;
             default:
                 return '';
-
         }
 
 
         return  \DB::select($query);
-
     }
 
     public function getICReportDumpQuery($request)
@@ -5299,19 +5337,19 @@ GROUP BY
         $where = '';
         $companies = (array)$request->companies;
         $companyIDs = array_filter(collect($companies)->pluck('companySystemID')->toArray());
-        if(count($companyIDs)){
+        if (count($companyIDs)) {
             $where .= 'AND erp_grvmaster.companySystemID IN (' . join(',', $companyIDs) . ')';
         }
 
         $years = (array)$request->years;
         $yearIDs = array_filter(collect($years)->pluck('year')->toArray());
-        if(count($yearIDs)){
+        if (count($yearIDs)) {
             $where .= 'AND YEAR(grvDate) IN (' . join(',', $yearIDs) . ')';
         }
 
         $months = (array)$request->months;
         $monthsIDs = array_filter(collect($months)->pluck('monthID')->toArray());
-        if(count($monthsIDs)){
+        if (count($monthsIDs)) {
             $where .= 'AND MONTH(grvDate) IN (' . join(',', $monthsIDs) . ')';
         }
 
@@ -5358,11 +5396,10 @@ GROUP BY
                     INNER JOIN
                         supplierassigned ON erp_grvmaster.supplierID = supplierassigned.supplierCodeSytem
                         AND erp_grvmaster.companySystemID = supplierassigned.companySystemID
-                    WHERE  supplierassigned.liabilityAccount = 9999963 '.$where.' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID,erp_custinvoicedirectdet.glCode
+                    WHERE  supplierassigned.liabilityAccount = 9999963 ' . $where . ' GROUP BY erp_grvmaster.grvAutoID,erp_custinvoicedirect.custInvoiceDirectAutoID,erp_custinvoicedirectdet.glCode
                     ORDER BY erp_grvmaster.grvAutoID DESC';
 
         return  \DB::select($query);
-
     }
 
     public function exportICReport(Request $request)
@@ -5371,12 +5408,12 @@ GROUP BY
 
         $output = $this->getICReportQuery($request);
 
-        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+        $requestCurrencyRpt = $this->getReportingCurrencyDetail($output, 'companyReportingCurrencyID');
 
         $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
         $type = $request->type;
-        
+
         switch ($reportTypeID) {
 
             case 'ICR':
@@ -5402,11 +5439,11 @@ GROUP BY
                             $data[$x]['PO Code'] = $val->companyID;
                             $data[$x]['PO Date'] = Helper::dateFormat($val->PODate);
                             $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency,$decimalPlaceRpt);
-                            $data[$x]['GRV Amount'] = round($val->GRVAmount,$decimalPlaceRpt);
-                            $data[$x]['AP Invoice Amount'] = round($val->APAmount,$decimalPlaceRpt);
-                            $data[$x]['AR Invoice Amount'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
-                            $data[$x]['Receipts/Adjustments'] = round($val->receiveAmountRpt,$decimalPlaceRpt);
+                            $data[$x]['PO Amount'] = round($val->poTotalComRptCurrency, $decimalPlaceRpt);
+                            $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
+                            $data[$x]['AP Invoice Amount'] = round($val->APAmount, $decimalPlaceRpt);
+                            $data[$x]['AR Invoice Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
+                            $data[$x]['Receipts/Adjustments'] = round($val->receiveAmountRpt, $decimalPlaceRpt);
 
                             $subTotalPOAmount += $val->poTotalComRptCurrency;
                             $subTotalGRVAmount += $val->GRVAmount;
@@ -5417,17 +5454,16 @@ GROUP BY
 
                         $x++;
                         $data[$x]['Company ID'] = '';
-                        $data[$x]['PO Code'] ='';
+                        $data[$x]['PO Code'] = '';
                         $data[$x]['PO Date'] = '';
                         $data[$x]['Supplier Name'] = 'Total';
-                        $data[$x]['PO Amount'] = round($subTotalPOAmount,$decimalPlaceRpt);
-                        $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
-                        $data[$x]['AP Invoice Amount'] = round($subTotalAPInvoiceAmount,$decimalPlaceRpt);
-                        $data[$x]['AR Invoice Amount'] = round($subTotalARInvoiceAmount,$decimalPlaceRpt);
-                        $data[$x]['Receipts/Adjustments'] = round($subTotalAdjAmount,$decimalPlaceRpt);
-
+                        $data[$x]['PO Amount'] = round($subTotalPOAmount, $decimalPlaceRpt);
+                        $data[$x]['GRV Amount'] = round($subTotalGRVAmount, $decimalPlaceRpt);
+                        $data[$x]['AP Invoice Amount'] = round($subTotalAPInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x]['AR Invoice Amount'] = round($subTotalARInvoiceAmount, $decimalPlaceRpt);
+                        $data[$x]['Receipts/Adjustments'] = round($subTotalAdjAmount, $decimalPlaceRpt);
                     }
-                } else {// DUMP
+                } else { // DUMP
 
                     if ($reportSD == "dump") {
 
@@ -5444,7 +5480,7 @@ GROUP BY
 
                                 $data[$x]['GRV Company'] = $val->grvCompany;
                                 $data[$x]['GRV Code'] = $val->grvCode;
-                                $data[$x]['GRV Amount'] = round($val->GRVAmount,$decimalPlaceRpt);
+                                $data[$x]['GRV Amount'] = round($val->GRVAmount, $decimalPlaceRpt);
                                 $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
                                 $data[$x]['GL Code'] = $val->grvGLCode;
                                 $data[$x]['GL Description'] = $val->grvGLCodeDes;
@@ -5453,7 +5489,7 @@ GROUP BY
                                 $data[$x]['Customer'] = $val->customer;
                                 $data[$x]['Booking Invoice Code'] = $val->bookingInvCode;
                                 $data[$x]['Booking Date'] = Helper::dateFormat($val->BookingDate);
-                                $data[$x]['Booking Amount Rpt'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+                                $data[$x]['Booking Amount Rpt'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
                                 $data[$x]['INV GL Code'] = $val->invGLCode;
                                 $data[$x]['INV GL Description'] = $val->invGLCodeDes;
                                 $data[$x]['INV Department'] = $val->invDepartment;
@@ -5464,20 +5500,20 @@ GROUP BY
 
                             $x++;
 
-//                            $data[$x]['GRV Company'] = '';
-//                            $data[$x]['GRV Code'] = '';
-//                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
-//                            $data[$x]['GRV Date'] = '';
-//                            $data[$x]['GL Code'] = '';
-//                            $data[$x]['GL Description'] = '';
-//                            $data[$x]['Department'] = '';
-//                            $data[$x]['Customer'] = '';
-//                            $data[$x]['Booking Invoice Code'] = '';
-//                            $data[$x]['Booking Date'] = '';
-//                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
-//                            $data[$x]['INV GL Code'] = '';
-//                            $data[$x]['INV GL Description'] = '';
-//                            $data[$x]['INV Department'] = '';
+                            //                            $data[$x]['GRV Company'] = '';
+                            //                            $data[$x]['GRV Code'] = '';
+                            //                            $data[$x]['GRV Amount'] = round($subTotalGRVAmount,$decimalPlaceRpt);
+                            //                            $data[$x]['GRV Date'] = '';
+                            //                            $data[$x]['GL Code'] = '';
+                            //                            $data[$x]['GL Description'] = '';
+                            //                            $data[$x]['Department'] = '';
+                            //                            $data[$x]['Customer'] = '';
+                            //                            $data[$x]['Booking Invoice Code'] = '';
+                            //                            $data[$x]['Booking Date'] = '';
+                            //                            $data[$x]['Booking Amount Rpt'] = round($subTotalBookingAmount,$decimalPlaceRpt);
+                            //                            $data[$x]['INV GL Code'] = '';
+                            //                            $data[$x]['INV GL Description'] = '';
+                            //                            $data[$x]['INV Department'] = '';
                         }
                     }
                 }
@@ -5511,7 +5547,7 @@ GROUP BY
                         $data[$x]['Stock Transfer Date'] = Helper::dateFormat($val->tranferDate);
                         $data[$x]['Customer INV Code'] = $val->bookingInvCode;
                         $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
 
                         $data[$x]['INV GL Code'] = $val->invGLCode;
                         $data[$x]['INV GL Description'] = $val->invGLCodeDes;
@@ -5522,7 +5558,7 @@ GROUP BY
                         $data[$x]['Approved'] = $val->Approved;
                         $data[$x]['Supplier Invoice Code'] = $val->supplierInvCode;
                         $data[$x]['Supplier Invoice Date'] = Helper::dateFormat($val->supplierInvDate);
-                        $data[$x]['Supplier Invoice Amount'] = round($val->supplierAmountRpt,$decimalPlaceRpt);
+                        $data[$x]['Supplier Invoice Amount'] = round($val->supplierAmountRpt, $decimalPlaceRpt);
 
                         $data[$x]['GL Code'] = $val->strGLCode;
                         $data[$x]['GL Description'] = $val->strGLCodeDes;
@@ -5534,11 +5570,11 @@ GROUP BY
 
                     $x++;
                     $data[$x]['Company From'] = '';
-                    $data[$x]['Stock Transfer Code'] ='';
+                    $data[$x]['Stock Transfer Code'] = '';
                     $data[$x]['Stock Transfer Date'] = '';
                     $data[$x]['Customer INV Code'] = '';
                     $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
                     $data[$x]['INV GL Code'] = '';
                     $data[$x]['INV GL Description'] = '';
                     $data[$x]['INV Department'] = '';
@@ -5547,11 +5583,10 @@ GROUP BY
                     $data[$x]['Approved'] = '';
                     $data[$x]['Supplier Invoice Code'] = '';
                     $data[$x]['Supplier Invoice Date'] = '';
-                    $data[$x]['Supplier Invoice Amount'] = round($subTotalSupplierAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['Supplier Invoice Amount'] = round($subTotalSupplierAmountRpt, $decimalPlaceRpt);
                     $data[$x]['GL Code'] = '';
                     $data[$x]['GL Description'] = '';
                     $data[$x]['Department'] = '';
-
                 }
 
                 \Excel::create('inter_company_stock_transfer', function ($excel) use ($data) {
@@ -5583,12 +5618,12 @@ GROUP BY
                         $data[$x]['Disposal Date'] = Helper::dateFormat($val->disposalDocumentDate);
                         $data[$x]['Customer INV Code'] = $val->bookingInvCode;
                         $data[$x]['Customer INV Date'] = Helper::dateFormat($val->bookingDate);
-                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt,$decimalPlaceRpt);
+                        $data[$x]['Customer INV Amount'] = round($val->bookingAmountRpt, $decimalPlaceRpt);
                         $data[$x]['Company To'] = $val->toCompanyID;
                         $data[$x]['Direct GRV Code'] = $val->grvPrimaryCode;
                         $data[$x]['GRV Date'] = Helper::dateFormat($val->grvDate);
                         $data[$x]['Direct GRV Approved'] = $val->Approved;
-                        $data[$x]['GRV Amount'] = round($val->GrvAmount,$decimalPlaceRpt);
+                        $data[$x]['GRV Amount'] = round($val->GrvAmount, $decimalPlaceRpt);
 
                         $subTotalBookingAmountRpt += $val->bookingAmountRpt;
                         $subTotalGrvAmount += $val->GrvAmount;
@@ -5596,17 +5631,16 @@ GROUP BY
 
                     $x++;
                     $data[$x]['Company From'] = '';
-                    $data[$x]['Disposal Document'] ='';
+                    $data[$x]['Disposal Document'] = '';
                     $data[$x]['Disposal Date'] = '';
                     $data[$x]['Customer INV Code'] = '';
                     $data[$x]['Customer INV Date'] = 'Total';
-                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt,$decimalPlaceRpt);
+                    $data[$x]['Customer INV Amount'] = round($subTotalBookingAmountRpt, $decimalPlaceRpt);
                     $data[$x]['Company To'] = '';
                     $data[$x]['Direct GRV Code'] = '';
                     $data[$x]['GRV Date'] = '';
                     $data[$x]['Direct GRV Approved'] = '';
-                    $data[$x]['GRV Amount'] = round($subTotalGrvAmount,$decimalPlaceRpt);
-
+                    $data[$x]['GRV Amount'] = round($subTotalGrvAmount, $decimalPlaceRpt);
                 }
 
                 \Excel::create('inter_company_Asset_transfer', function ($excel) use ($data) {
@@ -5637,12 +5671,12 @@ GROUP BY
                         $data[$x]['Transfer Type'] = $val->expenseClaimTypeDescription;
                         $data[$x]['PV Code'] = $val->BPVcode;
                         $data[$x]['PV Date'] = Helper::dateFormat($val->BPVdate);
-                        $data[$x]['PV Amount'] = round($val->payAmountCompRpt,$decimalPlaceRpt);
+                        $data[$x]['PV Amount'] = round($val->payAmountCompRpt, $decimalPlaceRpt);
                         $data[$x]['Company To'] = $val->companyIdTo;
                         $data[$x]['Receipt Code'] = $val->custPaymentReceiveCode;
                         $data[$x]['Receipt Date'] = Helper::dateFormat($val->custPaymentReceiveDate);
                         $data[$x]['Receipt Approved'] = $val->Approved;
-                        $data[$x]['Receipt Amount'] = round($val->companyRptAmount,$decimalPlaceRpt);
+                        $data[$x]['Receipt Amount'] = round($val->companyRptAmount, $decimalPlaceRpt);
 
                         $subTotalPayAmountCompRpt += $val->payAmountCompRpt;
                         $subTotalCompanyRptAmount += $val->companyRptAmount;
@@ -5650,16 +5684,15 @@ GROUP BY
 
                     $x++;
                     $data[$x]['Company From'] = '';
-                    $data[$x]['Transfer Type'] ='';
+                    $data[$x]['Transfer Type'] = '';
                     $data[$x]['PV Code'] = '';
                     $data[$x]['PV Date'] = 'Total';
-                    $data[$x]['PV Amount'] = round($subTotalPayAmountCompRpt,$decimalPlaceRpt);
+                    $data[$x]['PV Amount'] = round($subTotalPayAmountCompRpt, $decimalPlaceRpt);
                     $data[$x]['Company To'] = '';
                     $data[$x]['Receipt Code'] = '';
                     $data[$x]['Receipt Date'] = '';
                     $data[$x]['Receipt Approved'] = '';
-                    $data[$x]['Receipt Amount'] = round($subTotalCompanyRptAmount,$decimalPlaceRpt);
-
+                    $data[$x]['Receipt Amount'] = round($subTotalCompanyRptAmount, $decimalPlaceRpt);
                 }
 
                 \Excel::create('inter_company_Fund_transfer', function ($excel) use ($data) {
@@ -5679,7 +5712,8 @@ GROUP BY
         }
     }
 
-    public function getICDrillDownData(Request $request) {
+    public function getICDrillDownData(Request $request)
+    {
 
         $type = $request->type;
         $purchaseOrderID = $request->purchaseOrderID;
@@ -5725,7 +5759,7 @@ GROUP BY
 
                 $output = \DB::select($query);
 
-                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output, 'companyReportingCurrencyID');
 
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
                 $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
@@ -5735,26 +5769,26 @@ GROUP BY
                 $total['bookingAmountRpt'] = array_sum(collect($output)->pluck('bookingAmountRpt')->toArray());
 
                 return array(
-                    'reportData'=>$output,
-                    'total'=>$total,
-                    'decimalPlaceRpt'=>$decimalPlaceRpt,
-                    'currencyCodeRpt'=>$currencyCodeRpt,
+                    'reportData' => $output,
+                    'total' => $total,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyCodeRpt' => $currencyCodeRpt,
                 );
                 break;
             case 'ap':
 
-                $output = BookInvSuppDet::where('companySystemID',$companySystemID)
-                    ->where('purchaseOrderID',$purchaseOrderID)
+                $output = BookInvSuppDet::where('companySystemID', $companySystemID)
+                    ->where('purchaseOrderID', $purchaseOrderID)
                     ->groupBy('bookingSuppMasInvAutoID')
-                    ->select('bookingSuppMasInvAutoID','companyReportingCurrencyID',DB::raw('SUM(erp_bookinvsuppdet.totRptAmount) AS totRptAmount'))
+                    ->select('bookingSuppMasInvAutoID', 'companyReportingCurrencyID', DB::raw('SUM(erp_bookinvsuppdet.totRptAmount) AS totRptAmount'))
                     ->whereHas('suppinvmaster')
-                    ->with(['suppinvmaster'=> function($query){
-                        $query->select('bookingDate','bookingInvCode','bookingSuppMasInvAutoID');
+                    ->with(['suppinvmaster' => function ($query) {
+                        $query->select('bookingDate', 'bookingInvCode', 'bookingSuppMasInvAutoID');
                     }])
 
                     ->get();
 
-                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output, 'companyReportingCurrencyID');
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
                 $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
 
@@ -5762,16 +5796,16 @@ GROUP BY
                 $total['totRptAmount'] = array_sum(collect($output)->pluck('totRptAmount')->toArray());
 
                 return array(
-                    'reportData'=>$output,
-                    'total'=>$total,
-                    'decimalPlaceRpt'=>$decimalPlaceRpt,
-                    'currencyCodeRpt'=>$currencyCodeRpt,
+                    'reportData' => $output,
+                    'total' => $total,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyCodeRpt' => $currencyCodeRpt,
                 );
 
                 break;
             case 'receipt':
 
-                $bookingInvCodeSystem = (isset($request->bookinkcode)&& $request->bookinkcode > 0)?$request->bookinkcode: 0;
+                $bookingInvCodeSystem = (isset($request->bookinkcode) && $request->bookinkcode > 0) ? $request->bookinkcode : 0;
 
                 $query = "SELECT
                                 erp_custreceivepaymentdet.custReceivePaymentAutoID,
@@ -5813,7 +5847,7 @@ GROUP BY
 
                 $output = \DB::select($query);
 
-                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output,'companyReportingCurrencyID');
+                $requestCurrencyRpt = $this->getReportingCurrencyDetail($output, 'companyReportingCurrencyID');
 
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
                 $currencyCodeRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->CurrencyCode : 'USD';
@@ -5822,19 +5856,19 @@ GROUP BY
                 $total['receiveAmountRpt'] = array_sum(collect($output)->pluck('receiveAmountRpt')->toArray());
 
                 return array(
-                    'reportData'=>$output,
-                    'total'=>$total,
-                    'decimalPlaceRpt'=>$decimalPlaceRpt,
-                    'currencyCodeRpt'=>$currencyCodeRpt,
+                    'reportData' => $output,
+                    'total' => $total,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyCodeRpt' => $currencyCodeRpt,
                 );
                 break;
             default:
                 return $this->sendError('Drill down type not found');
         }
-
     }
 
-    private function getReportingCurrencyDetail($result, $column) {
+    private function getReportingCurrencyDetail($result, $column)
+    {
         $currencyIdRpt = 2;
 
         $decimalPlaceCollectRpt = collect($result)->pluck($column)->toArray();
@@ -5856,15 +5890,15 @@ GROUP BY
             if ($input['currency'] === 1) {
                 $reportData['decimalPlaces'] = $reportData['companyCurrency']['localcurrency']['DecimalPlaces'];
             } else {
-                 $reportData['decimalPlaces'] = $reportData['companyCurrency']['reportingcurrency']['DecimalPlaces'];
+                $reportData['decimalPlaces'] = $reportData['companyCurrency']['reportingcurrency']['DecimalPlaces'];
             }
         } else {
-             $reportData['decimalPlaces'] = 0;
+            $reportData['decimalPlaces'] = 0;
         }
 
         $reportData['accountType'] = $input['accountType'];
 
-         if (is_array($reportData['uncategorize']) && $reportData['columnTemplateID'] == null) {
+        if (is_array($reportData['uncategorize']) && $reportData['columnTemplateID'] == null) {
             $reportData['isUncategorize'] = false;
         } else {
             $reportData['isUncategorize'] = true;
@@ -5877,9 +5911,9 @@ GROUP BY
         }
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                     $excel->sheet('New sheet', function($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('xlsx');
+            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                $sheet->loadView($templateName, $reportData);
+            });
+        })->download('xlsx');
     }
 }

@@ -215,4 +215,9 @@ class BudgetConsumedData extends Model
     {
         return $this->belongsTo('App\Models\ProcumentOrder', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
     }
+
+    public function purchase_order_detail()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'documentSystemCode', 'purchaseOrderID');
+    }
 }
