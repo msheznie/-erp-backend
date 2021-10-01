@@ -46,15 +46,15 @@
                 <th>Document Amount</th>
               </thead>
               <tbody>
-                @foreach ($budgetConsumedData as $item)
+                @foreach ($detailsPOWise as $item)
                 <?php 
-                  $date = explode(' ',$item->timestamp);
+                  $date = explode(' ',$item->purchase_order_detail->createdDateTime);
                 ?>
                 <tr>
                   <td></td>
                   <td>{{$item->documentCode}}</td>
                   <td>{{$date[0] }}</td>
-                  <td>{{round($item->consumedRptAmount, 3)}}</td>
+                  <td>{{round($item->documentAmount, 3)}}</td>
                 </tr>
                 @endforeach
 
