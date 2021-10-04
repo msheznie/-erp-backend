@@ -220,10 +220,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 $checkDefaultTemplate = ReportTemplate::where('isDefault', 1)
                                                       ->where('reportID', 2)
+                                                      ->where('companySystemID', $request->companySystemID)
                                                       ->first();
 
                 if (!$checkDefaultTemplate) {
-                    return $this->sendError("Default template for PL not found", 500);
+                    return $this->sendError("Please configure default template to generate the report", 500);
                 }
 
                 break;
