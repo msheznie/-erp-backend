@@ -294,12 +294,12 @@ class FinancialReportAPIController extends AppBaseController
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             })
             ->sum('consumedRptAmount');
 
             $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             }])
                 ->where('projectID', $projectID)
                 ->where('documentSystemID', 2)
@@ -344,7 +344,7 @@ class FinancialReportAPIController extends AppBaseController
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            $query->whereBetween('approvedDate', [$fromDate, $toDate]);
         }])
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
@@ -355,7 +355,7 @@ class FinancialReportAPIController extends AppBaseController
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             })
             ->sum('consumedRptAmount');
 
@@ -1197,12 +1197,12 @@ class FinancialReportAPIController extends AppBaseController
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             })
             ->sum('consumedRptAmount');
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('createdDateTime', [$fromDate, $toDate]);
+            $query->whereBetween('approvedDate', [$fromDate, $toDate]);
         }])
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
@@ -1212,10 +1212,18 @@ class FinancialReportAPIController extends AppBaseController
 
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
+
         if ($projectAmount > 0) {
             $projectAmount = $projectAmount;
         } else {
             $projectAmount = 0;
+        }
+
+
+        if ($budgetAmount > 0) {
+            $budgetAmount = $budgetAmount;
+        } else {
+            $budgetAmount = 0;
         }
 
         $openingBalance = $projectAmount - $budgetAmount;

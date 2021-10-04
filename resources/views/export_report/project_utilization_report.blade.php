@@ -48,7 +48,7 @@
               <tbody>
                 @foreach ($detailsPOWise as $item)
                 <?php 
-                  $date = explode(' ',$item->purchase_order_detail->createdDateTime);
+                  $date = explode(' ',$item->purchase_order_detail->approvedDate);
                 ?>
                 <tr>
                   <td></td>
