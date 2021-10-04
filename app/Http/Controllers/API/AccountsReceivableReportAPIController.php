@@ -45,6 +45,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerContactDetails;
 use App\Models\CustomerMasterCategory;
+use App\Models\ReportTemplate;
 use App\Models\CustomerMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\GeneralLedger;
@@ -215,6 +216,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
+                }
+
+                $checkDefaultTemplate = ReportTemplate::where('isDefault', 1)
+                                                      ->where('reportID', 2)
+                                                      ->first();
+
+                if (!$checkDefaultTemplate) {
+                    return $this->sendError("Default template for PL not found", 500);
                 }
 
                 break;
@@ -1392,11 +1401,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->documentCode;
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Contract No'] = $val->ContractNumber;
-                            $data[$x]['Contract Description'] = $val->contractDescription;
-                            $data[$x]['Contract/PO'] = $val->CONTRACT_PO;
-                            $data[$x]['Contract End Date'] = \Helper::dateFormat($val->ContEndDate);
+                            $data[$x]['Segment'] = $val->serviceLineCode;
+                            // $data[$x]['Contract No'] = $val->ContractNumber;
+                            // $data[$x]['Contract Description'] = $val->contractDescription;
+                            // $data[$x]['Contract/PO'] = $val->CONTRACT_PO;
+                            // $data[$x]['Contract End Date'] = \Helper::dateFormat($val->ContEndDate);
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['GL Desc'] = $val->AccountDescription;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
@@ -4199,18 +4208,18 @@ WHERE
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                     INNER JOIN (
                 SELECT
-                    erp_templatesdetails.templatesDetailsAutoID,
-                    erp_templatesdetails.templatesMasterAutoID,
-                    erp_templatesdetails.templateDetailDescription,
-                    erp_templatesdetails.controlAccountID,
-                    erp_templatesdetails.controlAccountSubID,
-                    erp_templatesglcode.chartOfAccountSystemID,
-                    erp_templatesglcode.glCode
+                    erp_companyreporttemplatedetails.detID as templatesDetailsAutoID,
+                    erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
+                    erp_companyreporttemplatedetails.description as templateDetailDescription,
+                    erp_companyreporttemplatedetails.controlAccountType as controlAccountID,
+                    erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                    erp_companyreporttemplatelinks.glCode
                 FROM
-                    erp_templatesdetails
-                    INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                    erp_companyreporttemplatedetails
+                    INNER JOIN erp_companyreporttemplatelinks ON erp_companyreporttemplatedetails.detID = erp_companyreporttemplatelinks.templateDetailID
+                    INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID
                 WHERE
-                    ( ( ( erp_templatesdetails.templatesMasterAutoID ) = 15 ) AND ( ( erp_templatesdetails.controlAccountID ) = "PLI" ) )
+                    ( ( ( erp_companyreporttemplate.isDefault ) = 1 ) AND ( ( erp_companyreporttemplate.reportID ) = 2 ) )
                     ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -4707,18 +4716,18 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
                                 INNER JOIN (
                             SELECT
-                                erp_templatesdetails.templatesDetailsAutoID,
-                                erp_templatesdetails.templatesMasterAutoID,
-                                erp_templatesdetails.templateDetailDescription,
-                                erp_templatesdetails.controlAccountID,
-                                erp_templatesdetails.controlAccountSubID,
-                                erp_templatesglcode.chartOfAccountSystemID,
-                                erp_templatesglcode.glCode 
+                                erp_companyreporttemplatedetails.detID as templatesDetailsAutoID,
+                                erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
+                                erp_companyreporttemplatedetails.description as templateDetailDescription,
+                                erp_companyreporttemplatedetails.controlAccountType as controlAccountID,
+                                erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                erp_companyreporttemplatelinks.glCode 
                             FROM
-                                erp_templatesdetails
-                                INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                                erp_companyreporttemplatedetails
+                                INNER JOIN erp_companyreporttemplatelinks ON erp_companyreporttemplatedetails.detID = erp_companyreporttemplatelinks.templateDetailID 
+                                INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID 
                             WHERE
-                                erp_templatesdetails.templatesMasterAutoID = 15 AND erp_templatesdetails.controlAccountID = "PLI"
+                                erp_companyreporttemplate.isDefault = 1 AND erp_companyreporttemplate.reportID = 2
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                             
