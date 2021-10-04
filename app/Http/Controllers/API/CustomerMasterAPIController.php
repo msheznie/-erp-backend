@@ -971,6 +971,7 @@ class CustomerMasterAPIController extends AppBaseController
             $companySystemID = $input['companySystemID'];
             $excelUpload = $input['itemExcelUpload'];
 
+            $input['companySystemIDFilter'] = $companySystemID;
             $input = array_except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
@@ -1263,7 +1264,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['category']) && !is_null($value['category'])) )
                             {
 
-                                $category = CustomerMasterCategory::where([['companySystemID','=', $companySystemID],['categoryDescription','=',$value['category']]])
+                                $category = CustomerMasterCategory::where('categoryDescription','=',$value['category'])
                                                         ->whereHas('category_assigned', function ($query) use ($input) {
                                                         $query->when(isset($input['companySystemID']), function($query) use ($input){
                                                                 $query->where('companySystemID', $input['companySystemID']);
@@ -1969,13 +1970,7 @@ class CustomerMasterAPIController extends AppBaseController
                         {
                            
 
-                            if (is_numeric($value['fax'])){
-                                if($value['fax'] >= 0)
-                                {
-                                    $supplier_data['fax'] = $value['fax'];
-                                }
-                              
-                            }
+                            $supplier_data['fax'] = $value['fax'];
                                                             
                         }
                         
