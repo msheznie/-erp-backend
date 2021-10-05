@@ -4083,13 +4083,14 @@ WHERE
 
         $currency = $request->currencyID;
         $year = $request->year;
+        $showVAT = (isset($request->showVAT) && $request->showVAT) ? 1 : 0;
 
         $currencyClm = "MyRptAmount";
 
         if ($currency == 2) {
-            $currencyClm = "MyLocalAmount";
+            $currencyClm = ($showVAT == 1) ? "MyLocalAmount + VATAmountLocal" : "MyLocalAmount";
         } else if ($currency == 3) {
-            $currencyClm = "MyRptAmount";
+            $currencyClm = ($showVAT == 1) ? "MyRptAmount + VATAmountRPT" : "MyRptAmount";
         }
 
         $isAllCustomerSelected = $request->isAllCustomerSelected;
@@ -4098,6 +4099,7 @@ WHERE
         if ($isAllCustomerSelected == 1) {
             $nullCustomer = 'OR revenueDetailData.mySupplierCode IS NULL  OR revenueDetailData.mySupplierCode = ""';
         }
+
 
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
@@ -4179,6 +4181,8 @@ WHERE
                     erp_generalledger.glCode,
                     erp_generalledger.glAccountType,
                     chartofaccounts.controlAccounts,
+                    IF(ISNULL(tax_ledger_details.VATAmountRpt), 0, tax_ledger_details.VATAmountRpt) as VATAmountRPT,
+                    IF(ISNULL(tax_ledger_details.VATAmountLocal), 0, tax_ledger_details.VATAmountLocal) as VATAmountLocal,
                     revenueGLCodes.controlAccountID,
                     erp_generalledger.supplierCodeSystem,
                 IF
@@ -4205,6 +4209,7 @@ WHERE
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID
                     LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                     INNER JOIN (
@@ -4633,6 +4638,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
             $nullCustomer = 'OR revenueCustomerDetail.mySupplierCode IS NULL  OR revenueCustomerDetail.mySupplierCode = ""';
         }
 
+        $showVAT = (isset($request->showVAT) && $request->showVAT) ? 1 : 0;
+
         $output = \DB::select('SELECT
                                 revenueCustomerDetail.companySystemID,
                                 revenueCustomerDetail.companyID,
@@ -4650,15 +4657,15 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 revenueCustomerDetail.glCode,
                                 revenueCustomerDetail.AccountDescription,
                                 revenueCustomerDetail.documentDate,
+                                IF('.$showVAT.' = 1, round(revenueCustomerDetail.MyRptAmount,0) + VATAmountRPT , round(revenueCustomerDetail.MyRptAmount,0)) as RptAmount,
+                                IF('.$showVAT.' = 1, round(revenueCustomerDetail.MyLocalAmount,0) + VATAmountLocal , round(revenueCustomerDetail.MyLocalAmount,0)) as localAmount,
                                 documentLocalCurrency,
                                 documentLocalDecimalPlaces,
                                 documentRptCurrency,
                                 documentRptDecimalPlaces,
                                 month(revenueCustomerDetail.documentDate) as PostingMonth,
                                 year(revenueCustomerDetail.documentDate) as PostingYear,
-                                revenueCustomerDetail.documentNarration,
-                                round(revenueCustomerDetail.MyLocalAmount,0) localAmount,
-                                round(revenueCustomerDetail.MyRptAmount,0) RptAmount
+                                revenueCustomerDetail.documentNarration
                             FROM
                             (
                             SELECT
@@ -4681,6 +4688,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 chartofaccounts.controlAccounts,
                                 chartofaccounts.AccountDescription,
                                 erp_generalledger.supplierCodeSystem,
+                                IF(ISNULL(tax_ledger_details.VATAmountRpt), 0, tax_ledger_details.VATAmountRpt) as VATAmountRPT,
+                                IF(ISNULL(tax_ledger_details.VATAmountLocal), 0, tax_ledger_details.VATAmountLocal) as VATAmountLocal,
                                 currLocal.CurrencyCode as documentLocalCurrency,
                                 currLocal.DecimalPlaces as documentLocalDecimalPlaces,
                                 currRpt.CurrencyCode as documentRptCurrency,
@@ -4711,6 +4720,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_generalledger
                                 INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                                LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID
                                 LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
                                 AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
