@@ -1633,7 +1633,7 @@ class BankLedgerAPIController extends AppBaseController
             $sort = 'desc';
         }
         $employee = \Helper::getEmployeeInfo();
-
+        
         /*validation for cheque print*/
         if(isset($input['selectedForPrint']) && is_array($input['selectedForPrint']) && count($input['selectedForPrint'])>0){
             $chequeCount = 0;
@@ -1682,7 +1682,7 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.null_currency_field_is_found'),500);
                 }
                 ////////////
-
+                
                 /*
                  * Don't allow user to Select different Transaction type (Cheques and Transfer) and Print
                  * Don't allow user to select multiple Cheques and Print
@@ -1696,10 +1696,12 @@ class BankLedgerAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_can_print_only_one_cheque_payment_at_a_time'),500);
                 }
                 //////////////
+
+               
                 if($chequeCount>0){
 
                    
-
+                
 
 
                     if($input['type'] == 2 && $input['name'] != '')
@@ -1710,12 +1712,14 @@ class BankLedgerAPIController extends AppBaseController
                     else if($input['type'] == 1)
                     {   
 
-
-                      
-                        if(isset($input['bankID']) && ($input['bankID'] != null) && (!empty($input['bankID']) ) )
+                  
+                  
+                        if(isset($input['bank_master_id']) && ($input['bank_master_id'] != null) && (!empty($input['bank_master_id']) ) )
                         {
-                          
-                            $templates_bank = ChequeTemplateBank::where('bank_id',$input['bankID'])->with('template')->get();
+                        
+                            $templates_bank = ChequeTemplateBank::where('bank_id',$input['bank_master_id'][0])->with('template')->get();
+
+                     
                             if(count($templates_bank) == 0)
                             {
                                 return $this->sendError(trans('custom.no_templates'),500);
