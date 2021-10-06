@@ -1714,10 +1714,10 @@ class BankLedgerAPIController extends AppBaseController
 
                   
                   
-                        if(isset($input['bankAccountID']) && ($input['bankAccountID'] != null) && (!empty($input['bankAccountID']) ) )
+                        if(isset($input['bank_master_id']) && ($input['bank_master_id'] != null) && (!empty($input['bank_master_id']) ) )
                         {
                         
-                            $templates_bank = ChequeTemplateBank::where('bank_id',$input['bankAccountID'][0])->with('template')->get();
+                            $templates_bank = ChequeTemplateBank::where('bank_id',$input['bank_master_id'][0])->with('template')->get();
 
                      
                             if(count($templates_bank) == 0)
