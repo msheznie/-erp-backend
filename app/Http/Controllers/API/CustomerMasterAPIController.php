@@ -997,12 +997,12 @@ class CustomerMasterAPIController extends AppBaseController
                 return $this->sendError('The maximum size allow to upload is 20 MB',500);
             }
 
-          
+           
            
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
-        
-            //$originalFileName = 'supplier_template.xlsx';
+            //die();
+            //$originalFileName = 'item_template.xlsx';
             
          
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -2441,8 +2441,7 @@ class CustomerMasterAPIController extends AppBaseController
                 
                         $count = 1;
                     
-                  
-                  
+                     
                     foreach($formatChk as $key=>$value)
                     {   
                         $item_data = [];
@@ -2671,7 +2670,31 @@ class CustomerMasterAPIController extends AppBaseController
                                     $item_data['barcode'] = $value['barcode'];
                             
                             }
-        
+                            
+
+
+                            if ( (isset($value['is_active']) && !is_null($value['is_active'])) )
+                            {
+
+                             
+                                if ( $value['is_active'] == 'Yes' || $value['is_active'] == 'No') 
+                                {
+                                    if($value['is_active'] == 'No')
+                                    {
+                                        $vat_el = '0';
+                                    }
+                                    else
+                                    {
+                                        $vat_el = '1';
+                                    }
+                                
+                                    $item_data['isActive'] = $vat_el;
+                                 
+                                }
+                          
+                             
+                            }
+
                             $employee = Helper::getEmployeeInfo();
                             $item_data['createdPcID'] = gethostname();
                             $item_data['createdUserID'] = $employee->empID;
@@ -2681,11 +2704,8 @@ class CustomerMasterAPIController extends AppBaseController
                             $document = DocumentMaster::where('documentID', 'ITMM')->first();
                             $item_data['documentSystemID'] = $document->documentSystemID;
                             $item_data['documentID'] = $document->documentID;
-                            $item_data['isActive'] = 1;
                             $item_data['isPOSItem'] = 0;
 
-
-                  
 
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
                             {
