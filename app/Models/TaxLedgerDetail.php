@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
@@ -273,6 +274,7 @@ use Eloquent as Model;
  */
 class TaxLedgerDetail extends Model
 {
+    use Compoships;
 
     public $table = 'tax_ledger_details';
     
@@ -328,6 +330,7 @@ class TaxLedgerDetail extends Model
         'createdUserSystemID',
         'rcmApplicableYN',
         'recovertabilityPercentage',
+        'returnFilledDetailID',
         'recoverabilityAmount',
         'createdDateTime'
     ];
@@ -385,6 +388,7 @@ class TaxLedgerDetail extends Model
         'companySystemID' => 'integer',
         'createdPCID' => 'string',
         'createdUserSystemID' => 'integer',
+        'returnFilledDetailID' => 'integer',
         'createdDateTime' => 'datetime'
     ];
 
@@ -397,5 +401,40 @@ class TaxLedgerDetail extends Model
         
     ];
 
-    
+    public function sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategoryID','taxVatSubCategoriesAutoID');
+    } 
+
+    public function supplier(){
+        return $this->belongsTo('App\Models\SupplierMaster', 'partyAutoID','supplierCodeSystem');
+    }
+
+    public function document_master(){
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID','documentSystemID');
+    }
+
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster', 'partyAutoID','customerCodeSystem');
+    }
+
+    public function tax_ledger()
+    {
+        return $this->belongsTo('App\Models\TaxLedger', ['documentSystemID', 'documentMasterAutoID'],['documentSystemID', 'documentMasterAutoID']);
+    }
+
+    public function customer_invoice(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect',['documentMasterAutoID','documentSystemID','companySystemID'], ['custInvoiceDirectAutoID','documentSystemiD','companySystemID']);
+    } 
+
+    public function customer_invoice_details(){
+        return $this->belongsTo('App\Models\CustomerInvoiceItemDetails','documentDetailID', 'customerItemDetailID');
+    }
+
+    public function sales_return_details(){
+        return $this->belongsTo('App\Models\SalesReturnDetail','documentDetailID', 'salesReturnDetailID');
+    } 
+
+    public function credit_note_details(){
+        return $this->belongsTo('App\Models\CreditNoteDetails','documentDetailID', 'creditNoteDetailsID');
+    }
 }
