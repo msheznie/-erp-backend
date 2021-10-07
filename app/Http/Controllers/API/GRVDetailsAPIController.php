@@ -817,7 +817,7 @@ class GRVDetailsAPIController extends AppBaseController
                             $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
                             $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
                             $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
-                        } else if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                        } else if ($new['itemFinanceCategoryID'] != 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
                             $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                             $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
                             $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
@@ -1003,6 +1003,8 @@ class GRVDetailsAPIController extends AppBaseController
 
         $grvAutoID = $input['grvAutoID'];
 
+        
+
         $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
         if (empty($grvMaster)) {
             return $this->sendError('GRV Master not found');
@@ -1089,10 +1091,27 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['itemDescription'] = $itemAssign->itemDescription;
             $GRVDetail_arr['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
             $GRVDetail_arr['itemFinanceCategorySubID'] = $itemAssign->financeCategorySub;
-            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
-            $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
-            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
-            $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            // $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
+            // $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
+            // $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+            // $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            if ($itemAssign->financeCategoryMaster == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+                $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            } else if ($itemAssign->financeCategoryMaster != 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
+                $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
+                $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+            } else {
+                $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
+                $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
+                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+                $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            }
+
             $GRVDetail_arr['includePLForGRVYN'] = $financeCategorySub->includePLForGRVYN;
             $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
             $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
