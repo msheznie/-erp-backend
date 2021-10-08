@@ -2684,7 +2684,6 @@ class Helper
                     $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-<<<<<<< HEAD
                 case 96:
                     $docInforArr["tableName"] = 'currency_conversion_master';
                     $docInforArr["modelName"] = 'CurrencyConversionMaster';

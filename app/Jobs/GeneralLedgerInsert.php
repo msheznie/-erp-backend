@@ -151,6 +151,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
 
                         $unbilledGRVVATAddVatOnPO = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"]);
+                        $vatDetails = TaxService::processGrvVAT($masterModel["autoID"]);
 
                         Log::info('Total Logistic VAT');
                         Log::info($unbilledGRVVATAddVatOnPO);
@@ -208,7 +209,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
-                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $masterData->details[0]->transVATAmount > 0 || ($unbilledTransVATAmount > 0)) {
+                            if (($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && $vatDetails['masterVATTrans'] || ($unbilledTransVATAmount > 0)) {
                                 Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
@@ -224,9 +225,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
 
-                                        $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount + $unbilledTransVATAmount);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount + $unbilledLocalVATAmount);
-                                        $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount + $unbilledRptVATAmount);
+                                        $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans'] + $unbilledTransVATAmount);
+                                        $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATRpt'] + $unbilledLocalVATAmount);
+                                        $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATLocal'] + $unbilledRptVATAmount);
 
                                         array_push($finalData, $data);
 
@@ -257,9 +258,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                             $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount) * -1;
-                                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount) * -1;
-                                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount) * -1;
+                                            $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans']) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATRpt']) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATLocal']) * -1;
                                             $data['timestamp'] = \Helper::currentDateTime();
                                             array_push($finalData, $data);
 
@@ -279,21 +280,30 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($bs) {
                                 foreach ($bs as $val) {
+
+                                    $transBSVAT = isset($vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['transVATAmount']) ? $vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['transVATAmount'] : 0;
+                                    $rptBSVAT = isset($vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['rptVATAmount']) ? $vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['rptVATAmount'] : 0;
+                                    $localBSVAT = isset($vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['localVATAmount']) ? $vatDetails['bsVAT'][$val->financeGLcodebBSSystemID]['localVATAmount'] : 0;
+
+                                    $exemptVATTransAmount = isset($vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATTransAmount']) ? $vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATTransAmount'] : 0;
+                                    $exemptVATLocalAmount = isset($vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATLocalAmount']) ? $vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATLocalAmount'] : 0;
+                                    $exemptVATRptAmount = isset($vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATRptAmount']) ? $vatDetails['exemptVATportionBs'][$val->financeGLcodebBSSystemID]['exemptVATRptAmount'] : 0;
+
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
 
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
 
                                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -301,21 +311,30 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 foreach ($pl as $val) {
+
+                                    $transPLVAT = isset($vatDetails['plVAT'][$val->financeGLcodePLSystemID]['transVATAmount']) ? $vatDetails['plVAT'][$val->financeGLcodePLSystemID]['transVATAmount'] : 0;
+                                    $rptPLVAT = isset($vatDetails['plVAT'][$val->financeGLcodePLSystemID]['rptVATAmount']) ? $vatDetails['plVAT'][$val->financeGLcodePLSystemID]['rptVATAmount'] : 0;
+                                    $localPLVAT = isset($vatDetails['plVAT'][$val->financeGLcodePLSystemID]['localVATAmount']) ? $vatDetails['plVAT'][$val->financeGLcodePLSystemID]['localVATAmount'] : 0;
+
+                                    $exemptVATTransAmount = isset($vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATTransAmount']) ? $vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATTransAmount'] : 0;
+                                    $exemptVATLocalAmount = isset($vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATLocalAmount']) ? $vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATLocalAmount'] : 0;
+                                    $exemptVATRptAmount = isset($vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATRptAmount']) ? $vatDetails['exemptVATportionPL'][$val->financeGLcodebBSSystemID]['exemptVATRptAmount'] : 0;
+
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
                                     $data['glAccountTypeID'] = 2;
                                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transPLVAT + $exemptVATTransAmount);
 
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + $localPLVAT + $exemptVATLocalAmount);
 
                                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptPLVAT + $exemptVATRptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -744,6 +763,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
 
+                        $vatDetails = TaxService::processPRVAT($masterModel["autoID"]);
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -822,15 +843,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
                                         $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
-                                        $data['documentTransAmount'] = ABS(\Helper::roundValue($masterData->details[0]->transVATAmount)) * -1;
+                                        $data['documentTransAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATTrans'])) * -1;
 
                                         $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
-                                        $data['documentLocalAmount'] = ABS(\Helper::roundValue($masterData->details[0]->localVATAmount)) * -1;
+                                        $data['documentLocalAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATLocal'])) * -1;
 
                                         $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
                                         $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
-                                        $data['documentRptAmount'] = ABS(\Helper::roundValue($masterData->details[0]->rptVATAmount)) * -1;
+                                        $data['documentRptAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATRpt'])) * -1;
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     } else {
@@ -844,19 +865,27 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($bs) {
+                                $transBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['transVATAmount'] : 0;
+                                $rptBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['rptVATAmount'] : 0;
+                                $localBSVAT = isset($vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount']) ? $vatDetails['bsVAT'][$bs->financeGLcodebBSSystemID]['localVATAmount'] : 0;
+
+                                $exemptVATTransAmount = isset($vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATTransAmount']) ? $vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATTransAmount'] : 0;
+                                $exemptVATLocalAmount = isset($vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATLocalAmount']) ? $vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATLocalAmount'] : 0;
+                                $exemptVATRptAmount = isset($vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATRptAmount']) ? $vatDetails['exemptVATportionBs'][$bs->financeGLcodebBSSystemID]['exemptVATRptAmount'] : 0;
+                                
                                 $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
                                 $data['glCode'] = $bs->financeGLcodebBS;
                                 $data['glAccountType'] = 'BS';
                                 $data['glAccountTypeID'] = 1;
                                 $data['documentTransCurrencyID'] = $bs->supplierTransactionCurrencyID;
                                 $data['documentTransCurrencyER'] = $bs->supplierTransactionER;
-                                $data['documentTransAmount'] = ABS($bs->transAmount) * -1;
+                                $data['documentTransAmount'] = ABS($bs->transAmount + $transBSVAT + $exemptVATTransAmount) * -1;
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = $bs->localCurrencyER;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
+                                $data['documentLocalAmount'] = ABS($bs->localAmount + $localBSVAT + $exemptVATLocalAmount) * -1;
                                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                                 $data['documentRptCurrencyER'] = $bs->companyReportingER;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
+                                $data['documentRptAmount'] = ABS($bs->rptAmount + $rptBSVAT + $exemptVATRptAmount) * -1;
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }

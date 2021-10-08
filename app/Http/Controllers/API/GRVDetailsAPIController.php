@@ -868,6 +868,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['VATAmountRpt'] = $new['VATAmountRpt'];
                         $GRVDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
                         $GRVDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                        $GRVDetail_arr['exempt_vat_portion'] = $new['exempt_vat_portion'];
                         $GRVDetail_arr['logisticsAvailable'] = $POMaster->logisticsAvailable;
                         $GRVDetail_arr['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
 

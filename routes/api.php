@@ -2263,9 +2263,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('vat_return_filled_categories', 'VatReturnFilledCategoryAPIController');
         Route::resource('vat_sub_category_types', 'VatSubCategoryTypeAPIController');
         Route::resource('vat_return_filling_details', 'VatReturnFillingDetailAPIController');
-        Route::resource('vat_return_filled_category_refferedbacks', 'VatReturnFilledCategoryRefferedbackAPIController');
-        Route::resource('vat_return_filling_master_refferedbacks', 'VatReturnFillingMasterRefferedbackAPIController');
-        Route::resource('vat_return_filling_details_refferedbacks', 'VatReturnFillingDetailsRefferedbackAPIController');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
