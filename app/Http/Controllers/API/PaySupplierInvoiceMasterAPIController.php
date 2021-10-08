@@ -808,12 +808,22 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             }
                         }
 
-                        $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($val->purchaseOrderID, $id);
+                        
+                    }
 
-                        if (!$resValidate['status']) {
-                            $overPaymentErrorMessage[] = $resValidate['message'];
+
+                    $poIds = array_unique(collect($pvDetailExist)->pluck('purchaseOrderID')->toArray());
+
+                    foreach ($poIds as $keyPO => $valuePO) {
+                        if (!is_null($valuePO)) {
+                            $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($valuePO, $id);
+
+                            if (!$resValidate['status']) {
+                                $overPaymentErrorMessage[] = $resValidate['message'];
+                            }
                         }
                     }
+
 
                     $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
                     if ($error_count > 0) {
