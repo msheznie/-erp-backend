@@ -213,8 +213,8 @@ FROM
 	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-	INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
-	INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
+	LEFT JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
+	LEFT JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
 	AND erp_purchaserequest.PRConfirmedYN = 1 
 	AND erp_purchaserequest.cancelledYN = 0 
 	AND erp_purchaserequest.refferedBackYN = 0 
@@ -659,8 +659,8 @@ FROM
 	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-	INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
-	INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
+	LEFT JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
+	LEFT JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
 	AND erp_purchaserequest.PRConfirmedYN = 1 
 	AND erp_purchaserequest.cancelledYN = 0 
 	AND erp_purchaserequest.refferedBackYN = 0 
