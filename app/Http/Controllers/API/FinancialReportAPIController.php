@@ -298,9 +298,19 @@ class FinancialReportAPIController extends AppBaseController
             })
             ->sum('consumedRptAmount');
 
+        $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('approvedDate', '<', $fromDate);
+            })
+            ->sum('consumedRptAmount');
+
             $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             }])
+                ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+                })
                 ->where('projectID', $projectID)
                 ->where('documentSystemID', 2)
                 ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
@@ -309,13 +319,14 @@ class FinancialReportAPIController extends AppBaseController
 
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
+
         if ($projectAmount > 0) {
             $projectAmount = $projectAmount;
         } else {
             $projectAmount = 0;
         }
 
-        $openingBalance = $projectAmount - $budgetAmount;
+        $openingBalance = $projectAmount - $budgetOpeningConsumption;
 
 
         $closingBalance = $openingBalance - $budgetAmount;
@@ -346,6 +357,9 @@ class FinancialReportAPIController extends AppBaseController
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
             $query->whereBetween('approvedDate', [$fromDate, $toDate]);
         }])
+            ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+            })
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
@@ -359,7 +373,12 @@ class FinancialReportAPIController extends AppBaseController
             })
             ->sum('consumedRptAmount');
 
-
+        $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('approvedDate', '<', $fromDate);
+            })
+            ->sum('consumedRptAmount');
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
         if ($projectAmount > 0) {
@@ -368,7 +387,7 @@ class FinancialReportAPIController extends AppBaseController
             $projectAmount = 0;
         }
 
-        $openingBalance = $projectAmount - $budgetAmount;
+        $openingBalance = $projectAmount - $budgetOpeningConsumption;
 
 
         $closingBalance = $openingBalance - $budgetAmount;
@@ -1201,9 +1220,19 @@ class FinancialReportAPIController extends AppBaseController
             })
             ->sum('consumedRptAmount');
 
+        $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('approvedDate', '<', $fromDate);
+            })
+            ->sum('consumedRptAmount');
+
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
             $query->whereBetween('approvedDate', [$fromDate, $toDate]);
-        }])
+            }])
+            ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+            })
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
@@ -1226,7 +1255,7 @@ class FinancialReportAPIController extends AppBaseController
             $budgetAmount = 0;
         }
 
-        $openingBalance = $projectAmount - $budgetAmount;
+        $openingBalance = $projectAmount - $budgetOpeningConsumption;
 
         $closingBalance = $openingBalance - $budgetAmount;
 
