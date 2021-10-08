@@ -639,8 +639,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	employees.empName AS confirmedEmployee,
 	'' AS SupplierOrCustomer,
 	2 as DecimalPlaces ,
-	cur.CurrencyCode AS DocumentCurrency,
-	SUM(prd.totalCost) AS DocumentValue,
+	'ussd' AS DocumentCurrency,
+	1 AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -655,8 +655,8 @@ FROM
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
-	INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
-	INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
+	-- INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
+	-- INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
 	AND erp_purchaserequest.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
