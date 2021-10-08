@@ -208,13 +208,13 @@ SELECT
 FROM
 	erp_documentapproved
 	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
-	INNER JOIN erp_purchaserequestdetails as prd ON erp_purchaserequest.purchaseRequestID = prd.purchaseRequestID 
-	INNER JOIN currencymaster as cur ON erp_purchaserequest.currency = cur.currencyID 
 	INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
 	AND erp_purchaserequest.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
+	INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
 	AND erp_purchaserequest.PRConfirmedYN = 1 
 	AND erp_purchaserequest.cancelledYN = 0 
 	AND erp_purchaserequest.refferedBackYN = 0 
@@ -652,8 +652,6 @@ FROM
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
-	INNER JOIN erp_purchaserequestdetails as prd ON erp_purchaserequest.purchaseRequestID = prd.purchaseRequestID 
-	INNER JOIN currencymaster as cur ON erp_purchaserequest.currency = cur.currencyID 
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
@@ -661,6 +659,8 @@ FROM
 	AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	INNER JOIN erp_purchaserequestdetails as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
+	INNER JOIN currencymaster as cur ON cur.currencyID = erp_purchaserequest.currency 
 	AND erp_purchaserequest.PRConfirmedYN = 1 
 	AND erp_purchaserequest.cancelledYN = 0 
 	AND erp_purchaserequest.refferedBackYN = 0 
