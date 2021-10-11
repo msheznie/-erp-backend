@@ -602,12 +602,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
+        Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
 
+
+       
 
         Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
-
+        Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
 
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
@@ -1300,8 +1303,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
+        Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
 
-    
+        
+        Route::resource('pulled-mr-details', 'PulledItemFromMRController');
+        Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
+        Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
+
+       
 
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
