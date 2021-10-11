@@ -2597,16 +2597,19 @@ class PurchaseRequestAPIController extends AppBaseController
             $details = $materielRequest->details;
             foreach($details as $detail) {
 
-                $pulledItem = PulledItemFromMR::where('RequestID',$materielRequest->RequestID)
-                                                ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
+                if($detail->item_by) {
+                    $pulledItem = PulledItemFromMR::where('RequestID',$materielRequest->RequestID)
+                    ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
 
-                $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
+                    $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
 
-                if($pulledItem) {
+                    if($pulledItem) {
                     $detail['prRqQnty'] = $pulledItem->pr_qnty;
                     $detail['isChecked'] = true;
-                    
+
+}
                 }
+
             }
         }
 

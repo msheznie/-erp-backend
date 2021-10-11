@@ -24,6 +24,7 @@ use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
@@ -196,6 +197,25 @@ class StockTransferAPIController extends AppBaseController
                 $input['tranferDate'] = new Carbon($input['tranferDate']);
             }
         }
+
+         $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['locationTo'])
+                                    ->first();
+
+        if (!$warehouse) {
+            return $this->sendError('Location To not found', 500);
+        }
+
+        if ($warehouse->manufacturingYN == 1) {
+            if (is_null($warehouse->WIPGLCode)) {
+                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+            } else {
+                $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companyToSystemID']);
+                if (!$checkGLIsAssigned) {
+                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                }
+            }
+        }
+
 
         $documentDate = $input['tranferDate'];
         $monthBegin = $input['FYBiggin'];
@@ -480,6 +500,17 @@ class StockTransferAPIController extends AppBaseController
                 if ($checkWareHouseActiveTo->isActive == 0) {
                     $this->stockTransferRepository->update(['locationTo' => null], $id);
                     return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+                }
+
+                if ($checkWareHouseActiveTo->manufacturingYN == 1) {
+                    if (is_null($checkWareHouseActiveTo->WIPGLCode)) {
+                        return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                    } else {
+                        $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkWareHouseActiveTo->WIPGLCode, $input['companyToSystemID']);
+                        if (!$checkGLIsAssigned) {
+                            return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                        }
+                    }
                 }
             }
         }

@@ -971,6 +971,7 @@ class CustomerMasterAPIController extends AppBaseController
             $companySystemID = $input['companySystemID'];
             $excelUpload = $input['itemExcelUpload'];
 
+            $input['companySystemIDFilter'] = $companySystemID;
             $input = array_except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
@@ -996,12 +997,12 @@ class CustomerMasterAPIController extends AppBaseController
                 return $this->sendError('The maximum size allow to upload is 20 MB',500);
             }
 
-          
+           
            
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
-        
-            //$originalFileName = 'supplier_template.xlsx';
+            //die();
+            //$originalFileName = 'item_template.xlsx';
             
          
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -1263,7 +1264,7 @@ class CustomerMasterAPIController extends AppBaseController
                             if ( (isset($value['category']) && !is_null($value['category'])) )
                             {
 
-                                $category = CustomerMasterCategory::where([['companySystemID','=', $companySystemID],['categoryDescription','=',$value['category']]])
+                                $category = CustomerMasterCategory::where('categoryDescription','=',$value['category'])
                                                         ->whereHas('category_assigned', function ($query) use ($input) {
                                                         $query->when(isset($input['companySystemID']), function($query) use ($input){
                                                                 $query->where('companySystemID', $input['companySystemID']);
@@ -1969,13 +1970,7 @@ class CustomerMasterAPIController extends AppBaseController
                         {
                            
 
-                            if (is_numeric($value['fax'])){
-                                if($value['fax'] >= 0)
-                                {
-                                    $supplier_data['fax'] = $value['fax'];
-                                }
-                              
-                            }
+                            $supplier_data['fax'] = $value['fax'];
                                                             
                         }
                         
@@ -2446,8 +2441,7 @@ class CustomerMasterAPIController extends AppBaseController
                 
                         $count = 1;
                     
-                  
-                  
+                     
                     foreach($formatChk as $key=>$value)
                     {   
                         $item_data = [];
@@ -2676,7 +2670,31 @@ class CustomerMasterAPIController extends AppBaseController
                                     $item_data['barcode'] = $value['barcode'];
                             
                             }
-        
+                            
+
+
+                            if ( (isset($value['is_active']) && !is_null($value['is_active'])) )
+                            {
+
+                             
+                                if ( $value['is_active'] == 'Yes' || $value['is_active'] == 'No') 
+                                {
+                                    if($value['is_active'] == 'No')
+                                    {
+                                        $vat_el = '0';
+                                    }
+                                    else
+                                    {
+                                        $vat_el = '1';
+                                    }
+                                
+                                    $item_data['isActive'] = $vat_el;
+                                 
+                                }
+                          
+                             
+                            }
+
                             $employee = Helper::getEmployeeInfo();
                             $item_data['createdPcID'] = gethostname();
                             $item_data['createdUserID'] = $employee->empID;
@@ -2686,11 +2704,8 @@ class CustomerMasterAPIController extends AppBaseController
                             $document = DocumentMaster::where('documentID', 'ITMM')->first();
                             $item_data['documentSystemID'] = $document->documentSystemID;
                             $item_data['documentID'] = $document->documentID;
-                            $item_data['isActive'] = 1;
                             $item_data['isPOSItem'] = 0;
 
-
-                  
 
                             if(!$nullValue && !$valueNotExit && !$groupOfComapnyFalse && !$notValid)
                             {

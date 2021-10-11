@@ -652,9 +652,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
+
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
+        Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
@@ -2243,6 +2247,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
         Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
         Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
+        Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
+        Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+
+        Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank');
+
+        Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate');
+
+        Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
+        
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2374,7 +2387,18 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+Route::get('cache-clear', function () {
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+
+    return 'Cache (cache/config) cleared successfully';
+});
+
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
+
+
+
+

@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateStockReceiveDetailsAPIRequest;
 use App\Http\Requests\API\UpdateStockReceiveDetailsAPIRequest;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
+use App\Models\WarehouseMaster;
 use App\Models\StockTransfer;
 use App\Models\StockTransferDetails;
 use App\Repositories\StockReceiveDetailsRepository;
@@ -462,8 +463,8 @@ class StockReceiveDetailsAPIController extends AppBaseController
                 $item['unitOfMeasure'] = $new['unitOfMeasure'];
                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                 $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
-                $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                $item['financeGLcodebBS'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ? WarehouseMaster::getWIPGLCode($stockReceive->locationTo) : $new['financeGLcodebBS'];
+                $item['financeGLcodebBSSystemID'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ?  WarehouseMaster::getWIPGLSystemID($stockReceive->locationTo) : $new['financeGLcodebBSSystemID'];
                 $item['localCurrencyID'] = $new['localCurrencyID'];
                 $item['unitCostLocal'] = $new['unitCostLocal'];
                 $item['reportingCurrencyID'] = $new['reportingCurrencyID'];

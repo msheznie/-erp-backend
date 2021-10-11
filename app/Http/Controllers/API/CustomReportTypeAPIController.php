@@ -69,7 +69,7 @@ class CustomReportTypeAPIController extends AppBaseController
             ->with(['templates'])
             ->get();
 
-        return $this->sendResponse($customReportTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_types')]);
+        return $this->sendResponse($customReportTypes->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.custom_report_types')]));
     }
 
     /**

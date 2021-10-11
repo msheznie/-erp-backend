@@ -25,7 +25,7 @@ class CommonJobService
     }
 
     public static function tenant_list(){
-        return Tenant::get();
+        return Tenant::where('is_active', 1)->groupBy('database')->get();
     }
 
     public static function company_list(){

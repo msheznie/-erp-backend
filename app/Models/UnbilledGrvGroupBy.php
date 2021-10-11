@@ -141,6 +141,7 @@ class UnbilledGrvGroupBy extends Model
         'purchaseOrderID',
         'purhaseReturnAutoID',
         'grvAutoID',
+        'logisticYN',
         'grvDate',
         'supplierTransactionCurrencyID',
         'supplierTransactionCurrencyER',
@@ -169,6 +170,7 @@ class UnbilledGrvGroupBy extends Model
     protected $casts = [
         'unbilledgrvAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'logisticYN' => 'integer',
         'companyID' => 'string',
         'supplierID' => 'integer',
         'purhaseReturnAutoID' => 'integer',
