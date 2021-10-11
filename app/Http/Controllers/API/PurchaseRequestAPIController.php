@@ -40,6 +40,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\MaterielRequest;
 use App\Models\DocumentReferedHistory;
 use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
@@ -50,6 +51,7 @@ use App\Models\ItemAssigned;
 use App\Models\ProcumentOrderDetail;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\PulledItemFromMR;
 use App\Models\PrDetailsReferedHistory;
 use App\Models\Priority;
 use App\Models\PurchaseOrderDetails;
@@ -61,6 +63,7 @@ use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
+use App\Repositories\MaterielRequestRepository;
 use App\Repositories\UserRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -83,12 +86,14 @@ class PurchaseRequestAPIController extends AppBaseController
     private $purchaseRequestRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    private $materielRequestRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
+    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->materielRequestRepository = $materielRequestRepository;
     }
 
     /**
@@ -2562,9 +2567,132 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-      
-
     }
 
+    public function pullMrDetails(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved','cancelledYN'));
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        
+        $search = $request->input('search.value');
+        $materielRequests = MaterielRequest::where('approved',$input['approved'])
+                                        ->where('cancelledYN',$input['cancelledYN'])
+                                        ->where('serviceLineSystemID',$input['serviceLineSystemID'])
+                                        ->where('companySystemID',$input['companySystemID'])
+                                        ->with('details')->get();
+
+        $filtered = $materielRequests->filter(function ($value, $key) {
+         return $value->materialIssueStatusValue == "Pending";
+        });
+
+        $filtered->all();
+
+
+        foreach($filtered as $materielRequest) {
+            $details = $materielRequest->details;
+            foreach($details as $detail) {
+
+                $pulledItem = PulledItemFromMR::where('RequestID',$materielRequest->RequestID)
+                                                ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
+
+                $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
+
+                if($pulledItem) {
+                    $detail['prRqQnty'] = $pulledItem->pr_qnty;
+                    $detail['isChecked'] = true;
+                    
+                }
+            }
+        }
+
+
+ 
+        return $this->sendResponse($filtered, 'Data retreived Successfully!');
+    }
+
+    public function getItemQntyByPR(Request $request) {
+        $input = $request->input();
+        $item = $input['item'];
+        $purchase_id = $input['id'];
+
+        $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemcode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
+
+        $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemcode'])->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
+        $requestedQnty = $item['quantityRequested'];
+        if($requestedQnty >  $total_requested_qnty->sum) {
+            return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
+        }
+                $pulledDetail = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemcode'])->orderBy('id', 'ASC')->first();
+                    if($requests) {
+                        if($requestedQnty > $requests->sum) {
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemcode'])->get();
+                            $qntyToUpdateOnNextItem = $requestedQnty; // 10000
+            
+                            foreach($pulledDetails as $pulledDetail) {
+                                $mrQnty = $pulledDetail->mr_qnty; //8000
+                                $difference = (($requestedQnty) - $requests->sum); //10000-250  =  9750
+                                if($qntyToUpdateOnNextItem > 0 ) {
+                                    if($requestedQnty > $mrQnty) {
+                                        $maxQntyToUpdate = $mrQnty; // 8000 - 50 
+                                        if($qntyToUpdateOnNextItem > $maxQntyToUpdate) {
+                                            $qntyToUpdateOnNextItem =  ($qntyToUpdateOnNextItem - $maxQntyToUpdate > 0) ? $qntyToUpdateOnNextItem - $maxQntyToUpdate : 0;
+                                            $pulledDetail->pr_qnty = $maxQntyToUpdate;
+                                        }else {
+                                            $pulledDetail->pr_qnty = $qntyToUpdateOnNextItem;
+                                            $qntyToUpdateOnNextItem = 0;
+                                        }
+                                       
+                                    }else {
+                                        $pulledDetail->pr_qnty = $difference;
+                                        $qntyToUpdateOnNextItem = 0;
+                                    }
+                                }else {
+                                    $pulledDetail->pr_qnty = 0;
+                                }
+                                $pulledDetail->save();
+                            }
+            
+                        }else {
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemcode'])->orderBy('id', 'DESC')->get();
+                            $qntyToUpdateOnNextItem = $requestedQnty; //10000 
+                            $qntyToUpdate = null;
+                            $difference = ($requests->sum - ($requestedQnty));  //10000 - 6000
+                            foreach($pulledDetails as $pulledDetail) {
+                                if($difference > 0  ) {
+                                    if(($pulledDetail->pr_qnty) != 0 ) {
+                                        if($difference > $pulledDetail->pr_qnty) { // 2000 > 8000
+                                            if($qntyToUpdate == null) {
+                                                $qntyToUpdate = $pulledDetail->pr_qnty;
+                                            }
+                                            $pulledDetail->pr_qnty -= $qntyToUpdate; //0
+                                            $qntyToUpdate = $difference - $qntyToUpdate; //4000 - 2000
+                                            $difference -= $qntyToUpdate;
+                                        }else {
+                                            $pulledDetail->pr_qnty =  $pulledDetail->pr_qnty  - $difference;
+                                            $difference = 0;
+                                        }  
+                                    }
+
+                                }else {
+                                    // $pulledDetail->pr_qnty = 0;
+                                }
+                                $pulledDetail->save();
+                            }
+
+                            
+                            // $pulledDetail->pr_qnty = $pulledDetail->pr_qnty + (($requests->sum) - $item['quantityRequested']);
+                            // $pulledDetail->save();
+                        }
+
+
+            return $this->sendResponse($requests, 'Quantity updated successfully!');
+        }else {
+            return $this->sendResponse($requests, 'Data not found!');
+        }            
+    }
 }

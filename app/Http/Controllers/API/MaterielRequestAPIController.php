@@ -1106,5 +1106,22 @@ class MaterielRequestAPIController extends AppBaseController
         return $this->sendResponse($materielRequest,'Materiel Details Updated!');
 
     }
+
+
+    public function getMaterielRequestDetails($id) {
+
+        $materielRequest = MaterielRequest::find($id);
+
+        if($materielRequest->details) {
+            $details = $materielRequest->details;
+            foreach($details as $detail) {
+                $detail['itemPrimaryCode']= ($detail->item_by) ? $detail->item_by->primaryItemCode : null;
+            }
+            return $this->sendResponse($details,'Materiel Details Received!');
+        }else {
+            return $this->sendResponse([],'Materiel Not Received!');
+        }
+        
+    }
     
 }
