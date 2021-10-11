@@ -20,6 +20,7 @@ use App\Models\AssetDisposalMaster;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\AssetDisposalReferred;
 use App\Models\AssetDisposalType;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CustomerAssigned;
@@ -415,6 +416,12 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
 
                 if ($assetDisposalMaster->disposalType == 1) {
+
+                    $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($checkDisposalType->chartOfAccountID, $assetDisposalMaster->companySystemID);
+                    if (!$checkGLIsAssigned) {
+                        return $this->sendError('Inter company sales chart of account is not assigned to - From company', 500);
+                    }
+
                     //For customer check
                     $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
 

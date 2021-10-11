@@ -616,6 +616,21 @@ class GRVMasterAPIController extends AppBaseController
                     $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'];
 
                     $updateGRVDetail_log_detail->save();
+
+
+                    if ($row['includePLForGRVYN'] == -1 && !is_null($row['financeGLcodePLSystemID']) && $row['financeGLcodePLSystemID'] > 0) {
+                        $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodePLSystemID'], $gRVMaster->companySystemID);
+                        if (!$checkGLIsAssigned) {
+                            return $this->sendError('PL account is not assigned to the company', 500);
+                        }
+                    }
+
+                    if (!is_null($row['financeGLcodebBSSystemID']) && $row['financeGLcodebBSSystemID'] > 0) {
+                        $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodebBSSystemID'], $gRVMaster->companySystemID);
+                        if (!$checkGLIsAssigned) {
+                            return $this->sendError('BS account is not assigned to the company', 500);
+                        }
+                    }
                 }
             }
 
