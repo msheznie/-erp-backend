@@ -4,8 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnbilledGrvGroupByAPIRequest;
 use App\Http\Requests\API\UpdateUnbilledGrvGroupByAPIRequest;
+use App\Models\GRVDetails;
 use App\Models\BookInvSuppMaster;
 use App\Models\UnbilledGrvGroupBy;
+use App\Models\Company;
+use App\Models\SupplierAssigned;
 use App\Repositories\UnbilledGrvGroupByRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -14,6 +17,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
+use App\helper\TaxService;
 
 /**
  * Class UnbilledGrvGroupByController
@@ -342,7 +346,8 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 	unbilledMaster.purchaseOrderID,
 	unbilledMaster.supplierID,
     currency.DecimalPlaces,
-    (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmount
+    (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmount,
+    (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmountCheck
 FROM
 	erp_unbilledgrvgroupby AS unbilledMaster
 INNER JOIN currencymaster AS currency ON unbilledMaster.supplierTransactionCurrencyID = currency.currencyID
@@ -376,18 +381,29 @@ HAVING ROUND(
 			currency.DecimalPlaces
 		) > 0 AND ROUND(balanceAmount,currency.DecimalPlaces) > 0');
 
-        /*        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
-                    $query->where('interCompanyTransferYN', 0);
-                })->with(['pomaster', 'grvmaster'])
-                    ->where('companySystemID', $companyID)
-                    ->where('fullyBooked', '<>', 2)
-                    ->where('selectedForBooking', 0)
-                    ->where('supplierID', $bookInvSuppMaster->supplierID)
-                    ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
-                    ->where('grvDate', '<=', $bookInvSuppMaster->bookingDate)
-                    ->where('purchaseOrderID', $purchaseOrderID)
-                    ->where('totTransactionAmount', '>', 0)
-                    ->get();*/
+        $company = Company::where('companySystemID', $bookInvSuppMaster->companySystemID)->first();
+        $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $bookInvSuppMaster->supplierID)
+                                                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                                    ->first();
+        $valEligible = false;
+        if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
+            $valEligible = true;
+        }
+
+        foreach ($unbilledGrvGroupBy as $key => $value) {
+
+            $rcmActivated = TaxService::isGRVRCMActivation($value->grvAutoID);
+            $grvDetails = GRVDetails::where('purchaseOrderMastertID', $value->purchaseOrderID)
+                                   ->where('grvAutoID', $value->grvAutoID);
+            if ($valEligible && !$rcmActivated) {
+                $grvDetails = $grvDetails->selectRaw('grvDetailsID, itemPrimaryCode, itemDescription, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as balanceAmountCheck');
+            } else {
+                $grvDetails = $grvDetails->selectRaw('grvDetailsID, itemPrimaryCode, itemDescription, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as balanceAmountCheck');
+            }
+            
+
+            $value->grv_details = $grvDetails->get();
+        }
 
         return $this->sendResponse($unbilledGrvGroupBy, 'Purchase Request Details retrieved successfully');
 

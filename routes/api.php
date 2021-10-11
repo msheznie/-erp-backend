@@ -2406,3 +2406,6 @@ Route::get('job-check', function(){
     return '';
 });
 
+
+
+Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
