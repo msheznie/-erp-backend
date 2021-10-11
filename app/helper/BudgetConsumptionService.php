@@ -2672,6 +2672,10 @@ class BudgetConsumptionService
                                             ->when($DLBCPolicy, function($query) use ($detail){
                                             	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
                                             })
+                                            ->where(function($query) {
+                                            	$query->where('projectID', 0)
+                                            		  ->orWhereNull('projectID');
+                                            })
                                             ->where('chartOfAccountID', $detail->chartOfAccountID)
                                             ->where('companyFinanceYearID', $detail->companyFinanceYearID)
                                             ->where('documentSystemID', 2)
@@ -2698,6 +2702,12 @@ class BudgetConsumptionService
                                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
                                                     ->when($DLBCPolicy, function($query) use ($detail) {
 		                                            	$query->where('segment_allocated_items.serviceLineSystemID', $detail->serviceLineSystemID);
+		                                            })
+		                                            ->whereHas('order', function($query) {
+		                                            	$query->where(function($query) {
+				                                            	$query->where('projectID', 0)
+				                                            		  ->orWhereNull('projectID');
+				                                            });
 		                                            })
                                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                     ->groupBy('purchaseOrderMasterID')
