@@ -2619,7 +2619,6 @@ class PurchaseRequestAPIController extends AppBaseController
             array_push($dataArray,$filterData);
         }
 
-        
  
         return $this->sendResponse($dataArray, 'Data retreived Successfully!');
     }
