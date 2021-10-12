@@ -74,6 +74,7 @@ class ErpProjectMasterAPIController extends AppBaseController
     public function index(Request $request)
     {
         $input = $request->all();
+        $companyId = $input['companyId'];
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -81,7 +82,13 @@ class ErpProjectMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $projectMaster = ErpProjectMaster::where('companySystemID',$input['companyId'])->with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')->select(['id', 'projectCode', 'description', 'start_date', 'end_date','companySystemID','projectCurrencyID', 'serviceLineSystemID', 'estimatedAmount']);
+        $projectMaster = ErpProjectMaster::where('companySystemID',$companyId)
+                                        ->with(['company:CompanyID,companySystemID,CompanyName','currency', 'service_line',
+                                        'gl_details' => function($query){
+                                                $query->selectRaw('SUM(amount) as total, projectID')
+                                                      ->groupBy('projectID');
+                                        }])
+                                        ->select(['id', 'projectCode', 'description', 'start_date', 'end_date','companySystemID','projectCurrencyID', 'serviceLineSystemID', 'estimatedAmount']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
