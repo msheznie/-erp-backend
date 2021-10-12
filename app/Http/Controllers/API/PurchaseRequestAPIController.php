@@ -1420,6 +1420,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
             $checkItems = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->count();
+
             if ($checkItems == 0) {
                 return $this->sendError('Every request should have at least one item', 500);
             }
@@ -2604,10 +2605,9 @@ class PurchaseRequestAPIController extends AppBaseController
                     $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
 
                     if($pulledItem) {
-                    $detail['prRqQnty'] = $pulledItem->pr_qnty;
-                    $detail['isChecked'] = true;
-
-}
+                        $detail['prRqQnty'] = $pulledItem->pr_qnty;
+                        $detail['isChecked'] = true;
+                    }
                 }
 
             }
@@ -2615,7 +2615,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
  
-        return $this->sendResponse($filtered, 'Data retreived Successfully!');
+        return $this->sendResponse($filtered->toArray(), 'Data retreived Successfully!');
     }
 
     public function getItemQntyByPR(Request $request) {
