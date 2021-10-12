@@ -2621,6 +2621,19 @@ class PurchaseRequestAPIController extends AppBaseController
     public function confirmDocument(Request $request)
     {
         $input = $request->all();
+
+        if (!isset($input['autoID'])) {
+            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+        }
+
+        if (!isset($input['company'])) {
+            return ['success' => false, 'message' => 'Parameter company is missing'];
+        }
+
+        if (!isset($input['document'])) {
+            return ['success' => false, 'message' => 'Parameter document is missing'];
+        }
+
         $params =  array(
             'autoID' => $input['autoID'],
             'company' =>  $input['company'],
