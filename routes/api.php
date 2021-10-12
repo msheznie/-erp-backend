@@ -298,6 +298,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
         Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
         Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
+        //confirmation
+        Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 
         Route::resource('procurement-order', 'ProcumentOrderAPIController');
         Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
