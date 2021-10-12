@@ -350,7 +350,11 @@ class FinancialReportAPIController extends AppBaseController
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
-        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+
+        $companySystemID = $projectDetail['companySystemID'];
+        $transactionCurrencyID = $projectDetail->currency['currencyID'];
+        $documentCurrencyID = $projectDetail->currency['currencyID'];
 
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
@@ -372,6 +376,10 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereBetween('approvedDate', [$fromDate, $toDate]);
             })
             ->sum('consumedRptAmount');
+        $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
+        $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
+
+
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
             ->where('documentSystemID', 2)
@@ -379,8 +387,15 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereDate('approvedDate', '<', $fromDate);
             })
             ->sum('consumedRptAmount');
+        $budgetOpeningConsumptionCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetOpeningConsumption);
+        $budgetOpeningConsumption = $budgetOpeningConsumptionCurrencyConvertion['reportingAmount'];
+
+        
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
+        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
+
         if ($projectAmount > 0) {
             $projectAmount = $projectAmount;
         } else {
