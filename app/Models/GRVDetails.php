@@ -329,4 +329,10 @@ class GRVDetails extends Model
     public function vat_sub_category(){
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
+
+
+     public function supplier_invoice_item_detail()
+    {
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail', 'grvDetailsID', 'grvDetailsID');
+    }
 }

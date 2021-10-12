@@ -5,12 +5,19 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSupplierInvoiceItemDetailAPIRequest;
 use App\Http\Requests\API\UpdateSupplierInvoiceItemDetailAPIRequest;
 use App\Models\SupplierInvoiceItemDetail;
+use App\Models\BookInvSuppMaster;
+use App\Models\BookInvSuppDet;
+use App\Models\GRVDetails;
+use App\Models\Company;
+use App\Models\SupplierAssigned;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
+use App\helper\TaxService;
 
 /**
  * Class SupplierInvoiceItemDetailController
@@ -277,5 +284,60 @@ class SupplierInvoiceItemDetailAPIController extends AppBaseController
         $supplierInvoiceItemDetail->delete();
 
         return $this->sendSuccess('Supplier Invoice Item Detail deleted successfully');
+    }
+
+    public function getGRVDetailsForSupplierInvoice(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSupInvoiceDetAutoID = $input['bookingSupInvoiceDetAutoID'];
+
+        $bookInvSuppDetail = BookInvSuppDet::find($bookingSupInvoiceDetAutoID);
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $company = Company::where('companySystemID', $bookInvSuppMaster->companySystemID)->first();
+        $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $bookInvSuppMaster->supplierID)
+                                                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                                    ->first();
+        $valEligible = false;
+        if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
+            $valEligible = true;
+        }
+
+        $rcmActivated = TaxService::isGRVRCMActivation($bookInvSuppDetail->grvAutoID);
+
+        $pulledQry = DB::table('erp_bookinvsupp_item_det')
+                        ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, grvDetailsID")
+                        ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', '!=', $bookingSupInvoiceDetAutoID)
+                        ->groupBy('grvDetailsID');
+
+
+
+        $grvDetails = GRVDetails::where('erp_grvdetails.grvAutoID', $bookInvSuppDetail->grvAutoID)
+                               ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
+                                    $join->mergeBindings($pulledQry)
+                                         ->on('pulledQry.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID');
+                               })
+                               ->leftJoin('erp_bookinvsupp_item_det', function($join) use ($bookingSupInvoiceDetAutoID) {
+                                    $join->on('erp_bookinvsupp_item_det.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID')
+                                         ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
+                               });
+
+        if ($valEligible && !$rcmActivated) {
+            $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck');
+        } else {
+            $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck');
+        }
+
+        $grvDetails = $grvDetails->get(); 
+
+        return $this->sendResponse($grvDetails, 'Supplier Invoice Item Detail retrieved successfully');
     }
 }

@@ -19,6 +19,8 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
+use App\Models\SupplierInvoiceItemDetail;
+use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\UnbilledGrvGroupBy;
@@ -430,6 +432,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $poMasterTableTotal->save();
 
+        SupplierInvoiceItemDetail::where('bookingSupInvoiceDetAutoID', $id)->delete();
 
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
@@ -630,6 +633,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 return $this->sendError($itemExistArray, 422);
             }
 
+            $pullAmount = 0;
             foreach ($input['detailTable'] as $new) {
 
                 $groupMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID']);
@@ -679,8 +683,26 @@ class BookInvSuppDetAPIController extends AppBaseController
                     $this->checkPurchaseReturnsAndUpdateBookInvDetail($new['grvAutoID'], $bookingSuppMasInvAutoID);
 
 
-                    $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID);
+                    $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $bookingSuppMasInvAutoID, $groupMaster);
+
+                    if (!$resDetail['status']) {
+                        return $this->sendError($resDetail['message'], 500);
+                    }
+
+                    $pullAmount += $resDetail['data'];
                 }
+            }
+
+            if ($pullAmount > 0) {
+                $supplierInvoiceDetail = $item->toArray();
+
+                $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;      
+                
+                $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                if (!$resultUpdateDetail['status']) {
+                    return $this->sendError($result['message'], 500);
+                } 
             }
 
 
@@ -688,16 +710,175 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage());
+            return $this->sendError($exception->getMessage().$exception->getLine());
         }
 
     }
 
-    public function storeSupplierInvoiceGrvDetails($unbilledData, $bookingSupInvoiceDetAutoID)
+    public function editPOBaseDetail(Request $request)
     {
-        // foreach ($unbilledData['grv_details'] as $key => $value) {
-            
-        // }
+        $input = $request->all();
+
+        $bookInvSuppDetail = BookInvSuppDet::find($input['bookingSupInvoiceDetAutoID']);
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $totalPullAmount = 0;
+            foreach ($input['detailTable'] as $key => $value) {
+
+                $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
+
+                $invoiceItem = SupplierInvoiceItemDetail::where('grvDetailsID', $value['grvDetailsID'])
+                                                        ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
+                                                        ->first();
+
+                $invoiceItemID = ($invoiceItem) ? $invoiceItem->id : 0;
+                
+                if ($value['supplierInvoAmount'] == "") {
+                    $updateData['supplierInvoAmount'] = 0;
+                } else {
+                    $updateData['supplierInvoAmount'] = $value['supplierInvoAmount'];
+                }
+
+                $grvDetail = GRVDetails::find($value['grvDetailsID']);
+
+                $totalPendingAmount = 0;
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+
+                if ($balanceAmount) {
+                    $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
+                } else {
+                    $totalPendingAmount = $value['transactionAmount'];
+                }
+
+
+                $updateData['supplierInvoOrderedAmount'] = $totalPendingAmount - $value['supplierInvoAmount'];
+
+                $currency = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $updateData['supplierInvoAmount']);
+
+                $updateData['totTransactionAmount'] = $updateData['supplierInvoAmount'];
+                $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+                $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+                $totalVATAmount = $grvDetail->VATAmount * $grvDetail->noQty;
+
+                 if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+                    $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
+                    $VATAmount = $totalVATAmount * $percentage;
+                    $currencyVat = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $VATAmount);
+                        $updateData['VATAmount'] = \Helper::roundValue($VATAmount);
+                        $updateData['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
+                        $updateData['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+                }
+
+                SupplierInvoiceItemDetail::where('grvDetailsID', $value['grvDetailsID'])
+                                        ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
+                                        ->update($updateData);
+            }
+
+            if ($totalPullAmount > 0) {
+                $supplierInvoiceDetail = $bookInvSuppDetail->toArray();
+
+                $supplierInvoiceDetail['supplierInvoAmount'] = $totalPullAmount;      
+                
+                $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                if (!$resultUpdateDetail['status']) {
+                    return $this->sendError($result['message'], 500);
+                } 
+            }
+
+            DB::commit();
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage().$exception->getLine());
+        }
+    }
+
+    public function storeSupplierInvoiceGrvDetails($unbilledData, $bookingSupInvoiceDetAutoID, $bookingSuppMasInvAutoID, $groupMaster)
+    {
+        $totalPullAmount = 0;
+        foreach ($unbilledData['grv_details'] as $key => $value) {
+
+            $grvDetail = GRVDetails::find($value['grvDetailsID']);
+
+            $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
+
+             $totalPendingAmount = 0;
+            // balance Amount
+            $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+
+            if ($balanceAmount) {
+                $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
+            } else {
+                $totalPendingAmount = $value['transactionAmount'];
+            }
+
+           
+
+            $details = [
+                'bookingSupInvoiceDetAutoID' => $bookingSupInvoiceDetAutoID,
+                'bookingSuppMasInvAutoID' => $bookingSuppMasInvAutoID,
+                'unbilledgrvAutoID' => $unbilledData['unbilledgrvAutoID'],
+                'companySystemID' => $unbilledData['companySystemID'],
+                'grvDetailsID' => $value['grvDetailsID'],
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID'],
+                'exempt_vat_portion' => $value['exempt_vat_portion'],
+                'purchaseOrderID' => $unbilledData['purchaseOrderID'],
+                'grvAutoID' => $unbilledData['grvAutoID'],
+                'supplierTransactionCurrencyID' => $groupMaster->supplierTransactionCurrencyID,
+                'supplierTransactionCurrencyER' => $groupMaster->supplierTransactionCurrencyER,
+                'companyReportingCurrencyID' => $groupMaster->companyReportingCurrencyID,
+                'companyReportingER' => $groupMaster->companyReportingER,
+                'localCurrencyID' => $groupMaster->localCurrencyID,
+                'localCurrencyER' => $groupMaster->localCurrencyER,
+                'supplierInvoOrderedAmount' => ($totalPendingAmount - floatval(((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0))),
+                'transSupplierInvoAmount' => $value['transactionAmount'],
+                'localSupplierInvoAmount' => $value['localAmount'],
+                'rptSupplierInvoAmount' => $value['rptAmount']
+            ];
+
+            if (isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) {
+                $details['supplierInvoAmount'] = floatval($value['supplierInvoAmount']);
+            } else {
+                $details['supplierInvoAmount'] = 0;
+            }
+
+            $currency = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $details['supplierInvoAmount']);
+
+            $details['totTransactionAmount'] = $details['supplierInvoAmount'];
+            $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+            $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+            $totalVATAmount = $grvDetail->VATAmount * $grvDetail->noQty;
+
+             if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+                $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
+                $VATAmount = $totalVATAmount * $percentage;
+                $currencyVat = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $VATAmount);
+                    $details['VATAmount'] = \Helper::roundValue($VATAmount);
+                    $details['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
+                    $details['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+            }
+
+            $createRes = SupplierInvoiceItemDetail::create($details);
+
+        }
+
+
+        return ['status' => true, 'data' => $totalPullAmount];
     }
 
 

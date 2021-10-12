@@ -187,7 +187,6 @@ class SupplierInvoiceItemDetail extends Model
         'bookingSuppMasInvAutoID',
         'unbilledgrvAutoID',
         'companySystemID',
-        'companyID',
         'grvDetailsID',
         'purchaseOrderID',
         'grvAutoID',
@@ -207,7 +206,10 @@ class SupplierInvoiceItemDetail extends Model
         'totRptAmount',
         'VATAmount',
         'VATAmountLocal',
+        'exempt_vat_portion',
         'VATAmountRpt',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timeStamp'
     ];
 
@@ -220,9 +222,10 @@ class SupplierInvoiceItemDetail extends Model
         'bookingSupInvoiceDetAutoID' => 'integer',
         'id' => 'integer',
         'bookingSuppMasInvAutoID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'unbilledgrvAutoID' => 'integer',
         'companySystemID' => 'integer',
-        'companyID' => 'string',
         'grvDetailsID' => 'integer',
         'purchaseOrderID' => 'integer',
         'grvAutoID' => 'integer',
@@ -236,6 +239,7 @@ class SupplierInvoiceItemDetail extends Model
         'supplierInvoAmount' => 'float',
         'transSupplierInvoAmount' => 'float',
         'localSupplierInvoAmount' => 'float',
+        'exempt_vat_portion' => 'float',
         'rptSupplierInvoAmount' => 'float',
         'totTransactionAmount' => 'float',
         'totLocalAmount' => 'float',
