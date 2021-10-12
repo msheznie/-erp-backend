@@ -2613,9 +2613,14 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+        $dataArray = [];
+
+        foreach($filtered as $filterData) {
+            array_push($dataArray,$filterData);
+        }
 
  
-        return $this->sendResponse($filtered->toArray(), 'Data retreived Successfully!');
+        return $this->sendResponse($dataArray, 'Data retreived Successfully!');
     }
 
     public function getItemQntyByPR(Request $request) {
