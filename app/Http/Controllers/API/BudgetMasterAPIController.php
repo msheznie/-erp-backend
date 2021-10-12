@@ -596,7 +596,7 @@ class BudgetMasterAPIController extends AppBaseController
             $reportData = $reportData->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,erp_budgetconsumeddata.companyFinanceYearID, 
                                             Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
-                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 
+                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID = null)
                                             GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
                                             function ($join) {
@@ -609,7 +609,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
                                                Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
                                                erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
-                                               AND ((erp_purchaseordermaster.poCancelledYN)=0))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID = null)) GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
                                                (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
                                         function ($join) {
                                             $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
@@ -623,7 +623,7 @@ class BudgetMasterAPIController extends AppBaseController
             $reportData = $reportData->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,erp_budgetconsumeddata.companyFinanceYearID, 
                                             Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
-                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 
+                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID = null)
                                             GROUP BY erp_budgetconsumeddata.companySystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
                                     function ($join) {
@@ -635,7 +635,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
                                                Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
                                                erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
-                                               AND ((erp_purchaseordermaster.poCancelledYN)=0))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID = null))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
                                                (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
                                         function ($join) {
                                             $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
@@ -725,6 +725,10 @@ class BudgetMasterAPIController extends AppBaseController
                                             })
                                             ->orWhere('documentSystemID', '!=', 2);
                                     })
+                                    ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->where('chartOfAccountID', $input['chartOfAccountID'])
                                     ->where('consumeYN', -1)
@@ -746,6 +750,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
                                                         ->when($DLBCPolicy, function($query) use ($input) {
                                                             $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
+                                                        })
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
                                                         })
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                         ->groupBy('purchaseOrderMasterID')
@@ -771,7 +781,11 @@ class BudgetMasterAPIController extends AppBaseController
                                                     return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
                                                 })
                                                 ->where('approved', 0)
-                                                ->where('poCancelledYN', 0);
+                                                ->where('poCancelledYN', 0)
+                                                ->where(function($query) {
+                                                    $query->where('projectID', 0)
+                                                          ->orWhereNull('projectID');
+                                                });
                                         })
                                         ->where('budgetYear', $input['Year'])
                                         ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
@@ -867,6 +881,10 @@ class BudgetMasterAPIController extends AppBaseController
                                     ->whereHas('purchase_order', function ($query) {
                                         $query->where('grvRecieved', '!=', 2);
                                     })
+                                    ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->join(DB::raw('(SELECT
                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                                                         erp_companyreporttemplatelinks.templateMasterID,
@@ -908,6 +926,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                         ->when($DLBCPolicy, function($query) use ($input) {
                                                             $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
                                                         })
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->first();
@@ -929,7 +953,11 @@ class BudgetMasterAPIController extends AppBaseController
                                                     return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
                                                 })
                                                 ->where('approved', 0)
-                                                ->where('poCancelledYN', 0);
+                                                ->where('poCancelledYN', 0)
+                                                ->where(function($query) {
+                                                    $query->where('projectID', 0)
+                                                          ->orWhereNull('projectID');
+                                                });
                                         })
                                         ->where('budgetYear', $input['Year'])
                                         ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
@@ -1057,6 +1085,10 @@ class BudgetMasterAPIController extends AppBaseController
                                     ->whereHas('purchase_order', function ($query) {
                                         $query->where('grvRecieved', '!=', 2);
                                     })
+                                     ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->get();
 
             foreach ($data as $key => $value) {
@@ -1079,6 +1111,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                         })
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                         ->groupBy('purchaseOrderMasterID')
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
                                                         ->first();
 
                     if ($notRecivedPo) {
@@ -1110,6 +1148,10 @@ class BudgetMasterAPIController extends AppBaseController
                                             })
                                             ->orWhere('documentSystemID', '!=', 2);
                                     })
+                                    ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->join(DB::raw('(SELECT
                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                                                         erp_companyreporttemplatelinks.templateMasterID,
@@ -1150,6 +1192,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                             $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
                                                         })
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->first();
 
@@ -1302,6 +1350,10 @@ class BudgetMasterAPIController extends AppBaseController
                                     ->whereHas('purchase_order', function ($query) {
                                         $query->where('grvRecieved', '!=', 2);
                                     })
+                                    ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->get();
 
         $committedAmount = 0;
@@ -1323,6 +1375,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                         $query->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID']);
                                                     })
                                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                    ->whereHas('order', function($query) {
+                                                        $query->where(function($query) {
+                                                                $query->where('projectID', 0)
+                                                                      ->orWhereNull('projectID');
+                                                            });
+                                                    })
                                                     ->groupBy('purchaseOrderMasterID')
                                                     ->first();
 
@@ -1354,6 +1412,10 @@ class BudgetMasterAPIController extends AppBaseController
                                             })
                                             ->orWhere('documentSystemID', '!=', 2);
                                     })
+                                    ->where(function($query) {
+                                        $query->whereNull('projectID')
+                                              ->orWhere('projectID', 0);
+                                      })
                                     ->where('companyFinanceYearID', $dataParam['companyFinanceYearID'])
                                     ->whereIn('chartOfAccountID', $glIds)
                                     ->where('consumeYN', -1)
@@ -1377,6 +1439,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                         $query->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID']);
                                                     })
                                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                     ->whereHas('order', function($query) {
+                                                        $query->where(function($query) {
+                                                                $query->where('projectID', 0)
+                                                                      ->orWhereNull('projectID');
+                                                            });
+                                                    })
                                                     ->groupBy('purchaseOrderMasterID')
                                                     ->first();
 
@@ -1402,7 +1470,11 @@ class BudgetMasterAPIController extends AppBaseController
                                                 return $q->where('serviceLineSystemID', $dataParam['serviceLineSystemID']);
                                             })
                                             ->where('approved', 0)
-                                            ->where('poCancelledYN', 0);
+                                            ->where('poCancelledYN', 0)
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
                                     })
                                     ->where('budgetYear', $dataParam['Year'])
                                     ->whereIn('financeGLcodePLSystemID', $glIds)
