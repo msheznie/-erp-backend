@@ -80,4 +80,8 @@ class PulledItemFromMR extends Model
         'RequestID' => 'required'
     ];
 
+    public function mrRequests(){
+        return $this->hasMany('App\Models\MaterielRequest','RequestID','RequestID');
+    }
+
 }

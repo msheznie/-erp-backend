@@ -2580,46 +2580,59 @@ class PurchaseRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
         
-        $search = $request->input('search.value');
-        $materielRequests = MaterielRequest::where('approved',$input['approved'])
-                                        ->where('cancelledYN',$input['cancelledYN'])
-                                        ->where('serviceLineSystemID',$input['serviceLineSystemID'])
-                                        ->where('companySystemID',$input['companySystemID'])
-                                        ->with('details')->get();
+        $dataArray = [];
 
-        $filtered = $materielRequests->filter(function ($value, $key) {
+        $search = $request->input('search.value');
+
+        $slectedMaterialRequestArray = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->pluck('RequestID')->toArray();
+
+        $materielRequests = MaterielRequest::where('approved',$input['approved'])
+        ->leftJoin("erp_pulled_from_mr", "erp_request.RequestID", "=", "erp_pulled_from_mr.RequestID")
+        ->where('erp_request.cancelledYN',$input['cancelledYN'])
+        ->where('erp_request.serviceLineSystemID',$input['serviceLineSystemID'])
+        ->where('erp_request.companySystemID',$input['companySystemID'])
+        ->where('erp_pulled_from_mr.RequestID',NULL)
+        ->with('details')->get();
+
+        
+        $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
+
+        dd($materielRequests);
+        foreach($materielRequests as $ms) {
+            array_push($dataArray,$ms);
+        }
+
+        foreach($slectedMaterialRequest as $sm) {
+            array_push($dataArray,$sm);
+        }
+
+        
+
+        $filtered = collect($dataArray)->filter(function ($value, $key) {
          return $value->materialIssueStatusValue == "Pending";
         });
 
         $filtered->all();
 
-
         foreach($filtered as $materielRequest) {
             $details = $materielRequest->details;
             foreach($details as $detail) {
-
                 if($detail->item_by) {
                     $pulledItem = PulledItemFromMR::where('RequestID',$materielRequest->RequestID)
                     ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
-
                     $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
-
                     if($pulledItem) {
                         $detail['prRqQnty'] = $pulledItem->pr_qnty;
                         $detail['isChecked'] = true;
                     }
                 }
-
             }
         }
 
         $dataArray = [];
-
         foreach($filtered as $filterData) {
             array_push($dataArray,$filterData);
         }
-
- 
         return $this->sendResponse($dataArray, 'Data retreived Successfully!');
     }
 
@@ -2698,6 +2711,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
 
 
+            
             return $this->sendResponse($requests, 'Quantity updated successfully!');
         }else {
             return $this->sendResponse($requests, 'Data not found!');

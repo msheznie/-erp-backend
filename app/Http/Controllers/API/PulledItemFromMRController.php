@@ -9,6 +9,7 @@ use App\Repositories\ERPPulledMRDetailsRepository;
 use App\Http\Controllers\AppBaseController;
 use App\Models\PulledItemFromMR;
 use App\helper\Helper;
+use App\helper\PurcahseRequestDetail;
 use App\Models\Company;
 use App\Models\GRVDetails;
 use App\Models\Unit;
@@ -61,13 +62,20 @@ class PulledItemFromMRController extends AppBaseController
     public function store(createPullItemsFromPRAPIRequest $request)
     {
 
+
         $input = $request->all();
+
 
         $this->validatePolicies();
 
-        $data = $this->erpPulledMRDetailsRepository->create($input);
-
-        return $this->sendResponse($data->toArray(), 'Item added successfully');
+        $add = app()->make(PurcahseRequestDetail::class);
+        $addItemToPurchaseRequest = $add->validateItem($input);
+        if($addItemToPurchaseRequest['status']) {
+            $data = $this->erpPulledMRDetailsRepository->create($input);
+            return $this->sendResponse($data->toArray(), 'Item added successfully');
+        }else {
+            return $this->sendError($addItemToPurchaseRequest['message']);
+        }
 
     }
 
@@ -160,6 +168,9 @@ class PulledItemFromMRController extends AppBaseController
 
             $data['uom'] = $unit;
 
+            $puchaseRequestDetails = PurchaseRequestDetails::where('purchaseRequestID',$input['purcahseRequestID'])->where('itemCode',$data->itemcode)->first();
+            $data['purchaseRequestDetailsID'] = $puchaseRequestDetails->purchaseRequestDetailsID;
+            $data['purchaseRequestID'] = $input['purcahseRequestID'];
             $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies,$data) {
                 $query->whereIn('companySystemID', $group_companies)
                     ->where('approved', -1)
