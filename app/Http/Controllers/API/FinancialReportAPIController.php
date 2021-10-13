@@ -359,10 +359,10 @@ class FinancialReportAPIController extends AppBaseController
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+            $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
         }])
             ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
@@ -373,11 +373,11 @@ class FinancialReportAPIController extends AppBaseController
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->where('documentSystemID', 2)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->sum('consumedRptAmount');
-        $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
-        $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
+        // $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
+        // $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
 
 
 
@@ -1224,29 +1224,19 @@ class FinancialReportAPIController extends AppBaseController
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
-        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+
+        $companySystemID = $projectDetail['companySystemID'];
+        $transactionCurrencyID = $projectDetail->currency['currencyID'];
+        $documentCurrencyID = $projectDetail->currency['currencyID'];
 
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
-        $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
-            })
-            ->sum('consumedRptAmount');
-
-        $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereDate('approvedDate', '<', $fromDate);
-            })
-            ->sum('consumedRptAmount');
-
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('approvedDate', [$fromDate, $toDate]);
-            }])
+            $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+        }])
             ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate, $toDate]);
+                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->where('projectID', $projectID)
             ->where('documentSystemID', 2)
@@ -1254,8 +1244,31 @@ class FinancialReportAPIController extends AppBaseController
             ->groupBy('documentSystemCode')
             ->get();
 
+        $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+            })
+            ->sum('consumedRptAmount');
+        // $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
+        // $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
+
+
+
+        $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
+            ->where('documentSystemID', 2)
+            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('approvedDate', '<', $fromDate);
+            })
+            ->sum('consumedRptAmount');
+        $budgetOpeningConsumptionCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetOpeningConsumption);
+        $budgetOpeningConsumption = $budgetOpeningConsumptionCurrencyConvertion['reportingAmount'];
+
+        
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
+        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
 
         if ($projectAmount > 0) {
             $projectAmount = $projectAmount;
@@ -1263,14 +1276,8 @@ class FinancialReportAPIController extends AppBaseController
             $projectAmount = 0;
         }
 
-
-        if ($budgetAmount > 0) {
-            $budgetAmount = $budgetAmount;
-        } else {
-            $budgetAmount = 0;
-        }
-
         $openingBalance = $projectAmount - $budgetOpeningConsumption;
+
 
         $closingBalance = $openingBalance - $budgetAmount;
 
