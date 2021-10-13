@@ -12,6 +12,8 @@ use App\Models\ProcumentOrder;
 use App\Models\GRVMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseReturnDetails;
+use App\Models\DirectInvoiceDetails;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\PurchaseReturn;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierAssigned;
@@ -670,6 +672,183 @@ class TaxService
             }
 
              $vatData['bsVAT'] = $bsVATData;
+        }
+
+
+        return $vatData;
+    }
+
+
+    public static function processPoBasedSupllierInvoiceVAT($bookingSuppMasInvAutoID)
+    {
+        $detailVAT = SupplierInvoiceItemDetail::selectRaw('SUM(VATAmount) as totalVAT, SUM(VATAmountLocal) as totalVATLocal, SUM(VATAmountRpt) as totalVATRpt, vatSubCategoryID')
+                                                           ->whereNotNull('vatSubCategoryID')
+                                                           ->where('vatSubCategoryID', '>', 0)
+                                                           ->whereHas('vat_sub_category', function($query) {
+                                                                $query->where('subCatgeoryType', '!=', 3);
+                                                           })
+                                                           ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                                           ->where('exempt_vat_portion', 0)
+                                                           ->groupBy('bookingSuppMasInvAutoID')
+                                                           ->first();
+
+        $vatData = [
+            'totalVAT' => 0,
+            'totalVATLocal' => 0,
+            'totalVATRpt' => 0
+        ];
+
+        if ($detailVAT) {
+             $vatData = [
+                'totalVAT' => $detailVAT->totalVAT,
+                'totalVATLocal' => $detailVAT->totalVATLocal,
+                'totalVATRpt' => $detailVAT->totalVATRpt
+            ];
+        }
+
+        //get portainateAccounts
+       $exemptPotianteData = SupplierInvoiceItemDetail::selectRaw("VATAmount,VATAmountLocal ,VATAmountRpt ,bookingSuppMasInvAutoID, vatSubCategoryID, exempt_vat_portion")
+                              ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                              ->whereHas('vat_sub_category', function($query) {
+                                $query->where('subCatgeoryType', '!=',3);
+                              })
+                              ->where('exempt_vat_portion', '>', 0)
+                              ->get();
+
+        
+        foreach ($exemptPotianteData as $key => $value) {
+            $exemptVATTransAmount = $value->VATAmount * ($value->exempt_vat_portion/100);
+            $vatData['totalVAT'] += ($value->VATAmount - $exemptVATTransAmount);
+
+            $exemptVATLocalAmount = $value->VATAmountLocal * ($value->exempt_vat_portion/100);
+            $vatData['totalVATLocal'] += ($value->VATAmountLocal - $exemptVATLocalAmount);
+
+            $exemptVATRptAmount = $value->VATAmountRpt * ($value->exempt_vat_portion/100);
+            $vatData['totalVATRpt'] += ($value->VATAmountRpt - $exemptVATRptAmount);
+        }
+
+        return $vatData;
+    }
+
+    public static function processDirectSupplierInvoiceVAT($directInvoiceAutoID, $documentSystemID)
+    {
+        $checkVATCategories = DirectInvoiceDetails::selectRaw('vatSubCategoryID, erp_tax_vat_sub_categories.subCatgeoryType as vatSubCategoryType')
+                                                           ->whereNotNull('vatSubCategoryID')
+                                                           ->where('vatSubCategoryID', '>', 0)
+                                                           ->join('erp_tax_vat_sub_categories', 'erp_directinvoicedetails.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
+                                                           ->where('directInvoiceAutoID', $directInvoiceAutoID)
+                                                           ->groupBy('erp_tax_vat_sub_categories.subCatgeoryType')
+                                                           ->get();
+
+        $exemptVAT = false;
+        $vatSubCategoryTypes = collect($checkVATCategories)->pluck('vatSubCategoryType')->toArray();
+
+        if (in_array(3, $vatSubCategoryTypes)) {
+            $exemptVAT = true;
+        } 
+
+        $exemptVATPortainate = DirectInvoiceDetails::whereNotNull('exempt_vat_portion')
+                                       ->where('exempt_vat_portion', '>', 0)
+                                       ->where('directInvoiceAutoID', $directInvoiceAutoID)
+                                       ->get();
+
+        $exemptVATPortainateFlag = (count($exemptVATPortainate) > 0) ? true : false;
+        
+        $bsVATData = [];
+        $plVATData = [];
+        $exemptVATportionBs = [];
+        $exemptVATportionPL = [];
+        $vatData = [
+            'masterVATTrans' => 0,
+            'masterVATRpt' => 0,
+            'masterVATLocal' => 0,
+            'bsVAT' => $bsVATData,
+            'exemptVATportionBs' => $exemptVATportionBs
+        ];
+
+        if (!$exemptVAT && !$exemptVATPortainateFlag) {
+            $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                        ->WHERE('documentSystemCode', $directInvoiceAutoID)
+                                        ->WHERE('documentSystemID', $documentSystemID)
+                                        ->groupBy('documentSystemCode')
+                                        ->first();
+
+            if ($tax) {
+                $vatData['masterVATLocal'] = $tax->localAmount;
+                $vatData['masterVATRpt'] = $tax->rptAmount;
+                $vatData['masterVATTrans'] = $tax->transAmount;
+            }
+        } else {
+            $masterData = DirectInvoiceDetails::selectRaw('SUM(VATAmount) as totalVATAmount, SUM(VATAmountLocal) as totalVATAmountLocal, SUM(VATAmountRpt) as totalVATAmountRpt, vatSubCategoryID')
+                                            ->whereHas('vat_sub_category', function($query) {
+                                                $query->where('subCatgeoryType', '!=', 3);
+                                             })
+                                            ->where('exempt_vat_portion', 0)
+                                            ->where('directInvoiceAutoID', $directInvoiceAutoID)
+                                            ->groupBy('directInvoiceAutoID')
+                                            ->first();
+
+            $vatData['masterVATTrans'] = ($masterData) ? $masterData->totalVATAmount : 0;
+            $vatData['masterVATRpt'] = ($masterData) ? $masterData->totalVATAmountLocal : 0;
+            $vatData['masterVATLocal'] = ($masterData) ? $masterData->totalVATAmountRpt : 0;
+
+            //get portainateAccounts
+           $exemptPotianteData = DirectInvoiceDetails::selectRaw("(VATAmount) as transVATAmount,(VATAmountLocal) as localVATAmount ,(VATAmountRpt) as rptVATAmount ,directInvoiceAutoID, vatSubCategoryID, chartOfAccountSystemID, serviceLineSystemID, comments, exempt_vat_portion, directInvoiceDetailsID")
+                                  ->where('directInvoiceAutoID', $directInvoiceAutoID)
+                                  ->whereHas('vat_sub_category', function($query) {
+                                    $query->where('subCatgeoryType', '!=',3);
+                                  })
+                                  ->where('exempt_vat_portion', '>', 0)
+                                  ->get();
+
+            
+            foreach ($exemptPotianteData as $key => $value) {
+                $exemptVATTransAmount = $value->transVATAmount * ($value->exempt_vat_portion/100);
+                $vatData['masterVATTrans'] += ($value->transVATAmount - $exemptVATTransAmount);
+
+                $exemptVATLocalAmount = $value->localVATAmount * ($value->exempt_vat_portion/100);
+                $vatData['masterVATLocal'] += ($value->localVATAmount - $exemptVATLocalAmount);
+
+                $exemptVATRptAmount = $value->rptVATAmount * ($value->exempt_vat_portion/100);
+                $vatData['masterVATRpt'] += ($value->rptVATAmount - $exemptVATRptAmount);
+
+                if ($value->chartOfAccountSystemID > 0 && !is_null($value->chartOfAccountSystemID)) {
+                    $serviceLineSystemID = (!is_null($value->serviceLineSystemID)) ? $value->serviceLineSystemID : "";
+                    $comment = (!is_null($value->comments)) ? $value->comments : "";
+
+                    $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATTransAmount'] = ((isset($exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATTransAmount'])) ? $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATTransAmount'] : 0) + $exemptVATTransAmount;
+
+                     $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATLocalAmount'] = ((isset($exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATLocalAmount'])) ? $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATLocalAmount'] : 0) + $exemptVATLocalAmount;
+
+                      $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATRptAmount'] = ((isset($exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATRptAmount'])) ? $exemptVATportionBs[$value->chartOfAccountSystemID.$serviceLineSystemID.$comment]['exemptVATRptAmount'] : 0) + $exemptVATRptAmount;
+                }
+            }
+
+            $vatData['exemptVATportionBs'] = $exemptVATportionBs;
+
+
+            //get balansheet account
+            $bsVAT = DirectInvoiceDetails::selectRaw("SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount ,directInvoiceAutoID, vatSubCategoryID, chartOfAccountSystemID, serviceLineSystemID, comments")
+                              ->where('directInvoiceAutoID', $directInvoiceAutoID)
+                              ->whereHas('vat_sub_category', function($query) {
+                                $query->where('subCatgeoryType', 3);
+                              })
+                              ->groupBy('chartOfAccountSystemID', 'serviceLineSystemID', 'comments')
+                              ->get();
+
+             foreach ($bsVAT as $key => $value) {
+                $serviceLineSystemID = (!is_null($value->serviceLineSystemID)) ? $value->serviceLineSystemID : "";
+                $comment = (!is_null($value->comments)) ? $value->comments : "";
+                $temp = [];
+
+                $temp['transVATAmount'] = $value['transVATAmount'];
+                $temp['localVATAmount'] = $value['localVATAmount'];
+                $temp['rptVATAmount'] = $value['rptVATAmount'];
+
+                $bsVATData[$value['chartOfAccountSystemID'].$serviceLineSystemID.$comment] = $temp;
+            }
+            
+            $vatData['bsVAT'] = $bsVATData;
         }
 
 

@@ -175,6 +175,7 @@ class DirectInvoiceDetails extends Model
         'VATPercentage',
         'VATAmountLocal',
         'VATAmountRpt',
+        'exempt_vat_portion',
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
@@ -207,6 +208,7 @@ class DirectInvoiceDetails extends Model
         'localAmount' => 'float',
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
+        'exempt_vat_portion' => 'float',
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
         'isExtraAddon' => 'integer',
@@ -247,6 +249,10 @@ class DirectInvoiceDetails extends Model
     public function budget_detail()
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'chartOfAccountSystemID','chartOfAccountID');
+    }
+
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
     
 }

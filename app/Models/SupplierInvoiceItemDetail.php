@@ -260,5 +260,7 @@ class SupplierInvoiceItemDetail extends Model
         'bookingSuppMasInvAutoID' => 'required'
     ];
 
-    
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
+    }
 }
