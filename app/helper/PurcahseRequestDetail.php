@@ -454,10 +454,13 @@ class PurcahseRequestDetail
             $data->save();
         }else {
 
-            PurchaseRequestDetails::create($input);
+           $data =  PurchaseRequestDetails::create($input);
 
         }
-        return ['status' => true , 'message' => 'Purchase Request Details saved successfully'];
+
+       
+
+        return $data;
 
 
         // return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');

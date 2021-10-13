@@ -2584,29 +2584,32 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $slectedMaterialRequestArray = PulledItemFromMR::pluck('RequestID','purcahseRequestID')->toArray();
+        $slectedMaterialRequestArray = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->pluck('RequestID')->toArray();
 
         $materielRequests = MaterielRequest::where('approved',$input['approved'])
         // ->leftJoin("erp_pulled_from_mr", "erp_request.RequestID", "=", "erp_pulled_from_mr.RequestID")
         ->where('erp_request.cancelledYN',$input['cancelledYN'])
         ->where('erp_request.serviceLineSystemID',$input['serviceLineSystemID'])
         ->where('erp_request.companySystemID',$input['companySystemID'])
-        // ->where('erp_pulled_from_mr.purcahseRequestID',$input['purcahseRequestID'])
-        // ->where('erp_pulled_from_mr.RequestID',NULL)
+        ->where('erp_request.isSelectedToPR',0)
         ->with('details')->get();
 
-        // $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
 
+        $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
        
     
+        foreach($materielRequests as $ms) {
+            array_push($dataArray,$ms);
+        }
 
-        // foreach($slectedMaterialRequest as $sm) {
-        //     array_push($dataArray,$sm);
-        // }
+
+        foreach($slectedMaterialRequest as $sm) {
+            array_push($dataArray,$sm);
+        }
 
         
 
-        $filtered = collect($materielRequests)->filter(function ($value, $key) {
+        $filtered = collect($dataArray)->filter(function ($value, $key) {
          return $value->materialIssueStatusValue == "Pending";
         });
 
@@ -2643,12 +2646,14 @@ class PurchaseRequestAPIController extends AppBaseController
         $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
 
         $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
+       
         $requestedQnty = $item['quantityRequested'];
+
         if($requestedQnty >  $total_requested_qnty->sum) {
             return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
         }
                 $pulledDetail = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('id', 'ASC')->first();
-                    if($requests) {
+                    if(isset($requests)) {
                         if($requestedQnty > $requests->sum) {
                             $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->get();
                             $qntyToUpdateOnNextItem = $requestedQnty; // 10000
@@ -2656,6 +2661,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             foreach($pulledDetails as $pulledDetail) {
                                 $mrQnty = $pulledDetail->mr_qnty; //8000
                                 $difference = (($requestedQnty) - $requests->sum); //10000-250  =  9750
+
                                 if($qntyToUpdateOnNextItem > 0 ) {
                                     if($requestedQnty > $mrQnty) {
                                         $maxQntyToUpdate = $mrQnty; // 8000 - 50 
@@ -2668,11 +2674,11 @@ class PurchaseRequestAPIController extends AppBaseController
                                         }
                                        
                                     }else {
-                                        $pulledDetail->pr_qnty = $difference;
+                                        $pulledDetail->pr_qnty += $difference;
                                         $qntyToUpdateOnNextItem = 0;
                                     }
                                 }else {
-                                    $pulledDetail->pr_qnty = 0;
+                                    // $pulledDetail->pr_qnty = 0;
                                 }
                                 $pulledDetail->save();
                             }
@@ -2696,6 +2702,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $pulledDetail->pr_qnty =  $pulledDetail->pr_qnty  - $difference;
                                             $difference = 0;
                                         }  
+                                    }else {
+                                        $pulledDetail->delete();
                                     }
 
                                 }else {
@@ -2710,13 +2718,18 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
 
 
+            $data =[];
             if($pulledDetail['pr_qnty'] == 0) {
+                $data['isPrDeleted'] = true;
                 PurchaseRequestDetails::where('purchaseRequestID',$pulledDetail['purcahseRequestID'])->where('itemCode',$pulledDetail['itemCodeSystem'])->delete();
                 PulledItemFromMR::where('purcahseRequestID',$pulledDetail['purcahseRequestID'])->where('itemCodeSystem',$pulledDetail['itemCodeSystem'])->delete();
+                return $this->sendResponse($data, 'Quantity updated successfully!');
+
             }
-            return $this->sendResponse($requests, 'Quantity updated successfully!');
+            $data['isPrDeleted'] = false;
+            return $this->sendResponse($data, 'Quantity updated successfully!');
         }else {
-            return $this->sendResponse($requests, 'Data not found!');
+            return $this->sendResponse($data, 'Data not found!');
         }            
     }
 
