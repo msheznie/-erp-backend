@@ -2742,4 +2742,15 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendResponse(false, 'Data not found!');
         }
     }
+
+    public function delteItemQntyPR(Request $request) {
+        $input = $request->all();
+        $item = $input['item'];
+        $data = PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->first();
+        $id =$data->RequestID;
+        $request = MaterielRequest::find($id);
+        $request->isSelectedToPR =  false;
+        $request->save();
+        $data->delete();
+    }
 }
