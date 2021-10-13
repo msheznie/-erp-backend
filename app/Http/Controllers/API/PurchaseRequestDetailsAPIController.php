@@ -28,6 +28,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\PulledItemFromMR;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Repositories\PurchaseRequestRepository;
@@ -880,7 +881,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
 
-
         /** @var PurchaseRequestDetails $purchaseRequestDetails */
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
@@ -951,6 +951,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     }
                 }
             }
+
 
             DB::commit();
             return $this->sendResponse($purchaseRequestDetailsRes->toArray(), 'PurchaseRequestDetails updated successfully');

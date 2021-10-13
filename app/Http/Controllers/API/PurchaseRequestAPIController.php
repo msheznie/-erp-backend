@@ -2584,23 +2584,21 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $slectedMaterialRequestArray = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->pluck('RequestID')->toArray();
+        $slectedMaterialRequestArray = PulledItemFromMR::pluck('RequestID','purcahseRequestID')->toArray();
 
         $materielRequests = MaterielRequest::where('approved',$input['approved'])
         // ->leftJoin("erp_pulled_from_mr", "erp_request.RequestID", "=", "erp_pulled_from_mr.RequestID")
         ->where('erp_request.cancelledYN',$input['cancelledYN'])
         ->where('erp_request.serviceLineSystemID',$input['serviceLineSystemID'])
         ->where('erp_request.companySystemID',$input['companySystemID'])
+        // ->where('erp_pulled_from_mr.purcahseRequestID',$input['purcahseRequestID'])
         // ->where('erp_pulled_from_mr.RequestID',NULL)
         ->with('details')->get();
 
-        
         // $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
 
        
-        foreach($materielRequests as $ms) {
-            array_push($dataArray,$ms);
-        }
+    
 
         // foreach($slectedMaterialRequest as $sm) {
         //     array_push($dataArray,$sm);
@@ -2624,6 +2622,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     if($pulledItem) {
                         $detail['prRqQnty'] = $pulledItem->pr_qnty;
                         $detail['isChecked'] = true;
+                        $materielRequest['isChecked'] = true;
                     }
                 }
             }
@@ -2640,7 +2639,6 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->input();
         $item = $input['item'];
         $purchase_id = $input['id'];
-
 
         $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
 
@@ -2714,7 +2712,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
             if($pulledDetail['pr_qnty'] == 0) {
                 PurchaseRequestDetails::where('purchaseRequestID',$pulledDetail['purcahseRequestID'])->where('itemCode',$pulledDetail['itemCodeSystem'])->delete();
-                $pulledDetail->delete();
+                PulledItemFromMR::where('purcahseRequestID',$pulledDetail['purcahseRequestID'])->where('itemCodeSystem',$pulledDetail['itemCodeSystem'])->delete();
             }
             return $this->sendResponse($requests, 'Quantity updated successfully!');
         }else {
