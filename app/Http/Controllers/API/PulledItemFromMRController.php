@@ -173,7 +173,7 @@ class PulledItemFromMRController extends AppBaseController
      */
     public function update(Request $request, $id)
     {
-        //
+        return $request;
     }
 
     /**
@@ -300,5 +300,23 @@ class PulledItemFromMRController extends AppBaseController
                    
         return $this->sendResponse($datas, 'Data retreived successfully');
 
+    }
+
+    public function updateMrDetails(Request $request) {
+        $input = $request->all();
+        $item = PulledItemFromMR::where('itemCodeSystem',$input['itemCodeSystem'])->where('RequestDetailsID',$input['RequestDetailsID'])->where('purcahseRequestID',$input['purcahseRequestID'])->first();
+        if($input['pr_qnty'] > $item->mr_qnty) {
+            return $this->sendError("You cannot Request Purchase Quantity more the the Materiel Requested Quantity", 500);
+        }
+        $item->pr_qnty = $input['pr_qnty'];
+        $item->save();
+        $lineItems =  PulledItemFromMR::where('itemCodeSystem',$input['itemCodeSystem'])->where('purcahseRequestID',$input['purcahseRequestID'])->get();
+        $total = 0;
+        foreach($lineItems as $lineItem) {
+            $total += $lineItem->pr_qnty;
+        }
+        $puchaseRequestDetails = PurchaseRequestDetails::where('purchaseRequestID',$input['purcahseRequestID'])->where('itemCode',$input['itemCodeSystem'])->first();
+        $puchaseRequestDetails->quantityRequested = $total;
+        $puchaseRequestDetails->save();
     }
 }
