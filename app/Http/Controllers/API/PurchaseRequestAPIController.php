@@ -2623,9 +2623,14 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
                     $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
                     if($pulledItem) {
-                        $detail['prRqQnty'] = $pulledItem->pr_qnty;
-                        $detail['isChecked'] = true;
+                        if($detail->item_by->itemCodeSystem == $pulledItem->itemCodeSystem) {
+                            $detail['prRqQnty'] = $pulledItem->pr_qnty;
+                            $detail['isChecked'] = true;
+                        }else {
+                            $detail['isChecked'] = false;
+                        }
                         $materielRequest['isChecked'] = true;
+
                     }else {
                         $detail['isChecked'] = false;
                     }
