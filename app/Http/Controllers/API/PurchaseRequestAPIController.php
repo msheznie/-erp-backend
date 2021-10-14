@@ -2662,7 +2662,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
 
-                    if(isset($requests)) {
+        if(isset($requests)) {
                         if($requestedQnty > $requests->sum) {
                             $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'DESC')->get();
 
@@ -2729,7 +2729,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
                             
                         }
-
 
            
             return $this->sendResponse($requests, 'Quantity updated successfully!');
