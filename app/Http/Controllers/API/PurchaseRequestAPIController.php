@@ -2626,6 +2626,8 @@ class PurchaseRequestAPIController extends AppBaseController
                         $detail['prRqQnty'] = $pulledItem->pr_qnty;
                         $detail['isChecked'] = true;
                         $materielRequest['isChecked'] = true;
+                    }else {
+                        $detail['isChecked'] = false;
                     }
                 }
             }
@@ -2644,14 +2646,16 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchase_id = $input['id'];
 
         $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
-
         $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
        
         $requestedQnty = $item['quantityRequested'];
 
-        if($requestedQnty >  $total_requested_qnty->sum) {
-            return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
+        if(isset($total_requested_qnty)) {
+            if($requestedQnty >  $total_requested_qnty->sum) {
+                return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
+            }
         }
+
                 $pulledDetail = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('id', 'ASC')->first();
                     if(isset($requests)) {
                         if($requestedQnty > $requests->sum) {
