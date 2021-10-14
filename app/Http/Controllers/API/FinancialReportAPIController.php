@@ -412,7 +412,10 @@ class FinancialReportAPIController extends AppBaseController
             'openingBalance' => $openingBalance,
             'closingBalance' => $closingBalance,
             'detailsPOWise' => $detailsPOWise,
-            'companyReportingCurrency' => $reportingCurrency
+            'companyReportingCurrency' => $reportingCurrency,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'reportTittle' => 'Project Utilization Report'
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
