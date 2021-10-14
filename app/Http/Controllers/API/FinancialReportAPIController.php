@@ -347,6 +347,9 @@ class FinancialReportAPIController extends AppBaseController
     public function generateprojectUtilizationReport(Request $request)
     {
 
+        $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
+        $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
+
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
@@ -413,8 +416,8 @@ class FinancialReportAPIController extends AppBaseController
             'closingBalance' => $closingBalance,
             'detailsPOWise' => $detailsPOWise,
             'companyReportingCurrency' => $reportingCurrency,
-            'fromDate' => $fromDate,
-            'toDate' => $toDate,
+            'fromDate' => $dateFrom,
+            'toDate' => $dateTo,
             'reportTittle' => 'Project Utilization Report'
         );
 
@@ -1220,7 +1223,8 @@ class FinancialReportAPIController extends AppBaseController
 
     public function downloadProjectUtilizationReport(Request $request)
     {
-        $input = $request->all();
+        $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
+        $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
@@ -1286,8 +1290,8 @@ class FinancialReportAPIController extends AppBaseController
             'openingBalance' => $openingBalance,
             'closingBalance' => $closingBalance,
             'detailsPOWise' => $detailsPOWise,
-            'fromDate' => $fromDate,
-            'toDate' => $toDate,
+            'fromDate' => $dateFrom,
+            'toDate' => $dateTo,
             'reportTittle' => 'Project Utilization Report'
         );
 
