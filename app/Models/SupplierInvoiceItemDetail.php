@@ -263,4 +263,19 @@ class SupplierInvoiceItemDetail extends Model
     public function vat_sub_category(){
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
+
+    public function invoice_master()
+    {
+        return $this->belongsTo('App\Models\BookInvSuppMaster', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
+
+    public function invoice_detail()
+    {
+        return $this->belongsTo('App\Models\BookInvSuppDet', 'bookingSupInvoiceDetAutoID', 'bookingSupInvoiceDetAutoID');
+    }
+
+    public function grv_detail()
+    {
+        return $this->belongsTo('App\Models\GRVDetails', 'grvDetailsID', 'grvDetailsID');
+    }
 }

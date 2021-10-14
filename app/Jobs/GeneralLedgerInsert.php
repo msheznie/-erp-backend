@@ -258,9 +258,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                             $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                            $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans']) * -1;
-                                            $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATRpt']) * -1;
-                                            $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATLocal']) * -1;
+                                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount) * -1;
                                             $data['timestamp'] = \Helper::currentDateTime();
                                             array_push($finalData, $data);
 
@@ -1719,13 +1719,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentNarration'] = $val->comments;
                                         $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                                         $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                                        $data['documentTransAmount'] = ($masterData->rcmActivated) ? \Helper::roundValue(ABS($val->transAmount)) : \Helper::roundValue(ABS($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount));
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + abs($transBSVAT) + abs($exemptVATTransAmount));
                                         $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                        $data['documentLocalAmount'] = ($masterData->rcmActivated) ? \Helper::roundValue(ABS($val->localAmount)) : \Helper::roundValue(ABS($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount));
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + abs($localBSVAT) + abs($exemptVATLocalAmount));
                                         $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                                         $data['documentRptCurrencyER'] = $val->companyReportingER;
-                                        $data['documentRptAmount'] = ($masterData->rcmActivated) ? \Helper::roundValue(ABS($val->rptAmount)) : \Helper::roundValue(ABS($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount));
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + abs($rptBSVAT) + abs($exemptVATRptAmount));
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
