@@ -1,29 +1,20 @@
 <html>
 	<table>
 	        <thead>
+            <tr></tr>
             <tr>
               <th></th>
               <th></th>
-              <th></th>
-              <th></th>
-              <th><b align='center' style="color: blue;">{{$reportTittle}}</b></th>
-            </tr>
-            <tr>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <td>From Date:-{{$fromDate}}</td>
-            </tr>
-            <tr>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <td>To Date:-{{$toDate}}</td>
+              <th align='center' style="font-size:50px">{{$reportTittle}}</th>
             </tr>
             <tr></tr>
-            <tr></tr>
+            <tr>
+              <th></th>
+              <th style="font-size:15px;">Date From: {{$fromDate}}</th>
+              <th style="font-size:15px;">Date To: {{$toDate}}</th>
+              <th></th>
+              <th></th>
+            </tr>
             <tr></tr>
             <tr></tr>
             <tr>
