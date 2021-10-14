@@ -73,15 +73,23 @@ class PulledItemFromMRController extends AppBaseController
 
         $this->validatePolicies();
 
+        
+        if ($input['pr_qnty'] > $input['mr_qnty']) {
+            return $this->sendError("You cannot Request Purchase Quantity more the the Materiel Requested Quantity", 500);
+        }
+
         $add = app()->make(PurcahseRequestDetail::class);
         $purchaseRequestDetails = $add->validateItem($input);
+        if(!$purchaseRequestDetails['status'] && $purchaseRequestDetails['message']) {
+            return $this->sendError($purchaseRequestDetails['message'], 500);
+        }
         $purchaseRequest = PurchaseRequest::find($input['purcahseRequestID']);
         $materialReuest = MaterielRequest::find($input['RequestID']);
         if(isset($materialReuest)) {
             $materialReuest->isSelectedToPR = $input['isChecked'];
             $materialReuest->save();
         }
-        
+
         $id =  $purchaseRequestDetails->purchaseRequestDetailsID;
 
         DB::beginTransaction();
