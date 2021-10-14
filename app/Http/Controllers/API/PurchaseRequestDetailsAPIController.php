@@ -880,8 +880,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+        $purchaseRequestID = $input['purchaseRequestID'];
+        $itemCode = $input['itemCode'];
 
-        /** @var PurchaseRequestDetails $purchaseRequestDetails */
+        $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchaseRequestID)->where('itemCodeSystem',$itemCode)->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
+
+        if(isset($total_requested_qnty)) {
+            if($total_requested_qnty->sum <  $input['quantityRequested'] ) {
+                return $this->sendError('Quantity cannot be greater than total materiel request quantity');
+            }
+        }
+        
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestDetails)) {

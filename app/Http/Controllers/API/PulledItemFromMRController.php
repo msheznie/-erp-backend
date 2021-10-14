@@ -194,6 +194,12 @@ class PulledItemFromMRController extends AppBaseController
     public function removeMRDetails(Request $request) {
         $input = $request->all();
 
+        $mrRequest = MaterielRequest::find($input['RequestID']);
+
+        if(count($mrRequest->details) == 1) {
+            $mrRequest->isSelectedToPR = false;
+            $mrRequest->save();
+        }
         $data = PulledItemFromMR::where('RequestID',$input['RequestID'])
                                 ->where('companySystemID',$input['companySystemID'])
                                 ->where('itemCodeSystem',$input['itemCodeSystem'])
@@ -201,6 +207,7 @@ class PulledItemFromMRController extends AppBaseController
                                 ->first();
 
         if(!empty($data)) {
+            PurchaseRequestDetails::where('purchaseRequestID',$input['purcahseRequestID'])->where('itemCode',$input['itemCodeSystem'])->delete();
             $data->delete();
             return $this->sendResponse($input, 'Data removed successfully');
         }else{
