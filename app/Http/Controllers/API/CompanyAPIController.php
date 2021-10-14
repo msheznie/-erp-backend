@@ -337,7 +337,7 @@ class CompanyAPIController extends AppBaseController
     public function show($id)
     {
         /** @var Company $company */
-        $company = $this->companyRepository->findWithoutFail($id);
+        $company = $this->companyRepository->with('reportingcurrency')->findWithoutFail($id);
 
         if (empty($company)) {
             return $this->sendError('Company not found');
