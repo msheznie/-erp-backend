@@ -1455,7 +1455,7 @@ class PurchaseRequestAPIController extends AppBaseController
             if(isset($datas)) {
              foreach($datas as $data) {
                  $request = MaterielRequest::where('RequestID',$data->RequestID)->first();
-                if($request->isSelectedToPR) {
+                if($request->isSelectedToPR && count($request) == 1) {
                     $request->isSelectedToPR = false;
                     $request->save();
                 }
