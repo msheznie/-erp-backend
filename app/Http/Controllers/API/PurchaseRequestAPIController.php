@@ -2686,8 +2686,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                     if($qntyToUpdateOnNextItem > 0 ) {
                                         if($qntyToUpdateOnNextItem > $mrQnty) {
                                             $maxQntyToUpdate = $mrQnty; // 400 
-                                           
-                                            if($qntyToUpdateOnNextItem > $maxQntyToUpdate) {
+
+                                            if($mrQnty >=($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem)) {
                                                 $qntyToUpdateOnNextItem =  ($requestedQnty - $maxQntyToUpdate > 0) ? $requestedQnty - $maxQntyToUpdate : 0;
                                                 $pulledDetail->pr_qnty = $maxQntyToUpdate;
                                                 $pulledDetail->save();
@@ -2696,6 +2696,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                                 $qntyToUpdateOnNextItem = 0;
                                                 $pulledDetail->save();
                                             }
+                                           
+                                         
                                             
                                         }else {
                                             $pulledDetail->pr_qnty += $qntyToUpdateOnNextItem;
@@ -2731,8 +2733,6 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $pulledDetail->save();
 
                                         }  
-                                    }else {
-                                        $pulledDetail->delete();
                                     }
 
                                 }else {
