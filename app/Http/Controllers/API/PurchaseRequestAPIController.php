@@ -1450,6 +1450,19 @@ class PurchaseRequestAPIController extends AppBaseController
             );
 
             $confirm = \Helper::confirmDocument($params);
+            $datas =  PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->get();
+
+            if(isset($datas)) {
+             foreach($datas as $data) {
+                 $request = MaterielRequest::where('RequestID',$data->RequestID)->first();
+                if($request->isSelectedToPR) {
+                    $request->isSelectedToPR = false;
+                    $request->save();
+                }
+             }
+             PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->delete();
+            }
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
@@ -2664,7 +2677,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if(isset($requests)) {
                         if($requestedQnty > $requests->sum) {
-                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'DESC')->get();
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'ASC')->get();
 
                             $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum); //800-700  =  100
                             foreach($pulledDetails as $pulledDetail) {
@@ -2697,7 +2710,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             }
             
                         }else {
-                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'ASC')->get();
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'DESC')->get();
                             $qntyToUpdateOnNextItem = $requestedQnty; //3000 
                             $qntyToUpdate = null;
                             $difference = ($requests->sum - ($requestedQnty));  //3050 - 3000
