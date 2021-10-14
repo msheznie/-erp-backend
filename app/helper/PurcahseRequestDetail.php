@@ -442,14 +442,13 @@ class PurcahseRequestDetail
             $input['poQuantity'] = 0;
             $input['quantityOnOrder'] = 0;
             $input['quantityInHand'] = 0;
-            $input['itemCode'] = null;
         }
 
+        $input['itemCode'] =  $item->itemCodeSystem;
         $input['itemCategoryID'] = 0;
-
         if($alreadyAdded) {
             $data = PurchaseRequestDetails::where('purchaseRequestID',  $input['purchaseRequestID'])
-            ->where('itemPrimaryCode', $item->itemPrimaryCode)->first();
+            ->where('itemCode', $item->itemCodeSystem)->first();
             $data->quantityRequested = $input['quantityRequested'];
             $data->save();
         }else {
