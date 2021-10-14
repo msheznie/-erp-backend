@@ -1315,8 +1315,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('pulled-mr-details', 'PulledItemFromMRController');
         Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
         Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
+        Route::post('update-mr-details', 'PulledItemFromMRController@updateMrDetails');
 
-       
+        
 
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
