@@ -358,6 +358,8 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
+
+        unset($input['reportingcurrency']);
         // $input = $this->convertArrayToValue($input);
         $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
         /** @var Company $company */
