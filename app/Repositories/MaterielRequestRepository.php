@@ -65,7 +65,8 @@ class MaterielRequestRepository extends BaseRepository
         'cancelledByEmpName' => 'string',
         'cancelledComments' => 'string',
         'cancelledDate' => 'string',
-        'test'  => "string"
+        'test'  => "string",
+        'isSelectedToPR' => 'integer'
     ];
 
     /**

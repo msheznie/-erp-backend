@@ -12,6 +12,7 @@ use App\helper\Helper;
 use App\helper\PurcahseRequestDetail;
 use App\Models\Company;
 use App\Models\GRVDetails;
+use App\Models\MaterielRequest;
 use App\Models\Unit;
 use App\Models\SegmentAllocatedItem;
 use App\Models\ItemAssigned;
@@ -21,15 +22,20 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use Response;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\SegmentAllocatedItemRepository;
+
 
 class PulledItemFromMRController extends AppBaseController
 {
 
     private $erpPulledMRDetailsRepository;
+    private $segmentAllocatedItemRepository;
 
-    public function __construct(ERPPulledMRDetailsRepository $erpPulledMRDetailsRepository)
+    public function __construct(ERPPulledMRDetailsRepository $erpPulledMRDetailsRepository, SegmentAllocatedItemRepository $segmentAllocatedItemRepository)
     {
         $this->erpPulledMRDetailsRepository = $erpPulledMRDetailsRepository;
+        $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepository;
     }
 
 
@@ -65,16 +71,73 @@ class PulledItemFromMRController extends AppBaseController
 
         $input = $request->all();
 
-
         $this->validatePolicies();
 
+        
+        if ($input['pr_qnty'] > $input['mr_qnty']) {
+            return $this->sendError("You cannot Request Purchase Quantity more the the Materiel Requested Quantity", 500);
+        }
+
         $add = app()->make(PurcahseRequestDetail::class);
-        $addItemToPurchaseRequest = $add->validateItem($input);
-        if($addItemToPurchaseRequest['status']) {
+        $purchaseRequestDetails = $add->validateItem($input);
+        if(!$purchaseRequestDetails['status'] && $purchaseRequestDetails['message']) {
+            return $this->sendError($purchaseRequestDetails['message'], 500);
+        }
+        $purchaseRequest = PurchaseRequest::find($input['purcahseRequestID']);
+        $materialReuest = MaterielRequest::find($input['RequestID']);
+        if(isset($materialReuest)) {
+            $materialReuest->isSelectedToPR = $input['isChecked'];
+            $materialReuest->save();
+        }
+
+        $id =  $purchaseRequestDetails->purchaseRequestDetailsID;
+
+        DB::beginTransaction();
+            if ($purchaseRequestDetails->quantityRequested != $input['quantityRequested']) {
+                $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=',$purchaseRequest->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purcahseRequestID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->get();
+
+                if (sizeof($checkAlreadyAllocated) == 0) {
+                    $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID',$purchaseRequest->serviceLineSystemID)
+                                                         ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                         ->where('documentMasterAutoID', $input['purcahseRequestID'])
+                                                         ->where('documentDetailAutoID', $id)
+                                                         ->delete();
+
+                    $allocationData = [
+                        'serviceLineSystemID' => $purchaseRequest->serviceLineSystemID,
+                        'documentSystemID' => $purchaseRequest->documentSystemID,
+                        'docAutoID' => $input['purcahseRequestID'],
+                        'docDetailID' => $id
+                    ];
+
+                    $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+
+                    if (!$segmentAllocatedItem['status']) {
+                        return $this->sendError($segmentAllocatedItem['message']);
+                    }
+                } else {
+                     $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                 ->where('documentMasterAutoID', $input['purcahseRequestID'])
+                                                 ->where('documentDetailAutoID', $id)
+                                                 ->sum('allocatedQty');
+
+                    if ($allocatedQty > $input['quantityRequested']) {
+                        return $this->sendError("You cannot update the requested quantity. since quantity has been allocated to segments", 500);
+                    }
+                }
+            }
+
+
+            DB::commit();
+        if($purchaseRequestDetails) {
             $data = $this->erpPulledMRDetailsRepository->create($input);
             return $this->sendResponse($data->toArray(), 'Item added successfully');
         }else {
-            return $this->sendError($addItemToPurchaseRequest['message']);
+            return $this->sendError($purchaseRequestDetails['message']);
         }
 
     }
@@ -131,6 +194,12 @@ class PulledItemFromMRController extends AppBaseController
     public function removeMRDetails(Request $request) {
         $input = $request->all();
 
+        $mrRequest = MaterielRequest::find($input['RequestID']);
+
+        if(count($mrRequest->details) == 1) {
+            $mrRequest->isSelectedToPR = false;
+            $mrRequest->save();
+        }
         $data = PulledItemFromMR::where('RequestID',$input['RequestID'])
                                 ->where('companySystemID',$input['companySystemID'])
                                 ->where('itemCodeSystem',$input['itemCodeSystem'])
@@ -138,6 +207,7 @@ class PulledItemFromMRController extends AppBaseController
                                 ->first();
 
         if(!empty($data)) {
+            PurchaseRequestDetails::where('purchaseRequestID',$input['purcahseRequestID'])->where('itemCode',$input['itemCodeSystem'])->delete();
             $data->delete();
             return $this->sendResponse($input, 'Data removed successfully');
         }else{

@@ -350,11 +350,12 @@ class FinancialReportAPIController extends AppBaseController
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
-         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
+        $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
         $companySystemID = $projectDetail['companySystemID'];
         $transactionCurrencyID = $projectDetail->currency['currencyID'];
         $documentCurrencyID = $projectDetail->currency['currencyID'];
+        $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
@@ -376,8 +377,6 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->sum('consumedRptAmount');
-        // $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
-        // $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
 
 
 
@@ -387,8 +386,6 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereDate('approvedDate', '<', $fromDate);
             })
             ->sum('consumedRptAmount');
-        $budgetOpeningConsumptionCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetOpeningConsumption);
-        $budgetOpeningConsumption = $budgetOpeningConsumptionCurrencyConvertion['reportingAmount'];
 
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
@@ -414,7 +411,11 @@ class FinancialReportAPIController extends AppBaseController
             'budgetConsumptionAmount' => $budgetAmount,
             'openingBalance' => $openingBalance,
             'closingBalance' => $closingBalance,
-            'detailsPOWise' => $detailsPOWise
+            'detailsPOWise' => $detailsPOWise,
+            'companyReportingCurrency' => $reportingCurrency,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'reportTittle' => 'Project Utilization Report'
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1250,8 +1251,6 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->sum('consumedRptAmount');
-        // $budgetAmountCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetAmount);
-        // $budgetAmount = $budgetAmountCurrencyConvertion['reportingAmount'];
 
 
 
@@ -1261,8 +1260,6 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereDate('approvedDate', '<', $fromDate);
             })
             ->sum('consumedRptAmount');
-        $budgetOpeningConsumptionCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $budgetOpeningConsumption);
-        $budgetOpeningConsumption = $budgetOpeningConsumptionCurrencyConvertion['reportingAmount'];
 
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
@@ -1288,7 +1285,10 @@ class FinancialReportAPIController extends AppBaseController
             'budgetConsumptionAmount' => $budgetAmount,
             'openingBalance' => $openingBalance,
             'closingBalance' => $closingBalance,
-            'detailsPOWise' => $detailsPOWise
+            'detailsPOWise' => $detailsPOWise,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'reportTittle' => 'Project Utilization Report'
         );
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {

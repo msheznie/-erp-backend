@@ -611,7 +611,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
         Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
-
+        Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
@@ -1308,7 +1308,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
         Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
+        Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
 
+        
         
         Route::resource('pulled-mr-details', 'PulledItemFromMRController');
         Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');

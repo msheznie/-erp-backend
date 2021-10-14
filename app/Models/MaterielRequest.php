@@ -271,6 +271,7 @@ class MaterielRequest extends Model
         'cancelledByEmpName',
         'cancelledComments',
         'cancelledDate',
+        'isSelectedToPR'
     ];
 
     /**
@@ -326,6 +327,7 @@ class MaterielRequest extends Model
         'cancelledByEmpName' => 'string',
         'cancelledComments' => 'string',
         'cancelledDate' => 'string',
+        'isSelectedToPR'  => 'integer'
     ];
 
     /**

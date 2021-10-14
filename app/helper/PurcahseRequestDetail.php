@@ -98,7 +98,7 @@ class PurcahseRequestDetail
 
         $input['budgetYear'] = $purchaseRequest->budgetYear;
         $input['itemPrimaryCode'] = (!$itemNotound) ? $item->itemPrimaryCode : null;
-        $input['itemDescription'] = (!$itemNotound) ? $item->itemDescription : $input['itemCode'];
+        $input['itemDescription'] = (!$itemNotound) ? $item->itemDescription : $input['itemCodeSystem'];
         $input['partNumber'] = (!$itemNotound) ? $item->secondaryItemCode : null;
         $input['itemFinanceCategoryID'] = (!$itemNotound) ? $item->financeCategoryMaster : null;
         $input['itemFinanceCategorySubID'] = (!$itemNotound) ? $item->financeCategorySub : null;
@@ -389,7 +389,7 @@ class PurcahseRequestDetail
                     ->where('poCancelledYN', 0)
                     ->where('manuallyClosed', 0);
                  })
-                ->where('itemCode', $input['itemCode'])
+                ->where('itemCode', $input['itemCodeSystem'])
                 ->where('manuallyClosed',0)
                 ->groupBy('erp_purchaseorderdetails.itemCode')
                 ->select(
@@ -401,7 +401,7 @@ class PurcahseRequestDetail
                 )
                 ->sum('noQty');
 
-            $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+            $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
                 ->where('companySystemID', $companySystemID)
                 ->groupBy('itemSystemCode')
                 ->sum('inOutQty');
@@ -417,7 +417,7 @@ class PurcahseRequestDetail
                     $query->where('manuallyClosed',0);
                 });
             })
-                ->where('itemCode', $input['itemCode'])
+                ->where('itemCode', $input['itemCodeSystem'])
                 ->groupBy('erp_grvdetails.itemCode')
                 ->select(
                     [
@@ -454,10 +454,14 @@ class PurcahseRequestDetail
             $data->save();
         }else {
 
-            PurchaseRequestDetails::create($input);
+           $data =  PurchaseRequestDetails::create($input);
 
         }
-        return ['status' => true , 'message' => 'Purchase Request Details saved successfully'];
+        
+
+       
+
+        return $data;
 
 
         // return $this->sendResponse($purchaseRequestDetails->toArray(), 'Purchase Request Details saved successfully');

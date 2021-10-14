@@ -1,6 +1,31 @@
 <html>
 	<table>
-	    <thead>
+	        <thead>
+            <tr>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th><b align='center' style="color: blue;">{{$reportTittle}}</b></th>
+            </tr>
+            <tr>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <td>From Date:-{{$fromDate}}</td>
+            </tr>
+            <tr>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <td>To Date:-{{$toDate}}</td>
+            </tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
+            <tr></tr>
             <tr>
               <th>Project Details</th>
             </tr>

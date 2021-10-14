@@ -28,6 +28,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\PulledItemFromMR;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Repositories\PurchaseRequestRepository;
@@ -879,9 +880,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+        $purchaseRequestID = $input['purchaseRequestID'];
+        $itemCode = $input['itemCode'];
 
+        $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchaseRequestID)->where('itemCodeSystem',$itemCode)->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
 
-        /** @var PurchaseRequestDetails $purchaseRequestDetails */
+        if(isset($total_requested_qnty)) {
+            if($total_requested_qnty->sum <  $input['quantityRequested'] ) {
+                return $this->sendError('Quantity cannot be greater than total materiel request quantity');
+            }
+        }
+        
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestDetails)) {
@@ -951,6 +960,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     }
                 }
             }
+
 
             DB::commit();
             return $this->sendResponse($purchaseRequestDetailsRes->toArray(), 'PurchaseRequestDetails updated successfully');
