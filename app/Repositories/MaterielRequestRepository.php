@@ -65,6 +65,8 @@ class MaterielRequestRepository extends BaseRepository
         'cancelledByEmpName' => 'string',
         'cancelledComments' => 'string',
         'cancelledDate' => 'string',
+        'test'  => "string",
+        'isSelectedToPR' => 'integer'
     ];
 
     /**
@@ -107,6 +109,7 @@ class MaterielRequestRepository extends BaseRepository
             }
         }
 
+
         if (array_key_exists('approved', $input)) {
             if(($input['approved'] == 0 || $input['approved'] == -1 ) && !is_null($input['approved'])) {
                 $materielRequests->where('approved', $input['approved']);
@@ -125,21 +128,9 @@ class MaterielRequestRepository extends BaseRepository
             }
         }
 
-
-        $materielRequests = $materielRequests->select(
-            ['erp_request.RequestID',
-                'erp_request.RequestCode',
-                'erp_request.comments',
-                'erp_request.location',
-                'erp_request.RequestedDate',
-                'erp_request.priority',
-                'erp_request.ConfirmedYN',
-                'erp_request.approved',
-                'erp_request.serviceLineSystemID',
-                'erp_request.documentSystemID',
-                'erp_request.refferedBackYN',
-                'erp_request.cancelledYN'
-            ]);
+        if (array_key_exists('statusNot', $input)) {
+           $details = $materielRequests->with('details');
+        }
 
         $search = $request->input('search.value');
 

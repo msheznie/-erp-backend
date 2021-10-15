@@ -602,13 +602,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
+        Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
 
+
+       
 
         Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
-
-
+        Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
+        Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
@@ -649,9 +652,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
         Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
+        Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
+
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
+        Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
@@ -1300,8 +1307,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
+        Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
+        Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
 
-    
+        
+        
+        Route::resource('pulled-mr-details', 'PulledItemFromMRController');
+        Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
+        Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
+        Route::post('update-mr-details', 'PulledItemFromMRController@updateMrDetails');
+
+        
 
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
@@ -2234,6 +2250,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
         Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
         Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
+        Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
+        Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+
+        Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank');
+
+        Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate');
+
+        Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
+        
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2376,3 +2401,7 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
+
+
+
+

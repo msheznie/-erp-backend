@@ -956,6 +956,7 @@ class CreditNoteAPIController extends AppBaseController
             $mpdf->WriteHTML($html);
             return $mpdf->Output($fileName, 'I');
         } else {
+      
             $html = view('print.credit_note', $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);

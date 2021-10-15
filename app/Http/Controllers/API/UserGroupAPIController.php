@@ -60,9 +60,13 @@ class UserGroupAPIController extends AppBaseController
      * @return Response
      */
     public function store(CreateUserGroupAPIRequest $request)
-    {
+    {   
+     
         $input = $request->all();
         $userGroups = "";
+
+       
+    
         if (isset($request->userGroupID))
         {
             $id = $request->userGroupID;
@@ -71,6 +75,26 @@ class UserGroupAPIController extends AppBaseController
             if (empty($userGroups)) {
                 return $this->sendError('User Group not found');
             }
+            if($input["defaultYN"])
+            {
+                $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("defaultYN", true)->count();
+                if($userGroupsCheck == 0)
+                {
+                    $userGroupsDefault = UserGroup::where("companyID", $input["companyID"])->where("defaultYN", true)->first();
+
+                
+                    if (isset($userGroupsDefault)) {
+                        //return $this->sendError('The company have already a default user group');
+                        return $this->sendError(trans('custom.company_has_default_user_group'), 500);
+
+                    }
+                }
+    
+            }
+            
+
+        
+
             unset($input['company']);
             foreach ($input as $key => $value) {
                 if (is_array($input[$key])){
@@ -84,11 +108,23 @@ class UserGroupAPIController extends AppBaseController
             $userGroups->companyID = $input["companyID"];
             $userGroups->description = $input["description"];
             $userGroups->isActive = 1;
+            $userGroups->defaultYN = $input["defaultYN"];
 
            $userGroups->save();
         }else{
             $input['isActive'] = 1;
+
+            if($input["defaultYN"])
+            {
+                $userGroups = UserGroup::where("companyID", $input["companyID"])->where("defaultYN", true)->first();
+                if(isset($userGroups))
+                {
+                    return $this->sendError(trans('custom.company_has_default_user_group'), 500);
+                }
+            }
+        
             $userGroups = $this->userGroupRepository->create($input);
+        
         }
         return $this->sendResponse($userGroups, 'User Group saved successfully');
     }

@@ -449,7 +449,8 @@ class ProcumentOrder extends Model
         'workOrderGenerateID' => 'integer',
         'supCategorySubICVID' => 'integer',
         'rcmActivated' => 'integer',
-        'orderType' => 'boolean'
+        'orderType' => 'boolean',
+        'projectID' => 'integer'
     ];
 
     /**
@@ -630,6 +631,12 @@ class ProcumentOrder extends Model
     {
         return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
     }
+
+    public function budget_consumed()
+    {
+        return $this->hasMany('App\Models\BudgetConsumedData', 'documentSystemID', 'purchaseOrderID');
+    }
+
 
     public function getIsWoAmendAccessAttribute()
     {

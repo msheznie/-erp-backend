@@ -242,6 +242,11 @@
                     <tr>
                         <td>{{$request->customer->customerCity}}</td>
                     </tr>
+                    <tr>
+                            <td style="width: 20%"><span class="font-weight-bold">VAT No</span></td>
+                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 78%">{{$request->customer->vatNumber}} </td>
+                        </tr>
 
                 </table>
 

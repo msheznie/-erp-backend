@@ -784,6 +784,7 @@ class Helper
                                     return ['success' => false, 'message' => 'Amount parameter are missing'];
                                 }
                             }
+
                             $output = $approvalLevel->first();
 
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
@@ -826,9 +827,11 @@ class Helper
                                 }
                             }
 
+
                             if ($output) {
                                 /** get source document master record*/
                                 $sorceDocument = $namespacedModel::find($params["autoID"]);
+
                                 $documentApproved = [];
                                 if ($output) {
                                     if ($output->approvalrole) {

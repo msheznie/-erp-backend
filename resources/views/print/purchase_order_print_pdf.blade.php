@@ -289,6 +289,15 @@
                                 @endif
                             </td>
                         </tr>
+                        <tr>
+                            <td><span class="font-weight-bold">VAT No </span></td>
+                            <td><span class="font-weight-bold">:</span></td>
+                            <td>
+                                @if ($podata->company->vatRegisteredYN == 1)
+                                    {{$podata->company->vatRegistratonNumber}}
+                                @endif
+                            </td>
+                        </tr>
                     </table>
                 </td>
             </tr>
@@ -347,6 +356,11 @@
                             <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
                             <td style="width: 2%"><span class="font-weight-bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonEmail}} </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 20%"><span class="font-weight-bold">VAT No</span></td>
+                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 78%">{{$podata->supplier->vatNumber}} </td>
                         </tr>
                     </table>
                 </td>
