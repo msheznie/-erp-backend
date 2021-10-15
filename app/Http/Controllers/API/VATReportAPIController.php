@@ -364,15 +364,13 @@ class VATReportAPIController extends AppBaseController
             foreach ($output as $val) {
                 $x++;
 
-                $data[$x]['purchaseOrderMasterID'] = isset($val->purchaseOrderMasterID)? $val->purchaseOrderMasterID : '';
-                $data[$x]['purchaseOrderDetailsID'] = isset($val->purchaseOrderDetailsID)? $val->purchaseOrderDetailsID : '';
+
                 $data[$x]['purchaseOrderCode'] = isset($val->purchaseOrderCode)? $val->purchaseOrderCode : '';
                 $data[$x]['supplierID'] = isset($val->supplierID)? $val->supplierID : '';
                 $data[$x]['supplierPrimaryCode'] = isset($val->supplierPrimaryCode)? $val->supplierPrimaryCode : '';
                 $data[$x]['supplierName'] = isset($val->supplierName)? $val->supplierName : '';
-                $data[$x]['supplierTransactionCurrencyID'] = isset($val->supplierTransactionCurrencyID)? $val->supplierTransactionCurrencyID : '';
+                $data[$x]['supplierTransactionCurrencyID'] = isset($val->supplier_currency_code)? $val->supplier_currency_code : '';
                 $data[$x]['unitCost'] = isset($val->unitCost)? $val->unitCost : '';
-                $data[$x]['VATAmountLocal'] = isset($val->VATAmountLocal)? $val->VATAmountLocal : '';
                 $data[$x]['VATAmountLocal'] = isset($val->VATAmountLocal)? $val->VATAmountLocal : '';
                 $data[$x]['netAmount'] = isset($val->netAmount)? $val->netAmount : '';
                 $data[$x]['poCurrency'] = isset($val->poCurrency)? $val->poCurrency : '';
@@ -383,11 +381,9 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['totalLogisticAmount'] = isset($val->totalLogisticAmount)? $val->totalLogisticAmount : '';
                 $data[$x]['totalLogisticVATAmount'] = isset($val->totalLogisticVATAmount)? $val->totalLogisticVATAmount : '';
                 $data[$x]['addVatOnPO'] = isset($val->addVatOnPO)? $val->addVatOnPO : '';
-                $data[$x]['itemCode'] = isset($val->itemCode)? $val->itemCode : '';
                 $data[$x]['itemPrimaryCode'] = isset($val->itemPrimaryCode)? $val->itemPrimaryCode : '';
                 $data[$x]['itemDescription'] = isset($val->itemDescription)? $val->itemDescription : '';
                 $data[$x]['supplierPartNumber'] = isset($val->supplierPartNumber)? $val->supplierPartNumber : '';
-                $data[$x]['unitOfMeasure'] = isset($val->unitOfMeasure)? $val->unitOfMeasure : '';
                 $data[$x]['unitShortCode'] = isset($val->unitShortCode)? $val->unitShortCode : '';
                 $data[$x]['receivedStatus'] = isset($val->receivedStatus)? $val->receivedStatus : '';
                 $data[$x]['qtyToReceive'] = isset($val->qtyToReceive)? $val->qtyToReceive : '';
@@ -397,14 +393,11 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['GRVcostPerUnitComRptCur'] = isset($val->GRVcostPerUnitComRptCur)? $val->GRVcostPerUnitComRptCur : '';
                 $data[$x]['total'] = isset($val->total)? $val->total : '';
                 $data[$x]['vatSubCategory'] = isset($val->vatSubCategory)? $val->vatSubCategory : '';
-                $data[$x]['grvAutoID'] = isset($val->grvAutoID)? $val->grvAutoID : '';
                 $data[$x]['grvPrimaryCode'] = isset($val->grvPrimaryCode)? $val->grvPrimaryCode : '';
                 $data[$x]['lastOfgrvDate'] = isset($val->lastOfgrvDate)? Helper::dateFormat($val->lastOfgrvDate) : '';
                 $data[$x]['grvQty'] = isset($val->grvQty)? $val->grvQty : '';
                 $data[$x]['grvQty'] = isset($val->grvQty)? $val->grvQty : '';
                 $data[$x]['grvNetAmount'] = isset($val->grvNetAmount)? $val->grvNetAmount : '';
-                $data[$x]['bookingSupInvoiceDetAutoID'] = isset($val->bookingSupInvoiceDetAutoID)? $val->bookingSupInvoiceDetAutoID : '';
-                $data[$x]['bookingSuppMasInvAutoID'] = isset($val->bookingSuppMasInvAutoID)? $val->bookingSuppMasInvAutoID : '';
                 $data[$x]['bookingInvCode'] = isset($val->bookingInvCode)? $val->bookingInvCode : '';
                 $data[$x]['secondaryRefNo'] = isset($val->secondaryRefNo)? $val->secondaryRefNo : '';
                 //$data[$x]['approvedDate'] = isset($val->approvedDate)? $val->approvedDate : '';
@@ -534,7 +527,7 @@ class VATReportAPIController extends AppBaseController
             $toDate = new Carbon($input['toDate']);
         }
 
-        return DB::select( DB::raw("SELECT
+        $sql = "SELECT
             erp_purchaseorderdetails.purchaseOrderMasterID,
             erp_purchaseorderdetails.purchaseOrderDetailsID,
             podet.purchaseOrderCode,
@@ -542,6 +535,7 @@ class VATReportAPIController extends AppBaseController
             podet.supplierPrimaryCode,
             podet.supplierName,
             podet.supplierTransactionCurrencyID,
+            podet.supplier_currency_code,
             podet.poCurrency,
             podet.RCMStatus,
             podet.poConfirmedDate,
@@ -550,7 +544,7 @@ class VATReportAPIController extends AppBaseController
             logistic.totalLogisticAmount,
             logistic.totalLogisticVATAmount,
             IF
-                ( logistic.addVatOnPO > 0, \"YES\", \"NO\" ) AS addVatOnPO,
+                ( logistic.addVatOnPO > 0, 'YES', 'NO' ) AS addVatOnPO,
             erp_purchaseorderdetails.itemCode,
             erp_purchaseorderdetails.itemPrimaryCode,
             erp_purchaseorderdetails.itemDescription,
@@ -563,9 +557,9 @@ class VATReportAPIController extends AppBaseController
                 IF
                     ( podet.manuallyClosed = 1, IFNULL( gdet.noQty, 0 ), IFNULL( erp_purchaseorderdetails.noQty, 0 ) ) - gdet.noQty 
                 ) = 0,
-                \"Fully Received\",
+                'Fully Received',
             IF
-                ( ISNULL( gdet.noQty ) OR gdet.noQty = 0, \"Not Received\", \"Partially Received\" ) 
+                ( ISNULL( gdet.noQty ) OR gdet.noQty = 0, 'Not Received', 'Partially Received' ) 
             ) AS receivedStatus,
         IF
             ( podet.manuallyClosed = 1, 0, ( IFNULL( ( erp_purchaseorderdetails.noQty - gdet.noQty ), 0 ) ) ) AS qtyToReceive,
@@ -604,9 +598,10 @@ class VATReportAPIController extends AppBaseController
                 approvedDate AS orderDate,
                 erp_purchaseordermaster.createdDateTime,
                 erp_purchaseordermaster.supplierTransactionCurrencyID,
+                currencymaster.CurrencyCode AS supplier_currency_code,
                 purchaseOrderCode,
             IF
-                ( sentToSupplier = 0, \"Not Released\", \"Released\" ) AS STATUS,
+                ( sentToSupplier = 0, 'Not Released', 'Released' ) AS STATUS,
                 supplierID,
                 supplierPrimaryCode,
                 supplierName,
@@ -619,16 +614,16 @@ class VATReportAPIController extends AppBaseController
                 approvedDate,
                 erp_purchaseordermaster.companySystemID,
                 supCont.countryName,
-                IFNULL( suppliercategoryicvmaster.categoryDescription, \"-\" ) AS icvMasterDes,
-                IFNULL( suppliercategoryicvsub.categoryDescription, \"-\" ) AS icvSubDes,
+                IFNULL( suppliercategoryicvmaster.categoryDescription, '-' ) AS icvMasterDes,
+                IFNULL( suppliercategoryicvsub.categoryDescription, '-' ) AS icvSubDes,
             IF
-                ( supCont.isLCCYN = 1, \"YES\", \"NO\" ) AS isLcc,
+                ( supCont.isLCCYN = 1, 'YES', 'NO' ) AS isLcc,
             IF
-                ( supCont.isSMEYN = 1, \"YES\", \"NO\" ) AS isSme,
+                ( supCont.isSMEYN = 1, 'YES', 'NO' ) AS isSme,
             IF
-                ( rcmActivated = 1, \"YES\", \"NO\" ) AS RCMStatus,
+                ( rcmActivated = 1, 'YES', 'NO' ) AS RCMStatus,
             IF
-                ( approved = - 1, \"YES\", \"NO\" ) AS poApproveStatus,
+                ( approved = - 1, 'YES', 'NO' ) AS poApproveStatus,
                 currencymaster.CurrencyCode AS poCurrency 
             FROM
                 erp_purchaseordermaster
@@ -722,11 +717,12 @@ class VATReportAPIController extends AppBaseController
                 JOIN erp_bookinvsuppdet d ON d.bookingSuppMasInvAutoID = m.bookingSuppMasInvAutoID 
             ) AS lastInvoice ON erp_purchaseorderdetails.purchaseOrderMasterID = `lastInvoice`.`purchaseOrderID` 
         WHERE
-            `erp_purchaseorderdetails`.`companySystemID` IN (".implode(',', $childCompanies).") 
+            `erp_purchaseorderdetails`.`companySystemID` IN (".implode(',', $childCompanies).")         
         ORDER BY
             `podet`.`approvedDate` ASC,
-            `purchaseOrderDetailsID` DESC 
-            "));
+            `purchaseOrderDetailsID` DESC";
+
+        return DB::select( DB::raw("$sql"));
     }
 
 }
