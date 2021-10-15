@@ -2046,7 +2046,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
         Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
+        Route::post('generateVATDetailReport', 'VATReportAPIController@generateVATDetailReport');
         Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
+        Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport');
 
         Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
         Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
