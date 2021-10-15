@@ -1,3 +1,10 @@
+
+<?php 
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+?>
+
+
 <html>
 	<table>
 	        <thead>
@@ -30,10 +37,13 @@
                         <td>Segment - {{$projectDetail->service_line->ServiceLineCode}}/{{$projectDetail->service_line->ServiceLineDes}}</td>
                     </tr>
                     <tr>
-                        <td>Currency - {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
+                        <td>Project Currency - {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
                     </tr>
                     <tr>
-                        <td>Amount - {{round($projectAmount, 3)}}</td>
+                      <td>Reporting  Currency :- {{$companyReportingCurrency->CurrencyName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Amount - {{round($projectAmount, 3)}}({{$companyReportingCurrency->CurrencyCode}})</td>
                     </tr>
               
 	 	</tbody>
@@ -65,11 +75,12 @@
                 @foreach ($detailsPOWise as $item)
                 <?php 
                   $date = explode(' ',$item->purchase_order_detail->approvedDate);
+                  $date = (new Carbon($date[0]))->format('d/m/Y');
                 ?>
                 <tr>
                   <td></td>
                   <td>{{$item->documentCode}}</td>
-                  <td>{{$date[0] }}</td>
+                  <td>{{$date }}</td>
                   <td>{{round($item->documentAmount, 3)}}</td>
                 </tr>
                 @endforeach
