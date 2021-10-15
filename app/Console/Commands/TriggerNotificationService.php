@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\helper\CommonJobService;
 use App\helper\NotificationService;
 use App\Jobs\NotificationInitiate;
 use Illuminate\Console\Command;
@@ -42,7 +43,8 @@ class TriggerNotificationService extends Command
     {
         Log::useFiles( NotificationService::log_file() );
 
-        $tenants = NotificationService::get_tenant_details();
+        //$tenants = NotificationService::get_tenant_details();
+        $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }

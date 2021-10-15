@@ -336,5 +336,9 @@ return [
     'from_delivery_order' => 'From Delivery Order',
     'from_sales_invoice' => 'From Sales Invoice',
     'cust_receive_payment_det_reffered_histories' => 'Cust Receive Payment Det Reffered Histories',
-    'asset_verification_master'=>'Asset Verification Master'
+    'asset_verification_master'=>'Asset Verification Master',
+    'templates' => 'Templates',
+    'no_templates' => 'There is no template assign to this bank',
+    'no_bank' => 'There is no bank selected',
+    'company_has_default_user_group' => 'The company already have a default user group'
 ];

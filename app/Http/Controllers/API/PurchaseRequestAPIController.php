@@ -40,6 +40,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\MaterielRequest;
 use App\Models\DocumentReferedHistory;
 use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
@@ -50,6 +51,7 @@ use App\Models\ItemAssigned;
 use App\Models\ProcumentOrderDetail;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\PulledItemFromMR;
 use App\Models\PrDetailsReferedHistory;
 use App\Models\Priority;
 use App\Models\PurchaseOrderDetails;
@@ -61,6 +63,7 @@ use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
+use App\Repositories\MaterielRequestRepository;
 use App\Repositories\UserRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -83,12 +86,14 @@ class PurchaseRequestAPIController extends AppBaseController
     private $purchaseRequestRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    private $materielRequestRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
+    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->materielRequestRepository = $materielRequestRepository;
     }
 
     /**
@@ -1415,6 +1420,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
             $checkItems = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->count();
+
             if ($checkItems == 0) {
                 return $this->sendError('Every request should have at least one item', 500);
             }
@@ -1444,6 +1450,19 @@ class PurchaseRequestAPIController extends AppBaseController
             );
 
             $confirm = \Helper::confirmDocument($params);
+            $datas =  PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->get();
+
+            if(isset($datas)) {
+             foreach($datas as $data) {
+                 $request = MaterielRequest::where('RequestID',$data->RequestID)->first();
+                if($request->isSelectedToPR && count($request) == 1) {
+                    $request->isSelectedToPR = false;
+                    $request->save();
+                }
+             }
+             PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->delete();
+            }
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
@@ -2562,9 +2581,195 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-      
-
     }
 
+    public function pullMrDetails(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved','cancelledYN'));
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        
+        $dataArray = [];
+
+        $search = $request->input('search.value');
+
+        $slectedMaterialRequestArray = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->pluck('RequestID')->toArray();
+
+        $materielRequests = MaterielRequest::where('approved',$input['approved'])
+        // ->leftJoin("erp_pulled_from_mr", "erp_request.RequestID", "=", "erp_pulled_from_mr.RequestID")
+        ->where('erp_request.cancelledYN',$input['cancelledYN'])
+        ->where('erp_request.serviceLineSystemID',$input['serviceLineSystemID'])
+        ->where('erp_request.companySystemID',$input['companySystemID'])
+        ->where('erp_request.isSelectedToPR',0)
+        ->with('details')->get();
+
+
+        $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
+       
+    
+        foreach($materielRequests as $ms) {
+            array_push($dataArray,$ms);
+        }
+
+
+        foreach($slectedMaterialRequest as $sm) {
+            array_push($dataArray,$sm);
+        }
+
+        
+
+        $filtered = collect($dataArray)->filter(function ($value, $key) {
+         return $value->materialIssueStatusValue == "Pending";
+        });
+
+        $filtered->all();
+
+        foreach($filtered as $materielRequest) {
+            $details = $materielRequest->details;
+            foreach($details as $detail) {
+                if($detail->item_by) {
+                    $pulledItem = PulledItemFromMR::where('RequestID',$materielRequest->RequestID)
+                    ->where('itemPrimaryCode', $detail->item_by->primaryItemCode)->first();
+                    $detail['itemPrimaryCode'] = $detail->item_by->primaryItemCode;
+                    if($pulledItem) {
+                        if($detail->item_by->itemCodeSystem == $pulledItem->itemCodeSystem) {
+                            $detail['prRqQnty'] = $pulledItem->pr_qnty;
+                            $detail['isChecked'] = true;
+                        }else {
+                            $detail['isChecked'] = false;
+                        }
+                        $materielRequest['isChecked'] = true;
+
+                    }else {
+                        $detail['isChecked'] = false;
+                    }
+                }
+            }
+        }
+
+        $dataArray = [];
+        foreach($filtered as $filterData) {
+            array_push($dataArray,$filterData);
+        }
+        return $this->sendResponse($dataArray, 'Data retreived Successfully!');
+    }
+
+    public function getItemQntyByPR(Request $request) {
+        $input = $request->input();
+        $item = $input['item'];
+        $purchase_id = $input['id'];
+
+        $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
+        $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
+       
+        $requestedQnty = $item['quantityRequested'];
+
+        if(isset($total_requested_qnty)) {
+            if($requestedQnty >  $total_requested_qnty->sum) {
+                return  $this->sendError('Requested Quantity can not be greater than materiel requested Quantity');
+            }
+        }
+
+
+        if(isset($requests)) {
+                        if($requestedQnty > $requests->sum) {
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'ASC')->get();
+
+                            $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum); //800-700  =  100
+                            foreach($pulledDetails as $pulledDetail) {
+                                $mrQnty = $pulledDetail->mr_qnty; //400
+                                if($mrQnty != $pulledDetail->pr_qnty) {
+                                    if($qntyToUpdateOnNextItem > 0 ) {
+                                        if($qntyToUpdateOnNextItem > $mrQnty) {
+                                            $maxQntyToUpdate = $mrQnty; // 400 
+
+                                            if($mrQnty >=($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem)) {
+                                                $qntyToUpdateOnNextItem =  ($requestedQnty - $maxQntyToUpdate > 0) ? $requestedQnty - $maxQntyToUpdate : 0;
+                                                $pulledDetail->pr_qnty = $maxQntyToUpdate;
+                                                $pulledDetail->save();
+                                            }else {
+                                                $pulledDetail->pr_qnty = $qntyToUpdateOnNextItem;
+                                                $qntyToUpdateOnNextItem = 0;
+                                                $pulledDetail->save();
+                                            }
+                                           
+                                         
+                                            
+                                        }else {
+                                            $pulledDetail->pr_qnty += $qntyToUpdateOnNextItem;
+                                            $qntyToUpdateOnNextItem = 0;
+                                            $pulledDetail->save();
+    
+                                        }
+                                    }else {
+                                        $pulledDetail->pr_qnty = 0;
+                                    }
+                                }
+                            }
+            
+                        }else {
+                            $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'DESC')->get();
+                            $qntyToUpdateOnNextItem = $requestedQnty; //3000 
+                            $qntyToUpdate = null;
+                            $difference = ($requests->sum - ($requestedQnty));  //3050 - 3000
+                            foreach($pulledDetails as $pulledDetail) {
+                                if($difference > 0  ) {
+                                    if(($pulledDetail->pr_qnty) != 0 ) {
+                                        if($difference > $pulledDetail->pr_qnty) { // 50 > 3000
+                                            if($qntyToUpdate == null) {
+                                                $qntyToUpdate = $pulledDetail->pr_qnty;
+                                            }
+                                            $pulledDetail->pr_qnty -= $qntyToUpdate; //0
+                                            $qntyToUpdate = $difference - $qntyToUpdate; //4000 - 2000
+                                            $difference -= $qntyToUpdate;
+                                            $pulledDetail->save();
+                                        }else {
+                                            $pulledDetail->pr_qnty =  $pulledDetail->pr_qnty  - $difference;
+                                            $difference = 0;
+                                            $pulledDetail->save();
+
+                                        }  
+                                    }
+
+                                }else {
+                                    // $pulledDetail->pr_qnty = 0;
+                                }
+                            }
+
+                            
+                        }
+
+           
+            return $this->sendResponse($requests, 'Quantity updated successfully!');
+        }else {
+            return $this->sendResponse($requests, 'Data not found!');
+        }            
+    }
+
+    public function isPulledFromMR(Request $request) {
+        $input = $request->all();
+        $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->get();
+        if(count($pulledDetails) > 0) {
+            return $this->sendResponse(true, 'Data found!');
+        }else {
+            return $this->sendResponse(false, 'Data not found!');
+        }
+    }
+
+    public function delteItemQntyPR(Request $request) {
+        $input = $request->all();
+        $item = $input['item'];
+        $data = PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->first();
+        if(isset($data)) {
+            $id =$data->RequestID;
+            $request = MaterielRequest::find($id);
+            $request->isSelectedToPR =  false;
+            $request->save();
+        }
+        PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->delete();
+    }
 }

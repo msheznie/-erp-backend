@@ -59,6 +59,7 @@ use App\Models\UnbilledGRV;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
@@ -158,6 +159,26 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('Stamp date can not be greater than current date', 500);
             }
         }
+
+        $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['grvLocation'])
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->first();
+
+        if (!$warehouse) {
+            return $this->sendError('Location not found', 500);
+        }
+
+        if ($warehouse->manufacturingYN == 1) {
+            if (is_null($warehouse->WIPGLCode)) {
+                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+            } else {
+                $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
+                if (!$checkGLIsAssigned) {
+                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                }
+            }
+        }
+
 
         $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
@@ -376,6 +397,17 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Selected location is not active. Please select an active location');
         }
 
+        if ($warehouse->manufacturingYN == 1) {
+            if (is_null($warehouse->WIPGLCode)) {
+                return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+            } else {
+                $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
+                if (!$checkGLIsAssigned) {
+                    return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                }
+            }
+        }
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
@@ -584,6 +616,21 @@ class GRVMasterAPIController extends AppBaseController
                     $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'];
 
                     $updateGRVDetail_log_detail->save();
+
+
+                    if ($row['includePLForGRVYN'] == -1 && !is_null($row['financeGLcodePLSystemID']) && $row['financeGLcodePLSystemID'] > 0) {
+                        $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodePLSystemID'], $gRVMaster->companySystemID);
+                        if (!$checkGLIsAssigned) {
+                            return $this->sendError('PL account is not assigned to the company', 500);
+                        }
+                    }
+
+                    if (!is_null($row['financeGLcodebBSSystemID']) && $row['financeGLcodebBSSystemID'] > 0) {
+                        $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($row['financeGLcodebBSSystemID'], $gRVMaster->companySystemID);
+                        if (!$checkGLIsAssigned) {
+                            return $this->sendError('BS account is not assigned to the company', 500);
+                        }
+                    }
                 }
             }
 

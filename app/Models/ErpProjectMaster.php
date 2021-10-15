@@ -246,6 +246,10 @@ class ErpProjectMaster extends Model
         return $this->belongsTo('App\Models\ServiceLine', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
+    public function glEstimatedAmount(){
+        return $this->belongsTo('App\Models\ProjectGlDetail', 'id', 'projectID');
+    }
+
     public function gl_details(){
         return $this->hasMany('App\Models\ProjectGlDetail', 'projectID', 'id');
     }
