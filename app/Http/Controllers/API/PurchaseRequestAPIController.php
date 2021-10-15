@@ -2679,31 +2679,40 @@ class PurchaseRequestAPIController extends AppBaseController
                         if($requestedQnty > $requests->sum) {
                             $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'ASC')->get();
 
-                            $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum); //800-700  =  100
+                            $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum); //600-450  =  150
                             foreach($pulledDetails as $pulledDetail) {
                                 $mrQnty = $pulledDetail->mr_qnty; //400
                                 if($mrQnty != $pulledDetail->pr_qnty) {
                                     if($qntyToUpdateOnNextItem > 0 ) {
-                                        if($qntyToUpdateOnNextItem > $mrQnty) {
+                                        if($qntyToUpdateOnNextItem > $mrQnty) { // 150 > 3000
                                             $maxQntyToUpdate = $mrQnty; // 400 
-
+                                                  //400          //800
                                             if($mrQnty >=($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem)) {
-                                                $qntyToUpdateOnNextItem =  ($requestedQnty - $maxQntyToUpdate > 0) ? $requestedQnty - $maxQntyToUpdate : 0;
-                                                $pulledDetail->pr_qnty = $maxQntyToUpdate;
-                                                $pulledDetail->save();
-                                            }else {
-                                                $pulledDetail->pr_qnty = $qntyToUpdateOnNextItem;
+                                                $pulledDetail->pr_qnty += $mrQnty - ($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem) ;
                                                 $qntyToUpdateOnNextItem = 0;
                                                 $pulledDetail->save();
                                             }
-                                           
-                                         
-                                            
-                                        }else {
-                                            $pulledDetail->pr_qnty += $qntyToUpdateOnNextItem;
-                                            $qntyToUpdateOnNextItem = 0;
-                                            $pulledDetail->save();
+                                        }else {   
+                                            if($pulledDetail->pr_qnt != $mrQnty) {
+                                                if($pulledDetail->pr_qnty != 0) {
+                                                    $diff = $qntyToUpdateOnNextItem;
+                                                    if($mrQnty >= ($diff + $pulledDetail->pr_qnty)) {
+                                                        $pulledDetail->pr_qnty += $diff;
+                                                        $qntyToUpdateOnNextItem -= $diff;
+                                                        $pulledDetail->save();
+                                                    }else {
+                                                        $pulledDetail->pr_qnty += $diff;
+                                                        $qntyToUpdateOnNextItem =  0;
+                                                        $pulledDetail->save();
+                                                    }
+                                                }else {
+                                                   
+                                                    $pulledDetail->pr_qnty += $qntyToUpdateOnNextItem;
+                                                    $qntyToUpdateOnNextItem = 0;
+                                                    $pulledDetail->save();
     
+                                                }
+                                            }     
                                         }
                                     }else {
                                         $pulledDetail->pr_qnty = 0;
