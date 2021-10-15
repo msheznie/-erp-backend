@@ -232,6 +232,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $priorities = Priority::all();
 
+        $companyCurrency = Company::find($companyId);
+
+
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                           array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -288,7 +291,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'priorities' => $priorities,
             'financialYears' => $financialYears,
-            'conditions' => $conditions
+            'conditions' => $conditions,
+            'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
