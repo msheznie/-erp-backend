@@ -1231,9 +1231,10 @@ class FinancialReportAPIController extends AppBaseController
         $projectID = $request->projectID;
          $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
-        $companySystemID = $projectDetail['companySystemID'];
+         $companySystemID = $projectDetail['companySystemID'];
         $transactionCurrencyID = $projectDetail->currency['currencyID'];
         $documentCurrencyID = $projectDetail->currency['currencyID'];
+        $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
@@ -1292,7 +1293,8 @@ class FinancialReportAPIController extends AppBaseController
             'detailsPOWise' => $detailsPOWise,
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
-            'reportTittle' => 'Project Utilization Report'
+            'reportTittle' => 'Project Utilization Report',
+            'companyReportingCurrency' => $reportingCurrency->reportingcurrency,
         );
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {
