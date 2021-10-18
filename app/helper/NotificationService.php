@@ -115,6 +115,11 @@ class NotificationService
                         $details = [];
                         break;
 
+                    case 9:
+                        $details = RolReachedNotification::getReOrderLevelReachedNotification($companyID, $beforeAfter);
+                        $subject = 'Inventory stock reaches a  re-order level';
+                        break;
+
                     default:
                         Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
 
@@ -154,6 +159,9 @@ class NotificationService
                             break;
                         case 5:
                             $emailContent = BudgetLimitNotification::getEmailContent($details, $notificationUserVal[$key]['empName']);
+                            break;
+                        case 9:
+                            $emailContent = RolReachedNotification::getReOrderLevelReachedEmailContent($details, $notificationUserVal[$key]['empName']);
                             break;
                         default:
                             Log::error("Email content configuration not done for scenario {$scenario_des}");
