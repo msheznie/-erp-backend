@@ -626,18 +626,22 @@ class VATReportAPIController extends AppBaseController
                 SELECT m.bookingSuppMasInvAutoID, d.bookingSupInvoiceDetAutoID, m.bookingInvCode, t.lastOfInvoiceDate,
                 d.grvAutoID, d.purchaseOrderID, d.totTransactionAmount AS invoiceTotalAmount, d.VATAmount AS invoiceVatAmount 
                 FROM erp_bookinvsuppmaster AS m
+                JOIN erp_bookinvsuppdet d ON d.bookingSuppMasInvAutoID = m.bookingSuppMasInvAutoID
                 JOIN (
-                    SELECT max( erp_bookinvsuppmaster.supplierInvoiceDate ) AS lastOfInvoiceDate 
+                    SELECT max( erp_bookinvsuppmaster.supplierInvoiceDate ) AS lastOfInvoiceDate, purchaseOrderID
                     FROM ( erp_bookinvsuppmaster 
                         INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
                     ) 
                     WHERE bookingSupInvoiceDetAutoID > 0 
                     AND erp_bookinvsuppmaster.companySystemID IN (".implode(',', $childCompanies).")
                     GROUP BY erp_bookinvsuppdet.purchaseOrderID 
-                ) t ON m.supplierInvoiceDate = t.lastOfInvoiceDate
-                JOIN erp_bookinvsuppdet d ON d.bookingSuppMasInvAutoID = m.bookingSuppMasInvAutoID 
+                ) t ON t.purchaseOrderID = d.purchaseOrderID AND m.supplierInvoiceDate = t.lastOfInvoiceDate                
             ) AS lastInvoice ON erp_purchaseorderdetails.purchaseOrderMasterID = `lastInvoice`.`purchaseOrderID` 
             WHERE erp_purchaseorderdetails.companySystemID IN (".implode(',', $childCompanies).")         
+            GROUP BY erp_purchaseorderdetails.purchaseOrderDetailsID, 
+            erp_purchaseorderdetails.itemCode,
+            gdet2.grvAutoID, 
+            lastInvoice.bookingSuppMasInvAutoID
             ORDER BY podet.approvedDate ASC, purchaseOrderDetailsID DESC";
 
         return DB::select( DB::raw("$sql"));
