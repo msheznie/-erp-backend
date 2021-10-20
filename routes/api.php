@@ -164,6 +164,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
+        Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus');
         Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
         Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
 
@@ -611,7 +612,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
         Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
-        Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
+
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
@@ -1308,16 +1309,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
         Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
-        Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
 
-        
         
         Route::resource('pulled-mr-details', 'PulledItemFromMRController');
         Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
         Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
-        Route::post('update-mr-details', 'PulledItemFromMRController@updateMrDetails');
 
-        
+       
 
         Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
         Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
