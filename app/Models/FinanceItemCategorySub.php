@@ -58,6 +58,7 @@ class FinanceItemCategorySub extends Model
         'financeGLcodeRevenueSystemID',
         'financeGLcodeRevenue',
         'includePLForGRVYN',
+        'expiryYN',
         'isActive',
         'createdDateTime',
         'createdUserGroup',
@@ -84,6 +85,7 @@ class FinanceItemCategorySub extends Model
         'financeGLcodeRevenueSystemID' => 'integer',
         'financeGLcodeRevenue' => 'string',
         'includePLForGRVYN' => 'integer',
+        'expiryYN' => 'integer',
         'isActive' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
@@ -121,6 +123,11 @@ class FinanceItemCategorySub extends Model
     public function finance_gl_code_revenue()
     {
         return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodeRevenueSystemID','chartOfAccountSystemID');
+    }
+
+    public function finance_item_category_master()
+    {
+        return $this->belongsTo(\App\Models\FinanceItemCategoryMaster::class,'itemCategoryID','itemCategoryID');
     }
     
 }
