@@ -157,6 +157,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
+        Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
+        Route::get('exportPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@exportPurchaseRequestHistory');
 
         Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
         Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
