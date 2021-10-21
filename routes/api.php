@@ -163,6 +163,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
         Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
+        Route::post('purchase-request-validate-item', 'PurchaseRequestAPIController@validateItem');
+
+
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
         Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus');
         Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
