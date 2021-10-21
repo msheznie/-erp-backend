@@ -412,6 +412,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
                 ->where('chartOfAccountSystemID', $glCode)
                 ->first();
 
+
+            if (empty($bankGL)){
+                return $this->sendError('Bank details not found.', 500);
+            }
+
             if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
                 return $this->sendError('Cannot add. You are trying to select the same account.', 500);
             }

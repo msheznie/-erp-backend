@@ -2597,15 +2597,10 @@ class PurchaseRequestAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        
         $dataArray = [];
-
         $search = $request->input('search.value');
-
         $slectedMaterialRequestArray = PulledItemFromMR::where('purcahseRequestID',$input['purcahseRequestID'])->pluck('RequestID')->toArray();
-
         $materielRequests = MaterielRequest::where('approved',$input['approved'])
-        // ->leftJoin("erp_pulled_from_mr", "erp_request.RequestID", "=", "erp_pulled_from_mr.RequestID")
         ->where('erp_request.cancelledYN',$input['cancelledYN'])
         ->where('erp_request.serviceLineSystemID',$input['serviceLineSystemID'])
         ->where('erp_request.companySystemID',$input['companySystemID'])
@@ -2614,20 +2609,19 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         $slectedMaterialRequest = MaterielRequest::whereIn('RequestID',$slectedMaterialRequestArray)->with('details')->get();
-       
-    
         foreach($materielRequests as $ms) {
             array_push($dataArray,$ms);
         }
-
 
         foreach($slectedMaterialRequest as $sm) {
             array_push($dataArray,$sm);
         }
 
-        
+      
+        $mrDatas =  collect($dataArray);
+        $sorted_mrDatas =  $mrDatas->sortBy('RequestID');
 
-        $filtered = collect($dataArray)->filter(function ($value, $key) {
+        $filtered = $sorted_mrDatas->filter(function ($value, $key) {
          return $value->materialIssueStatusValue == "Pending";
         });
 
@@ -2667,10 +2661,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->input();
         $item = $input['item'];
         $purchase_id = $input['id'];
-
         $requests = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(pr_qnty) as sum')->first();
         $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
-       
         $requestedQnty = $item['quantityRequested'];
 
         if(isset($total_requested_qnty)) {
@@ -2679,19 +2671,16 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-
         if(isset($requests)) {
                         if($requestedQnty > $requests->sum) {
                             $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'ASC')->get();
-
-                            $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum); //600-450  =  150
+                            $qntyToUpdateOnNextItem = (($requestedQnty) - $requests->sum);
                             foreach($pulledDetails as $pulledDetail) {
-                                $mrQnty = $pulledDetail->mr_qnty; //400
+                                $mrQnty = $pulledDetail->mr_qnty;
                                 if($mrQnty != $pulledDetail->pr_qnty) {
                                     if($qntyToUpdateOnNextItem > 0 ) {
-                                        if($qntyToUpdateOnNextItem > $mrQnty) { // 150 > 3000
-                                            $maxQntyToUpdate = $mrQnty; // 400 
-                                                  //400          //800
+                                        if($qntyToUpdateOnNextItem > $mrQnty) {
+                                            $maxQntyToUpdate = $mrQnty;
                                             if($mrQnty >=($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem)) {
                                                 $pulledDetail->pr_qnty += $mrQnty - ($pulledDetail->pr_qnty+$qntyToUpdateOnNextItem) ;
                                                 $qntyToUpdateOnNextItem = 0;
@@ -2706,8 +2695,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                                         $qntyToUpdateOnNextItem -= $diff;
                                                         $pulledDetail->save();
                                                     }else {
-                                                        $pulledDetail->pr_qnty += $diff;
-                                                        $qntyToUpdateOnNextItem =  0;
+                                                        $qntyToUpdateOnNextItem =  $diff - ($mrQnty - $pulledDetail->pr_qnty);
+                                                        $pulledDetail->pr_qnty = $mrQnty;
                                                         $pulledDetail->save();
                                                     }
                                                 }else {
@@ -2727,34 +2716,37 @@ class PurchaseRequestAPIController extends AppBaseController
             
                         }else {
                             $pulledDetails = PulledItemFromMR::where('purcahseRequestID',$purchase_id)->where('itemCodeSystem',$item['itemCode'])->orderBy('RequestID', 'DESC')->get();
-                            $qntyToUpdateOnNextItem = $requestedQnty; //3000 
+                          
+                            $qntyToUpdateOnNextItem = $requestedQnty;
                             $qntyToUpdate = null;
-                            $difference = ($requests->sum - ($requestedQnty));  //3050 - 3000
+                            $difference = ($requests->sum - ($requestedQnty));
                             foreach($pulledDetails as $pulledDetail) {
-                                if($difference > 0  ) {
+                                if($difference > 0){
                                     if(($pulledDetail->pr_qnty) != 0 ) {
-                                        if($difference > $pulledDetail->pr_qnty) { // 50 > 3000
+                                        if($difference > $pulledDetail->pr_qnty) {
                                             if($qntyToUpdate == null) {
                                                 $qntyToUpdate = $pulledDetail->pr_qnty;
                                             }
-                                            $pulledDetail->pr_qnty -= $qntyToUpdate; //0
-                                            $qntyToUpdate = $difference - $qntyToUpdate; //4000 - 2000
-                                            $difference -= $qntyToUpdate;
+                                            $pulledDetail->pr_qnty -= $qntyToUpdate;
+                                            $qntyToUpdate = $difference - $qntyToUpdate; 
+                                            $difference = $qntyToUpdate;
                                             $pulledDetail->save();
                                         }else {
-                                            $pulledDetail->pr_qnty =  $pulledDetail->pr_qnty  - $difference;
-                                            $difference = 0;
-                                            $pulledDetail->save();
-
+                                            if(($pulledDetail->pr_qnty  - $difference) > 0) {
+                                                $pulledDetail->pr_qnty =  $pulledDetail->pr_qnty  - $difference;
+                                                $difference = 0;
+                                                $pulledDetail->save();
+                                            }else {
+                                                $difference -=  $pulledDetail->pr_qnty;
+                                                $qntyToUpdate = $difference;
+                                                $pulledDetail->pr_qnty = 0;
+                                                $pulledDetail->save();
+                                            }
                                         }  
                                     }
 
-                                }else {
-                                    // $pulledDetail->pr_qnty = 0;
                                 }
                             }
-
-                            
                         }
 
            
@@ -2777,12 +2769,14 @@ class PurchaseRequestAPIController extends AppBaseController
     public function delteItemQntyPR(Request $request) {
         $input = $request->all();
         $item = $input['item'];
-        $data = PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->first();
-        if(isset($data)) {
-            $id =$data->RequestID;
-            $request = MaterielRequest::find($id);
-            $request->isSelectedToPR =  false;
-            $request->save();
+        $datas = PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->get();
+        if(isset($datas)) {
+            foreach($datas as $data) {
+                $id =$data->RequestID;
+                $request = MaterielRequest::find($id);
+                $request->isSelectedToPR =  false;
+                $request->save();
+            }
         }
         PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->delete();
     }
