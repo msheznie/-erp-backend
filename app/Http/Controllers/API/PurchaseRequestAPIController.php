@@ -65,6 +65,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\MaterielRequestRepository;
 use App\Repositories\UserRepository;
+use App\helper\PurcahseRequestDetail;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -2784,5 +2785,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $request->save();
         }
         PulledItemFromMR::where('purcahseRequestID',$input['id'])->where('itemCodeSystem',$item['itemCode'])->delete();
+    }
+
+    public function validateItem(Request $request) {
+        $input = $request->all();
+        $add = app()->make(PurcahseRequestDetail::class);
+        $purchaseRequestDetailsValidation = $add->validateItemOnly($input);
+        return $purchaseRequestDetailsValidation;
     }
 }
