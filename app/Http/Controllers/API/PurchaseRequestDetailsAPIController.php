@@ -1227,4 +1227,115 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+
+    public function getItemMasterPurchaseRequestHistory(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $purchaseRequestDetails = DB::table('erp_purchaserequestdetails')
+          ->leftJoin('units', 'erp_purchaserequestdetails.unitOfMeasure', '=', 'units.UnitID')
+          ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
+          ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
+          ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+        ->select('erp_purchaserequestdetails.purchaseRequestID',
+            'erp_purchaserequestdetails.companyID',
+            'companymaster.CompanyName',
+            'erp_purchaserequest.purchaseRequestCode',
+            'erp_purchaserequest.supplierCodeSystem',
+            'erp_purchaserequest.supplierName',
+             'erp_purchaserequestdetails.partNumber',
+             'erp_purchaserequestdetails.unitOfMeasure',
+             'erp_purchaserequestdetails.quantityRequested',
+             'units.UnitShortCode',
+             'erp_purchaserequestdetails.totalCost',
+             'currencymaster.CurrencyCode',
+             'currencymaster.DecimalPlaces',
+             'erp_purchaserequest.PRRequestedDate'
+            )
+        ->paginate(15);
+
+    return $this->sendResponse($purchaseRequestDetails, 'Purchase Order Details retrieved successfully');
+
+
+
+    }
+
+
+    public function exportPurchaseRequestHistory(Request $request)
+    {
+
+        $type = $request['type'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+        $data = [];
+        $purchaseRequestDetails = DB::table('erp_purchaserequestdetails')
+        ->leftJoin('units', 'erp_purchaserequestdetails.unitOfMeasure', '=', 'units.UnitID')
+        ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
+        ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
+        ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+      ->select('erp_purchaserequestdetails.purchaseRequestID',
+          'erp_purchaserequestdetails.companyID',
+          'companymaster.CompanyName',
+          'erp_purchaserequest.purchaseRequestCode',
+          'erp_purchaserequest.supplierCodeSystem',
+          'erp_purchaserequest.supplierName',
+           'erp_purchaserequestdetails.partNumber',
+           'erp_purchaserequestdetails.unitOfMeasure',
+           'erp_purchaserequestdetails.quantityRequested',
+           'units.UnitShortCode',
+           'erp_purchaserequestdetails.totalCost',
+           'currencymaster.CurrencyCode',
+           'currencymaster.DecimalPlaces',
+           'erp_purchaserequest.PRRequestedDate'
+          )
+      ->get();
+
+        foreach ($purchaseRequestDetails as $order) {
+            $data[] = array(
+                //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
+                'Company Name' => $order->CompanyName,
+                'Request Code' => $order->purchaseRequestCode,
+                'Supplier Code' => $order->supplierCodeSystem,
+                'Requested Date' => date("d/m/Y", strtotime($order->PRRequestedDate)),
+                'supplier Name' => $order->supplierName,
+                'Part Number' => $order->partNumber,
+                'UOM' => $order->UnitShortCode,
+                'Currency' => $order->CurrencyCode,
+                'Requested Qty' => $order->quantityRequested,
+                'Total Cost' => $order->totalCost,
+            );
+        }
+
+        \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
+
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse($csv, 'successfully export');
+    }
+
+
 }
