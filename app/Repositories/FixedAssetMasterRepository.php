@@ -134,6 +134,7 @@ class FixedAssetMasterRepository extends BaseRepository
                                                 }
                                             }, 'item_by', 'localcurrency', 'rptcurrency'])
                                             ->whereHas('item_by', function ($q) {
+                                                $q->where('financeCategoryMaster', 3);
                                             })->whereHas('grv_master', function ($q) use ($search) {
                                                 $q->where('grvConfirmedYN', 1);
                                                 $q->where('approved', -1);
