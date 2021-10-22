@@ -669,9 +669,12 @@ class TaxVatCategoriesAPIController extends AppBaseController
         foreach ($items as $key => $value) {
             $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
 
+            $subcategory = TaxVatCategories::find($value['vatSubCategoryID']);
+
             $updateData = [
                 'vatMasterCategoryID' => $value['vatMasterCategoryID'],
-                'vatSubCategoryID' => $value['vatSubCategoryID']
+                'vatSubCategoryID' => $value['vatSubCategoryID'],
+                'exempt_vat_portion' => (isset($value['exempt_vat_portion']) && $subcategory && $subcategory->subCatgeoryType == 1) ? $value['exempt_vat_portion'] : 0,
             ];
 
             $res = PurchaseOrderDetails::where('purchaseOrderDetailsID', $value['purchaseOrderDetailsID'])
