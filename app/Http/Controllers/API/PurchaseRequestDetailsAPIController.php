@@ -1246,6 +1246,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
           ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
           ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
           ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+          ->where('erp_purchaserequestdetails.itemCode', $request['itemCodeSystem'])
+          ->whereIn('erp_purchaserequest.companySystemID', $subCompanies)
         ->select('erp_purchaserequestdetails.purchaseRequestID',
             'erp_purchaserequestdetails.companyID',
             'companymaster.CompanyName',
@@ -1263,7 +1265,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             )
         ->paginate(15);
 
-    return $this->sendResponse($purchaseRequestDetails, 'Purchase Order Details retrieved successfully');
+    return $this->sendResponse($purchaseRequestDetails, 'Purchase Request Details retrieved successfully');
 
 
 
@@ -1289,6 +1291,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
         ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
         ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+        ->where('erp_purchaserequestdetails.itemCode', $request['itemCodeSystem'])
+        ->whereIn('erp_purchaserequest.companySystemID', $subCompanies)
       ->select('erp_purchaserequestdetails.purchaseRequestID',
           'erp_purchaserequestdetails.companyID',
           'companymaster.CompanyName',
