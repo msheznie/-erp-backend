@@ -596,7 +596,7 @@ class BudgetMasterAPIController extends AppBaseController
             $reportData = $reportData->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,erp_budgetconsumeddata.companyFinanceYearID, 
                                             Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
-                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID = null)
+                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
                                             GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
                                             function ($join) {
@@ -609,7 +609,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
                                                Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
                                                erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
-                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID = null)) GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID IS NULL)) GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
                                                (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
                                         function ($join) {
                                             $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
@@ -623,7 +623,7 @@ class BudgetMasterAPIController extends AppBaseController
             $reportData = $reportData->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,erp_budgetconsumeddata.companyFinanceYearID, 
                                             Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
-                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID = null)
+                                            erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 AND (erp_budgetconsumeddata.projectID = 0 OR erp_budgetconsumeddata.projectID IS NULL)
                                             GROUP BY erp_budgetconsumeddata.companySystemID, 
                                             erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.companyFinanceYearID) as ca'),
                                     function ($join) {
@@ -635,7 +635,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
                                                Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseordermaster.budgetYear FROM 
                                                erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
-                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID = null))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                                               AND ((erp_purchaseordermaster.poCancelledYN)=0) AND (erp_purchaseordermaster.projectID = 0 OR erp_purchaseordermaster.projectID IS NULL))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
                                                (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
                                         function ($join) {
                                             $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')

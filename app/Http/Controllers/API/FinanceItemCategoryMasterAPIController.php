@@ -117,7 +117,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         }
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
-                                                         ->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
+                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
                                                          ->select('financeitemcategorysub.*');
 
 
@@ -263,5 +263,14 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategoryMaster->delete();
 
         return $this->sendResponse($id, 'Finance Item Category Master deleted successfully');
+    }
+
+    public function getFinanceItemCategoryMasterExpiryStatus(Request $request){
+        // $itemCategoryID = $request['itemCategoryID'];
+        $itemCategoryID = $request->all();
+
+        $expiryStatus = FinanceItemCategoryMaster::select('exipryYN')->where('itemCategoryID',$itemCategoryID)->first();
+
+        return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
     }
 }

@@ -1027,17 +1027,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function getQtyOrderDetails(Request $request){
 
         $input = $request->all();
-
         $validator = \Validator::make($input, [
             'companySystemID' => 'required',
             'itemCode' => 'required',
             'requestId' =>'required'
         ]);
-
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
 
         $pr = PurchaseRequest::where('purchaseRequestID',$input['requestId'])->first();
         if(empty($pr)){
@@ -1045,8 +1042,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         $companySystemID = $input['companySystemID'];
-
-
         $childCompanies = Helper::getSimilarGroupCompanies($companySystemID);
 
 
@@ -1194,9 +1189,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
-           
-
-
             if ($purchaseRequest->cancelledYN == -1) {
                 return $this->sendError('This Purchase Request already closed. You can not add.', 500);
             }
@@ -1224,26 +1216,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function addAllItemsToPurchaseRequest(Request $request) {
 
         $input = $request->all();
-
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
         ->first();
-
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                     ->where('companySystemID', $purchaseRequest->companySystemID)
                     ->first();
-        
             if ($allowFinanceCategory) {
                 $policy = $allowFinanceCategory->isYesNO;
-
                 if ($policy == 0) {
                     if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
                         return ['status' => false , 'message' => 'Category is not found.'];
-
                     }
                     $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                         ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
                         ->first();
-
                     if ($pRDetailExistSameItem) {
                         if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
                             return ['status' => false , 'message' => 'You cannot add different category item'];
@@ -1256,13 +1242,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $validationFailedItems = [];
         $totalItemCount = count($itemMasters);
         foreach($itemMasters as $item) {
-
             $data = [
                 "companySystemID" => $input['companySystemID'],
                 "purcahseRequestID" => $input['purchaseRequestID'],
                 "itemCodeSystem" => $item->itemCodeSystem
             ];
-
             $add = app()->make(PurcahseRequestDetail::class);
             $purchaseRequestDetailsValidation = $add->validateItemOnly($data);
             if(!$purchaseRequestDetailsValidation['status']) {
@@ -1270,30 +1254,134 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         }
 
-
         if(count($validationFailedItems) > 0) {
             $addedItems = $totalItemCount - count($validationFailedItems);
-            $items_to_add = $itemMasters->diff(collect($validationFailedItems));
-            
-            foreach($items_to_add as $item_to_add) {
-                $name = $item_to_add->barcode.'|'.$item_to_add->itemDescription;
+            $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
+            foreach($itemsToAdd as $itemToAdd) {
+                $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
                 $data = ([
                     "companySystemID" => $input['companySystemID'],
                     "purchaseRequestID" => $input['purchaseRequestID'],
                     "partNumber" =>  "-",
-                    "itemCode" => $item_to_add->itemCodeSystem,
-                    "itemPrimaryCode" => $item_to_add->primaryCode,
-                    "itemDescription" => $item_to_add->itemDescription,
+                    "itemCode" => $itemToAdd->itemCodeSystem,
+                    "itemPrimaryCode" => $itemToAdd->primaryCode,
+                    "itemDescription" => $itemToAdd->itemDescription,
                     "isMRPulled" => false
                 ]);
-
                 $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
             }
-
-
-            return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($items_to_add).' has been added'];
+            return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($itemsToAdd).' has been added'];
         }
-
         return ['status' => true , 'message' => 'Item reterived Succesfully'];
     }
+
+    public function getItemMasterPurchaseRequestHistory(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $purchaseRequestDetails = DB::table('erp_purchaserequestdetails')
+          ->leftJoin('units', 'erp_purchaserequestdetails.unitOfMeasure', '=', 'units.UnitID')
+          ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
+          ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
+          ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+        ->select('erp_purchaserequestdetails.purchaseRequestID',
+            'erp_purchaserequestdetails.companyID',
+            'companymaster.CompanyName',
+            'erp_purchaserequest.purchaseRequestCode',
+            'erp_purchaserequest.supplierCodeSystem',
+            'erp_purchaserequest.supplierName',
+             'erp_purchaserequestdetails.partNumber',
+             'erp_purchaserequestdetails.unitOfMeasure',
+             'erp_purchaserequestdetails.quantityRequested',
+             'units.UnitShortCode',
+             'erp_purchaserequestdetails.totalCost',
+             'currencymaster.CurrencyCode',
+             'currencymaster.DecimalPlaces',
+             'erp_purchaserequest.PRRequestedDate'
+            )
+        ->paginate(15);
+
+    return $this->sendResponse($purchaseRequestDetails, 'Purchase Order Details retrieved successfully');
+
+
+
+    }
+
+
+    public function exportPurchaseRequestHistory(Request $request)
+    {
+
+        $type = $request['type'];
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+        $data = [];
+        $purchaseRequestDetails = DB::table('erp_purchaserequestdetails')
+        ->leftJoin('units', 'erp_purchaserequestdetails.unitOfMeasure', '=', 'units.UnitID')
+        ->Join('companymaster', 'erp_purchaserequestdetails.companyID', '=', 'companymaster.CompanyID')
+        ->Join('erp_purchaserequest', 'erp_purchaserequestdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
+        ->leftJoin('currencymaster', 'erp_purchaserequest.currency', '=', 'currencymaster.currencyID')
+      ->select('erp_purchaserequestdetails.purchaseRequestID',
+          'erp_purchaserequestdetails.companyID',
+          'companymaster.CompanyName',
+          'erp_purchaserequest.purchaseRequestCode',
+          'erp_purchaserequest.supplierCodeSystem',
+          'erp_purchaserequest.supplierName',
+           'erp_purchaserequestdetails.partNumber',
+           'erp_purchaserequestdetails.unitOfMeasure',
+           'erp_purchaserequestdetails.quantityRequested',
+           'units.UnitShortCode',
+           'erp_purchaserequestdetails.totalCost',
+           'currencymaster.CurrencyCode',
+           'currencymaster.DecimalPlaces',
+           'erp_purchaserequest.PRRequestedDate'
+          )
+      ->get();
+
+        foreach ($purchaseRequestDetails as $order) {
+            $data[] = array(
+                //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
+                'Company Name' => $order->CompanyName,
+                'Request Code' => $order->purchaseRequestCode,
+                'Supplier Code' => $order->supplierCodeSystem,
+                'Requested Date' => date("d/m/Y", strtotime($order->PRRequestedDate)),
+                'supplier Name' => $order->supplierName,
+                'Part Number' => $order->partNumber,
+                'UOM' => $order->UnitShortCode,
+                'Currency' => $order->CurrencyCode,
+                'Requested Qty' => $order->quantityRequested,
+                'Total Cost' => $order->totalCost,
+            );
+        }
+
+        \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
+
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse($csv, 'successfully export');
+    }
+
+
 }
