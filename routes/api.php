@@ -134,7 +134,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
         Route::resource('units', 'UnitAPIController');
+
         Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
+        Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate');
 
         Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
 

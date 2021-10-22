@@ -550,6 +550,13 @@ class ItemMasterAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
+
+        $financeCategorySubID = $input['financeCategorySub'];
+        $itemCategorySubExpirystatus = FinanceItemcategorySub::select('expiryYN')
+                                        ->where('itemCategorySubID', $financeCategorySubID)->first();
+        $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
+
+
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
