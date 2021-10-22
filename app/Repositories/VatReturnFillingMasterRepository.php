@@ -48,7 +48,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
         return VatReturnFillingMaster::class;
     }
 
-    public function generateFilling($date, $categoryID, $companySystemID, $forUpdate = false, $returnFilledDetailID = null, $confirmedYN = 0)
+    public function generateFilling($date, $categoryID, $companySystemID, $forUpdate = false, $returnFilledDetailID = null, $confirmedYN = 0, $vatReturnFillingMasterID = null)
     {
         $linkedTaxLedgerDetails = [];
         $taxableAmount = 0;
@@ -155,37 +155,41 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
             case 10:
-                // $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
-                //                                   ->whereDate('documentDate', '<=', $date)
-                //                                   ->where('companySystemID', $companySystemID)
-                //                                   ->whereHas('supplier', function($query) use ($companyCountry){
-                //                                       $query->where('supplierCountryID', '!=', $companyCountry);
-                //                                   })
-                //                                   ->where('rcmApplicableYN', 1);
-                //                                   ->whereNotNull('inputVATGlAccountID')
-                //                                   ->when($forUpdate == false, function($query) {
-                //                                     $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
-                //                                           ->whereNull('returnFilledDetailID');
-                //                                   })
-                //                                   ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
-                //                                     $query->where(function($query) use ($returnFilledDetailID) {
-                //                                           $query->whereNull('returnFilledDetailID')
-                //                                                 ->orWhere('returnFilledDetailID', $returnFilledDetailID);
-                //                                         });
-                //                                   })
-                //                                    ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
-                //                                     $query->where(function($query) use ($returnFilledDetailID) {
-                //                                           $query->where('returnFilledDetailID', $returnFilledDetailID);
-                //                                         });
-                //                                   })
-                //                                   ->whereHas('sub_category', function($query) {
-                //                                         $query->whereHas('type', function($query) { 
-                //                                             $query->where('id', 3);
-                //                                         });
-                //                                   });
+                $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                                                  ->whereDate('documentDate', '<=', $date)
+                                                  ->where('companySystemID', $companySystemID)
+                                                  ->whereHas('supplier', function($query) use ($companyCountry){
+                                                      $query->where('supplierCountryID', '!=', $companyCountry);
+                                                  })
+                                                  ->where('rcmApplicableYN', 1)
+                                                  ->whereNotNull('inputVATGlAccountID')
+                                                  ->when($forUpdate == false, function($query) {
+                                                        $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
+                                                              ->whereNull('returnFilledDetailID');
+                                                  })
+                                                  ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                                  $query->whereNull('returnFilledDetailID')
+                                                                        ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                                                                });
+                                                  })
+                                                   ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->where('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
+                                                  })
+                                                  ->whereHas('supplier_invoice_details', function($query) {
+                                                        $query->whereHas('grv_detail', function($query) { 
+                                                            $query->where('itemFinanceCategoryID', 2);
+                                                        });
+                                                  })
+                                                  ->where('documentSystemID', 11)
+                                                  ->whereHas('supplier_invoice', function($query) {
+                                                        $query->where('documentType', 0);
+                                                  });
 
 
-                // $taxLedgerDetail = $taxLedgerDetailData->get();
+                $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
             case 12:
                  $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
@@ -200,38 +204,32 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                           ->whereNull('returnFilledDetailID');
                                                   })
                                                   ->where(function($query) {
-                                                    $query->where(function($query) {
-                                                              $query->whereHas('customer_invoice', function($query) {
-                                                                        $query->whereIn('isPerforma', [2,3,4,5]);
-                                                                    })
-                                                                    ->where('documentSystemID', 20)
-                                                                    ->whereHas('customer_invoice_details', function($query) {
-                                                                        $query->whereIn('itemFinanceCategoryID', [1,2,4]);
-                                                                    })
-                                                          })
-                                                          ->orWhere(function($query) {
-                                                              $query->where('documentSystemID', 87)
-                                                                    ->whereHas('sales_return_details', function($query) {
-                                                                        $query->whereIn('itemFinanceCategoryID', [1,2,4]);
-                                                                    });
-                                                          });
-                                                          // ->orWhere(function($query) {
-                                                          //     $query->where('documentSystemID', 87)
-                                                          //           ->whereHas('credit_note_details', function($query) {
-                                                          //               $query->whereIn('itemFinanceCategoryID', [1,2,4]);
-                                                          //           });
-                                                          // })
+                                                        $query->where(function($query) {
+                                                                  $query->whereHas('customer_invoice', function($query) {
+                                                                            $query->whereIn('isPerforma', [2,3,4,5]);
+                                                                        })
+                                                                        ->where('documentSystemID', 20)
+                                                                        ->whereHas('customer_invoice_details', function($query) {
+                                                                            $query->whereIn('itemFinanceCategoryID', [1,2,4]);
+                                                                        });
+                                                              })
+                                                              ->orWhere(function($query) {
+                                                                  $query->where('documentSystemID', 87)
+                                                                        ->whereHas('sales_return_details', function($query) {
+                                                                            $query->whereIn('itemFinanceCategoryID', [1,2,4]);
+                                                                        });
+                                                              });
                                                   })
                                                   ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
-                                                    $query->where(function($query) use ($returnFilledDetailID) {
-                                                          $query->whereNull('returnFilledDetailID')
-                                                                ->orWhere('returnFilledDetailID', $returnFilledDetailID);
-                                                        });
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->whereNull('returnFilledDetailID')
+                                                                    ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
                                                   })
-                                                   ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
-                                                    $query->where(function($query) use ($returnFilledDetailID) {
-                                                          $query->where('returnFilledDetailID', $returnFilledDetailID);
-                                                        });
+                                                  ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->where('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
                                                   })
                                                   ->whereHas('sub_category', function($query) {
                                                         $query->whereHas('type', function($query) { 
@@ -241,6 +239,59 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
+                break;
+            case 15:
+                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
+                                                  ->whereDate('documentDate', '<=', $date)
+                                                  ->where('companySystemID', $companySystemID)
+                                                  ->whereHas('customer', function($query) use ($companyCountry){
+                                                      $query->where('customerCountry', '!=',$companyCountry);
+                                                  })
+                                                  ->whereNotNull('outputVatGLAccountID')
+                                                  ->when($forUpdate == false, function($query) {
+                                                    $query->select('VATAmountLocal', 'taxableAmountLocal', 'id')
+                                                          ->whereNull('returnFilledDetailID');
+                                                  })
+                                                  ->where(function($query) {
+                                                        $query->where(function($query) {
+                                                                  $query->whereHas('customer_invoice', function($query) {
+                                                                            $query->whereIn('isPerforma', [2,3,4,5]);
+                                                                        })
+                                                                        ->where('documentSystemID', 20)
+                                                                        ->whereHas('customer_invoice_details', function($query) {
+                                                                            $query->whereIn('itemFinanceCategoryID', [1,2,4]);
+                                                                        });
+                                                              })
+                                                              ->orWhere(function($query) {
+                                                                  $query->where('documentSystemID', 87)
+                                                                        ->whereHas('sales_return_details', function($query) {
+                                                                            $query->whereIn('itemFinanceCategoryID', [1,2,4]);
+                                                                        });
+                                                              });
+                                                  })
+                                                  ->when($forUpdate == true && $confirmedYN == 0, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->whereNull('returnFilledDetailID')
+                                                                    ->orWhere('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
+                                                  })
+                                                  ->when($forUpdate == true && $confirmedYN == 1, function($query) use ($returnFilledDetailID){
+                                                        $query->where(function($query) use ($returnFilledDetailID) {
+                                                              $query->where('returnFilledDetailID', $returnFilledDetailID);
+                                                            });
+                                                  })
+                                                  ->whereHas('sub_category', function($query) {
+                                                        $query->whereHas('type', function($query) { 
+                                                            $query->where('id', 2);
+                                                        });
+                                                  });
+
+
+                $taxLedgerDetail = $taxLedgerDetailData->get();
+                break;
+            case 17:
+                // $oneA = VatReturnFillingDetail
+                
                 break;
             default:
                 # code...

@@ -176,7 +176,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                                                   ->get();
 
                         foreach ($subCategories as $key1 => $value1) {
-                            $res = $this->vatReturnFillingMasterRepository->generateFilling($input['date'], $value1->id, $input['companySystemID']);
+                            $res = $this->vatReturnFillingMasterRepository->generateFilling($input['date'], $value1->id, $input['companySystemID'], false, null, 0, $vatReturnFillingMaster->id);
                             if ($res['status']) {
                                 $detailData = [
                                     'vatReturnFilledCategoryID' => $saveResCategory->id,

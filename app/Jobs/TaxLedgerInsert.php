@@ -998,6 +998,7 @@ class TaxLedgerInsert implements ShouldQueue
                                                             ->get();
 
                             foreach ($detailData as $key => $value) {
+                                $ledgerDetailsData['rcmApplicableYN'] = TaxService::isGRVRCMActivation($value->grvAutoID);
                                 $ledgerDetailsData['documentDetailID'] = $value->id;
                                 $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
                                 $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
