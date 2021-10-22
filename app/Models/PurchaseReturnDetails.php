@@ -198,6 +198,7 @@ class PurchaseReturnDetails extends Model
         'grvAutoID',
         'grvDetailsID',
         'itemCode',
+        'exempt_vat_portion',
         'itemPrimaryCode',
         'itemDescription',
         'supplierPartNumber',
@@ -268,6 +269,7 @@ class PurchaseReturnDetails extends Model
         'supplierPartNumber' => 'string',
         'unitOfMeasure' => 'integer',
         'GRVQty' => 'float',
+        'exempt_vat_portion' => 'float',
         'comment' => 'string',
         'noQty' => 'float',
         'receivedQty' => 'float',
@@ -322,5 +324,9 @@ class PurchaseReturnDetails extends Model
     public function grv_detail_master()
     {
         return $this->belongsTo('App\Models\GRVDetails', 'grvDetailsID', 'grvDetailsID');
+    }
+
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
 }
