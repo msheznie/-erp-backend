@@ -529,6 +529,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
         Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
 
+
+
+        
         Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
         Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
         Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
@@ -1710,6 +1713,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
         Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
+        Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
 
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
 

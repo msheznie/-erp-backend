@@ -14,9 +14,11 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\PurcahseRequestDetail;
 use App\Http\Requests\API\CreatePurchaseRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestDetailsAPIRequest;
 use App\Models\Company;
+use App\Models\ItemMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\AssetFinanceCategory;
@@ -190,7 +192,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         $query->where('itemPrimaryCode', $item->itemPrimaryCode);
                     })
                     ->first();
-
                 if ($alreadyAdded) {
                     return $this->sendError("Selected item is already added. Please check again", 500);
                 }
@@ -1045,14 +1046,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-//        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
-//
-//        if ($isGroup) {
-//            $childCompanies = Helper::getGroupCompany($companySystemID);
-//
-//        } else {
-//            $childCompanies = [$companySystemID];
-//        }
 
         $childCompanies = Helper::getSimilarGroupCompanies($companySystemID);
 
@@ -1226,5 +1219,81 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function addAllItemsToPurchaseRequest(Request $request) {
+
+        $input = $request->all();
+
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
+        ->first();
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                    ->where('companySystemID', $purchaseRequest->companySystemID)
+                    ->first();
+        
+            if ($allowFinanceCategory) {
+                $policy = $allowFinanceCategory->isYesNO;
+
+                if ($policy == 0) {
+                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                        return ['status' => false , 'message' => 'Category is not found.'];
+
+                    }
+                    $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                        ->first();
+
+                    if ($pRDetailExistSameItem) {
+                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                            return ['status' => false , 'message' => 'You cannot add different category item'];
+                        }
+                    }
+                }
+            }
+       
+        $itemMasters = ItemMaster::where('isActive',1)->where('itemApprovedYN',1)->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
+        $validationFailedItems = [];
+        $totalItemCount = count($itemMasters);
+        foreach($itemMasters as $item) {
+
+            $data = [
+                "companySystemID" => $input['companySystemID'],
+                "purcahseRequestID" => $input['purchaseRequestID'],
+                "itemCodeSystem" => $item->itemCodeSystem
+            ];
+
+            $add = app()->make(PurcahseRequestDetail::class);
+            $purchaseRequestDetailsValidation = $add->validateItemOnly($data);
+            if(!$purchaseRequestDetailsValidation['status']) {
+                array_push($validationFailedItems,$item);
+            }
+        }
+
+
+        if(count($validationFailedItems) > 0) {
+            $addedItems = $totalItemCount - count($validationFailedItems);
+            $items_to_add = $itemMasters->diff(collect($validationFailedItems));
+            
+            foreach($items_to_add as $item_to_add) {
+                $name = $item_to_add->barcode.'|'.$item_to_add->itemDescription;
+                $data = ([
+                    "companySystemID" => $input['companySystemID'],
+                    "purchaseRequestID" => $input['purchaseRequestID'],
+                    "partNumber" =>  "-",
+                    "itemCode" => $item_to_add->itemCodeSystem,
+                    "itemPrimaryCode" => $item_to_add->primaryCode,
+                    "itemDescription" => $item_to_add->itemDescription,
+                    "isMRPulled" => false
+                ]);
+
+                $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
+            }
+
+
+            return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($items_to_add).' has been added'];
+        }
+
+        return ['status' => true , 'message' => 'Item reterived Succesfully'];
     }
 }
