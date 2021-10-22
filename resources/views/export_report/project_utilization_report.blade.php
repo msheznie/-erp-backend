@@ -29,6 +29,9 @@ use Carbon\CarbonPeriod;
             </tr>
           </thead>
 	 	<tbody>
+                      <?php 
+                        $decimalPoint = $companyReportingCurrency->DecimalPlaces;
+                      ?>
              
                     <tr>
                         <td>Description - {{$projectDetail->description}}</td>
@@ -43,7 +46,7 @@ use Carbon\CarbonPeriod;
                       <td>Reporting  Currency :- {{$companyReportingCurrency->CurrencyName}}</td>
                     </tr>
                     <tr>
-                        <td>Amount - {{round($projectAmount, 3)}}({{$companyReportingCurrency->CurrencyCode}})</td>
+                        <td>Amount - {{ round($projectAmount, $decimalPoint)}}({{$companyReportingCurrency->CurrencyCode}})</td>
                     </tr>
               
 	 	</tbody>
@@ -55,7 +58,7 @@ use Carbon\CarbonPeriod;
               <th></th>
               <th></th>
               <th></th>
-              <th>{{round($openingBalance, 3)}}</th>
+              <th>{{round($openingBalance, $decimalPoint)}}</th>
             </tr>
             <tr></tr>
             <tr></tr>
@@ -81,7 +84,8 @@ use Carbon\CarbonPeriod;
                   <td></td>
                   <td>{{$item->documentCode}}</td>
                   <td>{{$date }}</td>
-                  <td>{{round($item->documentAmount, 3)}}</td>
+                  <td>{{round($item->documentAmount, $decimalPoint)}}</td>
+                  <td></td>
                 </tr>
                 @endforeach
 
@@ -90,7 +94,7 @@ use Carbon\CarbonPeriod;
                     <td></td>
                     <td></td>
                     <td></td>
-                    <th>{{round($budgetConsumptionAmount, 3)}}</th>
+                    <th>{{round($budgetConsumptionAmount, $decimalPoint)}}</th>
                   </tr>
 
               </tbody>
@@ -103,7 +107,7 @@ use Carbon\CarbonPeriod;
                   <th></th>
                   <th></th>
                   <th></th>
-                  <th>{{round($closingBalance, 3)}}</th>
+                  <th>{{round($closingBalance, $decimalPoint)}}</th>
                 </tr>
               </thead>
 
