@@ -17,6 +17,7 @@ use App\Models\GRVDetails;
 use App\Models\CreditNote;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerInvoiceDirectDetail;
@@ -878,9 +879,9 @@ class TaxLedgerInsert implements ShouldQueue
                         $ledgerData['partyID'] = $masterData->supplierID;
                         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
-                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->directdetail[0]->transAmount);
+                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->netAmount);
 
-                        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->directdetail[0]->transAmount);
+                        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->netAmount);
                         $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
                         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
                             
@@ -962,7 +963,86 @@ class TaxLedgerInsert implements ShouldQueue
 
                                 array_push($finalDetailData, $ledgerDetailsData);
                             }
-                        } 
+                        } else {
+                            $details = SupplierInvoiceItemDetail::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,supplierTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,supplierTransactionCurrencyER as transCurrencyER')
+                                                    ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
+                                                    ->whereNotNull('vatSubCategoryID')
+                                                    ->groupBy('vatSubCategoryID')
+                                                    ->get();
+
+                            foreach ($details as $key => $value) {
+                                $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
+
+                                if ($subCategoryData) {
+                                    $ledgerData['taxAuthorityAutoID'] = isset($subCategoryData->tax->authorityAutoID) ? $subCategoryData->tax->authorityAutoID : null;
+                                }
+
+                                $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
+                                $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
+                                $ledgerData['localAmount'] = $value->localVATAmount;
+                                $ledgerData['rptAmount'] = $value->rptVATAmount;
+                                $ledgerData['transAmount'] = $value->transVATAmount;
+                                $ledgerData['transER'] = $value->transCurrencyER;
+                                $ledgerData['localER'] = $value->localCurrencyER;
+                                $ledgerData['comRptER'] = $value->reportingCurrencyER;
+                                $ledgerData['localCurrencyID'] = $value->localCurrencyID;
+                                $ledgerData['rptCurrencyID'] = $value->reportingCurrencyID;
+                                $ledgerData['transCurrencyID'] = $value->transCurrencyID;
+
+                                array_push($finalData, $ledgerData);
+                            }
+
+                            $detailData = SupplierInvoiceItemDetail::with(['grv_detail'])
+                                                            ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
+                                                            ->whereNotNull('vatSubCategoryID')
+                                                            ->get();
+
+                            foreach ($detailData as $key => $value) {
+                                $ledgerDetailsData['rcmApplicableYN'] = TaxService::isGRVRCMActivation($value->grvAutoID);
+                                $ledgerDetailsData['documentDetailID'] = $value->id;
+                                $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
+                                $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
+                                $ledgerDetailsData['serviceLineSystemID'] = null;
+                                $ledgerDetailsData['documentDate'] = $masterDocumentDate;
+                                $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
+                                $ledgerDetailsData['documentNumber'] = $masterData->bookingInvCode;
+                                $ledgerDetailsData['chartOfAccountSystemID'] = $value->grv_detail->financeGLcodePLSystemID;
+
+                                $chartOfAccountData = ChartOfAccount::find($value->grv_detail->financeGLcodePLSystemID);
+
+                                if ($chartOfAccountData) {
+                                    $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
+                                    $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                                }
+
+                                $ledgerDetailsData['transactionCurrencyID'] = $value->supplierTransactionCurrencyID;
+                                $ledgerDetailsData['originalInvoice'] = NULL;
+                                $ledgerDetailsData['originalInvoiceDate'] = NULL;
+                                $ledgerDetailsData['dateOfSupply'] = NULL;
+                                $ledgerDetailsData['partyType'] = 1;
+                                $ledgerDetailsData['partyAutoID'] = $masterData->supplierID;
+                                $ledgerDetailsData['partyVATRegisteredYN'] = $value->vatRegisteredYN;
+                                $ledgerDetailsData['partyVATRegNo'] = isset($masterData->supplier->vatNumber) ? $masterData->supplier->vatNumber : "";
+                                $ledgerDetailsData['countryID'] = isset($masterData->supplier->supplierCountryID) ? $masterData->supplier->supplierCountryID : "";
+                                $ledgerDetailsData['itemSystemCode'] = $value->grv_detail->itemCode;
+                                $ledgerDetailsData['itemCode'] = $value->grv_detail->itemPrimaryCode;
+                                $ledgerDetailsData['itemDescription'] = $value->grv_detail->itemDescription;
+                                $ledgerDetailsData['VATPercentage'] = $value->grv_detail->VATPercentage;
+                                $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - $value->VATAmount);
+                                $ledgerDetailsData['VATAmount'] = $value->VATAmount;
+                                $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
+                                $ledgerDetailsData['localER'] = $value->localCurrencyER;
+                                $ledgerDetailsData['reportingER'] = $value->companyReportingER;
+                                $ledgerDetailsData['taxableAmountLocal'] = ($value->totLocalAmount - $value->VATAmountLocal);
+                                $ledgerDetailsData['taxableAmountReporting'] = ($value->totRptAmount - $value->VATAmountRpt);
+                                $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
+                                $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
+                                $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
+                                $ledgerDetailsData['rptCurrencyID'] = $value->companyReportingCurrencyID;
+
+                                array_push($finalDetailData, $ledgerDetailsData);
+                            }
+                        }
 
                         break;
                     default:

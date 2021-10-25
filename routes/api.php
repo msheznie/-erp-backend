@@ -134,7 +134,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
         Route::resource('units', 'UnitAPIController');
+
         Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
+        Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate');
 
         Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
 
@@ -532,6 +534,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
         Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
 
+
+
+        
         Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
         Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
         Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
@@ -966,6 +971,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('warehouse_items', 'WarehouseItemsAPIController');
         Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
         Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
+        Route::post('editPOBaseDetail', 'BookInvSuppDetAPIController@editPOBaseDetail');
         Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems');
         Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
         Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
@@ -1711,6 +1717,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
         Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
+        Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
 
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
@@ -2061,8 +2068,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
         Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
         Route::post('generateVATReport', 'VATReportAPIController@generateVATReport');
+        Route::post('generateVATDetailReport', 'VATReportAPIController@generateVATDetailReport');
         Route::post('exportVATReport', 'VATReportAPIController@exportVATReport');
-
+        Route::post('exportVATDetailReport', 'VATReportAPIController@exportVATDetailReport');
 
         Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
         Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
@@ -2263,6 +2271,27 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
         
+        Route::resource('vat_return_filling_masters', 'VatReturnFillingMasterAPIController');
+        Route::post('getVatReturnFillings', 'VatReturnFillingMasterAPIController@getVatReturnFillings');
+        Route::post('getVatReturnFillingDetails', 'VatReturnFillingMasterAPIController@getVatReturnFillingDetails');
+        Route::post('updateVatReturnFillingDetails', 'VatReturnFillingMasterAPIController@updateVatReturnFillingDetails');
+        Route::post('vatReturnFillingReopen', 'VatReturnFillingMasterAPIController@vatReturnFillingReopen');
+        Route::get('getVATReturnFillingData', 'VatReturnFillingMasterAPIController@getVATReturnFillingData');
+        Route::get('getVATReturnFillingFormData', 'VatReturnFillingMasterAPIController@getVATReturnFillingFormData');
+
+        Route::post('getVRFApprovalByUser', 'VatReturnFillingMasterAPIController@getVRFApprovalByUser');
+        Route::post('getVRFApprovedByUser', 'VatReturnFillingMasterAPIController@getVRFApprovedByUser');
+        
+        Route::post('getVRFAmend', 'VatReturnFillingMasterAPIController@getVRFAmend');
+
+        Route::resource('vat_return_filling_categories', 'VatReturnFillingCategoryAPIController');
+        Route::resource('vat_return_filled_categories', 'VatReturnFilledCategoryAPIController');
+        Route::resource('vat_sub_category_types', 'VatSubCategoryTypeAPIController');
+        Route::resource('vat_return_filling_details', 'VatReturnFillingDetailAPIController');
+
+
+        Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
+        Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2405,7 +2434,5 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
-
-
 
 
