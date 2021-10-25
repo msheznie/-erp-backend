@@ -22,6 +22,8 @@ use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePoAdvancePaymentAPIRequest;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachments;
+use App\Models\AddonCostCategories;
+use App\Models\ItemAssigned;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\PoAdvancePayment;
@@ -353,6 +355,27 @@ ORDER BY
                 return $this->sendError('PO is fully received you cannot add logistic');
             }
         }
+
+
+        $checkCategory = AddonCostCategories::find($input['detail']['logisticCategoryID']);
+
+        if (!$checkCategory) {
+            return $this->sendError('Logistic category not found');    
+        }
+
+        if (is_null($checkCategory->itemSystemCode)) {
+            return $this->sendError('Please assign a service item to selected logistic category');    
+        }
+
+        $checkAssignedStatus = ItemAssigned::where('companySystemID', $purchaseOrder->companySystemID)
+                                            ->where('itemCodeSystem', $checkCategory->itemSystemCode)
+                                            ->where('isAssigned', -1)
+                                            ->first();
+
+        if (!$checkAssignedStatus) {
+            return $this->sendError('Item linked with this logistic category is not assigned to the company');    
+        }
+
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;

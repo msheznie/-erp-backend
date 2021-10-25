@@ -708,6 +708,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('po_addons', 'PoAddonsAPIController');
         Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
         Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+        Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories');
+        Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic');
 
         Route::resource('stock_receives', 'StockReceiveAPIController');
         Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
