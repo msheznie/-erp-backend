@@ -2657,6 +2657,41 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($dataArray, 'Data retreived Successfully!');
     }
 
+    public function confirmDocument(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['autoID'])) {
+            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+        }
+
+        if (!isset($input['company'])) {
+            return ['success' => false, 'message' => 'Parameter company is missing'];
+        }
+
+        if (!isset($input['document'])) {
+            return ['success' => false, 'message' => 'Parameter document is missing'];
+        }
+
+        $params =  array(
+            'autoID' => $input['autoID'],
+            'company' =>  $input['company'],
+            'document' => $input['document'],
+            'segment' => '',
+            'category' => '',
+            'amount' => $input['amount'],
+        );
+
+        $approve = \Helper::confirmDocument($params);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
+            return $this->sendResponse($more_data, $approve["message"]);
+        }
+    }
+
+
     public function getItemQntyByPR(Request $request) {
         $input = $request->input();
         $item = $input['item'];
