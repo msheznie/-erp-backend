@@ -306,6 +306,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
         Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
         Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
+        //confirmation
+        Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 
         Route::resource('procurement-order', 'ProcumentOrderAPIController');
         Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
@@ -650,8 +652,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
         Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo');
-
-
+        Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails');
+        
 
         Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
         Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
