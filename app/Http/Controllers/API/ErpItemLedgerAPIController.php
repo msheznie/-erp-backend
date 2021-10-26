@@ -1736,4 +1736,107 @@ GROUP BY
         return $this->sendResponse(array(), 'successfully export');
     }
 
+
+
+    public function getItemStockDetails(Request $request)
+    {
+
+
+        $date = new Carbon($request->date);
+        $date = $date->format('Y-m-d');
+
+
+        $selectedCompanyId = $request['company_id'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $item_code = $request['item_code'];
+        $input = $request->all();
+
+        $warehouse = WarehouseMaster::pluck('wareHouseSystemCode');
+
+
+        //DB::enableQueryLog();
+        $sql = "SELECT
+                ItemLedger.companySystemID,
+                ItemLedger.wareHouseSystemCode,
+                ItemLedger.companyID,
+                ItemLedger.itemSystemCode,
+                ItemLedger.itemPrimaryCode,
+                ItemLedger.itemDescription,
+                ItemLedger.unitOfMeasure,
+                ItemLedger.secondaryItemCode,
+                ItemLedger.UnitShortCode,
+                ItemLedger.categoryDescription,
+                ItemLedger.transactionDate,
+                ItemLedger.LocalCurrencyDecimals,
+                ItemLedger.RptCurrencyDecimals,
+                round(sum(Qty),3) AS Qty,
+                ItemLedger.minimumQty,               
+                ItemLedger.maximunQty,      
+                LocalCurrency,
+                warehouse,
+                rol,
+            IF
+                ( sum( localAmount ) / round(sum(Qty),3) IS NULL, 0, sum( localAmount ) / round(sum(Qty),3) ) AS WACLocal,
+                sum( localAmount ) AS WacLocalAmount,
+                RepCurrency,
+            IF
+                ( sum( rptAmount ) / round(sum(Qty),3) IS NULL, 0, sum( rptAmount ) / round(sum(Qty),3) ) AS WACRpt,
+                sum( rptAmount ) AS WacRptAmount 
+            FROM
+                (
+            SELECT
+                erp_itemledger.companySystemID,
+                erp_itemledger.companyID,
+                erp_itemledger.documentSystemID,
+                erp_itemledger.documentSystemCode,
+                erp_itemledger.itemSystemCode,
+                erp_itemledger.itemPrimaryCode,
+                erp_itemledger.itemDescription,
+                erp_itemledger.unitOfMeasure,
+                erp_itemledger.transactionDate,
+                erp_itemledger.wareHouseSystemCode,
+                financeitemcategorysub.categoryDescription,
+                itemmaster.secondaryItemCode,
+                units.UnitShortCode,
+                round( erp_itemledger.inOutQty, 2 ) AS Qty,
+                currencymaster.CurrencyName AS LocalCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+                currencymaster_1.CurrencyName AS RepCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+                itemassigned.minimumQty as minimumQty,               
+                itemassigned.maximunQty as maximunQty,   
+                itemassigned.rolQuantity as rol,   
+                warehousemaster.wareHouseDescription AS warehouse          
+            FROM
+                `erp_itemledger`
+                INNER JOIN `warehousemaster` ON `erp_itemledger`.`wareHouseSystemCode` = `warehousemaster`.`wareHouseSystemCode`
+                INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+                LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+                LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+                LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
+            WHERE
+                erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.itemSystemCode = $item_code 
+                AND itemmaster.financeCategoryMaster = 1 
+                ) AS ItemLedger 
+            GROUP BY
+                ItemLedger.wareHouseSystemCode";
+        $items = DB::select($sql);
+  
+        return $this->sendResponse($items, 'Erp Item Ledger retrieved successfully');
+
+    }
+
 }

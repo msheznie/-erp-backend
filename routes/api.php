@@ -650,8 +650,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
         Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo');
-
-
+        Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails');
+        
 
         Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
         Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
