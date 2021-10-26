@@ -689,21 +689,22 @@ class BookInvSuppDetAPIController extends AppBaseController
                         return $this->sendError($resDetail['message'], 500);
                     }
 
-                    $pullAmount += $resDetail['data'];
+                    $pullAmount = $resDetail['data'];
+                    
+                    if ($pullAmount > 0) {
+                        $supplierInvoiceDetail = $item->toArray();
+
+                        $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;      
+                        
+                        $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                        if (!$resultUpdateDetail['status']) {
+                            return $this->sendError($result['message'], 500);
+                        } 
+                    }
                 }
             }
 
-            if ($pullAmount > 0) {
-                $supplierInvoiceDetail = $item->toArray();
-
-                $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;      
-                
-                $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
-
-                if (!$resultUpdateDetail['status']) {
-                    return $this->sendError($result['message'], 500);
-                } 
-            }
 
 
             DB::commit();
@@ -721,6 +722,8 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $bookInvSuppDetail = BookInvSuppDet::find($input['bookingSupInvoiceDetAutoID']);
 
+        $groupMaster = UnbilledGrvGroupBy::find($bookInvSuppDetail->unbilledgrvAutoID);
+
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
@@ -737,7 +740,12 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
 
-                $invoiceItem = SupplierInvoiceItemDetail::where('grvDetailsID', $value['grvDetailsID'])
+                $invoiceItem = SupplierInvoiceItemDetail::when($groupMaster->logisticYN != 1, function($query) use ($value) {
+                                                            $query->where('grvDetailsID', $value['grvDetailsID']);  
+                                                        })
+                                                        ->when($groupMaster->logisticYN == 1, function($query) use ($value) {
+                                                            $query->where('logisticID', $value['logisticID']);  
+                                                        })
                                                         ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
                                                         ->first();
 
@@ -749,11 +757,17 @@ class BookInvSuppDetAPIController extends AppBaseController
                     $updateData['supplierInvoAmount'] = $value['supplierInvoAmount'];
                 }
 
-                $grvDetail = GRVDetails::find($value['grvDetailsID']);
+                $grvDetail = ($groupMaster->logisticYN) ? PoAdvancePayment::find($value['logisticID']) : GRVDetails::find($value['grvDetailsID']);
 
                 $totalPendingAmount = 0;
                 // balance Amount
-                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+                if ($groupMaster->logisticYN) {
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE logisticID = ' . $value['logisticID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.logisticID;'))->first();
+                    
+                } else {
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+                }
+
 
                 if ($balanceAmount) {
                     $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
@@ -770,9 +784,9 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
                 $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-                $totalVATAmount = $grvDetail->VATAmount * $grvDetail->noQty;
+                $totalVATAmount = ($groupMaster->logisticYN) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
 
-                 if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+                if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
                     $VATAmount = $totalVATAmount * $percentage;
                     $currencyVat = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $VATAmount);
@@ -781,7 +795,12 @@ class BookInvSuppDetAPIController extends AppBaseController
                         $updateData['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
                 }
 
-                SupplierInvoiceItemDetail::where('grvDetailsID', $value['grvDetailsID'])
+                SupplierInvoiceItemDetail::when($groupMaster->logisticYN != 1, function($query) use ($value) {
+                                            $query->where('grvDetailsID', $value['grvDetailsID']);  
+                                        })
+                                        ->when($groupMaster->logisticYN == 1, function($query) use ($value) {
+                                            $query->where('logisticID', $value['logisticID']);  
+                                        })
                                         ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
                                         ->update($updateData);
             }
@@ -811,13 +830,19 @@ class BookInvSuppDetAPIController extends AppBaseController
         $totalPullAmount = 0;
         foreach ($unbilledData['grv_details'] as $key => $value) {
 
-            $grvDetail = GRVDetails::find($value['grvDetailsID']);
-
             $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
 
-             $totalPendingAmount = 0;
-            // balance Amount
-            $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+            $totalPendingAmount = 0;
+            if ($unbilledData['logisticYN']) {
+                $grvDetail = PoAdvancePayment::find($value['logisticID']);
+
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.logisticID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE logisticID = ' . $value['logisticID'] . ' GROUP BY erp_bookinvsupp_item_det.logisticID;'))->first();
+            } else {
+                $grvDetail = GRVDetails::find($value['grvDetailsID']);
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+            }
 
             if ($balanceAmount) {
                 $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
@@ -825,14 +850,13 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $totalPendingAmount = $value['transactionAmount'];
             }
 
-           
-
             $details = [
                 'bookingSupInvoiceDetAutoID' => $bookingSupInvoiceDetAutoID,
                 'bookingSuppMasInvAutoID' => $bookingSuppMasInvAutoID,
                 'unbilledgrvAutoID' => $unbilledData['unbilledgrvAutoID'],
                 'companySystemID' => $unbilledData['companySystemID'],
                 'grvDetailsID' => $value['grvDetailsID'],
+                'logisticID' => $value['logisticID'],
                 'vatMasterCategoryID' => $value['vatMasterCategoryID'],
                 'vatSubCategoryID' => $value['vatSubCategoryID'],
                 'exempt_vat_portion' => $value['exempt_vat_portion'],
@@ -862,7 +886,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
             $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-            $totalVATAmount = $grvDetail->VATAmount * $grvDetail->noQty;
+            $totalVATAmount = ($unbilledData['logisticYN']) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
 
              if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                 $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);

@@ -992,7 +992,11 @@ class TaxLedgerInsert implements ShouldQueue
                                 array_push($finalData, $ledgerData);
                             }
 
-                            $detailData = SupplierInvoiceItemDetail::with(['grv_detail'])
+                            $detailData = SupplierInvoiceItemDetail::with(['grv_detail', 'logistic_detail' => function($query) {
+                                                                $query->with(['category_by' => function($query) {
+                                                                    $query->with(['item_by']);
+                                                                }]);
+                                                            }])
                                                             ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                                                             ->whereNotNull('vatSubCategoryID')
                                                             ->get();
@@ -1006,14 +1010,20 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['documentDate'] = $masterDocumentDate;
                                 $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
                                 $ledgerDetailsData['documentNumber'] = $masterData->bookingInvCode;
-                                $ledgerDetailsData['chartOfAccountSystemID'] = $value->grv_detail->financeGLcodePLSystemID;
+                                $ledgerDetailsData['chartOfAccountSystemID'] = ($value->grvDetailsID > 0) ? $value->grv_detail->financeGLcodePLSystemID : null;
 
-                                $chartOfAccountData = ChartOfAccount::find($value->grv_detail->financeGLcodePLSystemID);
+                                if ($value->grvDetailsID > 0) {
+                                    $chartOfAccountData = ChartOfAccount::find($value->grv_detail->financeGLcodePLSystemID);
 
-                                if ($chartOfAccountData) {
-                                    $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
-                                    $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                                    if ($chartOfAccountData) {
+                                        $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
+                                        $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                                    }
+                                } else {
+                                    $ledgerDetailsData['accountCode'] = null;
+                                    $ledgerDetailsData['accountDescription'] = null;
                                 }
+
 
                                 $ledgerDetailsData['transactionCurrencyID'] = $value->supplierTransactionCurrencyID;
                                 $ledgerDetailsData['originalInvoice'] = NULL;
@@ -1021,13 +1031,13 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['dateOfSupply'] = NULL;
                                 $ledgerDetailsData['partyType'] = 1;
                                 $ledgerDetailsData['partyAutoID'] = $masterData->supplierID;
-                                $ledgerDetailsData['partyVATRegisteredYN'] = $value->vatRegisteredYN;
+                                $ledgerDetailsData['partyVATRegisteredYN'] = $masterData->vatRegisteredYN;
                                 $ledgerDetailsData['partyVATRegNo'] = isset($masterData->supplier->vatNumber) ? $masterData->supplier->vatNumber : "";
                                 $ledgerDetailsData['countryID'] = isset($masterData->supplier->supplierCountryID) ? $masterData->supplier->supplierCountryID : "";
-                                $ledgerDetailsData['itemSystemCode'] = $value->grv_detail->itemCode;
-                                $ledgerDetailsData['itemCode'] = $value->grv_detail->itemPrimaryCode;
-                                $ledgerDetailsData['itemDescription'] = $value->grv_detail->itemDescription;
-                                $ledgerDetailsData['VATPercentage'] = $value->grv_detail->VATPercentage;
+                                $ledgerDetailsData['itemSystemCode'] = ($value->grvDetailsID > 0) ? $value->grv_detail->itemCode : (isset($value->logistic_detail->category_by->itemSystemCode) ? $value->logistic_detail->category_by->itemSystemCode : null);
+                                $ledgerDetailsData['itemCode'] = ($value->grvDetailsID > 0) ? $value->grv_detail->itemPrimaryCode :  (isset($value->logistic_detail->category_by->item_by->primaryCode) ? $value->logistic_detail->category_by->item_by->primaryCode : null);
+                                $ledgerDetailsData['itemDescription'] = ($value->grvDetailsID > 0) ? $value->grv_detail->itemDescription :  (isset($value->logistic_detail->category_by->item_by->itemDescription) ? $value->logistic_detail->category_by->item_by->itemDescription : null);
+                                $ledgerDetailsData['VATPercentage'] = ($value->grvDetailsID > 0) ? $value->grv_detail->VATPercentage : (isset($value->logistic_detail->VATPercentage) ? $value->logistic_detail->VATPercentage : null);
                                 $ledgerDetailsData['taxableAmount'] = ($value->totTransactionAmount - $value->VATAmount);
                                 $ledgerDetailsData['VATAmount'] = $value->VATAmount;
                                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;

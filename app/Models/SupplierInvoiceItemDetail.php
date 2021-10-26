@@ -188,6 +188,7 @@ class SupplierInvoiceItemDetail extends Model
         'unbilledgrvAutoID',
         'companySystemID',
         'grvDetailsID',
+        'logisticID',
         'purchaseOrderID',
         'grvAutoID',
         'supplierTransactionCurrencyID',
@@ -227,6 +228,7 @@ class SupplierInvoiceItemDetail extends Model
         'unbilledgrvAutoID' => 'integer',
         'companySystemID' => 'integer',
         'grvDetailsID' => 'integer',
+        'logisticID' => 'integer',
         'purchaseOrderID' => 'integer',
         'grvAutoID' => 'integer',
         'supplierTransactionCurrencyID' => 'integer',
@@ -277,5 +279,10 @@ class SupplierInvoiceItemDetail extends Model
     public function grv_detail()
     {
         return $this->belongsTo('App\Models\GRVDetails', 'grvDetailsID', 'grvDetailsID');
+    }
+
+    public function logistic_detail()
+    {
+        return $this->belongsTo('App\Models\PoAdvancePayment', 'logisticID', 'poAdvPaymentID');
     }
 }

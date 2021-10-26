@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateUnbilledGrvGroupByAPIRequest;
 use App\Http\Requests\API\UpdateUnbilledGrvGroupByAPIRequest;
 use App\Models\GRVDetails;
+use App\Models\PoAdvancePayment;
 use App\Models\BookInvSuppMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Company;
@@ -345,6 +346,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 	unbilledMaster.grvAutoID,
 	unbilledMaster.purchaseOrderID,
 	unbilledMaster.supplierID,
+    unbilledMaster.logisticYN,
     currency.DecimalPlaces,
     (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmount,
     (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmountCheck
@@ -391,30 +393,56 @@ HAVING ROUND(
         }
 
         foreach ($unbilledGrvGroupBy as $key => $value) {
+            if ($value->logisticYN) {
+                $pulledQry = DB::table('erp_bookinvsupp_item_det')
+                                ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, logisticID")
+                                ->where(function($query) {
+                                    $query->where('logisticID', 0)
+                                          ->orWhereNotNull('logisticID');
+                                })
+                                ->groupBy('logisticID');
 
-            $rcmActivated = TaxService::isGRVRCMActivation($value->grvAutoID);
+                $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur) + (erp_purchaseorderadvpayment.VATAmountRpt)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur) + (erp_purchaseorderadvpayment.VATAmountLocal)),7) as localAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck")
+                                                    ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                                                    ->leftJoin('erp_tax_vat_sub_categories', 'erp_purchaseorderadvpayment.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
+                                                    ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                                                    ->join('erp_addoncostcategories', 'erp_purchaseorderadvpayment.logisticCategoryID', '=', 'erp_addoncostcategories.idaddOnCostCategories')
+                                                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'erp_addoncostcategories.itemSystemCode')
+                                                    ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
+                                                        $join->mergeBindings($pulledQry)
+                                                             ->on('pulledQry.logisticID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
+                                                   })
+                                                    ->where('erp_purchaseorderadvpayment.grvAutoID', $value->grvAutoID)
+                                                    ->where('poID', $value->purchaseOrderID)
+                                                    ->where('erp_purchaseorderadvpayment.supplierID',$value->supplierID)
+                                                    ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');
 
-            $pulledQry = DB::table('erp_bookinvsupp_item_det')
-                            ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, grvDetailsID")
-                            ->groupBy('grvDetailsID');
-
-
-
-            $grvDetails = GRVDetails::where('purchaseOrderMastertID', $value->purchaseOrderID)
-                                   ->where('grvAutoID', $value->grvAutoID)
-                                   ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
-                                        $join->mergeBindings($pulledQry)
-                                             ->on('pulledQry.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID');
-                                   });
-
-            if ($valEligible && !$rcmActivated) {
-                $grvDetails = $grvDetails->selectRaw('erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, vatMasterCategoryID, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty) + (VATAmountRpt*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty) + (VATAmountRpt*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck');
+                $value->grv_details = $grvDetails->get();
             } else {
-                $grvDetails = $grvDetails->selectRaw('erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, vatMasterCategoryID, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck');
-            }
-            
+                $rcmActivated = TaxService::isGRVRCMActivation($value->grvAutoID);
 
-            $value->grv_details = $grvDetails->get();
+                $pulledQry = DB::table('erp_bookinvsupp_item_det')
+                                ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, grvDetailsID")
+                                ->groupBy('grvDetailsID');
+
+
+
+                $grvDetails = GRVDetails::where('purchaseOrderMastertID', $value->purchaseOrderID)
+                                       ->where('grvAutoID', $value->grvAutoID)
+                                       ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
+                                            $join->mergeBindings($pulledQry)
+                                                 ->on('pulledQry.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID');
+                                       });
+
+                if ($valEligible && !$rcmActivated) {
+                    $grvDetails = $grvDetails->selectRaw('erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, vatMasterCategoryID, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty) + (VATAmountRpt*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty) + (VATAmountRpt*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck, 0 as logisticID');
+                } else {
+                    $grvDetails = $grvDetails->selectRaw('erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, vatMasterCategoryID, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck, 0 as logisticID');
+                }
+                
+
+                $value->grv_details = $grvDetails->get();
+            }
         }
 
         return $this->sendResponse($unbilledGrvGroupBy, 'Purchase Request Details retrieved successfully');
