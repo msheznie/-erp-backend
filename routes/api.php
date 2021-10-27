@@ -137,6 +137,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
         Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate');
+        Route::post('financeItemCategorySubsAttributesUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsAttributesUpdate');
 
         Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
 
@@ -172,8 +173,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
         Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus');
+        Route::post('getFinanceItemCategoryMasterAttributesStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterAttributesStatus');
         Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
         Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
+        Route::post('getAttributesData', 'FinanceItemCategoryMasterAPIController@getAttributesData');
+        Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
+
+        Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
 
         Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
 
@@ -2435,3 +2441,10 @@ Route::get('job-check', function(){
 });
 
 
+
+
+Route::resource('erp_attributes', 'ErpAttributesAPIController');
+
+Route::resource('erp_attributes_dropdowns', 'ErpAttributesDropdownAPIController');
+
+Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
