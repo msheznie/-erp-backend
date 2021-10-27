@@ -375,6 +375,16 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     }
 
+
+    public function financeItemCategorySubsAttributesUpdate(Request $request){
+        $input = $request->all();
+        $itemCategorySubExpiryUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update(['attributesYN' => $input['attributesYN']]);
+        
+        return $this->sendResponse($itemCategorySubExpiryUpdate, 'FinanceItemCategorySub updated successfully');
+
+    }
+
     /**
      * Remove the specified FinanceItemCategorySub from storage.
      * DELETE /financeItemCategorySubs/{id}
