@@ -211,6 +211,10 @@ class SupplierInvoiceItemDetail extends Model
         'VATAmountRpt',
         'vatMasterCategoryID',
         'vatSubCategoryID',
+        'grvRecivedQty',
+        'grvReturnQty',
+        'invoicedAmount',
+        'balanceAmount',
         'timeStamp'
     ];
 
@@ -249,6 +253,10 @@ class SupplierInvoiceItemDetail extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
+        'grvRecivedQty' => 'float',
+        'grvReturnQty' => 'float',
+        'invoicedAmount' => 'float',
+        'balanceAmount' => 'float',
         'timeStamp' => 'datetime'
     ];
 

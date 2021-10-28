@@ -17,6 +17,8 @@ use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
+use App\Models\SupplierAssigned;
+use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierInvoiceItemDetail;
@@ -33,6 +35,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\TaxService;
 
 /**
  * Class BookInvSuppDetController
@@ -273,10 +276,45 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' AND erp_bookinvsuppdet.bookingSupInvoiceDetAutoID != ' . $bookInvSuppDet->bookingSupInvoiceDetAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
+
+        $returnAmount = 0;
+
+        if (!$unbilledGrvGroupByMaster->logisticYN) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($bookInvSuppDet->bookingSuppMasInvAutoID);
+
+            $company = Company::where('companySystemID', $bookInvSuppMaster->companySystemID)->first();
+            $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $bookInvSuppMaster->supplierID)
+                                                        ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                                        ->first();
+            $valEligible = false;
+            if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
+                $valEligible = true;
+            }
+
+            $rcmActivated = TaxService::isGRVRCMActivation($unbilledGrvGroupByMaster->grvAutoID);
+
+            $grvDetailData = GRVDetails::where('grvAutoID', $unbilledGrvGroupByMaster->grvAutoID);
+
+
+            if ($valEligible && !$rcmActivated) {
+                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
+            } else {
+                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
+            }
+
+            $grvDetailData = $grvDetailData->groupBy('grvAutoID')
+                                           ->first();
+
+            if ($grvDetailData) {
+                $returnAmount = $grvDetailData->totalReturnAmount;
+            }
+        }
+
+
         if ($balanceAmount) {
-            $totalPendingAmount = ($unbilledGrvGroupByMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
+            $totalPendingAmount = ($unbilledGrvGroupByMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount) - $returnAmount;
         } else {
-            $totalPendingAmount = $unbilledGrvGroupByMaster->totTransactionAmount;
+            $totalPendingAmount = $unbilledGrvGroupByMaster->totTransactionAmount - $returnAmount;
         }
 
         $input['supplierInvoOrderedAmount'] = $totalPendingAmount - $input['supplierInvoAmount'];
@@ -680,7 +718,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                         ]);
 
 
-                    $this->checkPurchaseReturnsAndUpdateBookInvDetail($new['grvAutoID'], $bookingSuppMasInvAutoID);
+                    // $this->checkPurchaseReturnsAndUpdateBookInvDetail($new['grvAutoID'], $bookingSuppMasInvAutoID);
 
 
                     $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $bookingSuppMasInvAutoID, $groupMaster);

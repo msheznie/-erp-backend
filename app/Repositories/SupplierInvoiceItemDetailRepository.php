@@ -3,6 +3,15 @@
 namespace App\Repositories;
 
 use App\Models\SupplierInvoiceItemDetail;
+use App\Models\BookInvSuppMaster;
+use App\Models\BookInvSuppDet;
+use App\Models\UnbilledGrvGroupBy;
+use App\Models\PoAdvancePayment;
+use App\Models\GRVDetails;
+use App\Models\Company;
+use App\Models\SupplierAssigned;
+use Illuminate\Support\Facades\DB;
+use App\helper\TaxService;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -54,5 +63,129 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
     public function model()
     {
         return SupplierInvoiceItemDetail::class;
+    }
+
+    public function getGRVDetailsForSupplierInvoice($input)
+    {
+        $bookingSupInvoiceDetAutoID = $input['bookingSupInvoiceDetAutoID'];
+
+        $bookInvSuppDetail = BookInvSuppDet::find($bookingSupInvoiceDetAutoID);
+
+        $groupMaster = UnbilledGrvGroupBy::find($bookInvSuppDetail->unbilledgrvAutoID);
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $company = Company::where('companySystemID', $bookInvSuppMaster->companySystemID)->first();
+        $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $bookInvSuppMaster->supplierID)
+                                                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                                    ->first();
+        $valEligible = false;
+        if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
+            $valEligible = true;
+        }
+
+        $rcmActivated = TaxService::isGRVRCMActivation($bookInvSuppDetail->grvAutoID);
+
+        if ($groupMaster->logisticYN) {
+            $pulledQry = DB::table('erp_bookinvsupp_item_det')
+                                ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, logisticID")
+                                ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', '!=', $bookingSupInvoiceDetAutoID)
+                                ->where(function($query) {
+                                    $query->where('logisticID', 0)
+                                          ->orWhereNotNull('logisticID');
+                                })
+                                ->groupBy('logisticID');
+
+            $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur) + (erp_purchaseorderadvpayment.VATAmountRpt)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur) + (erp_purchaseorderadvpayment.VATAmountLocal)),7) as localAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck, erp_bookinvsupp_item_det.supplierInvoAmount, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount")
+                                                    ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                                                    ->leftJoin('erp_tax_vat_sub_categories', 'erp_purchaseorderadvpayment.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
+                                                    ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                                                    ->join('erp_addoncostcategories', 'erp_purchaseorderadvpayment.logisticCategoryID', '=', 'erp_addoncostcategories.idaddOnCostCategories')
+                                                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'erp_addoncostcategories.itemSystemCode')
+                                                    ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
+                                                        $join->mergeBindings($pulledQry)
+                                                             ->on('pulledQry.logisticID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
+                                                   })
+                                                    ->leftJoin('erp_bookinvsupp_item_det', function($join) use ($bookingSupInvoiceDetAutoID) {
+                                                        $join->on('erp_bookinvsupp_item_det.logisticID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID')
+                                                             ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
+                                                   })
+                                                    ->where('erp_purchaseorderadvpayment.grvAutoID', $bookInvSuppDetail->grvAutoID)
+                                                    ->where('erp_purchaseorderadvpayment.supplierID',$bookInvSuppMaster->supplierID)
+                                                    ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');            
+        } else {
+
+            $pulledQry = DB::table('erp_bookinvsupp_item_det')
+                            ->selectRaw("SUM(totTransactionAmount) as SumOftotTransactionAmount, grvDetailsID")
+                            ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', '!=', $bookingSupInvoiceDetAutoID)
+                            ->groupBy('grvDetailsID');
+
+
+
+            $grvDetails = GRVDetails::where('erp_grvdetails.grvAutoID', $bookInvSuppDetail->grvAutoID)
+                                   ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
+                                        $join->mergeBindings($pulledQry)
+                                             ->on('pulledQry.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID');
+                                   })
+                                   ->leftJoin('erp_bookinvsupp_item_det', function($join) use ($bookingSupInvoiceDetAutoID) {
+                                        $join->on('erp_bookinvsupp_item_det.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID')
+                                             ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
+                                   })
+                                   ->with(['supplier_invoice_item_detail' => function($query) use ($bookingSupInvoiceDetAutoID){
+                                        $query->where('bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
+                                   }]);
+
+            if ($valEligible && !$rcmActivated) {
+                $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as localAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) / noQty) * returnQty)),7) as balanceAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) / noQty) * returnQty)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount, noQty, returnQty');
+            } else {
+                $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount, noQty, returnQty');
+            }
+        }
+
+        $grvDetails = $grvDetails->get(); 
+
+        return ['status' => true, 'data' => ['grvDetails' => $grvDetails, 'logisticYN' => $groupMaster->logisticYN]];
+    }
+
+
+    public function updateSupplierInvoiceItemDetail($bookingSuppMasInvAutoID)
+    {
+        $bookInvSuppDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                                           ->get();
+
+
+        foreach ($bookInvSuppDetail as $key => $value) {
+            $input = [
+                'bookingSuppMasInvAutoID' => $bookingSuppMasInvAutoID,
+                'bookingSupInvoiceDetAutoID' => $value->bookingSupInvoiceDetAutoID,
+                'companySystemID' => $value->companySystemID
+            ];
+
+            $grvDetails = $this->getGRVDetailsForSupplierInvoice($input);
+
+            if ($grvDetails['status']) {
+                foreach ($grvDetails['data']['grvDetails'] as $key1 => $value1) {
+                    if (isset($value1->supplier_invoice_item_detail) && !is_null($value1->supplier_invoice_item_detail)) {
+                        $updateData = [
+                            'grvRecivedQty' => $value1->noQty,
+                            'grvReturnQty' => $value1->returnQty,
+                            'invoicedAmount' => $value1->invoicedAmount,
+                            'balanceAmount' => floatval($value1->balanceAmountCheck) - floatval($value1->supplierInvoAmount),
+                        ];
+
+                        SupplierInvoiceItemDetail::where('id', $value1->supplier_invoice_item_detail->id)
+                                                 ->update($updateData);
+                    }   
+                }   
+            }
+        }
+
+        return ['status' => true];
     }
 }
