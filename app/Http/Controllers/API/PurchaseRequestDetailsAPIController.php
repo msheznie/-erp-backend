@@ -1363,6 +1363,26 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
       ->get();
 
         foreach ($purchaseRequestDetails as $order) {
+
+          if($order->quantityRequested == 0)
+          {
+            $qua_req = '0';
+          }
+          else
+          {
+            $qua_req = $order->quantityRequested;
+          }
+
+          if($order->totalCost == 0)
+          {
+            $qua_tot = '0';
+          }
+          else
+          {
+            $qua_tot = $order->totalCost;
+          }
+
+
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
@@ -1371,8 +1391,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 'Part Number' => $order->partNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
-                'Requested Qty' => $order->quantityRequested,
-                'Total Cost' => $order->totalCost,
+                'Requested Qty' => $qua_req,
+                'Total Cost' => $qua_tot,
             );
         }
 
