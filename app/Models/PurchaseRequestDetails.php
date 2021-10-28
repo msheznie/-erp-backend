@@ -117,7 +117,8 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedByEmpID',
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
-        'manuallyClosedComment'
+        'manuallyClosedComment',
+        'isMRPulled'
     ];
 
     /**
@@ -169,7 +170,8 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedByEmpID' => 'string',
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
-        'manuallyClosedComment' => 'string'
+        'manuallyClosedComment' => 'string',
+        'isMRPulled' => 'boolean'
     ];
 
     /**
