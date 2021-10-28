@@ -26,6 +26,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use Mpdf\Tag\Select;
+
 /**
  * Class FinanceItemCategorySubController
  * @package App\Http\Controllers\API
@@ -125,6 +127,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         }
 
         return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
+    }
+
+    public function getSubcategoryExpiryStatus(Request $request){
+        $input = $request->all();
+        $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN')->first();
+        return $this->sendResponse($expiryStatus, 'Finance Item Category Subs retrieved successfully');
+
     }
 
      public function getSubcategoriesBymainCategories(Request $request){
