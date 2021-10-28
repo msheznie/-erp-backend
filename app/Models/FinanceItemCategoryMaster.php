@@ -90,5 +90,10 @@ class FinanceItemCategoryMaster extends Model
         
     ];
 
+    public function item_sub_category()
+    {
+        return $this->hasMany('App\Models\FinanceItemCategorySub', 'itemCategoryID', 'itemCategoryID');
+    }
+
     
 }

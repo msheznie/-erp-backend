@@ -78,7 +78,9 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $financeItemCategoryMasters = FinanceItemCategoryMaster::select('financeitemcategorymaster.*');
+        $financeItemCategoryMasters = FinanceItemCategoryMaster::withCount(['item_sub_category' => function($query){
+                                                                    $query->where('expiryYN', 1);
+                                                                }]);
 
         $search = $request->input('search.value');
         if($search){
