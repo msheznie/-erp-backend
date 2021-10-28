@@ -2427,6 +2427,17 @@ Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 
+/*
+ * Start SRM related routes
+ */
+
+Route::group(['prefix' => 'srm', 'middleware' => ['tenantById']], function (){
+    Route::post('requests', 'SRM\APIController@handleRequest');
+});
+
+/*
+ * End SRM related routes
+ */
 
 Route::get('runCronJob/{cron}', function ($cron) {
     Artisan::call($cron);
