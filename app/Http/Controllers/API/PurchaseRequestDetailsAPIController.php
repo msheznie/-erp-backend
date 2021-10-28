@@ -92,7 +92,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
             ->with(['uom'])
-            ->get();
+            ->forPage($input['page'], 30)->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
     }
@@ -128,7 +128,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         if ($allowItemToTypePolicy) {
             $input['itemCode'] = isset($input['itemCode']['id']) ? $input['itemCode']['id'] : $input['itemCode'];
+        }else {
+            if(isset($input['itemCode']['id']))  {
+                $input['itemCode'] = $input['itemCode']['id'];
+            }
         }
+
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
@@ -1241,6 +1246,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $itemMasters = ItemMaster::where('isActive',1)->where('itemApprovedYN',1)->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
         $validationFailedItems = [];
         $totalItemCount = count($itemMasters);
+
         foreach($itemMasters as $item) {
             $data = [
                 "companySystemID" => $input['companySystemID'],
