@@ -593,7 +593,16 @@ WHERE
 public function generateStockLedger(Request $request)
 {
 
-    $selectedCompanyId = $request['companySystemID'];
+    if(is_array($request['companySystemID']))
+    {
+        $selectedCompanyId = $request['companySystemID'][0];
+    }
+    else
+    {
+        $selectedCompanyId = $request['companySystemID'];
+    }
+   
+
     $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
  
     if ($isGroup) {
@@ -1746,7 +1755,17 @@ GROUP BY
         $date = $date->format('Y-m-d');
 
 
-        $selectedCompanyId = $request['company_id'];
+ 
+
+        if(is_array($request['company_id']))
+        {
+            $selectedCompanyId = $request['company_id'][0];
+        }
+        else
+        {
+            $selectedCompanyId = $request['company_id'];
+        }
+       
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
