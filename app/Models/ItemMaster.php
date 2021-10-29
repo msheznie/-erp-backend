@@ -180,6 +180,10 @@ class ItemMaster extends Model
         //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
 
+    public function itemAssigned(){
+        return $this->belongsTo('App\Models\ItemAssigned','itemCodeSystem','itemCodeSystem');
+    }
+
     public function unit(){
         return $this->hasOne('App\Models\Unit','UnitID','unit');
     }
