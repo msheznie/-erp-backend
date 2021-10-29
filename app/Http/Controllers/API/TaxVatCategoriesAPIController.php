@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\VatSubCategoryType;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\PurchaseOrderDetails;
@@ -134,6 +135,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
+            'subCatgeoryType.required' => 'Sub Category type is required.',
             'percentage.required' => 'Percentage is required.',
             'percentage.min' => 'You cannot enter negative values for percentage',
             'percentage.numeric' => 'You can only enter numbers',
@@ -143,6 +145,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
             'subCategoryDescription' => 'required',
+            'subCatgeoryType' => 'required',
             'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
 
@@ -283,6 +286,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
+            'subCatgeoryType.required' => 'Sub Category type is required.',
             'percentage.required' => 'Percentage is required.',
             'percentage.min' => 'You cannot enter negative values for percentage',
             'percentage.numeric' => 'You can only enter numbers',
@@ -291,6 +295,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         ];
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
+            'subCatgeoryType' => 'required',
             'subCategoryDescription' => 'required',
             'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
@@ -405,7 +410,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxMasterAutoID = $request['taxMasterAutoID'];
 
         $vatCategories = TaxVatCategories::where('taxMasterAutoID', $taxMasterAutoID)
-            ->with(['tax', 'created_by','main']);
+            ->with(['tax', 'created_by','main', 'type']);
 
         $search = $request->input('search.value');
 
@@ -444,6 +449,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $output = array(
             'mainCategories' => $main,
             'applicableOns' => $applicable,
+            'subCategoryTypes' => VatSubCategoryType::all(),
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -669,9 +675,12 @@ class TaxVatCategoriesAPIController extends AppBaseController
         foreach ($items as $key => $value) {
             $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
 
+            $subcategory = TaxVatCategories::find($value['vatSubCategoryID']);
+
             $updateData = [
                 'vatMasterCategoryID' => $value['vatMasterCategoryID'],
-                'vatSubCategoryID' => $value['vatSubCategoryID']
+                'vatSubCategoryID' => $value['vatSubCategoryID'],
+                'exempt_vat_portion' => (isset($value['exempt_vat_portion']) && $subcategory && $subcategory->subCatgeoryType == 1) ? $value['exempt_vat_portion'] : 0,
             ];
 
             $res = PurchaseOrderDetails::where('purchaseOrderDetailsID', $value['purchaseOrderDetailsID'])

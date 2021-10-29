@@ -116,7 +116,8 @@ class ItemMaster extends Model
         'refferedBackYN',
         'timesReferred',
         'isPOSItem',
-        'vatSubCategory'
+        'vatSubCategory',
+        'expiryYN'
     ];
 
     /**
@@ -167,7 +168,8 @@ class ItemMaster extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'isPOSItem' => 'integer',
-        'vatSubCategory'=>'integer'
+        'vatSubCategory'=>'integer',
+        'expiryYN'=>'integer'
     ];
 
     /**
