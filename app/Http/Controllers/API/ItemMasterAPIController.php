@@ -296,6 +296,7 @@ class ItemMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
+
         $itemMasters = ItemMaster::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
         //->whereIn('primaryCompanySystemID',$childCompanies);
 
@@ -1318,5 +1319,85 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reopen["message"]);
         }
+    }
+
+
+    public function getAssignedItemsForCompany(Request $request) {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $input = $request;
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+
+        $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+            return $query->where('companySystemID', '=', $companyId);
+        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
+        //->whereIn('primaryCompanySystemID',$childCompanies);
+
+        if (array_key_exists('financeCategoryMaster', $input)) {
+            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
+                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
+            }
+        }
+
+        if (array_key_exists('financeCategorySub', $input)) {
+            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
+                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
+                $itemMasters->where('isActive', $input['isActive']);
+            }
+        }
+        if (array_key_exists('itemApprovedYN', $input)) {
+            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
+                $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
+            }
+        }
+
+        if (array_key_exists('itemConfirmedYN', $input)) {
+            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && !is_null($input['itemConfirmedYN'])) {
+                $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
+            }
+        }
+
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
     }
 }
