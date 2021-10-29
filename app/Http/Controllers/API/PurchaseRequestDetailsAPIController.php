@@ -1438,7 +1438,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 {
                    if($item_count == $count)
                    {
-                       return $this->sendError("All item for this purchase request  MR pull item", 501);
+                       return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 502);
        
                    }
                    else 
