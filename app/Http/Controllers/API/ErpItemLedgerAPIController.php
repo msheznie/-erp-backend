@@ -667,6 +667,8 @@ public function generateStockLedger(Request $request)
 erp_itemledger.companyID,
 companymaster.CompanyName,
 erp_itemledger.documentID,
+erp_itemledger.documentSystemCode,
+erp_itemledger.documentSystemID,
 erp_documentmaster.documentDescription,
 erp_itemledger.documentCode,
 erp_itemledger.itemPrimaryCode,
@@ -708,6 +710,8 @@ UNION ALL
 
 SELECT
 erp_itemledger.companyID,
+erp_itemledger.documentSystemCode,
+erp_itemledger.documentSystemID,
 companymaster.CompanyName,
 '' as documentID,
 '' as documentDescription,
@@ -760,7 +764,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
                 'Transaction Date' => date("d/m/Y", strtotime($detail->transactionDate)),
                 'Location' => $detail->wareHouseDescription,
                 'Quantity' => $detail->inOutQty,
-                'Amount' => $detail->LocalCurrency,
+                'Amount' => number_format($detail->TotalWacLocal, 2, '.', ''),
             );
 
          
@@ -784,6 +788,14 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
     }
     else if($type == 2)
     {
+        $total_count = 0;
+        foreach($details as $detail)
+        {
+            
+            $total_count = $total_count + $detail->inOutQty;
+         
+        }
+        $info['totla_quan'] = $total_count;
         $info['data'] = $details;
         $info['total'] = count($data);
         $info['curren_page'] = ($page);
