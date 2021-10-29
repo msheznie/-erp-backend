@@ -66,7 +66,8 @@ class FinanceItemCategorySub extends Model
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
-        'timeStamp'
+        'timeStamp',
+        'enableSpecification'
     ];
 
     /**
@@ -91,7 +92,8 @@ class FinanceItemCategorySub extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'enableSpecification' => 'integer'
     ];
 
     /**

@@ -322,6 +322,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
         Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
+        Route::resource('item-specification', 'ItemSpecificationController');
+
+        
         Route::resource('priorities', 'PriorityAPIController');
 
         Route::resource('locations', 'LocationAPIController');
@@ -329,6 +332,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
 
         Route::resource('months', 'MonthsAPIController');
+        Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
 
         Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
         Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
@@ -336,6 +340,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
         Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr');
         Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
+        Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
 
         Route::resource('document_approveds', 'DocumentApprovedAPIController');
         Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');

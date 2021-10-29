@@ -209,6 +209,11 @@ class ItemMaster extends Model
         return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
     }
 
+    public function specification()
+    {
+        return $this->belongsTo('App\Models\ItemSpecification','itemCodeSystem','item_id');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
