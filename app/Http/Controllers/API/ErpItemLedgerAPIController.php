@@ -656,7 +656,7 @@ public function generateStockLedger(Request $request)
     }
     
     $page = $input['page'];
-    $per_page = 2;
+    $per_page = 10;
     $start = intval(($page - 1) * $per_page);
 
     $end = intval(($page * $per_page));
