@@ -1951,7 +1951,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
               
                     if($is_failed)
                     {
-                        return $this->sendResponse($items, 'out of '.$item_count_obj.',items'.$succes_item .'items copied');
+                        return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied');
                     }
                     else
                     {
