@@ -1865,8 +1865,15 @@ GROUP BY
             GROUP BY
                 ItemLedger.wareHouseSystemCode";
         $items = DB::select($sql);
+        $total_count = 0;
+        foreach($items as $item)
+        {
+            $total_count = $total_count + $item->Qty;
+        }
+        $details['datas'] = $items;
+        $details['count'] = ($total_count);
   
-        return $this->sendResponse($items, 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($details, 'Erp Item Ledger retrieved successfully');
 
     }
 
