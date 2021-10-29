@@ -362,14 +362,35 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        
-        $itemCategorySubAssignedExpiryUpdate = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
-                                                ->update(['expiryYN' => $input['expiryYN']]);
-
-
         $this->financeItemCategorySubRepository->update($input, $id);
 
         return $this->sendResponse($financeItemCategorySub->toArray(), 'FinanceItemCategorySub updated successfully');
+    }
+
+    public function finance_item_category_subs_update(Request $request)
+    {
+        $input = $request->all();
+        $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+
+        $employee = Helper::getEmployeeInfo();
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+
+        $masterData = [
+            'categoryDescription' => $input['categoryDescription'],
+            'itemCategoryID' => $input['itemCategoryID'],
+            'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
+            'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
+            'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
+            'includePLForGRVYN' => $input['includePLForGRVYN'],
+            'modifiedPc' => $input['modifiedPc'],
+            'modifiedUser' => $input['modifiedUser'],
+        ];
+
+        $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update($masterData);
+        
+        return $this->sendResponse($itemCategorySubUpdate, 'FinanceItemCategorySub updated successfully');
     }
 
     public function financeItemCategorySubsExpiryUpdate(Request $request){
