@@ -3892,6 +3892,7 @@ WHERE
     {
         $id = $request->get('id');
 
+    
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
@@ -3934,7 +3935,9 @@ WHERE
             $purchaseOrder->creditPeriod = $supplier->creditPeriod;
         }
 
-        $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
+        $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])->where('currencyID', $input['supplierTransactionCurrencyID'])->first();
+
+
 
         if (empty($currency)) {
             return $this->sendError('Currency not found');
