@@ -857,7 +857,7 @@ class PurcahseRequestDetail
             $input['quantityInHand'] = 0;
         }
 
-        $input['itemCode'] =  $item->itemCodeSystem;
+        $input['itemCode'] =   $input['itemCodeSystem'];
         $input['itemCategoryID'] = 0;
         
         return ['status' => true , 'message' => 'Validation Success'];

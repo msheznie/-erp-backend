@@ -33,7 +33,8 @@ class FinanceItemCategorySubRepository extends BaseRepository
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
-        'timeStamp'
+        'timeStamp',
+        'enableSpecification'
     ];
 
     /**
