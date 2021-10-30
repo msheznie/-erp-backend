@@ -1681,7 +1681,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1);
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
@@ -3890,6 +3890,7 @@ WHERE
     {
         $id = $request->get('id');
 
+    
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
@@ -3932,7 +3933,9 @@ WHERE
             $purchaseOrder->creditPeriod = $supplier->creditPeriod;
         }
 
-        $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
+        $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])->where('currencyID', $input['supplierTransactionCurrencyID'])->first();
+
+
 
         if (empty($currency)) {
             return $this->sendError('Currency not found');
