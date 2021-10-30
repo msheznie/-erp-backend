@@ -1093,6 +1093,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if ($input['issueType'] == 1) {
                 $items = ItemAssigned::where('companySystemID', $companyId)
+                    ->where('isActive', 1)->where('isAssigned', -1)
                     ->whereIn('financeCategoryMaster', $categories)
                     ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode','itemCodeSystem']);
 
