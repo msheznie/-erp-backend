@@ -568,7 +568,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $location =  $input['location'];
 
         $items = ItemAssigned::where('companySystemID', $companyId)
-                               ->where('financeCategoryMaster',1);
+                               ->where('financeCategoryMaster',1)->where('isActive', 1)->where('isAssigned', -1);
 
         if (array_key_exists('search', $input)) {
 
