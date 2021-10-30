@@ -682,6 +682,7 @@ units.UnitShortCode,
 warehousemaster.wareHouseDescription,
 employees.empName,
 currencymaster.CurrencyName AS LocalCurrency,
+currencymaster.CurrencyCode AS LocalCurrencyCode,
 erp_itemledger.wacLocal,
 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, currencymaster.DecimalPlaces) AS TotalWacLocal,
 currencymaster_1.CurrencyName AS RepCurrency,
@@ -727,6 +728,7 @@ units.UnitShortCode,
 '' as wareHouseDescription,
 '' as empName,
 currencymaster.CurrencyName AS LocalCurrency,
+currencymaster.CurrencyCode AS LocalCurrencyCode,
 SUM((IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacLocal,
 SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0)) AS TotalWacLocal,
 currencymaster_1.CurrencyName AS RepCurrency,
@@ -749,19 +751,40 @@ erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . 
 DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
     //dd(DB::getQueryLog());
     
+
+  
+    $total_count = 0;
+    foreach($data as $detail)
+    {
+        
+        $total_count = $total_count + $detail->inOutQty;
+     
+    }
+
     $details = array_slice($data,$start, $per_page);
 
     if($type == 1)
     {   
         $data_obj = []; 
         $type_def = 'csv';
-        foreach ($details as $detail) {
+        foreach ($data as $detail) {
 
+            if($detail->documentCode == 'Opening Balance')
+            {
+                $dt = '';
+            }
+            else
+            {
+                $dt = date("d/m/Y", strtotime($detail->transactionDate));
+            }
+
+ 
        
             $data_obj[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
+       
                 'Document Code' => $detail->documentCode,
-                'Transaction Date' => date("d/m/Y", strtotime($detail->transactionDate)),
+                'Transaction Date' => $dt,
                 'Location' => $detail->wareHouseDescription,
                 'Quantity' => $detail->inOutQty,
                 'Amount' => number_format($detail->TotalWacLocal, 2, '.', ''),
@@ -788,13 +811,8 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
     }
     else if($type == 2)
     {
-        $total_count = 0;
-        foreach($details as $detail)
-        {
-            
-            $total_count = $total_count + $detail->inOutQty;
-         
-        }
+
+
         $info['totla_quan'] = $total_count;
         $info['data'] = $details;
         $info['total'] = count($data);
@@ -1766,7 +1784,12 @@ GROUP BY
         $date = new Carbon($request->date);
         $date = $date->format('Y-m-d');
 
-
+        $page = $request->page;
+        $per_page = 10;
+        $start = intval(($page - 1) * $per_page);
+    
+        $end = intval(($page * $per_page));
+    
  
 
         if(is_array($request['company_id']))
@@ -1870,10 +1893,21 @@ GROUP BY
         {
             $total_count = $total_count + $item->Qty;
         }
-        $details['datas'] = $items;
-        $details['count'] = ($total_count);
+
+
+        $details = array_slice($items,$start, $per_page);
+
+
+
+
+
+
+        $info['count'] = $total_count;
+        $info['datas'] = $details;
+        $info['total'] = count($items);
+        $info['curren_page'] = ($page);
   
-        return $this->sendResponse($details, 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($info, 'Erp Item Ledger retrieved successfully');
 
     }
 
