@@ -64,7 +64,8 @@ class FinanceItemcategorySubAssigned extends Model
         'companyID',
         'isActive',
         'isAssigned',
-        'timeStamp'
+        'timeStamp',
+        'enableSpecification'
     ];
 
     /**
@@ -88,7 +89,8 @@ class FinanceItemcategorySubAssigned extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'isActive' => 'integer',
-        'isAssigned' => 'integer'
+        'isAssigned' => 'integer',
+        'enableSpecification' => 'integer'
     ];
 
     /**
