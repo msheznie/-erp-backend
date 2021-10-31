@@ -1243,7 +1243,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 }
             }
        
-        $itemMasters = ItemMaster::where('isActive',1)->where('itemApprovedYN',1)->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
+        $companyId = $input['companySystemID'];
+        $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+            return $query->where('companySystemID', '=', $companyId);
+        })->where('isActive',1)->where('itemApprovedYN',1)->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
         $validationFailedItems = [];
         $totalItemCount = count($itemMasters);
 

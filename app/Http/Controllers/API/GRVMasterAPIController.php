@@ -1366,7 +1366,7 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $items = ItemAssigned::where('companySystemID', $companyID);
+        $items = ItemAssigned::where('companySystemID', $companyID)->where('isActive', 1)->where('isAssigned', -1);
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {

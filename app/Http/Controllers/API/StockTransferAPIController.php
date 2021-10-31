@@ -857,7 +857,7 @@ class StockTransferAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
 
-        $items = ItemAssigned::where('companySystemID', $companyId);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1);
         $items = $items->where('financeCategoryMaster', 1);
 
         if (array_key_exists('search', $input)) {
