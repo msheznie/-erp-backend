@@ -1934,11 +1934,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 //$request_data_details['purchaseRequestID'] = $purchaseRequests->purchaseRequestID;  
          
             //DB::commit();
+            $succes_item == 0;
             if($item_count_obj > 0)
             {
                 if($succes_item == 0)
                 {
-                    return $this->sendError("Unable to copy purchase request, items not valid", 500);
+                    return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 501);
                 }
                 else
                 {
