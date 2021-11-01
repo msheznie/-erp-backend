@@ -1015,18 +1015,27 @@ class ItemMasterAPIController extends AppBaseController
                 $baseimg = '';
                 $path = $storagePath.$decode_image->path;
 
+                if (Storage::disk('public')->exists($decode_image->path))
+                {
+                    $type = pathinfo($path, PATHINFO_EXTENSION);
+                    $data_info = file_get_contents($path);
                 
-                $type = pathinfo($path, PATHINFO_EXTENSION);
-                $data_info = file_get_contents($path);
-                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
-            
-                array_push($data,$base64);
+                    $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
+                
+                    array_push($data,$base64);
+                }
             
             }
-
-   
+      
+                if(count($data) == 0)
+                {
+                    $itemMaster['item_path'] = null;
+                }
+                else
+                {
+                    $itemMaster['item_path'] = collect($data);
+                }
               
-                $itemMaster['item_path'] = collect($data);
         }
         else
         {
