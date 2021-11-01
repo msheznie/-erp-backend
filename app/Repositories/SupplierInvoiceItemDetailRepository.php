@@ -118,7 +118,8 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
                                                    })
                                                     ->where('erp_purchaseorderadvpayment.grvAutoID', $bookInvSuppDetail->grvAutoID)
                                                     ->where('erp_purchaseorderadvpayment.supplierID',$bookInvSuppMaster->supplierID)
-                                                    ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');            
+                                                    ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');          
+            $grvDetails = $grvDetails->get();   
         } else {
 
             $pulledQry = DB::table('erp_bookinvsupp_item_det')
@@ -143,12 +144,25 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
 
             if ($valEligible && !$rcmActivated) {
                 $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty) + (erp_grvdetails.VATAmountRpt*noQty)),7) as localAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) / noQty) * returnQty)),7) as balanceAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (erp_grvdetails.VATAmount*noQty)),7) / noQty) * returnQty)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount, noQty, returnQty');
+                
+                $grvDetails = $grvDetails->get(); 
+
+                foreach ($grvDetails as $key1 => $value1) {
+                    $res = TaxService::processGRVDetailVATForUnbilled($value1->grvDetailsID);
+
+                    $value1->transactionAmount = $res['totalTransAmount'];
+                    $value1->rptAmount = $res['totalRptAmount'];
+                    $value1->localAmount = $res['totalLocalAmount'];
+
+                    $value1->balanceAmount = $value1->transactionAmount - $value1->invoicedAmount - round(($value1->transactionAmount / $value1->noQty) * $value1->returnQty, 7);
+                    $value1->balanceAmountCheck = $value1->transactionAmount - $value1->invoicedAmount - round(($value1->transactionAmount / $value1->noQty) * $value1->returnQty, 7);
+                }
             } else {
                 $grvDetails = $grvDetails->selectRaw('erp_bookinvsupp_item_det.supplierInvoAmount, erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, erp_grvdetails.vatMasterCategoryID, erp_grvdetails.vatSubCategoryID, erp_grvdetails.exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmountCheck, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount, noQty, returnQty');
+                $grvDetails = $grvDetails->get(); 
             }
         }
 
-        $grvDetails = $grvDetails->get(); 
 
         return ['status' => true, 'data' => ['grvDetails' => $grvDetails, 'logisticYN' => $groupMaster->logisticYN]];
     }

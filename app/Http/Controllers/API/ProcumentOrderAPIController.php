@@ -63,6 +63,7 @@ use App\Models\AdvanceReceiptDetails;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetConsumedData;
+use App\Models\TaxVatCategories;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
@@ -703,6 +704,17 @@ class ProcumentOrderAPIController extends AppBaseController
 
                     if (!$input['vatRegisteredYN']) {
                         $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
+                    } else {
+                        $checkVATCategory = TaxVatCategories::with(['type'])->find($itemDiscont['vatSubCategoryID']);
+                        if ($checkVATCategory) {
+                            if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $itemDiscont['exempt_vat_portion'] > 0 && $itemDiscont['VATAmount'] > 0) {
+                               $exemptVAT = $itemDiscont['VATAmount'] * ($itemDiscont['exempt_vat_portion'] / 100);
+
+                               $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                            } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                                $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
+                            }
+                        }
                     }
 
                     // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
