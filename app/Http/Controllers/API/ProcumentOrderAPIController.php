@@ -1683,7 +1683,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
-        $items = ItemAssigned::where('companySystemID', $companyId);
+        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1);
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
