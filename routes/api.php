@@ -132,6 +132,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
+        Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
+
         
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');

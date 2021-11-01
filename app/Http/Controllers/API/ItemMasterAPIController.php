@@ -1331,7 +1331,6 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $search = $request->input('search.value');
-        $input = $request;
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
@@ -1399,6 +1398,27 @@ class ItemMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+
+    }
+
+    public function getAllAssignedItemsForCompany(Request $request) {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+            return $query->where('companySystemID', '=', $companyId);
+        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
+
+        return $this->sendResponse($itemMasters, 'Data retrieved successfully');
+
 
     }
 }
