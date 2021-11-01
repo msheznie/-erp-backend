@@ -767,6 +767,7 @@ class ItemMasterAPIController extends AppBaseController
         $id = $input['itemCodeSystem'];
         $imageData = $input['item_path'];
         unset($input['item_path']);
+        unset($input['specification']);
 
         $input = array_except($input,['finance_sub_category']);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';

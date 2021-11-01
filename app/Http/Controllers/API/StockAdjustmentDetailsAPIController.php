@@ -513,6 +513,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $companyId = $input['companyId'];
 
         $items = ItemAssigned::where('companySystemID', $companyId)
+            ->where('isActive', 1)->where('isAssigned', -1)
             ->where('financeCategoryMaster', 1)
             ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
