@@ -1263,6 +1263,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             }
         }
 
+
         if(count($validationFailedItems) > 0) {
             $addedItems = $totalItemCount - count($validationFailedItems);
             $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
@@ -1275,7 +1276,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     "itemCode" => $itemToAdd->itemCodeSystem,
                     "itemPrimaryCode" => $itemToAdd->primaryCode,
                     "itemDescription" => $itemToAdd->itemDescription,
-                    "isMRPulled" => false
+                    "isMRPulled" => false,
+                    "unitOfMeasure" => $itemToAdd->unit,
+                    "partNumber" => $itemToAdd->secondaryItemCode
                 ]);
                 $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
             }
