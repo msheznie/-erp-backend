@@ -180,6 +180,27 @@ class Helper
      * $param 6-amount : amount
      * no return values
      */
+
+    public static function checkDomai()
+    {   
+
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $url = $_SERVER['HTTP_HOST'];
+        if (env('IS_MULTI_TENANCY') == true) {
+            
+            
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+           
+            $search = '*';
+            $redirectUrl = str_replace ($search, $subDomain, $redirectUrl);
+           
+        }   
+        
+        return $redirectUrl;
+    }
+
     public static function confirmDocument($params)
     {
         /** check document is already confirmed*/
@@ -899,17 +920,22 @@ class Helper
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        if (in_array($params["document"], self::documentListForClickHere())) {
-                                            if (in_array($params["document"], [1, 50, 51])) {
-                                                $redirectUrl =  env("PR_APPROVE_URL");
-                                            } else {
-                                                $redirectUrl =  env("APPROVE_URL");
-                                            }
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        } else {
-                                            $redirectUrl =  env("ERP_APPROVE_URL");
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        }
+                                        // if (in_array($params["document"], self::documentListForClickHere())) {
+                                        //     if (in_array($params["document"], [1, 50, 51])) {
+                                        //         $redirectUrl =  env("PR_APPROVE_URL");
+                                        //     } else {
+                                        //         $redirectUrl =  env("APPROVE_URL");
+                                        //     }
+                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // } else {
+                                        //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // }
+
+                                        $redirectUrl =  self::checkDomai();
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                         foreach ($approvalList as $da) {
@@ -2198,18 +2224,20 @@ class Helper
 
                                     $pushNotificationMessage = $subjectName . " is pending for your approval.";
 
-                                    if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
-                                        if (in_array($input["documentSystemID"], [1, 50, 51])) {
-                                            $redirectUrl =  env("PR_APPROVE_URL");
-                                        } else {
-                                            $redirectUrl =  env("APPROVE_URL");
-                                        }
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    } else {
-                                        $redirectUrl =  env("ERP_APPROVE_URL");
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    }
+                                    // if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
+                                    //     if (in_array($input["documentSystemID"], [1, 50, 51])) {
+                                    //         $redirectUrl =  env("PR_APPROVE_URL");
+                                    //     } else {
+                                    //         $redirectUrl =  env("APPROVE_URL");
+                                    //     }
+                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    // } else {
+                                    //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    // }
 
+                                    $redirectUrl =  self::checkDomai();
+                                    $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
 
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
