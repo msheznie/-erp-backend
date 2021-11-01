@@ -22,8 +22,12 @@ use App\Models\FinanceItemCategorySub;
 use App\Repositories\FinanceItemCategoryMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ErpAttributes;
+use App\Models\ErpAttributesDropdown;
+use App\Models\ErpAttributesFieldType;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -74,7 +78,9 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $financeItemCategoryMasters = FinanceItemCategoryMaster::select('financeitemcategorymaster.*');
+        $financeItemCategoryMasters = FinanceItemCategoryMaster::withCount(['item_sub_category' => function($query){
+                                                                    $query->where('expiryYN', 1);
+                                                                }]);
 
         $search = $request->input('search.value');
         if($search){
@@ -117,7 +123,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         }
 
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
-                                                         ->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
+                                                         ->with(['finance_item_category_master','finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue'])
                                                          ->select('financeitemcategorysub.*');
 
 
@@ -173,12 +179,65 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
+        $fieldTypes = ErpAttributesFieldType::all();
+
         $output = array('mainCategories' => $mainCategories,
             'chartOfAccount' => $chartOfAccount,
             'yesNoSelection' => $yesNoSelection,
+            'fieldTypes' => $fieldTypes,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAttributesData(Request $request){
+
+        $itemCategorySubID = $request[0];
+        $attributes = ErpAttributes::with('field_type')->where('document_master_id',$itemCategorySubID)->get();
+
+        return $this->sendResponse($attributes, 'Record retrieved successfully');
+    }
+
+    public function getDropdownValues(Request $request){
+
+        $itemCategorySubID = $request['itemCategorySubID'];
+
+        $dropDownvalues = ErpAttributesDropdown::where('attributes_id',$itemCategorySubID)->get();
+
+
+         return $this->sendResponse($dropDownvalues, 'Record retrieved successfully');
+    }
+
+    public function addItemAttributes(Request $request){
+            DB::beginTransaction();
+            try {
+                $input= $request->all();
+                $dropDownValues = $request['dropdownValues'];
+
+                $masterData = [
+                    'description' => $input['description'],
+                    'document_id' => $input['document_id'],
+                    'document_master_id' => $input['document_master_id'],
+                    'field_type_id' => $input['field_type_id']
+                ];
+                $attributes = ErpAttributes::create($masterData);
+
+                $attributes_id = $attributes->id;
+
+                foreach($dropDownValues as $data){
+                     $dropDownMasterData = [
+                        'description' => $data['value'],
+                        'attributes_id' => $attributes_id
+                    ];
+
+                    $dropdown = ErpAttributesDropdown::create($dropDownMasterData);
+                }
+            DB::commit();
+            return $this->sendResponse([], 'Record retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     /**
@@ -263,5 +322,21 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategoryMaster->delete();
 
         return $this->sendResponse($id, 'Finance Item Category Master deleted successfully');
+    }
+
+    public function getFinanceItemCategoryMasterExpiryStatus(Request $request){
+        $itemCategoryID = $request->all();
+
+        $expiryStatus = FinanceItemCategoryMaster::select('exipryYN')->where('itemCategoryID',$itemCategoryID)->first();
+
+        return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
+    }
+
+    public function getFinanceItemCategoryMasterAttributesStatus(Request $request){
+        $itemCategoryID = $request->all();
+
+        return$expiryStatus = FinanceItemCategoryMaster::select('attributesYN')->where('itemCategoryID',$itemCategoryID)->first();
+
+        return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
     }
 }

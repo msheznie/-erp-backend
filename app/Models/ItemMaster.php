@@ -116,7 +116,8 @@ class ItemMaster extends Model
         'refferedBackYN',
         'timesReferred',
         'isPOSItem',
-        'vatSubCategory'
+        'vatSubCategory',
+        'expiryYN'
     ];
 
     /**
@@ -167,7 +168,8 @@ class ItemMaster extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'isPOSItem' => 'integer',
-        'vatSubCategory'=>'integer'
+        'vatSubCategory'=>'integer',
+        'expiryYN'=>'integer'
     ];
 
     /**
@@ -207,6 +209,11 @@ class ItemMaster extends Model
     public function finalApprovedBy()
     {
         return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
+    }
+
+    public function specification()
+    {
+        return $this->belongsTo('App\Models\ItemSpecification','itemCodeSystem','item_id');
     }
 
     public function created_by()

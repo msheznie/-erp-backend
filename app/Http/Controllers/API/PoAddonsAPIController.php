@@ -22,8 +22,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
-
+use App\Models\PurchaseOrderDetails;
+use Illuminate\Support\Facades\DB;
 /**
  * Class PoAddonsController
  * @package App\Http\Controllers\API
@@ -238,6 +238,12 @@ class PoAddonsAPIController extends AppBaseController
      */
     public function update($id, UpdatePoAddonsAPIRequest $request)
     {
+       
+        DB::beginTransaction();
+        try {
+   
+
+                   
         $input = $request->all();
 
         $input = array_except($input, ['category']);
@@ -250,7 +256,7 @@ class PoAddonsAPIController extends AppBaseController
         if (empty($poAddons)) {
             return $this->sendError('Po Addons not found');
         }
-
+        
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['poId'])
             ->first();
 
@@ -258,13 +264,48 @@ class PoAddonsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+        ->where('purchaseOrderMasterID', $input['poId'])
+        ->first();
+
+    
+
+        $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
+        ->where('purchaseOrderMasterID', $input['poId'])
+        ->first();
+
+      
+
+        $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
+        ->where('poId', $input['poId'])
+        ->first();
+
+     
+
+        $new_add_on_amount = $poAddonMasterSum->addonTotalSum + $input['amount'];
+        $poMasterSumDeductedNotRounded = ($poMasterSum['masterTotalSum'] + $new_add_on_amount + $poMasterVATSum['masterTotalVATSum'] - $purchaseOrder->poDiscountAmount);
+
+     
         $input['supplierID'] =  $purchaseOrder->supplierID;
         $input['currencyID'] =  $purchaseOrder->supplierTransactionCurrencyID;
         $input['glCode'] =  0;
 
+
+
+        $purchaseOrder->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeductedNotRounded);
+        $purchaseOrder->update();
+
         $poAddons = $this->poAddonsRepository->update($input, $id);
 
+        DB::commit();
         return $this->sendResponse($poAddons->toArray(), 'PoAddons updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+       
+       
+
     }
 
     /**
@@ -308,15 +349,32 @@ class PoAddonsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var PoAddons $poAddons */
-        $poAddons = $this->poAddonsRepository->findWithoutFail($id);
 
-        if (empty($poAddons)) {
-            return $this->sendError('Po Addons not found');
+        DB::beginTransaction();
+        try {
+    
+            $poAddons = $this->poAddonsRepository->findWithoutFail($id);
+
+            $po_id = $poAddons->poId;
+            $deduct_amount = $poAddons->amount;
+    
+            $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $po_id)
+            ->first();
+            $purchaseOrder->poTotalSupplierTransactionCurrency -=$deduct_amount;
+            $purchaseOrder->update();
+     
+            if (empty($poAddons)) {
+                return $this->sendError('Po Addons not found');
+            }
+    
+            $poAddons->delete();
+            DB::commit();
+            return $this->sendResponse($id, 'Po Addons deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
 
-        $poAddons->delete();
-
-        return $this->sendResponse($id, 'Po Addons deleted successfully');
     }
 
 

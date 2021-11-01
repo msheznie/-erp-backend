@@ -114,6 +114,7 @@ class GRVDetails extends Model
         'financeGLcodebBSSystemID',
         'financeGLcodebBS',
         'financeGLcodePLSystemID',
+        'exempt_vat_portion',
         'financeGLcodePL',
         'includePLForGRVYN',
         'supplierPartNumber',
@@ -210,6 +211,7 @@ class GRVDetails extends Model
         'unitOfMeasure' => 'integer',
         'noQty' => 'float',
         'prvRecievedQty' => 'float',
+        'exempt_vat_portion' => 'float',
         'returnQty' => 'float',
         'poQty' => 'float',
         'unitCost' => 'float',
@@ -322,5 +324,15 @@ class GRVDetails extends Model
     }
     public function assetMaster(){ 
         return $this->hasMany('App\Models\FixedAssetMaster',  'docOriginDetailID', 'grvDetailsID');
+    }
+
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
+    }
+
+
+     public function supplier_invoice_item_detail()
+    {
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail', 'grvDetailsID', 'grvDetailsID');
     }
 }

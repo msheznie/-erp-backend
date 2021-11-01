@@ -55,7 +55,7 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Storage;
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -545,11 +545,60 @@ class ItemMasterAPIController extends AppBaseController
      *
      * @return Response
      */
+
+
+
+
+
+
+    private function storeImage($imageData, $picName, $picBasePath)
+    {
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $type = strtolower($type[1]); 
+
+            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                throw new Exception('invalid image type');
+            }
+
+            $imageData = base64_decode($imageData);
+
+            if ($imageData === false) {
+                throw new Exception('image decode failed');
+            }
+
+            $picNameExtension = "{$picName}.{$type}";
+            $picFullPath = $picBasePath . $picNameExtension;
+            Storage::disk('public')->put($picFullPath, $imageData);
+        } else if (preg_match('/^storage/', $imageData)) {
+            $imageData = basename($imageData);
+            $picFullPath = $picBasePath . $imageData;
+        } else {
+            throw new Exception('did not match data URI with image data');
+        }
+
+        return $picFullPath;
+    }
+
+
     public function store(CreateItemMasterAPIRequest $request)
     {
 
+      
         $input = $request->all();
+       
+
+        $imageData = (array)($input['images']);
+
+       
         $input = $this->convertArrayToValue($input);
+
+        $financeCategorySubID = $input['financeCategorySub'];
+        $itemCategorySubExpirystatus = FinanceItemcategorySub::select('expiryYN')
+                                        ->where('itemCategorySubID', $financeCategorySubID)->first();
+        $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
+
+
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
@@ -638,7 +687,36 @@ class ItemMasterAPIController extends AppBaseController
             $input['itemApprovedComment'] = '';
         }
 
+
+
+
         $itemMasters = $this->itemMasterRepository->create($input);
+        
+        $count = 0;
+        $image_path = [];
+        $path_dir['path'] = '';
+        foreach($imageData as $key=>$val)
+        {
+                    $count++;
+                    $random_words = $itemMasters['itemCodeSystem'].'_'.$count;
+                    $base_path = 'item/'.$itemMasters['itemCodeSystem'].'/'.$count.'/';
+                    $path_dir['path'] = $this->storeImage($val, $random_words, $base_path);
+                    array_push($image_path,$path_dir);
+        }
+        
+
+        if($imageData == null || empty($imageData))
+        {
+            $pic['pic'] = null;
+        }
+        else
+        {
+            $pic['pic'] = json_encode($image_path);
+        }
+        
+        $this->itemMasterRepository->update(['itemPicture' => $pic['pic']], $itemMasters['itemCodeSystem']);
+
+
 
         $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
         $financeCategoryMaster->modifiedPc = gethostname();
@@ -685,6 +763,10 @@ class ItemMasterAPIController extends AppBaseController
     public function updateItemMaster(Request $request)
     {
         $input = $request->all();
+        $id = $input['itemCodeSystem'];
+        $imageData = $input['item_path'];
+        unset($input['item_path']);
+
         $input = array_except($input,['finance_sub_category']);
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
@@ -703,7 +785,7 @@ class ItemMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-        $id = $input['itemCodeSystem'];
+       
 
 
         unset($input['final_approved_by']);
@@ -824,6 +906,38 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
+
+
+
+        if ($exists = Storage::disk('public')->exists('item/'.$id)) {
+            Storage::disk('public')->deleteDirectory('item/'.$id);
+        }
+ 
+        $count = 0;
+        $image_path = [];
+        $path_dir['path'] = '';
+
+   
+        if($imageData != null || !empty($imageData))
+        {
+            foreach($imageData as $key=>$val)
+            {
+                        $count++;
+                        $random_words = $id.'_'.$count;
+                        $base_path = 'item/'.$id.'/'.$count.'/';
+                        $path_dir['path'] = $this->storeImage($val, $random_words, $base_path);
+                        array_push($image_path,$path_dir);
+            }
+
+            $itemMaster->itemPicture = json_encode($image_path);
+        }
+
+
+
+       
+      
+
+
         $itemMaster->save();
         return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully d');
 
@@ -879,16 +993,50 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['finalApprovedBy','financeSubCategory'=> function($q){
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['specification','finalApprovedBy','financeSubCategory'=> function($q){
             $q->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
         }])->first();
+
+      
+        $image_data = $itemMaster->itemPicture;
+        $storagePath  = Storage::disk('public')->getDriver()->getAdapter()->getPathPrefix();
+     
+        if($image_data != null || !empty($image_data))
+        {
+         
+            $decode_images = json_decode($itemMaster->itemPicture);
+         
+            $itemMaster->itemPicture = null;
+            $data = [];
+            foreach($decode_images as $decode_image)
+            {
+                $baseimg = '';
+                $path = $storagePath.$decode_image->path;
+
+                
+                $type = pathinfo($path, PATHINFO_EXTENSION);
+                $data_info = file_get_contents($path);
+                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
+            
+                array_push($data,$base64);
+            
+            }
+
+   
+              
+                $itemMaster['item_path'] = collect($data);
+        }
+        else
+        {
+            $itemMaster['item_path'] = null;
+        }
 
 
         if (empty($itemMaster)) {
             return $this->sendError('Item Master not found');
         }
 
-        return $this->sendResponse($itemMaster->toArray(), 'Item Master retrieved successfully');
+        return $this->sendResponse($itemMaster, 'Item Master retrieved successfully');
     }
 
     /**
@@ -903,6 +1051,7 @@ class ItemMasterAPIController extends AppBaseController
     public function update($id, UpdateItemMasterAPIRequest $request)
     {
         $input = $request->all();
+        
 
         /** @var ItemMaster $itemMaster */
         $itemMaster = $this->itemMasterRepository->findWithoutFail($id);

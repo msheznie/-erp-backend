@@ -17,8 +17,12 @@ use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
+use App\Models\SupplierAssigned;
+use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
+use App\Models\SupplierInvoiceItemDetail;
+use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\UnbilledGrvGroupBy;
@@ -31,6 +35,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\TaxService;
 
 /**
  * Class BookInvSuppDetController
@@ -235,22 +240,34 @@ class BookInvSuppDetAPIController extends AppBaseController
         $input = array_except($request->all(), ['grvmaster', 'pomaster']);
         $input = $this->convertArrayToValue($input);
 
+        $result = $this->updateDetail($input, $id);
+
+        if ($result['status']) {
+            return $this->sendResponse($result['data'], trans('custom.update', ['attribute' => trans('custom.book_inv_supp_det')]));
+        } else {
+            return $this->sendError($result['message'], 500);
+        }
+    }
+
+
+    public function updateDetail($input, $id)
+    {
         /** @var BookInvSuppDet $bookInvSuppDet */
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppDet)) {
-            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
+            return ['status' => false, 'message' => trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')])];
         }
 
         if($bookInvSuppDet->suppinvmaster && $bookInvSuppDet->suppinvmaster->confirmedYN){
-            return $this->sendError(trans('custom.you_cannot_update_supplier_invoice_detail_this_document_already_confirmed'),500);
+            return ['status' => false, 'message' => trans('custom.you_cannot_update_supplier_invoice_detail_this_document_already_confirmed')];
         }
 
         $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
             ->first();
 
         if (empty($unbilledGrvGroupByMaster)) {
-            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')]));
+            return ['status' => false, 'message' => trans('custom.not_found', ['attribute' => trans('custom.supplier_invoice_details')])];
         }
 
         if ($input['supplierInvoAmount'] == "") {
@@ -259,10 +276,45 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' AND erp_bookinvsuppdet.bookingSupInvoiceDetAutoID != ' . $bookInvSuppDet->bookingSupInvoiceDetAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
+
+        $returnAmount = 0;
+
+        if (!$unbilledGrvGroupByMaster->logisticYN) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($bookInvSuppDet->bookingSuppMasInvAutoID);
+
+            $company = Company::where('companySystemID', $bookInvSuppMaster->companySystemID)->first();
+            $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $bookInvSuppMaster->supplierID)
+                                                        ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                                        ->first();
+            $valEligible = false;
+            if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
+                $valEligible = true;
+            }
+
+            $rcmActivated = TaxService::isGRVRCMActivation($unbilledGrvGroupByMaster->grvAutoID);
+
+            $grvDetailData = GRVDetails::where('grvAutoID', $unbilledGrvGroupByMaster->grvAutoID);
+
+
+            if ($valEligible && !$rcmActivated) {
+                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
+            } else {
+                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
+            }
+
+            $grvDetailData = $grvDetailData->groupBy('grvAutoID')
+                                           ->first();
+
+            if ($grvDetailData) {
+                $returnAmount = $grvDetailData->totalReturnAmount;
+            }
+        }
+
+
         if ($balanceAmount) {
-            $totalPendingAmount = ($unbilledGrvGroupByMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
+            $totalPendingAmount = ($unbilledGrvGroupByMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount) - $returnAmount;
         } else {
-            $totalPendingAmount = $unbilledGrvGroupByMaster->totTransactionAmount;
+            $totalPendingAmount = $unbilledGrvGroupByMaster->totTransactionAmount - $returnAmount;
         }
 
         $input['supplierInvoOrderedAmount'] = $totalPendingAmount - $input['supplierInvoAmount'];
@@ -317,7 +369,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $updateUnbilledGrvGroupByMaster->save();
 
-        return $this->sendResponse($bookInvSuppDet->toArray(), trans('custom.update', ['attribute' => trans('custom.book_inv_supp_det')]));
+
+        return ['status' => true, 'data' => $bookInvSuppDet->toArray()];
     }
 
     /**
@@ -417,6 +470,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
         $poMasterTableTotal->save();
 
+        SupplierInvoiceItemDetail::where('bookingSupInvoiceDetAutoID', $id)->delete();
 
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
@@ -471,203 +525,422 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_add_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
+        DB::beginTransaction();
+        try {
 
-        $itemExistArray = array();
-        $prExistArray = array();
-        //check added item exist
-        foreach ($input['detailTable'] as $itemExist) {
+            $itemExistArray = array();
+            $prExistArray = array();
+            //check added item exist
+            foreach ($input['detailTable'] as $itemExist) {
 
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExist = BookInvSuppDet::with(['grvmaster'])
-                    ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
-                    ->where('unbilledgrvAutoID', $itemExist['unbilledgrvAutoID'])
-                    ->get();
+                if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                    $siDetailExist = BookInvSuppDet::with(['grvmaster'])
+                        ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                        ->where('unbilledgrvAutoID', $itemExist['unbilledgrvAutoID'])
+                        ->get();
 
-                if (!empty($siDetailExist)) {
-                    foreach ($siDetailExist as $row) {
-                        $itemDrt = "The GRV you are trying to add already added to this invoice";
-                        $itemExistArray[] = [$itemDrt];
+                    if (!empty($siDetailExist)) {
+                        foreach ($siDetailExist as $row) {
+                            $itemDrt = "The GRV you are trying to add already added to this invoice";
+                            $itemExistArray[] = [$itemDrt];
+                        }
+                    }
+
+
+                    $checkPurchaseReurn = PurchaseReturnDetails::with(['master' => function($query){
+                                                                    $query->where('approved', 0);
+                                                               }])
+                                                               ->where('grvAutoID', $itemExist['grvAutoID'])
+                                                               ->whereHas('master', function($query){
+                                                                    $query->where('approved', 0);
+                                                               })
+                                                               ->first();
+
+                    if ($checkPurchaseReurn) {
+                        $prExistArray[] = [$checkPurchaseReurn->master->purchaseReturnCode. "is pending for approval."];
                     }
                 }
 
-
-                $checkPurchaseReurn = PurchaseReturnDetails::with(['master' => function($query){
-                                                                $query->where('approved', 0);
-                                                           }])
-                                                           ->where('grvAutoID', $itemExist['grvAutoID'])
-                                                           ->whereHas('master', function($query){
-                                                                $query->where('approved', 0);
-                                                           })
-                                                           ->first();
-
-                if ($checkPurchaseReurn) {
-                    $prExistArray[] = [$checkPurchaseReurn->master->purchaseReturnCode. "is pending for approval."];
-                }
             }
 
-        }
+            if (!empty($prExistArray)) {
+                return $this->sendError($prExistArray, 422);
+            }
 
-        if (!empty($prExistArray)) {
-            return $this->sendError($prExistArray, 422);
-        }
+            /*
+            * GWL-713
+             * documentType == 0  -   invoice type - PO
+            *  check policy 11 - Allow multiple GRV in One Invoice
+            * if policy 11 is 1 allow to add multiple different PO's
+            * if policy 11 is 0 do not allow multiple different PO's
+             */
+            if($bookInvSuppMaster->documentType==0){
+                $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
+                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                    ->first();
 
-        /*
-        * GWL-713
-         * documentType == 0  -   invoice type - PO
-        *  check policy 11 - Allow multiple GRV in One Invoice
-        * if policy 11 is 1 allow to add multiple different PO's
-        * if policy 11 is 0 do not allow multiple different PO's
-         */
-        if($bookInvSuppMaster->documentType==0){
-            $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
-                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
-                ->first();
+                if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
+                    $poId = 0;
 
-            if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
-                $poId = 0;
+                    $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
+                    if(count($details)){
 
-                $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
-                if(count($details)){
+                        $poIdArray = $details->pluck('purchaseOrderID')->toArray();
 
-                    $poIdArray = $details->pluck('purchaseOrderID')->toArray();
-
-                    if (count(array_unique($poIdArray)) > 1) {
-                        return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_saved_details'));
+                        if (count(array_unique($poIdArray)) > 1) {
+                            return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_saved_details'));
+                        }
+                        $poId = $poIdArray[0];
                     }
-                    $poId = $poIdArray[0];
-                }
 
-                $inputDetails = $input['detailTable'];
-                $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();
-                if (count(array_unique($inputPoIdArray)) > 1) {
-                    return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_selected_details'));
-                }
-                $inputPoId = $inputPoIdArray[0];
+                    $inputDetails = $input['detailTable'];
+                    $inputPoIdArray = collect($inputDetails)->pluck('purchaseOrderID')->toArray();
+                    if (count(array_unique($inputPoIdArray)) > 1) {
+                        return $this->sendError(trans('custom.multiple_pos_cannot_be_added_different_po_found_on_selected_details'));
+                    }
+                    $inputPoId = $inputPoIdArray[0];
 
-                if($poId != 0 && $poId != $inputPoId){
-                    return $this->sendError('multiple_pos_cannot_be_added_different_po_found_on_selected_and_already_saved_details');
+                    if($poId != 0 && $poId != $inputPoId){
+                        return $this->sendError('multiple_pos_cannot_be_added_different_po_found_on_selected_and_already_saved_details');
+                    }
                 }
             }
-        }
 
 
-        //check record total in General Ledger table
-        foreach ($input['detailTable'] as $itemExist) {
+            //check record total in General Ledger table
+            foreach ($input['detailTable'] as $itemExist) {
 
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
 
-                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', 3)->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['grvAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+                    $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', 3)->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['grvAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
-                if ($glCheck) {
-                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
+                    if ($glCheck) {
+                        if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
+                            $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
+                            $itemExistArray[] = [$itemDrt];
+                        }
+                    } else {
                         $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
-                } else {
-                    $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
                 }
             }
-        }
 
-        //check total matching
-        foreach ($input['detailTable'] as $temp) {
+            //check total matching
+            foreach ($input['detailTable'] as $temp) {
 
-            $groupMasterCheck = UnbilledGrvGroupBy::find($temp['unbilledgrvAutoID']);
+                $groupMasterCheck = UnbilledGrvGroupBy::find($temp['unbilledgrvAutoID']);
 
-            if (isset($temp['isChecked']) && $temp['isChecked']) {
+                if (isset($temp['isChecked']) && $temp['isChecked']) {
 
-                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $temp['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $temp['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
-                if ($balanceAmount) {
-                    if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) || ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
-                        $itemDrt = "Selected " . $temp['grvPrimaryCode'] . " GRV has been fully booked. Please check again";
+                    if ($balanceAmount) {
+                        if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) || ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
+                            $itemDrt = "Selected " . $temp['grvPrimaryCode'] . " GRV has been fully booked. Please check again";
+                            $itemExistArray[] = [$itemDrt];
+                        }
+                    }
+                }
+            }
+
+            // check with po table
+            foreach ($input['detailTable'] as $temp) {
+
+                if (isset($temp['isChecked']) && $temp['isChecked']) {
+
+                    $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
+                    //erp_purchaseorderadvpayment
+                    //reqAmountInPOTransCur
+                    $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
+                                              ->where('supplierID',$temp['supplierID'])
+                                              ->sum('reqAmountInPOTransCur');
+
+                    $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
+                        ->where('supplierID', $temp['supplierID'])
+                        ->sum('totTransactionAmount');
+
+                    if ($checkPreTotal > ($poMasterTotal->poTotalSupplierTransactionCurrency + $padpTotal)) {
+                        $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
             }
-        }
 
-        // check with po table
-        foreach ($input['detailTable'] as $temp) {
+            if (!empty($itemExistArray)) {
+                return $this->sendError($itemExistArray, 422);
+            }
 
-            if (isset($temp['isChecked']) && $temp['isChecked']) {
+            $pullAmount = 0;
+            foreach ($input['detailTable'] as $new) {
 
-                $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
-                //erp_purchaseorderadvpayment
-                //reqAmountInPOTransCur
-                $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
-                                          ->where('supplierID',$temp['supplierID'])
-                                          ->sum('reqAmountInPOTransCur');
+                $groupMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID']);
 
-                $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
-                    ->where('supplierID', $temp['supplierID'])
-                    ->sum('totTransactionAmount');
+                if (isset($new['isChecked']) && $new['isChecked']) {
 
-                if ($checkPreTotal > ($poMasterTotal->poTotalSupplierTransactionCurrency + $padpTotal)) {
-                    $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
-                    $itemExistArray[] = [$itemDrt];
+                    $totalPendingAmount = 0;
+                    // balance Amount
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+
+                    if ($balanceAmount) {
+                        $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
+                    } else {
+                        $totalPendingAmount = $groupMaster->totTransactionAmount;
+                    }
+
+                    $prDetail_arr['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;
+                    $prDetail_arr['unbilledgrvAutoID'] = $new['unbilledgrvAutoID'];
+                    $prDetail_arr['companySystemID'] = $groupMaster->companySystemID;
+                    $prDetail_arr['companyID'] = $groupMaster->companyID;
+                    $prDetail_arr['supplierID'] = $groupMaster->supplierID;
+                    $prDetail_arr['purchaseOrderID'] = $groupMaster->purchaseOrderID;
+                    $prDetail_arr['grvAutoID'] = $groupMaster->grvAutoID;
+                    $prDetail_arr['grvType'] = $groupMaster->grvType;
+                    $prDetail_arr['supplierTransactionCurrencyID'] = $groupMaster->supplierTransactionCurrencyID;
+                    $prDetail_arr['supplierTransactionCurrencyER'] = $groupMaster->supplierTransactionCurrencyER;
+                    $prDetail_arr['companyReportingCurrencyID'] = $groupMaster->companyReportingCurrencyID;
+                    $prDetail_arr['companyReportingER'] = $groupMaster->companyReportingER;
+                    $prDetail_arr['localCurrencyID'] = $groupMaster->localCurrencyID;
+                    $prDetail_arr['localCurrencyER'] = $groupMaster->localCurrencyER;
+                    $prDetail_arr['supplierInvoOrderedAmount'] = $totalPendingAmount;
+                    $prDetail_arr['transSupplierInvoAmount'] = $groupMaster->totTransactionAmount;
+                    $prDetail_arr['localSupplierInvoAmount'] = $groupMaster->totLocalAmount;
+                    $prDetail_arr['rptSupplierInvoAmount'] = $groupMaster->totRptAmount;
+                    //$prDetail_arr['supplierInvoAmount'] = $groupMaster->totTransactionAmount;
+                    //$prDetail_arr['totTransactionAmount'] = $groupMaster->totTransactionAmount;
+                    //$prDetail_arr['totLocalAmount'] = $groupMaster->totLocalAmount;
+                    //$prDetail_arr['totRptAmount'] = $groupMaster->totRptAmount;
+                    $item = $this->bookInvSuppDetRepository->create($prDetail_arr);
+
+                    $updatePRMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID'])
+                        ->update([
+                            'selectedForBooking' => -1
+                        ]);
+
+
+                    // $this->checkPurchaseReturnsAndUpdateBookInvDetail($new['grvAutoID'], $bookingSuppMasInvAutoID);
+
+
+                    $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $bookingSuppMasInvAutoID, $groupMaster);
+
+                    if (!$resDetail['status']) {
+                        return $this->sendError($resDetail['message'], 500);
+                    }
+
+                    $pullAmount = $resDetail['data'];
+                    
+                    if ($pullAmount > 0) {
+                        $supplierInvoiceDetail = $item->toArray();
+
+                        $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;      
+                        
+                        $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                        if (!$resultUpdateDetail['status']) {
+                            return $this->sendError($result['message'], 500);
+                        } 
+                    }
                 }
             }
+
+
+
+            DB::commit();
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage().$exception->getLine());
         }
 
-        if (!empty($itemExistArray)) {
-            return $this->sendError($itemExistArray, 422);
+    }
+
+    public function editPOBaseDetail(Request $request)
+    {
+        $input = $request->all();
+
+        $bookInvSuppDetail = BookInvSuppDet::find($input['bookingSupInvoiceDetAutoID']);
+
+        $groupMaster = UnbilledGrvGroupBy::find($bookInvSuppDetail->unbilledgrvAutoID);
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
         }
 
-        foreach ($input['detailTable'] as $new) {
+        DB::beginTransaction();
+        try {
 
-            $groupMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID']);
+            $totalPullAmount = 0;
+            foreach ($input['detailTable'] as $key => $value) {
 
-            if (isset($new['isChecked']) && $new['isChecked']) {
+                $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
+
+                $invoiceItem = SupplierInvoiceItemDetail::when($groupMaster->logisticYN != 1, function($query) use ($value) {
+                                                            $query->where('grvDetailsID', $value['grvDetailsID']);  
+                                                        })
+                                                        ->when($groupMaster->logisticYN == 1, function($query) use ($value) {
+                                                            $query->where('logisticID', $value['logisticID']);  
+                                                        })
+                                                        ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
+                                                        ->first();
+
+                $invoiceItemID = ($invoiceItem) ? $invoiceItem->id : 0;
+                
+                if ($value['supplierInvoAmount'] == "") {
+                    $updateData['supplierInvoAmount'] = 0;
+                } else {
+                    $updateData['supplierInvoAmount'] = $value['supplierInvoAmount'];
+                }
+
+                $grvDetail = ($groupMaster->logisticYN) ? PoAdvancePayment::find($value['logisticID']) : GRVDetails::find($value['grvDetailsID']);
 
                 $totalPendingAmount = 0;
                 // balance Amount
-                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
-
-                if ($balanceAmount) {
-                    $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
+                if ($groupMaster->logisticYN) {
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE logisticID = ' . $value['logisticID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.logisticID;'))->first();
+                    
                 } else {
-                    $totalPendingAmount = $groupMaster->totTransactionAmount;
+                    $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' AND erp_bookinvsupp_item_det.id !='.$invoiceItemID.' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
                 }
 
-                $prDetail_arr['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;
-                $prDetail_arr['unbilledgrvAutoID'] = $new['unbilledgrvAutoID'];
-                $prDetail_arr['companySystemID'] = $groupMaster->companySystemID;
-                $prDetail_arr['companyID'] = $groupMaster->companyID;
-                $prDetail_arr['supplierID'] = $groupMaster->supplierID;
-                $prDetail_arr['purchaseOrderID'] = $groupMaster->purchaseOrderID;
-                $prDetail_arr['grvAutoID'] = $groupMaster->grvAutoID;
-                $prDetail_arr['grvType'] = $groupMaster->grvType;
-                $prDetail_arr['supplierTransactionCurrencyID'] = $groupMaster->supplierTransactionCurrencyID;
-                $prDetail_arr['supplierTransactionCurrencyER'] = $groupMaster->supplierTransactionCurrencyER;
-                $prDetail_arr['companyReportingCurrencyID'] = $groupMaster->companyReportingCurrencyID;
-                $prDetail_arr['companyReportingER'] = $groupMaster->companyReportingER;
-                $prDetail_arr['localCurrencyID'] = $groupMaster->localCurrencyID;
-                $prDetail_arr['localCurrencyER'] = $groupMaster->localCurrencyER;
-                $prDetail_arr['supplierInvoOrderedAmount'] = $totalPendingAmount;
-                $prDetail_arr['transSupplierInvoAmount'] = $groupMaster->totTransactionAmount;
-                $prDetail_arr['localSupplierInvoAmount'] = $groupMaster->totLocalAmount;
-                $prDetail_arr['rptSupplierInvoAmount'] = $groupMaster->totRptAmount;
-                //$prDetail_arr['supplierInvoAmount'] = $groupMaster->totTransactionAmount;
-                //$prDetail_arr['totTransactionAmount'] = $groupMaster->totTransactionAmount;
-                //$prDetail_arr['totLocalAmount'] = $groupMaster->totLocalAmount;
-                //$prDetail_arr['totRptAmount'] = $groupMaster->totRptAmount;
-                $item = $this->bookInvSuppDetRepository->create($prDetail_arr);
 
-                $updatePRMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID'])
-                    ->update([
-                        'selectedForBooking' => -1
-                    ]);
+                if ($balanceAmount) {
+                    $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
+                } else {
+                    $totalPendingAmount = $value['transactionAmount'];
+                }
 
 
-                $this->checkPurchaseReturnsAndUpdateBookInvDetail($new['grvAutoID'], $bookingSuppMasInvAutoID);
+                $updateData['supplierInvoOrderedAmount'] = $totalPendingAmount - $value['supplierInvoAmount'];
+
+                $currency = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $updateData['supplierInvoAmount']);
+
+                $updateData['totTransactionAmount'] = $updateData['supplierInvoAmount'];
+                $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+                $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+                $totalVATAmount = ($groupMaster->logisticYN) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
+
+                if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+                    $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
+                    $VATAmount = $totalVATAmount * $percentage;
+                    $currencyVat = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $VATAmount);
+                        $updateData['VATAmount'] = \Helper::roundValue($VATAmount);
+                        $updateData['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
+                        $updateData['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+                }
+
+                SupplierInvoiceItemDetail::when($groupMaster->logisticYN != 1, function($query) use ($value) {
+                                            $query->where('grvDetailsID', $value['grvDetailsID']);  
+                                        })
+                                        ->when($groupMaster->logisticYN == 1, function($query) use ($value) {
+                                            $query->where('logisticID', $value['logisticID']);  
+                                        })
+                                        ->where('bookingSupInvoiceDetAutoID', $input['bookingSupInvoiceDetAutoID'])
+                                        ->update($updateData);
             }
+
+            if ($totalPullAmount > 0) {
+                $supplierInvoiceDetail = $bookInvSuppDetail->toArray();
+
+                $supplierInvoiceDetail['supplierInvoAmount'] = $totalPullAmount;      
+                
+                $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                if (!$resultUpdateDetail['status']) {
+                    return $this->sendError($result['message'], 500);
+                } 
+            }
+
+            DB::commit();
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage().$exception->getLine());
+        }
+    }
+
+    public function storeSupplierInvoiceGrvDetails($unbilledData, $bookingSupInvoiceDetAutoID, $bookingSuppMasInvAutoID, $groupMaster)
+    {
+        $totalPullAmount = 0;
+        foreach ($unbilledData['grv_details'] as $key => $value) {
+
+            $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
+
+            $totalPendingAmount = 0;
+            if ($unbilledData['logisticYN']) {
+                $grvDetail = PoAdvancePayment::find($value['logisticID']);
+
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.logisticID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE logisticID = ' . $value['logisticID'] . ' GROUP BY erp_bookinvsupp_item_det.logisticID;'))->first();
+            } else {
+                $grvDetail = GRVDetails::find($value['grvDetailsID']);
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsupp_item_det.grvDetailsID, Sum(erp_bookinvsupp_item_det.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsupp_item_det WHERE grvDetailsID = ' . $value['grvDetailsID'] . ' GROUP BY erp_bookinvsupp_item_det.grvDetailsID;'))->first();
+            }
+
+            if ($balanceAmount) {
+                $totalPendingAmount = ($value['transactionAmount'] - $balanceAmount->SumOftotTransactionAmount);
+            } else {
+                $totalPendingAmount = $value['transactionAmount'];
+            }
+
+            $details = [
+                'bookingSupInvoiceDetAutoID' => $bookingSupInvoiceDetAutoID,
+                'bookingSuppMasInvAutoID' => $bookingSuppMasInvAutoID,
+                'unbilledgrvAutoID' => $unbilledData['unbilledgrvAutoID'],
+                'companySystemID' => $unbilledData['companySystemID'],
+                'grvDetailsID' => $value['grvDetailsID'],
+                'logisticID' => $value['logisticID'],
+                'vatMasterCategoryID' => $value['vatMasterCategoryID'],
+                'vatSubCategoryID' => $value['vatSubCategoryID'],
+                'exempt_vat_portion' => $value['exempt_vat_portion'],
+                'purchaseOrderID' => $unbilledData['purchaseOrderID'],
+                'grvAutoID' => $unbilledData['grvAutoID'],
+                'supplierTransactionCurrencyID' => $groupMaster->supplierTransactionCurrencyID,
+                'supplierTransactionCurrencyER' => $groupMaster->supplierTransactionCurrencyER,
+                'companyReportingCurrencyID' => $groupMaster->companyReportingCurrencyID,
+                'companyReportingER' => $groupMaster->companyReportingER,
+                'localCurrencyID' => $groupMaster->localCurrencyID,
+                'localCurrencyER' => $groupMaster->localCurrencyER,
+                'supplierInvoOrderedAmount' => ($totalPendingAmount - floatval(((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0))),
+                'transSupplierInvoAmount' => $value['transactionAmount'],
+                'localSupplierInvoAmount' => $value['localAmount'],
+                'rptSupplierInvoAmount' => $value['rptAmount']
+            ];
+
+            if (isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) {
+                $details['supplierInvoAmount'] = floatval($value['supplierInvoAmount']);
+            } else {
+                $details['supplierInvoAmount'] = 0;
+            }
+
+            $currency = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $details['supplierInvoAmount']);
+
+            $details['totTransactionAmount'] = $details['supplierInvoAmount'];
+            $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+            $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+            $totalVATAmount = ($unbilledData['logisticYN']) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
+
+             if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
+                $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
+                $VATAmount = $totalVATAmount * $percentage;
+                $currencyVat = \Helper::currencyConversion($unbilledData['companySystemID'], $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $VATAmount);
+                    $details['VATAmount'] = \Helper::roundValue($VATAmount);
+                    $details['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
+                    $details['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+            }
+
+            $createRes = SupplierInvoiceItemDetail::create($details);
+
         }
 
 
-        return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
-
+        return ['status' => true, 'data' => $totalPullAmount];
     }
 
 

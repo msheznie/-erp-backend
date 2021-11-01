@@ -180,6 +180,27 @@ class Helper
      * $param 6-amount : amount
      * no return values
      */
+
+    public static function checkDomai()
+    {   
+
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $url = $_SERVER['HTTP_HOST'];
+        if (env('IS_MULTI_TENANCY') == true) {
+            
+            
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+           
+            $search = '*';
+            $redirectUrl = str_replace ($search, $subDomain, $redirectUrl);
+           
+        }   
+        
+        return $redirectUrl;
+    }
+
     public static function confirmDocument($params)
     {
         /** check document is already confirmed*/
@@ -632,6 +653,16 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgetaddition';
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
+                case 104:
+                    $docInforArr["documentCodeColumnName"] = 'returnFillingCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'vat_return_filling_master';
+                    $docInforArr["modelName"] = 'VatReturnFillingMaster';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 case 100:
                     $docInforArr["tableName"] = 'erp_budget_contingency';
@@ -889,17 +920,22 @@ class Helper
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        if (in_array($params["document"], self::documentListForClickHere())) {
-                                            if (in_array($params["document"], [1, 50, 51])) {
-                                                $redirectUrl =  env("PR_APPROVE_URL");
-                                            } else {
-                                                $redirectUrl =  env("APPROVE_URL");
-                                            }
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        } else {
-                                            $redirectUrl =  env("ERP_APPROVE_URL");
-                                            $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                        }
+                                        // if (in_array($params["document"], self::documentListForClickHere())) {
+                                        //     if (in_array($params["document"], [1, 50, 51])) {
+                                        //         $redirectUrl =  env("PR_APPROVE_URL");
+                                        //     } else {
+                                        //         $redirectUrl =  env("APPROVE_URL");
+                                        //     }
+                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // } else {
+                                        //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                        //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                        // }
+
+                                        $redirectUrl =  self::checkDomai();
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                         foreach ($approvalList as $da) {
@@ -1669,6 +1705,17 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+            case 104: // vat return filling
+                $docInforArr["tableName"] = 'vat_return_filling_master';
+                $docInforArr["modelName"] = 'VatReturnFillingMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedEmpID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             case 100:
                 $docInforArr["tableName"] = 'erp_budget_contingency';
@@ -2177,18 +2224,20 @@ class Helper
 
                                     $pushNotificationMessage = $subjectName . " is pending for your approval.";
 
-                                    if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
-                                        if (in_array($input["documentSystemID"], [1, 50, 51])) {
-                                            $redirectUrl =  env("PR_APPROVE_URL");
-                                        } else {
-                                            $redirectUrl =  env("APPROVE_URL");
-                                        }
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    } else {
-                                        $redirectUrl =  env("ERP_APPROVE_URL");
-                                        $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-                                    }
+                                    // if (in_array($input["documentSystemID"], self::documentListForClickHere())) {
+                                    //     if (in_array($input["documentSystemID"], [1, 50, 51])) {
+                                    //         $redirectUrl =  env("PR_APPROVE_URL");
+                                    //     } else {
+                                    //         $redirectUrl =  env("APPROVE_URL");
+                                    //     }
+                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    // } else {
+                                    //     $redirectUrl =  env("ERP_APPROVE_URL");
+                                    //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    // }
 
+                                    $redirectUrl =  self::checkDomai();
+                                    $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
 
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
@@ -2698,6 +2747,11 @@ class Helper
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                case 104:
+                    $docInforArr["tableName"] = 'vat_return_filling_master';
+                    $docInforArr["modelName"] = 'VatReturnFillingMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
@@ -2720,9 +2774,8 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102,65])) {
-                            
 
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102,65, 104])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
