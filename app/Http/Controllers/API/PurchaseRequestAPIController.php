@@ -75,7 +75,7 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\SegmentAllocatedItemRepository;
-
+use Illuminate\Support\Facades\Log;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -1346,6 +1346,7 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function update($id, UpdatePurchaseRequestAPIRequest $request)
     {
+
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
