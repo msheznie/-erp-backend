@@ -377,6 +377,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
+            'enableSpecification' => $input['enableSpecification'],
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
