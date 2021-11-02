@@ -1852,6 +1852,7 @@ GROUP BY
                 ItemLedger.minimumQty,               
                 ItemLedger.maximunQty,      
                 LocalCurrency,
+                LocalCurrencyCode,
                 warehouse,
                 rol,
             IF
@@ -1879,6 +1880,7 @@ GROUP BY
                 units.UnitShortCode,
                 round( erp_itemledger.inOutQty, 2 ) AS Qty,
                 currencymaster.CurrencyName AS LocalCurrency,
+                currencymaster.CurrencyCode AS LocalCurrencyCode,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
                 currencymaster_1.CurrencyName AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
