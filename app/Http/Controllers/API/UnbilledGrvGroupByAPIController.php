@@ -454,6 +454,18 @@ HAVING ROUND(
                     $grvDetails = $grvDetails->selectRaw('erp_grvdetails.grvDetailsID, itemPrimaryCode, itemDescription, vatMasterCategoryID, vatSubCategoryID, exempt_vat_portion, ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) as transactionAmount, ROUND(((GRVcostPerUnitComRptCur*noQty)),7) as rptAmount, ROUND(((GRVcostPerUnitLocalCur*noQty)),7) as localAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmount, ROUND((((GRVcostPerUnitSupTransCur*noQty) - IFNULL(pulledQry.SumOftotTransactionAmount,0)) - ((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)),7) as balanceAmountCheck, 0 as logisticID, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount, noQty, returnQty');
                     
                     $grv_details = $grvDetails->get();
+
+
+                    foreach ($grv_details as $key1 => $value1) {
+                        $res = TaxService::processGRVDetailVATForUnbilled($value1->grvDetailsID);
+
+                        $value1->transactionAmount = $value1->transactionAmount - $res['exemptVATTrans'];
+                        $value1->rptAmount = $value1->rptAmount - $res['exemptVATRpt'];
+                        $value1->localAmount = $value1->localAmount - $res['exemptVATLocal'];
+
+                        $value1->balanceAmount = $value1->transactionAmount - $value1->invoicedAmount - round(($value1->transactionAmount / $value1->noQty) * $value1->returnQty, 7);
+                        $value1->balanceAmountCheck = $value1->transactionAmount - $value1->invoicedAmount - round(($value1->transactionAmount / $value1->noQty) * $value1->returnQty, 7);
+                    }
                 }
                 
 
