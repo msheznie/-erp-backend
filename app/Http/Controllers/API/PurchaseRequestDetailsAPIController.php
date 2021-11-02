@@ -1508,7 +1508,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $request_data['docRefNo'] = $purchaseRequest->docRefNo;  
                     $request_data['companyID'] = $purchaseRequest->companyID;  
                     $request_data['purchaseRequestCode'] = $purchaseRequest->purchaseRequestCode;   
-                        
+                    $request_data['financeCategory'] = $purchaseRequest->financeCategory;   
+                    
+
+          
                     
                 $succes_item = 0;
                 $valid_items = [];
@@ -1517,6 +1520,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 foreach($items as $itemVal)
                 {   
                     
+                   
                     $is_failed= false;
 
                     $allowItemToTypePolicy = false;
@@ -1588,8 +1592,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     //start
 
                     if (!$itemNotound) {
+
+                        
+   
                         $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-                        $request_data_details['estimatedCost'] = $currencyConversion['documentAmount'];
+              
+                        $request_data_details['estimatedCost'] = $itemVal->estimatedCost;
                         $request_data_details['companySystemID'] = $item->companySystemID;
                         $request_data_details['companyID'] = $item->companyID;
                         $request_data_details['unitOfMeasure'] = $item->itemUnitOfMeasure;
@@ -1900,14 +1908,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                    
              
                     $request_data_details['quantityRequested'] = $itemVal->quantityRequested;  
-                    $request_data_details['totalCost'] = $itemVal->serviceLitotalCostneSystemID;  
+                    $request_data_details['totalCost'] = $itemVal->totalCost;  
                     $request_data_details['comments'] = $itemVal->comments;  
                     $request_data_details['itemCategoryID'] = $itemVal->itemCategoryID;
                     $request_data_details['isMRPulled'] = $itemVal->isMRPulled;  
                
                     //end
 
-                    
+           
                     // $request_data_details['companySystemID'] = $itemVal->companySystemID;      
                     // $request_data_details['partNumber'] = $itemVal->partNumber;  
                     // $request_data_details['quantityRequested'] = $itemVal->quantityRequested;  
@@ -1949,6 +1957,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //DB::commit();
 
 
+    
+            $segment_success = true;;
             if($item_count_obj > 0)
             {
                 if($succes_item == 0)
@@ -1960,20 +1970,81 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $new_purchaseRequests = $this->purchaseRequestRepository->create($request_data);
                     foreach($valid_items as $valid_item)
                     {
-                       
+                      
                         $valid_item['purchaseRequestID'] = $new_purchaseRequests['purchaseRequestID'];
 
                         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($valid_item);
+                                         
+                        $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=',$new_purchaseRequests->serviceLineSystemID)
+                                                                 ->where('documentSystemID', $new_purchaseRequests->documentSystemID)
+                                                                 ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
+                                                                 ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
+                                                                 ->get();
+
+
+                                                                         
+        
+                        if (sizeof($checkAlreadyAllocated) == 0) {
+                            $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID',$new_purchaseRequests->serviceLineSystemID)
+                                                                 ->where('documentSystemID', $new_purchaseRequests->documentSystemID)
+                                                                 ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
+                                                                 ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
+                                                                 ->delete();
+
+                                                                         
+        
+                            $allocationData = [
+                                'serviceLineSystemID' => $new_purchaseRequests->serviceLineSystemID,
+                                'documentSystemID' => $new_purchaseRequests->documentSystemID,
+                                'docAutoID' => $new_purchaseRequests->purchaseRequestID,
+                                'docDetailID' => $purchaseRequestDetails->purchaseRequestDetailsID
+                            ];
+                            
+
+                         
+                            $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+        
+                            if (!$segmentAllocatedItem['status']) {
+                                $segment_success = false;
+                            }
+                        } else {
+                             $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $new_purchaseRequests->documentSystemID)
+                                                         ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
+                                                         ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
+                                                         ->sum('allocatedQty');
+        
+                            if ($allocatedQty > $purchaseRequestDetails->quantityRequested) {
+                                $segment_success = false;
+                            }
+                        }
+                  
+
                        
                     }
               
                     if($is_failed)
-                    {
-                        return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied');
+                    { 
+                        if(!$segment_success)
+                        {
+                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied some items segment allocation failed');
+                        }
+                        else
+                        {
+                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied');
+                        }
+                        
                     }
                     else
                     {
-                        return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                        if(!$segment_success)
+                        {
+                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                        }
+                        else
+                        {
+                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                        }
+                        
                     }
                 }
  
