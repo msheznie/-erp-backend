@@ -87,9 +87,13 @@ class UnbilledGRVInsert implements ShouldQueue
                         foreach ($output as $key => $value) {
                                 $res = TaxService::processGRVVATForUnbilled($value);
 
-                                $value->totalVATAmount = $res['totalTransVATAmount'];
-                                $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
-                                $value->totalVATAmountRpt = $res['totalRptVATAmount'];
+                                $value->totTransactionAmount = $value->totTransactionAmount - $res['exemptVATTrans'];
+                                $value->totRptAmount = $value->totRptAmount - $res['exemptVATRpt'];
+                                $value->totLocalAmount = $value->totLocalAmount - $res['exemptVATLocal'];
+
+                                $value->totalVATAmount = $res['totalTransVATAmount'] + $res['exemptVATTrans'];
+                                $value->totalVATAmountLocal = $res['totalLocalVATAmount'] + $res['exemptVATLocal'];
+                                $value->totalVATAmountRpt = $res['totalRptVATAmount'] + $res['exemptVATRpt'];
                         }
                     }
 
@@ -144,6 +148,10 @@ class UnbilledGRVInsert implements ShouldQueue
 
                          foreach ($output as $key => $value) {
                                 $res = TaxService::processPRNVATForUnbilled($masterModel["autoID"], $masterModel["purhaseReturnAutoID"]);
+
+                                $value->totTransactionAmount = $value->totTransactionAmount - $res['exemptVATTrans'];
+                                $value->totRptAmount = $value->totRptAmount - $res['exemptVATRpt'];
+                                $value->totLocalAmount = $value->totLocalAmount - $res['exemptVATLocal'];
 
                                 $value->totalVATAmount = $res['totalTransVATAmount'];
                                 $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
