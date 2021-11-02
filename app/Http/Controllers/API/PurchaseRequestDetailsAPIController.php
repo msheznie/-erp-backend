@@ -1522,22 +1522,22 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $allowItemToTypePolicy = false;
                     $itemNotound = false;
                     $companySystemID = $itemVal->companySystemID;
-                    $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
-                    ->where('companySystemID', $itemVal->companySystemID)
-                    ->first();
+                    // $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+                    // ->where('companySystemID', $itemVal->companySystemID)
+                    // ->first();
 
                     
-                    if ($allowItemToType) {
-                        if ($allowItemToType->isYesNO) {
-                            $allowItemToTypePolicy = true;
-                        }
-                    }
+                    // if ($allowItemToType) {
+                    //     if ($allowItemToType->isYesNO) {
+                    //         $allowItemToTypePolicy = true;
+                    //     }
+                    // }
 
-                    if ($allowItemToTypePolicy) {
-                        $request_data_details['itemCode'] = $itemVal->itemCode;
-                    }
+                    // if ($allowItemToTypePolicy) {
+                    //     $request_data_details['itemCode'] = $itemVal->itemCode;
+                    // }
 
-
+                    $request_data_details['itemCode'] = $itemVal->itemCode;
                     $item = ItemAssigned::where('itemCodeSystem', $itemVal->itemCode)
                     ->where('companySystemID', $itemVal->companySystemID)
                     ->first();
