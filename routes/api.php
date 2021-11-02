@@ -187,6 +187,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
 
+
+
+        Route::resource('erp_attributes', 'ErpAttributesAPIController');
+        Route::post('itemAttributesIsMandotaryUpdate', 'ErpAttributesAPIController@itemAttributesIsMandotaryUpdate');
+        Route::post('itemAttributesDelete', 'ErpAttributesAPIController@itemAttributesDelete');
+
+        Route::resource('erp_attributes_dropdowns', 'ErpAttributesDropdownAPIController');
+        Route::post('addDropdownData', 'ErpAttributesDropdownAPIController@addDropdownData');
+        Route::post('getDropdownData', 'ErpAttributesDropdownAPIController@getDropdownData');
+
+        Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
+
+
         Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
 
         /** Company Navigation Menu access*/
@@ -2472,8 +2485,3 @@ Route::get('job-check', function(){
 
 
 
-Route::resource('erp_attributes', 'ErpAttributesAPIController');
-
-Route::resource('erp_attributes_dropdowns', 'ErpAttributesDropdownAPIController');
-
-Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
