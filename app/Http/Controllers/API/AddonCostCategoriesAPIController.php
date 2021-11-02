@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAddonCostCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateAddonCostCategoriesAPIRequest;
 use App\Models\AddonCostCategories;
+use App\Models\ItemMaster;
 use App\Repositories\AddonCostCategoriesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -278,4 +279,65 @@ class AddonCostCategoriesAPIController extends AppBaseController
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.addon_cost_categories')]));
     }
+
+    public function getLogisticCategories(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $categories = AddonCostCategories::with(['item_by']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $categories = $categories->where(function ($query) use ($search) {
+                $query->whereHas('item_by', function($q)use ($search){
+                    $q->where('itemDescription','LIKE', "%{$search}%")
+                    ->orWhere('primaryCode','LIKE', "%{$search}%");
+                })->orWhere('costCatDes','LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($categories)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('idaddOnCostCategories', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getItemsOptionForLogistic(Request $request)
+    {
+        $input = $request->all();
+        $financeCategoryId = 2;
+
+        $items = ItemMaster::where('financeCategoryMaster', $financeCategoryId);
+        if (array_key_exists('search', $input)) {
+
+            $search = $input['search'];
+
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
 }

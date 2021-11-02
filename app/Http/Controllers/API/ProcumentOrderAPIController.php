@@ -545,7 +545,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->serviceLine = $segment->ServiceLineCode;
         }
 
-
+     
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
@@ -600,7 +600,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $poVATMasterSumRounded = 0;
         }
 
-
+        
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
         $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
 
@@ -610,6 +610,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $poMasterSumDeducted = ($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']);
         $poMasterSumDeductedNotRounded = ($poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'] - $input['poDiscountAmount']);
+
+   
 
         $input['poTotalSupplierTransactionCurrency'] = \Helper::roundValue($poMasterSumDeductedNotRounded);
 
@@ -621,7 +623,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->companyReportingER = \Helper::roundValue($currencyConversionMaster['trasToRptER']);
         $procumentOrderUpdate->localCurrencyER = \Helper::roundValue($currencyConversionMaster['trasToLocER']);
 
-
+ 
         // updating coloum
         if ($input['documentSystemID'] != 5 && $input['poType_N'] != 5) {
             $procumentOrderUpdate->WO_PeriodFrom = null;
@@ -1037,13 +1039,13 @@ class ProcumentOrderAPIController extends AppBaseController
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
             $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
-
+       
             if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
             } else {
                 return $this->sendError('Payment terms total is not matching with the PO total');
             }
 
-
+   
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 

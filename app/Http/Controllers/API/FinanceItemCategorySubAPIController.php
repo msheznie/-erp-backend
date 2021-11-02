@@ -26,6 +26,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use Mpdf\Tag\Select;
+
 /**
  * Class FinanceItemCategorySubController
  * @package App\Http\Controllers\API
@@ -77,7 +79,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                     $companyID = [$companyId];
                 }
 
-                $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$request->get('itemCategoryID'))
+                 $subCategories = FinanceItemcategorySubAssigned::where('mainItemCategoryID',$request->get('itemCategoryID'))
                                                     ->where('isActive',1)
                                                     ->whereHas('finance_item_category_sub', function ($query){
                                                         $query->where('isActive',1);
@@ -88,7 +90,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                                                     ->groupBy('itemCategorySubID')
                                                     ->get();
             }else{
-                $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
+                return $subCategories = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
                     ->with(['finance_gl_code_bs','finance_gl_code_pl'])
                     ->where('isActive',1)
                     ->get();
@@ -125,6 +127,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         }
 
         return $this->sendResponse($itemCategorySubArray, 'Finance Item Category Subs retrieved successfully');
+    }
+
+    public function getSubcategoryExpiryStatus(Request $request){
+        $input = $request->all();
+        $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN')->first();
+        return $this->sendResponse($expiryStatus, 'Finance Item Category Subs retrieved successfully');
+
     }
 
      public function getSubcategoriesBymainCategories(Request $request){
@@ -270,7 +279,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $financeItemCategorySubs = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
 
-            $input = array_except($input,['companySystemID']);
+            $input = array_except($input,['companySystemID','finance_item_category_master']);
 
             if (empty($financeItemCategorySubs)) {
                 return $this->sendError('Sub category not found');
@@ -282,6 +291,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;
+            $financeItemCategorySubs->enableSpecification = $input['enableSpecification'];
             $financeItemCategorySubs->save();
 
             $this->financeItemcategorySubAssignedRepository->where(
@@ -353,10 +363,36 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
 
         
+        $itemCategorySubAssignedExpiryUpdate = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update(['expiryYN' => $input['expiryYN']]);
+
 
         $this->financeItemCategorySubRepository->update($input, $id);
 
         return $this->sendResponse($financeItemCategorySub->toArray(), 'FinanceItemCategorySub updated successfully');
+    }
+
+    public function financeItemCategorySubsExpiryUpdate(Request $request){
+        $input = $request->all();
+
+        $itemCategorySubAssignedExpiryUpdate = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update(['expiryYN' => $input['expiryYN']]);
+
+        $itemCategorySubExpiryUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update(['expiryYN' => $input['expiryYN']]);
+        
+        return $this->sendResponse($itemCategorySubExpiryUpdate, 'FinanceItemCategorySub updated successfully');
+
+    }
+
+
+    public function financeItemCategorySubsAttributesUpdate(Request $request){
+        $input = $request->all();
+        $itemCategorySubExpiryUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                                ->update(['attributesYN' => $input['attributesYN']]);
+        
+        return $this->sendResponse($itemCategorySubExpiryUpdate, 'FinanceItemCategorySub updated successfully');
+
     }
 
     /**

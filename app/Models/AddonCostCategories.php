@@ -48,6 +48,7 @@ class AddonCostCategories extends Model
     public $fillable = [
         'costCatDes',
         'glCode',
+        'itemSystemCode',
         'timesStamp'
     ];
 
@@ -58,6 +59,7 @@ class AddonCostCategories extends Model
      */
     protected $casts = [
         'idaddOnCostCategories' => 'integer',
+        'itemSystemCode' => 'integer',
         'costCatDes' => 'string',
         'glCode' => 'string'
     ];
@@ -71,5 +73,8 @@ class AddonCostCategories extends Model
         
     ];
 
-    
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemSystemCode', 'itemCodeSystem');
+    }
 }
