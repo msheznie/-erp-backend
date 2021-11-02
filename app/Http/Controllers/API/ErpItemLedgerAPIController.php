@@ -28,7 +28,9 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\Company;
+use App\Models\ItemMaster;
+use App\Models\Unit;
 /**
  * Class ErpItemLedgerController
  * @package App\Http\Controllers\API
@@ -601,7 +603,14 @@ public function generateStockLedger(Request $request)
     {
         $selectedCompanyId = $request['companySystemID'];
     }
-   
+    
+
+    $company = Company::where('companySystemID',$selectedCompanyId)->with(['localcurrency'=>function($query){
+        $query->select('currencyID','CurrencyCode');
+    }])->select('companySystemID','localCurrencyID')->first();
+
+    $ItemMaster = ItemMaster::where('itemCodeSystem',$request['Items'][0]['itemSystemCode'])->select('itemCodeSystem','unit')->first();
+    $unit = Unit::where('UnitID',$ItemMaster->unit)->first();
 
     $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
  
@@ -761,6 +770,8 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
      
     }
 
+
+    
     $details = array_slice($data,$start, $per_page);
 
     if($type == 1)
@@ -817,6 +828,9 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         $info['data'] = $details;
         $info['total'] = count($data);
         $info['curren_page'] = ($page);
+        $info['currency'] = ($company->localcurrency->CurrencyCode);
+        $info['unit'] = $unit->UnitShortCode;
+        
         return $this->sendResponse($info, 'Item ledger record retrieved successfully');
     }
 
@@ -1780,7 +1794,11 @@ GROUP BY
     public function getItemStockDetails(Request $request)
     {
 
+        $company = Company::where('companySystemID',$request['company_id'])->with(['localcurrency'=>function($query){
+            $query->select('currencyID','CurrencyCode');
+        }])->select('companySystemID','localCurrencyID')->first();
 
+ 
         $date = new Carbon($request->date);
         $date = $date->format('Y-m-d');
 
@@ -1834,6 +1852,7 @@ GROUP BY
                 ItemLedger.minimumQty,               
                 ItemLedger.maximunQty,      
                 LocalCurrency,
+                LocalCurrencyCode,
                 warehouse,
                 rol,
             IF
@@ -1861,6 +1880,7 @@ GROUP BY
                 units.UnitShortCode,
                 round( erp_itemledger.inOutQty, 2 ) AS Qty,
                 currencymaster.CurrencyName AS LocalCurrency,
+                currencymaster.CurrencyCode AS LocalCurrencyCode,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
                 currencymaster_1.CurrencyName AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
@@ -1899,14 +1919,16 @@ GROUP BY
 
 
 
-
+        $ItemMaster = ItemMaster::where('itemCodeSystem',$item_code)->select('itemCodeSystem','unit')->first();
+        $unit = Unit::where('UnitID',$ItemMaster->unit)->first();
 
 
         $info['count'] = $total_count;
         $info['datas'] = $details;
         $info['total'] = count($items);
         $info['curren_page'] = ($page);
-  
+        $info['currency'] = ($company->localcurrency->CurrencyCode);
+        $info['unit'] = $unit->UnitShortCode;   
         return $this->sendResponse($info, 'Erp Item Ledger retrieved successfully');
 
     }
