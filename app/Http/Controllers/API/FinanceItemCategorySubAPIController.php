@@ -375,7 +375,6 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
-
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
             'itemCategoryID' => $input['itemCategoryID'],
@@ -387,10 +386,17 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'modifiedUser' => $input['modifiedUser'],
         ];
 
-        $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
-                                                ->update($masterData);
-        
+        if (isset($input['itemCategorySubID'])){
+            $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                    ->update($masterData);
         return $this->sendResponse($itemCategorySubUpdate, 'FinanceItemCategorySub updated successfully');
+        } else {
+            $itemCategorySubCreate = FinanceItemcategorySub::create($masterData);
+        return $this->sendResponse($itemCategorySubCreate, 'FinanceItemCategorySub Created successfully');
+        }
+        
+        
+        
     }
 
     public function financeItemCategorySubsExpiryUpdate(Request $request){
