@@ -381,7 +381,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
-            'includePLForGRVYN' => $input['includePLForGRVYN'],
+            'includePLForGRVYN' => isset($input['includePLForGRVYN']) ? $input['includePLForGRVYN'] :null,
             'modifiedPc' => $input['modifiedPc'],
             'modifiedUser' => $input['modifiedUser'],
         ];
