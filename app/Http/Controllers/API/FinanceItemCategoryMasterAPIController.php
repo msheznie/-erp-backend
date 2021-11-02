@@ -25,6 +25,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\ErpAttributes;
 use App\Models\ErpAttributesDropdown;
 use App\Models\ErpAttributesFieldType;
+use Error;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -78,9 +79,12 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $financeItemCategoryMasters = FinanceItemCategoryMaster::withCount(['item_sub_category' => function($query){
-                                                                    $query->where('expiryYN', 1);
-                                                                }]);
+        $financeItemCategoryMasters = FinanceItemCategoryMaster::withCount(['item_sub_category as expiry_data_count' => function($query) {
+                                                                            $query->where('expiryYN', 1);
+                                                                        }])
+                                                                        ->withCount(['item_sub_category as attributes_data_count' => function($query) {
+                                                                            $query->where('attributesYN', 1);
+                                                                        }]);
 
         $search = $request->input('search.value');
         if($search){
@@ -212,28 +216,23 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             DB::beginTransaction();
             try {
                 $input= $request->all();
-                $dropDownValues = $request['dropdownValues'];
+
+                $descriptionValidate = ErpAttributes::where('description', $input['description'])
+                                                    ->where('document_master_id', $input['document_master_id'])->get();
+                if (count($descriptionValidate) > 0){
+                    return $this->sendError('Description Already Exist');
+                }
 
                 $masterData = [
                     'description' => $input['description'],
+                    'is_mendatory' => $input['is_mendatory'],
                     'document_id' => $input['document_id'],
                     'document_master_id' => $input['document_master_id'],
                     'field_type_id' => $input['field_type_id']
                 ];
                 $attributes = ErpAttributes::create($masterData);
-
-                $attributes_id = $attributes->id;
-
-                foreach($dropDownValues as $data){
-                     $dropDownMasterData = [
-                        'description' => $data['value'],
-                        'attributes_id' => $attributes_id
-                    ];
-
-                    $dropdown = ErpAttributesDropdown::create($dropDownMasterData);
-                }
             DB::commit();
-            return $this->sendResponse([], 'Record retrieved successfully');
+            return $this->sendResponse([], 'Attributes Created successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
