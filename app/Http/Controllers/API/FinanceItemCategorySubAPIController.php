@@ -375,22 +375,29 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
-
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
+            'enableSpecification' => $input['enableSpecification'],
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
-            'includePLForGRVYN' => $input['includePLForGRVYN'],
+            'includePLForGRVYN' => isset($input['includePLForGRVYN']) ? $input['includePLForGRVYN'] :null,
             'modifiedPc' => $input['modifiedPc'],
             'modifiedUser' => $input['modifiedUser'],
         ];
 
-        $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
-                                                ->update($masterData);
-        
+        if (isset($input['itemCategorySubID'])){
+            $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+                                    ->update($masterData);
         return $this->sendResponse($itemCategorySubUpdate, 'FinanceItemCategorySub updated successfully');
+        } else {
+            $itemCategorySubCreate = FinanceItemcategorySub::create($masterData);
+        return $this->sendResponse($itemCategorySubCreate, 'FinanceItemCategorySub Created successfully');
+        }
+        
+        
+        
     }
 
     public function financeItemCategorySubsExpiryUpdate(Request $request){
