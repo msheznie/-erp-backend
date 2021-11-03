@@ -221,7 +221,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                 $descriptionValidate = ErpAttributes::where('description', $input['description'])
                                                     ->where('document_master_id', $input['document_master_id'])->get();
                 if (count($descriptionValidate) > 0){
-                    return $this->sendError('Description Already Exist');
+                    return $this->sendError('Description Already Exists');
                 }
 
                 $masterData = [
@@ -288,7 +288,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateFinanceItemCategoryMasterAPIRequest $request)
     {
-        return$input = $request->all();
+        $input = $request->all();
 
         /** @var FinanceItemCategoryMaster $financeItemCategoryMaster */
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);

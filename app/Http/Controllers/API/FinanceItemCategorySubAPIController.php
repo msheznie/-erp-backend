@@ -371,18 +371,32 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     {
         $input = $request->all();
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+        
+        $financeGLcodebBS = ChartOfAccount::find($input['financeGLcodebBSSystemID']);
+        $financeGLcodePL = ChartOfAccount::find($input['financeGLcodePLSystemID']);
+        $financeGLcodeRevenue = ChartOfAccount::find($input['financeGLcodeRevenueSystemID']);
+
+        
+            $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
+            $input['financeGLcodePL'] = isset($financeGLcodePL->AccountCode) ? $financeGLcodePL->AccountCode : null;
+            $input['financeGLcodeRevenue'] = isset($financeGLcodeRevenue->AccountCode) ? $financeGLcodeRevenue->AccountCode : null;
+        
+    
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $masterData = [
             'categoryDescription' => $input['categoryDescription'],
-            'enableSpecification' => $input['enableSpecification'],
+            'enableSpecification' => isset($input['enableSpecification']) ? $input['enableSpecification'] : null,
             'itemCategoryID' => $input['itemCategoryID'],
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
             'includePLForGRVYN' => isset($input['includePLForGRVYN']) ? $input['includePLForGRVYN'] :null,
+            'financeGLcodebBS' => $input['financeGLcodebBS'],
+            'financeGLcodePL' => $input['financeGLcodePL'],
+            'financeGLcodeRevenue' => $input['financeGLcodeRevenue'],
             'modifiedPc' => $input['modifiedPc'],
             'modifiedUser' => $input['modifiedUser'],
         ];
