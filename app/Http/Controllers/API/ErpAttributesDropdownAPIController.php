@@ -86,7 +86,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 
             
         DB::commit();
-        return $this->sendResponse([], 'Attributes Dropdowns Created successfully');
+        return $this->sendResponse([], 'New Record Added Successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
