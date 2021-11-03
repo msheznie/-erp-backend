@@ -592,6 +592,8 @@ class ItemMasterAPIController extends AppBaseController
     public function store(CreateItemMasterAPIRequest $request)
     {
 
+
+       
         $input = $request->all();
        
 
@@ -701,7 +703,7 @@ class ItemMasterAPIController extends AppBaseController
         
         $count = 0;
         $image_path = [];
-        $path_dir['path'] = '';
+        
 
         $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
 
@@ -709,7 +711,7 @@ class ItemMasterAPIController extends AppBaseController
         foreach($imageData as $key=>$val)
         {
                    
-
+                   $path_dir['path'] = '';
                     $t=time();
                     $tem = substr($t,5);
                     $valtt = $this->quickRandom();
@@ -729,6 +731,7 @@ class ItemMasterAPIController extends AppBaseController
                     array_push($image_path,$path_dir);
         }
         
+
 
         if($imageData == null || empty($imageData))
         {
@@ -1084,19 +1087,23 @@ class ItemMasterAPIController extends AppBaseController
         $storagePath  = Storage::disk('s3')->getDriver()->getAdapter()->getPathPrefix();
 
 
-
     
         if($image_data != null || !empty($image_data))
         {
          
-            $decode_images = json_decode($itemMaster->itemPicture);
+            $decode_images = json_decode($image_data);
          
-            $itemMaster->itemPicture = null;
+            
+         
+           $itemMaster->itemPicture = null;
             $data = [];
+
             foreach($decode_images as $decode_image)
             {
                 $baseimg = '';
 
+
+            
                 if (Storage::disk('s3')->exists($decode_image->path))
                 {
                     // $type = pathinfo($path, PATHINFO_EXTENSION);
