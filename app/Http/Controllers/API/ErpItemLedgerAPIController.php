@@ -774,21 +774,50 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
     
     $details = array_slice($data,$start, $per_page);
 
+
+
+
     if($type == 1)
     {   
         $data_obj = []; 
         $type_def = 'csv';
         foreach ($data as $detail) {
 
+
+          
             if($detail->documentCode == 'Opening Balance')
             {
                 $dt = '';
             }
             else
             {
-                $dt = date("d/m/Y", strtotime($detail->transactionDate));
-            }
+                $dt = date("Y-m-d", strtotime($detail->transactionDate));
+           
 
+             
+     
+                //$dt = sprintf("%02s", $date);
+
+                //($currentDay<10 ? "0" : "").$currentDay."\n";
+            }
+      
+            if($detail->inOutQty == 0)
+            {
+              $qua_req = '0';
+            }
+            else
+            {
+              $qua_req = $detail->inOutQty;
+            }
+ 
+            if($detail->TotalWacLocal == 0)
+            {
+              $tran_amount = '0';
+            }
+            else
+            {
+              $tran_amount = number_format($detail->TotalWacLocal, 2, '.', '');
+            }
  
        
             $data_obj[] = array(
@@ -797,8 +826,8 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
                 'Document Code' => $detail->documentCode,
                 'Transaction Date' => $dt,
                 'Location' => $detail->wareHouseDescription,
-                'Quantity' => $detail->inOutQty,
-                'Amount' => number_format($detail->TotalWacLocal, 2, '.', ''),
+                'Quantity' => $qua_req,
+                'Amount' => $tran_amount,
             );
 
          
@@ -811,9 +840,13 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                $sheet->setColumnFormat(array(
+                    'B' => 'yyyy-mm-dd',
+                ));
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:E' . $lastrow)->getAlignment()->setWrapText(true);
+           // $excel->getActiveSheet()->getStyle('V'.$i)->getNumberFormat()->setFormatCode('dd-mmm-yyyy');
         })->download($type_def);
 
         
