@@ -216,6 +216,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             DB::beginTransaction();
             try {
                 $input= $request->all();
+                
 
                 $descriptionValidate = ErpAttributes::where('description', $input['description'])
                                                     ->where('document_master_id', $input['document_master_id'])->get();
@@ -225,7 +226,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
                 $masterData = [
                     'description' => $input['description'],
-                    'is_mendatory' => $input['is_mendatory'],
+                    'is_mendatory' => isset($input['is_mendatory']) ? $input['is_mendatory'] : false,
                     'document_id' => $input['document_id'],
                     'document_master_id' => $input['document_master_id'],
                     'field_type_id' => $input['field_type_id']
@@ -287,7 +288,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateFinanceItemCategoryMasterAPIRequest $request)
     {
-        $input = $request->all();
+        return$input = $request->all();
 
         /** @var FinanceItemCategoryMaster $financeItemCategoryMaster */
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
