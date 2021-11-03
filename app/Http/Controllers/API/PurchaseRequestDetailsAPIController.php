@@ -1370,6 +1370,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         foreach ($purchaseRequestDetails as $order) {
 
+
+        
           if($order->quantityRequested == 0)
           {
             $qua_req = '0';
@@ -1385,7 +1387,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
           }
           else
           {
-            $qua_tot = $order->totalCost;
+           
+            $qua_tot = number_format((float)$order->totalCost, $order->DecimalPlaces, '.', '');
+
           }
 
 
@@ -1393,7 +1397,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
                 'Request Code' => $order->purchaseRequestCode,
-                'Requested Date' => date("d/m/Y", strtotime($order->PRRequestedDate)),
+                'Requested Date' => date("Y-m-d", strtotime($order->PRRequestedDate)),
                 'Part Number' => $order->partNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
