@@ -1967,7 +1967,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             {
                 if($succes_item == 0)
                 {
-                    return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 501);
+                    return $this->sendError("Cannot copy this purchase request. Because all the items included in this document are pulled for pending PR/PO documents", 501);
                 }
                 else
                 {
