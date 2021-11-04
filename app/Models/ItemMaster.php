@@ -243,4 +243,9 @@ class ItemMaster extends Model
     {
         return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategory', 'taxVatSubCategoriesAutoID');
     }
+
+    public function purchase_request_details()
+    {
+        return $this->belongsTo('App\Models\PurchaseRequestDetails', 'itemCodeSystem', 'itemCode');
+    }
 }

@@ -24,6 +24,7 @@ use App\Models\ErpItemLedger;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
+use App\Models\MaterielRequest;
 use App\Models\SegmentAllocatedItem;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
@@ -1004,6 +1005,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if ($purchaseRequest->approved == 1) {
             return $this->sendError('This Purchase Request fully approved. You can not delete.', 500);
         }
+
+        $datas = PulledItemFromMR::where('purcahseRequestID',$purchaseRequestDetails->purchaseRequestID)->where('itemCodeSystem',$purchaseRequestDetails->itemCode)->get();
+        if(isset($datas)) {
+            foreach($datas as $data) {
+                $materialRequestID = $data->RequestID;
+                $request = MaterielRequest::find($materialRequestID);
+                $request->isSelectedToPR =  false;
+                $request->save();
+            }
+        }
+        PulledItemFromMR::where('purcahseRequestID',$purchaseRequestDetails->purchaseRequestID)->where('itemCodeSystem',$purchaseRequestDetails->itemCode)->delete();
 
         $purchaseRequestDetails->delete();
 

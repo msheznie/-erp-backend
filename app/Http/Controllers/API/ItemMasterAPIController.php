@@ -1448,8 +1448,12 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
             return $query->where('companySystemID', '=', $companyId);
-        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
-        //->whereIn('primaryCompanySystemID',$childCompanies);
+        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+        ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
+                $query->where('purchaseRequestID', $input['PurchaseRequestID']);
+            });
+        });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
