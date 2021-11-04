@@ -42,6 +42,7 @@ use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ExternalLinkHash;
 use App\Models\RegisteredSupplier;
+use App\Models\SupplierRegistrationLink;
 use App\Models\YesNoSelection;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
@@ -62,7 +63,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendEmail;
-
+use App\Repositories\SupplierRegistrationLinkRepository;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -72,11 +73,13 @@ class SupplierMasterAPIController extends AppBaseController
     /** @var  SupplierMasterRepository */
     private $supplierMasterRepository;
     private $userRepository;
+    private $registrationLinkRepository;
 
-    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo)
+    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->supplierMasterRepository = $supplierMasterRepo;
         $this->userRepository = $userRepo;
+        $this->registrationLinkRepository = $registrationLinkRepository;
     }
 
     /**
@@ -1604,5 +1607,14 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reopen["message"]);
         }
+    }
+
+    public function srmRegistrationLink(Request $request)
+    {
+        $input = $request->all();
+        if(true){
+
+        }
+        $this->registrationLinkRepository->save($request);
     }
 }
