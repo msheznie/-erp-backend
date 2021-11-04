@@ -816,7 +816,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
             }
             else
             {
-              $tran_amount = number_format($detail->TotalWacLocal, 2, '.', '');
+              $tran_amount = number_format($detail->TotalWacLocal, $detail->LocalCurrencyDecimals, '.', ',');
             }
  
        
@@ -832,7 +832,8 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
 
          
         }
-   
+
+ 
         \Excel::create('itemTransactionHistory', function ($excel) use ($data_obj) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data_obj) {
