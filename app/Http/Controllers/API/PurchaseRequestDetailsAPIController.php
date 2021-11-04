@@ -41,7 +41,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use App\Models\SegmentMaster;
 
 /**
  * Class PurchaseRequestDetailsController
@@ -244,6 +244,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 }
             }
 
+           
               // check policy 18
 
             $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -301,7 +302,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     if (!empty($anyPendingApproval)) {
                         return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                     }
-
+                      
                     $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
                         ->where('companySystemID', $companySystemID)
                         ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
@@ -348,11 +349,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         ->where('cancelledYN', 0)
                         ->first();
                     /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
-
+                
                     if (!empty($anyApprovedPRButPONotProcessed)) {
-                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
+                        return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check againn", 500);
                     }
-
+                    
                     $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
                         ->where('companySystemID', $companySystemID)
                         ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
@@ -401,7 +402,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     if (!empty($anyApprovedPRButPOPartiallyProcessed)) {
                         return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
                     }
-
+                    
                     /* PO check*/
 
                     $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
@@ -422,6 +423,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 }
             }
 
+       
 
             $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
             $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
@@ -735,11 +737,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     ->where('cancelledYN', 0)
                     ->first();
                 /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
-
+             
                 if (!empty($anyApprovedPRButPONotProcessed)) {
                     return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
                 }
 
+
+            
                 $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
                     ->where('companySystemID', $companySystemID)
                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
@@ -1421,62 +1425,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         return $this->sendResponse($csv, 'successfully export');
     }
 
-    public function copyPr($id,$type)
+    public function copyPr($id)
     {
-       
-        if($type == 2)
-        {
-            $items = PurchaseRequestDetails::where('purchaseRequestID', $id)
-            ->with(['uom'])
-            ->get();
-
-     
-            $item_count = count($items);
-            $count = 0;
-            $is_mr_pull = false;
-            if($item_count > 0)
-            {
-                foreach($items as $item)
-                {
-                   if($item->isMRPulled)
-                   {
-                       $count++;
-                       $is_mr_pull = true;
-                   }
-                  
-                }
-
-        
-                if($is_mr_pull)
-                {
-                   if($item_count == $count)
-                   {
-                       return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 501);
-       
-                   }
-                   else 
-                   {
-                       return $this->sendError("out of ".$item_count." from ".$count." are MR pull items DO you need proceed", 400);
-                   }
-                }
-            }
-  
-        }
-        else
-        {
-
+    
 
             $items = PurchaseRequestDetails::where('purchaseRequestID', $id)
-            ->where('isMRPulled',false)
             ->with(['uom'])
+            ->orderBy('purchaseRequestDetailsID', 'desc')
             ->get();
             
-        }
 
 
-
+         
         $item_count_obj = count($items);
-
+  
           // DB::beginTransaction();
             try {
 
@@ -1488,8 +1450,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     }
                     ])->findWithoutFail($id);
     
-                
-            
+                 
                     $request_data['documentSystemID'] = $purchaseRequest->documentSystemID;  
                     $request_data['companySystemID'] = $purchaseRequest->companySystemID;      
                     $request_data['budgetYearID'] = $purchaseRequest->budgetYearID;  
@@ -1511,20 +1472,48 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $request_data['documentID'] = $purchaseRequest->documentID;  
                     $request_data['docRefNo'] = $purchaseRequest->docRefNo;  
                     $request_data['companyID'] = $purchaseRequest->companyID;  
-                    $request_data['purchaseRequestCode'] = $purchaseRequest->purchaseRequestCode;   
                     $request_data['financeCategory'] = $purchaseRequest->financeCategory;   
-                    
 
-          
-                    
-                $succes_item = 0;
-                $valid_items = [];
 
-                
+                    $serivice_line_code = '';
+                    $segment = SegmentMaster::where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)->first();
+                    if ($segment) {
+                        $serivice_line_code = $segment->ServiceLineCode;
+                    }
+                    
+              
+              
+                    $lastSerial = PurchaseRequest::where('companySystemID', $purchaseRequest->companySystemID)
+                    ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                    ->orderBy('purchaseRequestID', 'desc')
+                    ->first();
+               
+                    $lastSerialNumber = 1;
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
+                    }
+
+                 
+                    $dep_id = 'PROC';
+                    $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+                    $request_data['purchaseRequestCode'] = $purchaseRequest->companyID . '\\' . $dep_id . '\\' . $serivice_line_code . '\\' . $purchaseRequest->documentID . $code;
+                    
+                    $request_data['serialNumber'] = $lastSerialNumber;
+
+                    $new_purchaseRequests = $this->purchaseRequestRepository->create($request_data);
+
+                    
+               
+
+                    $succes_item = 0;
+                    $valid_items = [];
+
+
                 foreach($items as $itemVal)
                 {   
                     
-                   
+               
+               
                     $is_failed= false;
 
                     $allowItemToTypePolicy = false;
@@ -1687,7 +1676,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             }
                         }
                              
-                 
+                     
                           // check policy 18
             
                         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -1699,7 +1688,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                       
                             if ($allowPendingApproval->isYesNO == 0) {
             
-                                $checkWhether = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                                $checkWhether = PurchaseRequest::where('purchaseRequestID', '!=', $new_purchaseRequests->purchaseRequestID)
                                     ->where('companySystemID', $companySystemID)
                                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
                                     ->select([
@@ -1741,7 +1730,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     //return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                                 }
                                 
-                                $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+
+                            
+                                $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $new_purchaseRequests->purchaseRequestID)
                                     ->where('companySystemID', $companySystemID)
                                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
                                     ->select([
@@ -1774,14 +1765,15 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     ->where('cancelledYN', 0)
                                     ->first();
                                 /* approved=-1 And cancelledYN=0 And selectedForPO=0 And prClosedYN=0 And fullyOrdered=0*/
-            
+                                // return $this->sendResponse($anyApprovedPRButPONotProcessed, 'successfully export');
+                                // die();
                                 if (!empty($anyApprovedPRButPONotProcessed)) {
                                     $is_failed= true;
                                     //continue;
                                    // return $this->sendError("There is a purchase request (" . $anyApprovedPRButPONotProcessed->purchaseRequestCode . ") approved hense PO is not processed for the item you are trying to add. Please check again", 500);
                                 }
-            
-                                $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
+                                
+                                $anyApprovedPRButPOPartiallyProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $new_purchaseRequests->purchaseRequestID)
                                     ->where('companySystemID', $companySystemID)
                                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
                                     ->select([
@@ -1821,7 +1813,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                 }
             
                                 /* PO check*/
-                                
+                                    
                                 $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
                                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
                                     ->whereHas('detail', function ($query) use ($item) {
@@ -1831,7 +1823,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     ->where('approved', 0)
                                     ->where('poCancelledYN', 0)
                                     ->first();
-            
+                                 
+                           
                                 if (!empty($checkPOPending)) {
                                     $is_failed= true;
                                    // continue;
@@ -1841,7 +1834,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             
                             }
                         }
-            
+                  
                   
                         $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
                         $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
@@ -1917,35 +1910,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $request_data_details['itemCategoryID'] = $itemVal->itemCategoryID;
                     $request_data_details['isMRPulled'] = $itemVal->isMRPulled;  
                
-                    //end
 
-           
-                    // $request_data_details['companySystemID'] = $itemVal->companySystemID;      
-                    // $request_data_details['partNumber'] = $itemVal->partNumber;  
-                    // $request_data_details['quantityRequested'] = $itemVal->quantityRequested;  
-                    // $request_data_details['estimatedCost'] = $itemVal->estimatedCost;    
-                    // $request_data_details['totalCost'] = $itemVal->serviceLitotalCostneSystemID;  
-                    // $request_data_details['comments'] = $itemVal->comments;  
-                    // $request_data_details['quantityOnOrder'] = $itemVal->quantityOnOrder;  
-                    // $request_data_details['quantityInHand'] = $itemVal->quantityInHand;  
-                    // $request_data_details['itemCategoryID'] = $itemVal->itemCategoryID;  
-                    // $request_data_details['itemCode'] = $itemVal->itemCode;  
-                    // $request_data_details['isMRPulled'] = $itemVal->isMRPulled;  
-                    // $request_data_details['budgetYear'] = $itemVal->budgetYear;  
-                    // $request_data_details['itemPrimaryCode'] = $itemVal->itemPrimaryCode;  
-                    // $request_data_details['itemDescription'] = $itemVal->itemDescription;  
-                    // $request_data_details['itemFinanceCategoryID'] = $itemVal->itemFinanceCategoryID;  
-                    // $request_data_details['itemFinanceCategorySubID'] = $itemVal->itemFinanceCategorySubID;  
-                    // $request_data_details['companyID'] = $itemVal->companyID;  
-                    // $request_data_details['unitOfMeasure'] = $itemVal->unitOfMeasure;  
-                    // $request_data_details['maxQty'] = $itemVal->maxQty;  
-                    // $request_data_details['minQty'] = $itemVal->minQty;  
-                    // $request_data_details['financeGLcodebBSSystemID'] = $itemVal->financeGLcodebBSSystemID;  
-                    // $request_data_details['financeGLcodebBS'] = $itemVal->financeGLcodebBS;  
-                    // $request_data_details['financeGLcodePLSystemID'] = $itemVal->financeGLcodePLSystemID;  
-                    // $request_data_details['financeGLcodePL'] = $itemVal->financeGLcodePL;  
-                    // $request_data_details['includePLForGRVYN'] = $itemVal->includePLForGRVYN;  
-                    // $request_data_details['poQuantity'] = $itemVal->poQuantity;  
                     if(!$is_failed)
                     {
                         $succes_item++;
@@ -1953,7 +1918,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                        // 
                     }
                    
-                    
+              
               
                 }
                 //$request_data_details['purchaseRequestID'] = $purchaseRequests->purchaseRequestID;  
@@ -1961,17 +1926,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //DB::commit();
 
 
-    
+            // return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request saved successfully');
+            //  die();
+      
             $segment_success = true;;
             if($item_count_obj > 0)
             {
                 if($succes_item == 0)
-                {
-                    return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 501);
+                {   
+                    $new_purchaseRequests->delete();
+                    return $this->sendError("Cannot copy this purchase request. Because all the items included in this document are pulled from pending PR/PO documents", 501);
                 }
                 else
-                {
-                    $new_purchaseRequests = $this->purchaseRequestRepository->create($request_data);
+                {   
+      
                     foreach($valid_items as $valid_item)
                     {
                       
@@ -2030,11 +1998,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     { 
                         if(!$segment_success)
                         {
-                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied some items segment allocation failed');
+                            return $this->sendResponse($items, 'Out of '.$item_count_obj.' Items, '.$succes_item .' Items copied some items segment allocation failed');
                         }
                         else
                         {
-                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied');
+                            return $this->sendResponse($items, 'Out of '.$item_count_obj.' Items, '.$succes_item .' Items are copied');
                         }
                         
                     }
@@ -2042,11 +2010,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     {
                         if(!$segment_success)
                         {
-                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
                         }
                         else
                         {
-                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
                         }
                         
                     }
@@ -2057,7 +2025,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             else 
             {
                 $purchaseRequests = $this->purchaseRequestRepository->create($request_data);
-                return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                return $this->sendResponse($items, 'PurchaseRequest copied successfully');
 
             }
         } catch (\Exception $exception) {
