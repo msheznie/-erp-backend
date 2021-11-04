@@ -364,7 +364,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->financeItemCategorySubRepository->update($input, $id);
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'FinanceItemCategorySub updated successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), 'FinancevItemCategoryvSub updated successfully');
     }
 
     public function finance_item_category_subs_update(Request $request)
