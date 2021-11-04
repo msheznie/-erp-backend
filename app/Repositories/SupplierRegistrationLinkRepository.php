@@ -3,8 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\SupplierRegistrationLink;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use InfyOm\Generator\Common\BaseRepository;
+use Illuminate\Support\Str;
 
 /**
  * Class SupplierRegistrationLinkRepository
@@ -32,14 +34,13 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         return SupplierRegistrationLink::class;
     }
 
-    public function save(Request $request)
+    public function save(Request $request): bool
     {
-        $input = $request->all();
         $supplierRegistrationLink = new SupplierRegistrationLink();
-        $supplierRegistrationLink->name = $input['name'];
-        $supplierRegistrationLink->email = $input['email'];
-        $supplierRegistrationLink->registration_number = $input['registration_number'];
-        $supplierRegistrationLink->token = "2424";
-        $status = $supplierRegistrationLink->save();
+        $supplierRegistrationLink->name = $request->input('name');
+        $supplierRegistrationLink->email = $request->input('email');
+        $supplierRegistrationLink->registration_number = $request->input('registration_number');
+        $supplierRegistrationLink->token = Carbon::now()->format('YmdHisu');
+        return $supplierRegistrationLink->save();
     }
 }

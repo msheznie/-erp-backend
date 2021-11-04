@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\NotificationService;
 use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
@@ -64,6 +65,11 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendEmail;
 use App\Repositories\SupplierRegistrationLinkRepository;
+use App\helper\email;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailForQueuing;
+
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1611,10 +1617,17 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function srmRegistrationLink(Request $request)
     {
-        $input = $request->all();
-        if(true){
+        $isCreated = $this->registrationLinkRepository->save($request);
 
+        if($isCreated){
+            NotificationService::emailNotification(1, "Test", "jayan.anuranga@gmail.com", "test email body jayan");
+            /*Mail::to("jayan.anuranga@gmail.com")->send(new EmailForQueuing("Jayan MSG", "Jayan"));
+            Log::info('API email sent success fully to :' );
+            Log::info('API Email send end');*/
+            return $this->sendResponse([], 'Supplier Registration Link Generated successfully');
+        }else{
+            return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
-        $this->registrationLinkRepository->save($request);
+
     }
 }
