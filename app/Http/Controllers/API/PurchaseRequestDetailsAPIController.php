@@ -1421,57 +1421,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         return $this->sendResponse($csv, 'successfully export');
     }
 
-    public function copyPr($id,$type)
+    public function copyPr($id)
     {
-       
-        if($type == 2)
-        {
-            $items = PurchaseRequestDetails::where('purchaseRequestID', $id)
-            ->with(['uom'])
-            ->get();
-
-     
-            $item_count = count($items);
-            $count = 0;
-            $is_mr_pull = false;
-            if($item_count > 0)
-            {
-                foreach($items as $item)
-                {
-                   if($item->isMRPulled)
-                   {
-                       $count++;
-                       $is_mr_pull = true;
-                   }
-                  
-                }
-
-        
-                if($is_mr_pull)
-                {
-                   if($item_count == $count)
-                   {
-                       return $this->sendError("Cannot copy this purchase request. Because all the item included in this document are pulled from MR or pulled for un approved PR/PO documents", 501);
-       
-                   }
-                   else 
-                   {
-                       return $this->sendError("out of ".$item_count." from ".$count." are MR pull items DO you need proceed", 400);
-                   }
-                }
-            }
-  
-        }
-        else
-        {
-
+    
 
             $items = PurchaseRequestDetails::where('purchaseRequestID', $id)
-            ->where('isMRPulled',false)
             ->with(['uom'])
             ->get();
             
-        }
 
 
 
@@ -1917,35 +1874,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $request_data_details['itemCategoryID'] = $itemVal->itemCategoryID;
                     $request_data_details['isMRPulled'] = $itemVal->isMRPulled;  
                
-                    //end
 
-           
-                    // $request_data_details['companySystemID'] = $itemVal->companySystemID;      
-                    // $request_data_details['partNumber'] = $itemVal->partNumber;  
-                    // $request_data_details['quantityRequested'] = $itemVal->quantityRequested;  
-                    // $request_data_details['estimatedCost'] = $itemVal->estimatedCost;    
-                    // $request_data_details['totalCost'] = $itemVal->serviceLitotalCostneSystemID;  
-                    // $request_data_details['comments'] = $itemVal->comments;  
-                    // $request_data_details['quantityOnOrder'] = $itemVal->quantityOnOrder;  
-                    // $request_data_details['quantityInHand'] = $itemVal->quantityInHand;  
-                    // $request_data_details['itemCategoryID'] = $itemVal->itemCategoryID;  
-                    // $request_data_details['itemCode'] = $itemVal->itemCode;  
-                    // $request_data_details['isMRPulled'] = $itemVal->isMRPulled;  
-                    // $request_data_details['budgetYear'] = $itemVal->budgetYear;  
-                    // $request_data_details['itemPrimaryCode'] = $itemVal->itemPrimaryCode;  
-                    // $request_data_details['itemDescription'] = $itemVal->itemDescription;  
-                    // $request_data_details['itemFinanceCategoryID'] = $itemVal->itemFinanceCategoryID;  
-                    // $request_data_details['itemFinanceCategorySubID'] = $itemVal->itemFinanceCategorySubID;  
-                    // $request_data_details['companyID'] = $itemVal->companyID;  
-                    // $request_data_details['unitOfMeasure'] = $itemVal->unitOfMeasure;  
-                    // $request_data_details['maxQty'] = $itemVal->maxQty;  
-                    // $request_data_details['minQty'] = $itemVal->minQty;  
-                    // $request_data_details['financeGLcodebBSSystemID'] = $itemVal->financeGLcodebBSSystemID;  
-                    // $request_data_details['financeGLcodebBS'] = $itemVal->financeGLcodebBS;  
-                    // $request_data_details['financeGLcodePLSystemID'] = $itemVal->financeGLcodePLSystemID;  
-                    // $request_data_details['financeGLcodePL'] = $itemVal->financeGLcodePL;  
-                    // $request_data_details['includePLForGRVYN'] = $itemVal->includePLForGRVYN;  
-                    // $request_data_details['poQuantity'] = $itemVal->poQuantity;  
                     if(!$is_failed)
                     {
                         $succes_item++;
@@ -1961,13 +1890,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //DB::commit();
 
 
-    
+      
             $segment_success = true;;
             if($item_count_obj > 0)
             {
                 if($succes_item == 0)
                 {
-                    return $this->sendError("Cannot copy this purchase request. Because all the items included in this document are pulled for pending PR/PO documents", 501);
+                    return $this->sendError("Cannot copy this purchase request. Because all the items included in this document are pulled from pending PR/PO documents", 501);
                 }
                 else
                 {
@@ -2030,11 +1959,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     { 
                         if(!$segment_success)
                         {
-                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied some items segment allocation failed');
+                            return $this->sendResponse($items, 'Out of '.$item_count_obj.' Items, '.$succes_item .' Items copied some items segment allocation failed');
                         }
                         else
                         {
-                            return $this->sendResponse($items, 'out of '.$item_count_obj.' items, '.$succes_item .' items copied');
+                            return $this->sendResponse($items, 'Out of '.$item_count_obj.' Items, '.$succes_item .' Items are copied');
                         }
                         
                     }
@@ -2042,11 +1971,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     {
                         if(!$segment_success)
                         {
-                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
                         }
                         else
                         {
-                            return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                            return $this->sendResponse($items, 'PurchaseRequest copied successfully');
                         }
                         
                     }
@@ -2057,7 +1986,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             else 
             {
                 $purchaseRequests = $this->purchaseRequestRepository->create($request_data);
-                return $this->sendResponse($items, 'PurchaseRequestDetails copied successfully');
+                return $this->sendResponse($items, 'PurchaseRequest copied successfully');
 
             }
         } catch (\Exception $exception) {
