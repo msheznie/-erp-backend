@@ -1392,7 +1392,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
           else
           {
            
-            $qua_tot = number_format((float)$order->totalCost, $order->DecimalPlaces, '.', '');
+            $qua_tot = number_format((float)$order->totalCost, $order->DecimalPlaces, '.', ',');
 
           }
 

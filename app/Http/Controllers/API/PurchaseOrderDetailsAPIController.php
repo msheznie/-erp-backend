@@ -213,7 +213,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             {
               //$tran_amount = round($order->unitCost,$order->DecimalPlaces);
 
-              $tran_amount = number_format((float)$order->unitCost, $order->DecimalPlaces, '.', '');
+              $tran_amount = number_format((float)$order->unitCost, $order->DecimalPlaces, '.', ',');
             }
 
             $data[] = array(
