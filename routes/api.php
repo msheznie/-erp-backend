@@ -1753,7 +1753,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
         Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
 
-        Route::get('copy_pr/{id}/{type}', 'PurchaseRequestDetailsAPIController@copyPr');
+        Route::get('copy_pr/{id}', 'PurchaseRequestDetailsAPIController@copyPr');
         
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
