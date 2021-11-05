@@ -44,6 +44,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster');
         Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
         Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
+        Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink');
 
         Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
         Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
