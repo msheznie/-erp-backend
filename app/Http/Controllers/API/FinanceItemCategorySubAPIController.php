@@ -364,7 +364,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $this->financeItemCategorySubRepository->update($input, $id);
 
-        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance ItemCategory Sub updated successfully');
+        return $this->sendResponse($financeItemCategorySub->toArray(), 'Finance Item Category Sub updated successfully');
     }
 
     public function finance_item_category_subs_update(Request $request)
@@ -404,7 +404,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         if (isset($input['itemCategorySubID'])){
             $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
-        return $this->sendResponse($itemCategorySubUpdate, 'Finance ItemCategory Sub updated successfully');
+        return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
             $itemCategorySubCreate = FinanceItemcategorySub::create($masterData);
         return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
