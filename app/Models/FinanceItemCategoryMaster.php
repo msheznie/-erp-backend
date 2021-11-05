@@ -50,6 +50,8 @@ class FinanceItemCategoryMaster extends Model
         'itemCodeDef',
         'numberOfDigits',
         'lastSerialOrder',
+        'exipryYN',
+        'attributesYN',
         'timeStamp',
         'createdUserGroup',
         'createdPcID',
@@ -70,6 +72,8 @@ class FinanceItemCategoryMaster extends Model
         'itemCodeDef' => 'string',
         'numberOfDigits' => 'integer',
         'lastSerialOrder' => 'integer',
+        'exipryYN' => 'integer',
+        'attributesYN' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
@@ -85,6 +89,11 @@ class FinanceItemCategoryMaster extends Model
     public static $rules = [
         
     ];
+
+    public function item_sub_category()
+    {
+        return $this->hasMany('App\Models\FinanceItemCategorySub', 'itemCategoryID', 'itemCategoryID');
+    }
 
     
 }

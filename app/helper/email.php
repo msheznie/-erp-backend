@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
+use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetVerification;
 use App\Models\BankAccount;
@@ -431,6 +432,13 @@ class email
                     if(!empty($budgetAddition)){
                         $data['docApprovedYN'] = $budgetAddition->approvedYN;
                         $data['docCode'] = $budgetAddition->additionVoucherNo;
+                    }
+                    break;
+                case 104:
+                    $vrf = VatReturnFillingMaster::find($data['docSystemCode']);
+                    if (!empty($budget)) {
+                        $data['docApprovedYN'] = $vrf->approvedYN;
+                        $data['docCode'] = $vrf->returnFillingCode;
                     }
                     break;
                 default:

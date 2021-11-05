@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateTaxVatCategoriesAPIRequest;
 use App\Http\Requests\API\UpdateTaxVatCategoriesAPIRequest;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\VatSubCategoryType;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\PurchaseOrderDetails;
@@ -134,6 +135,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
+            'subCatgeoryType.required' => 'Sub Category type is required.',
             'percentage.required' => 'Percentage is required.',
             'percentage.min' => 'You cannot enter negative values for percentage',
             'percentage.numeric' => 'You can only enter numbers',
@@ -143,6 +145,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
             'subCategoryDescription' => 'required',
+            'subCatgeoryType' => 'required',
             'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
 
@@ -267,8 +270,8 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function update($id, UpdateTaxVatCategoriesAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['main','tax','created_by']);
-        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory'));
+        $input = array_except($input,['main','tax','created_by', 'Actions', 'type', 'DT_Row_Index']);
+        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory', 'subCatgeoryType'));
 
         /** @var TaxVatCategories $taxVatCategories */
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
@@ -283,6 +286,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $messages = [
             'mainCategory.required' => 'Main Category is required.',
             'subCategoryDescription.required' => 'Sub Category is required.',
+            'subCatgeoryType.required' => 'Sub Category type is required.',
             'percentage.required' => 'Percentage is required.',
             'percentage.min' => 'You cannot enter negative values for percentage',
             'percentage.numeric' => 'You can only enter numbers',
@@ -291,6 +295,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         ];
         $validator = \Validator::make($input, [
             'mainCategory' => 'required',
+            'subCatgeoryType' => 'required',
             'subCategoryDescription' => 'required',
             'percentage' => 'required|numeric|min:0',
             'applicableOn' => 'required',
@@ -329,10 +334,9 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $taxVatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $id)->update($input);
 
-        $taxVatCategories = $this->taxVatCategoriesRepository->update($input, $id);
-
-        return $this->sendResponse($taxVatCategories->toArray(), 'TaxVatCategories updated successfully');
+        return $this->sendResponse([], 'TaxVatCategories updated successfully');
     }
 
     /**
@@ -405,7 +409,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $taxMasterAutoID = $request['taxMasterAutoID'];
 
         $vatCategories = TaxVatCategories::where('taxMasterAutoID', $taxMasterAutoID)
-            ->with(['tax', 'created_by','main']);
+            ->with(['tax', 'created_by','main', 'type']);
 
         $search = $request->input('search.value');
 
@@ -444,6 +448,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $output = array(
             'mainCategories' => $main,
             'applicableOns' => $applicable,
+            'subCategoryTypes' => VatSubCategoryType::all(),
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -669,9 +674,12 @@ class TaxVatCategoriesAPIController extends AppBaseController
         foreach ($items as $key => $value) {
             $value = $this->convertArrayToSelectedValue($value, ['vatMasterCategoryID', 'vatSubCategoryID']);
 
+            $subcategory = TaxVatCategories::find($value['vatSubCategoryID']);
+
             $updateData = [
                 'vatMasterCategoryID' => $value['vatMasterCategoryID'],
-                'vatSubCategoryID' => $value['vatSubCategoryID']
+                'vatSubCategoryID' => $value['vatSubCategoryID'],
+                'exempt_vat_portion' => (isset($value['exempt_vat_portion']) && $subcategory && $subcategory->subCatgeoryType == 1) ? $value['exempt_vat_portion'] : 0,
             ];
 
             $res = PurchaseOrderDetails::where('purchaseOrderDetailsID', $value['purchaseOrderDetailsID'])

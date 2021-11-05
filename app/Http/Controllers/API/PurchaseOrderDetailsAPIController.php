@@ -27,6 +27,7 @@ use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
+use App\Models\TaxVatCategories;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\CompanyPolicyMaster;
@@ -190,19 +191,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->get();
 
+
+    
         foreach ($purchaseOrderDetails as $order) {
+
+
+            if($order->noQty == 0)
+            {
+              $qua_req = '0';
+            }
+            else
+            {
+              $qua_req = $order->noQty;
+            }
+ 
+            if($order->unitCost == 0)
+            {
+              $tran_amount = '0';
+            }
+            else
+            {
+              //$tran_amount = round($order->unitCost,$order->DecimalPlaces);
+
+              $tran_amount = number_format((float)$order->unitCost, $order->DecimalPlaces, '.', ',');
+            }
+
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
                 'PO Code' => $order->purchaseOrderCode,
                 'Supplier Code' => $order->supplierPrimaryCode,
-                'Approved Date' => date("d/m/Y", strtotime($order->approvedDate)),
+                'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
                 'supplier Name' => $order->supplierName,
                 'Part Number' => $order->supplierPartNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
-                'PO Qty' => $order->noQty,
-                'Unit Cost' => $order->unitCost,
+                'PO Qty' => $qua_req,
+                'Unit Cost' => $tran_amount,
             );
         }
 
@@ -909,6 +934,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrderDetailsData = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
         DB::beginTransaction();
         try {
+            if (isset($input['vatSubCategoryID']) && $input['vatSubCategoryID'] > 0) {
+                $subcategoryVAT = TaxVatCategories::find($input['vatSubCategoryID']);
+                $input['exempt_vat_portion'] = (isset($input['exempt_vat_portion']) && $subcategoryVAT && $subcategoryVAT->subCatgeoryType == 1) ? $input['exempt_vat_portion'] : 0;
+            }
+
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
             $input['discountAmount'] = isset($input['discountAmount']) ? \Helper::roundValue($input['discountAmount']) : 0;
             $discountedUnitPrice = $input['unitCost']  - $input['discountAmount'];
@@ -1402,7 +1432,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = $request->all();
         $poID = $input['purchaseOrderID'];
 
-        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID'))
+        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
             ->with(['unit' => function ($query) {
             }])
             ->where('purchaseOrderMasterID', $poID)

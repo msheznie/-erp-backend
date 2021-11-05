@@ -113,6 +113,7 @@ class PurchaseOrderDetails extends Model
     public $fillable = [
         'companyID',
         'companySystemID',
+        'exempt_vat_portion',
         'departmentID',
         'serviceLineCode',
         'serviceLineSystemID',
@@ -236,6 +237,7 @@ class PurchaseOrderDetails extends Model
         'itemClientReferenceNumberMasterID' => 'integer',
         'clientReferenceNumber' => 'string',
         'requestedQty' => 'float',
+        'exempt_vat_portion' => 'float',
         'noQty' => 'float',
         'balanceQty' => 'float',
         'noOfDays' => 'integer',

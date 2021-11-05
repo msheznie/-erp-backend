@@ -116,7 +116,8 @@ class ItemMaster extends Model
         'refferedBackYN',
         'timesReferred',
         'isPOSItem',
-        'vatSubCategory'
+        'vatSubCategory',
+        'expiryYN'
     ];
 
     /**
@@ -167,7 +168,8 @@ class ItemMaster extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'isPOSItem' => 'integer',
-        'vatSubCategory'=>'integer'
+        'vatSubCategory'=>'integer',
+        'expiryYN'=>'integer'
     ];
 
     /**
@@ -179,6 +181,10 @@ class ItemMaster extends Model
         //'secondaryItemCode'  => 'required',
         //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
+
+    public function itemAssigned(){
+        return $this->belongsTo('App\Models\ItemAssigned','itemCodeSystem','itemCodeSystem');
+    }
 
     public function unit(){
         return $this->hasOne('App\Models\Unit','UnitID','unit');
@@ -209,6 +215,11 @@ class ItemMaster extends Model
         return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
     }
 
+    public function specification()
+    {
+        return $this->belongsTo('App\Models\ItemSpecification','itemCodeSystem','item_id');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -231,5 +242,10 @@ class ItemMaster extends Model
     public function vat_sub_category()
     {
         return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategory', 'taxVatSubCategoriesAutoID');
+    }
+
+    public function purchase_request_details()
+    {
+        return $this->belongsTo('App\Models\PurchaseRequestDetails', 'itemCodeSystem', 'itemCode');
     }
 }

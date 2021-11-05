@@ -44,6 +44,7 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PoAdvancePayment;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerInvoice;
 use App\Models\DirectInvoiceDetails;
@@ -69,6 +70,7 @@ use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
+use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -89,11 +91,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
     /** @var  BookInvSuppMasterRepository */
     private $bookInvSuppMasterRepository;
     private $userRepository;
+    private $supplierInvoiceItemDetailRepository;
 
-    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo)
+    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo)
     {
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->userRepository = $userRepo;
+        $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
     }
 
     /**
@@ -748,12 +752,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total, SUM(VATAmount*noQty) as transVATAmount'))
                             ->where('grvAutoID', $exc->grvAutoID)
                             ->first();
+
+                        $logisticVATTotal = PoAdvancePayment::where('grvAutoID', $exc->grvAutoID)
+                                                            ->sum('VATAmount');
+
+
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totTransactionAmount');
                         if (!$valEligible) {
                             $grvDetailTotal = $grvDetailSum['total'];
                         } else {
-                            $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'];
+                            $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'] + $logisticVATTotal;
                         }
                         if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
@@ -912,6 +921,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         }
                     }
                 }
+            }
+
+            if ($input['documentType'] == 0) {
+                $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
 
             $params = array(

@@ -59,11 +59,13 @@ class FinanceItemcategorySubAssigned extends Model
         'financeGLcodeRevenueSystemID',
         'financeGLcodeRevenue',
         'includePLForGRVYN',
+        'expiryYN',
         'companySystemID',
         'companyID',
         'isActive',
         'isAssigned',
-        'timeStamp'
+        'timeStamp',
+        'enableSpecification'
     ];
 
     /**
@@ -83,10 +85,12 @@ class FinanceItemcategorySubAssigned extends Model
         'financeGLcodeRevenueSystemID' => 'integer',
         'financeGLcodeRevenue' => 'string',
         'includePLForGRVYN' => 'integer',
+        'expiryYN' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'isActive' => 'integer',
-        'isAssigned' => 'integer'
+        'isAssigned' => 'integer',
+        'enableSpecification' => 'integer'
     ];
 
     /**

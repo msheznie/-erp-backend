@@ -691,6 +691,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['VATAmountRpt'] = $new['VATAmountRpt'];
                 $item['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
                 $item['vatSubCategoryID'] = $new['vatSubCategoryID'];
+                $item['exempt_vat_portion'] = $new['exempt_vat_portion'];
 
                 array_push($createArray, $item);
             }

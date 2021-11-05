@@ -63,6 +63,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         //'cors' => \App\Http\Middleware\Cors::class
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
+        'tenantById' => \App\Http\Middleware\TenantByKey::class,
         'locale' => \App\Http\Middleware\DetectLocale::class
     ];
 }
