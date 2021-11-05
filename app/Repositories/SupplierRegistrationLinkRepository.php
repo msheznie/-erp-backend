@@ -34,13 +34,13 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         return SupplierRegistrationLink::class;
     }
 
-    public function save(Request $request): bool
+    public function save(Request $request, $timeToken): bool
     {
         $supplierRegistrationLink = new SupplierRegistrationLink();
         $supplierRegistrationLink->name = $request->input('name');
         $supplierRegistrationLink->email = $request->input('email');
         $supplierRegistrationLink->registration_number = $request->input('registration_number');
-        $supplierRegistrationLink->token = Carbon::now()->format('YmdHisu');
+        $supplierRegistrationLink->token = $timeToken;
         return $supplierRegistrationLink->save();
     }
 }

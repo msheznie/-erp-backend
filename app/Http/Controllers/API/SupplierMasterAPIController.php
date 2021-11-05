@@ -63,9 +63,7 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendEmail;
 use App\Repositories\SupplierRegistrationLinkRepository;
-use App\helper\email;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
@@ -1617,14 +1615,13 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function srmRegistrationLink(Request $request)
     {
-        $isCreated = $this->registrationLinkRepository->save($request);
-
+        $company = Company::find($request->input('companyId'));
+        $timeToken = Carbon::now()->format('YmdHisu');
+        $isCreated = $this->registrationLinkRepository->save($request, $timeToken);
+        $loginUrl = env('SRM_LINK')."?=".$timeToken;
         if($isCreated){
-            NotificationService::emailNotification(1, "Test", "jayan.anuranga@gmail.com", "test email body jayan");
-            /*Mail::to("jayan.anuranga@gmail.com")->send(new EmailForQueuing("Jayan MSG", "Jayan"));
-            Log::info('API email sent success fully to :' );
-            Log::info('API Email send end');*/
-            return $this->sendResponse([], 'Supplier Registration Link Generated successfully');
+            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br />"." Please find the below link to register at ". $company->CompanyName ." supplier portal. It will expire in 48 hours. "."<br />"." Thank You"."<br /><br /><b>"."Click Here: "."</b><a href='".$loginUrl.".'>".$loginUrl."</a>"));
+            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         }else{
             return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
