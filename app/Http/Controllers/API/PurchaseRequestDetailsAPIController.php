@@ -1237,6 +1237,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function addAllItemsToPurchaseRequest(Request $request) {
 
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['financeCategoryMaster', 'financeCategorySub']);
+
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
         ->first();
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
@@ -1261,8 +1263,18 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
        
         $companyId = $input['companySystemID'];
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-            return $query->where('companySystemID', '=', $companyId);
-        })->where('isActive',1)->where('itemApprovedYN',1)->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
+                                    return $query->where('companySystemID', '=', $companyId);
+                                 })->where('isActive',1)
+                                 ->where('itemApprovedYN',1)
+                                 ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){
+                                    $query->where('financeCategoryMaster', $input['financeCategoryMaster']);
+                                 })
+                                 ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
+                                    $query->where('financeCategorySub', $input['financeCategorySub']);
+                                 })
+                                 ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+                                 ->get();
+        
         $validationFailedItems = [];
         $totalItemCount = count($itemMasters);
 
@@ -1278,29 +1290,26 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 array_push($validationFailedItems,$item);
             }
         }
+        
 
-
-        if(count($validationFailedItems) > 0) {
-            $addedItems = $totalItemCount - count($validationFailedItems);
-            $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
-            foreach($itemsToAdd as $itemToAdd) {
-                $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
-                $data = ([
-                    "companySystemID" => $input['companySystemID'],
-                    "purchaseRequestID" => $input['purchaseRequestID'],
-                    "partNumber" =>  "-",
-                    "itemCode" => $itemToAdd->itemCodeSystem,
-                    "itemPrimaryCode" => $itemToAdd->primaryCode,
-                    "itemDescription" => $itemToAdd->itemDescription,
-                    "isMRPulled" => false,
-                    "unitOfMeasure" => $itemToAdd->unit,
-                    "partNumber" => $itemToAdd->secondaryItemCode
-                ]);
-                $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
-            }
-            return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($itemsToAdd).' has been added'];
+        $addedItems = $totalItemCount - count($validationFailedItems);
+        $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
+        foreach($itemsToAdd as $itemToAdd) {
+            $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
+            $data = ([
+                "companySystemID" => $input['companySystemID'],
+                "purchaseRequestID" => $input['purchaseRequestID'],
+                "partNumber" =>  "-",
+                "itemCode" => $itemToAdd->itemCodeSystem,
+                "itemPrimaryCode" => $itemToAdd->primaryCode,
+                "itemDescription" => $itemToAdd->itemDescription,
+                "isMRPulled" => false,
+                "unitOfMeasure" => $itemToAdd->unit,
+                "partNumber" => $itemToAdd->secondaryItemCode
+            ]);
+            $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
         }
-        return ['status' => true , 'message' => 'Item reterived Succesfully'];
+        return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($itemsToAdd).' has been added'];
     }
 
     public function getItemMasterPurchaseRequestHistory(Request $request)
