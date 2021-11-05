@@ -191,19 +191,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->get();
 
+
+    
         foreach ($purchaseOrderDetails as $order) {
+
+
+            if($order->noQty == 0)
+            {
+              $qua_req = '0';
+            }
+            else
+            {
+              $qua_req = $order->noQty;
+            }
+ 
+            if($order->unitCost == 0)
+            {
+              $tran_amount = '0';
+            }
+            else
+            {
+              //$tran_amount = round($order->unitCost,$order->DecimalPlaces);
+
+              $tran_amount = number_format((float)$order->unitCost, $order->DecimalPlaces, '.', ',');
+            }
+
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
                 'PO Code' => $order->purchaseOrderCode,
                 'Supplier Code' => $order->supplierPrimaryCode,
-                'Approved Date' => date("d/m/Y", strtotime($order->approvedDate)),
+                'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
                 'supplier Name' => $order->supplierName,
                 'Part Number' => $order->supplierPartNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
-                'PO Qty' => $order->noQty,
-                'Unit Cost' => $order->unitCost,
+                'PO Qty' => $qua_req,
+                'Unit Cost' => $tran_amount,
             );
         }
 

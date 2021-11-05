@@ -44,6 +44,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster');
         Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
         Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
+        Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink');
 
         Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
         Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
@@ -131,11 +132,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('item/masters', 'ItemMasterAPIController');
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
+        Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
+        Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
+
+        
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
         Route::resource('units', 'UnitAPIController');
 
         Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
+        Route::post('finance_item_category_subs_update', 'FinanceItemCategorySubAPIController@finance_item_category_subs_update');
         Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate');
         Route::post('financeItemCategorySubsAttributesUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsAttributesUpdate');
 
@@ -181,6 +187,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
 
         Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
+
+
+
+        Route::resource('erp_attributes', 'ErpAttributesAPIController');
+        Route::post('itemAttributesIsMandotaryUpdate', 'ErpAttributesAPIController@itemAttributesIsMandotaryUpdate');
+        Route::post('itemAttributesDelete', 'ErpAttributesAPIController@itemAttributesDelete');
+
+        Route::resource('erp_attributes_dropdowns', 'ErpAttributesDropdownAPIController');
+        Route::post('addDropdownData', 'ErpAttributesDropdownAPIController@addDropdownData');
+        Route::post('getDropdownData', 'ErpAttributesDropdownAPIController@getDropdownData');
+
+        Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
+
 
         Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
 
@@ -1735,7 +1754,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
         Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
 
-        Route::get('copy_pr/{id}/{type}', 'PurchaseRequestDetailsAPIController@copyPr');
+        Route::get('copy_pr/{id}', 'PurchaseRequestDetailsAPIController@copyPr');
         
         Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
@@ -2467,8 +2486,3 @@ Route::get('job-check', function(){
 
 
 
-Route::resource('erp_attributes', 'ErpAttributesAPIController');
-
-Route::resource('erp_attributes_dropdowns', 'ErpAttributesDropdownAPIController');
-
-Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');

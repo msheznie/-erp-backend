@@ -162,6 +162,14 @@ class GeneralLedgerInsert implements ShouldQueue
                             $unbilledLocalVATAmount =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountLocal'];
                             $unbilledRptVATAmount   =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountRpt'];
 
+                            $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
+                            $localVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
+                            $rptVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+
+                            $exemptVATTrans = isset($vatDetails['exemptVATTrans']) ? $vatDetails['exemptVATTrans'] : 0;
+                            $exemptVATRpt = isset($vatDetails['exemptVATRpt']) ? $vatDetails['exemptVATRpt'] : 0;
+                            $exemptVATLocal = isset($vatDetails['exemptVATLocal']) ? $vatDetails['exemptVATLocal'] : 0;
+
                             $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
                             $rcmActivated = TaxService::isGRVRCMActivation($masterModel["autoID"]);
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -192,13 +200,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
-                            $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $masterData->details[0]->transVATAmount : $masterData->details[0]->transAmount) * -1);
+                            $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount : ($masterData->details[0]->transAmount - $exemptVATTrans)) * -1);
                             $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $masterData->details[0]->localVATAmount : $masterData->details[0]->localAmount) * -1);
+                            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : ($masterData->details[0]->localAmount - $exemptVATLocal)) * -1);
                             $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
-                            $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $masterData->details[0]->rptVATAmount : $masterData->details[0]->rptAmount) * -1);
+                            $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : ($masterData->details[0]->rptAmount - $exemptVATRpt)) * -1);
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
@@ -258,9 +266,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['glAccountType'] = $chartOfAccountData->controlAccounts;
                                             $data['glAccountTypeID'] = $chartOfAccountData->controlAccountsSystemID;
 
-                                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transVATAmount) * -1;
-                                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localVATAmount) * -1;
-                                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptVATAmount) * -1;
+                                            $data['documentTransAmount'] = \Helper::roundValue(($transVATAmount + $exemptVATTrans)) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(($localVATAmount + $exemptVATLocal)) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue(($rptVATAmount + $exemptVATRpt)) * -1;
                                             $data['timestamp'] = \Helper::currentDateTime();
                                             array_push($finalData, $data);
 
@@ -765,6 +773,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $vatDetails = TaxService::processPRVAT($masterModel["autoID"]);
 
+                        $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
+                        $localVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
+                        $rptVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -794,13 +807,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['glCode'] = ($masterData->isInvoiceCreatedForGrv == 1) ? $masterData->liabilityAccount : $masterData->UnbilledGRVAccount;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
-                            $data['documentTransAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->transAmount + $masterData->details[0]->transVATAmount : $masterData->details[0]->transAmount));
+                            $data['documentTransAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->transAmount + $transVATAmount : $masterData->details[0]->transAmount));
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->localAmount + $masterData->details[0]->localVATAmount : $masterData->details[0]->localAmount));
+                            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->localAmount + $localVATAmount : $masterData->details[0]->localAmount));
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->rptAmount + $masterData->details[0]->rptVATAmount : $masterData->details[0]->rptAmount));
+                            $data['documentRptAmount'] = \Helper::roundValue((($valEligible) ? $masterData->details[0]->rptAmount + $rptVATAmount : $masterData->details[0]->rptAmount));
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;

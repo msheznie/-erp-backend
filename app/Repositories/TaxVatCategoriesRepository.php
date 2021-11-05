@@ -29,6 +29,7 @@ class TaxVatCategoriesRepository extends BaseRepository
         'createdUserID',
         'createdUserSystemID',
         'createdDateTime',
+        'subCatgeoryType',
         'modifiedPCID',
         'modifiedUserID',
         'modifiedUserSystemID',

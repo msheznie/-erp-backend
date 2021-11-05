@@ -182,6 +182,10 @@ class ItemMaster extends Model
         //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
 
+    public function itemAssigned(){
+        return $this->belongsTo('App\Models\ItemAssigned','itemCodeSystem','itemCodeSystem');
+    }
+
     public function unit(){
         return $this->hasOne('App\Models\Unit','UnitID','unit');
     }
@@ -238,5 +242,10 @@ class ItemMaster extends Model
     public function vat_sub_category()
     {
         return $this->belongsTo('App\Models\TaxVatCategories', 'vatSubCategory', 'taxVatSubCategoriesAutoID');
+    }
+
+    public function purchase_request_details()
+    {
+        return $this->belongsTo('App\Models\PurchaseRequestDetails', 'itemCodeSystem', 'itemCode');
     }
 }

@@ -1147,6 +1147,7 @@ class GRVMasterAPIController extends AppBaseController
 
     }
 
+
     public function rejectGoodReceiptVoucher(Request $request)
     {
         $reject = \Helper::rejectDocument($request);

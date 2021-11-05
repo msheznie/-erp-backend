@@ -271,7 +271,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'comments' => 'comments');
 
                         break;
-                    case 24: //Inventory Reclassification
+                    case 24: // Purchase Return
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'PurchaseReturn';
                         $docInforArr["childRelation"] = 'details';

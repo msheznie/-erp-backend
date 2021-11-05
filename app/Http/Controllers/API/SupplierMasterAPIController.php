@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\NotificationService;
 use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
@@ -42,6 +43,7 @@ use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ExternalLinkHash;
 use App\Models\RegisteredSupplier;
+use App\Models\SupplierRegistrationLink;
 use App\Models\YesNoSelection;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
@@ -61,7 +63,10 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendEmail;
+use App\Repositories\SupplierRegistrationLinkRepository;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailForQueuing;
 
 /**
  * Class SupplierMasterController
@@ -72,11 +77,13 @@ class SupplierMasterAPIController extends AppBaseController
     /** @var  SupplierMasterRepository */
     private $supplierMasterRepository;
     private $userRepository;
+    private $registrationLinkRepository;
 
-    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo)
+    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->supplierMasterRepository = $supplierMasterRepo;
         $this->userRepository = $userRepo;
+        $this->registrationLinkRepository = $registrationLinkRepository;
     }
 
     /**
@@ -1604,5 +1611,20 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reopen["message"]);
         }
+    }
+
+    public function srmRegistrationLink(Request $request)
+    {
+        $company = Company::find($request->input('companyId'));
+        $timeToken = Carbon::now()->format('YmdHisu');
+        $isCreated = $this->registrationLinkRepository->save($request, $timeToken);
+        $loginUrl = env('SRM_LINK')."?=".$timeToken;
+        if($isCreated){
+            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br />"." Please find the below link to register at ". $company->CompanyName ." supplier portal. It will expire in 48 hours. "."<br />"." Thank You"."<br /><br /><b>"."Click Here: "."</b><a href='".$loginUrl.".'>".$loginUrl."</a>"));
+            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+        }else{
+            return $this->sendError('Supplier Registration Link Generation Failed',500);
+        }
+
     }
 }
