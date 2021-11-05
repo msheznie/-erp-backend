@@ -1272,6 +1272,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                  ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
                                     $query->where('financeCategorySub', $input['financeCategorySub']);
                                  })
+                                 ->whereDoesntHave('purchase_request_details', function($query) use ($input) {
+                                    $query->where('purchaseRequestID', $input['purchaseRequestID']);
+                                 })
                                  ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
                                  ->get();
         
@@ -1290,7 +1293,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 array_push($validationFailedItems,$item);
             }
         }
-        
+
 
         $addedItems = $totalItemCount - count($validationFailedItems);
         $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
