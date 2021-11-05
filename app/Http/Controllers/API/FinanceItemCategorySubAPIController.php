@@ -372,9 +372,9 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $input = $request->all();
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
         
-        $financeGLcodebBS = ChartOfAccount::find($input['financeGLcodebBSSystemID']);
-        $financeGLcodePL = ChartOfAccount::find($input['financeGLcodePLSystemID']);
-        $financeGLcodeRevenue = ChartOfAccount::find($input['financeGLcodeRevenueSystemID']);
+        $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
+        $financeGLcodePL = ChartOfAccount::find(isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] : null);
+        $financeGLcodeRevenue = ChartOfAccount::find(isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] : null);
 
         
             $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
