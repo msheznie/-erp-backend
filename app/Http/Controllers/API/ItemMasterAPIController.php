@@ -605,7 +605,8 @@ class ItemMasterAPIController extends AppBaseController
         $financeCategorySubID = $input['financeCategorySub'];
         $itemCategorySubExpirystatus = FinanceItemcategorySub::select('expiryYN')
                                         ->where('itemCategorySubID', $financeCategorySubID)->first();
-        $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
+
+       // $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
 
 
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
