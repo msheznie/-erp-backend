@@ -888,7 +888,6 @@ class ItemMasterAPIController extends AppBaseController
                 'primaryCompanySystemID' => 'required|numeric|min:1',
                 'financeCategoryMaster' => 'required|numeric|min:1',
                 'financeCategorySub' => 'required|numeric|min:1',
-                'secondaryItemCode' => 'required',
                 'unit' => 'required|numeric|min:1'
             ]);
 
