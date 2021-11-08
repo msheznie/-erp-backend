@@ -44,7 +44,7 @@ use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
 use App\helper\Helper;
 use App\helper\DocumentCodeGenerate;
-
+use Carbon\Carbon;
 /**
  * Class ChartOfAccountController
  * @package App\Http\Controllers\API
@@ -241,6 +241,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     //check policy 8
                     $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 8);
+
                     if ($policy) {
                         $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
@@ -252,9 +253,14 @@ class ChartOfAccountAPIController extends AppBaseController
                             'AccountDescription' => $input['AccountDescription']
                         ];
 
-                        $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
 
+
+                        $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
                         if ($updateChartOfAccount) {
+                            $updateChartOfAccount->AccountDescription =  $input['AccountDescription'];
+                            $updateChartOfAccount->save();
+                            DB::commit();
+                            
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
                             $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
@@ -266,7 +272,9 @@ class ChartOfAccountAPIController extends AppBaseController
                                     UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID, $chartOfAccount->documentSystemID, $chartOfAccount->primaryCompanySystemID, $chartOfAccount->chartOfAccountSystemID, $description, $modified_array[$key], $old, $key);
                                 }
                             }
+
                         }
+
                     }
 
 
@@ -278,7 +286,9 @@ class ChartOfAccountAPIController extends AppBaseController
                         ];
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+                        DB::commit();
 
+                     
                         if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
@@ -295,6 +305,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     }
 
+                    
                     if ($policyCAc || $policy) {
                         return $this->sendResponse([], 'Chart Of Account updated successfully');
                     }
@@ -339,6 +350,8 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
                 }
                 $input = array_except($input, ['confirmedYN']);
+
+               
                 $this->chartOfAccountRepository->update($input, $input['chartOfAccountSystemID']);
 
                 if ($isMasterAc != $chartOfAccount->isMasterAccount) {
@@ -954,7 +967,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 $data[$x]['Account Code'] = $val->AccountCode;
                 $data[$x]['Account Description'] = $val->AccountDescription;
-                $data[$x]['Master Account'] = $val->masterAccount;
+                // $data[$x]['Master Account'] = $val->masterAccount;
                 $data[$x]['Control Account'] = isset($val->controlAccount->description) ? $val->controlAccount->description : '';
                 $data[$x]['Category BL or PL'] = isset($val->accountType->description) ? $val->accountType->description : '';
                 $data[$x]['isBank'] = ($val->isBank) ? "Yes" : 'No';
