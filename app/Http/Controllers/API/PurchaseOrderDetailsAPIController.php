@@ -904,7 +904,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function update($id, UpdatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit');
+        $input = array_except($request->all(), 'unit', 'vat_sub_category');
+
+        if (isset($input['vat_sub_category'])) {
+            unset($input['vat_sub_category']);
+        }
+
         $input = $this->convertArrayToValue($input);
 
         //$empInfo = self::getEmployeeInfo();
