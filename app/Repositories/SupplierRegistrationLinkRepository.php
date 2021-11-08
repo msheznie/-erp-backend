@@ -40,6 +40,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->name = $request->input('name');
         $supplierRegistrationLink->email = $request->input('email');
         $supplierRegistrationLink->registration_number = $request->input('registration_number');
+        $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $timeToken;
         return $supplierRegistrationLink->save();
     }
