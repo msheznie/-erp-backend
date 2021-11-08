@@ -253,7 +253,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
-            }])
+            }, 'vat_sub_category'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
