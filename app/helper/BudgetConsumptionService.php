@@ -57,7 +57,7 @@ class BudgetConsumptionService
                         $userMessageE .= "<br>";
 
                         if (isset($budgetData['departmentWiseCheckBudgetPolicy']) && $budgetData['departmentWiseCheckBudgetPolicy'] && (!isset($budgetData['projectBased']) || (isset($budgetData['projectBased']) && !$budgetData['projectBased']))) {
-                        	$userMessageE .= "Service Line : ". $value['serviceLine'] ;
+                        	$userMessageE .= "Segment : ". $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
                         

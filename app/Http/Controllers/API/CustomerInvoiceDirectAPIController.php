@@ -229,7 +229,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
             $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
             if (!$serviceLine) {
-                return $this->sendError('Please select a Service Line', 500);
+                return $this->sendError('Please select a Segment', 500);
             }
             $segment = SegmentMaster::find($input['serviceLineSystemID']);
             $input['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
@@ -439,7 +439,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
                 if (!$serviceLine) {
-                    return $this->sendError('Please select a Service Line', 500);
+                    return $this->sendError('Please select a Segment', 500);
                 }
                 $segment = SegmentMaster::find($input['serviceLineSystemID']);
                 $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
@@ -976,7 +976,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 ], [
 
                                     'serviceLineSystemID.required' => 'Department is required.',
-                                    'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
+                                    'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
                                     'invoiceAmount.required' => 'Amount is required.',
@@ -1018,7 +1018,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         if (count($groupby) != 0) {
 
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
+                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
                             } else {
 
                                 // VAT configuration validation

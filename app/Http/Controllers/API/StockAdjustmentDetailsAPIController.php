@@ -152,13 +152,13 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         if ($stockAdjustment->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($stockAdjustment->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Service Line not found');
+                return $this->sendError('Segment not found');
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active service line', 500);
+                return $this->sendError('Please select a active Segment', 500);
             }
         } else {
-            return $this->sendError('Please select a service line.', 500);
+            return $this->sendError('Please select a Segment.', 500);
         }
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
