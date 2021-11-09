@@ -428,13 +428,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                         $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
                         if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
+                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " segment need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
                                 $errorMasg[] = $templateDetailData->description . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         } else if ($transferedAmount == 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
+                                $errorMasg[] = $templateDetailData->description . " of " . $value[0]['serviceLine'] . " segment need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
                                 $errorMasg[] = $templateDetailData->description . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
@@ -466,13 +466,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                         $roundedDiffAmound = round($differentAmount, $currency->reportingcurrency->DecimalPlaces);
                         if ($transferedAmount > 0 && $roundedDiffAmound > 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " segment need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
                                 $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($differentAmount, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }
                         } else if ($transferedAmount == 0) {
                             if ($departmentWiseCheckBudgetPolicy) {
-                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " service line need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
+                                $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " of " . $value[0]['serviceLine'] . " segment need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             } else {
                                 $errorMasg[] = $templateDetailData->AccountCode . " - " . $templateDetailData->AccountDescription . " need " . $currency->reportingcurrency->CurrencyCode . " " . number_format($budgetAmountToUnBlock, $currency->reportingcurrency->DecimalPlaces) . " to unblock the documents " . $documents;
                             }

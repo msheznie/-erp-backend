@@ -975,7 +975,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'unitCost' => 'required|numeric|min:1',
                                 ], [
 
-                                    'serviceLineSystemID.required' => 'Department is required.',
+                                    'serviceLineSystemID.required' => 'Segment is required.',
                                     'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
