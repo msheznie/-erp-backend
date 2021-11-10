@@ -67,11 +67,7 @@ use App\Repositories\SupplierRegistrationLinkRepository;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Hash;
-=======
-use Illuminate\Support\Facades\URL;
->>>>>>> 5867000377d7730f69b48eeef209626dc1eca8cb
 
 /**
  * Class SupplierMasterController
