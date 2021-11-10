@@ -26,6 +26,7 @@ use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ErpItemLedger;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -195,6 +196,13 @@ class SegmentMasterAPIController extends AppBaseController
                                  ->first();
 
         if ($checkGeneralLedger) {
+            $segmentUsed = true;
+        }
+
+        $checkItemLedger = ErpItemLedger::where('serviceLineSystemID', $id)
+        ->first();
+
+        if ($checkItemLedger) {
             $segmentUsed = true;
         }
 
