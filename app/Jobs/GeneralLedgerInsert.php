@@ -235,7 +235,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                         $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans'] + $unbilledTransVATAmount);
                                         $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATLocal'] + $unbilledLocalVATAmount);
-                                        $data['documentRptAmount'] = \Helper::roundValue($vatDetails['exemptVATRpt'] + $unbilledRptVATAmount);
+                                        $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATRpt'] + $unbilledRptVATAmount);
 
                                         array_push($finalData, $data);
 
