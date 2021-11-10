@@ -439,6 +439,7 @@ class SegmentMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $isDeletedShow = ($input['isDeletedShow'] == 'false') ? 0 : 1;
         $selectedCompanyId = $input['selectedCompanyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -448,14 +449,23 @@ class SegmentMasterAPIController extends AppBaseController
             $companyData = Company::find($selectedCompanyId);
             $segmenntData = [];
             foreach ($subCompanies as $key => $value) {
-                $segmenntData[] = $this->getNonGroupCompanyOrganizationStructure($value, true);
+                if($isDeletedShow){
+                    $segmenntData[] = $this->getNonGroupCompanyOrganizationStructurewithDeleted($value, true);
+                } else{
+                    $segmenntData[] = $this->getNonGroupCompanyOrganizationStructure($value, true);
+                }
             }
 
             $companyData->subCompanies = $segmenntData;
 
             return $this->sendResponse(['orgData' => $companyData, 'isGroup' => true], 'Organization Levels retrieved successfully');
         }else{
-            return $this->getNonGroupCompanyOrganizationStructure($selectedCompanyId);
+            if($isDeletedShow){
+                return $this->getNonGroupCompanyOrganizationStructurewithDeleted($selectedCompanyId);
+            } else{
+                return $this->getNonGroupCompanyOrganizationStructure($selectedCompanyId);
+            }
+            
         }
     }
 
@@ -487,5 +497,35 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully');
+    }
+
+    public function getNonGroupCompanyOrganizationStructurewithDeleted($companySystemID, $dataReturn = false)
+    {
+         $orgStructure = Company::withcount(['segments'])
+                             ->with(['segments' => function ($q) {
+                                $q->withoutGlobalScope('final_level')
+                                  ->withoutGlobalScope('deleted_status')
+                                  ->where(function($query) {
+                                    $query->whereNull('masterID')
+                                          ->orWhere('masterID', 0);
+                                                })
+                                            ->withcount(['sub_level_deleted' => function($query) {
+                                                    
+                                            }])
+                                            ->with(['sub_level_deleted' => function($query) {
+                                                    
+                                            }]);
+                                        }])
+                                        ->find($companySystemID);
+
+        if ($dataReturn) {
+            return $orgStructure;
+        }
+
+        if (empty($orgStructure)) {
+            return $this->sendError('Warehouse not found');
+        }
+
+        return $this->sendResponse(['orgData' => $orgStructure, 'isGroup' => false], 'Organization Levels retrieved successfully with deleted segments');
     }
 }
