@@ -6,7 +6,6 @@ use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use InfyOm\Generator\Common\BaseRepository;
-use Illuminate\Support\Str;
 
 /**
  * Class SupplierRegistrationLinkRepository
@@ -34,13 +33,16 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         return SupplierRegistrationLink::class;
     }
 
-    public function save(Request $request, $timeToken): bool
+    public function save(Request $request, $token): bool
     {
         $supplierRegistrationLink = new SupplierRegistrationLink();
         $supplierRegistrationLink->name = $request->input('name');
         $supplierRegistrationLink->email = $request->input('email');
         $supplierRegistrationLink->registration_number = $request->input('registration_number');
-        $supplierRegistrationLink->token = $timeToken;
+        $supplierRegistrationLink->company_id = $request->input('company_id');
+        $supplierRegistrationLink->token = $token;
+        $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
+
         return $supplierRegistrationLink->save();
     }
 }

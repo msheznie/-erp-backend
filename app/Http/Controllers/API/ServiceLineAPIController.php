@@ -75,7 +75,7 @@ class ServiceLineAPIController extends AppBaseController
         $this->serviceLineRepository->pushCriteria(new LimitOffsetCriteria($request));
         $serviceLines = $this->serviceLineRepository->all();
 
-        return $this->sendResponse($serviceLines->toArray(), 'Service Lines retrieved successfully');
+        return $this->sendResponse($serviceLines->toArray(), 'Segment retrieved successfully');
     }
 
     /**
@@ -122,7 +122,7 @@ class ServiceLineAPIController extends AppBaseController
 
         $serviceLine = $this->serviceLineRepository->create($input);
 
-        return $this->sendResponse($serviceLine->toArray(), 'Service Line saved successfully');
+        return $this->sendResponse($serviceLine->toArray(), 'Segment saved successfully');
     }
 
     /**
@@ -169,10 +169,10 @@ class ServiceLineAPIController extends AppBaseController
         $serviceLine = $this->serviceLineRepository->findWithoutFail($id);
 
         if (empty($serviceLine)) {
-            return $this->sendError('Service Line not found');
+            return $this->sendError('Segment not found');
         }
 
-        return $this->sendResponse($serviceLine->toArray(), 'Service Line retrieved successfully');
+        return $this->sendResponse($serviceLine->toArray(), 'Segment retrieved successfully');
     }
 
     /**
@@ -229,7 +229,7 @@ class ServiceLineAPIController extends AppBaseController
         $serviceLine = $this->serviceLineRepository->findWithoutFail($id);
 
         if (empty($serviceLine)) {
-            return $this->sendError('Service Line not found');
+            return $this->sendError('Segment not found');
         }
 
         $serviceLine = $this->serviceLineRepository->update($input, $id);
@@ -281,18 +281,18 @@ class ServiceLineAPIController extends AppBaseController
         $serviceLine = $this->serviceLineRepository->findWithoutFail($id);
 
         if (empty($serviceLine)) {
-            return $this->sendError('Service Line not found');
+            return $this->sendError('Segment not found');
         }
 
         $serviceLine->delete();
 
-        return $this->sendResponse($id, 'Service Line deleted successfully');
+        return $this->sendResponse($id, 'Segment deleted successfully');
     }
 
     public function getServiceLineByCompany(Request $request)
     {
         $companyID = $request->companyID;
         $serviceline = ServiceLine::where('companySystemID', $companyID)->where('isActive',1)->where('isFinalLevel',1)->where('isDeleted',0)->get();
-        return $this->sendResponse($serviceline, 'Service Line retrieved successfully');
+        return $this->sendResponse($serviceline, 'Segment retrieved successfully');
     }
 }
