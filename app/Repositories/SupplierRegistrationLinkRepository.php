@@ -42,6 +42,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
+
         return $supplierRegistrationLink->save();
     }
 }
