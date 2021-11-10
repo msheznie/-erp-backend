@@ -161,6 +161,10 @@ class SegmentMaster extends Model
         static::addGlobalScope('final_level', function (Builder $builder) {
             $builder->where('isFinalLevel', 1);
         });
+
+        static::addGlobalScope('deleted_status', function (Builder $builder) {
+            $builder->where('isDeleted', 0);
+        });
     }
 
     /**
@@ -181,5 +185,10 @@ class SegmentMaster extends Model
     public function sub_levels()
     {
         return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_levels')->where('isDeleted', 0)->withoutGlobalScope('final_level');
+    }
+
+    public function sub_level_deleted()
+    {
+        return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_level_deleted')->withoutGlobalScope('final_level')->withoutGlobalScope('deleted_status');
     }
 }
