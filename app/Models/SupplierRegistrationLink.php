@@ -9,6 +9,4 @@ class SupplierRegistrationLink extends Model
     public $table = 'srm_supplier_registration_link';
 
     protected $primaryKey  = 'id';
-
-    public $timestamps = false;
 }

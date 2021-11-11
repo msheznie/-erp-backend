@@ -461,7 +461,7 @@
                     <th>#</th>
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
-                    <th class="text-center">Service Line</th>
+                    <th class="text-center">Segment</th>
                     <th class="text-center">Payment Amount</th>
                     <th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
