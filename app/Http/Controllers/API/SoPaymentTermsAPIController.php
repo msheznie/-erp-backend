@@ -135,14 +135,13 @@ class SoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('At least one item should added to create payment term');
         }
 
-        $salesOrder = QuotationMaster::find($salesOrderID)
-            ->first();
+        $salesOrder = QuotationMaster::with(['customer'])->find($salesOrderID);
 
         if (empty($salesOrder)) {
             return $this->sendError('Sales Order not found');
         }
 
-        $input['inDays'] = 0; //$purchaseOrder->creditPeriod;
+        $input['inDays'] = (isset($salesOrder->customer->creditDays) && $salesOrder->customer->creditDays > 0) ? $salesOrder->customer->creditDays : 0;
 
         /*if (!empty($purchaseOrder->createdDateTime) && !empty($purchaseOrder->creditPeriod)) {
             $addedDate = strtotime("+$purchaseOrder->creditPeriod day", strtotime($purchaseOrder->createdDateTime));

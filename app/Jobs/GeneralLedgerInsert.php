@@ -163,8 +163,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $unbilledRptVATAmount   =  $unbilledGRVVATAddVatOnPO['vatOnPOTotalAmountRpt'];
 
                             $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
-                            $localVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
-                            $rptVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+                            $localVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+                            $rptVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
 
                             $exemptVATTrans = isset($vatDetails['exemptVATTrans']) ? $vatDetails['exemptVATTrans'] : 0;
                             $exemptVATRpt = isset($vatDetails['exemptVATRpt']) ? $vatDetails['exemptVATRpt'] : 0;
@@ -234,8 +234,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
 
                                         $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans'] + $unbilledTransVATAmount);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATRpt'] + $unbilledLocalVATAmount);
-                                        $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATLocal'] + $unbilledRptVATAmount);
+                                        $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATLocal'] + $unbilledLocalVATAmount);
+                                        $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATRpt'] + $unbilledRptVATAmount);
 
                                         array_push($finalData, $data);
 
@@ -774,8 +774,8 @@ class GeneralLedgerInsert implements ShouldQueue
                         $vatDetails = TaxService::processPRVAT($masterModel["autoID"]);
 
                         $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
-                        $localVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
-                        $rptVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+                        $localVATAmount = isset($vatDetails['masterVATLocal']) ? $vatDetails['masterVATLocal'] : 0;
+                        $rptVATAmount = isset($vatDetails['masterVATRpt']) ? $vatDetails['masterVATRpt'] : 0;
 
 
                         if ($masterData) {

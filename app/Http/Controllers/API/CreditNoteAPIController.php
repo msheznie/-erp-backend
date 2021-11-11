@@ -21,6 +21,7 @@ use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNoteDetailsRefferdback;
 use App\Models\CreditNoteReferredback;
@@ -511,7 +512,7 @@ class CreditNoteAPIController extends AppBaseController
                     $validators = \Validator::make($item, $validations, [
 
                         'serviceLineSystemID.required' => 'Department is required.',
-                        'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
+                        'serviceLineCode.required' => 'Cannot confirm. Segment code is not updated.',
                         'contractUID.required' => 'Contract no is required.',
                         'creditAmount.required' => 'Amount should be greater than 0 for every items.',
 
@@ -528,9 +529,9 @@ class CreditNoteAPIController extends AppBaseController
             if (count($groupby) != 0) {
                 if (count($groupby) > 1 || count($groupbycontract) > 1) {
                     if ($isOperationIntergrated) {
-                        return $this->sendError('You cannot continue. Multiple service line or contract exist in details.', 500);
+                        return $this->sendError('You cannot continue. Multiple segment or contract exist in details.', 500);
                     } else {
-                        return $this->sendError('You cannot continue. Multiple service line exist in details.', 500);
+                        return $this->sendError('You cannot continue. Multiple segment exist in details.', 500);
                     }
                 }
             } else {
@@ -546,6 +547,14 @@ class CreditNoteAPIController extends AppBaseController
 
                 if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
                     return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                }
+
+                $outputChartOfAc = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];

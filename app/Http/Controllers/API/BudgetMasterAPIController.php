@@ -183,7 +183,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
         if (empty($segment)) {
-            return $this->sendError('Service Line not found', 500);
+            return $this->sendError('Segment not found', 500);
         }
 
         $template = ReportTemplate::find($input['templateMasterID']);
@@ -192,7 +192,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         if ($segment->isActive == 0) {
-            return $this->sendError('Please select a active Service Line', 500);
+            return $this->sendError('Please select a active Segment', 500);
         }
         $input['serviceLineCode'] = $segment->ServiceLineCode;
 
