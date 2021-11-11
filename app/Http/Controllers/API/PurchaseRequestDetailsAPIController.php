@@ -2057,8 +2057,23 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError("Unable to copy purchase request", 501);
         }
 
-      
+    }
 
+
+    public function removeAllItems($id) {
+        $purchase_request_details = PurchaseRequestDetails::where('purchaseRequestID',$id)->get();
+        foreach($purchase_request_details as $purchase_request_detail) {
+                $data = PulledItemFromMR::where('purcahseRequestID',$id)->where('itemCodeSystem',$purchase_request_detail->itemCode)->first();
+                if(isset($data)) {
+                        $m_id =$data->RequestID;
+                        $request = MaterielRequest::find($m_id);
+                        $request->isSelectedToPR =  false;
+                        $request->save();
+                        $data->delete();
+                }
+        }
+        PurchaseRequestDetails::where('purchaseRequestID',$id)->delete();
+        return $this->sendResponse([], 'Item Deleted Successfully');
     }
 
 }
