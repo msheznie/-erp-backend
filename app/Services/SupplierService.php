@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
+use phpDocumentor\Reflection\DocBlock\Tags\Throws;
 
 class SupplierService
 {
@@ -26,7 +27,9 @@ class SupplierService
             ])
             ->first();
 
-        throw_unless($supplierDataUsingToken, "Invalid Token");
+        if(is_null($supplierDataUsingToken)){
+            return false;
+        }
 
         return $supplierDataUsingToken;
     }

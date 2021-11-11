@@ -72,21 +72,22 @@ class SRMService
 
     public function getSupplierInvitationInfo(Request $request)
     {
-        try{
             $invitationToken = $request->input('extra.token');
             $data =  $this->supplierService->getTokenData($invitationToken);
+
+            if(!$data){
+                return [
+                    'success'   => false,
+                    'message'   => "Invalid Token",
+                    'data'      => null
+                ];
+            }
+
             return [
                 'success'   => true,
                 'message'   => 'Valid Invitation Link',
                 'data'      => $data
             ];
-        }catch (\Exception $e){
-            return [
-                'success'   => false,
-                'message'   => $e->getMessage(),
-                'data'      => null
-            ];
-        }
 
     }
 }
