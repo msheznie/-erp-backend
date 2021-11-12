@@ -147,6 +147,12 @@ class DocumentApprovedAPIController extends AppBaseController
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
         $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
+        if ($fromPms) {
+        	$customerInvoiceWhere = " AND erp_custinvoicedirect.createdFrom = 5";
+        } else {
+        	$customerInvoiceWhere = " AND erp_custinvoicedirect.createdFrom != 5";
+        }
  
         $limit = '';
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
@@ -437,7 +443,7 @@ FROM
 	AND erp_custinvoicedirect.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_custinvoicedirect.confirmedYN = 1 
 	AND erp_custinvoicedirect.approved = -1
-	AND erp_custinvoicedirect.canceledYN = 0
+	AND erp_custinvoicedirect.canceledYN = 0".$customerInvoiceWhere."
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_custinvoicedirect.customerID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_custinvoicedirect.custTransactionCurrencyID 
 WHERE
