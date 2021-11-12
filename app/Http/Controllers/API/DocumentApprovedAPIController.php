@@ -146,6 +146,8 @@ class DocumentApprovedAPIController extends AppBaseController
 
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+ 
         $limit = '';
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
             $limit = 'LIMIT 6 ';
