@@ -418,6 +418,9 @@ class CompanyFinanceYearAPIController extends AppBaseController
     {
 
         $input = $request->all();
+
+        // return$croneJobFinancialPeriodActivation = $this->companyFinanceYearRepository->croneJobFinancialPeriodActivation();
+
         //$input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {

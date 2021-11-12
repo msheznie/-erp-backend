@@ -29,6 +29,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('invoiceDueReminder')->daily()->withoutOverlapping();
         $schedule->command('notification_service')->daily()->withoutOverlapping();
         $schedule->command('leave_accrual_schedule')->daily()->withoutOverlapping();
+        $schedule->command('financialPeriodActivation')->daily()->withoutOverlapping();
 
     }
 
