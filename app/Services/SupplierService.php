@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
-use phpDocumentor\Reflection\DocBlock\Tags\Throws;
+use Illuminate\Support\Facades\DB;
 
 class SupplierService
 {
@@ -23,7 +23,8 @@ class SupplierService
     {
         $supplierDataUsingToken = SupplierRegistrationLink::where([
             ['token', $token],
-            ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()]
+            ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()],
+            ['status', 0]
             ])
             ->first();
 
@@ -32,6 +33,11 @@ class SupplierService
         }
 
         return $supplierDataUsingToken;
+    }
+
+    public function updateTokenStatus($token)
+    {
+        return DB::table('srm_supplier_registration_link')->where('token', $token)->update(['status' => 1]);
     }
 
  
