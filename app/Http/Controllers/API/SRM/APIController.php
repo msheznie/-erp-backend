@@ -13,6 +13,7 @@ define('GET_PURCHASE_ORDERS', 'GET_PURCHASE_ORDERS');
 define('GET_PURCHASE_ORDER_PRINT', 'GET_PURCHASE_ORDER_PRINT');
 define('GET_PURCHASE_ORDER_ADDONS', 'GET_PURCHASE_ORDER_ADDONS');
 define('GET_SUPPLIER_INVITATION_INFO', 'GET_SUPPLIER_INVITATION_INFO');
+define('UPDATE_SUPPLIER_INVITATION_STATUS', 'UPDATE_SUPPLIER_INVITATION_STATUS');
 
 class APIController extends Controller
 {
@@ -41,6 +42,8 @@ class APIController extends Controller
                 return $this->SRMService->getPoAddons($request);
             case GET_SUPPLIER_INVITATION_INFO:
                 return $this->SRMService->getSupplierInvitationInfo($request);
+            case UPDATE_SUPPLIER_INVITATION_STATUS:
+                return $this->SRMService->updateSupplierInvitaion($request);
             default:
                 return [
                     'success'   => false,
