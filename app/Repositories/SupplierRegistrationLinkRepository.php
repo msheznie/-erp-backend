@@ -44,7 +44,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
         $supplierRegistrationLink->tenant_id = 1;
-        $supplierRegistrationLink->api_key = md5(Carbon::now()->format('YmdHisu'));
+        $supplierRegistrationLink->api_key = "fow0lrRWCKxVIB4fW3lR";
         $supplierRegistrationLink->created_by = Auth::id();
         $supplierRegistrationLink->updated_by = '';
 
