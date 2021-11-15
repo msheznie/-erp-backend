@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ErpItemLedger;
 use App\Models\PoAddons;
 use App\Models\ProcumentOrder;
+use App\Models\SlotMaster;
 use Carbon\Carbon;
 
 class POService
@@ -31,7 +32,7 @@ class POService
             }, 'approved' => function ($query) {
                 $query->with('employee');
                 $query->where('rejectedYN', 0);
-                $query->whereIN('documentSystemID', [2, 5, 52]);
+                $query->whereIN('documentSystemID', [2]);
             }, 'suppliercontact' => function ($query) {
                 $query->where('isDefault', -1);
             }, 'paymentTerms_by' => function ($query) {
@@ -79,5 +80,21 @@ class POService
             ->get();
         return $orderAddons;
     }
- 
+    public function getAppointmentSlots($companyID, $wareHouseID)
+    {
+        $slot = new SlotMaster();
+        $data = $slot->getSlotData($companyID, $wareHouseID);
+        return $data;
+    }
+    public function getPurchaseOrders($comapnyID, $wareHouseID, $supplierID, $tenantID)
+    {
+        return ProcumentOrder::with(['detail' => function ($query) {
+            $query->with('unit');
+        }])
+            ->select('purchaseOrderID', 'purchaseOrderCode')
+            ->where('approved', -1)
+            ->where('supplierID', $supplierID)
+            ->where('documentSystemID', 2)
+            ->get();
+    }
 }

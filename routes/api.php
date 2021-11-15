@@ -2393,6 +2393,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
     Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
+    Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
+    Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
+    Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
 });
 
 
@@ -2481,8 +2484,8 @@ Route::get('cache-clear', function () {
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
-});
+}); 
 
+Route::resource('appointments', 'AppointmentAPIController');
 
-
-
+Route::resource('appointment_details', 'AppointmentDetailsAPIController');
