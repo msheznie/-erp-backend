@@ -366,7 +366,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
         Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+        Route::post('purchase-request/remove-all-items/{id}', 'PurchaseRequestDetailsAPIController@removeAllItems');
         Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
+        Route::get('get-all-uom-options', 'PurchaseRequestAPIController@getAllUomOptions');
+
         Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
         Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr');
         Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
