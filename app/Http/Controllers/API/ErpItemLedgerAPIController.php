@@ -1967,4 +1967,228 @@ GROUP BY
 
     }
 
+
+    public function getErpLedgerItems(Request $request)
+    {
+
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+
+        $category = (array)$request['category'];
+        $category = collect($category)->pluck('id');
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->whereIn('itemmaster.financeCategorySub', $category)
+            //->where('itemmaster.financeCategoryMaster', 1)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            //->take(50)
+            ->get();
+
+
+       
+
+
+        $output = array(
+            'item' => $item
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+    }
+
+    public function validateItemSummaryReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'Items' => 'required',
+                    'Warehouse' => 'required',
+                    'reportType' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred');
+        }
+
+    }
+
+    public function generateItemSummaryReport(Request $request)
+    {
+
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $warehouse = (array)$request['Warehouse'];
+        $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        $category = (array)$request['category'];
+        $category = collect($category)->pluck('id');
+
+        $items = (array)$request['Items'];
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+
+        $currency = $request['currency'][0];
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+        }
+
+        // $filter_values = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+        //  ->join('FinanceItemCategorySub', 'itemmaster.financeCategorySub', '=', 'FinanceItemCategorySub.itemCategorySubID')
+        // ->whereIn('wareHouseSystemCode', $warehouse)
+        // ->whereIn('itemPrimaryCode', $items)
+        // ->whereIn('itemmaster.financeCategorySub', $category)
+        // ->groupBy('itemPrimaryCode')
+        // ->selectRaw('itemLedgerAutoID,inOutQty,itemPrimaryCode,transactionDate,sum(case when inOutQty>0 then inOutQty else 0 end) as inwards_quantity,sum(case when inOutQty<0 then inOutQty else 0 end) as outwards_quantity,itemmaster.financeCategorySub,FinanceItemCategorySub.categoryDescription')
+        // ->whereBetween('transactionDate', [$fromDate, $toDate])
+        // ->get();
+ 
+
+
+        $filter_val = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+                                    ->join('FinanceItemCategorySub', 'itemmaster.financeCategorySub', '=', 'FinanceItemCategorySub.itemCategorySubID')
+                                    ->join('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+                                    ->whereIn('wareHouseSystemCode', $warehouse)
+                                    ->whereIn('itemPrimaryCode', $items)
+                                    ->whereIn('itemmaster.financeCategorySub', $category)
+                                    ->groupBy('itemPrimaryCode')
+                                    ->selectRaw('currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' else 0 end) as inwards_value,itemmaster.financeCategorySub,FinanceItemCategorySub.categoryDescription')
+                                    ->get();
+
+
+
+                              
+        $array = array();
+        if (!empty($filter_val)) {
+            foreach ($filter_val as $element)
+             {
+                $array[$element->categoryDescription][]  = $element;
+             }
+        }
+
+
+
+        $GrandOpeningBalance = collect($filter_val)->pluck('opening_balance_value')->toArray();
+        $GrandOpeningBalance = array_sum($GrandOpeningBalance);
+
+        $GrandInwards= collect($filter_val)->pluck('inwards_value')->toArray();
+        $GrandInwards = array_sum($GrandInwards);
+
+        $GrandOutwards = collect($filter_val)->pluck('outwards_value')->toArray();
+        $GrandOutwards = array_sum($GrandOutwards);
+
+        $GrandClosing = collect($filter_val)->pluck('closing_balance_value')->toArray();
+        $GrandClosing = array_sum($GrandClosing);
+
+
+
+        $output = array(
+            'categories' => $array,
+            'grandOpeningBalance' => $GrandOpeningBalance,
+            'grandInwards' => $GrandInwards,
+            'grandOutwards' => $GrandOutwards,
+            'grandClosing' => $GrandClosing,
+        );
+
+        return $this->sendResponse($output, 'data retrieved retrieved successfully');
+
+    }
+
+    public function exportItemSummary(Request $request)
+    {
+       
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $warehouse = (array)$request['Warehouse'];
+        $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        $category = (array)$request['category'];
+        $category = collect($category)->pluck('id');
+
+        $items = (array)$request['Items'];
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+        
+        $currency = $request['currency'][0];
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+        }
+
+        $filter_val = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+                                    ->join('FinanceItemCategorySub', 'itemmaster.financeCategorySub', '=', 'FinanceItemCategorySub.itemCategorySubID')
+                                    ->join('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+                                    ->whereIn('wareHouseSystemCode', $warehouse)
+                                    ->whereIn('itemPrimaryCode', $items)
+                                    ->whereIn('itemmaster.financeCategorySub', $category)
+                                    ->groupBy('itemPrimaryCode')
+                                    ->selectRaw('currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' else 0 end) as inwards_value,itemmaster.financeCategorySub,FinanceItemCategorySub.categoryDescription')
+                                    ->get();
+
+                                  
+
+        
+        foreach ($filter_val as $val) {
+            $data[] = array(
+                'Category' => $val->categoryDescription,
+                'Item Code' => $val->itemPrimaryCode,
+                'Item Description' => $val->itemDescription,
+                'Opening Balance Qty' => $val->opening_balance_quantity,
+                'Opening Balance Val' =>  number_format($val->opening_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+                'Inwards Qty' => $val->inwards_quantity,
+                'Inwards Val' => number_format($val->inwards_value, $val->LocalCurrencyDecimals, '.', ','),
+                'Outwards Qty' => $val->outwards_quantity,
+                'Outwards Val' => number_format($val->outwards_value, $val->LocalCurrencyDecimals, '.', ','),
+                'Closing Balance Qty' => $val->closing_balance_quantity,
+                'Closing Balance Val' => number_format($val->closing_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+
+            );
+        }
+
+        
+
+         \Excel::create('inventory_summary_report', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($request->type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
 }
