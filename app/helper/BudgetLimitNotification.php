@@ -140,7 +140,7 @@ class BudgetLimitNotification
             foreach ($details['groups'] as $key1 => $value1) {
                 if ($key == $key1) {
                     $budgetMasterData = BudgetMaster::with(['finance_year_by', 'segment_by'])->find($value['budgetmasterID']);
-                    $serviceLine = ($details['budgetFormData']['departmentWiseCheckBudgetPolicy']) ? " of service line ".$budgetMasterData->segment_by->ServiceLineCode : "";
+                    $serviceLine = ($details['budgetFormData']['departmentWiseCheckBudgetPolicy']) ? " of segment ".$budgetMasterData->segment_by->ServiceLineCode : "";
 
                     if ($details['budgetFormData']['checkBudgetBasedOnGLPolicy']) {
                         $templateWiseData = collect($value1)->groupBy('chartOfAccountID');

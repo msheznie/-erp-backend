@@ -373,4 +373,8 @@ class PurchaseOrderDetails extends Model
         return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseOrderDetailsID');
 
     }
+
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
+    }
 }

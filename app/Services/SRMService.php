@@ -8,9 +8,11 @@ use Illuminate\Http\Request;
 class SRMService
 {
     private $POService = null;
-    public function __construct(POService $POService)
+    private $supplierService = null;
+    public function __construct(POService $POService, SupplierService $supplierService)
     {
         $this->POService = $POService;
+        $this->supplierService = $supplierService;
     }
 
     /**
@@ -66,5 +68,25 @@ class SRMService
             'message'   => 'Purchase order addon successfully get',
             'data'      => $data
         ];
+    }
+
+    public function getSupplierInvitationInfo(Request $request)
+    {
+        try{
+            $invitationToken = $request->input('extra.token');
+            $data =  $this->supplierService->getTokenData($invitationToken);
+            return [
+                'success'   => true,
+                'message'   => 'Valid Invitation Link',
+                'data'      => $data
+            ];
+        }catch (\Exception $e){
+            return [
+                'success'   => false,
+                'message'   => $e->getMessage(),
+                'data'      => null
+            ];
+        }
+
     }
 }
