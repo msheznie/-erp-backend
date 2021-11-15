@@ -68,7 +68,10 @@ class PurchaseRequestDetailsRepository extends BaseRepository
         'prClosedYN',
         'fullyOrdered',
         'poTrackingID',
-        'timeStamp'
+        'timeStamp',
+        'altUnit',
+        'altUnitValue',
+        'isMRPulled'
     ];
 
     /**
