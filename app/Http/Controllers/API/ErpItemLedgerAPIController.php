@@ -2055,16 +2055,6 @@ GROUP BY
             $cur = 'wacRpt';
         }
 
-        // $filter_values = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
-        //  ->join('FinanceItemCategorySub', 'itemmaster.financeCategorySub', '=', 'FinanceItemCategorySub.itemCategorySubID')
-        // ->whereIn('wareHouseSystemCode', $warehouse)
-        // ->whereIn('itemPrimaryCode', $items)
-        // ->whereIn('itemmaster.financeCategorySub', $category)
-        // ->groupBy('itemPrimaryCode')
-        // ->selectRaw('itemLedgerAutoID,inOutQty,itemPrimaryCode,transactionDate,sum(case when inOutQty>0 then inOutQty else 0 end) as inwards_quantity,sum(case when inOutQty<0 then inOutQty else 0 end) as outwards_quantity,itemmaster.financeCategorySub,FinanceItemCategorySub.categoryDescription')
-        // ->whereBetween('transactionDate', [$fromDate, $toDate])
-        // ->get();
- 
 
 
         $filter_val = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
