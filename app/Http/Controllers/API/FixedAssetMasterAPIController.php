@@ -1552,7 +1552,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                                                             dep.depRpt AS DepRpt"))
             ->whereIn('erp_fa_asset_master.companySystemID', $subCompanies)
             ->where('erp_fa_asset_master.approved', -1)
-            ->where('erp_fa_asset_master.DIPOSED', 0)
+            // ->where('erp_fa_asset_master.DIPOSED', 0)
             ->whereDate('erp_fa_asset_master.dateAQ', '<=', $asOfDate)
             ->leftJoin('erp_fa_assettype', 'erp_fa_assettype.typeID', '=', 'erp_fa_asset_master.assetType')
             ->leftJoin('erp_fa_financecategory', 'erp_fa_financecategory.faFinanceCatID', '=', 'erp_fa_asset_master.AUDITCATOGARY')

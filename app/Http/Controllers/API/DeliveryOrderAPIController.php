@@ -895,6 +895,7 @@ WHERE
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_delivery_order.companySystemID', $companySystemID)
                 ->where('erp_delivery_order.approvedYN', 0)
+                ->where('erp_delivery_order.isFrom', '!=',5)
                 ->where('erp_delivery_order.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
@@ -971,6 +972,7 @@ WHERE
             $query->on('erp_documentapproved.documentSystemCode', '=', 'deliveryOrderID')
                 ->where('erp_delivery_order.companySystemID', $companySystemID)
                 ->where('erp_delivery_order.approvedYN', -1)
+                ->where('erp_delivery_order.isFrom', '!=',5)
                 ->where('erp_delivery_order.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')

@@ -443,8 +443,8 @@ class TaxService
                                     }])->find($grvAutoID);
 
             $vatData['masterVATTrans'] = $masterData->details[0]->transVATAmount;
-            $vatData['masterVATRpt'] = $masterData->details[0]->localVATAmount;
-            $vatData['masterVATLocal'] = $masterData->details[0]->rptVATAmount;
+            $vatData['masterVATLocal'] = $masterData->details[0]->localVATAmount;
+            $vatData['masterVATRpt'] = $masterData->details[0]->rptVATAmount;
 
         } else {
             $masterData = GRVMaster::with(['details' => function ($query) {
@@ -462,8 +462,8 @@ class TaxService
                                 })->find($grvAutoID);
 
             $vatData['masterVATTrans'] = ($masterData) ? $masterData->details[0]->transVATAmount : 0;
-            $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->localVATAmount : 0;
-            $vatData['masterVATLocal'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
+            $vatData['masterVATLocal'] = ($masterData) ? $masterData->details[0]->localVATAmount : 0;
+            $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
 
             //get portainateAccounts
            $exemptPotianteData = GRVDetails::selectRaw("(VATAmount*noQty) as transVATAmount,(VATAmountLocal*noQty) as localVATAmount ,(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID, vatSubCategoryID, financeGLcodebBSSystemID, financeGLcodePLSystemID, exempt_vat_portion, grvDetailsID, includePLForGRVYN")
@@ -612,8 +612,8 @@ class TaxService
                         }])->find($purhaseReturnAutoID);
 
             $vatData['masterVATTrans'] = $masterData->details[0]->transVATAmount;
-            $vatData['masterVATRpt'] = $masterData->details[0]->localVATAmount;
-            $vatData['masterVATLocal'] = $masterData->details[0]->rptVATAmount;
+            $vatData['masterVATLocal'] = $masterData->details[0]->localVATAmount;
+            $vatData['masterVATRpt'] = $masterData->details[0]->rptVATAmount;
 
         } else {
             $masterData = PurchaseReturn::with(['details' => function ($query) {
@@ -631,8 +631,8 @@ class TaxService
                                 })->find($purhaseReturnAutoID);
 
             $vatData['masterVATTrans'] = ($masterData) ? $masterData->details[0]->transVATAmount : 0;
-            $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->localVATAmount : 0;
-            $vatData['masterVATLocal'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
+            $vatData['masterVATLocal'] = ($masterData) ? $masterData->details[0]->localVATAmount : 0;
+            $vatData['masterVATRpt'] = ($masterData) ? $masterData->details[0]->rptVATAmount : 0;
 
             //get portainateAccounts
            $exemptPotianteData = PurchaseReturnDetails::selectRaw("(VATAmount*noQty) as transVATAmount,(VATAmountLocal*noQty) as localVATAmount ,(VATAmountRpt*noQty) as rptVATAmount ,purhaseReturnAutoID, vatSubCategoryID, financeGLcodebBSSystemID, exempt_vat_portion, purhasereturnDetailID")
@@ -836,8 +836,8 @@ class TaxService
                                             ->first();
 
             $vatData['masterVATTrans'] = ($masterData) ? $masterData->totalVATAmount : 0;
-            $vatData['masterVATRpt'] = ($masterData) ? $masterData->totalVATAmountLocal : 0;
-            $vatData['masterVATLocal'] = ($masterData) ? $masterData->totalVATAmountRpt : 0;
+            $vatData['masterVATLocal'] = ($masterData) ? $masterData->totalVATAmountLocal : 0;
+            $vatData['masterVATRpt'] = ($masterData) ? $masterData->totalVATAmountRpt : 0;
 
             //get portainateAccounts
            $exemptPotianteData = DirectInvoiceDetails::selectRaw("(VATAmount) as transVATAmount,(VATAmountLocal) as localVATAmount ,(VATAmountRpt) as rptVATAmount ,directInvoiceAutoID, vatSubCategoryID, chartOfAccountSystemID, serviceLineSystemID, comments, exempt_vat_portion, directInvoiceDetailsID")

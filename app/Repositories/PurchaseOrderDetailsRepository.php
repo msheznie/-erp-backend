@@ -91,7 +91,9 @@ class PurchaseOrderDetailsRepository extends BaseRepository
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'altUnit',
+        'altUnitValue'
     ];
 
     /**

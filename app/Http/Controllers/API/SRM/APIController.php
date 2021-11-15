@@ -15,6 +15,8 @@ define('GET_PURCHASE_ORDER_ADDONS', 'GET_PURCHASE_ORDER_ADDONS');
 define('GET_APPOINTMENT_SLOTS', 'GET_APPOINTMENT_SLOTS');
 define('GET_PO', 'GET_PO');
 define('SAVE_PO_APPOINTMENT', 'SAVE_PO_APPOINTMENT');
+define('GET_SUPPLIER_INVITATION_INFO', 'GET_SUPPLIER_INVITATION_INFO');
+
 
 class APIController extends Controller
 {
@@ -45,10 +47,11 @@ class APIController extends Controller
             case GET_APPOINTMENT_SLOTS:
                 return $this->SRMService->getAppointmentSlots($request);
             case GET_PO:
-                    return $this->SRMService->getPurchaseOrders($request);
+                return $this->SRMService->getPurchaseOrders($request);
             case SAVE_PO_APPOINTMENT:
                 return $this->SRMService->SavePurchaseOrderList($request);
-                    
+            case GET_SUPPLIER_INVITATION_INFO:
+                return $this->SRMService->getSupplierInvitationInfo($request);
             default:
                 return [
                     'success'   => false,

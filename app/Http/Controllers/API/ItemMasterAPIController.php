@@ -618,7 +618,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $ruleArray = array('secondaryItemCode' => 'required|unique:itemmaster',
+        $ruleArray = array(
             'primaryCompanySystemID' => 'required|numeric|min:1',
             'itemDescription' => 'required',
             'unit' => 'required|numeric|min:1',
@@ -805,15 +805,6 @@ class ItemMasterAPIController extends AppBaseController
         unset($input['remove_items']);
 
         $input = array_except($input,['finance_sub_category']);
-        $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
-        $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $validator = \Validator::make($input, [
-            'secondaryItemCode' => Rule::unique('itemmaster')->ignore($input['itemCodeSystem'], 'itemCodeSystem')
-        ], $messages);
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
 
 
 
@@ -897,7 +888,6 @@ class ItemMasterAPIController extends AppBaseController
                 'primaryCompanySystemID' => 'required|numeric|min:1',
                 'financeCategoryMaster' => 'required|numeric|min:1',
                 'financeCategorySub' => 'required|numeric|min:1',
-                'secondaryItemCode' => 'required',
                 'unit' => 'required|numeric|min:1'
             ]);
 

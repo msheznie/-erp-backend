@@ -253,7 +253,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
-            }])
+            }, 'vat_sub_category','altUom'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
@@ -904,7 +904,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function update($id, UpdatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit');
+        $input = array_except($request->all(), 'unit', 'vat_sub_category');
+
+        if (isset($input['vat_sub_category'])) {
+            unset($input['vat_sub_category']);
+        }
+
         $input = $this->convertArrayToValue($input);
 
         //$empInfo = self::getEmployeeInfo();

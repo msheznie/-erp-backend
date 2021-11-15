@@ -52,10 +52,10 @@ class POUpdated
                 $dataEmail['docApprovedYN'] = 0;
                 $dataEmail['docCode'] = $order['purchaseOrderCode'];
                 $dataEmail['ccEmailID'] = $email_id;
-                $temp = "Service line changed for " . $order['purchaseOrderCode'] . "<p> from ". $original['serviceLine'] ." to ". $order->serviceLine .  $footer;
+                $temp = "Segment changed for " . $order['purchaseOrderCode'] . "<p> from ". $original['serviceLine'] ." to ". $order->serviceLine .  $footer;
                 $dataEmail['isEmailSend'] = 0;
                 $dataEmail['attachmentFileName'] = null;
-                $dataEmail['alertMessage'] = "Service line changed for " . $order['purchaseOrderCode'];
+                $dataEmail['alertMessage'] = "Segment changed for " . $order['purchaseOrderCode'];
                 $dataEmail['emailAlertMessage'] = $temp;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
                 Log::info('Email array:');

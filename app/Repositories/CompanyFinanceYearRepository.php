@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Models\CompanyFinanceYear;
 use InfyOm\Generator\Common\BaseRepository;
+use Carbon\Carbon;
+
 
 /**
  * Class CompanyFinanceYearRepository
@@ -47,5 +49,11 @@ class CompanyFinanceYearRepository extends BaseRepository
     public function model()
     {
         return CompanyFinanceYear::class;
+    }
+
+    public function croneJobFinancialPeriodActivation(){
+        $currentDate = Carbon::now()->format('Y-m-d');
+        // return$financialYear = CompanyFinanceYear::where('YEAR(bigginingDate)' , 'YEAR($currentDate)')-first();
+        
     }
 }

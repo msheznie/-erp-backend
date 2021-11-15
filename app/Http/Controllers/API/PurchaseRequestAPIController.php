@@ -61,6 +61,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequestReferred;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
+use App\Models\Unit;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\MaterielRequestRepository;
@@ -256,6 +257,11 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        
+        $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID', $companyId)
+            ->first();
+
         $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
 
@@ -293,7 +299,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'priorities' => $priorities,
             'financialYears' => $financialYears,
             'conditions' => $conditions,
-            'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0
+            'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0,
+            'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1267,7 +1274,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','currency_by',
-            'priority_pdf', 'location_pdf', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
+            'priority_pdf', 'location_pdf', 'details.uom', 'details.altUom' ,'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
@@ -2821,5 +2828,42 @@ class PurchaseRequestAPIController extends AppBaseController
         $add = app()->make(PurcahseRequestDetail::class);
         $purchaseRequestDetailsValidation = $add->validateItemOnly($input);
         return $purchaseRequestDetailsValidation;
+    }
+
+
+     /**
+     * get UOM Option For PurchaseRequest
+     * get /get-all-uom-options
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getAllUomOptions(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $policy = 1;
+
+        $financeCategoryId = 0;
+
+        $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+        if ($allAltUOM) {
+            $policy = $allAltUOM->isYesNO;
+
+            if ($policy == 0) {
+                return $this->sendError('Policy not found');
+            }
+        }
+
+        $units = Unit::all();
+
+        return $this->sendResponse($units->toArray(), 'Data retrieved successfully');
     }
 }

@@ -1754,7 +1754,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with([
             'detail' => function ($query) {
-                $query->with('unit');
+                $query->with(['unit','altUom']);
             }, 'supplier' => function ($query) {
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {

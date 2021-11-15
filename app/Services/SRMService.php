@@ -11,9 +11,11 @@ use Illuminate\Http\Request;
 class SRMService
 {
     private $POService = null;
-    public function __construct(POService $POService)
+    private $supplierService = null;
+    public function __construct(POService $POService, SupplierService $supplierService)
     {
         $this->POService = $POService;
+        $this->supplierService = $supplierService;
     }
 
     /**
@@ -60,7 +62,6 @@ class SRMService
             'data'      => $data
         ];
     }
-
     public function getPoAddons(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
@@ -71,31 +72,34 @@ class SRMService
             'data'      => $data
         ];
     }
-    public function getAppointmentSlots(Request $request){ 
+    public function getAppointmentSlots(Request $request)
+    {
         $tenantID = $request->input('tenantId');
         $comapnyID = $request->input('extra.companyId');
         $wareHouseID = $request->input('extra.wareHouseID');
-        $supplierID =  $request->input('auth.id'); 
-        $data =  $this->POService->getAppointmentSlots($comapnyID,$wareHouseID);
+        $supplierID =  $request->input('auth.id');
+        $data =  $this->POService->getAppointmentSlots($comapnyID, $wareHouseID);
         return [
             'success'   => true,
             'message'   => 'Calander appointment slots successfully get',
             'data'      => $data
         ];
     }
-    public function getPurchaseOrders(Request $request){ 
+    public function getPurchaseOrders(Request $request)
+    {
         $tenantID = $request->input('tenantId');
         $comapnyID = $request->input('extra.companyID');
         $wareHouseID = $request->input('extra.wareHouseID');
         $supplierID =  $request->input('auth.id');
-        $data =  $this->POService->getPurchaseOrders($comapnyID,$wareHouseID,$supplierID,$tenantID);
+        $data =  $this->POService->getPurchaseOrders($comapnyID, $wareHouseID, $supplierID, $tenantID);
         return [
             'success'   => true,
             'message'   => 'Purchase Orders successfully get',
             'data'      => $data
         ];
     }
-    public function SavePurchaseOrderList(Request $request){ 
+    public function SavePurchaseOrderList(Request $request)
+    {
         $tenantID = $request->input('tenantId');
         $purchaseOrderDetailID = $request->input('extra.purchaseOrderDetailID');
         $item_id = $request->input('extra.item_id');
@@ -106,12 +110,12 @@ class SRMService
 
         $data['supplier_id'] = $supplierID;
         $data['status'] = 0;
-        $data['slot_detail_id'] = $slot_detail_id;  
-        $appointment = Appointment::create($data); 
-        if($appointment){ 
+        $data['slot_detail_id'] = $slot_detail_id;
+        $appointment = Appointment::create($data);
+        if ($appointment) {
             $slotDetail['status'] = 2;
             SlotDetails::where('id', $slot_detail_id)
-            ->update($slotDetail); 
+                ->update($slotDetail);
             $data_details['appointment_id'] = $appointment->id;
             $data_details['po_master_id'] = $purchaseOrderID;
             $data_details['item_id'] = $item_id;
@@ -123,6 +127,25 @@ class SRMService
             'success'   => true,
             'message'   => 'Purchase Orders Appointment get',
             'data'      => $appointment
+        ];
+    }
+    public function getSupplierInvitationInfo(Request $request)
+    {
+        $invitationToken = $request->input('extra.token');
+        $data =  $this->supplierService->getTokenData($invitationToken);
+
+        if (!$data) {
+            return [
+                'success'   => false,
+                'message'   => "Invalid Token",
+                'data'      => null
+            ];
+        }
+
+        return [
+            'success'   => true,
+            'message'   => 'Valid Invitation Link',
+            'data'      => $data
         ];
     }
 }

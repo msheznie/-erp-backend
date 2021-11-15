@@ -2475,7 +2475,7 @@ FROM
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
-	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (  DATE(disposedDate) > '$asOfDate')) OR DIPOSED <>  -1)
+	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where
 	) t  ORDER BY sortfaID desc  ";
 
