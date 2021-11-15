@@ -3,12 +3,12 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Repositories\companyFinanceYearRepository;
+use App\Repositories\CompanyFinanceYearRepository;
 use Illuminate\Support\Facades\Log;
 
-class InvoiceDueDateReminder extends Command
+class FinancialPeriodActivation extends Command
 {
-    private $companyFinanceYearRepository;
+    private $CompanyFinanceYearRepository;
     /**
      * The name and signature of the console command.
      *
@@ -27,10 +27,10 @@ class InvoiceDueDateReminder extends Command
      *
      * @return void
      */
-    public function __construct(companyFinanceYearRepository $companyFinanceRepo)
+    public function __construct(CompanyFinanceYearRepository $companyFinanceRepo)
     {
         parent::__construct();
-        $this->companyFinanceYearRepository = $companyFinanceRepo;
+        $this->CompanyFinanceYearRepository = $companyFinanceRepo;
     }
 
     /**
@@ -42,6 +42,6 @@ class InvoiceDueDateReminder extends Command
     {
         Log::info('Financial Period Activation'.now());
 
-        $this->companyFinanceYearRepository->croneJobFinancialPeriodActivation();
+        $this->CompanyFinanceYearRepository->croneJobFinancialPeriodActivation();
     }
 }
