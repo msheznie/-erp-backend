@@ -92,7 +92,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $prId = $input['purchaseRequestId'];
 
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
-            ->with(['uom'])
+            ->with(['uom','altUom'])
             ->forPage($input['page'], 30)->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
@@ -888,7 +888,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function update($id, UpdatePurchaseRequestDetailsAPIRequest $request)
     {
         $input = array_except($request->all(), 'uom');
-
+        
         $input = $this->convertArrayToValue($input);
 
         $purchaseRequestID = $input['purchaseRequestID'];
