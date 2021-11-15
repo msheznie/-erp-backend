@@ -2845,7 +2845,6 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $input['companyId'];
-        $purchaseRequestId = $input['purchaseRequestId'];
 
         $policy = 1;
 
