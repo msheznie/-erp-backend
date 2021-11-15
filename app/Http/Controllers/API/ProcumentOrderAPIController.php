@@ -1754,7 +1754,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with([
             'detail' => function ($query) {
-                $query->with('unit');
+                $query->with(['unit','item'=>function($query1){
+                    $query1->select('itemCodeSystem','itemDescription')->with('specification');
+                }]);
             }, 'supplier' => function ($query) {
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {
@@ -1778,10 +1780,17 @@ class ProcumentOrderAPIController extends AppBaseController
         ])->first();
 
 
+         $is_specification = false;       
+
         if (!empty($output)) {
 
             foreach ($output->detail as $item) {
 
+                if(isset($item->item->specification) || $item->item->specification != null)
+                {
+                    $is_specification = true; 
+                }
+       
                 $date = $output->createdDateTime;
 
                 $item->inhand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
@@ -1799,7 +1808,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->sum('inOutQty')) * -1;
             }
         }
-
+        $output['is_specification'] = $is_specification;
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -3062,7 +3071,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
     {
         $id = $request->get('id');
         $typeID = $request->get('typeID');
-
+        $spec_id = 1;
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
@@ -3070,7 +3079,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
-            $query->with('unit');
+            $query->with(['unit','item'=>function($query1){
+                $query1->select('itemCodeSystem','itemDescription')->with('specification');
+            }]);
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('rejectedYN', 0);
@@ -3080,6 +3091,25 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+
+      
+        $is_specification = 0;       
+
+        if (!empty($outputRecord)) {
+
+            foreach ($outputRecord as $item) {
+
+                foreach ($item->detail as $val) {
+                    if(isset($val->item->specification) || $val->item->specification != null)
+                    {
+                        $is_specification = 1; 
+                        break;
+                    }
+                }
+            }
+        }
+
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -3136,6 +3166,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'secondaryCompany' => $checkCompanyIsMerged,
             'title' => $documentTitle,
             'termsCond' => $typeID,
+            'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons
         );
