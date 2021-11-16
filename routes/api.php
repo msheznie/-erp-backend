@@ -2491,3 +2491,5 @@ Route::get('job-check', function(){
 Route::resource('appointments', 'AppointmentAPIController');
 
 Route::resource('appointment_details', 'AppointmentDetailsAPIController');
+
+Route::resource('po_categories', 'PoCategoryAPIController');
