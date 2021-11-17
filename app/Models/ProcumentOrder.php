@@ -310,6 +310,7 @@ class ProcumentOrder extends Model
         'rcmActivated',
         'orderType',
         'projectID',
+        'approval_remarks'
     ];
 
     /**
@@ -450,7 +451,8 @@ class ProcumentOrder extends Model
         'supCategorySubICVID' => 'integer',
         'rcmActivated' => 'integer',
         'orderType' => 'boolean',
-        'projectID' => 'integer'
+        'projectID' => 'integer',
+        'approval_remarks' => 'string'
     ];
 
     /**
