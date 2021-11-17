@@ -2398,11 +2398,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
     Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
     Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
+
+    Route::get('test', 'TenantAPIController@test');
 });
 
 
 Route::resource('tenants', 'TenantAPIController');
-Route::get('test', 'TenantAPIController@test');
+
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
@@ -2491,3 +2493,5 @@ Route::get('job-check', function(){
 Route::resource('appointments', 'AppointmentAPIController');
 
 Route::resource('appointment_details', 'AppointmentDetailsAPIController');
+
+Route::resource('po_categories', 'PoCategoryAPIController');
