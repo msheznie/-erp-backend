@@ -2,3 +2,6 @@
 
 
 
+
+
+Route::resource('poCategories', 'PoCategoryController');

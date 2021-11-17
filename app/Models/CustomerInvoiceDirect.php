@@ -522,6 +522,7 @@ class CustomerInvoiceDirect extends Model
         'returnStatus',
         'selectedForSalesReturn',
         'vatRegisteredYN',
+        'createdFrom',
         'customerVATEligible',
         'approvedByUserID'
     ];
@@ -554,6 +555,7 @@ class CustomerInvoiceDirect extends Model
         'rigNo' => 'string',
         'customerID' => 'integer',
         'customerGLSystemID' => 'integer',
+        'createdFrom' => 'integer',
         'customerGLCode' => 'string',
         'customerInvoiceNo' => 'string',
         'custTransactionCurrencyID' => 'integer',

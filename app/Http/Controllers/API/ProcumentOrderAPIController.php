@@ -127,6 +127,7 @@ use App\Models\WorkOrderGenerationLog;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\PoCategory;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\UserRepository;
@@ -192,7 +193,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
-
+      
         $input = $this->convertArrayToValue($input);
 
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
@@ -550,7 +551,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
-
+        $procumentOrderUpdate->approval_remarks = $input['approval_remarks'];
         if ($input['partiallyGRVAllowed']) {
             $procumentOrderUpdate->partiallyGRVAllowed = -1;
         } else {
@@ -1285,6 +1286,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         $procumentOrders->with(['created_by' => function ($query) {
             //$query->select(['empName']);
+        }, 'category' => function ($query) {
         }, 'location' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'currency' => function ($query) {
@@ -1413,7 +1415,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.poTypeID',
                 'erp_purchaseordermaster.rcmActivated',
-                'erp_purchaseordermaster.sentToSupplier'
+                'erp_purchaseordermaster.sentToSupplier',
+                'erp_purchaseordermaster.categoryID',
             ]
         );
 
@@ -1477,6 +1480,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+
+        $po_category = PoCategory::where('isActive',true)->get();
+
+        $po_category_default = PoCategory::where('isActive',true)->where('isDefault',true)->pluck('id');
 
         $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
@@ -1629,6 +1636,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = array(
             'segments' => $segments,
+            'category' => $po_category,
+            'category_default' => $po_category_default,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
