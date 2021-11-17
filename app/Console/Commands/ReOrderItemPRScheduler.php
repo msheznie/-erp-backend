@@ -3,22 +3,23 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-
-class ReOrderItemPR extends Command
+use App\Jobs\ReOrderItemPR;
+use Illuminate\Support\Facades\Auth;
+class ReOrderItemPRScheduler extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:name';
+    protected $signature = 'command:newPR';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Reorder level PR';
 
     /**
      * Create a new command instance.
@@ -37,6 +38,6 @@ class ReOrderItemPR extends Command
      */
     public function handle()
     {
-        //
+        ReOrderItemPR::dispatch(Auth::user());
     }
 }
