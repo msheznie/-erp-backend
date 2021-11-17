@@ -1626,7 +1626,7 @@ class SupplierMasterAPIController extends AppBaseController
         $token = md5(Carbon::now()->format('YmdHisu'));
         $apiKey = $request->input('api_key');
 
-        $isCreated = $this->registrationLinkRepository->save($request, $token, $apiKey);
+        $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
         if($isCreated){
             Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
