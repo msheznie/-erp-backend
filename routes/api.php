@@ -164,6 +164,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
         Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
 
+        Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
+
         Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
         Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
