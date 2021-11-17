@@ -34,7 +34,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         return SupplierRegistrationLink::class;
     }
 
-    public function save(Request $request, $token): bool
+    public function save(Request $request, $token, $apiKey): bool
     {
         $supplierRegistrationLink = new SupplierRegistrationLink();
         $supplierRegistrationLink->name = $request->input('name');
@@ -43,8 +43,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
-        $supplierRegistrationLink->tenant_id = 1;
-        $supplierRegistrationLink->api_key = "fow0lrRWCKxVIB4fW3lR";
+        $supplierRegistrationLink->api_key = $apiKey;
         $supplierRegistrationLink->created_by = Auth::id();
         $supplierRegistrationLink->updated_by = '';
 

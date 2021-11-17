@@ -42,6 +42,8 @@ class TenantEnforce
                     return "Sub domain " . $subDomain . " not found";
                 }
             }
+        }else{
+            $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
         }
         return $next($request);
     }
