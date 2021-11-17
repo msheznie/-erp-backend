@@ -43,7 +43,7 @@ use Eloquent as Model;
 class WorkOrderGenerationLog extends Model
 {
 
-    public $table = 'workOrderGenerationLog';
+    public $table = 'workordergenerationlog';
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
