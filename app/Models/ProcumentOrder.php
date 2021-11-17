@@ -310,7 +310,7 @@ class ProcumentOrder extends Model
         'rcmActivated',
         'orderType',
         'projectID',
-        'approval_remarks'
+        'approval_remarks',
         'categoryID',
     ];
 
@@ -453,7 +453,7 @@ class ProcumentOrder extends Model
         'rcmActivated' => 'integer',
         'orderType' => 'boolean',
         'projectID' => 'integer',
-        'approval_remarks' => 'string'
+        'approval_remarks' => 'string',
         'categoryID'  => 'integer',
     ];
 
