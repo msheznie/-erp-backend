@@ -2340,6 +2340,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
         Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice');
+
+        Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
+        Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
+        Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2493,6 +2497,8 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 });
+
+
 
 
 
