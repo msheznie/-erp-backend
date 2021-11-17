@@ -310,6 +310,7 @@ class ProcumentOrder extends Model
         'rcmActivated',
         'orderType',
         'projectID',
+        'categoryID',
     ];
 
     /**
@@ -450,7 +451,8 @@ class ProcumentOrder extends Model
         'supCategorySubICVID' => 'integer',
         'rcmActivated' => 'integer',
         'orderType' => 'boolean',
-        'projectID' => 'integer'
+        'projectID' => 'integer',
+        'categoryID'  => 'integer',
     ];
 
     /**
@@ -637,6 +639,11 @@ class ProcumentOrder extends Model
         return $this->hasMany('App\Models\BudgetConsumedData', 'documentSystemID', 'purchaseOrderID');
     }
 
+    
+    public function category()
+    {
+        return $this->belongsTo('App\Models\PoCategory', 'categoryID', 'id');
+    }
 
     public function getIsWoAmendAccessAttribute()
     {

@@ -598,10 +598,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
         Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
         Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-
-
-        Route::post('generateItemSummaryReport', 'ErpItemLedgerAPIController@generateItemSummaryReport');
-
         Route::post('generateStockLedger', 'ErpItemLedgerAPIController@generateStockLedger');        
         Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
         Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
@@ -649,8 +645,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
         Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
         Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
-        Route::post('exportItemSummary', 'ErpItemLedgerAPIController@exportItemSummary');
-        
         Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
         Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
         Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
@@ -824,9 +818,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('contracts', 'ContractAPIController');
         Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
-        Route::post('validateItemSummaryReport', 'ErpItemLedgerAPIController@validateItemSummaryReport');
-
-
         Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
         Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -2407,11 +2398,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
     Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
     Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
+
+    Route::get('test', 'TenantAPIController@test');
 });
 
 
 Route::resource('tenants', 'TenantAPIController');
-Route::get('test', 'TenantAPIController@test');
+
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
@@ -2500,3 +2493,5 @@ Route::get('job-check', function(){
 Route::resource('appointments', 'AppointmentAPIController');
 
 Route::resource('appointment_details', 'AppointmentDetailsAPIController');
+
+Route::resource('po_categories', 'PoCategoryAPIController');

@@ -54,7 +54,7 @@ class APIController extends Controller
             case GET_SUPPLIER_INVITATION_INFO:
                 return $this->SRMService->getSupplierInvitationInfo($request);
             case UPDATE_SUPPLIER_INVITATION_STATUS:
-                return $this->SRMService->updateSupplierInvitaion($request);
+                return $this->SRMService->updateSupplierInvitation($request);
             default:
                 return [
                     'success'   => false,
