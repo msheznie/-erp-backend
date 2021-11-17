@@ -1624,7 +1624,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         // Generate Hash Token for the current timestamp
         $token = md5(Carbon::now()->format('YmdHisu'));
-        $apiKey = "fow0lrRWCKxVIB4fW3lR";
+        $apiKey = $request->input('api_key');
 
         $isCreated = $this->registrationLinkRepository->save($request, $token, $apiKey);
         $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
