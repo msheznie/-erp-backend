@@ -551,7 +551,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
-
+        $procumentOrderUpdate->approval_remarks = $input['approval_remarks'];
         if ($input['partiallyGRVAllowed']) {
             $procumentOrderUpdate->partiallyGRVAllowed = -1;
         } else {
