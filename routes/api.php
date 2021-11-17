@@ -583,6 +583,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
         Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
+        Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems');
 
         Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
 
@@ -817,8 +818,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('contracts', 'ContractAPIController');
         Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
-
-
         Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
         Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -2396,11 +2395,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
     Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
+    Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
+    Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
+    Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
+
+    Route::get('test', 'TenantAPIController@test');
 });
 
 
 Route::resource('tenants', 'TenantAPIController');
-Route::get('test', 'TenantAPIController@test');
+
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
@@ -2484,8 +2488,10 @@ Route::get('cache-clear', function () {
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
-});
+}); 
 
+Route::resource('appointments', 'AppointmentAPIController');
 
+Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
-
+Route::resource('po_categories', 'PoCategoryAPIController');

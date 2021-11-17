@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -42,6 +43,8 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
+        $supplierRegistrationLink->created_by = Auth::id();
+        $supplierRegistrationLink->updated_by = '';
 
         return $supplierRegistrationLink->save();
     }
