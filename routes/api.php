@@ -2408,8 +2408,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
     Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
     Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
-
+    Route::post('clanderSlotDateRangeValidation', 'SlotMasterAPIController@clanderSlotDateRangeValidation');
+    Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
+    Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::get('test', 'TenantAPIController@test');
+
 });
 
 
