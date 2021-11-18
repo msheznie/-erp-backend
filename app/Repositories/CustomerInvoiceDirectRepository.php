@@ -108,6 +108,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
+        'createdFrom',
         'createdDateTime',
         'timestamp'
     ];

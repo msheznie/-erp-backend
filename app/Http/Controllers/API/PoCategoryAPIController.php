@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\helper\TaxService;
-use App\Http\Requests\API\CreateTenantAPIRequest;
-use App\Http\Requests\API\UpdateTenantAPIRequest;
-use App\Models\GRVDetails;
-use App\Models\PoAdvancePayment;
-use App\Models\PurchaseOrderDetails;
-use App\Models\Tenant;
-use App\Repositories\TenantRepository;
+use App\Http\Requests\API\CreatePoCategoryAPIRequest;
+use App\Http\Requests\API\UpdatePoCategoryAPIRequest;
+use App\Models\PoCategory;
+use App\Repositories\PoCategoryRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -17,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TenantController
+ * Class PoCategoryController
  * @package App\Http\Controllers\API
  */
 
-class TenantAPIController extends AppBaseController
+class PoCategoryAPIController extends AppBaseController
 {
-    /** @var  TenantRepository */
-    private $tenantRepository;
+    /** @var  PoCategoryRepository */
+    private $poCategoryRepository;
 
-    public function __construct(TenantRepository $tenantRepo)
+    public function __construct(PoCategoryRepository $poCategoryRepo)
     {
-        $this->tenantRepository = $tenantRepo;
+        $this->poCategoryRepository = $poCategoryRepo;
     }
 
     /**
@@ -36,10 +32,10 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants",
-     *      summary="Get a listing of the Tenants.",
-     *      tags={"Tenant"},
-     *      description="Get all Tenants",
+     *      path="/poCategories",
+     *      summary="Get a listing of the PoCategories.",
+     *      tags={"PoCategory"},
+     *      description="Get all PoCategories",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -53,7 +49,7 @@ class TenantAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Tenant")
+     *                  @SWG\Items(ref="#/definitions/PoCategory")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -65,29 +61,29 @@ class TenantAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->tenantRepository->pushCriteria(new RequestCriteria($request));
-        $this->tenantRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $tenants = $this->tenantRepository->all();
+        $this->poCategoryRepository->pushCriteria(new RequestCriteria($request));
+        $this->poCategoryRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $poCategories = $this->poCategoryRepository->all();
 
-        return $this->sendResponse($tenants->toArray(), 'Tenants retrieved successfully');
+        return $this->sendResponse($poCategories->toArray(), 'Po Categories retrieved successfully');
     }
 
     /**
-     * @param CreateTenantAPIRequest $request
+     * @param CreatePoCategoryAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/tenants",
-     *      summary="Store a newly created Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Store Tenant",
+     *      path="/poCategories",
+     *      summary="Store a newly created PoCategory in storage",
+     *      tags={"PoCategory"},
+     *      description="Store PoCategory",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be stored",
+     *          description="PoCategory that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/PoCategory")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -100,7 +96,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/PoCategory"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -110,13 +106,13 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTenantAPIRequest $request)
+    public function store(CreatePoCategoryAPIRequest $request)
     {
         $input = $request->all();
 
-        $tenant = $this->tenantRepository->create($input);
+        $poCategory = $this->poCategoryRepository->create($input);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant saved successfully');
+        return $this->sendResponse($poCategory->toArray(), 'Po Category saved successfully');
     }
 
     /**
@@ -124,14 +120,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants/{id}",
-     *      summary="Display the specified Tenant",
-     *      tags={"Tenant"},
-     *      description="Get Tenant",
+     *      path="/poCategories/{id}",
+     *      summary="Display the specified PoCategory",
+     *      tags={"PoCategory"},
+     *      description="Get PoCategory",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of PoCategory",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -147,7 +143,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/PoCategory"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -159,30 +155,30 @@ class TenantAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var PoCategory $poCategory */
+        $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($poCategory)) {
+            return $this->sendError('Po Category not found');
         }
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant retrieved successfully');
+        return $this->sendResponse($poCategory->toArray(), 'Po Category retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTenantAPIRequest $request
+     * @param UpdatePoCategoryAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/tenants/{id}",
-     *      summary="Update the specified Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Update Tenant",
+     *      path="/poCategories/{id}",
+     *      summary="Update the specified PoCategory in storage",
+     *      tags={"PoCategory"},
+     *      description="Update PoCategory",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of PoCategory",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -190,9 +186,9 @@ class TenantAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be updated",
+     *          description="PoCategory that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/PoCategory")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -205,7 +201,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/PoCategory"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -215,20 +211,20 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTenantAPIRequest $request)
+    public function update($id, UpdatePoCategoryAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var PoCategory $poCategory */
+        $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($poCategory)) {
+            return $this->sendError('Po Category not found');
         }
 
-        $tenant = $this->tenantRepository->update($input, $id);
+        $poCategory = $this->poCategoryRepository->update($input, $id);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant updated successfully');
+        return $this->sendResponse($poCategory->toArray(), 'PoCategory updated successfully');
     }
 
     /**
@@ -236,14 +232,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/tenants/{id}",
-     *      summary="Remove the specified Tenant from storage",
-     *      tags={"Tenant"},
-     *      description="Delete Tenant",
+     *      path="/poCategories/{id}",
+     *      summary="Remove the specified PoCategory from storage",
+     *      tags={"PoCategory"},
+     *      description="Delete PoCategory",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of PoCategory",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -271,26 +267,15 @@ class TenantAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var PoCategory $poCategory */
+        $poCategory = $this->poCategoryRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($poCategory)) {
+            return $this->sendError('Po Category not found');
         }
 
-        $tenant->delete();
+        $poCategory->delete();
 
-        return $this->sendSuccess('Tenant deleted successfully');
-    }
-
-
-    public function test(Request $request)
-    {
-
-        $data = env('IS_MULTI_TENANCY');
-
-        $output = TaxService::poLogisticVATDistributionForGRV(58732);
-
-        return $this->sendResponse($output, 'retrieved successfully' . $request->input('api_key'));
+        return $this->sendSuccess('Po Category deleted successfully');
     }
 }
