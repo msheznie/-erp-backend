@@ -21,7 +21,7 @@ class BlockInvoice
 
 			if ($customerData->creditLimit > 0 && $customerData->custGLAccountSystemID != null) {
 				$customerOutsanding = GeneralLedger::where('companySystemID', $masterRecord->companySystemID)
-							                        ->whereIn('documentSystemID', [20, 19, 21])
+							                        ->whereIn('documentSystemID', [20, 19, 21, 71])
 							                        ->where('supplierCodeSystem', $masterRecord->customerID)
 							                        ->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
 							                        ->sum('documentRptAmount');
@@ -29,17 +29,11 @@ class BlockInvoice
 				$customerNewOutsanding = floatval($masterRecord->bookingAmountRpt) +  $customerOutsanding;
 
 				if ($customerNewOutsanding > 0 && ($customerNewOutsanding > $customerData->creditLimit)) {
-					$reportCurrencyDecimalPlace = 2;
-					$currencyCode = "USD";
 					$comanyMasterData = Company::find($masterRecord->companySystemID);
-					if ($comanyMasterData) {
-						$currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
-						if ($currencyData) {
-							$reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
-							$currencyCode = $currencyData->CurrencyCode;
-						}
-					}
-
+					
+					$currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
+					$reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
+					$currencyCode = $currencyData->CurrencyCode;
 					$customerOutsandingFormated = number_format($customerNewOutsanding, $reportCurrencyDecimalPlace);
 
 					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
