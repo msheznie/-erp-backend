@@ -2037,6 +2037,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+        Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps');
+        Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp');
+        Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp');
+
+        Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
+
 
         Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
@@ -2499,3 +2505,4 @@ Route::resource('appointments', 'AppointmentAPIController');
 Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
 Route::resource('po_categories', 'PoCategoryAPIController');
+
