@@ -84,11 +84,10 @@ class SlotDetails extends Model
     public $fillable = [
         'company_id',
         'created_by',
-        'date',
+        'start_date',
+        'end_date',
         'slot_master_id',
-        'status',
-        'time_from',
-        'time_to'
+        'status'
     ];
 
     /**
@@ -99,12 +98,9 @@ class SlotDetails extends Model
     protected $casts = [
         'company_id' => 'integer',
         'created_by' => 'integer',
-        'date' => 'datetime',
         'id' => 'integer',
         'slot_master_id' => 'integer',
-        'status' => 'integer',
-        'time_from' => 'float',
-        'time_to' => 'float'
+        'status' => 'integer'
     ];
 
     /**

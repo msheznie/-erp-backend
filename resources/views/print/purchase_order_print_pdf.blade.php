@@ -734,6 +734,52 @@
         </table>
     </div>
 </div>
+@if ($specification==1)
+
+<div class="row">
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
+                <td width="100%" style="text-align: center;font-size: 9px;"><h3 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h3></td>
+            </tr>
+        </table>
+        <br>
+      
+            @if ($podata->detail)
+                @foreach ($podata->detail as $det)
+                @if ($det->item->specification)
+
+
+                   <table style="width:100%;border: 1px solid;
+  background: #c4c4c4;
+  margin-bottom: 27px;">
+                     <tr style="height:10px;
+">
+                        <td style="width: 0%;height:10px">
+                        <td width="100%" style="text-align: left;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}}</h5></td>
+                        </td>
+
+                        <td style="width: 10%">
+                        <td width="100%" style="text-align: center;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->unit->UnitShortCode}}</h5></td>
+
+                        </td>
+                    </tr>
+                    </table>
+                    <br>
+                    <table style="width:100%">
+                        <tr>
+                            <td width="100%" style="text-align: left;font-size: 12px;"><p class="font-weight-bold" >{!!$det->item->specification->html !!}</p></td>
+                        </tr>
+                    </table>
+               @endif
+                @endforeach
+            @endif
+
+</div>   
+ 
+
+
+@endif
 @if ($termsCond==1)
     <div class="row" id="paymentTermsCond">
         <div class="page_break"></div>
@@ -1219,3 +1265,5 @@
         </table>
     </div>
 @endif
+
+

@@ -16,6 +16,7 @@ define('GET_APPOINTMENT_SLOTS', 'GET_APPOINTMENT_SLOTS');
 define('GET_PO', 'GET_PO');
 define('SAVE_PO_APPOINTMENT', 'SAVE_PO_APPOINTMENT');
 define('GET_SUPPLIER_INVITATION_INFO', 'GET_SUPPLIER_INVITATION_INFO');
+define('UPDATE_SUPPLIER_INVITATION_STATUS', 'UPDATE_SUPPLIER_INVITATION_STATUS');
 
 
 class APIController extends Controller
@@ -52,6 +53,8 @@ class APIController extends Controller
                 return $this->SRMService->SavePurchaseOrderList($request);
             case GET_SUPPLIER_INVITATION_INFO:
                 return $this->SRMService->getSupplierInvitationInfo($request);
+            case UPDATE_SUPPLIER_INVITATION_STATUS:
+                return $this->SRMService->updateSupplierInvitation($request);
             default:
                 return [
                     'success'   => false,

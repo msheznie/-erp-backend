@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class FinancialPeriodActivation extends Command
 {
-    private $CompanyFinanceYearRepository;
+    private $companyFinanceYearRepository;
     /**
      * The name and signature of the console command.
      *
@@ -30,7 +30,7 @@ class FinancialPeriodActivation extends Command
     public function __construct(CompanyFinanceYearRepository $companyFinanceRepo)
     {
         parent::__construct();
-        $this->CompanyFinanceYearRepository = $companyFinanceRepo;
+        $this->companyFinanceYearRepository = $companyFinanceRepo;
     }
 
     /**
@@ -42,6 +42,6 @@ class FinancialPeriodActivation extends Command
     {
         Log::info('Financial Period Activation'.now());
 
-        $this->CompanyFinanceYearRepository->croneJobFinancialPeriodActivation();
+        $this->companyFinanceYearRepository->croneJobFinancialPeriodActivation();
     }
 }

@@ -148,4 +148,23 @@ class SRMService
             'data'      => $data
         ];
     }
+
+    public function updateSupplierInvitation(Request $request){
+        $invitationToken = $request->input('extra.token');
+        $isUpdated =  $this->supplierService->updateTokenStatus($invitationToken);
+
+        if(!$isUpdated){
+            return [
+                'success'   => false,
+                'message'   => "Update Failed",
+                'data'      => null
+            ];
+        }
+
+        return [
+            'success'   => true,
+            'message'   => 'Updated Successfully',
+            'data'      => $isUpdated
+        ];
+    }
 }

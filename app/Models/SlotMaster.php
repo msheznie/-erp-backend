@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Carbon\Carbon;
+use DateInterval;
+use DatePeriod;
+use DateTime;
 
 /**
  * @SWG\Definition(
@@ -92,8 +96,6 @@ class SlotMaster extends Model
         'created_by',
         'from_date',
         'no_of_deliveries',
-        'time_from',
-        'time_to',
         'to_date',
         'warehouse_id'
     ];
@@ -109,8 +111,6 @@ class SlotMaster extends Model
         'from_date' => 'datetime',
         'id' => 'integer',
         'no_of_deliveries' => 'integer',
-        'time_from' => 'float',
-        'time_to' => 'float',
         'to_date' => 'datetime',
         'warehouse_id' => 'integer'
     ];
@@ -129,9 +129,49 @@ class SlotMaster extends Model
 
     public function getSlotData($companyID, $wareHouseID)
     {
-        return SlotMaster::with(['slot_details'])
-        /* ->where('company_id', $companyID) */
-       /*  ->where('warehouse_id', $wareHouseID) */
-        ->get();
+        return SlotMaster::with(['slot_details', 'ware_house'])
+            /* ->where('company_id', $companyID) */
+            /*  ->where('warehouse_id', $wareHouseID) */
+            ->get();
     }
+    public function ware_house()
+    {
+        return $this->hasOne(WarehouseMaster::class, 'wareHouseSystemCode', 'warehouse_id');
+    }
+    public function checkDaySelectedDate($data)
+    {
+        $begin = new DateTime($data['dateFrom']);
+        $end = clone $begin;
+        $end->modify($data['dateTo']);
+        $end->modify('+1 day');
+        $interval = new DateInterval('P1D');
+        $daterange = new DatePeriod($begin, $interval, $end);
+        $weekDaysActive = [];
+
+
+        $date1_ts = strtotime(new Carbon($data['dateFrom']));
+        $date2_ts = strtotime(new Carbon($data['dateTo']));
+        $diff = $date2_ts - $date1_ts;
+        $days = round($diff / 86400);
+
+        if($days == 0) {
+            foreach ($daterange as $date) {
+                $weekDay = WeekDays::select('id')
+                    ->where('description', $date->format("l"))
+                    ->first();
+                $weekDay['isActive'] = true;
+                $weekDay['id'] = $weekDay['id'];
+                array_push($weekDaysActive, $weekDay);
+            }
+        } 
+        if ($days > 0 && isset($data['weekDays']) && $data['weekDays']!='') {
+            $weekDaysActive = $data['weekDays'];
+        }
+        
+        return $weekDaysActive;
+    }
+    public function slot_days()
+    {
+        return $this->hasMany('App\Models\SlotMasterWeekDays', 'slot_master_id', 'id');
+    } 
 }
