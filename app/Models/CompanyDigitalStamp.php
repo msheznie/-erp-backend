@@ -103,9 +103,7 @@ class CompanyDigitalStamp extends Model
         
     ];
 
-    // public function getImageUrlAttribute(){
-    //     return Helper::getFileUrlFromS3($this->path);
-    // }
+   
 
     public function getImageUrlAttribute(){
 
