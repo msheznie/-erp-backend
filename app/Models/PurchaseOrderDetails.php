@@ -388,7 +388,7 @@ class PurchaseOrderDetails extends Model
     }
 
     public function item(){
-        return $this->hasOne('App\Models\Itemmaster', 'itemCodeSystem', 'itemCode');
+        return $this->hasOne('App\Models\ItemMaster', 'itemCodeSystem', 'itemCode');
 
     }
 }
