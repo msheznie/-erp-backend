@@ -433,6 +433,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
+        if(doubleval($input['salvage_value']) >  (doubleval($input['costUnitRpt']))) {
+            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        }
+
         DB::beginTransaction();
         try {
             $messages = [
@@ -524,7 +528,6 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
             $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
-
             if ($documentCodeData['status']) {
                 $documentCode = $documentCodeData['documentCode'];
                 $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
