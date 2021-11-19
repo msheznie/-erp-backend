@@ -71,6 +71,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -92,12 +93,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
     private $bookInvSuppMasterRepository;
     private $userRepository;
     private $supplierInvoiceItemDetailRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo)
+    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo, UserRepository $userRepo, SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo)
     {
         $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
         $this->userRepository = $userRepo;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -1075,11 +1078,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
 
+        $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
+                                    ->where('companySystemID', $companyId)
+                                    ->first();
+
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'tax' => $taxMaster,
+            'assetAllocatePolicy' => ($assetAllocatePolicy && $assetAllocatePolicy->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
@@ -1956,6 +1965,8 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMasterData->save();
 
             AuditTrial::createAuditTrial($bookInvSuppMasterData->documentSystemID,$bookingSuppMasInvAutoID,$input['returnComment'],'returned back to amend');
+
+            $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($bookingSuppMasInvAutoID, $bookInvSuppMasterData->documentSystemID);
 
             DB::commit();
             return $this->sendResponse($bookInvSuppMasterData->toArray(), 'Supplier Invoice amend saved successfully');

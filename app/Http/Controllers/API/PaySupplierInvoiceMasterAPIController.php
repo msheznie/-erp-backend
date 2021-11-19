@@ -65,6 +65,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -83,10 +84,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 {
     /** @var  PaySupplierInvoiceMasterRepository */
     private $paySupplierInvoiceMasterRepository;
+    private $expenseAssetAllocationRepository;
 
-    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
+
+    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo)
     {
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
+        $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
     /**
@@ -1582,6 +1586,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 ->where('isYesNO', 1)
                 ->first();
 
+            $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
+                                    ->where('companySystemID', $companyId)
+                                    ->where('isYesNO', 1)
+                                    ->first();
+
+
             $output = array(
                 'financialYears' => $financialYears,
                 'companyFinanceYear' => $companyFinanceYear,
@@ -1591,6 +1601,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'years' => $years,
                 'supplier' => $supplier,
                 'chequeRegistryPolicy' => $is_exist_policy_GCNFCR ? true : false,
+                'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
                 'payee' => $payee,
                 'bank' => $bank,
                 'currency' => $currency,
@@ -2683,6 +2694,8 @@ HAVING
             $paymentVoucherData->save();
 
             AuditTrial::createAuditTrial($paymentVoucherData->documentSystemID,$PayMasterAutoId,$input['returnComment'],'returned back to amend');
+
+            $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($PayMasterAutoId, $paymentVoucherData->documentSystemID);
 
             DB::commit();
             return $this->sendResponse($paymentVoucherData->toArray(), 'Payment voucher return back to amend successfully');
