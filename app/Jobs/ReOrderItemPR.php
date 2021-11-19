@@ -548,7 +548,11 @@ class ReOrderItemPR implements ShouldQueue
                             $request_data_details['itemCategoryID'] = 0;
                             $request_data_details['isMRPulled'] = false;
                     
-            
+                            if($itemVal->roQuantity <= 0)
+                            {
+                                $is_failed= true;
+                            }    
+
                             if(!$is_failed)
                             {
                                 $succes_item++;
