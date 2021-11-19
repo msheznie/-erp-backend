@@ -11,9 +11,13 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Location;
 use App\Models\WarehouseMaster;
 use App\Models\WeekDays;
+use Carbon\Carbon;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use DateInterval;
+use DatePeriod;
+use DateTime;
 
 /**
  * Class SlotMasterController
@@ -315,6 +319,119 @@ class SlotMasterAPIController extends AppBaseController
         $companyID  = $input['companyID'];
         $wareHouseID = $input['warhouse'];
         $data = $slot->getSlotData($companyID, $wareHouseID);
-        return $this->sendResponse($data, 'Record retrieved successfully');
+        $arr = [];
+        $x = 0;
+        if (!empty($data)) {
+            foreach ($data as $row) {
+                foreach ($row['slot_details'] as $slotDetail) {
+                    $arr[$x]['id'] = $slotDetail->id;
+                    $arr[$x]['slot_master_id'] = $row->id;
+                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription;
+                    $arr[$x]['start'] = $slotDetail->start_date;
+                    $arr[$x]['end'] = $slotDetail->end_date;
+                    $arr[$x]['fullDay'] = 0;
+                    $arr[$x]['color'] = '#ffc107';
+                    $arr[$x]['status'] = $slotDetail->status;
+                    $x++;
+                }
+            }
+        }
+        return $this->sendResponse($arr, 'Record retrieved successfully');
+    }
+
+    public function clanderSlotDateRangeValidation(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $messages = [
+            'wareHouse.required' => 'Warehouse is required.',
+            'dateFrom.required' => 'From Date is required.'
+        ];
+
+        $validator = \Validator::make($input, [
+            'wareHouse' => 'required',
+            'dateFrom' => 'required'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $wareHouse =  $input['wareHouse'];
+        $fromDate =  new Carbon($input['dateFrom']);
+        $toDate =  new Carbon($input['dateTo']);
+
+        if (isset($fromDate) && isset($toDate) && ($toDate->format('Y-m-d') < $fromDate->format('Y-m-d'))) {
+            return $this->sendError('To Date is greater than from date');
+        }
+
+        $begin = new DateTime($fromDate);
+        $end = clone $begin;
+        $end->modify($toDate);
+        $end->modify('+1 day');
+        $interval = new DateInterval('P1D');
+        $daterange = new DatePeriod($begin, $interval, $end);
+        $weekDayArr = [];
+        $new = [];
+        $weekDays =  WeekDays::get();
+        foreach ($weekDays as $val) {
+            foreach ($daterange as $date) {
+                if (!in_array($val['description'], $weekDayArr) && $val['description'] == $date->format("l")) {
+                    array_push($weekDayArr, $val);
+                }
+            }
+        }
+        return $this->sendResponse($weekDayArr, 'Record retrieved successfully');
+    }
+
+
+    public function clanderSlotMasterData(Request $request)
+    {
+        $input = $request->all();
+        $slotMasterID = $input['slotMasterID'];
+        $slotMaster = SlotMaster::with(['slot_days' => function ($query) {
+            $query->with(['week_days']);
+        }])
+            ->where('id', $slotMasterID)->first();
+
+
+        $dateFrom = Carbon::parse($slotMaster['from_date']);
+        $dateTo =  Carbon::parse($slotMaster['to_date']);
+        $begin =  new DateTime($dateFrom->format('Y-m-d'));
+        $end = clone $begin;
+        $end->modify($dateTo->format('Y-m-d'));
+        $end->modify('+1 day');
+        $interval = new DateInterval('P1D');
+        $daterange = new DatePeriod($begin, $interval, $end);
+        $weekDayArr = [];
+        $new = [];
+        $weekDays =  WeekDays::get();
+        foreach ($weekDays as $val) {
+            foreach ($daterange as $date) {
+                if (!in_array($val['description'], $weekDayArr) && $val['description'] == $date->format("l")) {
+                    array_push($weekDayArr, $val);
+                }
+            }
+        }
+
+
+        return [
+            'masterData' => $slotMaster,
+            'weekDayArr' =>  $weekDayArr
+        ];
+    }
+
+    public function removeCalanderSlot(Request $request)
+    {
+        $input = $request->all();
+        $slotMasterId = $input['slotMasterId'];
+        $calanderSlots = $this->slotMasterRepository->deleteSlot($slotMasterId);
+        if ($calanderSlots['status']) {
+            return $this->sendResponse([], 'Successfully deleted');
+        } else {
+            $statusCode = isset($calanderSlots['code']) ? $calanderSlots['code'] : 404;
+            return $this->sendError($calanderSlots['message'], $statusCode);
+        }
     }
 }

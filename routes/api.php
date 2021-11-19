@@ -155,6 +155,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
+        Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');
+        
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
@@ -2037,6 +2039,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+        Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps');
+        Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp');
+        Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp');
+
+        Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
+
 
         Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
@@ -2331,6 +2339,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
         Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice');
+
+        Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
+        Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
+        Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2398,8 +2410,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
     Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
     Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
-
+    Route::post('clanderSlotDateRangeValidation', 'SlotMasterAPIController@clanderSlotDateRangeValidation');
+    Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
+    Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::get('test', 'TenantAPIController@test');
+
 });
 
 
@@ -2495,3 +2510,4 @@ Route::resource('appointments', 'AppointmentAPIController');
 Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
 Route::resource('po_categories', 'PoCategoryAPIController');
+
