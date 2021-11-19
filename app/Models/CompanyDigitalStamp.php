@@ -104,7 +104,6 @@ class CompanyDigitalStamp extends Model
     ];
 
    
-
     public function getImageUrlAttribute(){
 
         $awsPolicy = Helper::checkPolicy($this->company_system_id, 50);
