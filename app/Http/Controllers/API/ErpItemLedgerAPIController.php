@@ -1988,7 +1988,7 @@ GROUP BY
             ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
             ->whereIn('itemmaster.financeCategorySub', $category)
-            //->where('itemmaster.financeCategoryMaster', 1)
+            ->where('itemmaster.financeCategoryMaster', 1)
             ->groupBy('erp_itemledger.itemSystemCode')
             //->take(50)
             ->get();
