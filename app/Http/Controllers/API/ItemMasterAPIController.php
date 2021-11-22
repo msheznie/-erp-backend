@@ -935,7 +935,7 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
      
-        return$disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
+        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
 
  
         $count = 0;
