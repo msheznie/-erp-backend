@@ -24,6 +24,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrder;
 use App\Models\ErpItemLedger;
 use App\Models\GRVDetails;
+use App\Models\Location;
 use App\Models\PurchaseOrderDetails;
 use App\helper\Helper;
 use DB;
@@ -59,6 +60,9 @@ class ReOrderItemPR implements ShouldQueue
     public function handle(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepository,SegmentAllocatedItemRepository $segmentAllocatedItemRepository,PurchaseRequestRepository $purchaseRequestRepository,UserRepository $userRepository,ItemMasterRepository $itemMasterRepository)
     {
 
+
+        
+   
       
         $companies = Company::where('isActive',true)->pluck('companySystemID');
 
@@ -67,6 +71,17 @@ class ReOrderItemPR implements ShouldQueue
         $details = [];
         foreach($companies as $companyID)
         {
+
+
+        $serivice_line_id = 1;    
+        $segments = SegmentMaster::where("companySystemID", $companyID)->where('isActive', 1)->select('serviceLineSystemID','ServiceLineDes')->first();
+        if(isset($segments))
+        {
+            $serivice_line_id =  $segments->serviceLineSystemID;   
+        }
+        $location = Location::first()->locationID;      
+       
+ 
 
             $prPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 62)
             ->where('companySystemID', $companyID)
@@ -106,8 +121,8 @@ class ReOrderItemPR implements ShouldQueue
                         $user = $userRepository->with(['employee'])->findWithoutFail($id);
                 
                         $request_data['createdPcID'] = gethostname();
-                        $request_data['createdUserID'] = 888;//$user->employee['empID'];
-                        $request_data['createdUserSystemID'] = 11;//$user->employee['employeeSystemID'];
+                        $request_data['createdUserID'] = null;//$user->employee['empID'];
+                        $request_data['createdUserSystemID'] = null;//$user->employee['employeeSystemID'];
                         
                         $currency = (isset($company)) ? $company->localCurrencyID : 0;
                         $request_data['currency'] = $currency;
@@ -131,7 +146,7 @@ class ReOrderItemPR implements ShouldQueue
             
                         $request_data['documentSystemID'] = 1;  
                         $request_data['companySystemID'] = $companyID;        
-                        $serivice_line_id = 1;
+                        //$serivice_line_id = 1;
                         $request_data['serviceLineSystemID'] = $serivice_line_id;     
                         $segment = SegmentMaster::where('serviceLineSystemID', $serivice_line_id)->first();
                         if ($segment) {
@@ -139,9 +154,9 @@ class ReOrderItemPR implements ShouldQueue
                             $request_data['serviceLineCode'] = $segment->ServiceLineCode;
                         }
             
-                        $request_data['serviceLineSystemID'] = 1;  
+                       // $request_data['serviceLineSystemID'] = 1;  
                         $request_data['comments'] = 'System Auto-Generated - Auto Re-order Purchase';  
-                        $request_data['location'] = 1;  
+                        $request_data['location'] = $location;  
                         $request_data['priority'] = 1;  
             
                         $request_data['departmentID'] = 'PROC';  
@@ -182,7 +197,7 @@ class ReOrderItemPR implements ShouldQueue
                         //purchase request end
             
                         // item details echekc start
-        
+                        
         
                         $succes_item = 0;
                         $valid_items = [];
@@ -543,7 +558,7 @@ class ReOrderItemPR implements ShouldQueue
                       
                        
                             $request_data_details['quantityRequested'] =$itemVal->roQuantity;  
-                            $request_data_details['totalCost'] = 30;  
+                            $request_data_details['totalCost'] = 0;  
                             $request_data_details['comments'] = 'generated pr';  
                             $request_data_details['itemCategoryID'] = 0;
                             $request_data_details['isMRPulled'] = false;
