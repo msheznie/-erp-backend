@@ -1441,8 +1441,19 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->where('quantityRequested', '<=', 0)
                 ->count();
 
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+            $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
+
+            $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID',  $purchaseRequest->companySystemID)
+            ->first();
+      
+            if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
+                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
             }
 
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
