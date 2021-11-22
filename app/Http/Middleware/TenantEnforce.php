@@ -17,8 +17,12 @@ class TenantEnforce
      * @param \Closure $next
      * @return mixed
      */
+
+
     public function handle($request, Closure $next)
     {
+
+        $apiKeyRoutes = ['api/v1/srmRegistrationLink'];
 
         if (env('IS_MULTI_TENANCY', false)) {
             $url = $request->getHttpHost();
@@ -34,7 +38,9 @@ class TenantEnforce
                 }
                 $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
                 if (!empty($tenant)) {
-                    $request->request->add(['api_key' => $tenant->api_key]);
+                    if (in_array($request->route()->uri, $apiKeyRoutes)) {
+                        $request->request->add(['api_key' => $tenant->api_key]);
+                    }
                     Config::set("database.connections.mysql.database", $tenant->database);
                     //DB::purge('mysql');
                     DB::reconnect('mysql');
@@ -42,8 +48,10 @@ class TenantEnforce
                     return "Sub domain " . $subDomain . " not found";
                 }
             }
-        }else{
-            $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
+        } else {
+            if (in_array($request->route()->uri, $apiKeyRoutes)) {
+                $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
+            }
         }
         return $next($request);
     }

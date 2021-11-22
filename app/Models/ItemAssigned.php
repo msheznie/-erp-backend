@@ -99,7 +99,8 @@ class ItemAssigned extends Model
         'itemMovementCategory',
         'timeStamp',
         'isPOSItem',
-        'sellingCost'
+        'sellingCost',
+        'roQuantity'
     ];
 
     /**
@@ -141,7 +142,8 @@ class ItemAssigned extends Model
         'selectedForWarehouse' => 'integer',
         'itemMovementCategory' => 'integer',
         'isPOSItem' => 'integer',
-        'sellingCost' => 'float'
+        'sellingCost' => 'float',
+        'roQuantity' => 'float',
     ];
 
     /**

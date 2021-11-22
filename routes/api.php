@@ -155,6 +155,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
+        Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');
+        
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
@@ -163,6 +165,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
         Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
         Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
+
+        Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
 
         Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -2413,6 +2417,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::get('test', 'TenantAPIController@test');
 
+    Route::get('runCronJob/{cron}', function ($cron) {
+        Artisan::call($cron);
+        return 'CRON Job run successfully';
+    });
+
 });
 
 
@@ -2486,10 +2495,6 @@ Route::group(['prefix' => 'srm', 'middleware' => ['tenantById']], function (){
  * End SRM related routes
  */
 
-Route::get('runCronJob/{cron}', function ($cron) {
-    Artisan::call($cron);
-    return 'CRON Job run successfully';
-});
 
 Route::get('cache-clear', function () {
     Artisan::call('cache:clear');
