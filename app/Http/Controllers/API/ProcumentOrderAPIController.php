@@ -988,6 +988,22 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('noQty', '<', 0.1)
                 ->count();
 
+
+            $checkAltUnit = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
+
+            $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID',  $procumentOrder->companySystemID)
+            ->first();
+      
+            if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
+                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
+            }
+
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum qty requested', 500);
             }
