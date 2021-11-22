@@ -29,11 +29,16 @@ class BlockInvoice
 				$customerNewOutsanding = floatval($masterRecord->bookingAmountRpt) +  $customerOutsanding;
 
 				if ($customerNewOutsanding > 0 && ($customerNewOutsanding > $customerData->creditLimit)) {
+					$reportCurrencyDecimalPlace = 2;
+					$currencyCode = "USD";
 					$comanyMasterData = Company::find($masterRecord->companySystemID);
-					
-					$currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
-					$reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
-					$currencyCode = $currencyData->CurrencyCode;
+					if ($comanyMasterData) {
+						$currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
+						if ($currencyData) {
+							$reportCurrencyDecimalPlace = $currencyData->DecimalPlaces;
+							$currencyCode = $currencyData->CurrencyCode;
+						}
+					}
 					$customerOutsandingFormated = number_format($customerNewOutsanding, $reportCurrencyDecimalPlace);
 
 					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
