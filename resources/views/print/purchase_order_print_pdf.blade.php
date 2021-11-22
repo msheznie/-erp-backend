@@ -751,8 +751,10 @@
 
 
                    <table style="width:100%;border: 1px solid;
-  background: #c4c4c4;">
-                     <tr style="height:10px">
+  background: #c4c4c4;
+  margin-bottom: 27px;">
+                     <tr style="height:10px;
+">
                         <td style="width: 0%;height:10px">
                         <td width="100%" style="text-align: left;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}}</h5></td>
                         </td>

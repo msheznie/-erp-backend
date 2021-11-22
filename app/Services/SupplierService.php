@@ -22,10 +22,10 @@ class SupplierService
     public function getTokenData($token)
     {
         $supplierDataUsingToken = SupplierRegistrationLink::where([
-            ['token', $token],
-            ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()],
-            ['status', 0]
-            ])
+           ['token', $token],
+           ['token_expiry_date_time', '>', Carbon::now()->toDateTimeString()],
+           ['status', 0]
+        ])
             ->first();
 
         if(is_null($supplierDataUsingToken)){

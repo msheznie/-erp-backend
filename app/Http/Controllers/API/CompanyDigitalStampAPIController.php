@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\helper\TaxService;
-use App\Http\Requests\API\CreateTenantAPIRequest;
-use App\Http\Requests\API\UpdateTenantAPIRequest;
-use App\Models\GRVDetails;
-use App\Models\PoAdvancePayment;
-use App\Models\PurchaseOrderDetails;
-use App\Models\Tenant;
-use App\Repositories\TenantRepository;
+use App\Http\Requests\API\CreateCompanyDigitalStampAPIRequest;
+use App\Http\Requests\API\UpdateCompanyDigitalStampAPIRequest;
+use App\Models\CompanyDigitalStamp;
+use App\Repositories\CompanyDigitalStampRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -17,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TenantController
+ * Class CompanyDigitalStampController
  * @package App\Http\Controllers\API
  */
 
-class TenantAPIController extends AppBaseController
+class CompanyDigitalStampAPIController extends AppBaseController
 {
-    /** @var  TenantRepository */
-    private $tenantRepository;
+    /** @var  CompanyDigitalStampRepository */
+    private $companyDigitalStampRepository;
 
-    public function __construct(TenantRepository $tenantRepo)
+    public function __construct(CompanyDigitalStampRepository $companyDigitalStampRepo)
     {
-        $this->tenantRepository = $tenantRepo;
+        $this->companyDigitalStampRepository = $companyDigitalStampRepo;
     }
 
     /**
@@ -36,10 +32,10 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants",
-     *      summary="Get a listing of the Tenants.",
-     *      tags={"Tenant"},
-     *      description="Get all Tenants",
+     *      path="/companyDigitalStamps",
+     *      summary="Get a listing of the CompanyDigitalStamps.",
+     *      tags={"CompanyDigitalStamp"},
+     *      description="Get all CompanyDigitalStamps",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -53,7 +49,7 @@ class TenantAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Tenant")
+     *                  @SWG\Items(ref="#/definitions/CompanyDigitalStamp")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -65,29 +61,29 @@ class TenantAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->tenantRepository->pushCriteria(new RequestCriteria($request));
-        $this->tenantRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $tenants = $this->tenantRepository->all();
+        $this->companyDigitalStampRepository->pushCriteria(new RequestCriteria($request));
+        $this->companyDigitalStampRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $companyDigitalStamps = $this->companyDigitalStampRepository->all();
 
-        return $this->sendResponse($tenants->toArray(), 'Tenants retrieved successfully');
+        return $this->sendResponse($companyDigitalStamps->toArray(), 'Company Digital Stamps retrieved successfully');
     }
 
     /**
-     * @param CreateTenantAPIRequest $request
+     * @param CreateCompanyDigitalStampAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/tenants",
-     *      summary="Store a newly created Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Store Tenant",
+     *      path="/companyDigitalStamps",
+     *      summary="Store a newly created CompanyDigitalStamp in storage",
+     *      tags={"CompanyDigitalStamp"},
+     *      description="Store CompanyDigitalStamp",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be stored",
+     *          description="CompanyDigitalStamp that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/CompanyDigitalStamp")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -100,7 +96,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/CompanyDigitalStamp"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -110,13 +106,13 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTenantAPIRequest $request)
+    public function store(CreateCompanyDigitalStampAPIRequest $request)
     {
         $input = $request->all();
 
-        $tenant = $this->tenantRepository->create($input);
+        $companyDigitalStamp = $this->companyDigitalStampRepository->create($input);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant saved successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), 'Company Digital Stamp saved successfully');
     }
 
     /**
@@ -124,14 +120,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenants/{id}",
-     *      summary="Display the specified Tenant",
-     *      tags={"Tenant"},
-     *      description="Get Tenant",
+     *      path="/companyDigitalStamps/{id}",
+     *      summary="Display the specified CompanyDigitalStamp",
+     *      tags={"CompanyDigitalStamp"},
+     *      description="Get CompanyDigitalStamp",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of CompanyDigitalStamp",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -147,7 +143,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/CompanyDigitalStamp"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -159,30 +155,30 @@ class TenantAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var CompanyDigitalStamp $companyDigitalStamp */
+        $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($companyDigitalStamp)) {
+            return $this->sendError('Company Digital Stamp not found');
         }
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant retrieved successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), 'Company Digital Stamp retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTenantAPIRequest $request
+     * @param UpdateCompanyDigitalStampAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/tenants/{id}",
-     *      summary="Update the specified Tenant in storage",
-     *      tags={"Tenant"},
-     *      description="Update Tenant",
+     *      path="/companyDigitalStamps/{id}",
+     *      summary="Update the specified CompanyDigitalStamp in storage",
+     *      tags={"CompanyDigitalStamp"},
+     *      description="Update CompanyDigitalStamp",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of CompanyDigitalStamp",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -190,9 +186,9 @@ class TenantAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Tenant that should be updated",
+     *          description="CompanyDigitalStamp that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Tenant")
+     *          @SWG\Schema(ref="#/definitions/CompanyDigitalStamp")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -205,7 +201,7 @@ class TenantAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Tenant"
+     *                  ref="#/definitions/CompanyDigitalStamp"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -215,20 +211,20 @@ class TenantAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTenantAPIRequest $request)
+    public function update($id, UpdateCompanyDigitalStampAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var CompanyDigitalStamp $companyDigitalStamp */
+        $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($companyDigitalStamp)) {
+            return $this->sendError('Company Digital Stamp not found');
         }
 
-        $tenant = $this->tenantRepository->update($input, $id);
+        $companyDigitalStamp = $this->companyDigitalStampRepository->update($input, $id);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant updated successfully');
+        return $this->sendResponse($companyDigitalStamp->toArray(), 'CompanyDigitalStamp updated successfully');
     }
 
     /**
@@ -236,14 +232,14 @@ class TenantAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/tenants/{id}",
-     *      summary="Remove the specified Tenant from storage",
-     *      tags={"Tenant"},
-     *      description="Delete Tenant",
+     *      path="/companyDigitalStamps/{id}",
+     *      summary="Remove the specified CompanyDigitalStamp from storage",
+     *      tags={"CompanyDigitalStamp"},
+     *      description="Delete CompanyDigitalStamp",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Tenant",
+     *          description="id of CompanyDigitalStamp",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -271,26 +267,15 @@ class TenantAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var Tenant $tenant */
-        $tenant = $this->tenantRepository->findWithoutFail($id);
+        /** @var CompanyDigitalStamp $companyDigitalStamp */
+        $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
 
-        if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+        if (empty($companyDigitalStamp)) {
+            return $this->sendError('Company Digital Stamp not found');
         }
 
-        $tenant->delete();
+        $companyDigitalStamp->delete();
 
-        return $this->sendSuccess('Tenant deleted successfully');
-    }
-
-
-    public function test(Request $request)
-    {
-
-        $data = env('IS_MULTI_TENANCY');
-
-        $output = TaxService::poLogisticVATDistributionForGRV(58732);
-
-        return $this->sendResponse($output, 'retrieved successfully' . $request->input('api_key'));
+        return $this->sendResponse($companyDigitalStamp,'Company Digital Stamp deleted successfully');
     }
 }

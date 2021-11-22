@@ -53,6 +53,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'faSubCatID3',
         'COSTUNIT',
         'costUnitRpt',
+        'salvage_value',
         'AUDITCATOGARY',
         'PARTNUMBER',
         'MANUFACTURE',
