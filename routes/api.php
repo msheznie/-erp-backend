@@ -2417,14 +2417,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::get('test', 'TenantAPIController@test');
 
-<<<<<<< HEAD
-=======
     Route::get('runCronJob/{cron}', function ($cron) {
         Artisan::call($cron);
         return 'CRON Job run successfully';
     });
 
->>>>>>> 6c7dfe67cc5c405e07dc7b76525b5ba7e4b916a7
 });
 
 
