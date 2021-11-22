@@ -750,19 +750,16 @@
                 @if ($det->item->specification)
 
 
-                   <table style="width:100%;border: 1px solid;
+                   <table style="width:100%;
   background: #c4c4c4;
   margin-bottom: 27px;">
                      <tr style="height:10px;
 ">
                         <td style="width: 0%;height:10px">
-                        <td width="100%" style="text-align: left;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}}</h5></td>
+                        <td width="100%" style="text-align: left;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</h5></td>
                         </td>
 
-                        <td style="width: 10%">
-                        <td width="100%" style="text-align: center;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->unit->UnitShortCode}}</h5></td>
-
-                        </td>
+                    
                     </tr>
                     </table>
                     <br>
