@@ -3196,6 +3196,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'addons' => $orderAddons
         );
 
+
         try {
             // check document type has set template as default, then get rendered html with data
             $data = $this->printTemplateService->getDefaultTemplateSource($procumentOrder['documentSystemID'], $order);
