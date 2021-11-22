@@ -3104,7 +3104,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
-            $query->with(['unit','item'=>function($query1){
+            $query->with(['unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {
@@ -3195,6 +3195,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons
         );
+
 
         try {
             // check document type has set template as default, then get rendered html with data
