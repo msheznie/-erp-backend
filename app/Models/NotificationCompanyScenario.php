@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
-
+use App\Models\NotificationUser;
 /**
  * @SWG\Definition(
  *      definition="NotificationCompanyScenario",
@@ -106,6 +106,10 @@ class NotificationCompanyScenario extends Model
 
     public function notification_day_setup(){ 
         return $this->hasMany(NotificationDaySetup::class, 'companyScenarionID', 'id');
+    } 
+
+    public function user(){ 
+        return $this->hasMany(NotificationUser::class, 'companyScenarionID', 'id');
     } 
     public function company()
     {

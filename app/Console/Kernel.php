@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('command:newPR')->daily()->withoutOverlapping();
         $schedule->command('command:queuework')->everyMinute()->withoutOverlapping();
         $schedule->command('invoiceDueReminder')->daily()->withoutOverlapping();
         $schedule->command('notification_service')->daily()->withoutOverlapping();

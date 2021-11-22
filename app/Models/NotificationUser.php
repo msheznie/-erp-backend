@@ -114,4 +114,8 @@ class NotificationUser extends Model
         return $setup->get();
     }
 
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','empID','employeeSystemID');
+    }
+
 }

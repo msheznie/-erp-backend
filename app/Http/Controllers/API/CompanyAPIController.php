@@ -773,6 +773,7 @@ class CompanyAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->rawColumns(['image_url'])
             ->make(true);
     }
 

@@ -719,6 +719,21 @@ class Helper
                     }
                 }
 
+                if (in_array($params["document"], [71])) {
+                    $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
+                        ->where('companySystemID', $params['company'])
+                        ->where('isYesNO', 1)
+                        ->first();
+
+
+                    if ($invoiceBlockPolicy) {
+                        $blockResult = BlockInvoice::blockCustomerInvoiceByCreditLimit($params["document"], $masterRec);
+                        if (!$blockResult['status']) {
+                            return ['success' => false, 'message' => $blockResult['message']];
+                        }
+                    }
+                }
+
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
