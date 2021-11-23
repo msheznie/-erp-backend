@@ -602,6 +602,8 @@
                 <th style="text-align: center">Item Description</th>
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
+                <th style="text-align: center">Alt.UOM</th>
+                <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Qty</th>
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
@@ -630,6 +632,8 @@
                     <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
+                    <td>{{$det->altUom->UnitShortCode}}</td>
+                    <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>

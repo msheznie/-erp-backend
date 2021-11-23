@@ -942,7 +942,6 @@ class ItemMasterAPIController extends AppBaseController
         $image_path = [];
         $path_dir['path'] = '';
 
-
        
         if($remove_items != null || !empty($remove_items))
         {
