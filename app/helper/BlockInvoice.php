@@ -24,11 +24,16 @@ class BlockInvoice
 							                        ->where('supplierCodeSystem', $masterRecord->customerID)
 							                        ->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
 							                        ->sum('documentRptAmount');
+
+				$amountRpt =0;
+				$documentName ='';										
 				if($masterRecord->documentSystemID == 20){
 					$amountRpt = $masterRecord->bookingAmountRpt;
+					$documentName ='Invoice';
 				} 
 				elseif($masterRecord->documentSystemID == 71){
 					$amountRpt = $masterRecord->companyReportingAmount;
+					$documentName ='Delivery order';
 				}
 				$customerNewOutsanding = floatval($amountRpt) +  $customerOutsanding;
 
@@ -45,7 +50,7 @@ class BlockInvoice
 					}
 					$customerOutsandingFormated = number_format($customerNewOutsanding, $reportCurrencyDecimalPlace);
 
-					return ['status' => false, 'message' => "Invoice creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
+					return ['status' => false, 'message' => " ".$documentName. " creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
 				}
 			}
 		}
