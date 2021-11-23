@@ -113,16 +113,21 @@ class ErpProjectMasterAPIController extends AppBaseController
 
 
         return \DataTables::eloquent($projectMaster)
-            ->addIndexColumn()->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
-                        $query->orderBy('id', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->with('orderCondition', $sort)
-            ->make(true);
+                        ->addIndexColumn()->order(function ($query) use ($input) {
+                            if (request()->has('order') ) {
+                                if($input['order'][0]['column'] == 0)
+                                {
+                                    $query->orderBy('id', $input['order'][0]['dir']);
+                                }
+                            }
+                        })
+                        ->addColumn('totalConsumedAmount', function ($project) {
+                            $projectDetails = ProjectGlDetail::where('projectID', $project->id)->get();
+
+                            return collect($projectDetails)->sum('consumed_amount');
+                        })
+                        ->with('orderCondition', $sort)
+                        ->make(true);
     }
 
     /**

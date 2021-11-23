@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
+use App\Models\ErpProjectMaster;
+use App\Models\BudgetConsumedData;
 
 /**
  * @SWG\Definition(
@@ -66,14 +69,14 @@ use Eloquent as Model;
  */
 class ProjectGlDetail extends Model
 {
-
+    use Compoships;
     public $table = 'projectgldetails';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
     protected $primaryKey = 'ID';
 
-
+    protected $appends = ['consumed_amount'];
 
     public $fillable = [
         'projectID',
@@ -108,9 +111,30 @@ class ProjectGlDetail extends Model
         
     ];
 
+    public function getConsumedAmountAttribute()
+    {
+        $consumedAmountRpt = BudgetConsumedData::where('projectID', $this->projectID)
+                                            ->where('chartOfAccountID', $this->chartOfAccountSystemID)
+                                            ->sum('consumedRptAmount');
+
+        $projectMaster = ErpProjectMaster::with(['company'])->find($this->projectID);
+        $consumedAmount = 0;
+        if ($projectMaster) {
+            $convertAmount = \Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
+
+            $consumedAmount = $convertAmount['documentAmount'];
+        }
+
+        return $consumedAmount;
+
+    }
+
     public function chartofaccounts(){
         return $this->belongsTo('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
-    
+    public function consumed_data()
+    {
+        return $this->belongsTo('App\Models\BudgetConsumedData', ['projectID', 'chartOfAccountSystemID'], ['projectID', 'chartOfAccountID']);
+    }
 }
