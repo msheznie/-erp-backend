@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\API\CreateCompanyDigitalStampAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDigitalStampAPIRequest;
 use App\Models\CompanyDigitalStamp;
@@ -269,6 +271,9 @@ class CompanyDigitalStampAPIController extends AppBaseController
     {
         /** @var CompanyDigitalStamp $companyDigitalStamp */
         $companyDigitalStamp = $this->companyDigitalStampRepository->findWithoutFail($id);
+
+        $disk = Helper::policyWiseDisk($companyDigitalStamp->company_system_id, 'public');
+        $re = Storage::disk($disk)->delete($companyDigitalStamp->path);
 
         if (empty($companyDigitalStamp)) {
             return $this->sendError('Company Digital Stamp not found');
