@@ -3078,6 +3078,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
+        
         $id = $request->get('id');
         $typeID = $request->get('typeID');
         $spec_id = 1;

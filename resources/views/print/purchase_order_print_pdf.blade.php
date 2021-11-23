@@ -1,3 +1,11 @@
+
+
+
+<!-- <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet"> -->
+<!-- <link rel="stylesheet" href="{{ public_path('assets/css/app.css') }}"> -->
+<!-- <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}" media="all" /> -->
+<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
+<!-- <link rel="stylesheet" href="{{ ltrim(public_path('assets/css/app.css'), '/') }}" /> -->
 <style type="text/css">
     <!--
     @page {
@@ -154,6 +162,9 @@
     #paymentTermsCond .footer {
         display: none;
     }
+
+  
+
 </style>
 
 <div class="footer">
@@ -752,20 +763,28 @@
 
                    <table style="width:100%;
   background: #c4c4c4;
-  margin-bottom: 27px;">
+  margin-bottom: 20px;">
                      <tr style="height:10px;
 ">
                         <td style="width: 0%;height:10px">
-                        <td width="100%" style="text-align: left;font-size: 16px;"><h5 class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</h5></td>
+                        <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
                         </td>
 
                     
                     </tr>
                     </table>
-                    <br>
                     <table style="width:100%">
-                        <tr>
-                            <td width="100%" style="text-align: left;font-size: 12px;"><p class="font-weight-bold" >{!!$det->item->specification->html !!}</p></td>
+                        
+                    <!-- <div class="ql-container ql-snow" style="border-width: 0;">
+                        <div class="ql-editor">
+                            {{$det->item->specification->html}}
+                        </div>
+                    </div> -->
+                         <tr >
+                             <td class="ql-container ql-snow">
+                             <td class="ql-editor" >{!!$det->item->specification->html !!}</td>
+                             </td>
+                           
                         </tr>
                     </table>
                @endif
