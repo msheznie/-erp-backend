@@ -3094,6 +3094,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
+        
         $id = $request->get('id');
         $typeID = $request->get('typeID');
         $spec_id = 1;
@@ -3196,6 +3197,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'addons' => $orderAddons
         );
 
+
+        
 
         try {
             // check document type has set template as default, then get rendered html with data
