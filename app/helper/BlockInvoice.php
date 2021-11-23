@@ -1,6 +1,7 @@
 <?php
 
 namespace App\helper;
+
 use Carbon\Carbon;
 use App\Models\CustomerMaster;
 use App\Models\GeneralLedger;
@@ -12,28 +13,27 @@ class BlockInvoice
 	public static function blockCustomerInvoiceByCreditLimit($documentSystemID, $masterRecord)
 	{
 		if ((isset($masterRecord->customerID) && $masterRecord->customerID > 0 && $masterRecord->isPerforma != 1 && $documentSystemID == 20) || isset($masterRecord->customerID) && $masterRecord->customerID > 0 && $documentSystemID == 71) {
-			 $customerData = CustomerMaster::find($masterRecord->customerID);
+			$customerData = CustomerMaster::find($masterRecord->customerID);
 
 			if (!$customerData) {
 				return ['status' => false, 'message' => "Customer not found"];
 			}
-			
+
 			if ($customerData->creditLimit > 0 && $customerData->custGLAccountSystemID != null) {
 				$customerOutsanding = GeneralLedger::where('companySystemID', $masterRecord->companySystemID)
-							                        ->whereIn('documentSystemID', [20, 19, 21, 71])
-							                        ->where('supplierCodeSystem', $masterRecord->customerID)
-							                        ->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
-							                        ->sum('documentRptAmount');
+					->whereIn('documentSystemID', [20, 19, 21, 71])
+					->where('supplierCodeSystem', $masterRecord->customerID)
+					->where('chartOfAccountSystemID', $customerData->custGLAccountSystemID)
+					->sum('documentRptAmount');
 
-				$amountRpt =0;
-				$documentName ='';										
-				if($masterRecord->documentSystemID == 20){
+				$amountRpt = 0;
+				$documentName = '';
+				if ($documentSystemID == 20) {
 					$amountRpt = $masterRecord->bookingAmountRpt;
-					$documentName ='Invoice';
-				} 
-				elseif($masterRecord->documentSystemID == 71){
+					$documentName = 'Invoice';
+				} elseif ($documentSystemID == 71) {
 					$amountRpt = $masterRecord->companyReportingAmount;
-					$documentName ='Delivery order';
+					$documentName = 'Delivery order';
 				}
 				$customerNewOutsanding = floatval($amountRpt) +  $customerOutsanding;
 
@@ -50,7 +50,7 @@ class BlockInvoice
 					}
 					$customerOutsandingFormated = number_format($customerNewOutsanding, $reportCurrencyDecimalPlace);
 
-					return ['status' => false, 'message' => " ".$documentName. " creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is ".$customerOutsandingFormated." ".$currencyCode];
+					return ['status' => false, 'message' => " " . $documentName . " creation blocked. The selected customer’s current outstanding has exceeded the credit limit. Current outstanding is " . $customerOutsandingFormated . " " . $currencyCode];
 				}
 			}
 		}
