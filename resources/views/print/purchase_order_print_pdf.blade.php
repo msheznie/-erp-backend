@@ -632,7 +632,13 @@
                     <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
-                    <td>{{$det->altUom->UnitShortCode}}</td>
+                    <td>
+                       @if($det->altUom)
+                        {{$det->altUom->UnitShortCode}}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
