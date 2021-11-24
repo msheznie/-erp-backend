@@ -15,7 +15,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Awobaz\Compoships\Compoships;
 /**
  * Class EmployeesDepartment
  * @package App\Models
@@ -45,7 +45,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class EmployeesDepartment extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'employeesdepartments';
     
     const CREATED_AT = 'createdDate';
@@ -157,6 +157,6 @@ class EmployeesDepartment extends Model
 
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
-    }
+    } 
     
 }

@@ -294,6 +294,10 @@ class ProcumentOrderDetail extends Model
     public function productmentOrder() {
         return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
     }
+
+    public function unit() {
+        return $this->hasOne(\App\Models\unit::class,'UnitID','unitOfMeasure');
+    }
     
 
 }

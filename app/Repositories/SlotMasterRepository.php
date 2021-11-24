@@ -86,14 +86,18 @@ class SlotMasterRepository extends AppBaseController
         $fromDate = $fromDate->format('Y-m-d') . ' ' . $fromTime;
         $toDate = $toDate->format('Y-m-d') . ' ' . $toTime; 
         $dateRangeExist = '';
-
-     
- 
+        $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
+        if($limitYN == 1){ 
+                if( $input['noofdeliveries'] <=0){ 
+                    return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
+                }
+        } 
 
         DB::beginTransaction();
         $data['warehouse_id'] = $input['wareHouse'];
         $data['from_date'] = $fromDate;
         $data['to_date'] = $toDate;
+        $data['limit_deliveries'] = $limitYN;
         $data['no_of_deliveries'] = $input['noofdeliveries'];
         $data['company_id'] = $input['companyId'];
         $data['created_by'] = Helper::getEmployeeSystemID();
@@ -188,8 +192,7 @@ class SlotMasterRepository extends AppBaseController
         $interval = new DateInterval('P1D');
         $daterange = new DatePeriod($begin, $interval, $end);
         $slotWeekDays = SlotMasterWeekDays::with(['week_days'])->where('slot_master_id', $id)->get();
-        foreach ($slotWeekDays as $val) {
-            for ($i = 0; $i < $noOfDeliveries; $i++) {
+        foreach ($slotWeekDays as $val) { 
                 foreach ($daterange as $date) {
                     if ($val['week_days']['description'] == $date->format("l")) {
                         $data['slot_master_id'] = $id;
@@ -200,8 +203,7 @@ class SlotMasterRepository extends AppBaseController
                         $data['created_by'] = Helper::getEmployeeSystemID();
                         $insertCalanderDetails = SlotDetails::create($data);
                     }
-                }
-            }
+                } 
         }
         if ($insertCalanderDetails) {
             return ['status' => true, 'message' => "Successfully Saved."];
