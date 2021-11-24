@@ -576,20 +576,24 @@ class AssetManagementReportAPIController extends AppBaseController
                 $output = $this->getAssetCWIPQRY($request);
                 return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
                 break;
-             case 'AEA': //Asset expenses
+            case 'AEA': //Asset expenses
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getAssetExpenseQRY($request);
 
                 $outputArr = array();
+                $grandTotalLocal = 0;
+                $grandTotalRpt = 0;
                 if ($output) {
                     foreach ($output as $val) {
                         $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        $grandTotalLocal += $val->amountLocal;
+                        $grandTotalRpt += $val->amountRpt;
                     }
                 }
 
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
 
-                return array('reportData' => $outputArr,'companyCurrency' => $companyCurrency);
+                return array('reportData' => $outputArr,'companyCurrency' => $companyCurrency, 'grandTotalLocal' => $grandTotalLocal, 'grandTotalRpt' => $grandTotalRpt);
 
                 break;
             default:
