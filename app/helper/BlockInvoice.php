@@ -30,12 +30,14 @@ class BlockInvoice
 				$documentName = '';
 				if ($documentSystemID == 20) {
 					$amountRpt = $masterRecord->bookingAmountRpt;
+					$vatAmountRpt = $masterRecord->VATAmountRpt;
 					$documentName = 'Invoice';
 				} elseif ($documentSystemID == 71) {
 					$amountRpt = $masterRecord->companyReportingAmount;
+					$vatAmountRpt = $masterRecord->VATAmountRpt;
 					$documentName = 'Delivery order';
 				}
-				$customerNewOutsanding = floatval($amountRpt) +  $customerOutsanding;
+				$customerNewOutsanding = floatval($amountRpt) + floatval($vatAmountRpt) +  $customerOutsanding;
 
 				if ($customerNewOutsanding > 0 && ($customerNewOutsanding > $customerData->creditLimit)) {
 					$reportCurrencyDecimalPlace = 2;
