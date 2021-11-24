@@ -14,7 +14,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Awobaz\Compoships\Compoships;
 /**
  * Class DocumentApproved
  * @package App\Models
@@ -56,7 +56,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DocumentApproved extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'erp_documentapproved';
     
     const CREATED_AT = 'timeStamp';
@@ -207,5 +207,12 @@ class DocumentApproved extends Model
         }
 
         return $result->delete();
+    }
+    public function employeeDepartments()
+    {
+        return $this->hasOne('App\Models\EmployeesDepartment',['employeeGroupID', 'documentSystemID','companySystemID'], ['approvalGroupID', 'documentSystemID','companySystemID']);
+    } 
+    public function employeeRole(){ 
+        return $this->hasOne('App\Models\Appointment',['id', 'current_level_no'],['documentSystemCode', 'rollLevelOrder']);
     }
 }

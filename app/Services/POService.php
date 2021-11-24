@@ -80,13 +80,13 @@ class POService
             ->get();
         return $orderAddons;
     }
-    public function getAppointmentSlots($companyID, $wareHouseID)
+    public function getAppointmentSlots($tenantID)
     {
         $slot = new SlotMaster();
-        $data = $slot->getSlotData($companyID, $wareHouseID);
+        $data = $slot->getSlotData($tenantID);
         return $data;
     }
-    public function getPurchaseOrders($comapnyID, $wareHouseID, $supplierID, $tenantID)
+    public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID)
     {
         return ProcumentOrder::with(['detail' => function ($query) {
             $query->with('unit');
