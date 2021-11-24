@@ -1446,11 +1446,12 @@ class PurchaseRequestAPIController extends AppBaseController
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
-            $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
+            $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->where('altUnitValue',NULL)->count();
 
             $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
             ->where('companySystemID',  $purchaseRequest->companySystemID)
             ->first();
+
       
             if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
                 return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
