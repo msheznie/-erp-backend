@@ -93,7 +93,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
             ->with(['uom','altUom'])
-            ->forPage($input['page'], 30)->get();
+            ->skip($input['skip'])->take($input['limit'])->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
     }
@@ -1297,8 +1297,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $addedItems = $totalItemCount - count($validationFailedItems);
         $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
+        $dataToAdd = [];
         foreach($itemsToAdd as $itemToAdd) {
             $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
+            $itemToAdd['purchaseRequestID'] =  $input['purchaseRequestID'];
+            $itemToAdd['companySystemID'] =  $input['companySystemID'];
+            $itemToAdd['partNumber'] =  "-";
+            $itemToAdd['isMRPulled'] =  false;
             $data = ([
                 "companySystemID" => $input['companySystemID'],
                 "purchaseRequestID" => $input['purchaseRequestID'],
@@ -1310,8 +1315,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 "unitOfMeasure" => $itemToAdd->unit,
                 "partNumber" => $itemToAdd->secondaryItemCode
             ]);
-            $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
+            array_push($dataToAdd,$data);
         }
+        
+        $purchaseRequestDetails = PurchaseRequestDetails::insert($dataToAdd);
+
         return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($itemsToAdd).' has been added'];
     }
 

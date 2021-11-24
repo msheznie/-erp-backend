@@ -635,7 +635,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['itemDescription'] = $new['itemDescription'];
                             $prDetail_arr['comment'] = $new['comments'];
                             $prDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
-
+                            $prDetail_arr['altUnit'] = $new['altUnit'];
+                            $prDetail_arr['altUnitValue'] = $new['altUnitValue'];
                             $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                             $prDetail_arr['noQty'] = $new['poQty'];
 
