@@ -55,7 +55,7 @@ class CompanyFinanceYearRepository extends BaseRepository
         return CompanyFinanceYear::class;
     }
 
-    public function croneJobFinancialPeriodActivation(){
+    public static function croneJobFinancialPeriodActivation(){
         DB::beginTransaction();
         try {
             $currentDate = Carbon::now()->format('Y-m-d');
