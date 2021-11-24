@@ -3,23 +3,23 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
-
-class QueueWork extends Command
+use App\Jobs\ReOrderItemPR;
+use Illuminate\Support\Facades\Auth;
+class ReOrderItemPRScheduler extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:queuework';
+    protected $signature = 'command:newPR';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Run Queue';
+    protected $description = 'Reorder level PR';
 
     /**
      * Create a new command instance.
@@ -38,6 +38,6 @@ class QueueWork extends Command
      */
     public function handle()
     {
-       // Artisan::call('queue:work');
+        ReOrderItemPR::dispatch(Auth::user());
     }
 }

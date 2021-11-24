@@ -935,13 +935,12 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
      
-        return$disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
+        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
 
  
         $count = 0;
         $image_path = [];
         $path_dir['path'] = '';
-
 
        
         if($remove_items != null || !empty($remove_items))
@@ -1518,5 +1517,34 @@ class ItemMasterAPIController extends AppBaseController
         return $this->sendResponse($itemMasters, 'Data retrieved successfully');
 
 
+    }
+
+    public function getInventorySubCat(Request $request)
+    {
+        $itemCategorySub = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl'])->where('itemCategoryID','=',1)->where('isActive',1)->get();
+        $itemCategorySubArray = [];
+        $i=0;
+        foreach ($itemCategorySub as $value){
+            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
+            }else if($value->financeGLcodebBSSystemID && $value->finance_gl_code_bs != null){
+
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_bs->AccountCode)?$value->finance_gl_code_bs->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_bs->AccountDescription)?$value->finance_gl_code_bs->AccountDescription:'';
+
+            }else{
+                $itemCategorySubArray[$i]['AccountCode'] = '';
+                $itemCategorySubArray[$i]['AccountDescription'] = '';
+            }
+            $i++;
+        }
+
+        $output = array(
+        'financeItemCategorySub' => $itemCategorySubArray,
+    );
+
+    return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

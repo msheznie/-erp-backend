@@ -1441,8 +1441,20 @@ class PurchaseRequestAPIController extends AppBaseController
                 ->where('quantityRequested', '<=', 0)
                 ->count();
 
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+            $checkAltUnit = PurchaseRequestDetails::where('purchaseRequestID', $id)->where('altUnit','!=',0)->whereNull('altUnitValue')->count();
+
+            $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID',  $purchaseRequest->companySystemID)
+            ->first();
+
+      
+            if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
+                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
             }
 
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
@@ -1951,13 +1963,15 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
+        
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'priority_pdf', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+            'priority_pdf', 'location', 'details.uom','details.altUom', 'company', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }
         ])->findWithoutFail($id);
+
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');

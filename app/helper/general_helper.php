@@ -718,7 +718,7 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
-                if (in_array($params["document"], [20])) {
+                if (in_array($params["document"], [20,71])) {
                     $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
                         ->where('companySystemID', $params['company'])
                         ->where('isYesNO', 1)

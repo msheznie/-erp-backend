@@ -988,6 +988,22 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('noQty', '<', 0.1)
                 ->count();
 
+
+            $checkAltUnit = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
+
+            $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID',  $procumentOrder->companySystemID)
+            ->first();
+      
+            if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
+                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
+            }
+
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum qty requested', 500);
             }
@@ -3078,6 +3094,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
+        
         $id = $request->get('id');
         $typeID = $request->get('typeID');
         $spec_id = 1;
@@ -3088,7 +3105,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
-            $query->with(['unit','item'=>function($query1){
+            $query->with(['unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {
@@ -3179,6 +3196,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons
         );
+
+
+        
 
         try {
             // check document type has set template as default, then get rendered html with data

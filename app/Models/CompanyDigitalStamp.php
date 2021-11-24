@@ -103,10 +103,7 @@ class CompanyDigitalStamp extends Model
         
     ];
 
-    // public function getImageUrlAttribute(){
-    //     return Helper::getFileUrlFromS3($this->path);
-    // }
-
+   
     public function getImageUrlAttribute(){
 
         $awsPolicy = Helper::checkPolicy($this->company_system_id, 50);
