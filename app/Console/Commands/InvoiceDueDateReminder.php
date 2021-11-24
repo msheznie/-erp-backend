@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Illuminate\Support\Facades\Log;
+use App\helper\CommonJobService;
+use App\Jobs\InvoiceDueReminderJob;
 
 class InvoiceDueDateReminder extends Command
 {
@@ -42,6 +44,18 @@ class InvoiceDueDateReminder extends Command
     {
         Log::info('Customer Invoice Due Reminder'.now());
 
-        $this->customerInvoiceRepoRepository->croneJobCustomerInvoiceReminder();
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenant_database = $tenant->database;
+
+            Log::info("{$tenant_database} DB added to queue for invoice due reminder . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+            InvoiceDueReminderJob::dispatch($tenant_database);
+        }        
     }
 }

@@ -320,7 +320,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $data;
     }
 
-    public function croneJobCustomerInvoiceReminder()
+    public static function croneJobCustomerInvoiceReminder()
     {
         $threeDayBefore = Carbon::now()->addDays(3)->format('Y-m-d');
         $dueInvoices = AccountsReceivableLedger::where('documentSystemID', 20)
