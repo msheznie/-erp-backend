@@ -433,11 +433,11 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
-        if(doubleval($input['salvage_value']) >  (doubleval($input['costUnitRpt']))) {
+        if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
             return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
         }
 
-        if(doubleval($input['salvage_value']) < 0) {
+        if(doubleval($input['salvage_value_rpt']) < 0) {
             return $this->sendError("Salvage value cannot be less than Zero", 500);
         }
 
@@ -556,6 +556,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             if ($companyCurrencyConversion) {
                 $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
             }
+
+            $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
+            if ($salvageCurrencyConversion) {
+                $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
+            }
+
 
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
