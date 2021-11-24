@@ -2328,10 +2328,10 @@ class Helper
                                 $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         } 
-                      /*   $sendEmail = \Email::sendEmail($emails);
+                         $sendEmail = \Email::sendEmail($emails);
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
-                        } */
+                        } 
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
                     } else {
