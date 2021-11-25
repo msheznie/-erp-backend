@@ -90,7 +90,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $prId = $input['purchaseRequestId'];
-
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
             ->with(['uom','altUom'])
             ->skip($input['skip'])->take($input['limit'])->get();
