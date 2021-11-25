@@ -174,4 +174,11 @@ class ErpLocationAPIController extends AppBaseController
         $location = ErpLocation::create($masterData);
         return $this->sendResponse($location, 'Erp Location Created successfully');
     }
+
+    public function deleteLocation(Request $request){
+        $input = $request->all();
+
+            $location = ErpLocation::where('locationID', $input['locationID'])->delete();
+            return $this->sendResponse($location, 'Erp Location deleted successfully');
+    }
 }
