@@ -268,6 +268,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::resource('erp_locations', 'ErpLocationAPIController');
+        Route::post('getAllLocation', 'ErpLocationAPIController@getAllLocation');
+        Route::post('createLocation', 'ErpLocationAPIController@createLocation');
         Route::resource('accounts_types', 'AccountsTypeAPIController');
 
 

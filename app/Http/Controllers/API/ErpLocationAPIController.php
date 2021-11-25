@@ -135,4 +135,43 @@ class ErpLocationAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Erp Location deleted successfully');
     }
+
+    public function getAllLocation(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $locations= ErpLocation::all();
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $locations = $locations->where(function ($query) use ($search) {
+                $query->where('locationName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($locations)
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->addColumn('Actions', 'Actions', "Actions")
+        //->addColumn('Index', 'Index', "Index")
+        ->make(true);
+    }
+
+    public function createLocation(Request $request){
+        $input = $request->all();
+        $masterData = ['locationName'=>$input['locationName'] ];
+
+        if(isset($input['locationID'])){
+            $location = ErpLocation::where('locationID', $input['locationID'])->update($masterData);
+            return $this->sendResponse($location, 'Erp Location updated successfully');
+        }
+
+        $location = ErpLocation::create($masterData);
+        return $this->sendResponse($location, 'Erp Location Created successfully');
+    }
 }
