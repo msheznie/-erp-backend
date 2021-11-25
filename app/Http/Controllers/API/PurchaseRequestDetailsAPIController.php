@@ -90,11 +90,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $prId = $input['purchaseRequestId'];
-
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
             ->with(['uom','altUom'])
             ->skip($input['skip'])->take($input['limit'])->get();
-
+        $index = $input['skip'] + 1;
+        foreach($items as $item) {
+            $item['index'] = $index;
+            $index++;
+        }
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
     }
 
