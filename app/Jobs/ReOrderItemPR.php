@@ -24,6 +24,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrder;
 use App\Models\ErpItemLedger;
 use App\Models\GRVDetails;
+use App\Models\PurchaseRequestDetails;
 use App\Models\Location;
 use App\Models\PurchaseOrderDetails;
 use App\helper\Helper;
@@ -510,42 +511,21 @@ class ReOrderItemPR implements ShouldQueue
 
                                     foreach ($valid_items as $valid_item) {
                                         $valid_item['purchaseRequestID'] = $new_purchaseRequests['purchaseRequestID'];
-                                        
-                                        $purchaseRequestDetails = $purchaseRequestDetailsRepository->create($valid_item);
-                                        $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', '!=', $new_purchaseRequests->serviceLineSystemID)
-                                                                                    ->where('documentSystemID', $new_purchaseRequests->documentSystemID)
-                                                                                    ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
-                                                                                    ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
-                                                                                    ->get();
+                                        $purchaseRequestDetailsRes = PurchaseRequestDetails::create($valid_item);
+                                       
+                                        $purchaseRequestDetailsResData = $purchaseRequestDetailsRes->toArray();
 
-                                        if (sizeof($checkAlreadyAllocated) == 0) {
-                                            $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', $new_purchaseRequests->serviceLineSystemID)
-                                                                                        ->where('documentSystemID', $new_purchaseRequests->documentSystemID)
-                                                                                        ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
-                                                                                        ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
-                                                                                        ->delete();
+                                        $allocationData = [
+                                            'serviceLineSystemID' => $new_purchaseRequests['serviceLineSystemID'],
+                                            'documentSystemID' => $new_purchaseRequests['documentSystemID'],
+                                            'docAutoID' => $new_purchaseRequests['purchaseRequestID'],
+                                            'docDetailID' => $purchaseRequestDetailsResData['purchaseRequestDetailsID']
+                                        ];
 
-                                            $allocationData = [
-                                                'serviceLineSystemID' => $new_purchaseRequests->serviceLineSystemID,
-                                                'documentSystemID' => $new_purchaseRequests->documentSystemID,
-                                                'docAutoID' => $new_purchaseRequests->purchaseRequestID,
-                                                'docDetailID' => $purchaseRequestDetails->purchaseRequestDetailsID
-                                            ];
+                                        $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
 
-                                            $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
-
-                                            if (!$segmentAllocatedItem['status']) {
-                                                $segment_success = false;
-                                            }
-                                        } else {
-                                            $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $new_purchaseRequests->documentSystemID)
-                                                ->where('documentMasterAutoID', $new_purchaseRequests->purchaseRequestID)
-                                                ->where('documentDetailAutoID', $purchaseRequestDetails->purchaseRequestDetailsID)
-                                                ->sum('allocatedQty');
-
-                                            if ($allocatedQty > $purchaseRequestDetails->quantityRequested) {
-                                                $segment_success = false;
-                                            }
+                                        if (!$segmentAllocatedItem['status']) {
+                                            $segment_success = false;
                                         }
                                     }
 
