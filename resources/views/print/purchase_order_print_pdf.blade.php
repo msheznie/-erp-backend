@@ -603,8 +603,8 @@
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Alt.UOM</th>
-                <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Qty</th>
+                <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
                 @if ($podata->isVatEligible)
@@ -639,8 +639,8 @@
                             -
                         @endif
                     </td>
-                    <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
+                    <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)
