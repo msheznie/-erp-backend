@@ -13,6 +13,7 @@ use App\Repositories\PurchaseRequestRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Models\ItemAssigned;
+use App\Models\Employee;
 use App\Models\Company;
 use App\Models\ItemMaster;
 use App\Models\CompanyFinanceYear;
@@ -112,9 +113,11 @@ class ReOrderItemPR implements ShouldQueue
                             $company = Company::where('companySystemID', $companyID)->first();
                             $request_data['PRRequestedDate'] = now();
 
+                            $systemEmployee = Employee::where('isSuperAdmin', -1)->first();
+
                             $request_data['createdPcID'] = gethostname();
-                            $request_data['createdUserID'] = null; 
-                            $request_data['createdUserSystemID'] = null; 
+                            $request_data['createdUserID'] = ($systemEmployee) ? $systemEmployee->empID : null; 
+                            $request_data['createdUserSystemID'] = ($systemEmployee) ? $systemEmployee->employeeSystemID : null; 
 
                             $currency = (isset($company)) ? $company->localCurrencyID : 0;
                             $request_data['currency'] = $currency;
@@ -500,7 +503,7 @@ class ReOrderItemPR implements ShouldQueue
 
 
                                     $request_data_details['quantityRequested'] = $itemVal->roQuantity;
-                                    $request_data_details['totalCost'] = 0;
+                                    $request_data_details['totalCost'] = floatval($itemVal->roQuantity) * floatval($currencyConversion['documentAmount']);
                                     $request_data_details['comments'] = 'generated pr';
                                     $request_data_details['itemCategoryID'] = 0;
                                     $request_data_details['isMRPulled'] = false;
