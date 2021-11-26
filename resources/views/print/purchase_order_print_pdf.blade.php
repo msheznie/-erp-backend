@@ -607,8 +607,10 @@
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
+                @if($allowAltUom)
                 <th style="text-align: center">Alt.UOM</th>
                 <th style="text-align: center">Alt.Qty</th>
+                @endif
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
                 @if ($podata->isVatEligible)
@@ -637,6 +639,7 @@
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
+                    @if($allowAltUom)
                     <td>
                        @if($det->altUom)
                         {{$det->altUom->UnitShortCode}}
@@ -645,6 +648,7 @@
                         @endif
                     </td>
                     <td>{{$det->altUnitValue}}</td>
+                    @endif
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)

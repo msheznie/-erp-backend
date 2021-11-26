@@ -1977,6 +1977,12 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
+        $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+        ->where('companySystemID', $purchaseRequest->companySystemID)
+        ->first();
+
+        $purchaseRequest['allowAltUom'] = ($checkAltUOM) ? $checkAltUOM->isYesNO : false;
+
         $array = array('request' => $purchaseRequest);
         $time = strtotime("now");
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';

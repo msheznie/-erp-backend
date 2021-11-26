@@ -3185,6 +3185,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $isMergedCompany = true;
         }
 
+        
+        $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->first();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3195,11 +3200,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'termsCond' => $typeID,
             'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
-            'addons' => $orderAddons
+            'addons' => $orderAddons,
+            'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false
         );
 
 
-        
 
         try {
             // check document type has set template as default, then get rendered html with data
