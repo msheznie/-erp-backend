@@ -163,7 +163,9 @@
         display: none;
     }
 
-  
+    .quill-html img {
+        max-width: 700px;
+    }
 
 </style>
 
@@ -603,8 +605,8 @@
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Alt.UOM</th>
-                <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Qty</th>
+                <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
                 @if ($podata->isVatEligible)
@@ -639,8 +641,8 @@
                             -
                         @endif
                     </td>
-                    <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
+                    <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)
@@ -761,7 +763,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 9px;"><h3 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h3></td>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h4></td>
             </tr>
         </table>
         <br>
@@ -771,30 +773,23 @@
                 @if ($det->item->specification)
 
 
-                   <table style="width:100%;
-  background: #c4c4c4;
-  margin-bottom: 20px;">
-                     <tr style="height:10px;
-">
-                        <td style="width: 0%;height:10px">
-                        <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
-                        </td>
+                   <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">
+                        <tr style="height:10px;">
+                            <td style="width: 0%;height:10px">
+                            <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
+                            </td>
 
-                    
-                    </tr>
-                    </table>
-                    <table style="width:100%">
                         
-                    <!-- <div class="ql-container ql-snow" style="border-width: 0;">
-                        <div class="ql-editor">
-                            {{$det->item->specification->html}}
-                        </div>
-                    </div> -->
-                         <tr >
+                        </tr>
+                    </table>
+                    <table style="width:100% !important" class="table">
+                         <tr>
                              <td class="ql-container ql-snow">
-                             <td class="ql-editor" >{!!$det->item->specification->html !!}</td>
+                             <td class="ql-editor">
+                                <div style="max-width: 700px !important" class="quill-html">
+                                    {!!$det->item->specification->html !!}
+                                </div>
                              </td>
-                           
                         </tr>
                     </table>
                @endif

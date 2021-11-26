@@ -4,7 +4,9 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Jobs\ReOrderItemPR;
-use Illuminate\Support\Facades\Auth;
+use App\helper\CommonJobService;
+use Illuminate\Support\Facades\Log;
+
 class ReOrderItemPRScheduler extends Command
 {
     /**
@@ -38,6 +40,20 @@ class ReOrderItemPRScheduler extends Command
      */
     public function handle()
     {
-        ReOrderItemPR::dispatch(Auth::user());
+        Log::info('Re Order Item PR Shedular'.now());
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenant_database = $tenant->database;
+
+            Log::info("{$tenant_database} DB added to queue for re order pr . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+            ReOrderItemPR::dispatch($tenant_database);
+        }        
     }
 }

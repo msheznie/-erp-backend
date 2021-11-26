@@ -2416,12 +2416,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::get('test', 'TenantAPIController@test');
-
-    Route::get('runCronJob/{cron}', function ($cron) {
-        Artisan::call($cron);
-        return 'CRON Job run successfully';
-    });
-
 });
 
 
@@ -2507,6 +2501,11 @@ Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
 }); 
+
+Route::get('runCronJob/{cron}', function ($cron) {
+    Artisan::call($cron);
+    return 'CRON Job run successfully';
+});
 
 Route::resource('appointments', 'AppointmentAPIController');
 

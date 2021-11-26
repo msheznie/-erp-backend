@@ -898,7 +898,8 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'timeStamp',
         'supCategoryICVMasterID',
         'supCategorySubICVID',
-        'rcmActivated'
+        'rcmActivated',
+        'approval_remarks'
     ];
 
     /**
@@ -1039,7 +1040,8 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'isSelected' => 'boolean',
         'supCategoryICVMasterID' => 'integer',
         'supCategorySubICVID' => 'integer',
-        'rcmActivated' => 'integer'
+        'rcmActivated' => 'integer',
+        'approval_remarks' => 'string'
     ];
 
     /**
