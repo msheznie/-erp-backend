@@ -163,6 +163,10 @@
         display: none;
     }
 
+    .ql-editor > img{
+        display:none;
+    }
+
   
 
 </style>
@@ -602,8 +606,8 @@
                 <th style="text-align: center">Item Description</th>
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
-                <th style="text-align: center">Alt.UOM</th>
                 <th style="text-align: center">Qty</th>
+                <th style="text-align: center">Alt.UOM</th>
                 <th style="text-align: center">Alt.Qty</th>
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
@@ -632,6 +636,7 @@
                     <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
+                    <td class="text-right">{{$det->noQty}}</td>
                     <td>
                        @if($det->altUom)
                         {{$det->altUom->UnitShortCode}}
@@ -639,7 +644,6 @@
                             -
                         @endif
                     </td>
-                    <td class="text-right">{{$det->noQty}}</td>
                     <td>{{$det->altUnitValue}}</td>
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
@@ -783,20 +787,11 @@
                     
                     </tr>
                     </table>
-                    <table style="width:100%">
-                        
-                    <!-- <div class="ql-container ql-snow" style="border-width: 0;">
-                        <div class="ql-editor">
-                            {{$det->item->specification->html}}
-                        </div>
-                    </div> -->
-                         <tr >
-                             <td class="ql-container ql-snow">
-                             <td class="ql-editor" >{!!$det->item->specification->html !!}</td>
-                             </td>
-                           
-                        </tr>
-                    </table>
+                    <div class="ql-container ql-snow">
+                    <div  class="ql-editor">
+                    {!!$det->item->specification->html !!}
+                    </div>
+                    </div>
                @endif
                 @endforeach
             @endif
