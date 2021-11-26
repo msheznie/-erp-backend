@@ -163,7 +163,9 @@
         display: none;
     }
 
-  
+    .quill-html img {
+        max-width: 700px;
+    }
 
 </style>
 
@@ -771,30 +773,23 @@
                 @if ($det->item->specification)
 
 
-                   <table style="width:100%;
-  background: #ede7e7;
-  margin-bottom: 20px;">
-                     <tr style="height:10px;
-">
-                        <td style="width: 0%;height:10px">
-                        <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
-                        </td>
+                   <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">
+                        <tr style="height:10px;">
+                            <td style="width: 0%;height:10px">
+                            <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
+                            </td>
 
-                    
-                    </tr>
-                    </table>
-                    <table style="width:100%">
                         
-                    <!-- <div class="ql-container ql-snow" style="border-width: 0;">
-                        <div class="ql-editor">
-                            {{$det->item->specification->html}}
-                        </div>
-                    </div> -->
-                         <tr >
+                        </tr>
+                    </table>
+                    <table style="width:100% !important" class="table">
+                         <tr>
                              <td class="ql-container ql-snow">
-                             <td class="ql-editor" >{!!$det->item->specification->html !!}</td>
+                             <td class="ql-editor">
+                                <div style="max-width: 700px !important" class="quill-html">
+                                    {!!$det->item->specification->html !!}
+                                </div>
                              </td>
-                           
                         </tr>
                     </table>
                @endif
