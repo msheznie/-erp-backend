@@ -105,4 +105,11 @@ class RolReachedNotification
         </table>';
         return $body;
     }
+
+     public static function getReOrderLevelPREmailContent($details, $fullName)
+    {
+        $body = "Dear {$fullName},<br/>";
+        $body .= $details;
+        return $body;
+    }
 }

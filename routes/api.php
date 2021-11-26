@@ -155,6 +155,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
+        Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');
+        
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
@@ -163,6 +165,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
         Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
         Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
+
+        Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
 
         Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -366,7 +370,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
         Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+        Route::post('purchase-request/remove-all-items/{id}', 'PurchaseRequestDetailsAPIController@removeAllItems');
         Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
+        Route::get('get-all-uom-options', 'PurchaseRequestAPIController@getAllUomOptions');
+
         Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
         Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr');
         Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
@@ -580,6 +587,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
         Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
+        Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems');
 
         Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
 
@@ -814,8 +822,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('contracts', 'ContractAPIController');
         Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
-
-
         Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
         Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -2035,6 +2041,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+        Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps');
+        Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp');
+        Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp');
+
+        Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
+
 
         Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
@@ -2329,6 +2341,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
         Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice');
+
+        Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
+        Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
+        Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2393,11 +2409,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
     Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
+    Route::post('saveCalanderSlots', 'SlotMasterAPIController@saveCalanderSlots');
+    Route::get('getFormDataCalander', 'SlotMasterAPIController@getFormDataCalander');
+    Route::get('getCalanderSlotData', 'SlotMasterAPIController@getCalanderSlotData');
+    Route::post('clanderSlotDateRangeValidation', 'SlotMasterAPIController@clanderSlotDateRangeValidation');
+    Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
+    Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
+    Route::get('test', 'TenantAPIController@test');
 });
 
 
 Route::resource('tenants', 'TenantAPIController');
-Route::get('test', 'TenantAPIController@test');
+
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 //Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
@@ -2466,10 +2489,6 @@ Route::group(['prefix' => 'srm', 'middleware' => ['tenantById']], function (){
  * End SRM related routes
  */
 
-Route::get('runCronJob/{cron}', function ($cron) {
-    Artisan::call($cron);
-    return 'CRON Job run successfully';
-});
 
 Route::get('cache-clear', function () {
     Artisan::call('cache:clear');
@@ -2481,8 +2500,16 @@ Route::get('cache-clear', function () {
 Route::get('job-check', function(){
     \App\helper\CommonJobService::job_check();
     return '';
+}); 
+
+Route::get('runCronJob/{cron}', function ($cron) {
+    Artisan::call($cron);
+    return 'CRON Job run successfully';
 });
 
+Route::resource('appointments', 'AppointmentAPIController');
 
+Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
+Route::resource('po_categories', 'PoCategoryAPIController');
 

@@ -90,11 +90,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $prId = $input['purchaseRequestId'];
-
         $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
-            ->with(['uom'])
-            ->forPage($input['page'], 30)->get();
-
+            ->with(['uom','altUom'])
+            ->skip($input['skip'])->take($input['limit'])->get();
+        $index = $input['skip'] + 1;
+        foreach($items as $item) {
+            $item['index'] = $index;
+            $index++;
+        }
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
     }
 
@@ -888,7 +891,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function update($id, UpdatePurchaseRequestDetailsAPIRequest $request)
     {
         $input = array_except($request->all(), 'uom');
-
+        
         $input = $this->convertArrayToValue($input);
 
         $purchaseRequestID = $input['purchaseRequestID'];
@@ -1297,8 +1300,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $addedItems = $totalItemCount - count($validationFailedItems);
         $itemsToAdd = $itemMasters->diff(collect($validationFailedItems));
+        $dataToAdd = [];
         foreach($itemsToAdd as $itemToAdd) {
             $name = $itemToAdd->barcode.'|'.$itemToAdd->itemDescription;
+            $itemToAdd['purchaseRequestID'] =  $input['purchaseRequestID'];
+            $itemToAdd['companySystemID'] =  $input['companySystemID'];
+            $itemToAdd['partNumber'] =  "-";
+            $itemToAdd['isMRPulled'] =  false;
             $data = ([
                 "companySystemID" => $input['companySystemID'],
                 "purchaseRequestID" => $input['purchaseRequestID'],
@@ -1310,8 +1318,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 "unitOfMeasure" => $itemToAdd->unit,
                 "partNumber" => $itemToAdd->secondaryItemCode
             ]);
-            $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($data);
+            array_push($dataToAdd,$data);
         }
+        
+        $purchaseRequestDetails = PurchaseRequestDetails::insert($dataToAdd);
+
         return ['status' => true , 'message' => 'Out of '.$totalItemCount.' items '.count($itemsToAdd).' has been added'];
     }
 
@@ -2057,8 +2068,36 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError("Unable to copy purchase request", 501);
         }
 
-      
+    }
 
+
+    public function removeAllItems($id) {
+        $purchase_request = PurchaseRequest::find($id);
+        if($purchase_request) {
+            $purchase_request_details = PurchaseRequestDetails::where('purchaseRequestID',$id)->get();
+
+            foreach($purchase_request_details as $purchase_request_detail) {
+                    $data = PulledItemFromMR::where('purcahseRequestID',$id)->where('itemCodeSystem',$purchase_request_detail->itemCode)->first();
+                    if(isset($data)) {
+                            $m_id =$data->RequestID;
+                            $request = MaterielRequest::find($m_id);
+                            $request->isSelectedToPR =  false;
+                            $request->save();
+                            $data->delete();
+                    }
+            }
+            PurchaseRequestDetails::where('purchaseRequestID',$id)->delete();
+    
+            SegmentAllocatedItem::where('documentMasterAutoID', $id)
+            ->where('documentSystemID', $purchase_request->documentSystemID)
+            ->delete();
+    
+    
+            return $this->sendResponse([], 'Item Deleted Successfully');
+        }else {
+            return $this->sendError('Purchase Request not found');
+        }
+        
     }
 
 }

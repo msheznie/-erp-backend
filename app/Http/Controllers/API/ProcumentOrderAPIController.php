@@ -127,6 +127,7 @@ use App\Models\WorkOrderGenerationLog;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\PoCategory;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Repositories\UserRepository;
@@ -192,7 +193,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
-
+      
         $input = $this->convertArrayToValue($input);
 
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
@@ -550,7 +551,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->modifiedPc = gethostname();
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
-
+        $procumentOrderUpdate->approval_remarks = $input['approval_remarks'];
         if ($input['partiallyGRVAllowed']) {
             $procumentOrderUpdate->partiallyGRVAllowed = -1;
         } else {
@@ -987,6 +988,22 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('noQty', '<', 0.1)
                 ->count();
 
+
+            $checkAltUnit = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)->where('altUnit','!=',0)->where('altUnitValue',0)->count();
+
+            $allAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+            ->where('companySystemID',  $procumentOrder->companySystemID)
+            ->first();
+      
+            if ($checkAltUnit > 0 && $allAltUOM->isYesNO) {
+                return $this->sendError('Every Alternative UOM should have Alternative UOM Qty', 500);
+            }
+
+            $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
+            if (!$validateAllocatedQuantity['status']) {
+                return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum qty requested', 500);
             }
@@ -1285,6 +1302,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         $procumentOrders->with(['created_by' => function ($query) {
             //$query->select(['empName']);
+        }, 'category' => function ($query) {
         }, 'location' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'currency' => function ($query) {
@@ -1413,7 +1431,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.poTypeID',
                 'erp_purchaseordermaster.rcmActivated',
-                'erp_purchaseordermaster.sentToSupplier'
+                'erp_purchaseordermaster.sentToSupplier',
+                'erp_purchaseordermaster.categoryID',
             ]
         );
 
@@ -1477,6 +1496,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+
+        $po_category = PoCategory::where('isActive',true)->get();
+
+        $po_category_default = PoCategory::where('isActive',true)->where('isDefault',true)->pluck('id');
 
         $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
@@ -1629,6 +1652,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = array(
             'segments' => $segments,
+            'category' => $po_category,
+            'category_default' => $po_category_default,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -1754,7 +1779,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with([
             'detail' => function ($query) {
-                $query->with('unit');
+                $query->with(['unit','altUom','item'=>function($query1){
+                    $query1->select('itemCodeSystem','itemDescription')->with('specification');
+                }]);
             }, 'supplier' => function ($query) {
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {
@@ -1778,10 +1805,17 @@ class ProcumentOrderAPIController extends AppBaseController
         ])->first();
 
 
+         $is_specification = false;       
+
         if (!empty($output)) {
 
             foreach ($output->detail as $item) {
 
+                if(isset($item->item->specification) || $item->item->specification != null)
+                {
+                    $is_specification = true; 
+                }
+       
                 $date = $output->createdDateTime;
 
                 $item->inhand = ErpItemLedger::where('itemSystemCode', $item->itemCode)
@@ -1799,7 +1833,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->sum('inOutQty')) * -1;
             }
         }
-
+        $output['is_specification'] = $is_specification;
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -1834,6 +1868,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
             'erp_purchaseordermaster.poType_N',
+            'erp_purchaseordermaster.approval_remarks',
             'erp_purchaseordermaster.budgetYear',
             'erp_purchaseordermaster.rcmActivated',
             'erp_purchaseordermaster.amended',
@@ -3060,9 +3095,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
+        
         $id = $request->get('id');
         $typeID = $request->get('typeID');
-
+        $spec_id = 1;
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
@@ -3070,7 +3106,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
-            $query->with('unit');
+            $query->with(['unit','altUom','item'=>function($query1){
+                $query1->select('itemCodeSystem','itemDescription')->with('specification');
+            }]);
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('rejectedYN', 0);
@@ -3080,6 +3118,25 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+
+      
+        $is_specification = 0;       
+
+        if (!empty($outputRecord)) {
+
+            foreach ($outputRecord as $item) {
+
+                foreach ($item->detail as $val) {
+                    if(isset($val->item->specification) || $val->item->specification != null)
+                    {
+                        $is_specification = 1; 
+                        break;
+                    }
+                }
+            }
+        }
+
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -3128,6 +3185,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $isMergedCompany = true;
         }
 
+        
+        $checkAltUOM = CompanyPolicyMaster::where('companyPolicyCategoryID', 60)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->first();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3136,9 +3198,13 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'secondaryCompany' => $checkCompanyIsMerged,
             'title' => $documentTitle,
             'termsCond' => $typeID,
+            'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
-            'addons' => $orderAddons
+            'addons' => $orderAddons,
+            'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false
         );
+
+
 
         try {
             // check document type has set template as default, then get rendered html with data
@@ -3217,6 +3283,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_purchaseordermaster.supplierPrimaryCode',
             'erp_purchaseordermaster.supplierName',
             'erp_purchaseordermaster.narration',
+            'erp_purchaseordermaster.approval_remarks',
             'erp_purchaseordermaster.serviceLine',
             'erp_purchaseordermaster.createdDateTime',
             'erp_purchaseordermaster.poConfirmedDate',
