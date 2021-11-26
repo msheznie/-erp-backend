@@ -1967,4 +1967,44 @@ GROUP BY
 
     }
 
+
+    public function getErpLedgerItems(Request $request)
+    {
+
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+
+        $category = (array)$request['category'];
+        $category = collect($category)->pluck('id');
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->whereIn('itemmaster.financeCategorySub', $category)
+            ->where('itemmaster.financeCategoryMaster', 1)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            //->take(50)
+            ->get();
+
+
+       
+
+
+        $output = array(
+            'item' => $item
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+    }
+
+
+
+
+
 }

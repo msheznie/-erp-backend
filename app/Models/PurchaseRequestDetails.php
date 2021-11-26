@@ -118,7 +118,9 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
         'manuallyClosedComment',
-        'isMRPulled'
+        'isMRPulled',
+        'altUnit',
+        'altUnitValue'
     ];
 
     /**
@@ -171,7 +173,9 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
         'manuallyClosedComment' => 'string',
-        'isMRPulled' => 'boolean'
+        'isMRPulled' => 'boolean',
+        'altUnit'  => 'integer',
+        'altUnitValue'  => 'float'
     ];
 
     /**
@@ -185,6 +189,10 @@ class PurchaseRequestDetails extends Model
 
     public function uom(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function altUom(){
+        return $this->belongsTo('App\Models\Unit','altUnit','UnitID');
     }
 
     public function podetail(){

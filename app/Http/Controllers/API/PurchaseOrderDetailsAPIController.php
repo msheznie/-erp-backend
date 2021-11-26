@@ -253,7 +253,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
-            }, 'vat_sub_category'])
+            }, 'vat_sub_category','altUom'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
@@ -635,7 +635,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['itemDescription'] = $new['itemDescription'];
                             $prDetail_arr['comment'] = $new['comments'];
                             $prDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
-
+                            $prDetail_arr['altUnit'] = $new['altUnit'];
+                            $prDetail_arr['altUnitValue'] = $new['altUnitValue'];
                             $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                             $prDetail_arr['noQty'] = $new['poQty'];
 

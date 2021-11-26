@@ -284,12 +284,13 @@ class TenantAPIController extends AppBaseController
     }
 
 
-    public function test()
+    public function test(Request $request)
     {
+
         $data = env('IS_MULTI_TENANCY');
 
         $output = TaxService::poLogisticVATDistributionForGRV(58732);
 
-        return $this->sendResponse($output, 'retrieved successfully');
+        return $this->sendResponse($output, 'retrieved successfully' . $request->input('api_key'));
     }
 }

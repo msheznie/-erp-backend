@@ -433,6 +433,14 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
+        if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
+            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        }
+
+        if(doubleval($input['salvage_value_rpt']) < 0) {
+            return $this->sendError("Salvage value cannot be less than Zero", 500);
+        }
+
         DB::beginTransaction();
         try {
             $messages = [
@@ -524,7 +532,6 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
             $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $input['serviceLineSystemID'],$input['faCatID'],$input['faSubCatID']);
-
             if ($documentCodeData['status']) {
                 $documentCode = $documentCodeData['documentCode'];
                 $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
@@ -549,6 +556,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             if ($companyCurrencyConversion) {
                 $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
             }
+
+            $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
+            if ($salvageCurrencyConversion) {
+                $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
+            }
+
 
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
@@ -693,6 +706,15 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
+        }
+
+
+        if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
+            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        }
+
+        if(doubleval($input['salvage_value_rpt']) < 0) {
+            return $this->sendError("Salvage value cannot be less than Zero", 500);
         }
 
         // check already approved
@@ -857,6 +879,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 }
             }
+
             if ($itemPicture && isset($itemImgaeArr[0]['file'])) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
                 $extension = $itemImgaeArr[0]['filetype'];
@@ -873,6 +896,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $data['itemPath'] = $path;
                 Storage::disk($disk)->put($path, $decodeFile);
+
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);
 
                 if($fixedAssetMaster->approved == -1)
@@ -880,6 +904,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             DB::commit();
+
             return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
 
         } catch (\Exception $exception) {

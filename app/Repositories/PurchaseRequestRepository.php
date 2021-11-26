@@ -96,7 +96,8 @@ class PurchaseRequestRepository extends BaseRepository
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'approval_remarks'
     ];
 
     /**

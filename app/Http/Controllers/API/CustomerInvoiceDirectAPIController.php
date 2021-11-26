@@ -2859,6 +2859,8 @@ WHERE
             $sort = 'desc';
         }
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
 
@@ -2898,12 +2900,18 @@ WHERE
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
+        })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID, $fromPms) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
                 ->where('erp_custinvoicedirect.approved', 0)
-                ->where('erp_custinvoicedirect.confirmedYN', 1);
+                ->where('erp_custinvoicedirect.confirmedYN', 1)
+                ->when(!$fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', '!=', 5);
+                })
+                ->when($fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', 5);
+                });
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')
@@ -2954,6 +2962,8 @@ WHERE
             $sort = 'desc';
         }
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
 
@@ -2982,7 +2992,13 @@ WHERE
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
                 ->where('erp_custinvoicedirect.approved', -1)
-                ->where('erp_custinvoicedirect.confirmedYN', 1);
+                ->where('erp_custinvoicedirect.confirmedYN', 1)
+                 ->when(!$fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', '!=', 5);
+                })
+                ->when($fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', 5);
+                });
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')

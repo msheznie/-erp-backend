@@ -141,11 +141,20 @@ class DocumentApprovedAPIController extends AppBaseController
 
     public function getAllDocumentApproval(request $request)
     {
+
         $input = $request->all();
         $search = $request->input('search.value');
 
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
+        if ($fromPms) {
+        	$customerInvoiceWhere = " AND erp_custinvoicedirect.createdFrom = 5";
+        } else {
+        	$customerInvoiceWhere = " AND erp_custinvoicedirect.createdFrom != 5";
+        }
+ 
         $limit = '';
         if(isset($input['forDashboardWidget']) && $input['forDashboardWidget'] ==1){
             $limit = 'LIMIT 6 ';
@@ -181,6 +190,7 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $isApproved   = isset($input['isApproved']) ? $input['isApproved'] : 0;
+
         if($isApproved){
             $qry = "SELECT t.*,companymaster.*,erp_documentmaster.documentDescription FROM (SELECT
 	*
@@ -214,7 +224,7 @@ FROM
 	AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	LEFT JOIN (
-        SELECT purchaseRequestID, SUM(IFNULL(totalCost, 0)) AS prq_tot 
+        SELECT purchaseRequestID, SUM(IFNULL(totalCost, 0)) AS prq_tot, altUnitValue, altUnit
         FROM erp_purchaserequestdetails
         GROUP BY purchaseRequestID
     )  as prd ON prd.purchaseRequestID = erp_purchaserequest.purchaseRequestID 
@@ -435,7 +445,7 @@ FROM
 	AND erp_custinvoicedirect.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_custinvoicedirect.confirmedYN = 1 
 	AND erp_custinvoicedirect.approved = -1
-	AND erp_custinvoicedirect.canceledYN = 0
+	AND erp_custinvoicedirect.canceledYN = 0".$customerInvoiceWhere."
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_custinvoicedirect.customerID
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_custinvoicedirect.custTransactionCurrencyID 
 WHERE
@@ -633,6 +643,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	'' as approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
@@ -693,6 +704,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	erp_purchaseordermaster.approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
@@ -748,6 +760,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	'' as approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
@@ -801,6 +814,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	'' as approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
@@ -854,7 +868,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
@@ -906,7 +920,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
@@ -959,7 +973,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
@@ -1011,7 +1025,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
@@ -1063,7 +1077,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
@@ -1115,6 +1129,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	'' as approval_remarks,
 	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
@@ -1181,6 +1196,7 @@ WHERE
         if ($isEmployeeDischarched == 'true') {
             $output = [];
         }
+
 
         return \DataTables::of($output)
             ->addColumn('Actions', 'Actions', "Actions")

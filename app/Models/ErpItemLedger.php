@@ -245,4 +245,9 @@ class ErpItemLedger extends Model
     public function uom(){
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure','UnitID');
     }
+
+    
+    public function item_master(){
+        return $this->belongsTo('App\Models\itemmaster', 'itemSystemCode','itemCodeSystem');
+    }
 }
