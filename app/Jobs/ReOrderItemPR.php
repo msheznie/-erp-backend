@@ -423,6 +423,22 @@ class ReOrderItemPR implements ShouldQueue
                                                 // continue;
                                                 // return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                                             }
+
+
+                                             $checkApprovedNonRecived = ProcumentOrder::where('companySystemID', $companySystemID)
+                                                ->where('serviceLineSystemID', $new_purchaseRequests->serviceLineSystemID)
+                                                ->whereHas('detail', function ($query) use ($item) {
+                                                    $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                                          ->where('goodsRecievedYN', '!=', 2);
+                                                })
+                                                ->where('approved', -1)
+                                                ->first();
+
+
+                                            if (!empty($checkApprovedNonRecived)) {
+                                                $is_failed = true;
+                                            }
+
                                             /* PO --> approved=-1 And cancelledYN=0 */
                                         }
                                     }
