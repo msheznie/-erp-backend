@@ -761,7 +761,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 9px;"><h3 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h3></td>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h4></td>
             </tr>
         </table>
         <br>
@@ -772,7 +772,7 @@
 
 
                    <table style="width:100%;
-  background: #c4c4c4;
+  background: #ede7e7;
   margin-bottom: 20px;">
                      <tr style="height:10px;
 ">
