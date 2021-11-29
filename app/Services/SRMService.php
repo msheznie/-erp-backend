@@ -184,7 +184,9 @@ class SRMService
     public function updateSupplierInvitation(Request $request)
     {
         $invitationToken = $request->input('extra.token');
-        $isUpdated =  $this->supplierService->updateTokenStatus($invitationToken);
+        $supplierUuid = $request->input('supplier_uuid');
+
+        $isUpdated =  $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid);
 
         if (!$isUpdated) {
             return [
