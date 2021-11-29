@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Repositories\AppointmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -277,5 +278,67 @@ class AppointmentAPIController extends AppBaseController
         $appointment->delete();
 
         return $this->sendSuccess('Appointment deleted successfully');
+    }
+    public function getAppointments(Request $request)
+    {
+        $input = $request->all();
+        $slotDetailId = $input['slotDetailId'];
+        $companyId = $input['companyId'];
+        $documentSystemID = 106;
+        $empID = \Helper::getEmployeeSystemID();
+        $data = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
+            $q->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                ->where('erp_documentapproved.companySystemID', $companyId);;
+
+            $q->with(['employeeDepartments' => function ($q2) use ($companyId, $documentSystemID, $empID) {
+                $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            }]);
+            $q->with(['employeeRole' => function ($q3) use ($companyId, $documentSystemID, $empID) {
+                $q3->where('appointment.company_id', $companyId)
+                    ->where('appointment.approved_yn', 0)
+                    ->where('appointment.confirmed_yn', 1);
+            }]);
+        }, 'created_by'])
+            ->where('slot_detail_id', $slotDetailId)
+            ->get();
+
+        return $data;
+    }
+    public function approveCalanderDelAppointment(Request $request)
+    {
+        $input = $request->all();
+
+        $params = array(
+            'documentApprovedID' => $input['document_approved']['documentApprovedID'],
+            'documentSystemCode' => $input['id'],
+            'documentSystemID' => $input['document_system_id'],
+            'approvalLevelID' => $input['document_approved']['approvalLevelID'],
+            'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
+            'approvedComments' => $input['approvedComments']
+        );
+
+        $approve = \Helper::approveDocument($params);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+    public function getAppointmentById(Request $request)
+    {
+        $input = $request->all();
+        $appointmentId = $input['appointmentId'];
+
+        $data = Appointment::with(['detail' => function ($q) {
+            $q->with(['getPoDetails' => function ($q1) {
+                $q1->with(['productmentOrder', 'unit']);
+            }]);
+        }])
+            ->where('id', $appointmentId)->first();
+
+        return $data;
     }
 }
