@@ -9,6 +9,7 @@ use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
+use App\Models\SupplierRegistrationLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +43,7 @@ class SRMService
     }
     public function getPoList(Request $request): array
     {
-        $supplierID = $request->input('auth.id');
+        $supplierID = self::getSupplierIdByUUID($request->input('uuid'));
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
@@ -81,7 +82,7 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
-        $supplierID =  $request->input('auth.id');
+        $supplierID =  self::getSupplierIdByUUID($request->input('uuid'));
         $poData = [];
         $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID);
 
@@ -97,7 +98,7 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
-        $supplierID =  $request->input('auth.id');
+        $supplierID =  self::getSupplierIdByUUID($request->input('uuid'));
         $appointmentID = $request->input('extra.appointmentID');;
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
@@ -303,5 +304,21 @@ class SRMService
             'message'   => $confirm['message'],
             'data'      => $params
         ];
+    }
+
+    public static function getSupplierIdByUUID($uuid){
+
+        if($uuid){
+            $supplier = SupplierRegistrationLink::where('uuid',$uuid)
+                                ->with(['supplier'])
+                                ->whereHas('supplier')
+                                ->first();
+
+            if(!empty($supplier)){
+                return $supplier->supplier_master_id;
+            }
+        }
+
+        return 0;
     }
 }
