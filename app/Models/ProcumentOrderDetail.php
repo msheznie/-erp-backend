@@ -171,7 +171,10 @@ class ProcumentOrderDetail extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'VATApplicableOn'
+        'VATApplicableOn',
+        'altUnit',
+        'altUnitValue'
+
     ];
 
     /**
@@ -251,7 +254,9 @@ class ProcumentOrderDetail extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'VATApplicableOn' => 'integer'
+        'VATApplicableOn' => 'integer',
+        'altUnit'  => 'integer',
+        'altUnitValue'  => 'float'
     ];
 
     /**
@@ -266,6 +271,21 @@ class ProcumentOrderDetail extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      **/
+
+    public function order()
+    {
+        return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
+    }
+
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function altUom(){
+        return $this->belongsTo('App\Models\Unit','altUnit','UnitID');
+    }
+
+    
     public function erpPurchaseordermaster()
     {
         return $this->belongsTo(\App\Models\ErpPurchaseordermaster::class);

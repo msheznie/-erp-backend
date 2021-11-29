@@ -215,7 +215,7 @@ class StockAdjustmentAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
-            return $this->sendError('Service Line not found',500);
+            return $this->sendError('Segment not found',500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
@@ -377,12 +377,12 @@ class StockAdjustmentAPIController extends AppBaseController
         if ($input['serviceLineSystemID']) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Service Line not found');
+                return $this->sendError('Segment not found');
             }
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->stockAdjustmentRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
-                return $this->sendError('Please select a active service line', 500,$serviceLineError);
+                return $this->sendError('Please select a active Segment', 500,$serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;

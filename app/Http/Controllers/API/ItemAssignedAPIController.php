@@ -167,7 +167,7 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError('Item not found');
         }
 
-        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity','itemMovementCategory'];
+        $updateColumns = ['minimumQty', 'maximunQty', 'rolQuantity','itemMovementCategory','roQuantity'];
 
         $rules = [];
 

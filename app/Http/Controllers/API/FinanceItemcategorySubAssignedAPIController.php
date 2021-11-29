@@ -126,7 +126,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         foreach ($input as $key => $value) {
             if (is_array($input[$key])) {
                 if (count($input[$key]) > 0) {
-                    $input[$key] = $input[$key][0];
+                    $input[$key] = isset($input[$key][0]) ? $input[$key][0] : 0;
                 } else {
                     $input[$key] = 0;
                 }

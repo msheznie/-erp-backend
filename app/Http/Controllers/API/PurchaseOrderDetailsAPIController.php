@@ -191,19 +191,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->get();
 
+
+    
         foreach ($purchaseOrderDetails as $order) {
+
+
+            if($order->noQty == 0)
+            {
+              $qua_req = '0';
+            }
+            else
+            {
+              $qua_req = $order->noQty;
+            }
+ 
+            if($order->unitCost == 0)
+            {
+              $tran_amount = '0';
+            }
+            else
+            {
+              //$tran_amount = round($order->unitCost,$order->DecimalPlaces);
+
+              $tran_amount = number_format((float)$order->unitCost, $order->DecimalPlaces, '.', ',');
+            }
+
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
                 'PO Code' => $order->purchaseOrderCode,
                 'Supplier Code' => $order->supplierPrimaryCode,
-                'Approved Date' => date("d/m/Y", strtotime($order->approvedDate)),
+                'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
                 'supplier Name' => $order->supplierName,
                 'Part Number' => $order->supplierPartNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
-                'PO Qty' => $order->noQty,
-                'Unit Cost' => $order->unitCost,
+                'PO Qty' => $qua_req,
+                'Unit Cost' => $tran_amount,
             );
         }
 
@@ -229,7 +253,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
-            }])
+            }, 'vat_sub_category','altUom'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
@@ -611,7 +635,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['itemDescription'] = $new['itemDescription'];
                             $prDetail_arr['comment'] = $new['comments'];
                             $prDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
-
+                            $prDetail_arr['altUnit'] = $new['altUnit'];
+                            $prDetail_arr['altUnitValue'] = $new['altUnitValue'];
                             $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                             $prDetail_arr['noQty'] = $new['poQty'];
 
@@ -880,7 +905,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function update($id, UpdatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit');
+        $input = array_except($request->all(), 'unit', 'vat_sub_category');
+
+        if (isset($input['vat_sub_category'])) {
+            unset($input['vat_sub_category']);
+        }
+
         $input = $this->convertArrayToValue($input);
 
         //$empInfo = self::getEmployeeInfo();

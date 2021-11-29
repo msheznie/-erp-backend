@@ -18,6 +18,7 @@ class RolReachedNotification
                 })
                 ->where('companySystemID', '=', $companyID)
                 ->where('financeCategoryMaster', '=', 1)
+                ->where('isActive', '=', 1)
                 ->whereRaw('ledger.INoutQty <= minimumQty')->get();
         }
 
@@ -67,6 +68,7 @@ class RolReachedNotification
                 })
                 ->where('companySystemID', '=', $companyID)
                 ->where('financeCategoryMaster', '=', 1)
+                ->where('isActive', '=', 1)
                 ->whereRaw('ledger.INoutQty <= rolQuantity')->get();
         }
 
@@ -101,6 +103,13 @@ class RolReachedNotification
         }
         $body .= '</tbody>
         </table>';
+        return $body;
+    }
+
+     public static function getReOrderLevelPREmailContent($details, $fullName)
+    {
+        $body = "Dear {$fullName},<br/>";
+        $body .= $details;
         return $body;
     }
 }

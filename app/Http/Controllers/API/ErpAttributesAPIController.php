@@ -8,6 +8,7 @@ use App\Models\ErpAttributes;
 use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ErpAttributesDropdown;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -225,6 +226,7 @@ class ErpAttributesAPIController extends AppBaseController
         $erpAttributes = $this->erpAttributesRepository->update($input, $id);
 
         return $this->sendResponse($erpAttributes->toArray(), 'ErpAttributes updated successfully');
+        
     }
 
     /**
@@ -269,6 +271,11 @@ class ErpAttributesAPIController extends AppBaseController
     {
         /** @var ErpAttributes $erpAttributes */
         $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+        
+        if($erpAttributes->field_type_id == 3){
+           $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->delete();
+        }
+
 
         if (empty($erpAttributes)) {
             return $this->sendError('Erp Attributes not found');
@@ -276,6 +283,27 @@ class ErpAttributesAPIController extends AppBaseController
 
         $erpAttributes->delete();
 
-        return $this->sendSuccess('Erp Attributes deleted successfully');
+        return $this->sendResponse([],'Erp Attributes deleted successfully');
+    }
+
+    public function itemAttributesIsMandotaryUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+        $is_mendatory = ($input['is_mendatory']) ? 1 : 0;
+
+        $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)
+        ->update(['is_mendatory' => $is_mendatory]);
+
+        return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes updated successfully');
+
+    }
+
+    public function itemAttributesDelete(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+        $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)->delete();
+
+        return $this->sendResponse($attributesIsMandotaryUpdate, 'Erp Attributes deleted successfully');
+
     }
 }

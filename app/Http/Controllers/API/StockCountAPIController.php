@@ -215,11 +215,11 @@ class StockCountAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }else{
-            return $this->sendError('Service Line not found',500);
+            return $this->sendError('Segment not found',500);
         }
 
         if ($segment->isActive == 0) {
-            return $this->sendError('Please select a active service line', 500);
+            return $this->sendError('Please select a active Segment', 500);
         }
 
         $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['location'])->first();
@@ -441,12 +441,12 @@ class StockCountAPIController extends AppBaseController
             if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Service Line not found');
+                    return $this->sendError('Segment not found');
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
                     $this->stockCountRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
-                    return $this->sendError('Please select a active service line', 500,$serviceLineError);
+                    return $this->sendError('Please select a active Segment', 500,$serviceLineError);
                 }
 
                 $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;

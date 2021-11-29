@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -66,6 +67,38 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $erpAttributesDropdowns = $this->erpAttributesDropdownRepository->all();
 
         return $this->sendResponse($erpAttributesDropdowns->toArray(), 'Erp Attributes Dropdowns retrieved successfully');
+    }
+
+
+    public function addDropdownData(Request $request){
+        DB::beginTransaction();
+        try {
+            $input= $request->all();
+
+            $descriptionValidate = ErpAttributesDropdown::where('description', $input['description'])
+                                                            ->where('attributes_id', $input['attributes_id'])->get();
+            if (count($descriptionValidate) > 0){
+                return $this->sendError('Dropdown Value Already Exists');
+            }
+
+           
+            $attributes = ErpAttributesDropdown::create($input);
+
+            
+        DB::commit();
+        return $this->sendResponse([], 'New Record Added Successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getDropdownData(Request $request){
+        $input = $request->all();
+        $attributes_id = $input[0];
+        return$dropdownData = ErpAttributesDropdown::where('attributes_id',$attributes_id)->get();
+
+        return $this->sendResponse($dropdownData, 'Record retrieved successfully');
     }
 
     /**
@@ -276,6 +309,6 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 
         $erpAttributesDropdown->delete();
 
-        return $this->sendSuccess('Erp Attributes Dropdown deleted successfully');
+        return $this->sendResponse([],'Erp Attributes Dropdown deleted successfully');
     }
 }

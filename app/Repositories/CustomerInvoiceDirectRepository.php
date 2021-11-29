@@ -108,6 +108,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
+        'createdFrom',
         'createdDateTime',
         'timestamp'
     ];
@@ -286,7 +287,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma', 'returnStatus');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma', 'returnStatus', 'erp_custinvoicedirect.createdFrom');
 
         return $invMaster;
     }
@@ -319,7 +320,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $data;
     }
 
-    public function croneJobCustomerInvoiceReminder()
+    public static function croneJobCustomerInvoiceReminder()
     {
         $threeDayBefore = Carbon::now()->addDays(3)->format('Y-m-d');
         $dueInvoices = AccountsReceivableLedger::where('documentSystemID', 20)

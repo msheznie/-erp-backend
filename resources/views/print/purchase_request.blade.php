@@ -295,6 +295,10 @@
                 <th class="text-left">Part Number</th>
                 <th class="text-left">UOM</th>
                 <th class="text-left">QTY Requested</th>
+                 @if($request->allowAltUom)
+                <th class="text-left">Alt.UOM</th>
+                <th class="text-left">Alt.Qty</th>
+                @endif
                 <th class="text-left">QTY On Order</th>
 
                 @if($request->approved == -1)
@@ -315,6 +319,16 @@
                         @endif
                     </td>
                     <td class="text-right">{{$item->quantityRequested}}</td>
+                    @if($request->allowAltUom)
+                        <td>
+                            @if($item->altUom)
+                                {{$item->altUom->UnitShortCode}}
+                            @endif
+                        </td>
+                        <td class="text-right">
+                                {{$item->altUnitValue}}
+                        </td>
+                    @endif    
                     <td class="text-right">{{$item->quantityOnOrder}}</td>
                     @if($request->approved == -1)
                         <td class="text-right">

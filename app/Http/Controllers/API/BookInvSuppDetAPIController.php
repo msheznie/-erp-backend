@@ -293,20 +293,20 @@ class BookInvSuppDetAPIController extends AppBaseController
 
             $rcmActivated = TaxService::isGRVRCMActivation($unbilledGrvGroupByMaster->grvAutoID);
 
-            $grvDetailData = GRVDetails::where('grvAutoID', $unbilledGrvGroupByMaster->grvAutoID);
+            $grvDetailData = GRVDetails::where('grvAutoID', $unbilledGrvGroupByMaster->grvAutoID)
+                                       ->get();
 
-
+            $returnAmount = 0;
             if ($valEligible && !$rcmActivated) {
-                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty) + (VATAmount*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
+                foreach ($grvDetailData as $key => $value) {
+                    $grvProcessData = TaxService::processGRVDetailVATForUnbilled($value->grvDetailsID);
+                    $returnAmount += round((($grvProcessData['totalTransAmount'] / $value->noQty) * $value->returnQty), 7);
+                }
+
             } else {
-                $grvDetailData = $grvDetailData->selectRaw('SUM(((ROUND(((GRVcostPerUnitSupTransCur*noQty)),7) / noQty) * returnQty)) as totalReturnAmount');
-            }
-
-            $grvDetailData = $grvDetailData->groupBy('grvAutoID')
-                                           ->first();
-
-            if ($grvDetailData) {
-                $returnAmount = $grvDetailData->totalReturnAmount;
+                foreach ($grvDetailData as $key => $value) {
+                    $returnAmount += round(($value->GRVcostPerUnitSupTransCur * $value->returnQty), 7);
+                }
             }
         }
 
@@ -822,7 +822,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
                 $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-                $totalVATAmount = ($groupMaster->logisticYN) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
+                $totalVATAmount = ($groupMaster->logisticYN) ? $grvDetail->VATAmount : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
 
                 if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
@@ -924,7 +924,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
             $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
 
-            $totalVATAmount = ($unbilledData['logisticYN']) ? $grvDetail->VATAmount : $grvDetail->VATAmount * $grvDetail->noQty;
+            $totalVATAmount = ($unbilledData['logisticYN']) ? $grvDetail->VATAmount : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
 
              if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                 $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);

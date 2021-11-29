@@ -31,6 +31,18 @@ class InventoryReportAPIController extends AppBaseController
     {
         $reportID = $request->reportID;
         switch ($reportID) {
+            case 'INVIS':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'items' => 'required',
+                    'warehouse' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             case 'INVST':
                 $reportTypeID = '';
                 if (isset($request->reportTypeID)) {
@@ -139,21 +151,107 @@ class InventoryReportAPIController extends AppBaseController
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
 
+
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+        ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+        ->whereIn('erp_itemledger.companySystemID', $companiesByGroup)
+        ->where('itemmaster.financeCategoryMaster', 1)
+        ->groupBy('erp_itemledger.itemSystemCode')
+        //->take(50)
+        ->get();
+
+
         $output = array(
             'warehouse' => $warehouse,
             'document' => $document,
             'segment' => $segment,
+            'item' => $item,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+    private function itemSummaryReport($from, $toDate, $warhouse,$category,$items,$currency)
+    {
 
+        $fromDate = new Carbon($from);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $warehouse = (array)$warhouse;
+        $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        $items = (array)$items;
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+        }
+
+        return ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+                                    ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
+                                    ->join('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+                                    ->join('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+                                    ->whereIn('wareHouseSystemCode', $warehouse)
+                                    ->whereIn('itemPrimaryCode', $items)
+                                    ->groupBy('itemPrimaryCode')
+                                    ->selectRaw('unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription')
+                                    ->get();
+
+    }
 
     /*generate report according to each report id*/
     public function generateReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
+
+            case 'INVIS':        
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
+                      
+                $array = array();
+                if (!empty($filter_val)) {
+                    foreach ($filter_val as $element)
+                     {
+                        $array[$element->categoryDescription][]  = $element;
+                     }
+                }
+        
+        
+        
+                $GrandOpeningBalance = collect($filter_val)->pluck('opening_balance_value')->toArray();
+                $GrandOpeningBalance = array_sum($GrandOpeningBalance);
+        
+                $GrandInwards= collect($filter_val)->pluck('inwards_value')->toArray();
+                $GrandInwards = array_sum($GrandInwards);
+        
+                $GrandOutwards = collect($filter_val)->pluck('outwards_value')->toArray();
+                $GrandOutwards = array_sum($GrandOutwards);
+        
+                $GrandClosing = collect($filter_val)->pluck('closing_balance_value')->toArray();
+                $GrandClosing = array_sum($GrandClosing);
+        
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $output = array(
+                    'categories' => $array,
+                    'grandOpeningBalance' => $GrandOpeningBalance,
+                    'grandInwards' => $GrandInwards,
+                    'grandOutwards' => $GrandOutwards,
+                    'company' => $company,
+                    'currencyID' => $input['currency'],
+                    'grandClosing' => $GrandClosing,
+                );   
+                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+
+                 break;
             case 'INVST': //Stock Transaction Report
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ST') { //Stock Transaction Report
@@ -838,6 +936,53 @@ FROM
     {
         $reportID = $request->reportID;
         switch ($reportID) {
+
+            case 'INVIS':
+
+  
+                                          
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+
+                $currencyCode = ($request['currency'][0] == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
+
+
+                foreach ($filter_val as $val) {
+                    $data[] = array(
+                        'Category' => $val->categoryDescription,
+                        'Item Code' => $val->itemPrimaryCode,
+                        'Item Description' => $val->itemDescription,
+                        'UOM' => $val->UnitShortCode,
+                        'Opening Balance Qty' => $val->opening_balance_quantity,
+                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Inwards Qty' => $val->inwards_quantity,
+                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Outwards Qty' => abs($val->outwards_quantity),
+                        'Outwards Val ('.$currencyCode.')' => number_format($val->outwards_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Closing Balance Qty' => $val->closing_balance_quantity,
+                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+        
+                    );
+                }
+        
+                
+        
+                 \Excel::create('inventory_summary_report', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($request->type);
+        
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+
             case 'INVST': //Stock Transaction Report
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ST') { //Stock Transaction Report

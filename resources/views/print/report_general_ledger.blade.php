@@ -169,7 +169,7 @@
                 <th>Document Number</th>
                 <th>Date</th>
                 <th>Document Narration</th>
-                <th>Service Line</th>
+                <th>Segment</th>
                 <th>Contract</th>
                 <th>Party Name</th>
                 @if(in_array('confi_name', $extraColumns))

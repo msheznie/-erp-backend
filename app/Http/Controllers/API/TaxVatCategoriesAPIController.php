@@ -270,8 +270,8 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function update($id, UpdateTaxVatCategoriesAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['main','tax','created_by']);
-        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory'));
+        $input = array_except($input,['main','tax','created_by', 'Actions', 'type', 'DT_Row_Index']);
+        $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory', 'subCatgeoryType'));
 
         /** @var TaxVatCategories $taxVatCategories */
         $taxVatCategories = $this->taxVatCategoriesRepository->findWithoutFail($id);
@@ -334,10 +334,9 @@ class TaxVatCategoriesAPIController extends AppBaseController
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        $taxVatCategories = TaxVatCategories::where('taxVatSubCategoriesAutoID', $id)->update($input);
 
-        $taxVatCategories = $this->taxVatCategoriesRepository->update($input, $id);
-
-        return $this->sendResponse($taxVatCategories->toArray(), 'TaxVatCategories updated successfully');
+        return $this->sendResponse([], 'TaxVatCategories updated successfully');
     }
 
     /**
