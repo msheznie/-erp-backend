@@ -109,6 +109,27 @@ class Helper
      * @param $selectedCompanyId - current company id
      * @return array
      */
+
+    public static function checkDomai()
+    {   
+
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $url = $_SERVER['HTTP_HOST'];
+        if (env('IS_MULTI_TENANCY') == true) {
+            
+            
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+           
+            $search = '*';
+            $redirectUrl = str_replace ($search, $subDomain, $redirectUrl);
+           
+        }   
+        
+        return $redirectUrl;
+    }
+
     public static function getGroupCompany($selectedCompanyId)
     {
         $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
@@ -181,25 +202,7 @@ class Helper
      * no return values
      */
 
-    public static function checkDomai()
-    {   
 
-        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
-        $url = $_SERVER['HTTP_HOST'];
-        if (env('IS_MULTI_TENANCY') == true) {
-            
-            
-            $url_array = explode('.', $url);
-            $subDomain = $url_array[0];
-
-           
-            $search = '*';
-            $redirectUrl = str_replace ($search, $subDomain, $redirectUrl);
-           
-        }   
-        
-        return $redirectUrl;
-    }
 
     public static function confirmDocument($params)
     {
@@ -221,6 +224,8 @@ class Helper
 
         DB::beginTransaction();
         try {
+      
+
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
             switch ($params["document"]) { // check the document id and set relavant parameters
                 case 1:
@@ -951,9 +956,9 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
+                                    
                                         $redirectUrl =  self::checkDomai();
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
@@ -1804,7 +1809,6 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
-          
             $userMessage = 'Successfully approved the document';
             $more_data = [];
             $userMessageE = '';
@@ -2282,6 +2286,9 @@ class Helper
                                     //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                     // }
 
+
+
+                         
                                     $redirectUrl =  self::checkDomai();
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
                                     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
