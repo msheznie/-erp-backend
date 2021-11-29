@@ -43,7 +43,7 @@ class SRMService
     }
     public function getPoList(Request $request): array
     {
-        $supplierID = self::getSupplierIdByUUID($request->input('uuid'));
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
@@ -82,7 +82,7 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
-        $supplierID =  self::getSupplierIdByUUID($request->input('uuid'));
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
         $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID);
 
@@ -98,7 +98,7 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
-        $supplierID =  self::getSupplierIdByUUID($request->input('uuid'));
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');;
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
