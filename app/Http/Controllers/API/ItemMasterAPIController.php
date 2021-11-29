@@ -56,6 +56,7 @@ use Illuminate\Support\Facades\DB;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Config;
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -295,6 +296,7 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             $childCompanies = [$companyId];
         }
+
 
         $itemMasters = ItemMaster::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
         //->whereIn('primaryCompanySystemID',$childCompanies);
@@ -551,7 +553,7 @@ class ItemMasterAPIController extends AppBaseController
 
 
 
-    private function storeImage($imageData, $picName, $picBasePath)
+    private function storeImage($imageData, $picName, $picBasePath,$disk)
     {
         if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
             $imageData = substr($imageData, strpos($imageData, ',') + 1);
@@ -569,10 +571,10 @@ class ItemMasterAPIController extends AppBaseController
 
             $picNameExtension = "{$picName}.{$type}";
             $picFullPath = $picBasePath . $picNameExtension;
-            Storage::disk('public')->put($picFullPath, $imageData);
-        } else if (preg_match('/^storage/', $imageData)) {
+            Storage::disk($disk)->put($picFullPath, $imageData);
+        } else if (preg_match('/^https/', $imageData)) {
             $imageData = basename($imageData);
-            $picFullPath = $picBasePath . $imageData;
+            $picFullPath = $picBasePath;
         } else {
             throw new Exception('did not match data URI with image data');
         }
@@ -580,11 +582,18 @@ class ItemMasterAPIController extends AppBaseController
         return $picFullPath;
     }
 
+    public static function quickRandom($length = 6)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
+    }
 
     public function store(CreateItemMasterAPIRequest $request)
     {
 
-      
+
+       
         $input = $request->all();
        
 
@@ -596,7 +605,8 @@ class ItemMasterAPIController extends AppBaseController
         $financeCategorySubID = $input['financeCategorySub'];
         $itemCategorySubExpirystatus = FinanceItemcategorySub::select('expiryYN')
                                         ->where('itemCategorySubID', $financeCategorySubID)->first();
-        $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
+
+       // $input['expiryYN'] = $itemCategorySubExpirystatus->expiryYN;
 
 
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
@@ -608,7 +618,7 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $ruleArray = array('secondaryItemCode' => 'required|unique:itemmaster',
+        $ruleArray = array(
             'primaryCompanySystemID' => 'required|numeric|min:1',
             'itemDescription' => 'required',
             'unit' => 'required|numeric|min:1',
@@ -694,16 +704,35 @@ class ItemMasterAPIController extends AppBaseController
         
         $count = 0;
         $image_path = [];
-        $path_dir['path'] = '';
+        
+
+        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
+
+    
         foreach($imageData as $key=>$val)
         {
-                    $count++;
-                    $random_words = $itemMasters['itemCodeSystem'].'_'.$count;
-                    $base_path = 'item/'.$itemMasters['itemCodeSystem'].'/'.$count.'/';
-                    $path_dir['path'] = $this->storeImage($val, $random_words, $base_path);
+                   
+                   $path_dir['path'] = '';
+                    $t=time();
+                    $tem = substr($t,5);
+                    $valtt = $this->quickRandom();
+                    $random_words = $itemMasters['itemCodeSystem'].'_'.$valtt.'_'.$tem;
+                    //$base_path = 'item/'.$itemMasters['itemCodeSystem'].'/'.$count.'/';
+                    if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
+                        $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
+                    }   
+                    else
+                    {
+
+                        $base_path = 'item-master/images/'.$itemMasters['itemCodeSystem'] . '/';
+                    }
+                   
+
+                    $path_dir['path'] = $this->storeImage($val, $random_words, $base_path,$disk);
                     array_push($image_path,$path_dir);
         }
         
+
 
         if($imageData == null || empty($imageData))
         {
@@ -760,23 +789,22 @@ class ItemMasterAPIController extends AppBaseController
      *
      * @return Response
      */
+
+
     public function updateItemMaster(Request $request)
     {
+
+ 
+
         $input = $request->all();
         $id = $input['itemCodeSystem'];
         $imageData = $input['item_path'];
+        $remove_items = $input['remove_items'];
         unset($input['item_path']);
+        unset($input['specification']);
+        unset($input['remove_items']);
 
         $input = array_except($input,['finance_sub_category']);
-        $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
-        $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
-        $validator = \Validator::make($input, [
-            'secondaryItemCode' => Rule::unique('itemmaster')->ignore($input['itemCodeSystem'], 'itemCodeSystem')
-        ], $messages);
-
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
 
 
 
@@ -790,7 +818,9 @@ class ItemMasterAPIController extends AppBaseController
 
         unset($input['final_approved_by']);
         $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
-
+        $pic_item = $itemMaster->itemPicture;
+  
+  
         if (empty($itemMaster)) {
             return $this->sendError('Item Master not found');
         }
@@ -858,7 +888,6 @@ class ItemMasterAPIController extends AppBaseController
                 'primaryCompanySystemID' => 'required|numeric|min:1',
                 'financeCategoryMaster' => 'required|numeric|min:1',
                 'financeCategorySub' => 'required|numeric|min:1',
-                'secondaryItemCode' => 'required',
                 'unit' => 'required|numeric|min:1'
             ]);
 
@@ -881,7 +910,7 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError($confirm["message"], 500);
             }
         }
-
+        
         if($itemMaster->itemConfirmedYN == 1){
             $checkSubCategory = FinanceItemcategorySubAssigned::where('mainItemCategoryID', $itemMaster->financeCategoryMaster)
                 ->where('itemCategorySubID', $input['financeCategorySub'])
@@ -892,7 +921,7 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError('The Finance Sub Category field is required.', 500);
             }
         }
-
+        
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
                          'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID');
 
@@ -905,37 +934,83 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMaster->$key = $value;
             }
         }
+     
+        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
 
-
-
-
-        if ($exists = Storage::disk('public')->exists('item/'.$id)) {
-            Storage::disk('public')->deleteDirectory('item/'.$id);
-        }
  
         $count = 0;
         $image_path = [];
         $path_dir['path'] = '';
 
-   
+       
+        if($remove_items != null || !empty($remove_items))
+        {
+            foreach($remove_items as $key=>$val)
+            { 
+                $re = Storage::disk($disk)->delete($val['db_path']);
+             
+            }
+        }
+
+
+      
         if($imageData != null || !empty($imageData))
         {
             foreach($imageData as $key=>$val)
-            {
-                        $count++;
-                        $random_words = $id.'_'.$count;
-                        $base_path = 'item/'.$id.'/'.$count.'/';
-                        $path_dir['path'] = $this->storeImage($val, $random_words, $base_path);
-                        array_push($image_path,$path_dir);
+            {   
+               
+                $path_dir['path'] = '';
+                 if (preg_match('/^https/', $val['path']))
+                 {  
+                //     $rr = base64_decode($val);
+                //      $file_path = parse_url($val);
+
+                //      $bucket_name = env('AWS_BUCKET').'/';
+                //     $file_name = explode($bucket_name,$file_path['path']);
+                //    // $my_url = urlencode($val);
+
+                //      $data_info = file_get_contents('https://s3.us-west-1.amazonaws.com/gearsdev.testbucket/1/G_ERP/item-master/images/312/1/312_1.jpeg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAX7MLAY73NRLXZDLA%2F20211103%2Fus-west-1%2Fs3%2Faws4_request&X-Amz-Date=20211103T102110Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=7458257fac12166f3c155afd5db69f562d8e092990a1dd3b22b6954055cf4864');
+
+                //     return $this->sendResponse($data_info, 'Itemmaster updated successfully d');
+                //     die();
+                    $path_dir['path'] = $val['db_path'];
+                 }
+                 else
+                 {
+                   
+
+                    $t=time();
+                    $tem = substr($t,5);
+                    $valtt = $this->quickRandom();
+                    $random_words = $id.'_'.$valtt.'_'.$tem;
+                    if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
+                        $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$id . '/';
+                    }   
+                    else
+                    {
+    
+                        $base_path = 'item-master/images/'.$id . '/';
+                    }
+                   
+    
+                    $path_dir['path'] = $this->storeImage($val['path'], $random_words, $base_path,$disk);
+                 }
+        
+    
+  
+                array_push($image_path,$path_dir);                   
             }
+
+          
+
 
             $itemMaster->itemPicture = json_encode($image_path);
         }
 
 
 
-       
-      
+        
+   
 
 
         $itemMaster->save();
@@ -999,32 +1074,52 @@ class ItemMasterAPIController extends AppBaseController
 
       
         $image_data = $itemMaster->itemPicture;
-        $storagePath  = Storage::disk('public')->getDriver()->getAdapter()->getPathPrefix();
-     
+        $storagePath  = Storage::disk('s3')->getDriver()->getAdapter()->getPathPrefix();
+
+
+    
         if($image_data != null || !empty($image_data))
         {
          
-            $decode_images = json_decode($itemMaster->itemPicture);
+            $decode_images = json_decode($image_data);
          
-            $itemMaster->itemPicture = null;
+            
+         
+           $itemMaster->itemPicture = null;
             $data = [];
+
             foreach($decode_images as $decode_image)
             {
                 $baseimg = '';
-                $path = $storagePath.$decode_image->path;
 
-                
-                $type = pathinfo($path, PATHINFO_EXTENSION);
-                $data_info = file_get_contents($path);
-                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
+
             
-                array_push($data,$base64);
+                if (Storage::disk('s3')->exists($decode_image->path))
+                {
+                    // $type = pathinfo($path, PATHINFO_EXTENSION);
+                    // $data_info = file_get_contents($path);
+                
+                    // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
+                    $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
+
+                    $info['flag'] = true;
+                    $info['path'] = $baseimg;
+                    $info['db_path'] = $decode_image->path;
+
+                    array_push($data,$info);
+                }
             
             }
-
-   
+      
+                if(count($data) == 0)
+                {
+                    $itemMaster['item_path'] = null;
+                }
+                else
+                {
+                    $itemMaster['item_path'] = collect($data);
+                }
               
-                $itemMaster['item_path'] = collect($data);
         }
         else
         {
@@ -1318,5 +1413,138 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reopen["message"]);
         }
+    }
+
+
+    public function getAssignedItemsForCompany(Request $request) {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+
+        $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+            return $query->where('companySystemID', '=', $companyId);
+        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+        ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
+                $query->where('purchaseRequestID', $input['PurchaseRequestID']);
+            });
+        });
+
+        if (array_key_exists('financeCategoryMaster', $input)) {
+            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
+                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
+            }
+        }
+
+        if (array_key_exists('financeCategorySub', $input)) {
+            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
+                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
+                $itemMasters->where('isActive', $input['isActive']);
+            }
+        }
+        if (array_key_exists('itemApprovedYN', $input)) {
+            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
+                $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
+            }
+        }
+
+        if (array_key_exists('itemConfirmedYN', $input)) {
+            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && !is_null($input['itemConfirmedYN'])) {
+                $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
+            }
+        }
+
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
+    }
+
+    public function getAllAssignedItemsForCompany(Request $request) {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+            return $query->where('companySystemID', '=', $companyId);
+        })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])->get();
+
+        return $this->sendResponse($itemMasters, 'Data retrieved successfully');
+
+
+    }
+
+    public function getInventorySubCat(Request $request)
+    {
+        $itemCategorySub = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl'])->where('itemCategoryID','=',1)->where('isActive',1)->get();
+        $itemCategorySubArray = [];
+        $i=0;
+        foreach ($itemCategorySub as $value){
+            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
+            }else if($value->financeGLcodebBSSystemID && $value->finance_gl_code_bs != null){
+
+                $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_bs->AccountCode)?$value->finance_gl_code_bs->AccountCode:'';
+                $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_bs->AccountDescription)?$value->finance_gl_code_bs->AccountDescription:'';
+
+            }else{
+                $itemCategorySubArray[$i]['AccountCode'] = '';
+                $itemCategorySubArray[$i]['AccountDescription'] = '';
+            }
+            $i++;
+        }
+
+        $output = array(
+        'financeItemCategorySub' => $itemCategorySubArray,
+    );
+
+    return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

@@ -734,8 +734,15 @@ class LogisticAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $company = Company::find($input['companySystemID']);
 
-        $data = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], $input['amount']);
+        if(!$company) {
+            return $this->sendError("Company Not Found", 500);
+        }
+        
+
+
+        $data = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['amount']);
 
         return $this->sendResponse($data, 'Record retrieved successfully');
         

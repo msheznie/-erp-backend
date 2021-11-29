@@ -36,8 +36,10 @@ use App\Models\SupplierType;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CompanyDigitalStamp;
 use App\Repositories\CompanyPolicyCategoryRepository;
 use App\Repositories\CompanyPolicyMasterRepository;
+use App\Repositories\CompanyDigitalStampRepository;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -57,13 +59,15 @@ class CompanyAPIController extends AppBaseController
     private $companyRepository;
     private $policyCategoryRepository;
     private $policyMasterRepository;
+    private $CompanyDigitalStampRepository;
 
     public function __construct(CompanyRepository $companyRepo, CompanyPolicyCategoryRepository $policyCategoryRepo,
-     CompanyPolicyMasterRepository $policyMasterRepo)
+     CompanyPolicyMasterRepository $policyMasterRepo, CompanyDigitalStampRepository $companyDigitalStampRepo)
     {
         $this->companyRepository = $companyRepo;
         $this->policyCategoryRepository = $policyCategoryRepo;
         $this->policyMasterRepository = $policyMasterRepo;
+        $this->companyDigitalStampRepository = $companyDigitalStampRepo;
     }
     
     
@@ -594,6 +598,7 @@ class CompanyAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+
     public function uploadCompanyLogo(Request $request) {
         $input = $request->all();
         $extension = $input['fileType'];
@@ -640,6 +645,143 @@ class CompanyAPIController extends AppBaseController
 
             }
         }
+    }
+
+    public function uploadDigitalStamp(Request $request){
+        $input = $request->all();
+        $imageData = $input['item_path'];
+        $companySystemID = $input['companySystemID'];
+        unset($input['item_path']);
+
+        $masterData = [];
+        $path_dir['path'] = '';
+        
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
+        
+
+        if($imageData != null || !empty($imageData))
+        {
+            foreach($imageData as $key=>$val)
+            {   
+                // $path_dir['path'] = '';
+                if (preg_match('/^https/', $val['path']))
+                 { 
+                    $path_dir['path'] = $val['db_path'];
+                 } else
+                 {
+                    $t=time();
+                    $tem = substr($t,5);
+                    $valtt = $this->quickRandom();
+                    $random_words = $valtt.'_'.$tem;
+                    if (Helper::checkPolicy($input['companySystemID'], 50)) {
+                        $base_path = $companySystemID.'/G_ERP/company-setting/digital-stamps/';
+                    }   
+                    else
+                    {
+    
+                        $base_path = 'company-setting/digital-stamps/';
+                    }
+                    
+                    $path_dir = $this->storeImage($val['path'], $random_words, $base_path,$disk);
+
+                    $masterData= [
+                        'path'=>$path_dir,
+                        'is_default'=>false,
+                        'company_system_id'=> $companySystemID
+                    ];
+        
+                    $digitalStampUpload = $this->companyDigitalStampRepository->create($masterData);
+                 }
+            }
+
+        }
+
+        return $this->sendResponse($digitalStampUpload , 'Digital Stamp Uploaded successfully');
+    }
+
+    private function storeImage($imageData, $picName, $picBasePath,$disk)
+    {
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $type = strtolower($type[1]); 
+
+            if (!in_array($type, ['jpg', 'jpeg', 'png'])) {
+                throw new Exception('invalid image type');
+            }
+
+            $imageData = base64_decode($imageData);
+
+            if ($imageData === false) {
+                throw new Exception('image decode failed');
+            }
+
+            $picNameExtension = "{$picName}.{$type}";
+            $picFullPath = $picBasePath . $picNameExtension;
+            Storage::disk($disk)->put($picFullPath, $imageData);
+        } else if (preg_match('/^https/', $imageData)) {
+            $imageData = basename($imageData);
+            $picFullPath = $picBasePath;
+        } else {
+            throw new Exception('did not match data URI with image data');
+        }
+
+        return $picFullPath;
+    }
+
+    public function updateDefaultStamp(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+        $company_system_id = $input['company_system_id'];
+        $is_default = $input['is_default'];
+
+        $reverseMasterData=[
+            'company_system_id'=>$company_system_id,
+            'is_default'=>0
+        ];
+
+        $masterData=[
+            'company_system_id'=>$company_system_id,
+            'is_default'=>$is_default
+        ];
+
+        
+        $removeIsDefault= CompanyDigitalStamp::where('company_system_id', $company_system_id)->update($reverseMasterData);
+
+        $updateIsDefault =CompanyDigitalStamp::where('id', $id)->update($masterData);
+
+        return $this->sendResponse($updateIsDefault , 'Default digital stamp updated successfully');
+    }
+
+    public function getDigitalStamps(Request $request){
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $digitalStamps = CompanyDigitalStamp::where('company_system_id', $companySystemID);
+        return \DataTables::eloquent($digitalStamps)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->rawColumns(['image_url'])
+            ->make(true);
+    }
+
+    public static function quickRandom($length = 6)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
     }
 
 }

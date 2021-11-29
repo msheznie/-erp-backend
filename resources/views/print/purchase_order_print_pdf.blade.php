@@ -1,3 +1,11 @@
+
+
+
+<!-- <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet"> -->
+<!-- <link rel="stylesheet" href="{{ public_path('assets/css/app.css') }}"> -->
+<!-- <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}" media="all" /> -->
+<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
+<!-- <link rel="stylesheet" href="{{ ltrim(public_path('assets/css/app.css'), '/') }}" /> -->
 <style type="text/css">
     <!--
     @page {
@@ -154,6 +162,11 @@
     #paymentTermsCond .footer {
         display: none;
     }
+
+    .quill-html img {
+        max-width: 700px;
+    }
+
 </style>
 
 <div class="footer">
@@ -592,6 +605,10 @@
                 <th style="text-align: center">Sup.Part No</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
+                @if($allowAltUom)
+                <th style="text-align: center">Alt.UOM</th>
+                <th style="text-align: center">Alt.Qty</th>
+                @endif
                 <th style="text-align: center">Unit Cost</th>
                 <th style="text-align: center">Dis. Per Unit</th>
                 @if ($podata->isVatEligible)
@@ -620,6 +637,16 @@
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
+                    @if($allowAltUom)
+                    <td>
+                       @if($det->altUom)
+                        {{$det->altUom->UnitShortCode}}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>{{$det->altUnitValue}}</td>
+                    @endif
                     <td class="text-right">{{number_format($det->unitCost, $numberFormatting)}}</td>
                     <td class="text-right">{{number_format($det->discountAmount, $numberFormatting)}}</td>
                     @if ($podata->isVatEligible)
@@ -734,6 +761,50 @@
         </table>
     </div>
 </div>
+@if ($specification==1)
+
+<div class="row">
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h4></td>
+            </tr>
+        </table>
+        <br>
+      
+            @if ($podata->detail)
+                @foreach ($podata->detail as $det)
+                @if ($det->item->specification)
+
+
+                   <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">
+                        <tr style="height:10px;">
+                            <td style="width: 0%;height:10px">
+                            <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
+                            </td>
+
+                        
+                        </tr>
+                    </table>
+                    <table style="width:100% !important" class="table">
+                         <tr>
+                             <td class="ql-container ql-snow">
+                             <td class="ql-editor">
+                                <div style="max-width: 700px !important" class="quill-html">
+                                    {!!$det->item->specification->html !!}
+                                </div>
+                             </td>
+                        </tr>
+                    </table>
+               @endif
+                @endforeach
+            @endif
+
+</div>   
+ 
+
+
+@endif
 @if ($termsCond==1)
     <div class="row" id="paymentTermsCond">
         <div class="page_break"></div>
@@ -1219,3 +1290,5 @@
         </table>
     </div>
 @endif
+
+

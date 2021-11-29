@@ -19,8 +19,11 @@ namespace App\Http\Controllers\API;
 
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
+use App\Models\ItemAssigned;
 use App\Models\CompanyFinancePeriod;
+use App\Models\ExpenseAssetAllocation;
 use App\Models\CompanyFinanceYear;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVMaster;
@@ -57,12 +60,30 @@ class AssetManagementReportAPIController extends AppBaseController
         /*load asset type dropdown*/
         $aasetType = AssetType::all();
 
+        $assets = [];
+        $expenseGL = [];
+        if (isset($request['reportID']) && $request['reportID'] == "AEA") {
+            $assets = ItemAssigned::where('companySystemID', $selectedCompanyId)
+                                  ->where('isActive', 1)
+                                  ->where('isAssigned', -1)
+                                   ->where('financeCategoryMaster', 3)
+                                   ->get();
+
+
+            $expenseGL = ChartOfAccountsAssigned::where('companySystemID', $selectedCompanyId)
+                                                ->where('isAssigned', -1)
+                                                ->where('isActive', 1)
+                                                ->get();
+        }
+
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'assetCategory' => $assetCategory,
             'financePeriod' => $financePeriod,
             'years' => $years,
             'months' => $months,
+            'assets' => $assets,
+            'expenseGL' => $expenseGL,
             'assetType' => $aasetType
         );
 
@@ -154,6 +175,19 @@ class AssetManagementReportAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+             case 'AEA':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'currencyID' => 'required',
+                    'glAccounts' => 'required',
+                    'assets' => 'required',
                 ]);
 
                 if ($validator->fails()) {
@@ -541,6 +575,26 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $output = $this->getAssetCWIPQRY($request);
                 return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                break;
+            case 'AEA': //Asset expenses
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getAssetExpenseQRY($request);
+
+                $outputArr = array();
+                $grandTotalLocal = 0;
+                $grandTotalRpt = 0;
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        $grandTotalLocal += $val->amountLocal;
+                        $grandTotalRpt += $val->amountRpt;
+                    }
+                }
+
+                $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
+
+                return array('reportData' => $outputArr,'companyCurrency' => $companyCurrency, 'grandTotalLocal' => $grandTotalLocal, 'grandTotalRpt' => $grandTotalRpt);
+
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
@@ -1104,7 +1158,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] =  $final['rptnbv'];
                     }
 
-//                    return $data;
+                   // return $data;
 
                      \Excel::create('Asset_Register_Group_detail_Report', function ($excel) use ($data) {
                         $excel->sheet('asset register grouped', function ($sheet) use ($data) {
@@ -1349,6 +1403,49 @@ class AssetManagementReportAPIController extends AppBaseController
                 })->download($type);
                 return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
+            case 'AEA': //Asset Expense
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $decimalPlaces = 2;
+                $output = $this->getAssetExpenseQRY($request);
+                $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
+                if (count($output) > 0) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
+                        $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
+                        $data[$x]['Asset Code'] = isset($val->asset->primaryCode) ? $val->asset->primaryCode : "";
+                        $data[$x]['Asset Description'] = isset($val->asset->itemDescription) ? $val->asset->itemDescription : "";
+
+                        if ($val->documentSystemID == 11) {
+                            $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
+                            $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
+                        } else {
+                            $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
+                            $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                        }
+
+                        if ($request->currencyID == 2) {
+                            $data[$x]['Currency'] = $companyCurrency->localcurrency->CurrencyCode;
+                            $data[$x]['Amount'] = round($val->amountLocal, $companyCurrency->localcurrency->DecimalPlaces);
+                        } else {
+                             $data[$x]['Currency'] = $companyCurrency->reportingcurrency->CurrencyCode;
+                            $data[$x]['Amount'] = round($val->amountRpt, $companyCurrency->reportingcurrency->DecimalPlaces);
+                        }
+                        $x++;
+                    }
+                }
+
+                 \Excel::create('asset_expenses', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+                return $this->sendResponse(array(), trans('custom.success_export'));
+                break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
         }
@@ -1427,6 +1524,56 @@ FROM
                     erp_fa_asset_master.companySystemID,
                     erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';
         return \DB::select($query);
+    }
+
+    public function getAssetExpenseQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+
+        $toDate = new Carbon($request->toDate);
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('itemCodeSystem')->toArray() : [];
+        $chartOfAccountIds = (isset($request->glAccounts) && count($request->glAccounts) > 0) ? collect($request->glAccounts)->pluck('chartOfAccountSystemID')->toArray() : [];
+
+        return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)
+                                                  ->whereIn('assetID', $assetIds)
+                                                  ->with(['asset', 'chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
+                                                        $query->whereIn('companySystemID', $companyID)
+                                                              ->whereDate('bookingDate', '>=', $fromDate)
+                                                              ->whereDate('bookingDate', '<=', $toDate);
+                                                  }, 'payment_voucher'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                        $query->whereIn('companySystemID', $companyID)
+                                                              ->whereDate('BPVdate', '>=', $fromDate)
+                                                              ->whereDate('BPVdate', '<=', $toDate);
+                                                  }])
+                                                  ->where(function($query) use ($companyID, $fromDate, $toDate) {
+                                                      $query->where(function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereHas('supplier_invoice', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                        $query->whereIn('companySystemID', $companyID)
+                                                                              ->whereDate('bookingDate', '>=', $fromDate)
+                                                                              ->whereDate('bookingDate', '<=', $toDate);
+                                                                    })
+                                                                    ->where('documentSystemID', 11);
+                                                          })
+                                                         ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereHas('payment_voucher', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                        $query->whereIn('companySystemID', $companyID)
+                                                                              ->whereDate('BPVdate', '>=', $fromDate)
+                                                                              ->whereDate('BPVdate', '<=', $toDate);
+                                                                    })
+                                                                    ->where('documentSystemID', 4);
+                                                          });
+                                                  })
+                                                  ->get();
+
     }
 
     function getAssetDisposal($request)
@@ -2475,7 +2622,7 @@ FROM
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
-	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (  DATE(disposedDate) > '$asOfDate')) OR DIPOSED <>  -1)
+	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where
 	) t  ORDER BY sortfaID desc  ";
 

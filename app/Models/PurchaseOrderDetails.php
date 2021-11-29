@@ -199,7 +199,9 @@ class PurchaseOrderDetails extends Model
         'madeLocallyYN',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'VATApplicableOn'
+        'VATApplicableOn',
+        'altUnit',
+        'altUnitValue'
     ];
 
     /**
@@ -294,7 +296,9 @@ class PurchaseOrderDetails extends Model
         'modifiedUser' => 'string',
         'madeLocallyYN' => 'integer',
         'supplierCatalogMasterID' => 'integer',
-        'supplierCatalogDetailID' => 'integer'
+        'supplierCatalogDetailID' => 'integer',
+        'altUnit'  => 'integer',
+        'altUnitValue'  => 'float'
     ];
 
     /**
@@ -317,6 +321,11 @@ class PurchaseOrderDetails extends Model
     public function unit(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
     }
+
+    public function altUom(){
+        return $this->belongsTo('App\Models\Unit','altUnit','UnitID');
+    }
+
 
     public function reporting_currency(){
         return $this->belongsTo('App\Models\CurrencyMaster','companyReportingCurrencyID','currencyID');
@@ -371,6 +380,15 @@ class PurchaseOrderDetails extends Model
 
     public function allocations(){
         return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseOrderDetailsID');
+
+    }
+
+    public function vat_sub_category(){
+        return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
+    }
+
+    public function item(){
+        return $this->hasOne('App\Models\ItemMaster', 'itemCodeSystem', 'itemCode');
 
     }
 }

@@ -26,6 +26,7 @@ use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\Company;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\DebitNote;
@@ -632,6 +633,14 @@ class DebitNoteAPIController extends AppBaseController
 
                 if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))) {
                     return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                }
+
+                $outputChartOfAc = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
                 }
 
                 $taxDetail['companyID'] = $input['companyID'];

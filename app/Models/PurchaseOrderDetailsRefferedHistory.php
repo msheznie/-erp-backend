@@ -614,7 +614,9 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'madeLocallyYN'
+        'madeLocallyYN',
+        'altUnit',
+        'altUnitValue'
     ];
 
     /**
@@ -712,7 +714,9 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'madeLocallyYN' => 'integer'
+        'madeLocallyYN' => 'integer',
+        'altUnit'  => 'integer',
+        'altUnitValue'  => 'float'
     ];
 
     /**

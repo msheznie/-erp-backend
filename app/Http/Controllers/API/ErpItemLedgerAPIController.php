@@ -28,7 +28,9 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\Company;
+use App\Models\ItemMaster;
+use App\Models\Unit;
 /**
  * Class ErpItemLedgerController
  * @package App\Http\Controllers\API
@@ -593,7 +595,23 @@ WHERE
 public function generateStockLedger(Request $request)
 {
 
-    $selectedCompanyId = $request['companySystemID'];
+    if(is_array($request['companySystemID']))
+    {
+        $selectedCompanyId = $request['companySystemID'][0];
+    }
+    else
+    {
+        $selectedCompanyId = $request['companySystemID'];
+    }
+    
+
+    $company = Company::where('companySystemID',$selectedCompanyId)->with(['localcurrency'=>function($query){
+        $query->select('currencyID','CurrencyCode');
+    }])->select('companySystemID','localCurrencyID')->first();
+
+    $ItemMaster = ItemMaster::where('itemCodeSystem',$request['Items'][0]['itemSystemCode'])->select('itemCodeSystem','unit')->first();
+    $unit = Unit::where('UnitID',$ItemMaster->unit)->first();
+
     $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
  
     if ($isGroup) {
@@ -647,7 +665,7 @@ public function generateStockLedger(Request $request)
     }
     
     $page = $input['page'];
-    $per_page = 2;
+    $per_page = 10;
     $start = intval(($page - 1) * $per_page);
 
     $end = intval(($page * $per_page));
@@ -658,6 +676,8 @@ public function generateStockLedger(Request $request)
 erp_itemledger.companyID,
 companymaster.CompanyName,
 erp_itemledger.documentID,
+erp_itemledger.documentSystemCode,
+erp_itemledger.documentSystemID,
 erp_documentmaster.documentDescription,
 erp_itemledger.documentCode,
 erp_itemledger.itemPrimaryCode,
@@ -671,6 +691,7 @@ units.UnitShortCode,
 warehousemaster.wareHouseDescription,
 employees.empName,
 currencymaster.CurrencyName AS LocalCurrency,
+currencymaster.CurrencyCode AS LocalCurrencyCode,
 erp_itemledger.wacLocal,
 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, currencymaster.DecimalPlaces) AS TotalWacLocal,
 currencymaster_1.CurrencyName AS RepCurrency,
@@ -699,6 +720,8 @@ UNION ALL
 
 SELECT
 erp_itemledger.companyID,
+erp_itemledger.documentSystemCode,
+erp_itemledger.documentSystemID,
 companymaster.CompanyName,
 '' as documentID,
 '' as documentDescription,
@@ -714,6 +737,7 @@ units.UnitShortCode,
 '' as wareHouseDescription,
 '' as empName,
 currencymaster.CurrencyName AS LocalCurrency,
+currencymaster.CurrencyCode AS LocalCurrencyCode,
 SUM((IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacLocal,
 SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0)) AS TotalWacLocal,
 currencymaster_1.CurrencyName AS RepCurrency,
@@ -736,27 +760,80 @@ erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . 
 DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
     //dd(DB::getQueryLog());
     
+
+  
+    $total_count = 0;
+    foreach($data as $detail)
+    {
+        
+        $total_count = $total_count + $detail->inOutQty;
+     
+    }
+
+
+    
     $details = array_slice($data,$start, $per_page);
+
+
+
 
     if($type == 1)
     {   
         $data_obj = []; 
         $type_def = 'csv';
-        foreach ($details as $detail) {
+        foreach ($data as $detail) {
 
+
+          
+            if($detail->documentCode == 'Opening Balance')
+            {
+                $dt = '';
+            }
+            else
+            {
+                $dt = date("Y-m-d", strtotime($detail->transactionDate));
+           
+
+             
+     
+                //$dt = sprintf("%02s", $date);
+
+                //($currentDay<10 ? "0" : "").$currentDay."\n";
+            }
+      
+            if($detail->inOutQty == 0)
+            {
+              $qua_req = '0';
+            }
+            else
+            {
+              $qua_req = $detail->inOutQty;
+            }
+ 
+            if($detail->TotalWacLocal == 0)
+            {
+              $tran_amount = '0';
+            }
+            else
+            {
+              $tran_amount = number_format($detail->TotalWacLocal, $detail->LocalCurrencyDecimals, '.', ',');
+            }
+ 
        
             $data_obj[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
+       
                 'Document Code' => $detail->documentCode,
-                'Transaction Date' => date("d/m/Y", strtotime($detail->transactionDate)),
+                'Transaction Date' => $dt,
                 'Location' => $detail->wareHouseDescription,
-                'Quantity' => $detail->inOutQty,
-                'Amount' => $detail->LocalCurrency,
+                'Quantity' => $qua_req,
+                'Amount' => $tran_amount,
             );
 
          
         }
-   
+
+ 
         \Excel::create('itemTransactionHistory', function ($excel) use ($data_obj) {
 
             $excel->sheet('sheet name', function ($sheet) use ($data_obj) {
@@ -764,9 +841,13 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                $sheet->setColumnFormat(array(
+                    'B' => 'yyyy-mm-dd',
+                ));
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:E' . $lastrow)->getAlignment()->setWrapText(true);
+           // $excel->getActiveSheet()->getStyle('V'.$i)->getNumberFormat()->setFormatCode('dd-mmm-yyyy');
         })->download($type_def);
 
         
@@ -775,9 +856,15 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
     }
     else if($type == 2)
     {
+
+
+        $info['totla_quan'] = $total_count;
         $info['data'] = $details;
         $info['total'] = count($data);
         $info['curren_page'] = ($page);
+        $info['currency'] = ($company->localcurrency->CurrencyCode);
+        $info['unit'] = $unit->UnitShortCode;
+        
         return $this->sendResponse($info, 'Item ledger record retrieved successfully');
     }
 
@@ -1741,12 +1828,31 @@ GROUP BY
     public function getItemStockDetails(Request $request)
     {
 
+        $company = Company::where('companySystemID',$request['company_id'])->with(['localcurrency'=>function($query){
+            $query->select('currencyID','CurrencyCode');
+        }])->select('companySystemID','localCurrencyID')->first();
 
+ 
         $date = new Carbon($request->date);
         $date = $date->format('Y-m-d');
 
+        $page = $request->page;
+        $per_page = 10;
+        $start = intval(($page - 1) * $per_page);
+    
+        $end = intval(($page * $per_page));
+    
+ 
 
-        $selectedCompanyId = $request['company_id'];
+        if(is_array($request['company_id']))
+        {
+            $selectedCompanyId = $request['company_id'][0];
+        }
+        else
+        {
+            $selectedCompanyId = $request['company_id'];
+        }
+       
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
@@ -1780,6 +1886,7 @@ GROUP BY
                 ItemLedger.minimumQty,               
                 ItemLedger.maximunQty,      
                 LocalCurrency,
+                LocalCurrencyCode,
                 warehouse,
                 rol,
             IF
@@ -1807,6 +1914,7 @@ GROUP BY
                 units.UnitShortCode,
                 round( erp_itemledger.inOutQty, 2 ) AS Qty,
                 currencymaster.CurrencyName AS LocalCurrency,
+                currencymaster.CurrencyCode AS LocalCurrencyCode,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
                 currencymaster_1.CurrencyName AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
@@ -1834,9 +1942,69 @@ GROUP BY
             GROUP BY
                 ItemLedger.wareHouseSystemCode";
         $items = DB::select($sql);
-  
-        return $this->sendResponse($items, 'Erp Item Ledger retrieved successfully');
+        $total_count = 0;
+        foreach($items as $item)
+        {
+            $total_count = $total_count + $item->Qty;
+        }
+
+
+        $details = array_slice($items,$start, $per_page);
+
+
+
+        $ItemMaster = ItemMaster::where('itemCodeSystem',$item_code)->select('itemCodeSystem','unit')->first();
+        $unit = Unit::where('UnitID',$ItemMaster->unit)->first();
+
+
+        $info['count'] = $total_count;
+        $info['datas'] = $details;
+        $info['total'] = count($items);
+        $info['curren_page'] = ($page);
+        $info['currency'] = ($company->localcurrency->CurrencyCode);
+        $info['unit'] = $unit->UnitShortCode;   
+        return $this->sendResponse($info, 'Erp Item Ledger retrieved successfully');
 
     }
+
+
+    public function getErpLedgerItems(Request $request)
+    {
+
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+
+        $category = (array)$request['category'];
+        $category = collect($category)->pluck('id');
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->whereIn('itemmaster.financeCategorySub', $category)
+            ->where('itemmaster.financeCategoryMaster', 1)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            //->take(50)
+            ->get();
+
+
+       
+
+
+        $output = array(
+            'item' => $item
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+    }
+
+
+
+
 
 }

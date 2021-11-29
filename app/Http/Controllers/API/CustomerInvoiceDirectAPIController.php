@@ -229,7 +229,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
             $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
             if (!$serviceLine) {
-                return $this->sendError('Please select a Service Line', 500);
+                return $this->sendError('Please select a Segment', 500);
             }
             $segment = SegmentMaster::find($input['serviceLineSystemID']);
             $input['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
@@ -439,7 +439,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
                 if (!$serviceLine) {
-                    return $this->sendError('Please select a Service Line', 500);
+                    return $this->sendError('Please select a Segment', 500);
                 }
                 $segment = SegmentMaster::find($input['serviceLineSystemID']);
                 $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
@@ -975,8 +975,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'unitCost' => 'required|numeric|min:1',
                                 ], [
 
-                                    'serviceLineSystemID.required' => 'Department is required.',
-                                    'serviceLineCode.required' => 'Cannot confirm. Service Line code is not updated.',
+                                    'serviceLineSystemID.required' => 'Segment is required.',
+                                    'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
                                     'invoiceAmount.required' => 'Amount is required.',
@@ -1018,7 +1018,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         if (count($groupby) != 0) {
 
                             if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
+                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
                             } else {
 
                                 // VAT configuration validation
@@ -2859,6 +2859,8 @@ WHERE
             $sort = 'desc';
         }
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
 
@@ -2898,12 +2900,18 @@ WHERE
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
+        })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID, $fromPms) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
                 ->where('erp_custinvoicedirect.approved', 0)
-                ->where('erp_custinvoicedirect.confirmedYN', 1);
+                ->where('erp_custinvoicedirect.confirmedYN', 1)
+                ->when(!$fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', '!=', 5);
+                })
+                ->when($fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', 5);
+                });
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')
@@ -2954,6 +2962,8 @@ WHERE
             $sort = 'desc';
         }
 
+        $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
+
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
 
@@ -2982,7 +2992,13 @@ WHERE
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
                 ->where('erp_custinvoicedirect.approved', -1)
-                ->where('erp_custinvoicedirect.confirmedYN', 1);
+                ->where('erp_custinvoicedirect.confirmedYN', 1)
+                 ->when(!$fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', '!=', 5);
+                })
+                ->when($fromPms, function($query) {
+                    $query->where('erp_custinvoicedirect.createdFrom', 5);
+                });
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')

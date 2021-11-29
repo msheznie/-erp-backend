@@ -271,7 +271,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'comments' => 'comments');
 
                         break;
-                    case 24: //Inventory Reclassification
+                    case 24: // Purchase Return
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'PurchaseReturn';
                         $docInforArr["childRelation"] = 'details';
@@ -444,7 +444,7 @@ class ItemLedgerInsert implements ShouldQueue
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                     }else if($masterModel["documentSystemID"] == 7){    // stock adjustment
-                                        if($masterRec['stockCountType'] == 2){       // cost adjustment
+                                        if($masterRec['stockAdjustmentType'] == 2){       // cost adjustment
                                             $data[$i][$column] = 1;
                                             Log::info('qty is'.$data[$i][$column]);
                                         }else{
@@ -457,7 +457,7 @@ class ItemLedgerInsert implements ShouldQueue
 
                                         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
 
-                                        if($masterRec['stockAdjustmentType']==2){       // cost count
+                                        if($masterRec['stockCountType']==2){       // cost count
                                             $data[$i][$column] = 1;
                                             Log::info('qty is'.$data[$i][$column]);
                                         }else{

@@ -12,4 +12,9 @@ let mix = require('laravel-mix');
  */
 
 mix.js('resources/assets/js/app.js', 'public/js')
-   .sass('resources/assets/sass/app.scss', 'public/css');
+   .sass('resources/assets/sass/app.scss', 'public/css')
+   .styles([
+      'resources/assets/css/quill.bubble.css',
+      'resources/assets/css/quill.core.css',
+      'resources/assets/css/quill.snow.css'
+      ], 'public/assets/css/app.css');

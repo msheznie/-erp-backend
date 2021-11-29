@@ -152,6 +152,7 @@ class PurchaseRequest extends Model
         'approvedDate',
         'approvedByUserID',
         'approvedByUserSystemID',
+        'approval_remarks',
         'timesReferred',
         'refferedBackYN',
         'prClosedYN',
@@ -290,7 +291,8 @@ class PurchaseRequest extends Model
         'manuallyClosedByEmpID' => 'string',
         'manuallyClosedByEmpName' => 'string',
         'manuallyClosedDate' => 'string',
-        'manuallyClosedComment' => 'string'
+        'manuallyClosedComment' => 'string',
+        'approval_remarks' => 'string'
     ];
 
     /**
