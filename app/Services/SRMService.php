@@ -49,6 +49,7 @@ class SRMService
         $data = ProcumentOrder::where('approved', -1)
             ->where('supplierID', $supplierID)
             ->with(['currency', 'created_by'])
+            ->orderBy('createdDateTime', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
         return [
             'success'   => true,
