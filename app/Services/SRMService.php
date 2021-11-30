@@ -48,8 +48,8 @@ class SRMService
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
             ->where('supplierID', $supplierID)
-            ->where('documentSystemID', 2)
             ->with(['currency', 'created_by'])
+            ->orderBy('createdDateTime', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
         return [
             'success'   => true,

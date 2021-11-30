@@ -88,7 +88,7 @@ class SlotMasterRepository extends AppBaseController
         $dateRangeExist = '';
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
         if($limitYN == 1){ 
-                if( $input['noofdeliveries'] <=0){ 
+                if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
                     return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
                 }
         } 
@@ -98,7 +98,7 @@ class SlotMasterRepository extends AppBaseController
         $data['from_date'] = $fromDate;
         $data['to_date'] = $toDate;
         $data['limit_deliveries'] = $limitYN;
-        $data['no_of_deliveries'] = $input['noofdeliveries'];
+        $data['no_of_deliveries'] = isset($input['noofdeliveries']) ? $input['noofdeliveries'] : 0;
         $data['company_id'] = $input['companyId'];
         $data['created_by'] = Helper::getEmployeeSystemID();
         try {
