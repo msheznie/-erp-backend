@@ -196,7 +196,7 @@ class InventoryReportAPIController extends AppBaseController
             $cur = 'wacRpt';
             $cur_id = 'erp_itemledger.wacRptCurrencyID';
         }
-
+ 
         return ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
                                     ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
                                     ->join('currencymaster', $cur_id, '=', 'currencymaster.currencyID')
@@ -215,9 +215,12 @@ class InventoryReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
 
-            case 'INVIS':        
-                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
-                      
+            case 'INVIS':    
+                
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
+   
                 $array = array();
                 if (!empty($filter_val)) {
                     foreach ($filter_val as $element)
@@ -241,14 +244,13 @@ class InventoryReportAPIController extends AppBaseController
                 $GrandClosing = array_sum($GrandClosing);
         
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
-                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $output = array(
                     'categories' => $array,
                     'grandOpeningBalance' => $GrandOpeningBalance,
                     'grandInwards' => $GrandInwards,
-                    'grandOutwards' => $GrandOutwards,
+                    'grandOutwards' => ($GrandOutwards < 0?$GrandOutwards*-1:$GrandOutwards),
                     'company' => $company,
-                    'currencyID' => $input['currency'],
+                    'currencyID' => $currency_id,
                     'grandClosing' => $GrandClosing,
                 );   
                 return $this->sendResponse($output, 'data retrieved retrieved successfully');
@@ -941,15 +943,16 @@ FROM
 
             case 'INVIS':
 
-  
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
                                           
-                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
 
-                $currencyCode = ($request['currency'][0] == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
+                $currencyCode = ($currency_id == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
 
-                $decimal_val = ($request['currency'][0] == 1) ? $company->localcurrency->DecimalPlaces : $company->reportingcurrency->DecimalPlaces;
+                $decimal_val = ($currency_id == 1) ? $company->localcurrency->DecimalPlaces : $company->reportingcurrency->DecimalPlaces;
 
           
                 foreach ($filter_val as $val) {
@@ -962,8 +965,8 @@ FROM
                         'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
                         'Inwards Qty' => $val->inwards_quantity,
                         'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $decimal_val, '.', ','),
-                        'Outwards Qty' => abs($val->outwards_quantity),
-                        'Outwards Val ('.$currencyCode.')' => number_format($val->outwards_value, $decimal_val, '.', ','),
+                        'Outwards Qty' => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
+                        'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
                         'Closing Balance Qty' => $val->closing_balance_quantity,
                         'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
         
