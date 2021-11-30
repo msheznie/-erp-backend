@@ -1,11 +1,5 @@
 
 
-
-<!-- <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet"> -->
-<!-- <link rel="stylesheet" href="{{ public_path('assets/css/app.css') }}"> -->
-<!-- <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}" media="all" /> -->
-<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
-<!-- <link rel="stylesheet" href="{{ ltrim(public_path('assets/css/app.css'), '/') }}" /> -->
 <style type="text/css">
     <!--
     @page {
@@ -23,15 +17,15 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
-    h3 {
+    #watermark h3, .content h3 {
         font-size: 1.53125rem;
     }
 
-    h6 {
+     #watermark h6, .content h6 {
         font-size: 0.875rem;
     }
 
-    h6, h3 {
+     #watermark h6, .content h6 ,#watermark h3,  .content h3 {
         margin-bottom: 0.1rem;
         font-weight: 500;
         line-height: 1.2;
@@ -168,7 +162,7 @@
     }
 
 </style>
-
+<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 <div class="footer">
     <table style="width:100%; margin-top: 2%">
         <tr>
