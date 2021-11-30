@@ -133,21 +133,21 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
+        
         $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
-            ->where('companySystemID', $companySystemID)
-            ->first();
+        ->where('companySystemID', $companySystemID)
+        ->first();
 
-        $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
+        if($input['itemAutoID']) {
+            $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
             ->where('quotationMasterID', $input['quotationMasterID'])
             ->first();
 
-        if (!empty($itemExist)) {
-            return $this->sendError('Added item already exist');
+            if (!empty($itemExist)) {
+                return $this->sendError('Added item already exist');
+            }
         }
 
-        if (empty($item)) {
-            return $this->sendError('Added item not found in item master');
-        }
 
         $quotationMasterData = QuotationMaster::find($input['quotationMasterID']);
 
@@ -155,11 +155,15 @@ class QuotationDetailsAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
-        $unitMasterData = Unit::find($item->itemUnitOfMeasure);
-        if (empty($unitMasterData)) {
-            return $this->sendError('Unit of Measure not found');
+
+        if($item) {
+            $unitMasterData = Unit::find($item->itemUnitOfMeasure);
+            if (empty($unitMasterData)) {
+                return $this->sendError('Unit of Measure not found');
+            }
+            $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
         }
-        $input['unitOfMeasure'] = $unitMasterData->UnitShortCode;
+
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if (empty($company)) {
@@ -168,12 +172,12 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $input['companyID'] = $company->CompanyID;
 
-        $input['itemSystemCode'] = $item->itemPrimaryCode;
-        $input['itemDescription'] = $item->itemDescription;
-        $input['itemCategory'] = $item->financeCategoryMaster;
-        $input['itemReferenceNo'] = $item->secondaryItemCode;
-        $input['unitOfMeasureID'] = $item->itemUnitOfMeasure;
-        $input['wacValueLocal'] = $item->wacValueLocal;
+        $input['itemSystemCode'] = ($item) ? $item->itemPrimaryCode : null;
+        $input['itemDescription'] = ($item) ? $item->itemDescription : $input['itemCode'];
+        $input['itemCategory'] = ($item) ? $item->financeCategoryMaster : null;
+        $input['itemReferenceNo'] = ($item) ? $item->secondaryItemCode : null;
+        $input['unitOfMeasureID'] = ($item) ? $item->itemUnitOfMeasure : null;
+        $input['wacValueLocal'] = ($item) ? $item->wacValueLocal : null;
 
         if ($quotationMasterData->documentSystemID == 68) {
             $input['unittransactionAmount'] = round(\Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
@@ -196,7 +200,7 @@ class QuotationDetailsAPIController extends AppBaseController
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
-        $input['wacValueReporting'] = $item->wacValueReporting;
+        $input['wacValueReporting'] = ($item) ? $item->wacValueReporting : null;
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
@@ -544,6 +548,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)
             ->get();
+            
 
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
@@ -722,12 +727,16 @@ WHERE
 
                         // checking the qty request is matching with sum total
                         if ($new['requestedQty'] >= $new['noQty']) {
-                            $item = ItemAssigned::where('itemCodeSystem', $new['itemAutoID'])
-                                                ->where('companySystemID', $salesOrder->companySystemID)
-                                                ->first();
 
-                            if (empty($item)) {
-                                return $this->sendError('Added item not found in item master');
+                            if($new['itemAutoID'] != 0) {
+                                $item = ItemAssigned::where('itemCodeSystem', $new['itemAutoID'])
+                                ->where('companySystemID', $salesOrder->companySystemID)
+                                ->first();
+
+
+                                if (empty($item)) {
+                                    return $this->sendError('Added item not found in item master');
+                                }
                             }
 
                             $new['qtyIssuedDefaultMeasure'] = $new['noQty'];
