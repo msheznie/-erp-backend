@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
 
 /**
@@ -66,9 +66,9 @@ use Eloquent as Model;
  */
 class Appointment extends Model
 {
-
+    use Compoships;
     public $table = 'appointment';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -81,7 +81,22 @@ class Appointment extends Model
         'slot_detail_id',
         'status',
         'supplier_id',
-        'tenat_id'
+        'tenat_id',
+        'document_id',
+        'document_system_id',
+        'serial_no',
+        'primary_code',
+        'confirmed_by_emp_id',
+        'confirmedByName',
+        'confirmedByEmpID',
+        'confirmed_date',
+        'approved_yn',
+        'approved_date',
+        'approved_by_emp_name',
+        'approved_by_emp_id',
+        'current_level_no',
+        'timesReferred',
+        'confirmed_yn'
     ];
 
     /**
@@ -96,7 +111,22 @@ class Appointment extends Model
         'slot_detail_id' => 'integer',
         'status' => 'integer',
         'supplier_id' => 'integer',
-        'tenat_id' => 'integer'
+        'tenat_id' => 'integer',
+        'document_id' => 'varchar',
+        'document_system_id' => 'integer',
+        'serial_no' => 'integer',
+        'primary_code' => 'varchar',
+        'confirmed_by_emp_id' => 'integer',
+        'confirmedByName' => 'varchar',
+        'confirmedByEmpID' => 'varchar',
+        'confirmed_date' => 'datetime',
+        'approved_yn' => 'integer',
+        'approved_date' => 'datetime',
+        'approved_by_emp_name' => 'varchar',
+        'approved_by_emp_id' => 'integer',
+        'current_level_no' => 'integer',
+        'timesReferred' => 'integer',
+        'confirmed_yn' => 'integer'
     ];
 
     /**
@@ -104,9 +134,18 @@ class Appointment extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
 
-    
+    public function detail()
+    {
+        return $this->hasMany('App\Models\AppointmentDetails', 'appointment_id', 'id');
+    }
+    public function created_by()
+    {
+        return $this->hasOne('App\Models\SupplierAssigned', 'supplierCodeSytem', 'created_by');
+    }
+    public function documentApproved()
+    {
+        return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+    }
 }

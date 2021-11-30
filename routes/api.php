@@ -156,6 +156,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
         Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');
+        Route::get('getItemSubCategory', 'ItemMasterAPIController@getItemSubCategory');
         
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
@@ -268,6 +269,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::resource('erp_locations', 'ErpLocationAPIController');
+        Route::post('getAllLocation', 'ErpLocationAPIController@getAllLocation');
+        Route::post('createLocation', 'ErpLocationAPIController@createLocation');
+        Route::post('deleteLocation', 'ErpLocationAPIController@deleteLocation');
         Route::resource('accounts_types', 'AccountsTypeAPIController');
 
 
@@ -2345,6 +2349,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
         Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
         Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
+        Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
+        Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2415,6 +2421,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('clanderSlotDateRangeValidation', 'SlotMasterAPIController@clanderSlotDateRangeValidation');
     Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
+    Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
     Route::get('test', 'TenantAPIController@test');
 });
 

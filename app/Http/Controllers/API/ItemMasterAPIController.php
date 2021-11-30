@@ -1547,4 +1547,22 @@ class ItemMasterAPIController extends AppBaseController
 
     return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    public function getItemSubCategory(Request $request)
+    {
+        $input = $request->all();
+
+        $subCategoryData = [];
+        if (isset($input['itemSystemCode']) && $input['itemSystemCode'] > 0) {
+            $itemMaster = ItemMaster::find($input['itemSystemCode']);
+
+            if ($itemMaster) {
+                $subCategoryData = FinanceItemCategorySub::with(['finance_gl_code_bs','finance_gl_code_pl', 'finance_gl_code_revenue'])
+                                                         ->where('itemCategorySubID',$itemMaster->financeCategorySub)
+                                                         ->first();
+            }
+        }
+
+        return $this->sendResponse($subCategoryData, 'Record retrieved successfully');
+    }
 }

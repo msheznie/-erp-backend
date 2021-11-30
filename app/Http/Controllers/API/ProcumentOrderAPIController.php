@@ -196,17 +196,7 @@ class ProcumentOrderAPIController extends AppBaseController
       
         $input = $this->convertArrayToValue($input);
 
-        if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-
-            $validator = \Validator::make($input, [
-                'supCategoryICVMasterID' => 'required|numeric|min:1',
-                'supCategorySubICVID' => 'required|numeric|min:1',
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-        } else if (isset($input['preCheck']) && $input['preCheck']) {
+       if (isset($input['preCheck']) && $input['preCheck']) {
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             if (!empty($company) && $company->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));

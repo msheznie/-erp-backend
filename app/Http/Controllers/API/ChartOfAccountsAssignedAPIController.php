@@ -414,24 +414,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
         $companyID = $input['companySystemID'];
         $projectID = $input['projectID'];
-        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+        $glDetails = ProjectGlDetail::with('chartofaccounts')
+                                    ->where('companySystemID', $companyID)
                                     ->where('projectID' , $projectID)->get();
 
         if (empty($glDetails)) {
                 return $this->sendError('Data not found');
-            } 
-                                                            
-        // return \DataTables::eloquent($glDetails)
-        //     ->addIndexColumn()->order(function ($query) use ($input) {
-        //         if (request()->has('order') ) {
-        //             if($input['order'][0]['column'] == 0)
-        //             {
-        //                 $query->orderBy('id', $input['order'][0]['dir']);
-        //             }
-        //         }
-        //     })
-        //     ->with('orderCondition', $sort)
-        //     ->make(true);
+        } 
 
         return \DataTables::of($glDetails)
             ->addIndexColumn()
