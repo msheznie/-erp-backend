@@ -1811,7 +1811,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             foreach ($output->detail as $item) {
 
-                if(isset($item->item->specification) || $item->item->specification != null)
+                if(isset($item->item->specification) || (isset($item->item->specification) && $item->item->specification != null))
                 {
                     $is_specification = true; 
                 }
