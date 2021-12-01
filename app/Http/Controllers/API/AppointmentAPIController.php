@@ -303,6 +303,7 @@ class AppointmentAPIController extends AppBaseController
             }]);
         }, 'created_by'])
             ->where('slot_detail_id', $slotDetailId)
+            ->where('confirmed_yn', 1)
             ->get();
 
         return $data;
