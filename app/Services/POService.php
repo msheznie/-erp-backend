@@ -98,7 +98,7 @@ class POService
         }])
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
-            //->where('supplierID', $supplierID)
+            ->where('supplierID', $supplierID)
             ->get();
     }
 }

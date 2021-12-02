@@ -47,7 +47,7 @@ class SRMService
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
-            //->where('supplierID', $supplierID)
+            ->where('supplierID', $supplierID)
             ->with(['currency', 'created_by'])
             ->orderBy('createdDateTime', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
@@ -142,7 +142,7 @@ class SRMService
                     $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
                     $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];//0;
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -219,7 +219,7 @@ class SRMService
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] = "Test"; //$row->ware_house->wareHouseDescription .$availableConcat;
+                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription .$availableConcat;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;
