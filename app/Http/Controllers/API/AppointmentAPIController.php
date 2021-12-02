@@ -301,7 +301,7 @@ class AppointmentAPIController extends AppBaseController
                     ->where('appointment.approved_yn', 0)
                     ->where('appointment.confirmed_yn', 1);
             }]);
-        }, 'created_by'])
+        }, 'created_by', 'detail'])
             ->where('slot_detail_id', $slotDetailId)
             ->where('confirmed_yn', 1)
             ->get();
