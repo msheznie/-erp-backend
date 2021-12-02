@@ -19,6 +19,8 @@ use App\Http\Requests\API\UpdateQuotationDetailsAPIRequest;
 use App\Models\ItemAssigned;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\Unit;
 use App\Models\Company;
 use App\Repositories\QuotationDetailsRepository;
@@ -630,6 +632,81 @@ WHERE
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
 
         return $this->sendResponse($detail, 'Quotation Details retrieved successfully');
+    }
+
+
+    public function mapLineItemQo(Request $request)
+    {
+        $input = $request->all();
+
+        $checkItem = QuotationDetails::where('quotationMasterID',$input['quotationMasterID'])
+                                         ->where('itemSystemCode', $input['itemCodeNew'])
+                                         ->where('quotationDetailsID', '!=', $input['quotationDetailsID'])
+                                         ->first();
+
+        if ($checkItem) {
+            return $this->sendError('This item has already maped with another item of this purchase request');
+        }
+
+        $checkForPoItem = QuotationDetails::where('quotationDetailsID', $input['quotationDetailsID'])
+                                         ->first();
+
+        $companySystemID = $input['companySystemID'];
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeNew'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $qoMaster = QuotationMaster::find($input['quotationMasterID']);
+
+        if (empty($qoMaster)) {
+            return $this->sendError('Quotation Details not found');
+        }
+
+
+        $input['itemCode'] = $input['itemCodeNew'];
+
+        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['partNumber'] = $item->secondaryItemCode;
+        $input['itemFinanceCategoryID'] =  $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+        $input['companySystemID'] = $item->companySystemID;
+        $input['companyID'] = $item->companyID;
+        $input['unitOfMeasureID'] = $item->itemUnitOfMeasure;
+        $unit = Unit::find( $item->itemUnitOfMeasure);
+        $input['unitOfMeasure'] = ($unit) ? $unit->UnitShortCode : null;
+        $input['itemCategory'] =  $item->financeCategoryMaster;
+
+
+        if ($item->financeCategoryMaster == 1) {
+
+            $alreadyAdded = QuotationMaster::where('quotationMasterID', $input['soQuotationMasterID'])
+                ->whereHas('detail', function ($query) use ($companySystemID, $qoMaster, $item) {
+                    $query->where('itemSystemCode', $item->itemCodeSystem);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $quotationDetailss = $this->quotationDetailsRepository->update($input, $input['quotationDetailsID']);
+            DB::commit();
+            return $this->sendResponse($input, 'Quotation item maped successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+        }
+
+
     }
 
 

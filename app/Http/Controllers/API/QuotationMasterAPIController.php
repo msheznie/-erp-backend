@@ -1454,6 +1454,7 @@ class QuotationMasterAPIController extends AppBaseController
         $documentSystemID = 67;
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
+        
 
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
@@ -1466,6 +1467,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1626,4 +1628,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+
+    
 }
