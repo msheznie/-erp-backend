@@ -7,6 +7,8 @@ use App\Models\PoAddons;
 use App\Models\ProcumentOrder;
 use App\Models\SlotMaster;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use function Clue\StreamFilter\fun;
 
 class POService
 {
@@ -64,14 +66,15 @@ class POService
                 $to = new Carbon($date);
 
                 $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode', $item->itemCode)
-                    ->where('companySystemID', $item->companySystemID)
-                    ->where('documentSystemID', 8)
-                    ->whereBetween('transactionDate', [$from, $to])
-                    ->sum('inOutQty')) * -1;
+                        ->where('companySystemID', $item->companySystemID)
+                        ->where('documentSystemID', 8)
+                        ->whereBetween('transactionDate', [$from, $to])
+                        ->sum('inOutQty')) * -1;
             }
         }
         return $output;
     }
+
     public function getPoAddons($purchaseOrderID)
     {
         $orderAddons = PoAddons::where('poId', $purchaseOrderID)
@@ -80,21 +83,22 @@ class POService
             ->get();
         return $orderAddons;
     }
+
     public function getAppointmentSlots($tenantID)
     {
         $slot = new SlotMaster();
         $data = $slot->getSlotData($tenantID);
         return $data;
     }
+
     public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID)
     {
-        return ProcumentOrder::with(['detail' => function ($query) {
-            $query->with('unit');
+        return ProcumentOrder::with(['detail.appointmentDetails', 'detail.unit', 'detail' => function ($query) {
+            $query->where('goodsRecievedYN', '!=', 2);
         }])
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
             ->where('supplierID', $supplierID)
-            ->where('documentSystemID', 2)
             ->get();
     }
 }
