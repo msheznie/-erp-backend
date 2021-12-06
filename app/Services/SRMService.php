@@ -361,12 +361,7 @@ class SRMService
      */
     public function fetch(array $data) {
         $apiKey = $data['apiKey'];
-
-        if(!$apiKey){
-            $tenant = $this->getTenant($data['tenantId']);
-            throw_unless($tenant, "Invalid tenant ID");
-            $apiKey = $tenant->api_key;
-        }
+        throw_unless($apiKey, "APIS key must be passed");
 
         return $this->sharedService->fetch([
             'url' => env('ERP_ENDPOINT'),
@@ -387,7 +382,7 @@ class SRMService
      * @return mixed
      * @throws Throwable
      */
-    public function fetchAPIsFromSRM(array $data) {
+    public function callSRMAPIs(array $data) {
         throw_unless($data['apiKey'], "Pass apiKey from calling SRM APIs");
         throw_unless($data['request'], "Pass request from calling SRM APIs");
 

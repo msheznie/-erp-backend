@@ -94,7 +94,7 @@ class APIController extends Controller
      */
     public function fetch(Request $request){
         try {
-            $response = $this->SRMService->fetchAPIsFromSRM([
+            $response = $this->SRMService->callSRMAPIs([
                 'apiKey' => $request->input('api_key'),
                 'request' => $request->input('request'),
                 'extra' => [
@@ -102,7 +102,7 @@ class APIController extends Controller
                     'uuid' => $request->input('uuid')
                 ]
             ]);
-            return response()->json($response);
+
             throw_unless($response, "Invalid API Key or Something went wrong in SRM");
             throw_unless($response && $response->data, $response->message ?? "Something went wrong!, API couldn't fetch");
 

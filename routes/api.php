@@ -2355,8 +2355,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         /**
          * Supplier registration approval routes
          */
-        Route::post('suppliers/registration/approvals', 'SupplierRegistrationApproval@index');
-        Route::post('suppliers/registration/approvals/status', 'SupplierRegistrationApproval@update');
+        Route::post('suppliers/registration/approvals', 'SupplierRegistrationApprovalController@index');
+        Route::post('suppliers/registration/approvals/status', 'SupplierRegistrationApprovalController@update');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

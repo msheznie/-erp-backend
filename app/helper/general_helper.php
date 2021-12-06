@@ -1927,7 +1927,15 @@ class Helper
                                     }
                                 }
                             }
-                        }  
+                        }
+
+                        // pass below data for taking action in controller
+                        $more_data = [
+                            'numberOfLevels' => $approvalLevel->noOfLevels,
+                            'currentLevel' => $input["rollLevelOrder"]
+                        ];
+
+
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                         
                             // create monthly deduction

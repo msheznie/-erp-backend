@@ -4,12 +4,28 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Services\SRMService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
-class SupplierRegistrationApproval extends AppBaseController
+// supplier KYC status
+define('PENDING', 0);
+define('SUBMITTED', 1);
+define('PENDING_FOR_APPROVAL', 2);
+define('APPROVED', 3);
+define('REJECT', 4);
+
+class SupplierRegistrationApprovalController extends AppBaseController
 {
+    private $srmService = null;
+
+    public function __construct(SRMService $srmService)
+    {
+        $this->srmService = $srmService;
+    }
+
     /**
      * get KYC list
      * @param Request $request
@@ -27,11 +43,12 @@ class SupplierRegistrationApproval extends AppBaseController
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
 
-        $poMasters = DB::table('erp_documentapproved')
+        $suppliersDetail = DB::table('erp_documentapproved')
             ->select(
             'srm_supplier_registration_link.id',
             'erp_documentapproved.documentSystemID',
             'srm_supplier_registration_link.name',
+            'srm_supplier_registration_link.approved_yn',
             'srm_supplier_registration_link.email',
             'srm_supplier_registration_link.registration_number',
             'srm_supplier_registration_link.company_id',
@@ -66,9 +83,8 @@ class SupplierRegistrationApproval extends AppBaseController
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('srm_supplier_registration_link.company_id', $companyID)
-                ->where('srm_supplier_registration_link.approved_yn', 0)
                 ->where('srm_supplier_registration_link.confirmed_yn', 1);
-        })->where('erp_documentapproved.approvedYN', 0)
+        })
             // ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [107])
@@ -78,14 +94,20 @@ class SupplierRegistrationApproval extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $poMasters = $poMasters->where(function ($query) use ($search) {
+            $suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%")
                     ->orWhere('registration_number', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($poMasters)
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $suppliersDetail->where('srm_supplier_registration_link.approved_yn', $input['approved']);
+            }
+        }
+
+        return \DataTables::of($suppliersDetail)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -103,6 +125,7 @@ class SupplierRegistrationApproval extends AppBaseController
     /**
      * handle KYC Status
      * @param Request $request
+     * @throws Throwable
      */
     public function update(Request $request){
         switch ($request->input('mode')){
@@ -124,6 +147,7 @@ class SupplierRegistrationApproval extends AppBaseController
      * approve KYC
      * @param $request
      * @return mixed
+     * @throws Throwable
      */
     public function approveSupplierKYC($request){
         $approve = Helper::approveDocument($request);
@@ -131,6 +155,32 @@ class SupplierRegistrationApproval extends AppBaseController
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
+            if($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']){
+                $response = $this->srmService->callSRMAPIs([
+                    'apiKey' => $request->input('api_key'),
+                    'request' => 'UPDATE_KYC_STATUS',
+                    'extra' => [
+                        'status'    => APPROVED,
+                        'auth'      => $request->user(),
+                        'uuid'      => $request->input('uuid')
+                    ]
+                ]);
+
+                if($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+            } elseif ($approve['data'] && $approve['data']['currentLevel'] > 0){
+                    $response = $this->srmService->callSRMAPIs([
+                        'apiKey' => $request->input('api_key'),
+                        'request' => 'UPDATE_KYC_STATUS',
+                        'extra' => [
+                            'status'    => PENDING_FOR_APPROVAL,
+                            'auth'      => $request->user(),
+                            'uuid'      => $request->input('uuid')
+                        ]
+                    ]);
+
+                    if($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+            }
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }

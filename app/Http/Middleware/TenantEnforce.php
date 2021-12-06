@@ -24,7 +24,8 @@ class TenantEnforce
 
         $apiKeyRoutes = [
             'api/v1/srmRegistrationLink',
-            'api/v1/srm/fetch'
+            'api/v1/srm/fetch',
+            'api/v1/suppliers/registration/approvals/status'
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {
