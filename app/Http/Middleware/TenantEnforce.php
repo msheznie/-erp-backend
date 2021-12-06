@@ -22,7 +22,10 @@ class TenantEnforce
     public function handle($request, Closure $next)
     {
 
-        $apiKeyRoutes = ['api/v1/srmRegistrationLink'];
+        $apiKeyRoutes = [
+            'api/v1/srmRegistrationLink',
+            'api/v1/srm/fetch'
+        ];
 
         if (env('IS_MULTI_TENANCY', false)) {
             $url = $request->getHttpHost();
@@ -53,6 +56,7 @@ class TenantEnforce
                 $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
             }
         }
+
         return $next($request);
     }
 }

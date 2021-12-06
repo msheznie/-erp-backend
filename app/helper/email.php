@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
+use App\Models\SupplierRegistrationLink;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetVerification;
@@ -88,7 +89,7 @@ class email
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox.</font>";
-        $empInfoSkip = array(106);
+        $empInfoSkip = array(106, 107);
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
 
@@ -454,6 +455,14 @@ class email
                     if (!empty($appointment)) {
                         $data['docApprovedYN'] = $appointment->approved_yn;
                         $data['docCode'] = $appointment->primary_code;
+                    }
+                    break;
+                case 107:
+                    $supplierLink = SupplierRegistrationLink::find($data['docSystemCode']);
+
+                    if (!empty($supplierLink)) {
+                        $data['docApprovedYN'] = $supplierLink->approved_yn;
+                        $data['docCode'] = $supplierLink->id;
                     }
                     break;
                 default:

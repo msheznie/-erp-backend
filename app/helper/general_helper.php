@@ -207,7 +207,7 @@ class Helper
     public static function confirmDocument($params)
     {
         //Skip Employee Info when Confirming;
-        $empInfoSkip = array(106); 
+        $empInfoSkip = array(106, 107); // 107 mean documentMaster id of "Supplier Registration" document in ERP
 
         /** check document is already confirmed*/  
         if (!array_key_exists('autoID', $params)) {
@@ -716,6 +716,17 @@ class Helper
                         $docInforArr["modelName"] = 'Appointment';
                         $docInforArr["primarykey"] = 'id';
                         break;
+                case 107: //Supper registration
+                    $docInforArr["documentCodeColumnName"] = 'id';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1790,19 +1801,31 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                 break;
             case 106: 
-                    $docInforArr["tableName"] = 'appointment';
-                    $docInforArr["modelName"] = 'Appointment';
-                    $docInforArr["primarykey"] = 'id';
-                    $docInforArr["approvedColumnName"] = 'approved_yn';
-                    $docInforArr["approvedBy"] = 'approvedByUserID';
-                    $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
-                    $docInforArr["approvedDate"] = 'approved_date';
-                    $docInforArr["approveValue"] = -1;
-                    $docInforArr["confirmedYN"] = "confirmed_yn";
-                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
-                    break;
+                $docInforArr["tableName"] = 'appointment';
+                $docInforArr["modelName"] = 'Appointment';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+            case 107:  //Supper registration
+                $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
             default:
-                return ['success' => false, 'message' => 'Document ID not found'];
+                return ['success' => false, 'message' => 'Document ID not foundssss'];
         }
 
 
@@ -2803,6 +2826,12 @@ class Helper
                 case 104:
                     $docInforArr["tableName"] = 'vat_return_filling_master';
                     $docInforArr["modelName"] = 'VatReturnFillingMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 107:
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
