@@ -328,6 +328,27 @@ class AppointmentAPIController extends AppBaseController
             return $this->sendResponse(array(), $approve["message"]);
         }
     }
+
+    public function rejectCalanderDelAppointment(Request $request)
+    {
+        $input = $request->all();
+
+        $params = array(
+            'documentApprovedID' => $input['document_approved']['documentApprovedID'],
+            'documentSystemCode' => $input['id'],
+            'documentSystemID' => $input['document_system_id'],
+            'approvalLevelID' => $input['document_approved']['approvalLevelID'],
+            'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
+            'rejectedComments' => $input['rejectedComments']
+        );
+
+        $approve = \Helper::rejectDocument($params);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
     public function getAppointmentById(Request $request)
     {
         $input = $request->all();
