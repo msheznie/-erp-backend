@@ -2356,6 +2356,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
         Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
+        Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
     });
 

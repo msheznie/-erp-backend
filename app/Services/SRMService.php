@@ -212,7 +212,12 @@ class SRMService
         if (isset($data) && $data != '') {
             foreach ($data as $row) {
                 foreach ($row['slot_details'] as $slotDetail) {
-                    $appointment = Appointment::select('id')->where('slot_detail_id', $slotDetail->id)->get();
+                    $appointment = Appointment::select('id')
+                        ->where('slot_detail_id', $slotDetail->id)
+                        ->where('confirmed_yn', 1)
+                        ->where('approved_yn', 1)
+                        ->where('timesReferred', 0)
+                        ->get();
                     $availableConcat = '';
                     if($row['limit_deliveries']==1){ 
                        $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
