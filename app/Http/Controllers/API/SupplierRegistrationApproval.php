@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierRegistrationApproval extends AppBaseController
 {
+    /**
+     * get KYC list
+     * @param Request $request
+     * @return mixed
+     */
     public function index(Request $request) {
         $input = $request->all();
 
@@ -95,13 +100,54 @@ class SupplierRegistrationApproval extends AppBaseController
             ->make(true);
     }
 
+    /**
+     * handle KYC Status
+     * @param Request $request
+     */
     public function update(Request $request){
+        switch ($request->input('mode')){
+            case 'approve': {
+                $this->approveSupplierKYC($request);
+                break;
+            }
+            case 'reject': {
+                $this->rejectSupplierKYC($request);
+                break;
+            }
+            default: {
+
+            }
+        }
+    }
+
+    /**
+     * approve KYC
+     * @param $request
+     * @return mixed
+     */
+    public function approveSupplierKYC($request){
         $approve = Helper::approveDocument($request);
 
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
             return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+
+    /**
+     * reject KYC
+     * @param $request
+     * @return mixed
+     */
+    public function rejectSupplierKYC($request)
+    {
+        $reject = Helper::rejectDocument($request);
+
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
     }
 }
