@@ -219,7 +219,7 @@ class SRMService
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription .$availableConcat;
+                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;
