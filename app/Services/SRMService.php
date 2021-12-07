@@ -10,17 +10,22 @@ use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\Shared\SharedService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class SRMService
 {
     private $POService = null;
     private $supplierService = null;
-    public function __construct(POService $POService, SupplierService $supplierService)
+    private $sharedService = null;
+
+    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService)
     {
-        $this->POService = $POService;
-        $this->supplierService = $supplierService;
+        $this->POService        = $POService;
+        $this->supplierService  = $supplierService;
+        $this->sharedService    = $sharedService;
     }
 
     /**
@@ -142,7 +147,7 @@ class SRMService
                     $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
                     $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = 0;;
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -212,14 +217,19 @@ class SRMService
         if (isset($data) && $data != '') {
             foreach ($data as $row) {
                 foreach ($row['slot_details'] as $slotDetail) {
-                    $appointment = Appointment::select('id')->where('slot_detail_id', $slotDetail->id)->get();
+                    $appointment = Appointment::select('id')
+                        ->where('slot_detail_id', $slotDetail->id)
+                        ->where('confirmed_yn', 1)
+                        ->where('approved_yn', 1)
+                        ->where('timesReferred', 0)
+                        ->get();
                     $availableConcat = '';
                     if($row['limit_deliveries']==1){ 
                        $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] =  $row->ware_house->wareHouseDescription .$availableConcat;
+                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;
@@ -322,5 +332,73 @@ class SRMService
         }
 
         return 0;
+    }
+
+    /**
+     * create supplier approval setup
+     * @param Request $request
+     * @return array
+     * @throws Throwable
+     */
+    public function supplierRegistrationApprovalSetup(Request $request){
+        $supplierLink = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))->first();
+
+        throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
+
+        $data = $this->supplierService->createSupplierApprovalSetup([
+            'autoID'    => $supplierLink->id,
+            'company'   => $supplierLink->company_id,
+            'documentID'  => 107 // 107 mean documentMaster id of "Supplier Registration" document in ERP
+        ]);
+
+        return [
+            'success'   => true,
+            'message'   => 'Supplier approval setup created!',
+            'data'      => $data
+        ];
+    }
+
+    /**
+     * fetch ERP APIs
+     * @param array $data
+     * @return mixed
+     * @throws Throwable
+     */
+    public function fetch(array $data) {
+        $apiKey = $data['apiKey'];
+        throw_unless($apiKey, "APIS key must be passed");
+
+        return $this->sharedService->fetch([
+            'url' => env('ERP_ENDPOINT'),
+            'method' => 'POST',
+            'data' => [
+                'api_key'       => $apiKey,
+                'request'       => $data['request'],
+                'auth'          => $data['auth'],
+                'extra'         => $data['extra'] ?? null,
+                'supplier_uuid' => $data['supplier_uuid'] ?? null,
+            ]
+        ]);
+    }
+
+    /**
+     * fetch ERP APIs
+     * @param array $data
+     * @return mixed
+     * @throws Throwable
+     */
+    public function callSRMAPIs(array $data) {
+        throw_unless($data['apiKey'], "Pass apiKey from calling SRM APIs");
+        throw_unless($data['request'], "Pass request from calling SRM APIs");
+
+        return $this->sharedService->fetch([
+            'url' => env('SRM_ENDPOINT'),
+            'method' => 'POST',
+            'data' => [
+                'api_key'       => $data['apiKey'],
+                'request'       => $data['request'],
+                'extra'         => $data['extra'] ?? null
+            ]
+        ]);
     }
 }

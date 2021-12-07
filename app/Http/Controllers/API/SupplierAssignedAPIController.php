@@ -68,7 +68,8 @@ class SupplierAssignedAPIController extends AppBaseController
     public function store(CreateSupplierAssignedAPIRequest $request)
     {
         $input = $request->all();
-
+        $companies = $input['companySystemID'];
+        unset($input['companySystemID']);
         unset( $input['primaryCompanySystemID']);
         unset( $input['importanceDescription']);
         unset( $input['natureDescription']);
@@ -83,48 +84,72 @@ class SupplierAssignedAPIController extends AppBaseController
         $input = array_except($input, ['final_approved_by']);
         $input = $this->convertArrayToValue($input);
 
-        $messages = [
-            'companySystemID.required' => 'Company field is required.',
-            'liabilityAccountSysemID.required' => 'Liability Account field is required.',
-            'UnbilledGRVAccountSystemID.required' => 'Un-billed Account field is required.',
-        ];
-        $validator = \Validator::make($input, [
-            'companySystemID' => 'required',
-            'liabilityAccountSysemID' => 'required',
-            'UnbilledGRVAccountSystemID' => 'required'
-        ], $messages);
+        foreach($companies as $companie)
+        {
+                if( array_key_exists ('supplierAssignedID' , $input )){
+                    $input['companySystemID'] = $companies[0];
+                }
+                else
+                {
+                    $input['companySystemID'] = $companie['id'];
+                }
+               
+    
+                $messages = [
+                    'companySystemID.required' => 'Company field is required.',
+                    'liabilityAccountSysemID.required' => 'Liability Account field is required.',
+                    'UnbilledGRVAccountSystemID.required' => 'Un-billed Account field is required.',
+                ];
+                $validator = \Validator::make($input, [
+                    'companySystemID' => 'required',
+                    'liabilityAccountSysemID' => 'required',
+                    'UnbilledGRVAccountSystemID' => 'required'
+                ], $messages);
+        
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+        
+             
+                $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
+                $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+                $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
+                $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+                $input['isMarkupPercentage'] = isset($input['isMarkupPercentage'])?$input['isMarkupPercentage']:0;
+                $input['markupPercentage'] = (isset($input['markupPercentage']) && $input['isMarkupPercentage']==1)?$input['markupPercentage']:0;
+        
+                if( array_key_exists ('supplierAssignedID' , $input )){
+        
+                    $supplierAssigneds = SupplierAssigned::where('supplierAssignedID', $input['supplierAssignedID'])->first();
+        
+                    if (empty($supplierAssigneds)) {
+                        return $this->sendError('supplier Assigned not found');
+                    }
+                    foreach ($input as $key => $value) {
+                        $supplierAssigneds->$key = $value;
+                    }
+                    $supplierAssigneds->save();
+                }else{
+    
+                       
+                            $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['supplierCodeSytem'], 'supplier');
+                            if (!$validatorResult['success']) {
+                                return $this->sendError($validatorResult['message']);
+                            }
+                           
+                            $company = Company::where('companySystemID',$companie['id'])->first();
+                            $input['companyID'] = $company['CompanyID'];
+                            $supplierAssigneds = $this->supplierAssignedRepository->create($input);
+    
+                        
+                   }
 
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
-        }
+          }
 
-        $company = Company::where('companySystemID',$input['companySystemID'])->first();
-        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
-        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
-        $input['companyID'] = $company['CompanyID'];
-        $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
-        $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
-        $input['isMarkupPercentage'] = isset($input['isMarkupPercentage'])?$input['isMarkupPercentage']:0;
-        $input['markupPercentage'] = (isset($input['markupPercentage']) && $input['isMarkupPercentage']==1)?$input['markupPercentage']:0;
+ 
+        
 
-        if( array_key_exists ('supplierAssignedID' , $input )){
-
-            $supplierAssigneds = SupplierAssigned::where('supplierAssignedID', $input['supplierAssignedID'])->first();
-
-            if (empty($supplierAssigneds)) {
-                return $this->sendError('supplier Assigned not found');
-            }
-            foreach ($input as $key => $value) {
-                $supplierAssigneds->$key = $value;
-            }
-            $supplierAssigneds->save();
-        }else{
-            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['supplierCodeSytem'], 'supplier');
-            if (!$validatorResult['success']) {
-                return $this->sendError($validatorResult['message']);
-            }
-            $supplierAssigneds = $this->supplierAssignedRepository->create($input);
-        }
+        
 
         return $this->sendResponse($supplierAssigneds->toArray(), 'Supplier Assigned saved successfully');
     }

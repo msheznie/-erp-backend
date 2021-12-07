@@ -59,6 +59,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\ChartOfAccount;
 use App\Models\CustomerCurrency;
 use App\Models\QuotationStatusMaster;
+use App\Models\CompanyPolicyMaster;
 use App\Repositories\QuotationMasterRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
@@ -66,6 +67,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+
 use Carbon\Carbon;
 use Response;
 
@@ -766,6 +768,14 @@ class QuotationMasterAPIController extends AppBaseController
                                   ->get();
         $soPaymentTermsDrop = PoPaymentTermTypes::all();
 
+
+        /* check add new item policy */
+        $addNewItem = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+        ->where('companySystemID', $companyId)
+        ->first();
+
+
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -776,7 +786,8 @@ class QuotationMasterAPIController extends AppBaseController
             'customer' => $customer,
             'salespersons' => $salespersons,
             'segments' => $segments,
-            'soPaymentTermsDrop' => $soPaymentTermsDrop
+            'soPaymentTermsDrop' => $soPaymentTermsDrop,
+            'addNewItemPolicy' => ($addNewItem) ? $addNewItem->isYesNO : false
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1443,6 +1454,7 @@ class QuotationMasterAPIController extends AppBaseController
         $documentSystemID = 67;
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
+        
 
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
@@ -1455,6 +1467,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1615,4 +1628,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+
+    
 }

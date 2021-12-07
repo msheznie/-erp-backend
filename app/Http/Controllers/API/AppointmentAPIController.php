@@ -301,7 +301,7 @@ class AppointmentAPIController extends AppBaseController
                     ->where('appointment.approved_yn', 0)
                     ->where('appointment.confirmed_yn', 1);
             }]);
-        }, 'created_by'])
+        }, 'created_by', 'detail'])
             ->where('slot_detail_id', $slotDetailId)
             ->where('confirmed_yn', 1)
             ->get();
@@ -322,6 +322,27 @@ class AppointmentAPIController extends AppBaseController
         );
 
         $approve = \Helper::approveDocument($params);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+
+    public function rejectCalanderDelAppointment(Request $request)
+    {
+        $input = $request->all();
+
+        $params = array(
+            'documentApprovedID' => $input['document_approved']['documentApprovedID'],
+            'documentSystemCode' => $input['id'],
+            'documentSystemID' => $input['document_system_id'],
+            'approvalLevelID' => $input['document_approved']['approvalLevelID'],
+            'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
+            'rejectedComments' => $input['rejectedComments']
+        );
+
+        $approve = \Helper::rejectDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

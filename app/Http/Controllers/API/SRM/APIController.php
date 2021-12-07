@@ -5,7 +5,10 @@ namespace App\Http\Controllers\API\SRM;
 use App\Http\Controllers\Controller;
 use App\Services\POService;
 use App\Services\SRMService;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 // available apis name define here
 define('GET_CURRENCIES', 'GET_CURRENCIES');
@@ -22,6 +25,7 @@ define('GET_APPOINTMENT_DELIVERIES', 'GET_APPOINTMENT_DELIVERIES');
 define('GET_PO_APPOINTMENT', 'GET_PO_APPOINTMENT');
 define('DELETE_SUPPLIER_APPOINTMENT', 'DELETE_SUPPLIER_APPOINTMENT');
 define('CONFIRM_SUPPLIER_APPOINTMENT', 'CONFIRM_SUPPLIER_APPOINTMENT');
+define('SUPPLIER_REGISTRATION_APPROVAL_SETUP', 'SUPPLIER_REGISTRATION_APPROVAL_SETUP');
 
 
 class APIController extends Controller
@@ -38,6 +42,7 @@ class APIController extends Controller
      * handle api request
      * @param Request $request
      * @return array
+     * @throws Throwable
      */
     public function handleRequest(Request $request): array
     {
@@ -69,13 +74,54 @@ class APIController extends Controller
             case DELETE_SUPPLIER_APPOINTMENT:
                 return $this->SRMService->deleteSupplierAppointment($request);
             case CONFIRM_SUPPLIER_APPOINTMENT:
-                return $this->SRMService->confirmSupplierAppointment($request); 
+                return $this->SRMService->confirmSupplierAppointment($request);
+            case SUPPLIER_REGISTRATION_APPROVAL_SETUP:
+                return $this->SRMService->supplierRegistrationApprovalSetup($request);
             default:
                 return [
                     'success'   => false,
                     'message'   => 'Requested API not available, please recheck!',
                     'data'      => null
                 ];
+        }
+    }
+
+    /**
+     * fetch SRM services
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Throwable
+     */
+    public function fetch(Request $request){
+        try {
+            $response = $this->SRMService->callSRMAPIs([
+                'apiKey' => $request->input('api_key'),
+                'request' => $request->input('request'),
+                'extra' => [
+                    'auth' => $request->user(),
+                    'uuid' => $request->input('uuid')
+                ]
+            ]);
+
+            throw_unless($response, "Invalid API Key or Something went wrong in SRM");
+            throw_unless($response && $response->data, $response->message ?? "Something went wrong!, API couldn't fetch");
+
+            return response()->json($response);
+        } catch (RequestException $e) {
+            $exception = (string) $e->getResponse()->getBody();
+            $exception = json_decode($exception);
+
+            \Log::info([
+                'type' => 'ERP',
+                'desc' => 'ERP API call Errors',
+                'exception' => $exception
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->message,
+                'data' => $exception->message
+            ], 500);
         }
     }
 }
