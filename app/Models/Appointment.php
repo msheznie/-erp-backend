@@ -96,7 +96,8 @@ class Appointment extends Model
         'approved_by_emp_id',
         'current_level_no',
         'timesReferred',
-        'confirmed_yn'
+        'confirmed_yn',
+        'refferedBackYN'
     ];
 
     /**
