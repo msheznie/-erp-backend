@@ -1825,7 +1825,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                 break;
             default:
-                return ['success' => false, 'message' => 'Document ID not foundssss'];
+                return ['success' => false, 'message' => 'Document ID not found'];
         }
 
 
@@ -1929,11 +1929,13 @@ class Helper
                             }
                         }
 
-                        // pass below data for taking action in controller
-                        $more_data = [
-                            'numberOfLevels' => $approvalLevel->noOfLevels,
-                            'currentLevel' => $input["rollLevelOrder"]
-                        ];
+                        if ($input['documentSystemID'] === 107) {
+                            // pass below data for taking action in controller
+                            $more_data = [
+                                'numberOfLevels' => $approvalLevel->noOfLevels,
+                                'currentLevel' => $input["rollLevelOrder"]
+                            ];
+                        }
 
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
