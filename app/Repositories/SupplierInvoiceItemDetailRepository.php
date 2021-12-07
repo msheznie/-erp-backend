@@ -102,7 +102,11 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
                                 })
                                 ->groupBy('logisticID');
 
-            $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur) + (erp_purchaseorderadvpayment.VATAmountRpt)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur) + (erp_purchaseorderadvpayment.VATAmountLocal)),7) as localAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0)),7) as balanceAmountCheck, erp_bookinvsupp_item_det.supplierInvoAmount, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount")
+            $returnedLogistic = DB::table('purchase_return_logistic')
+                                        ->selectRaw("(SUM(logisticAmountTrans) + SUM(logisticVATAmount)) as prLogisticAmount, poAdvPaymentID")
+                                        ->groupBy('poAdvPaymentID');
+
+            $grvDetails = PoAdvancePayment::selectRaw("0 as grvDetailsID, erp_purchaseorderadvpayment.poAdvPaymentID as logisticID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, erp_tax_vat_sub_categories.mainCategory as vatMasterCategoryID, erp_purchaseorderadvpayment.vatSubCategoryID, 0 as exempt_vat_portion, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount)),7) as transactionAmount, ROUND(((reqAmountInPORptCur) + (erp_purchaseorderadvpayment.VATAmountRpt)),7) as rptAmount, ROUND(((reqAmountInPOLocalCur) + (erp_purchaseorderadvpayment.VATAmountLocal)),7) as localAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmount, ROUND(((reqAmountTransCur_amount) + (erp_purchaseorderadvpayment.VATAmount) - IFNULL(pulledQry.SumOftotTransactionAmount,0) - IFNULL(returnedLogistic.prLogisticAmount,0)),7) as balanceAmountCheck, erp_bookinvsupp_item_det.supplierInvoAmount, IFNULL(pulledQry.SumOftotTransactionAmount,0) as invoicedAmount")
                                                     ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                                     ->leftJoin('erp_tax_vat_sub_categories', 'erp_purchaseorderadvpayment.vatSubCategoryID', '=', 'erp_tax_vat_sub_categories.taxVatSubCategoriesAutoID')
                                                     ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
@@ -111,6 +115,10 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
                                                     ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
                                                         $join->mergeBindings($pulledQry)
                                                              ->on('pulledQry.logisticID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
+                                                   })
+                                                   ->leftJoin(\DB::raw("({$returnedLogistic->toSql()}) as returnedLogistic"), function($join) use ($returnedLogistic){
+                                                        $join->mergeBindings($returnedLogistic)
+                                                             ->on('returnedLogistic.poAdvPaymentID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
                                                    })
                                                     ->leftJoin('erp_bookinvsupp_item_det', function($join) use ($bookingSupInvoiceDetAutoID) {
                                                         $join->on('erp_bookinvsupp_item_det.logisticID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID')

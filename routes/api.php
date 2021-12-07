@@ -2520,3 +2520,6 @@ Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
 Route::resource('po_categories', 'PoCategoryAPIController');
 
+
+
+Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
