@@ -79,10 +79,17 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('srm_supplier_registration_link', function ($query) use ($companyID, $empID) {
-            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
-                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                ->where('srm_supplier_registration_link.company_id', $companyID)
+        })->join('srm_supplier_registration_link', function ($query) use ($companyID, $empID, $input) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id');
+//                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+
+                if (array_key_exists('approved', $input)) {
+                    if ($input['approved'] == 0 && !is_null($input['approved'])) {
+                        $query->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr');
+                    }
+                }
+
+                $query->where('srm_supplier_registration_link.company_id', $companyID)
                 ->where('srm_supplier_registration_link.confirmed_yn', 1);
         })
             // ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
@@ -103,7 +110,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $suppliersDetail->where('srm_supplier_registration_link.approved_yn', $input['approved']);
+                $suppliersDetail->where('erp_documentapproved.approvedYN', $input['approved']);
             }
         }
 
@@ -167,18 +174,6 @@ class SupplierRegistrationApprovalController extends AppBaseController
                 ]);
 
                 if($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
-            } elseif ($approve['data'] && $approve['data']['currentLevel'] > 0){
-                    $response = $this->srmService->callSRMAPIs([
-                        'apiKey' => $request->input('api_key'),
-                        'request' => 'UPDATE_KYC_STATUS',
-                        'extra' => [
-                            'status'    => PENDING_FOR_APPROVAL,
-                            'auth'      => $request->user(),
-                            'uuid'      => $request->input('uuid')
-                        ]
-                    ]);
-
-                    if($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
             }
 
             return $this->sendResponse(array(), $approve["message"]);
@@ -189,6 +184,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
      * reject KYC
      * @param $request
      * @return mixed
+     * @throws Throwable
      */
     public function rejectSupplierKYC($request)
     {
@@ -197,6 +193,18 @@ class SupplierRegistrationApprovalController extends AppBaseController
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
+            $response = $this->srmService->callSRMAPIs([
+                'apiKey' => $request->input('api_key'),
+                'request' => 'UPDATE_KYC_STATUS',
+                'extra' => [
+                    'status'    => REJECT,
+                    'auth'      => $request->user(),
+                    'uuid'      => $request->input('uuid')
+                ]
+            ]);
+
+            if($response && $response->success === false) return $this->sendError("Something went wrong!, Supplier status couldn't be updated");
+
             return $this->sendResponse(array(), $reject["message"]);
         }
     }
