@@ -137,4 +137,10 @@ class ChartOfAccountsAssigned extends Model
                                               ->where('isActive', 1)
                                               ->first();       
     }
+
+
+    public function project()
+    {
+        return $this->hasMany('App\Models\ProjectGlDetail','chartOfAccountSystemID','chartOfAccountSystemID');
+    }
 }

@@ -1929,7 +1929,7 @@ class Helper
                             }
                         }
 
-                        if ($input['documentSystemID'] === 107) {
+                        if ($input['documentSystemID'] == 107) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
