@@ -2358,6 +2358,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
         Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
+
+        /**
+         * Supplier registration approval routes
+         */
+        Route::post('suppliers/registration/approvals', 'SupplierRegistrationApprovalController@index');
+        Route::post('suppliers/registration/approvals/status', 'SupplierRegistrationApprovalController@update');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2495,8 +2501,14 @@ Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
  * Start SRM related routes
  */
 
-Route::group(['prefix' => 'srm', 'middleware' => ['tenantById']], function (){
-    Route::post('requests', 'SRM\APIController@handleRequest');
+Route::group(['prefix' => 'srm'], function (){
+    Route::group(['middleware' => ['tenantById']], function (){
+        Route::post('requests', 'SRM\APIController@handleRequest');
+    });
+
+    Route::group(['middleware' => ['tenant']], function (){
+        Route::post('fetch', 'SRM\APIController@fetch');
+    });
 });
 
 /*

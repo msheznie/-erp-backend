@@ -10,17 +10,22 @@ use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\Shared\SharedService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class SRMService
 {
     private $POService = null;
     private $supplierService = null;
-    public function __construct(POService $POService, SupplierService $supplierService)
+    private $sharedService = null;
+
+    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService)
     {
-        $this->POService = $POService;
-        $this->supplierService = $supplierService;
+        $this->POService        = $POService;
+        $this->supplierService  = $supplierService;
+        $this->sharedService    = $sharedService;
     }
 
     /**
@@ -327,5 +332,73 @@ class SRMService
         }
 
         return 0;
+    }
+
+    /**
+     * create supplier approval setup
+     * @param Request $request
+     * @return array
+     * @throws Throwable
+     */
+    public function supplierRegistrationApprovalSetup(Request $request){
+        $supplierLink = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))->first();
+
+        throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
+
+        $data = $this->supplierService->createSupplierApprovalSetup([
+            'autoID'    => $supplierLink->id,
+            'company'   => $supplierLink->company_id,
+            'documentID'  => 107 // 107 mean documentMaster id of "Supplier Registration" document in ERP
+        ]);
+
+        return [
+            'success'   => true,
+            'message'   => 'Supplier approval setup created!',
+            'data'      => $data
+        ];
+    }
+
+    /**
+     * fetch ERP APIs
+     * @param array $data
+     * @return mixed
+     * @throws Throwable
+     */
+    public function fetch(array $data) {
+        $apiKey = $data['apiKey'];
+        throw_unless($apiKey, "APIS key must be passed");
+
+        return $this->sharedService->fetch([
+            'url' => env('ERP_ENDPOINT'),
+            'method' => 'POST',
+            'data' => [
+                'api_key'       => $apiKey,
+                'request'       => $data['request'],
+                'auth'          => $data['auth'],
+                'extra'         => $data['extra'] ?? null,
+                'supplier_uuid' => $data['supplier_uuid'] ?? null,
+            ]
+        ]);
+    }
+
+    /**
+     * fetch ERP APIs
+     * @param array $data
+     * @return mixed
+     * @throws Throwable
+     */
+    public function callSRMAPIs(array $data) {
+        throw_unless($data['apiKey'], "Pass apiKey from calling SRM APIs");
+        throw_unless($data['request'], "Pass request from calling SRM APIs");
+
+        return $this->sharedService->fetch([
+            'url' => env('SRM_ENDPOINT'),
+            'method' => 'POST',
+            'data' => [
+                'api_key'       => $data['apiKey'],
+                'request'       => $data['request'],
+                'extra'         => $data['extra'] ?? null
+            ]
+        ]);
     }
 }
