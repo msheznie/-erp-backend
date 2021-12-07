@@ -147,7 +147,7 @@ class SRMService
                     $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
                     $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = 0;;
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -217,14 +217,19 @@ class SRMService
         if (isset($data) && $data != '') {
             foreach ($data as $row) {
                 foreach ($row['slot_details'] as $slotDetail) {
-                    $appointment = Appointment::select('id')->where('slot_detail_id', $slotDetail->id)->get();
+                    $appointment = Appointment::select('id')
+                        ->where('slot_detail_id', $slotDetail->id)
+                        ->where('confirmed_yn', 1)
+                        ->where('approved_yn', 1)
+                        ->where('timesReferred', 0)
+                        ->get();
                     $availableConcat = '';
                     if($row['limit_deliveries']==1){ 
                        $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] =  $row->ware_house->wareHouseDescription .$availableConcat;
+                    $arr[$x]['title'] = $row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;

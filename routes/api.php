@@ -383,6 +383,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
         Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
 
+        
         Route::resource('document_approveds', 'DocumentApprovedAPIController');
         Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
 
@@ -1897,7 +1898,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
+        Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
 
+        
 
         Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
 
@@ -2025,6 +2028,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('salesQuotationForSO', 'QuotationMasterAPIController@salesQuotationForSO');
         Route::get('getSalesQuoatationDetailForSO', 'QuotationMasterAPIController@getSalesQuoatationDetailForSO');
         Route::post('getDeliveryDetailsForSQ', 'DeliveryOrderAPIController@getDeliveryDetailsForSQ');
+        Route::post('mapLineItemQo', 'QuotationDetailsAPIController@mapLineItemQo');
+
+
 
         Route::get('downloadSummaryTemplate', 'MobileBillSummaryAPIController@downloadSummaryTemplate');
         Route::get('downloadDetailTemplate', 'MobileDetailAPIController@downloadDetailTemplate');
@@ -2350,6 +2356,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
         Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
+        Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
 
         /**

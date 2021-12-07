@@ -35,6 +35,7 @@ use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemCategorySub;
+use App\Models\FixedAssetCategory;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMasterRefferedBack;
@@ -460,6 +461,9 @@ class ItemMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        /**  Fixed Assets  Drop Down */
+        $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
+
         /**  Companies by group  Drop Down */
         $companiesByGroup = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
 
@@ -524,6 +528,7 @@ class ItemMasterAPIController extends AppBaseController
 
 
         $output = array('companiesByGroup' => $companiesByGroup,
+            'fixedAssetCategory' => $fixedAssetCategory,
             'allCompanies' => $allCompanies,
             'financeItemCategoryMaster' => $itemCategory,
             'assetFinanceCategory' => $assetFinanceCategory,

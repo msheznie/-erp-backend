@@ -2837,7 +2837,13 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
-                case 107:
+                case 106:
+                    $docInforArr["tableName"] = 'appointment';
+                    $docInforArr["modelName"] = 'Appointment';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+				case 107:
                     $docInforArr["tableName"] = 'srm_supplier_registration_link';
                     $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';

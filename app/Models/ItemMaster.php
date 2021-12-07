@@ -117,7 +117,11 @@ class ItemMaster extends Model
         'timesReferred',
         'isPOSItem',
         'vatSubCategory',
-        'expiryYN'
+        'expiryYN',
+        'faCatID',
+        'faSubCatID',
+        'faSubCatID2',
+        'faSubCatID3'
     ];
 
     /**
@@ -169,7 +173,11 @@ class ItemMaster extends Model
         'timesReferred' => 'integer',
         'isPOSItem' => 'integer',
         'vatSubCategory'=>'integer',
-        'expiryYN'=>'integer'
+        'expiryYN'=>'integer',
+        'faCatID'=>'integer',
+        'faSubCatID'=>'integer',
+        'faSubCatID2'=>'integer',
+        'faSubCatID3'=>'integer'
     ];
 
     /**
