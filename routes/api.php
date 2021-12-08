@@ -393,6 +393,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('bank_accounts', 'BankAccountAPIController');
         Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
+
+
+        Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
         Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
