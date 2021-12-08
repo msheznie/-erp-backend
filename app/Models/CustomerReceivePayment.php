@@ -590,7 +590,8 @@ class CustomerReceivePayment extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'bankAccountBalance' => 'float',
     ];
 
     /**

@@ -612,10 +612,14 @@ class BankAccountAPIController extends AppBaseController
         $bankBalance = $this->getBankAccountBalanceSummery($input);
 
         $bankBalance_amount = $bankBalance['netBankBalance'];
-        $details = \Helper::currencyConversion($input->companySystemID,$bank_currency, 2, $bankBalance_amount,$input->bankAccountAutoID);
-        $amount = round($details['documentAmount'],2);
+        $details = \Helper::currencyConversion($input->companySystemID,$bank_currency, $document_currency, $bankBalance_amount,$input->bankAccountAutoID);
+        $amount = $details['documentAmount'];
+        $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->first();
 
-        return $this->sendResponse($amount, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+        $data['amount'] = $amount;
+        $data['decimal'] = $currencies;
+        
+        return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
 
     }
 

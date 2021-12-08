@@ -751,7 +751,8 @@ class PaySupplierInvoiceMaster extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'bankAccountBalance' => 'float',
     ];
 
     /**
