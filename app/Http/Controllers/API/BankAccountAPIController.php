@@ -600,6 +600,25 @@ class BankAccountAPIController extends AppBaseController
         return $array;
     }
 
+
+    public function getBankBalance(Request $request)
+    {
+
+        $input =  (object)$request->all();
+
+        $currency = $this->convertArrayToSelectedValue($request->all(), array('bank_currency','document_currency'));
+        $bank_currency = $currency['bank_currency'];
+        $document_currency = $currency['document_currency'];
+        $bankBalance = $this->getBankAccountBalanceSummery($input);
+
+        $bankBalance_amount = $bankBalance['netBankBalance'];
+        $details = \Helper::currencyConversion($input->companySystemID,$bank_currency, 2, $bankBalance_amount,$input->bankAccountAutoID);
+        $amount = round($details['documentAmount'],2);
+
+        return $this->sendResponse($amount, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+
+    }
+
     public function getBankAccountFormData(Request $request)
     {
         $companyId = $request['companyId'];
