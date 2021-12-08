@@ -495,7 +495,8 @@ class CustomerReceivePayment extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
-        'netAmountRpt'
+        'netAmountRpt',
+        'bankAccountBalance'
     ];
 
     /**
