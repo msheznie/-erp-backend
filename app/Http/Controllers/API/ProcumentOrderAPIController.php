@@ -874,14 +874,14 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
 
-                $validator = \Validator::make($input, [
-                    'supCategoryICVMasterID' => 'required|numeric|min:1',
-                    'supCategorySubICVID' => 'required|numeric|min:1',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
+//                $validator = \Validator::make($input, [
+//                    'supCategoryICVMasterID' => 'required|numeric|min:1',
+//                    'supCategorySubICVID' => 'required|numeric|min:1',
+//                ]);
+//
+//                if ($validator->fails()) {
+//                    return $this->sendError($validator->messages(), 422);
+//                }
             }
 
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
