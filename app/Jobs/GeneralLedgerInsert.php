@@ -959,7 +959,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 foreach ($logisticData as $val) {
                                     $data['supplierCodeSystem'] = $val->supplierID;
                                     $data['chartOfAccountSystemID'] = $val->UnbilledGRVAccountSystemID;
-                                    $data['glCode'] = ChartOfAccount::getAccountCode($val->UnbilledGRVAccountSystemID   );
+                                    $data['glCode'] = ChartOfAccount::getAccountCode($val->UnbilledGRVAccountSystemID);
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;

@@ -168,5 +168,8 @@ class PurchaseReturnLogistic extends Model
         
     ];
 
-    
+     public function logistic_data()
+    {
+        return $this->belongsTo('App\Models\PoAdvancePayment', 'poAdvPaymentID', 'poAdvPaymentID');
+    }
 }
