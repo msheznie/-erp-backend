@@ -391,6 +391,11 @@ class SRMService
         throw_unless($data['apiKey'], "Pass apiKey from calling SRM APIs");
         throw_unless($data['request'], "Pass request from calling SRM APIs");
 
+        \Log::debug('==========$response=========');
+        \Log::debug([$data]);
+        \Log::debug([env('SRM_ENDPOINT')]);
+        \Log::debug('==========$response=========');
+
         return $this->sharedService->fetch([
             'url' => env('SRM_ENDPOINT'),
             'method' => 'POST',

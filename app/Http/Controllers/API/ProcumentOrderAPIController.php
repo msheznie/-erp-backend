@@ -871,19 +871,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
-
-            if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-
-                $validator = \Validator::make($input, [
-                    'supCategoryICVMasterID' => 'required|numeric|min:1',
-                    'supCategorySubICVID' => 'required|numeric|min:1',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-            }
-
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $procumentOrder->companySystemID)
                 ->first();
