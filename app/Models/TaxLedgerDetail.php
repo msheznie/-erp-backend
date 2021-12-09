@@ -493,4 +493,16 @@ class TaxLedgerDetail extends Model
     public function supplier_invoice_details(){
         return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
     } 
+
+    public function grv_detail(){
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
+    } 
+
+    public function purchase_return_detail(){
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
+    } 
+
+    public function item_detail(){
+        return $this->belongsTo('App\Models\ItemMaster','itemSystemCode', 'itemCodeSystem');
+    } 
 }

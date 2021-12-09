@@ -679,6 +679,14 @@ class GRVMasterAPIController extends AppBaseController
                 if(empty(TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                 }
+
+                $inputVATGL = TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $gRVMaster->companySystemID);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                }
             }
 
 
@@ -686,6 +694,14 @@ class GRVMasterAPIController extends AppBaseController
             if(TaxService::isGRVRCMActivation($id) && !empty($totalVAT) && $totalVAT->totalVAT > 0 ){
                 if(empty(TaxService::getOutputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                }
+
+                $outputVATGL = TaxService::getOutputVATTransferGLAccount($gRVMaster->companySystemID);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputVATGL->outputVatTransferGLAccountAutoID, $gRVMaster->companySystemID);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
                 }
             }
 
