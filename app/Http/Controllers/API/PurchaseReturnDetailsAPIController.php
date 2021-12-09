@@ -32,6 +32,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -306,9 +307,23 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             unset($input['grv_detail_master']);
         }
 
-        $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
+            $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseReturnDetails->toArray(), 'PurchaseReturnDetails updated successfully');
+            $res = $this->purchaseReturnDetailsRepository->savePrnLogistics($id);
+            if (!$res['status']) {
+                DB::rollback();
+                return $this->sendError($res['message'], 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse($purchaseReturnDetails->toArray(), 'PurchaseReturnDetails updated successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Error Occurred', 500);
+        }
+
     }
 
     /**
@@ -697,20 +712,33 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             }
         }
 
+        DB::beginTransaction();
+        try {
 
-        $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
 
-        if ($error_count > 0) {
-            return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
-        } else {
-            foreach ($createArray as $item) {
-                $this->purchaseReturnDetailsRepository->create($item);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            } else {
+                foreach ($createArray as $item) {
+                    $resPrDetail = $this->purchaseReturnDetailsRepository->create($item);
+
+                    $res = $this->purchaseReturnDetailsRepository->savePrnLogistics($resPrDetail->purhasereturnDetailID);
+                    if (!$res['status']) {
+                        DB::rollback();
+                        return $this->sendError($res['message'], 500);
+                    }
+                }
             }
+
+            $this->updateGrvInvoiceStatus($input['purhaseReturnAutoID'], $input['grvAutoID']);
+
+            DB::commit();
+            return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Error Occurred', 500);
         }
-
-        $this->updateGrvInvoiceStatus($input['purhaseReturnAutoID'], $input['grvAutoID']);
-
-        return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
     }
 
 

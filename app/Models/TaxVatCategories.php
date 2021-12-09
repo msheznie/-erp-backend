@@ -179,4 +179,13 @@ class TaxVatCategories extends Model
         return $this->belongsTo('App\Models\ItemMaster', 'taxVatSubCategoriesAutoID', 'vatSubCategory');
     }
 
+    public static function getMainCategory($taxVatSubCategoriesAutoID)
+    {
+
+        $category = TaxVatCategories::find($taxVatSubCategoriesAutoID);
+
+        return ($category) ? $category->mainCategory : null;
+
+    }
+
 }

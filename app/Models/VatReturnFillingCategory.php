@@ -47,6 +47,7 @@ class VatReturnFillingCategory extends Model
     public $fillable = [
         'category',
         'masterID',
+        'isFormula',
         'isActive'
     ];
 
@@ -59,6 +60,7 @@ class VatReturnFillingCategory extends Model
         'id' => 'integer',
         'category' => 'string',
         'masterID' => 'integer',
+        'isFormula' => 'integer',
         'isActive' => 'integer'
     ];
 

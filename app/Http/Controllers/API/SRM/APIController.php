@@ -94,6 +94,9 @@ class APIController extends Controller
      */
     public function fetch(Request $request){
         try {
+            \Log::debug('=========$request==========');
+            \Log::debug([$request->all()]);
+            \Log::debug('=========$request==========');
             $response = $this->SRMService->callSRMAPIs([
                 'apiKey' => $request->input('api_key'),
                 'request' => $request->input('request'),
@@ -103,11 +106,19 @@ class APIController extends Controller
                 ]
             ]);
 
+            \Log::debug('==========$response=========');
+            \Log::debug([$response]);
+            \Log::debug('==========$response=========');
+
             throw_unless($response, "Invalid API Key or Something went wrong in SRM");
             throw_unless($response && $response->data, $response->message ?? "Something went wrong!, API couldn't fetch");
 
             return response()->json($response);
         } catch (RequestException $e) {
+            \Log::debug('==========$e=========');
+            \Log::debug([$e->getResponse()]);
+            \Log::debug([$e->getTrace()]);
+            \Log::debug('==========$e=========');
             $exception = (string) $e->getResponse()->getBody();
             $exception = json_decode($exception);
 

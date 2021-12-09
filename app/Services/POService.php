@@ -93,7 +93,11 @@ class POService
 
     public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID)
     {
-        return ProcumentOrder::with(['detail.appointmentDetails', 'detail.unit', 'detail' => function ($query) {
+        return ProcumentOrder::with(['detail.appointmentDetails' => function ($query) {
+            $query->whereHas('appointment', function ($q){
+                $q->where('refferedBackYN', '!=', -1);
+            });
+        }, 'detail.unit', 'detail' => function ($query) {
             $query->where('goodsRecievedYN', '!=', 2);
         }])
             ->select('purchaseOrderID', 'purchaseOrderCode')

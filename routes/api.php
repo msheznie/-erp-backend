@@ -361,8 +361,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
         Route::resource('item-specification', 'ItemSpecificationController');
-
-        
         Route::resource('priorities', 'PriorityAPIController');
 
         Route::resource('locations', 'LocationAPIController');
@@ -393,6 +391,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('bank_accounts', 'BankAccountAPIController');
         Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
+
+
+        Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
         Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
@@ -2543,3 +2544,6 @@ Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
 Route::resource('po_categories', 'PoCategoryAPIController');
 
+
+
+Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');

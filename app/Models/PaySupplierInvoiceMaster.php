@@ -638,7 +638,8 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'bankAccountBalance'
     ];
 
     /**
@@ -750,7 +751,8 @@ class PaySupplierInvoiceMaster extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'bankAccountBalance' => 'float',
     ];
 
     /**
