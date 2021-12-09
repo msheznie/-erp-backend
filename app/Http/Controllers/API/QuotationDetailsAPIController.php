@@ -23,6 +23,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\Unit;
 use App\Models\Company;
+use App\Models\ItemMaster;
 use App\Repositories\QuotationDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -130,6 +131,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
+
         $employee = \Helper::getEmployeeInfo();
         $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
 
@@ -206,6 +208,23 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
+
+        /* check add new item policy */
+        $addNewItem = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+        ->where('companySystemID', $quotationMasterData->companySystemID)
+        ->first();
+
+        if(isset($input['itemCode']['id'])) {
+            $item = ItemMaster::find($input['itemCode']['id']);
+            unset($input['itemCode'], $input['itemDescription']);
+            $input['itemAutoID'] = $item->itemCodeSystem;
+            $input['itemSystemCode'] = $item->primaryCode;
+            $input['itemDescription'] = $item->itemDescription;
+            $input['itemCategory'] = $item->financeCategoryMaster;
+            $input['defaultUOM'] = $item->unit;
+            $input['unitOfMeasureID'] = $item->unit;
+        }
+
 
         $quotationDetails = $this->quotationDetailsRepository->create($input);
 
@@ -669,9 +688,10 @@ WHERE
 
         $input['itemCode'] = $input['itemCodeNew'];
 
-        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+
+        $input['itemSystemCode'] = $item->itemPrimaryCode;
+        $input['itemReferenceNo'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
-        $input['partNumber'] = $item->secondaryItemCode;
         $input['itemFinanceCategoryID'] =  $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
