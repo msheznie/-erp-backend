@@ -361,8 +361,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
         Route::resource('item-specification', 'ItemSpecificationController');
-
-        
         Route::resource('priorities', 'PriorityAPIController');
 
         Route::resource('locations', 'LocationAPIController');
