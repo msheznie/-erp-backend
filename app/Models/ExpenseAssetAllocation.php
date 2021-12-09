@@ -90,7 +90,7 @@ class ExpenseAssetAllocation extends Model
 
      public function asset()
     {
-        return $this->belongsTo('App\Models\ItemMaster', 'assetID','itemCodeSystem');
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'assetID','faID');
     } 
 
     public function chart_of_account()
