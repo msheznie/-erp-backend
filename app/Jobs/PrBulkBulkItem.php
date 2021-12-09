@@ -15,6 +15,7 @@ use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\helper\PurcahseRequestDetail;
 use App\Http\Controllers\AppBaseController;
+use App\helper\CommonJobService;
 class PrBulkBulkItem implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -26,9 +27,17 @@ class PrBulkBulkItem implements ShouldQueue
      */
 
     public $data;
-    public function __construct($input)
+    public $dispatch_db;
+    public function __construct($input,$dispatch_db)
     {
+        if(env('IS_MULTI_TENANCY',false)){
+            self::onConnection('database_main');
+        }else{
+            self::onConnection('database');
+        }
+        
         $this->data = $input;
+        $this->dispatch_db = $dispatch_db;
     }
 
     /**
@@ -38,6 +47,11 @@ class PrBulkBulkItem implements ShouldQueue
      */
     public function handle()
     {
+
+            
+            $db = $this->dispatch_db;
+            CommonJobService::db_switch($db);
+
 
             $input = $this->data;
             $base_controller = app()->make(AppBaseController::class);

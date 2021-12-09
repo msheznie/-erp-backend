@@ -24,10 +24,16 @@ class TenantEnforce
 
         $apiKeyRoutes = ['api/v1/srmRegistrationLink'];
 
+        $dbRoutes = ['api/v1/purchase-request-add-all-items'];
+
         if (env('IS_MULTI_TENANCY', false)) {
+
+            
             $url = $request->getHttpHost();
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
+            $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
+           
             if ($subDomain == 'www') {
                 $subDomain = $url_array[1];
             }
@@ -41,6 +47,10 @@ class TenantEnforce
                     if (in_array($request->route()->uri, $apiKeyRoutes)) {
                         $request->request->add(['api_key' => $tenant->api_key]);
                     }
+
+                    if (in_array($request->route()->uri, $dbRoutes)) {
+                        $request->request->add(['db' => $tenant->database]);
+                    }
                     Config::set("database.connections.mysql.database", $tenant->database);
                     //DB::purge('mysql');
                     DB::reconnect('mysql');
@@ -51,6 +61,10 @@ class TenantEnforce
         } else {
             if (in_array($request->route()->uri, $apiKeyRoutes)) {
                 $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
+            }
+
+            if (in_array($request->route()->uri, $dbRoutes)) {
+                $request->request->add(['db' => ""]);
             }
         }
         return $next($request);

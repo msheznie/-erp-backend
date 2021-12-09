@@ -1238,13 +1238,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     }
 
     public function addAllItemsToPurchaseRequest(Request $request) {
+
         $input = $request->all();
+
+        $db = $input['db'];
         $data['isBulkItemJobRun'] = true;
         $id = $input['purchaseRequestID'];
         $purchaseRequest = $this->purchaseRequestRepository->update($data, $id);
         if(isset($purchaseRequest))
         {
-            PrBulkBulkItem::dispatch($input);
+            PrBulkBulkItem::dispatch($input,$db);
             return ['status' => true , 'message' => 'Items Added to Queue Please wait some minutes to process'];
         }
         else
