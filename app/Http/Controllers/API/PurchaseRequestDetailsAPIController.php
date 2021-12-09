@@ -1241,7 +1241,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $db = $input['db'];
+        $db = isset($input['db']) ? $input['db'] : "";    
         $data['isBulkItemJobRun'] = true;
         $id = $input['purchaseRequestID'];
         $purchaseRequest = $this->purchaseRequestRepository->update($data, $id);

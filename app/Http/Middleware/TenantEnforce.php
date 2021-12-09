@@ -32,7 +32,6 @@ class TenantEnforce
             $url = $request->getHttpHost();
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
-            $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
            
             if ($subDomain == 'www') {
                 $subDomain = $url_array[1];
