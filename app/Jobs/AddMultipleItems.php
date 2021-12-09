@@ -31,6 +31,12 @@ class AddMultipleItems implements ShouldQueue
     {
         $this->record = $record;
         $this->purchaseOrder = $purchaseOrder;
+        
+        if(env('IS_MULTI_TENANCY',false)){
+            self::onConnection('database_main');
+        }else{
+            self::onConnection('database');
+        }
     }
 
     /**

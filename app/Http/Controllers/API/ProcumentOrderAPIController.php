@@ -146,6 +146,7 @@ use Response;
 use App\Models\ERPAssetTransfer;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AddMultipleItems;
+use App\helper\CancelDocument;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -2203,7 +2204,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
-
         $employee = \Helper::getEmployeeInfo();
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
@@ -2298,6 +2298,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($purchaseOrderID, 'Order canceled successfully ');
     }
@@ -8508,11 +8510,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
             }
 
-            // if (count($formatChk) > 0) {
-            //     if (!isset($formatChk['item_code']) || !isset($formatChk['qty'])) {
-            //     }
-            // }
-
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'no_qty', 'unit_cost'))->get()->toArray();
 
@@ -8529,12 +8526,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             if (count($record) > 0) {
                 AddMultipleItems::dispatch(array_filter($record),$purchaseOrder);
-                // $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);             
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
-            // Storage::disk($disk)->delete('app/' . $originalFileName);
             DB::commit();
             return $this->sendResponse([], 'Items uploaded Successfully!!');
         } catch (\Exception $exception) {
