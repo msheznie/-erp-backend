@@ -894,14 +894,31 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
                 }
 
+                $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                }
+
                 //if rcm activated
                 if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
                     if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
                         // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                     }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
                         return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+
                     }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
                         // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                    }
+                    
+                    $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
                     }
                 }
             }
@@ -916,11 +933,43 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                     }
 
+                    $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    }
+
+                    $inputVATGL = TaxService::getInputVATTransferGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                    }
+
                     if (TaxService::isSupplierInvoiceRcmActivated($id)) {
                         if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
                             return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
                         }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
                             return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getOutputVATTransferGLAccount($input["companySystemID"]);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatTransferGLAccountAutoID, $input["companySystemID"]);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
                         }
                     }
                 }
