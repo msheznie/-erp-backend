@@ -207,7 +207,7 @@ class Helper
     public static function confirmDocument($params)
     {
         //Skip Employee Info when Confirming;
-        $empInfoSkip = array(106); 
+        $empInfoSkip = array(106, 107); // 107 mean documentMaster id of "Supplier Registration" document in ERP
 
         /** check document is already confirmed*/  
         if (!array_key_exists('autoID', $params)) {
@@ -716,6 +716,17 @@ class Helper
                         $docInforArr["modelName"] = 'Appointment';
                         $docInforArr["primarykey"] = 'id';
                         break;
+                case 107: //Supper registration
+                    $docInforArr["documentCodeColumnName"] = 'id';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1790,17 +1801,29 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                 break;
             case 106: 
-                    $docInforArr["tableName"] = 'appointment';
-                    $docInforArr["modelName"] = 'Appointment';
-                    $docInforArr["primarykey"] = 'id';
-                    $docInforArr["approvedColumnName"] = 'approved_yn';
-                    $docInforArr["approvedBy"] = 'approvedByUserID';
-                    $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
-                    $docInforArr["approvedDate"] = 'approved_date';
-                    $docInforArr["approveValue"] = -1;
-                    $docInforArr["confirmedYN"] = "confirmed_yn";
-                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
-                    break;
+                $docInforArr["tableName"] = 'appointment';
+                $docInforArr["modelName"] = 'Appointment';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+            case 107:  //Supper registration
+                $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1904,7 +1927,17 @@ class Helper
                                     }
                                 }
                             }
-                        }  
+                        }
+
+                        if ($input['documentSystemID'] == 107) {
+                            // pass below data for taking action in controller
+                            $more_data = [
+                                'numberOfLevels' => $approvalLevel->noOfLevels,
+                                'currentLevel' => $input["rollLevelOrder"]
+                            ];
+                        }
+
+
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                         
                             // create monthly deduction
@@ -2806,11 +2839,24 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 106:
+                    $docInforArr["tableName"] = 'appointment';
+                    $docInforArr["modelName"] = 'Appointment';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+				case 107:
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+
             if ($docApprove) {
 
                 if ($docApprove->approvedYN == -1) {
@@ -2828,7 +2874,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102,65, 104])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102,65, 104, 106])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }

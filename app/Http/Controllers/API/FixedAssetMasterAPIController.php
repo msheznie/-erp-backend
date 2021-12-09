@@ -1045,10 +1045,14 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getFAGrvDetailsByID(Request $request)
     {
         $subCategory = GRVDetails::with(['grv_master' => function($query){
-            $query->with(['segment_by','supplier_by']);
+            $query->with(['segment_by','supplier_by','location_by' => function($query){
+                $query->with(['location']);
+            }]);
         }, 'item_by' => function($query) {
             $query->with(['asset_category']);
-        }])->find($request->grvDetailsID);
+        }
+
+        ])->find($request->grvDetailsID);
         return $this->sendResponse($subCategory, 'Record retrieved successfully');
     }
 

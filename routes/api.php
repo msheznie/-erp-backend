@@ -393,6 +393,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('bank_accounts', 'BankAccountAPIController');
         Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
+
+
+        Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
         Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
         Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
@@ -2361,7 +2364,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset');
         Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense');
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
+        Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
+
+        /**
+         * Supplier registration approval routes
+         */
+        Route::post('suppliers/registration/approvals', 'SupplierRegistrationApprovalController@index');
+        Route::post('suppliers/registration/approvals/status', 'SupplierRegistrationApprovalController@update');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2499,8 +2509,14 @@ Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
  * Start SRM related routes
  */
 
-Route::group(['prefix' => 'srm', 'middleware' => ['tenantById']], function (){
-    Route::post('requests', 'SRM\APIController@handleRequest');
+Route::group(['prefix' => 'srm'], function (){
+    Route::group(['middleware' => ['tenantById']], function (){
+        Route::post('requests', 'SRM\APIController@handleRequest');
+    });
+
+    Route::group(['middleware' => ['tenant']], function (){
+        Route::post('fetch', 'SRM\APIController@fetch');
+    });
 });
 
 /*
@@ -2531,3 +2547,6 @@ Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
 Route::resource('po_categories', 'PoCategoryAPIController');
 
+
+
+Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');

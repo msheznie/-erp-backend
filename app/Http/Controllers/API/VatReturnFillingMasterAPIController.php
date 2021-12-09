@@ -189,8 +189,10 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                 $detailRes = VatReturnFillingDetail::create($detailData);
 
                                 if ($detailRes) {
-                                    $updateVATDetail = TaxLedgerDetail::whereIn('id', $res['data']['linkedTaxLedgerDetails'])
-                                                                      ->update(['returnFilledDetailID' => $detailRes->id]);
+                                    if (isset($res['data']['linkedTaxLedgerDetails']) && count($res['data']['linkedTaxLedgerDetails']) > 0) {
+                                        $updateVATDetail = TaxLedgerDetail::whereIn('id', $res['data']['linkedTaxLedgerDetails'])
+                                                                          ->update(['returnFilledDetailID' => $detailRes->id]);
+                                    }
                                 }
                             } else {
                                 DB::rollback();
@@ -493,7 +495,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+                        // $query->orderBy('id', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -561,6 +563,10 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         $updateReturnDetail = VatReturnFillingDetail::where('id', $input['returnFilledDetailID'])
                                                     ->update(['taxableAmount' => $taxableAmount, 'taxAmount' => $taxAmount]);
 
+        $fillingDetail = VatReturnFillingDetail::find($input['returnFilledDetailID']);
+
+
+        $this->vatReturnFillingMasterRepository->updateFillingFormula($fillingDetail->vatReturnFillingID);
 
         return $this->sendResponse([], 'Record updated successfully');
     }
