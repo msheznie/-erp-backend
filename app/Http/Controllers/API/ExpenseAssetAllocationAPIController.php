@@ -8,6 +8,7 @@ use App\Models\ItemAssigned;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\ExpenseAssetAllocation;
+use App\Models\FixedAssetMaster;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -341,20 +342,18 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
      public function getCompanyAsset(Request $request)
     {
         $input = $request->all();
-
         $companyId = $input['companyId'];
-        $financeCategoryId = 3;
 
-        $items = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)
-                            ->where('financeCategoryMaster', $financeCategoryId);
+
+        $items = FixedAssetMaster::where('confirmedYN',-1)->where('DIPOSED',0)->where('companySystemID',$companyId);                    
 
         if (array_key_exists('search', $input)) {
 
             $search = $input['search'];
 
             $items = $items->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
         }
 
