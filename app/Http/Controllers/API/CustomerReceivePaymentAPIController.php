@@ -416,7 +416,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     public function update($id, UpdateCustomerReceivePaymentAPIRequest $request)
     {
         $input = $request->all();
-
+      
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
@@ -1296,9 +1296,37 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+       
+
+        if(isset($input['bankAccount']))
+        {
+            if(!empty($input['bankAccount']) )
+            {
+                $bank_currency = $input['bankCurrency'];
+                $document_currency = $input['custTransactionCurrencyID'];
+
+                $cur_det['companySystemID'] = $input['companySystemID'];
+                $cur_det['bankmasterAutoID'] = $input['bankID'];
+                $cur_det['bankAccountAutoID'] = $input['bankAccount'];
+                $cur_det_info =  (object)$cur_det;
+
+                $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
+
+                $bankBalance_amount = $bankBalance['netBankBalance'];
+                $details = \Helper::currencyConversion($input['companySystemID'],$bank_currency,$document_currency, $bankBalance_amount,$input['bankAccount']);
+                $amount = $details['documentAmount'];
+                $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
+
+                $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+
+            
+                $input['bankAccountBalance'] = $rounded_amount;
+
+            }
+        }
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($customerReceivePayment->toArray(), 'Receipt Voucher updated successfully');
+        return $this->sendResponse($input, 'Receipt Voucher updated successfully');
     }
 
     /**

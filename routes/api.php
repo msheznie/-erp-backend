@@ -361,8 +361,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
         Route::resource('item-specification', 'ItemSpecificationController');
-
-        
         Route::resource('priorities', 'PriorityAPIController');
 
         Route::resource('locations', 'LocationAPIController');
@@ -2370,8 +2368,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         /**
          * Supplier registration approval routes
          */
-        Route::post('suppliers/registration/approvals', 'SupplierRegistrationApprovalController@index');
-        Route::post('suppliers/registration/approvals/status', 'SupplierRegistrationApprovalController@update');
+        Route::group(['prefix' => 'suppliers/registration'], function () {
+            Route::post('/', 'SupplierRegistrationController@index');
+            Route::post('/attach', 'SupplierRegistrationController@linkKYCWithSupplier');
+            Route::post('approvals', 'SupplierRegistrationApprovalController@index');
+            Route::post('approvals/status', 'SupplierRegistrationApprovalController@update');
+        });
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

@@ -14,6 +14,8 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\ItemMaster;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
+use App\helper\CommonJobService;
+
 
 class AddMultipleItems implements ShouldQueue
 {
@@ -21,22 +23,23 @@ class AddMultipleItems implements ShouldQueue
 
     public $record;
     public $purchaseOrder;
-
+    public $db;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($record,$purchaseOrder)
+    public function __construct($record,$purchaseOrder,$db)
     {
-        $this->record = $record;
-        $this->purchaseOrder = $purchaseOrder;
-        
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
             self::onConnection('database');
         }
+
+        $this->record = $record;
+        $this->purchaseOrder = $purchaseOrder;
+        $this->db = $db;
     }
 
     /**
@@ -46,6 +49,8 @@ class AddMultipleItems implements ShouldQueue
      */
     public function handle()
     {
+        CommonJobService::db_switch($this->db);
+        
         $items = $this->record;
         $valiatedItems = $this->validateItem($items);
         Log::info('Add Mutiple Items Started');

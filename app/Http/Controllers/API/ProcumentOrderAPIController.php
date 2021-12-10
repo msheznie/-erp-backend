@@ -8525,7 +8525,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             if (count($record) > 0) {
-                AddMultipleItems::dispatch(array_filter($record),$purchaseOrder);
+                $db = isset($input['db']) ? $input['db'] : ""; 
+                AddMultipleItems::dispatch(array_filter($record),$purchaseOrder,$db);
             } else {
                 return $this->sendError('No Records found!', 500);
             }
