@@ -68,6 +68,7 @@ use App\Repositories\MaterielRequestRepository;
 use App\Repositories\UserRepository;
 use App\helper\PurcahseRequestDetail;
 use App\Traits\AuditTrial;
+use App\helper\CancelDocument;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1575,7 +1576,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
-
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
@@ -1679,6 +1679,8 @@ class PurchaseRequestAPIController extends AppBaseController
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
 
