@@ -48,6 +48,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\helper\CancelDocument;
 use Response;
 
 /**
@@ -966,6 +967,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $requestID = $input['RequestID'];
 
+
         $materielRequest = MaterielRequest::find($requestID);
 
         if (empty($materielRequest)) {
@@ -1035,6 +1037,7 @@ class MaterielRequestAPIController extends AppBaseController
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
     }

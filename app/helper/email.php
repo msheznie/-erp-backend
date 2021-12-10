@@ -520,7 +520,7 @@ class email
                     Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
                 }
             }
-            Log::info('email sent success fully to :' . $data['empEmail']);
+            Log::info('email sent success fully to - :' . $data['empEmail']);
             Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
         } else {
             Alert::create($data);

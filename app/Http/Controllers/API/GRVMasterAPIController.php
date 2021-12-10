@@ -71,6 +71,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\helper\CancelDocument;
 use Response;
 
 /**
@@ -1518,8 +1519,12 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
     public function cancelGRV(Request $request)
     {
+
+
         $input = $request->all();
+
         $employee = Helper::getEmployeeInfo();
+
         // precheck
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
         if ($isEligible['status'] == 0) {
@@ -1567,6 +1572,11 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             }
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvCancelledComment'],'cancelled');
+
+            // cancelation email
+            CancelDocument::sendEmail($input);
+
+            return $this->sendResponse($grv, 'GRV successfully canceled');
 
             DB::commit();
         } catch (\Exception $e) {
