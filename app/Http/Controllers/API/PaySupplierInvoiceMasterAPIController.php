@@ -1276,7 +1276,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             Log::info('Cheque No:' . $input['BPVchequeNo']);
             Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
             Log::info('beforeUpdate______________________________________________________');
+         
 
+            if(isset($input['BPVAccount']))
+            {
+                if(!empty($input['BPVAccount']) )
+                {
+                    $bank_currency = $input['BPVbankCurrency'];
+                    $document_currency = $input['supplierTransCurrencyID'];
+    
+                    $cur_det['companySystemID'] = $input['companySystemID'];
+                    $cur_det['bankmasterAutoID'] = $input['BPVbank'];
+                    $cur_det['bankAccountAutoID'] = $input['BPVAccount'];
+                    $cur_det_info =  (object)$cur_det;
+    
+                    $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
+    
+                    $bankBalance_amount = $bankBalance['netBankBalance'];
+                    $details = \Helper::currencyConversion($input['companySystemID'],$bank_currency,$document_currency, $bankBalance_amount,$input['BPVAccount']);
+                    $amount = $details['documentAmount'];
+                    $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
+    
+                    $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+               
+          
+                    $input['bankAccountBalance'] = $rounded_amount;
+    
+                }
+            }
+      
+           
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
             Log::info('Cheque No:' . $input['BPVchequeNo']);
