@@ -142,7 +142,8 @@ class ProcumentOrderRepository extends BaseRepository
         'modifiedUser',
         'createdDateTime',
         'isSelected',
-        'timeStamp'
+        'timeStamp',
+        'upload_job_status'
     ];
 
     /**

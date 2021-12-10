@@ -5586,4 +5586,13 @@ class Helper
 
         return $sort;
     } 
+
+    // check wether the item assgined to the company
+    public static function IsItemAssigned($item_code,$company_id) {
+        $itemAssigned =  Models\ItemAssigned::where('companySystemID',$company_id)->where('itemCodeSystem',$item_code)->get();
+        if($itemAssigned) {
+            return true;
+        }
+        return false;
+    }
 }

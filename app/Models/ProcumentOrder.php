@@ -312,6 +312,7 @@ class ProcumentOrder extends Model
         'projectID',
         'approval_remarks',
         'categoryID',
+        'upload_job_status'
     ];
 
     /**
@@ -455,6 +456,8 @@ class ProcumentOrder extends Model
         'projectID' => 'integer',
         'approval_remarks' => 'string',
         'categoryID'  => 'integer',
+        'upload_job_status'  => 'integer',
+        
     ];
 
     /**
