@@ -28,6 +28,7 @@ class PrBulkBulkItem implements ShouldQueue
 
     public $data;
     public $dispatch_db;
+    public $timeout = 500;
     public function __construct($input,$dispatch_db)
     {
         if(env('IS_MULTI_TENANCY',false)){
