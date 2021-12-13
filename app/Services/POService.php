@@ -102,6 +102,13 @@ class POService
         }])
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('poClosedYN', 0)
+            ->where('grvRecieved', "<>", 2)
+            ->where('WO_confirmedYN', 1)
+            ->where('manuallyClosed', 0)
+            ->where('poType_N', '<>', 5)
             ->where('supplierID', $supplierID)
             ->orderBy('purchaseOrderID', 'desc')
             ->get();
