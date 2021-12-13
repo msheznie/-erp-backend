@@ -1452,9 +1452,11 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
+
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
         
+        return $salesOrderData;
 
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
@@ -1467,7 +1469,6 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
-            ->whereDate('documentDate', '<=',$salesOrderData->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
