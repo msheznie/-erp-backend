@@ -103,6 +103,7 @@ class POService
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
             ->where('supplierID', $supplierID)
+            ->orderBy('purchaseOrderID', 'desc')
             ->get();
     }
 }
