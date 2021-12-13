@@ -1456,8 +1456,6 @@ class QuotationMasterAPIController extends AppBaseController
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
         
-        return $salesOrderData;
-
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
