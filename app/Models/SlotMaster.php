@@ -130,7 +130,9 @@ class SlotMaster extends Model
 
     public function getSlotData($tenantID)
     {
-        return SlotMaster::with(['slot_details', 'ware_house'])
+        return SlotMaster::with(['slot_details', 'ware_house' => function($query){
+           $query->where('isActive', 1);
+        }])
             /* ->where('company_id', $companyID) */
             /*  ->where('warehouse_id', $wareHouseID) */
             ->get();
