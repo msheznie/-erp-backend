@@ -67,6 +67,7 @@ use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 use Response;
 
 class CancelDocument
@@ -78,6 +79,7 @@ class CancelDocument
     {
         $confirmedUserID = 0;
         $documentSystemCode = 0;
+        $cancelledBy = Auth::user()->name;
 
         if(isset($array['created_by'])) {
             $createdBy = $array['created_by']['employeeSystemID'];
@@ -127,14 +129,13 @@ class CancelDocument
         }
 
         $approvedUsers = self::getApprovedUsers($array,$documentSystemCode);
-        $cretaedUser = self::getCreatedUserDetails($array['createdUserSystemID']);
 
         if($approvedUsers) {
             foreach($approvedUsers as $employee) {
                 if ($employee && !is_null($employee->empEmail)) {
                     $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
                     $dataEmail['companySystemID'] = $employee->companySystemID;
-                    $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled</p>';
+                    $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $employee->documentID." Document Cancelled";
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -148,7 +149,7 @@ class CancelDocument
                 if ($user && !is_null($user->empEmail)) {
                     $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
                     $dataEmail['companySystemID'] = $array->companySystemID;
-                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled</p>';
+                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -160,7 +161,7 @@ class CancelDocument
                 if ($user && !is_null($user->empEmail)) {
                     $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
                     $dataEmail['companySystemID'] = $array->companySystemID;
-                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled</p>';
+                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -177,11 +178,4 @@ class CancelDocument
         }
     }
 
-    public static function getCreatedUserDetails($employee_id) {
-        $employee = Employee::find($employee_id);
-
-        if($employee) {
-            return $employee->empEmail;
-        }
-    }
 }
