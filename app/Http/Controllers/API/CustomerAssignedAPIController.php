@@ -69,6 +69,7 @@ class CustomerAssignedAPIController extends AppBaseController
      */
     public function store(CreateCustomerAssignedAPIRequest $request)
     {
+       
         $input = $request->all();
         $id = Auth::id();
         $companies = $input['companySystemID'];
@@ -81,10 +82,9 @@ class CustomerAssignedAPIController extends AppBaseController
 
         if( array_key_exists ('customerAssignedID' , $input )){
 
-            foreach($companies as $companie)
-            {
+         
                 if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
-                    $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['customerCodeSystem'], 'customer', true);
+                    $validatorResult = \Helper::checkCompanyForMasters($companies, $input['customerCodeSystem'], 'customer', true);
                     if (!$validatorResult['success']) {
                         return $this->sendError($validatorResult['message']);
                     }
@@ -100,7 +100,7 @@ class CustomerAssignedAPIController extends AppBaseController
     
                 $customerAssigneds = $this->customerAssignedRepository->update($data, $input['customerAssignedID']);
 
-            }
+          
 
 
         }else{
