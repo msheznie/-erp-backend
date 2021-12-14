@@ -1173,23 +1173,6 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['exempt_vat_portion'] = $value->exempt_vat_portion;
                                 $ledgerDetailsData['logisticYN'] = ($value->logisticID > 0) ? 1 : 0;
                                 $ledgerDetailsData['addVATonPO'] = (isset($value->logistic_detail->addVatOnPO) ? $value->logistic_detail->addVatOnPO : 0) ? 1 : 0;
-
-                                if(!$isRCMApplicable) {
-                                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
-                                    if($subCategory->subCatgeoryType == 2) {
-                                        $ledgerDetailsData['taxableAmount']  -= $ledgerDetailsData['VATAmount'];
-                                        $ledgerDetailsData['taxableAmountLocal'] -= $ledgerDetailsData['VATAmountLocal'];
-                                        $ledgerDetailsData['taxableAmountReporting'] -= $ledgerDetailsData['VATAmountRpt'];
-
-                                    }else {
-                                        if($valu->exempt_vat_portion > 0) {
-                                            $ledgerDetailsData['taxableAmount']   -= ($ledgerDetailsData['VATAmount']/100) * $valu->exempt_vat_portion;
-                                            $ledgerDetailsData['taxableAmountLocal']   -= ($ledgerDetailsData['VATAmountLocal']/100) * $valu->exempt_vat_portion;
-                                            $ledgerDetailsData['taxableAmountReporting']   -= ($ledgerDetailsData['VATAmountRpt']/100) * $valu->exempt_vat_portion;
-                                        }
-                                    }
-                                }
-
                                 array_push($finalDetailData, $ledgerDetailsData);
                             }
                         }
