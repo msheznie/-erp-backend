@@ -345,7 +345,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         $companyId = $input['companyId'];
 
 
-        $items = FixedAssetMaster::where('confirmedYN',-1)->where('DIPOSED',0)->where('companySystemID',$companyId);                    
+        $items = FixedAssetMaster::where('approved',-1)->where('confirmedYN',1)->where('companySystemID',$companyId);                    
 
         if (array_key_exists('search', $input)) {
 
