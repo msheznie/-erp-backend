@@ -2781,5 +2781,60 @@ HAVING
         return $this->sendResponse($paymentVoucherData, 'Payment voucher pre checked successfully');
     }
 
+    public function updateBankBalance(Request $request)
+    {
+        $input = $request->all();
+
+        DB::beginTransaction();
+        try {
+
+        $input = $this->convertArrayToValue($input);
+        $id = $input['PayMasterAutoId'];
+        if(isset($input['BPVAccount']))
+        {
+            if(!empty($input['BPVAccount']) )
+            {
+
+                $bankAccount = BankAccount::find($input['BPVAccount']);
+                if ($bankAccount) {
+                    $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
+
+                }
+
+
+                $bank_currency = $input['BPVbankCurrency'];
+                $document_currency = $input['supplierTransCurrencyID'];
+
+                $cur_det['companySystemID'] = $input['companySystemID'];
+                $cur_det['bankmasterAutoID'] = $input['BPVbank'];
+                $cur_det['bankAccountAutoID'] = $input['BPVAccount'];
+                $cur_det_info =  (object)$cur_det;
+
+                $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
+
+                $amount = $bankBalance['netBankBalance'];
+                $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
+
+                $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+                
+                $details['bankAccountBalance'] = $rounded_amount;
+
+                $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($details, $id);
+                DB::commit();
+                return $this->sendResponse($paySupplierInvoiceMaster, 'successfully updated');
+
+            }
+        }
+      
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+  
+       
+       
+    }
+
 
 }
