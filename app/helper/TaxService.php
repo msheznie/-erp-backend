@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Log;
 class TaxService
 {
 
+
     public static function checkPOVATEligible($supplierVATEligible = 0, $vatRegisteredYN = 0, $documentSystemID = 0)
     {
         //$vatRegisteredYN == 1 &
