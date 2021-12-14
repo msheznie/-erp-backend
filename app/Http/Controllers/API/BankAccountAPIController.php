@@ -612,8 +612,6 @@ class BankAccountAPIController extends AppBaseController
         $bankBalance = $this->getBankAccountBalanceSummery($input);
 
         $amount = $bankBalance['netBankBalance'];
-        // $details = \Helper::currencyConversion($input->companySystemID,$bank_currency, $document_currency, $bankBalance_amount,$input->bankAccountAutoID);
-        // $amount = $details['documentAmount'];
         $currencies = CurrencyMaster::where('currencyID','=',$bank_currency)->first();
 
         $data['amount'] = $amount;

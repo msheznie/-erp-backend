@@ -1313,8 +1313,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
 
                 $amount = $bankBalance['netBankBalance'];
-                // $details = \Helper::currencyConversion($input['companySystemID'],$bank_currency,$document_currency, $bankBalance_amount,$input['bankAccount']);
-                // $amount = $details['documentAmount'];
                 $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
 
                 $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
