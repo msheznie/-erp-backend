@@ -1183,9 +1183,9 @@ class TaxLedgerInsert implements ShouldQueue
 
                                     }else {
                                         if($valu->exempt_vat_portion > 0) {
-                                            $ledgerDetailsData['taxableAmount']   = ($ledgerDetailsData['VATAmount']/100) * $valu->exempt_vat_portion;
-                                            $ledgerDetailsData['taxableAmountLocal']   = ($ledgerDetailsData['VATAmountLocal']/100) * $valu->exempt_vat_portion;
-                                            $ledgerDetailsData['taxableAmountReporting']   = ($ledgerDetailsData['VATAmountRpt']/100) * $valu->exempt_vat_portion;
+                                            $ledgerDetailsData['taxableAmount']   -= ($ledgerDetailsData['VATAmount']/100) * $valu->exempt_vat_portion;
+                                            $ledgerDetailsData['taxableAmountLocal']   -= ($ledgerDetailsData['VATAmountLocal']/100) * $valu->exempt_vat_portion;
+                                            $ledgerDetailsData['taxableAmountReporting']   -= ($ledgerDetailsData['VATAmountRpt']/100) * $valu->exempt_vat_portion;
                                         }
                                     }
                                 }
