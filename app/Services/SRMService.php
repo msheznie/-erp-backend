@@ -212,6 +212,7 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $data =  $this->POService->getAppointmentSlots($tenantID);
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $x = 0;
         if (isset($data) && $data != '') {
@@ -221,8 +222,21 @@ class SRMService
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
                         ->where('approved_yn', 1)
-                        ->where('timesReferred', 0)
+                        ->where('refferedBackYN', 0)
+                        ->where('created_by', $supplierID)
                         ->get();
+
+                    $appointmentApproved = Appointment::select('id')
+                        ->where('slot_detail_id', $slotDetail->id)
+                        ->where('confirmed_yn', 1)
+                        ->orWhere(function($query) {
+                            $query->where('approved_yn', 0)
+                                ->where('approved_yn', 1);
+                        })
+                        ->where('refferedBackYN', 0)
+                        ->where('created_by', $supplierID)
+                        ->get();
+
                     $availableConcat = '';
                     if($row['limit_deliveries']==1){ 
                        $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
@@ -237,6 +251,7 @@ class SRMService
                     $arr[$x]['status'] = $slotDetail->status;
                     $arr[$x]['slotCompanyId'] = $row['company_id'];
                     $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1: ($row['no_of_deliveries'] - sizeof($appointment)) );
+                    $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - sizeof($appointmentApproved);
                     $x++;
                 }
             }
@@ -252,11 +267,13 @@ class SRMService
 
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails']);
         }, 'created_by'])
             ->where('slot_detail_id', $slotDetailID)
+            ->where('created_by', $supplierID)
             ->get();
 
         return [
