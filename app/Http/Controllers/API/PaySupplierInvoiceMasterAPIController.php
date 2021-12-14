@@ -2800,6 +2800,10 @@ HAVING
                     $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
 
                 }
+                else
+                {
+                    return $this->sendError('Bank currency not found');
+                }
 
 
                 $bank_currency = $input['BPVbankCurrency'];
