@@ -1114,7 +1114,8 @@ class TaxLedgerInsert implements ShouldQueue
 
                             foreach ($detailData as $key => $value) {
                                 $ledgerDetailsData['rcmApplicableYN'] = TaxService::isGRVRCMActivation($value->grvAutoID);
-                                $ledgerDetailsData['documentDetailID'] = $value->id;
+                                $isRCMApplicable =  (boolean) $ledgerDetailsData['rcmApplicableYN'];
+                                $ledgerDetailsData['documentDetailID'] = $value->id;                               
                                 $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;
                                 $ledgerDetailsData['vatMasterCategoryID'] = $value->vatMasterCategoryID;
                                 $ledgerDetailsData['serviceLineSystemID'] = null;
@@ -1129,6 +1130,21 @@ class TaxLedgerInsert implements ShouldQueue
                                     $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
                                     $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
                                 }
+
+
+
+
+                                if(!$isRCMApplicable) {
+                                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                                    if($subCategory->subCatgeoryType == 2) {
+                                        $taxableAmountReporting = ( $value->totRptAmount -  (($value->totRptAmount / 100) * $subCategory->percentage));
+                                    }else {
+                                        $taxableAmountReporting =  $value->totRptAmount - $value->VATAmountRpt;
+                                    }
+                                }else {
+                                   $taxableAmountReporting =  $value->totRptAmount;
+                                }
+
 
                                 $ledgerDetailsData['transactionCurrencyID'] = $value->supplierTransactionCurrencyID;
                                 $ledgerDetailsData['originalInvoice'] = NULL;
@@ -1148,8 +1164,8 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
                                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                                 $ledgerDetailsData['reportingER'] = $value->companyReportingER;
-                                $ledgerDetailsData['taxableAmountLocal'] = ($value->totLocalAmount - $value->VATAmountLocal);
-                                $ledgerDetailsData['taxableAmountReporting'] = ($value->totRptAmount - $value->VATAmountRpt);
+                                $ledgerDetailsData['taxableAmountLocal'] = ($isRCMApplicable) ? $value->totLocalAmount  : ($value->totLocalAmount - $value->VATAmountLocal);
+                                $ledgerDetailsData['taxableAmountReporting'] = ($isRCMApplicable) ? $value->totRptAmount : ($value->totRptAmount - $value->VATAmountRpt);
                                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
                                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
                                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
@@ -1157,6 +1173,22 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['exempt_vat_portion'] = $value->exempt_vat_portion;
                                 $ledgerDetailsData['logisticYN'] = ($value->logisticID > 0) ? 1 : 0;
                                 $ledgerDetailsData['addVATonPO'] = (isset($value->logistic_detail->addVatOnPO) ? $value->logistic_detail->addVatOnPO : 0) ? 1 : 0;
+
+                                if(!$isRCMApplicable) {
+                                    $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                                    if($subCategory->subCatgeoryType == 2) {
+                                        $ledgerDetailsData['taxableAmount']  -= $ledgerDetailsData['VATAmount'];
+                                        $ledgerDetailsData['taxableAmountLocal'] -= $ledgerDetailsData['VATAmountLocal'];
+                                        $ledgerDetailsData['taxableAmountReporting'] -= $ledgerDetailsData['VATAmountRpt'];
+
+                                    }else {
+                                        if($valu->exempt_vat_portion > 0) {
+                                            $ledgerDetailsData['taxableAmount']   = ($ledgerDetailsData['VATAmount']/100) * $valu->exempt_vat_portion;
+                                            $ledgerDetailsData['taxableAmountLocal']   = ($ledgerDetailsData['VATAmountLocal']/100) * $valu->exempt_vat_portion;
+                                            $ledgerDetailsData['taxableAmountReporting']   = ($ledgerDetailsData['VATAmountRpt']/100) * $valu->exempt_vat_portion;
+                                        }
+                                    }
+                                }
 
                                 array_push($finalDetailData, $ledgerDetailsData);
                             }
