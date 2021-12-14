@@ -1292,9 +1292,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     
                     $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
     
-                    $bankBalance_amount = $bankBalance['netBankBalance'];
-                    $details = \Helper::currencyConversion($input['companySystemID'],$bank_currency,$document_currency, $bankBalance_amount,$input['BPVAccount']);
-                    $amount = $details['documentAmount'];
+                    $amount = $bankBalance['netBankBalance'];
                     $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
     
                     $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
