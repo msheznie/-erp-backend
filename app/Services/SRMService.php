@@ -212,6 +212,7 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $data =  $this->POService->getAppointmentSlots($tenantID);
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $x = 0;
         if (isset($data) && $data != '') {
@@ -222,6 +223,7 @@ class SRMService
                         ->where('confirmed_yn', 1)
                         ->where('approved_yn', 1)
                         ->where('refferedBackYN', 0)
+                        ->where('created_by', $supplierID)
                         ->get();
 
                     $appointmentApproved = Appointment::select('id')
@@ -232,6 +234,7 @@ class SRMService
                                 ->where('approved_yn', 1);
                         })
                         ->where('refferedBackYN', 0)
+                        ->where('created_by', $supplierID)
                         ->get();
 
                     $availableConcat = '';
@@ -264,11 +267,13 @@ class SRMService
 
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
+        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails']);
         }, 'created_by'])
             ->where('slot_detail_id', $slotDetailID)
+            ->where('created_by', $supplierID)
             ->get();
 
         return [
