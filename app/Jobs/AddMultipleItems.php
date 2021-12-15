@@ -41,7 +41,8 @@ class AddMultipleItems implements ShouldQueue
 
         $this->record = $record;
         $this->purchaseOrder = $purchaseOrder;
-        $this->db = $db;
+        CommonJobService::db_switch($db);
+
     }
 
     /**
@@ -53,8 +54,6 @@ class AddMultipleItems implements ShouldQueue
     {
         Log::info('Add Mutiple Items Started');
 
-        CommonJobService::db_switch($this->db);
-        Log::info('DB Name'.$this->db);
         $items = $this->record;
         $valiatedItems = $this->validateItem($items);
 
