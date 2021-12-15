@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Config;
 class CommonJobService
 {
     public static function db_switch( $db ){
-        if(!empty($db))
+        if(!$db)
         {
             Config::set("database.connections.mysql.database", $db);
             DB::reconnect('mysql');
