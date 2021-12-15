@@ -97,10 +97,6 @@ class email
 
         foreach ($array as $data) {
 
-            if (in_array($data['docSystemID'], $empInfoSkip)) {
-                return ['success' => true, 'message' => 'Successfully Inserted'];
-            }
-
             $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
 
             if (!empty($employee)) {
@@ -108,6 +104,10 @@ class email
                 $data['empName'] = $employee->empName;
                 $data['empEmail'] = $employee->empEmail;
             } else {
+                if (in_array($data['docSystemID'], $empInfoSkip)) {
+                    continue;
+                   // return ['success' => true, 'message' => 'Successfully Inserted'];
+                }
                 return ['success' => false, 'message' => 'Employee Not Found'];
             }
 
