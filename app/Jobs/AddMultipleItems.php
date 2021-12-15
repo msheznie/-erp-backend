@@ -49,12 +49,13 @@ class AddMultipleItems implements ShouldQueue
      */
     public function handle()
     {
+        Log::info('Add Mutiple Items Started');
+
         CommonJobService::db_switch($this->db);
-        
+        Log::info('DB Name'.$this->db);
         $items = $this->record;
         $valiatedItems = $this->validateItem($items);
 
-        Log::info('Add Mutiple Items Started');
         $procumentOrder = ProcumentOrder::find($this->purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 0;
         $procumentOrder->save();
