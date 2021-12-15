@@ -63,10 +63,11 @@ class SlotMasterRepository extends AppBaseController
         }
         $fromTime = date_format(new Carbon($input['dateFromTime']), 'H:i:s');
         $fromDate = new Carbon($input['dateFrom']);
+        $fromDateTime = $fromDate->toDateString().' '.$fromTime ;
 
         $toTime = date_format(new Carbon($input['dateToTime']), 'H:i:s');
         $toDate = new Carbon($input['dateTo']);
-
+        $toDateTime = $toDate->toDateString().' '.$toTime ;
 
         $weekDaysActive = $slotMaster->checkDaySelectedDate($input);
         $weekDayCount = array_filter($weekDaysActive, function ($item) {
@@ -96,12 +97,13 @@ class SlotMasterRepository extends AppBaseController
         $toDate = $toDate->format('Y-m-d') . ' ' . $toTime; 
         $dateRangeExist = '';
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
-        if($limitYN == 1){ 
-                if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
-                    return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
-                } else {
+        if($limitYN == 1){
+                if(!isset($input['noofdeliveries'])){
                     return ['status' => false, 'message' => 'Invalid No of deliveries'];
                 }
+                if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
+                    return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
+                } 
         }
 
         DB::beginTransaction();
@@ -119,8 +121,8 @@ class SlotMasterRepository extends AppBaseController
             if ($slotMasterID > 0) {
                 $dateRangeExist = DB::table('slot_master')
                 ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromTime' AND from_date <= '$toTime')")
-                ->orWhereRaw("(to_date >= '$fromTime' AND to_date <= '$toTime')")
+                ->whereRaw("(from_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
+                //->orWhereRaw("(to_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
                 ->where('warehouse_id', '=', $input['wareHouse'])
                 ->where('id', '!=', $input['slotMasterID'])
                 ->first();
@@ -129,9 +131,9 @@ class SlotMasterRepository extends AppBaseController
             if($slotMasterID == 0){ 
                 $dateRangeExist = DB::table('slot_master')
                 ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromTime' AND from_date <= '$toTime')")
-                ->orWhereRaw("(to_date >= '$fromTime' AND to_date <= '$toTime')")
-                ->where('warehouse_id', '=', $input['wareHouse']) 
+                ->whereRaw("(from_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
+                //->orWhereRaw("(to_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
+                ->where('warehouse_id', '=', $input['wareHouse'])
                 ->first();
             }
             if (!empty($dateRangeExist)) {
