@@ -178,18 +178,41 @@ class TaxLedgerInsert implements ShouldQueue
                             $ledgerDetailsData['itemCode'] = $value->itemPrimaryCode;
                             $ledgerDetailsData['itemDescription'] = $value->itemDescription;
                             $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                            $ledgerDetailsData['taxableAmount'] = ($value->landingCost_TransCur * $value->noQty);
                             $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->noQty;
                             $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount * $value->noQty;
                             $ledgerDetailsData['localER'] = $value->localCurrencyER;
                             $ledgerDetailsData['reportingER'] = $value->companyReportingER;
-                            $ledgerDetailsData['taxableAmountLocal'] = ($value->landingCost_LocalCur * $value->noQty);
-                            $ledgerDetailsData['taxableAmountReporting'] = ($value->landingCost_RptCur * $value->noQty);
                             $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->noQty;
                             $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->noQty;
+                            
+                            $subCategory = TaxVatCategories::find($value->vatSubCategoryID);
+                            if($subCategory->subCatgeoryType != 2) {
+                                if($value->exempt_vat_portion != 0) {
+                                    $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
+                                    $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+                                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+
+                                }else {
+                                    $taxableAmountLocal =  ($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal'];
+                                    $taxableAmountReporting =  ($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt'];
+                                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount'];
+
+                                }
+                            }else {
+                                $taxableAmountLocal =  $value->landingCost_LocalCur * $value->noQty;
+                                $taxableAmountReporting =  $value->landingCost_RptCur * $value->noQty;
+                                $taxableAmount =  $value->landingCost_TransCur * $value->noQty;
+
+                            }    
+
+                            $ledgerDetailsData['taxableAmount'] = $taxableAmount;
+                            $ledgerDetailsData['taxableAmountLocal'] = $taxableAmountLocal;
+                            $ledgerDetailsData['taxableAmountReporting'] = $taxableAmountReporting;
                             $ledgerDetailsData['localCurrencyID'] = $value->localCurrencyID;
                             $ledgerDetailsData['rptCurrencyID'] = $value->companyReportingCurrencyID;
                             $ledgerDetailsData['exempt_vat_portion'] = $value->exempt_vat_portion;
+
+                            
 
                             array_push($finalDetailData, $ledgerDetailsData);
                         }
