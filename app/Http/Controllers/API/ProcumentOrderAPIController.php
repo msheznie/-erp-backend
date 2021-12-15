@@ -8532,7 +8532,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], 'Items uploaded Successfully!! - '.$db);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
