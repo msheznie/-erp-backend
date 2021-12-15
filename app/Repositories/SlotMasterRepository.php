@@ -108,18 +108,18 @@ class SlotMasterRepository extends AppBaseController
             if ($slotMasterID > 0) {
                 $dateRangeExist = DB::table('slot_master')
                 ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromDate' AND from_date <= '$toDate')")
-                ->orWhereRaw("(to_date >= '$fromDate' AND to_date <= '$toDate')")
+                ->whereRaw("(from_date >= '$fromTime' AND from_date <= '$toTime')")
+                ->orWhereRaw("(to_date >= '$fromTime' AND to_date <= '$toTime')")
                 ->where('warehouse_id', '=', $input['wareHouse'])
-                ->where('id', '!=', $input['slotMasterID'])  
+                ->where('id', '!=', $input['slotMasterID'])
                 ->first();
             }
     
             if($slotMasterID == 0){ 
                 $dateRangeExist = DB::table('slot_master')
                 ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromDate' AND from_date <= '$toDate')")
-                ->orWhereRaw("(to_date >= '$fromDate' AND to_date <= '$toDate')")
+                ->whereRaw("(from_date >= '$fromTime' AND from_date <= '$toTime')")
+                ->orWhereRaw("(to_date >= '$fromTime' AND to_date <= '$toTime')")
                 ->where('warehouse_id', '=', $input['wareHouse']) 
                 ->first();
             }
