@@ -53,6 +53,8 @@ class SlotMasterRepository extends AppBaseController
     {
         $input = $request->all();
         $slotMaster = new SlotMaster();
+        $dt = Carbon::now();
+
 
         $slotMasterID = $input['slotMasterID'];
         $resValidate = $this->validateCalanderSlots($input);
@@ -74,9 +76,16 @@ class SlotMasterRepository extends AppBaseController
         });
 
         if($toTime <= $fromTime){ 
-            return ['status' => false, 'message' => 'Time to cannot be less than or equal'];
+            return ['status' => false, 'message' => 'Time To field is invalid'];
         }
 
+        if( $fromDate <= $dt->toDateString()){
+            return ['status' => false, 'message' => 'From Date is invalid'];
+        }
+
+        if($fromDate->toDateString() === $dt->toDateString() && $fromTime <= $dt->toTimeString()){
+            return ['status' => false, 'message' => 'Time From field is invalid'];
+        }
 
         if (count($weekDayCount) == 0) {
             return ['status' => false, 'message' => 'Please select at least one day to proceed'];
@@ -90,8 +99,10 @@ class SlotMasterRepository extends AppBaseController
         if($limitYN == 1){ 
                 if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
                     return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
+                } else {
+                    return ['status' => false, 'message' => 'Invalid No of deliveries'];
                 }
-        } 
+        }
 
         DB::beginTransaction();
         $data['warehouse_id'] = $input['wareHouse'];
@@ -151,13 +162,17 @@ class SlotMasterRepository extends AppBaseController
         $messages = [
             'wareHouse.required' => 'Warehouse is required.',
             'dateFrom.required' => 'From Date is required.',
-            'dateTo.required' => 'To is required.'
+            'dateTo.required' => 'To is required.',
+            'dateFromTime.required' => 'Time From is required.',
+            'dateToTime.required' => 'Time To is required.',
         ];
 
         $validator = \Validator::make($input, [
             'wareHouse' => 'required',
             'dateFrom' => 'required',
-            'dateTo' => 'required'
+            'dateTo' => 'required',
+            'dateFromTime' => 'required',
+            'dateToTime' => 'required',
         ], $messages);
 
         if ($validator->fails()) {
