@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class CommonJobService
 {
     public static function db_switch( $db ){
+        Log::info("database Name in common service  start-".$db);
         if($db)
         {
             Log::info("database Name in common service -".$db);
@@ -19,6 +20,7 @@ class CommonJobService
             DB::purge('mysql');
         }
 
+        Log::info("database Name in common service  end-".Config::get("database.connections.mysql.database"));
 
         return true;
     }
