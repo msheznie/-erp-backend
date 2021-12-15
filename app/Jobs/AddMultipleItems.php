@@ -53,6 +53,7 @@ class AddMultipleItems implements ShouldQueue
         
         $items = $this->record;
         $valiatedItems = $this->validateItem($items);
+
         Log::info('Add Mutiple Items Started');
         $procumentOrder = ProcumentOrder::find($this->purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 0;
@@ -68,33 +69,31 @@ class AddMultipleItems implements ShouldQueue
 
     public function validateItem($items) {
         $validatedItemsArray = [];
-
         foreach($items as $item) {
-            if($item['item_code']) {
-                $orgItem = ItemMaster::find(trim($item['item_code']));
-                if($orgItem && Helper::IsItemAssigned($item['item_code'],$this->purchaseOrder['companySystemID'])) {
+            if(array_key_exists('item_code',$item)) {
+                $orgItem = ItemMaster::where('primaryCode',trim($item['item_code']))->first();
+                if($orgItem) {
                     $item['purchaseOrderMasterID'] = $this->purchaseOrder['purchaseOrderID'];
                     $item['companyID'] = $this->purchaseOrder['companyID'];
                     $item['companySystemID'] = $this->purchaseOrder['companySystemID'];
                     $item['serviceLineSystemID'] = $this->purchaseOrder['serviceLineSystemID'];
                     $item['serviceLineCode'] = $this->purchaseOrder['serviceLine'];
-                    $item['itemCode'] = trim($item['item_code']);
+                    $item['itemCode'] = $orgItem['itemCodeSystem'];
                     $item['unitCost'] = trim($item['unit_cost']);
                     $item['noQty'] = trim($item['no_qty']);
                     $item['itemPrimaryCode'] = trim($orgItem['primaryCode']);
                     $item['itemDescription'] = trim($orgItem['itemDescription']);
                     $item['netAmount'] =   $item['unitCost'] * $item['noQty'];
+                    $item['itemCode'] = $item['item_code'];
                     unset($item['item_code'], $item['unit_cost'], $item['no_qty']);
                     $item['unitOfMeasure'] = trim($orgItem['unit']);
                     $item['altUnit'] = trim($orgItem['unit']);
                     $item['altUnitValue'] = trim($item['noQty']);
                     array_push($validatedItemsArray,$item);
                 }
-                return $validatedItemsArray;
             }
-            
         }
 
+        return $validatedItemsArray;
     }
-
 }
