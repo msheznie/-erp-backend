@@ -70,28 +70,31 @@ class AddMultipleItems implements ShouldQueue
         $validatedItemsArray = [];
 
         foreach($items as $item) {
-            $orgItem = ItemMaster::find(trim($item['item_code']));
-            if($orgItem && Helper::IsItemAssigned($item['item_code'],$this->purchaseOrder['companySystemID'])) {
-                $item['purchaseOrderMasterID'] = $this->purchaseOrder['purchaseOrderID'];
-                $item['companyID'] = $this->purchaseOrder['companyID'];
-                $item['companySystemID'] = $this->purchaseOrder['companySystemID'];
-                $item['serviceLineSystemID'] = $this->purchaseOrder['serviceLineSystemID'];
-                $item['serviceLineCode'] = $this->purchaseOrder['serviceLine'];
-                $item['itemCode'] = trim($item['item_code']);
-                $item['unitCost'] = trim($item['unit_cost']);
-                $item['noQty'] = trim($item['no_qty']);
-                $item['itemPrimaryCode'] = trim($orgItem['primaryCode']);
-                $item['itemDescription'] = trim($orgItem['itemDescription']);
-                $item['netAmount'] =   $item['unitCost'] * $item['noQty'];
-                unset($item['item_code'], $item['unit_cost'], $item['no_qty']);
-                $item['unitOfMeasure'] = trim($orgItem['unit']);
-                $item['altUnit'] = trim($orgItem['unit']);
-                $item['altUnitValue'] = trim($item['noQty']);
-                array_push($validatedItemsArray,$item);
+            if($item['item_code']) {
+                $orgItem = ItemMaster::find(trim($item['item_code']));
+                if($orgItem && Helper::IsItemAssigned($item['item_code'],$this->purchaseOrder['companySystemID'])) {
+                    $item['purchaseOrderMasterID'] = $this->purchaseOrder['purchaseOrderID'];
+                    $item['companyID'] = $this->purchaseOrder['companyID'];
+                    $item['companySystemID'] = $this->purchaseOrder['companySystemID'];
+                    $item['serviceLineSystemID'] = $this->purchaseOrder['serviceLineSystemID'];
+                    $item['serviceLineCode'] = $this->purchaseOrder['serviceLine'];
+                    $item['itemCode'] = trim($item['item_code']);
+                    $item['unitCost'] = trim($item['unit_cost']);
+                    $item['noQty'] = trim($item['no_qty']);
+                    $item['itemPrimaryCode'] = trim($orgItem['primaryCode']);
+                    $item['itemDescription'] = trim($orgItem['itemDescription']);
+                    $item['netAmount'] =   $item['unitCost'] * $item['noQty'];
+                    unset($item['item_code'], $item['unit_cost'], $item['no_qty']);
+                    $item['unitOfMeasure'] = trim($orgItem['unit']);
+                    $item['altUnit'] = trim($orgItem['unit']);
+                    $item['altUnitValue'] = trim($item['noQty']);
+                    array_push($validatedItemsArray,$item);
+                }
+                return $validatedItemsArray;
             }
+            
         }
 
-        return $validatedItemsArray;
     }
 
 }
