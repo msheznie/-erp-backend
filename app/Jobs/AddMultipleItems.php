@@ -31,7 +31,7 @@ class AddMultipleItems implements ShouldQueue
      */
     public function __construct($record,$purchaseOrder,$db)
     {
-        Log::info('Add Mutiple Items Started in Constructor - DB - '.$ $db);
+        Log::info('Add Mutiple Items Started in Constructor - DB - '.$db);
 
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
