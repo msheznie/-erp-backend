@@ -252,7 +252,7 @@ class SRMService
                     $arr[$x]['color'] = '#ffc107';
                     $arr[$x]['status'] = $slotDetail->status;
                     $arr[$x]['slotCompanyId'] = $row['company_id'];
-                    $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1: ($row['no_of_deliveries'] - sizeof($appointment)) );
+                    $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1: ($row['no_of_deliveries'] - $appointment) );
                     $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - sizeof($appointmentApproved);
                     $x++;
                 }
