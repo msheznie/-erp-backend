@@ -44,17 +44,16 @@ class ProcumentOrderService
 
         CommonJobService::db_switch($db);
 
-        // $items = $records;
-        // $valiatedItems = self::validateItem($items,$purchaseOrder);
-
-        // $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
-        // $procumentOrder->upload_job_status = 0;
-        // $procumentOrder->save();
-        // $procumentOrderDetails = PurchaseOrderDetails::insert($valiatedItems);
+        $items = $records;
+        $valiatedItems = self::validateItem($items,$purchaseOrder);
+        $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
+        $procumentOrder->upload_job_status = 0;
+        $procumentOrder->save();
+        $procumentOrderDetails = PurchaseOrderDetails::insert($valiatedItems);
         Log::info('Add Mutiple Items End');
-        // $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
-        // $procumentOrder->upload_job_status = 1;
-        // $procumentOrder->save();
+        $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
+        $procumentOrder->upload_job_status = 1;
+        $procumentOrder->save();
     }
 
     public static function validateItem($items,$purchaseOrder) {
