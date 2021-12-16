@@ -894,7 +894,13 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $itemRequestArray = $itemRequest->toArray();
-        unset($itemRequestArray['materialIssueStatusValue'], $itemRequestArray['material_issue']);
+        if(isset($itemRequestArray['materialIssueStatusValue'])) {
+            unset($itemRequestArray['materialIssueStatusValue']);
+        }
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
