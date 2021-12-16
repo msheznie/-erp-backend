@@ -20,12 +20,14 @@ class SRMService
     private $POService = null;
     private $supplierService = null;
     private $sharedService = null;
+    private $invoiceService = null;
 
-    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService)
+    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService, InvoiceService $invoiceService)
     {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
+        $this->invoiceService   = $invoiceService;
     }
 
     /**
@@ -422,5 +424,20 @@ class SRMService
                 'extra'         => $data['extra'] ?? null
             ]
         ]);
+    }
+
+    /**
+     * create supplier approval setup
+     * @param Request $request
+     * @return array
+     * @throws Throwable
+     */
+    public function getInvoicesList(Request $request){
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        return [
+            'success'   => true,
+            'message'   => 'Record retrieved successfully',
+            'data'      =>  $this->invoiceService->getInvoicesList($request,$supplierID)
+        ];
     }
 }

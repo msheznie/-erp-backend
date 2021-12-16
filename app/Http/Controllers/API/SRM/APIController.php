@@ -26,6 +26,7 @@ define('GET_PO_APPOINTMENT', 'GET_PO_APPOINTMENT');
 define('DELETE_SUPPLIER_APPOINTMENT', 'DELETE_SUPPLIER_APPOINTMENT');
 define('CONFIRM_SUPPLIER_APPOINTMENT', 'CONFIRM_SUPPLIER_APPOINTMENT');
 define('SUPPLIER_REGISTRATION_APPROVAL_SETUP', 'SUPPLIER_REGISTRATION_APPROVAL_SETUP');
+define('GET_INVOICES', 'GET_INVOICES');
 
 
 class APIController extends Controller
@@ -77,6 +78,8 @@ class APIController extends Controller
                 return $this->SRMService->confirmSupplierAppointment($request);
             case SUPPLIER_REGISTRATION_APPROVAL_SETUP:
                 return $this->SRMService->supplierRegistrationApprovalSetup($request);
+            case GET_INVOICES:
+                return $this->SRMService->getInvoicesList($request);
             default:
                 return [
                     'success'   => false,
