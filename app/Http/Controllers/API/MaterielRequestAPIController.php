@@ -883,15 +883,18 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
+
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
+
 
         if ($itemRequest->refferedBackYN != -1) {
             return $this->sendError('You cannot refer back this request');
         }
 
         $itemRequestArray = $itemRequest->toArray();
+        unset($itemRequestArray['materialIssueStatusValue'], $itemRequestArray['material_issue']);
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
