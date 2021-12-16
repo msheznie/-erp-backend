@@ -289,7 +289,7 @@ class WarehouseMasterAPIController extends AppBaseController
             ->select('companySystemID', 'CompanyID', 'CompanyName')
             ->get();
         /** all Locations Drop Down */
-        $erpLocations = ErpLocation::select('locationID', 'locationName')->get();
+        $erpLocations = ErpLocation::where('is_deleted', 0)->select('locationID', 'locationName')->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();

@@ -64,7 +64,7 @@ class AssetManagementReportAPIController extends AppBaseController
         $expenseGL = [];
         if (isset($request['reportID']) && $request['reportID'] == "AEA") {
 
-            $assets = FixedAssetMaster::where('confirmedYN',-1)->where('companySystemID',$selectedCompanyId)->get();
+            $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
 
 
             $expenseGL = ChartOfAccountsAssigned::where('companySystemID', $selectedCompanyId)

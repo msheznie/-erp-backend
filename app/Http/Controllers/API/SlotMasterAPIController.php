@@ -298,7 +298,7 @@ class SlotMasterAPIController extends AppBaseController
     public function getFormDataCalander(Request $request)
     {
         $companyID = $request['companyID'];
-        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyID);
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyID)->where('isActive', 1);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
         }

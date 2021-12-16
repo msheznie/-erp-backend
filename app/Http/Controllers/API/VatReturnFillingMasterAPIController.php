@@ -189,9 +189,9 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                                 $detailRes = VatReturnFillingDetail::create($detailData);
 
                                 if ($detailRes) {
-                                    if (isset($res['data']['linkedTaxLedgerDetails']) && count($res['data']['linkedTaxLedgerDetails']) > 0) {
+                                    if(isset($res['data']['linkedTaxLedgerDetails']) && count($res['data']['linkedTaxLedgerDetails']) > 0) {
                                         $updateVATDetail = TaxLedgerDetail::whereIn('id', $res['data']['linkedTaxLedgerDetails'])
-                                                                          ->update(['returnFilledDetailID' => $detailRes->id]);
+                                                            ->update(['returnFilledDetailID' => $detailRes->id]);
                                     }
                                 }
                             } else {

@@ -133,7 +133,7 @@ class CancelDocument
         if($approvedUsers) {
             foreach($approvedUsers as $employee) {
                 if ($employee && !is_null($employee->empEmail)) {
-                    $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
+                    $dataEmail['empEmail'] = $employee->empEmail;
                     $dataEmail['companySystemID'] = $employee->companySystemID;
                     $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $employee->documentID." Document Cancelled";
@@ -147,7 +147,7 @@ class CancelDocument
         if($array->created_by) {
             $user = $array->created_by;
                 if ($user && !is_null($user->empEmail)) {
-                    $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
+                    $dataEmail['empEmail'] = $user->empEmail;
                     $dataEmail['companySystemID'] = $array->companySystemID;
                     $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
@@ -159,7 +159,7 @@ class CancelDocument
         if($array->confirmed_by) {
             $user = $array->confirmed_by;
                 if ($user && !is_null($user->empEmail)) {
-                    $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
+                    $dataEmail['empEmail'] = $user->empEmail;
                     $dataEmail['companySystemID'] = $array->companySystemID;
                     $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";

@@ -8462,7 +8462,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
 
             $disk = 'local';
-            // Storage::disk($disk)->put($originalFileName, $decodeFile);
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
@@ -8485,7 +8485,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $allowItemToTypePolicy = true;
                 }
             }
-
 
             foreach ($uniqueData as $key => $value) {
                 if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
@@ -8523,6 +8522,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             if ($purchaseOrder->approved == 1) {
                 return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
             }
+
 
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 

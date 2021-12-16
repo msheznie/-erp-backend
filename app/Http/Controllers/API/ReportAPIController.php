@@ -178,9 +178,9 @@ class ReportAPIController extends AppBaseController
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
-                    /*IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,*/
-                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0))) as qtyToReceive,
+                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-IFNULL(gdet.noQty,0)) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
+                    /*IFNULL((erp_purchaseorderdetails.noQty-IFNULL(gdet.noQty,0)),0) as qtyToReceive,*/
+                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-IFNULL(gdet.noQty,0)),0))) as qtyToReceive,
                     IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) as noQty,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
