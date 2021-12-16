@@ -28,7 +28,7 @@ class TenantEnforce
             'api/v1/suppliers/registration/approvals/status'
         ];
 
-        $dbRoutes = ['api/v1/purchase-request-add-all-items'];
+        $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload'];
 
         if (env('IS_MULTI_TENANCY', false)) {
 

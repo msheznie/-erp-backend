@@ -48,6 +48,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\helper\CancelDocument;
 use Response;
 
 /**
@@ -882,15 +883,24 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
+
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
+
 
         if ($itemRequest->refferedBackYN != -1) {
             return $this->sendError('You cannot refer back this request');
         }
 
         $itemRequestArray = $itemRequest->toArray();
+        if(isset($itemRequestArray['materialIssueStatusValue'])) {
+            unset($itemRequestArray['materialIssueStatusValue']);
+        }
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
@@ -966,6 +976,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $requestID = $input['RequestID'];
 
+
         $materielRequest = MaterielRequest::find($requestID);
 
         if (empty($materielRequest)) {
@@ -1035,6 +1046,7 @@ class MaterielRequestAPIController extends AppBaseController
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
     }

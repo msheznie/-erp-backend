@@ -1317,7 +1317,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
-        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible']);
+        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible','assetID','isFrom']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 
@@ -1452,10 +1452,10 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
+
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
         
-
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1467,7 +1467,6 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
-            ->whereDate('documentDate', '<=',$salesOrderData->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 

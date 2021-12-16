@@ -17,6 +17,7 @@ use App\Models\ErpLocation;
 use App\Repositories\ErpLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\WarehouseMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -144,7 +145,7 @@ class ErpLocationAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $locations= ErpLocation::all();
+        $locations= ErpLocation::where('is_deleted', 0)->get();
         $search = $request->input('search.value');
 
         if ($search) {
@@ -177,8 +178,13 @@ class ErpLocationAPIController extends AppBaseController
 
     public function deleteLocation(Request $request){
         $input = $request->all();
-
-            $location = ErpLocation::where('locationID', $input['locationID'])->delete();
+        $isLocationUsed = WarehouseMaster::where('wareHouseLocation', $input['locationID'])->first();
+        
+        if($isLocationUsed){
+            return $this->sendError('Location cannot be deleted - Location is already selected for a warehouse');
+        }
+            $deleteData = ['is_deleted'=>1];
+            $location = ErpLocation::where('locationID', $input['locationID'])->update($deleteData);
             return $this->sendResponse($location, 'Erp Location deleted successfully');
     }
 }

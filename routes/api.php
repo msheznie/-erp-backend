@@ -856,6 +856,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addPVDetailsByInterCompany', 'DirectPaymentDetailsAPIController@addPVDetailsByInterCompany');
         Route::post('pv-md-deduction-type', 'DirectPaymentDetailsAPIController@updat_monthly_deduction');
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
+        Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -1764,6 +1765,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
         Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
+
         Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
 
         Route::get('copy_pr/{id}', 'PurchaseRequestDetailsAPIController@copyPr');
@@ -1899,6 +1901,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
+        Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate');
+        Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
+
+
         Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
 
         

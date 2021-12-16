@@ -117,7 +117,7 @@ class NotificationService
 
                     case 9:
                         $details = RolReachedNotification::getReOrderLevelReachedNotification($companyID, $beforeAfter);
-                        $subject = 'Inventory stock reaches a  re-order level';
+                        $subject = 'Inventory stock reaches a re-order level';
                         break;
 
                     default:

@@ -35,7 +35,8 @@ class ErpLocation extends Model
 
 
     public $fillable = [
-        'locationName'
+        'locationName',
+        'is_deleted'
     ];
 
     /**
@@ -45,7 +46,8 @@ class ErpLocation extends Model
      */
     protected $casts = [
         'locationID' => 'integer',
-        'locationName' => 'string'
+        'locationName' => 'string',
+        'is_deleted' => 'integer'
     ];
 
     /**

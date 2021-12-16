@@ -542,7 +542,8 @@ class CustomerReceivePaymentRefferedHistory extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'bankAccountBalance'
     ];
 
     /**
@@ -626,7 +627,8 @@ class CustomerReceivePaymentRefferedHistory extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'bankAccountBalance' => "double"
     ];
 
     /**
