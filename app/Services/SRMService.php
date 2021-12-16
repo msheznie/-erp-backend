@@ -440,4 +440,20 @@ class SRMService
             'data'      =>  $this->invoiceService->getInvoicesList($request,$supplierID)
         ];
     }
+
+    /**
+     * create supplier approval setup
+     * @param Request $request
+     * @return array
+     * @throws Throwable
+     */
+    public function getInvoiceDetailsById(Request $request){
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $id = $request->input('extra.id');
+        return [
+            'success'   => true,
+            'message'   => 'Record retrieved successfully',
+            'data'      => $this->invoiceService->getInvoiceDetailsById($id,$supplierID)
+        ];
+    }
 }
