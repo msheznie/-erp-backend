@@ -17,6 +17,7 @@ use App\Models\ErpLocation;
 use App\Repositories\ErpLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\WarehouseMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -134,5 +135,56 @@ class ErpLocationAPIController extends AppBaseController
         $erpLocation->delete();
 
         return $this->sendResponse($id, 'Erp Location deleted successfully');
+    }
+
+    public function getAllLocation(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $locations= ErpLocation::where('is_deleted', 0)->get();
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $locations = $locations->where(function ($query) use ($search) {
+                $query->where('locationName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($locations)
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->addColumn('Actions', 'Actions', "Actions")
+        //->addColumn('Index', 'Index', "Index")
+        ->make(true);
+    }
+
+    public function createLocation(Request $request){
+        $input = $request->all();
+        $masterData = ['locationName'=>$input['locationName'] ];
+
+        if(isset($input['locationID'])){
+            $location = ErpLocation::where('locationID', $input['locationID'])->update($masterData);
+            return $this->sendResponse($location, 'Erp Location updated successfully');
+        }
+
+        $location = ErpLocation::create($masterData);
+        return $this->sendResponse($location, 'Erp Location Created successfully');
+    }
+
+    public function deleteLocation(Request $request){
+        $input = $request->all();
+        $isLocationUsed = WarehouseMaster::where('wareHouseLocation', $input['locationID'])->first();
+        
+        if($isLocationUsed){
+            return $this->sendError('Location cannot be deleted - Location is already selected for a warehouse');
+        }
+            $deleteData = ['is_deleted'=>1];
+            $location = ErpLocation::where('locationID', $input['locationID'])->update($deleteData);
+            return $this->sendResponse($location, 'Erp Location deleted successfully');
     }
 }

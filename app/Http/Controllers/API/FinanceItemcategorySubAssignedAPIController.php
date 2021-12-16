@@ -98,7 +98,8 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     {
 
         $input = $request->all();
-
+        $companies = $input['companySystemID'];
+        unset($input['companySystemID']);
         if (array_key_exists('Actions', $input)) {
             unset($input['Actions']);
         }
@@ -142,6 +143,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             $input['financeGLcodeRevenueSystemID'] = null;
         }
 
+       
         if (array_key_exists('itemCategoryAssignedID', $input)) {
 
             $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('itemCategoryAssignedID', $input['itemCategoryAssignedID'])->first();
@@ -160,11 +162,16 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             $financeItemCategorySubAssigned->save();
         } else {
 
-            $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            $input['companyID'] = $company->CompanyID;
-            $input['isAssigned'] = -1;
-            $input['mainItemCategoryID'] = $input['itemCategoryID'];
-            $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
+            foreach($companies as $companie)
+            {
+                $company = Company::where('companySystemID', $companie['id'])->first();
+                $input['companyID'] = $company->CompanyID;
+                $input['companySystemID'] = $companie['id'];
+                $input['isAssigned'] = -1;
+                $input['mainItemCategoryID'] = $input['itemCategoryID'];
+                $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
+            }
+
         }
 
         return $this->sendResponse($financeItemCategorySubAssigned->toArray(), 'Finance Item Category Sub Assigned saved successfully');

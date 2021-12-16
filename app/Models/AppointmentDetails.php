@@ -74,7 +74,8 @@ class AppointmentDetails extends Model
         'created_by',
         'item_id',
         'po_master_id',
-        'qty'
+        'qty',
+        'po_detail_id'
     ];
 
     /**
@@ -88,7 +89,9 @@ class AppointmentDetails extends Model
         'id' => 'integer',
         'item_id' => 'integer',
         'po_master_id' => 'integer',
-        'qty' => 'integer'
+        'qty' => 'integer',
+        'po_detail_id' => 'integer'
+
     ];
 
     /**
@@ -99,6 +102,15 @@ class AppointmentDetails extends Model
     public static $rules = [
         
     ];
+    public function getPoMaster(){ 
+        return $this->hasOne('App\Models\ProcumentOrder', 'purchaseOrderID', 'po_master_id');
+    }
+    public function getPoDetails(){ 
+        return $this->hasOne('App\Models\ProcumentOrderDetail', 'purchaseOrderDetailsID', 'po_detail_id');
+    }
+    public function appointment(){
+        return $this->belongsTo('App\Models\Appointment', 'appointment_id', 'id');
+    }
 
     
 }

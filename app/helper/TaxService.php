@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Log;
 class TaxService
 {
 
+
     public static function checkPOVATEligible($supplierVATEligible = 0, $vatRegisteredYN = 0, $documentSystemID = 0)
     {
         //$vatRegisteredYN == 1 &
@@ -290,6 +291,20 @@ class TaxService
                 $q->where('rcmActivated', 1);
             })
             ->exists();
+    }
+
+    public static function isPRNRCMActivation($purhaseReturnAutoID = 0)
+    {
+
+        $purchaseReturnDetail = PurchaseReturnDetails::where('purhaseReturnAutoID', $purhaseReturnAutoID)->first();
+
+        $rcm = false;
+
+        if ($purchaseReturnDetail) {
+            $rcm = self::isGRVRCMActivation($purchaseReturnDetail->grvAutoID);
+        }
+
+        return $rcm;
     }
 
     public static function isSupplierInvoiceRcmActivated($id = 0)
@@ -600,6 +615,9 @@ class TaxService
             'masterVATTrans' => 0,
             'masterVATRpt' => 0,
             'masterVATLocal' => 0,
+            'exemptVATTrans' => 0,
+            'exemptVATRpt' => 0,
+            'exemptVATLocal' => 0,
             'bsVAT' => $bsVATData,
             'exemptVATportionBs' => $exemptVATportionBs,
             'exemptVATportionPL' => $exemptVATportionPL,
@@ -647,12 +665,15 @@ class TaxService
             foreach ($exemptPotianteData as $key => $value) {
                 $exemptVATTransAmount = $value->transVATAmount * ($value->exempt_vat_portion/100);
                 $vatData['masterVATTrans'] += ($value->transVATAmount - $exemptVATTransAmount);
+                $vatData['exemptVATTrans'] += $exemptVATTransAmount;
 
                 $exemptVATLocalAmount = $value->localVATAmount * ($value->exempt_vat_portion/100);
                 $vatData['masterVATLocal'] += ($value->localVATAmount - $exemptVATLocalAmount);
+                $vatData['exemptVATLocal'] += $exemptVATLocalAmount;
 
                 $exemptVATRptAmount = $value->rptVATAmount * ($value->exempt_vat_portion/100);
                 $vatData['masterVATRpt'] += ($value->rptVATAmount - $exemptVATRptAmount);
+                $vatData['exemptVATRpt'] += $exemptVATRptAmount;
 
                 if ($value->financeGLcodebBSSystemID > 0 && !is_null($value->financeGLcodebBSSystemID)) {
                     $exemptVATportionBs[$value->financeGLcodebBSSystemID]['exemptVATTransAmount'] = ((isset($exemptVATportionBs[$value->financeGLcodebBSSystemID]['exemptVATTransAmount'])) ? $exemptVATportionBs[$value->financeGLcodebBSSystemID]['exemptVATTransAmount'] : 0) + $exemptVATTransAmount;
@@ -682,6 +703,10 @@ class TaxService
                 $temp['transVATAmount'] = $value['transVATAmount'];
                 $temp['localVATAmount'] = $value['localVATAmount'];
                 $temp['rptVATAmount'] = $value['rptVATAmount'];
+
+                $vatData['exemptVATTrans'] += $value['transVATAmount'];
+                $vatData['exemptVATLocal'] += $value['localVATAmount'];
+                $vatData['exemptVATRpt'] += $value['rptVATAmount'];
 
                 $bsVATData[$value['financeGLcodebBSSystemID']] = $temp;
             }
@@ -1085,5 +1110,40 @@ class TaxService
         }
 
         return ['totalTransAmount' => $totalTransAmount, 'totalTransVATAmount' => $totalTransVATAmount, 'totalRptAmount' => $totalRptAmount, 'totalLocalAmount' => $totalLocalAmount, 'totalRptVATAmount' => $totalRptVATAmount, 'totalLocalVATAmount' => $totalLocalVATAmount, 'exemptVATTrans' => $exemptVATTrans, 'exemptVATRpt' => $exemptVATRpt, 'exemptVATLocal' => $exemptVATLocal];
+    }
+
+
+    public static function processPRNLogisticDetails($purhaseReturnAutoID)
+    {
+        $purchaseReturnDetails = PurchaseReturnDetails::with(['grv_detail_master'])->where('purhaseReturnAutoID', $purhaseReturnAutoID)->get();
+
+
+        $resultData = [
+            'logisticTransAmount' => 0,
+            'logisticLocalAmount' => 0,
+            'logisticRptAmount' => 0,
+            'logisticTransVATAmount' => 0,
+            'logisticLocalVATAmount' => 0,
+            'logisticRptVATAmount' => 0
+        ];
+
+        $grvAutoID = isset($purchaseReturnDetails[0]['grvAutoID']) ? $purchaseReturnDetails[0]['grvAutoID'] : 0;
+        $grvTotalLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(VATAmount),0) as VATAmountTotal, COALESCE(SUM(VATAmountLocal),0) as VATAmountLocalTotal, COALESCE(SUM(VATAmountRpt),0) as VATAmountRptTotal, COALESCE(SUM(reqAmountInPOTransCur),0) as transactionTotalSum, COALESCE(SUM(reqAmountInPORptCur),0) as reportingTotalSum, COALESCE(SUM(reqAmountInPOLocalCur),0) as localTotalSum'))
+                ->where('grvAutoID', $grvAutoID)
+                ->first();
+
+        foreach ($purchaseReturnDetails as $key => $value) {
+            $resultData['logisticTransAmount'] += (isset($value->grv_detail_master->logisticsCharges_TransCur) ? ($value->grv_detail_master->logisticsCharges_TransCur * $value->noQty) : 0);
+            $resultData['logisticLocalAmount'] += (isset($value->grv_detail_master->logisticsCharges_LocalCur) ? ($value->grv_detail_master->logisticsCharges_LocalCur * $value->noQty) : 0);
+            $resultData['logisticRptAmount'] += (isset($value->grv_detail_master->logisticsChargest_RptCur) ? ($value->grv_detail_master->logisticsChargest_RptCur * $value->noQty) : 0);
+
+
+            $resultData['logisticTransVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_TransCur) / $grvTotalLogisticAmount['transactionTotalSum']) * $grvTotalLogisticAmount['VATAmountTotal']) * $value->noQty);
+            $resultData['logisticLocalVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_LocalCur) / $grvTotalLogisticAmount['localTotalSum']) * $grvTotalLogisticAmount['VATAmountLocalTotal']) * $value->noQty);
+            $resultData['logisticRptVATAmount'] += (((floatval($value->grv_detail_master->logisticsChargest_RptCur) / $grvTotalLogisticAmount['reportingTotalSum']) * $grvTotalLogisticAmount['VATAmountRptTotal']) * $value->noQty);
+
+        }
+
+        return $resultData;
     }
 }

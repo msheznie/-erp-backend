@@ -71,6 +71,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\helper\CancelDocument;
 use Response;
 
 /**
@@ -679,6 +680,14 @@ class GRVMasterAPIController extends AppBaseController
                 if(empty(TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
                 }
+
+                $inputVATGL = TaxService::getInputVATTransferGLAccount($gRVMaster->companySystemID);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $gRVMaster->companySystemID);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                }
             }
 
 
@@ -686,6 +695,14 @@ class GRVMasterAPIController extends AppBaseController
             if(TaxService::isGRVRCMActivation($id) && !empty($totalVAT) && $totalVAT->totalVAT > 0 ){
                 if(empty(TaxService::getOutputVATTransferGLAccount($gRVMaster->companySystemID))){
                     return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                }
+
+                $outputVATGL = TaxService::getOutputVATTransferGLAccount($gRVMaster->companySystemID);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputVATGL->outputVatTransferGLAccountAutoID, $gRVMaster->companySystemID);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
                 }
             }
 
@@ -1518,8 +1535,12 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
     public function cancelGRV(Request $request)
     {
+
+
         $input = $request->all();
+
         $employee = Helper::getEmployeeInfo();
+
         // precheck
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
         if ($isEligible['status'] == 0) {
@@ -1567,6 +1588,11 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             }
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvCancelledComment'],'cancelled');
+
+            // cancelation email
+            CancelDocument::sendEmail($input);
+
+            return $this->sendResponse($grv, 'GRV successfully canceled');
 
             DB::commit();
         } catch (\Exception $e) {

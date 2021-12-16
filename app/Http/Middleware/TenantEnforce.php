@@ -22,12 +22,21 @@ class TenantEnforce
     public function handle($request, Closure $next)
     {
 
-        $apiKeyRoutes = ['api/v1/srmRegistrationLink'];
+        $apiKeyRoutes = [
+            'api/v1/srmRegistrationLink',
+            'api/v1/srm/fetch',
+            'api/v1/suppliers/registration/approvals/status'
+        ];
+
+        $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload'];
 
         if (env('IS_MULTI_TENANCY', false)) {
+
+            
             $url = $request->getHttpHost();
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
+           
             if ($subDomain == 'www') {
                 $subDomain = $url_array[1];
             }
@@ -41,6 +50,10 @@ class TenantEnforce
                     if (in_array($request->route()->uri, $apiKeyRoutes)) {
                         $request->request->add(['api_key' => $tenant->api_key]);
                     }
+
+                    if (in_array($request->route()->uri, $dbRoutes)) {
+                        $request->request->add(['db' => $tenant->database]);
+                    }
                     Config::set("database.connections.mysql.database", $tenant->database);
                     //DB::purge('mysql');
                     DB::reconnect('mysql');
@@ -52,7 +65,12 @@ class TenantEnforce
             if (in_array($request->route()->uri, $apiKeyRoutes)) {
                 $request->request->add(['api_key' => "fow0lrRWCKxVIB4fW3lR"]);
             }
+
+            if (in_array($request->route()->uri, $dbRoutes)) {
+                $request->request->add(['db' => ""]);
+            }
         }
+
         return $next($request);
     }
 }

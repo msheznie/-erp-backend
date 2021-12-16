@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\helper\TaxService;
 use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
+use App\Models\PurchaseReturnLogistic;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Company;
 use App\Models\SupplierAssigned;
@@ -161,6 +162,38 @@ class UnbilledGRVInsert implements ShouldQueue
 
                     if ($output) {
                         $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
+
+                        $outputLogistic = PurchaseReturnLogistic::selectRaw("erp_grvmaster.companySystemID,
+                                                              erp_grvmaster.companyID,
+                                                              purchase_return_logistic.supplierID,
+                                                              erp_purchaseorderadvpayment.poID as purchaseOrderID,
+                                                              purchase_return_logistic.grvAutoID,
+                                                              purchase_return_logistic.purchaseReturnID as purhaseReturnAutoID,
+                                                              NOW() as grvDate,
+                                                              purchase_return_logistic.supplierTransactionCurrencyID as supplierTransactionCurrencyID,
+                                                              '1' as supplierTransactionCurrencyER,
+                                                              erp_purchaseordermaster.companyReportingCurrencyID,
+                                                              ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,
+                                                              erp_purchaseordermaster.localCurrencyID,
+                                                              ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,
+                                                              ROUND(SUM(logisticAmountTrans + purchase_return_logistic.logisticVATAmount),7) as totTransactionAmount,
+                                                              ROUND(SUM(logisticAmountLocal + purchase_return_logistic.logisticVATAmountLocal),7) as totLocalAmount, 
+                                                              ROUND(SUM(logisticAmountRpt + purchase_return_logistic.logisticVATAmountRpt),7) as totRptAmount,
+                                                              'POG' as grvType,NOW() as timeStamp, 
+                                                              ROUND(SUM(purchase_return_logistic.logisticVATAmount),7) as totalVATAmount, 
+                                                              ROUND(SUM(purchase_return_logistic.logisticVATAmountLocal),7) as totalVATAmountLocal,
+                                                              ROUND(SUM(purchase_return_logistic.logisticVATAmountRpt),7) as totalVATAmountRpt,
+                                                              1 as logisticYN")
+                                                    ->leftJoin('erp_grvmaster', 'purchase_return_logistic.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
+                                                    ->leftJoin('erp_purchaseorderadvpayment', 'purchase_return_logistic.poAdvPaymentID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID')
+                                                    ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+                                                    ->where('purchase_return_logistic.purchaseReturnID',$masterModel["purhaseReturnAutoID"])
+                                                    ->groupBy('purchase_return_logistic.UnbilledGRVAccountSystemID','purchase_return_logistic.supplierID')
+                                                    ->get();
+
+                        if($outputLogistic){
+                            $unbillRes1 = UnbilledGrvGroupBy::insert($outputLogistic->toArray());
+                        }
 
                         DB::commit();
                         Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));

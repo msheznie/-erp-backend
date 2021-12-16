@@ -298,7 +298,7 @@ class SlotMasterAPIController extends AppBaseController
     public function getFormDataCalander(Request $request)
     {
         $companyID = $request['companyID'];
-        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyID);
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyID)->where('isActive', 1);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
         }
@@ -330,8 +330,8 @@ class SlotMasterAPIController extends AppBaseController
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
                     $arr[$x]['fullDay'] = 0;
-                    $arr[$x]['color'] = '#ffc107';
-                    $arr[$x]['status'] = $slotDetail->status;
+                    $arr[$x]['color'] =($slotDetail->status == 1?'#cf3000ba':'#ffc107');
+                    $arr[$x]['status'] = isset($slotDetail->status)?$slotDetail->status:0;
                     $x++;
                 }
             }

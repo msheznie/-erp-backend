@@ -63,11 +63,8 @@ class AssetManagementReportAPIController extends AppBaseController
         $assets = [];
         $expenseGL = [];
         if (isset($request['reportID']) && $request['reportID'] == "AEA") {
-            $assets = ItemAssigned::where('companySystemID', $selectedCompanyId)
-                                  ->where('isActive', 1)
-                                  ->where('isAssigned', -1)
-                                   ->where('financeCategoryMaster', 3)
-                                   ->get();
+
+            $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
 
 
             $expenseGL = ChartOfAccountsAssigned::where('companySystemID', $selectedCompanyId)
@@ -1413,8 +1410,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
                         $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['Asset Code'] = isset($val->asset->primaryCode) ? $val->asset->primaryCode : "";
-                        $data[$x]['Asset Description'] = isset($val->asset->itemDescription) ? $val->asset->itemDescription : "";
+                        $data[$x]['Asset Code'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x]['Asset Description'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
 
                         if ($val->documentSystemID == 11) {
                             $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
@@ -1540,7 +1537,7 @@ FROM
             $companyID = (array)$request->companySystemID;
         }
 
-        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('itemCodeSystem')->toArray() : [];
+        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
         $chartOfAccountIds = (isset($request->glAccounts) && count($request->glAccounts) > 0) ? collect($request->glAccounts)->pluck('chartOfAccountSystemID')->toArray() : [];
 
         return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)

@@ -70,12 +70,15 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
      */
     public function store(CreateChartOfAccountsAssignedAPIRequest $request)
     {
+
+      
         $input = $request->all();
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
         $input = array_except($input, ['final_approved_by','company']);
+        $companies = $input['companySystemID'];
         $input = $this->convertArrayToValue($input);
         if (array_key_exists('chartOfAccountsAssignedID', $input)) {
             $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
@@ -137,38 +140,50 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
             $chartOfAccountsAssigned->save();
         } else {
-            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['chartOfAccountSystemID'], 'chartofaccounts');
-            if (!$validatorResult['success']) {
-                return $this->sendError($validatorResult['message']);
+            unset($input['companySystemID']);
+  
+            foreach($companies as $companie)
+            {
+                
+                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['chartOfAccountSystemID'], 'chartofaccounts');
+                if (!$validatorResult['success']) {
+                    return $this->sendError($validatorResult['message']);
+                }
+
+                $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
+
+                if (!$chartofaccountData) {
+                    return $this->sendError('Chart of Account not found!', 404);
+                }
+
+                // if ($chartofaccountData->isMasterAccount == 0) {
+                //     $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
+                //                                                ->where('isMasterAccount', 1)
+                //                                                ->whereHas('chartofaccount_assigned', function($query) use ($input) {
+                //                                                     $query->where('companySystemID', $input['companySystemID'])
+                //                                                           ->where('isAssigned', -1)
+                //                                                           ->where('isActive', 1);
+                //                                                })
+                //                                                ->first();
+
+                //     if (!$checkMasterAccountIsAssigned) {
+                //         return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
+                //     }
+                // }
+
+
+   
+             
+                $input = $this->convertArrayToValue($input);
+                $company = Company::find($companie['id']);
+                $input['companySystemID'] = $companie['id'];
+                $input['companyID'] = $company->CompanyID;
+                $input['isAssigned'] = -1;
+                $input['isActive'] = 1;
+                $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->create($input);
             }
+    
 
-            $chartofaccountData = ChartOfAccount::find($input['chartOfAccountSystemID']);
-
-            if (!$chartofaccountData) {
-                return $this->sendError('Chart of Account not found!', 404);
-            }
-
-            // if ($chartofaccountData->isMasterAccount == 0) {
-            //     $checkMasterAccountIsAssigned = ChartOfAccount::where('AccountCode', $chartofaccountData->masterAccount)
-            //                                                ->where('isMasterAccount', 1)
-            //                                                ->whereHas('chartofaccount_assigned', function($query) use ($input) {
-            //                                                     $query->where('companySystemID', $input['companySystemID'])
-            //                                                           ->where('isAssigned', -1)
-            //                                                           ->where('isActive', 1);
-            //                                                })
-            //                                                ->first();
-
-            //     if (!$checkMasterAccountIsAssigned) {
-            //         return $this->sendError('Master account is not assigned or inactive to this company, therefore you cannot assign');
-            //     }
-            // }
-
-            $input = $this->convertArrayToValue($input);
-            $company = Company::find($input['companySystemID']);
-            $input['companyID'] = $company->CompanyID;
-            $input['isAssigned'] = -1;
-            $input['isActive'] = 1;
-            $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->create($input);
         }
 
 
@@ -394,7 +409,8 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('controllAccountYN', 0)
             ->where('isBank', 0)
             ->where('isAssigned', -1)
-            ->where('isActive', 1);
+            ->where('isActive', 1)
+            ->whereDoesntHave('project');
         $items = $items->get();
 
         if (empty($items)) {
@@ -414,24 +430,13 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
         $companyID = $input['companySystemID'];
         $projectID = $input['projectID'];
-        $glDetails = ProjectGlDetail::with('chartofaccounts')->where('companySystemID', $companyID)
+        $glDetails = ProjectGlDetail::with('chartofaccounts')
+                                    ->where('companySystemID', $companyID)
                                     ->where('projectID' , $projectID)->get();
 
         if (empty($glDetails)) {
                 return $this->sendError('Data not found');
-            } 
-                                                            
-        // return \DataTables::eloquent($glDetails)
-        //     ->addIndexColumn()->order(function ($query) use ($input) {
-        //         if (request()->has('order') ) {
-        //             if($input['order'][0]['column'] == 0)
-        //             {
-        //                 $query->orderBy('id', $input['order'][0]['dir']);
-        //             }
-        //         }
-        //     })
-        //     ->with('orderCondition', $sort)
-        //     ->make(true);
+        } 
 
         return \DataTables::of($glDetails)
             ->addIndexColumn()

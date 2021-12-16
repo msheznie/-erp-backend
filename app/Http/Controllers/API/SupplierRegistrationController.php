@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\helper\Helper;
+use App\Models\SupplierRegistrationLink;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+
+class SupplierRegistrationController extends Controller
+{
+    /**
+     * get KYC list
+     * @param Request $request
+     * @return mixed
+     */
+    public function index(Request $request) {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = Helper::getEmployeeSystemID();
+
+        $suppliersDetail = SupplierRegistrationLink::select('*');
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($suppliersDetail)
+            ->order(function ($query) use ($input) {
+                $query->orderBy('created_at', 'DESC');
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
+     * link KYC with supplier
+     * @param Request $request
+     * @return array
+     * @throws Throwable
+     */
+    public function linkKYCWithSupplier(Request $request){
+        try {
+            $selectedSupplier = $request->input('selectedSupplier');
+            $selectedKYC = $request->input('selectedKYC');
+
+            throw_unless($selectedSupplier, 'selected supplier must be passed');
+
+            $isUpdated = SupplierRegistrationLink::where('id', $selectedKYC)
+                ->update([
+                    'supplier_master_id' => $selectedSupplier
+                ]);
+            
+            throw_unless($isUpdated, "Something went wrong!, Supplier cannot attached to the KYC");
+
+            return [
+                'success'   => true,
+                'message'   => 'Supplier has been attached to the KYC',
+                'data'      => $isUpdated
+            ];
+        }catch(\Exception $e){
+            return [
+                'success'   => false,
+                'message'   => $e->getMessage(),
+                'data'      => []
+            ];
+        }
+    }
+}

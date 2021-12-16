@@ -12,6 +12,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
@@ -1309,5 +1310,21 @@ WHERE
                 }])
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+    public function isLinkItem(Request $request) {
+        $input = $request->all();
+        $companyId = $input['companySystemID'];
+
+        $addNewItem = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+        ->where('companySystemID', $companyId)
+        ->first();
+
+        if($addNewItem) {
+            return $this->sendResponse($addNewItem->isYesNO, 'Details retrieved successfully');
+        }else {
+            return $this->sendResponse(false, 'Details retrieved successfully');
+        }
+
     }
 }
