@@ -174,17 +174,11 @@
 <body onload="window.print();window.close()">
 
 <div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    {{-- <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}
 </div>
 <div id="watermark"></div>
 
 @if ($entity != null)
-    {{-- @if($loop->last)
-         <div class="card-body content">
-             @else--}}
     <div class="card-body content">
-        {{--   @endif--}}
         <table style="width: 100%">
             <tr style="width: 100%">
                 <td valign="top" style="width: 100%">
@@ -193,10 +187,16 @@
                         <span style="margin-left: 10px">{{$entity->BPVcode}}</span>
                     </h6>
                 </td>
-            </tr>
-            <tr>
                 <td>
                     <h6> {{ \App\helper\Helper::dateFormat($date)}} </h6>
+                </td>
+            </tr>
+
+            <tr></tr>
+
+            <tr>
+                <td>
+                    <b>To,</b>
                 </td>
             </tr>
             <tr>
@@ -210,75 +210,38 @@
                         <br><br>
                     @endif
                     <br><br><br>
+                    <b>Subject                  :  Amount Transfer</b> <br>
+                    <b>Reference                :  Our Account #</b> <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b>
+                    <br><br><br>
 
                     Dear Sir,<br><br>
-                    <u><b>Sub : FUND TRANSFER</b></u> <br> <br>
-                    By debiting our Account No.
-                    <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b>
-                    kindly transfer a sum
-                    of
+                    Please arrange to transfer an amount of 
                     <b>@if(isset($entity->supplierTransactionCurrencyDetails)) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{' '.number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
                     [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}
                     and
-                    {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
-                    following account as detailed below.<br>
-                </td>
-            </tr>
-            @if(isset($entity->supplierTransactionCurrencyDetails) && isset($entity->bankcurrency))
-                @if($entity->supplierTransactionCurrencyDetails->currencyID != $entity->bankcurrency->currencyID)
-                <tr>
-                    <td>
-                        {{$entity->instruction}}
-                    </td>
-                </tr>
-                @endif
-            @endif
-            <tr>
-                <td>
-                    <table style="width: 100%">
-                        @if($entity->memos != null)
-                            @foreach($entity->supplier->supplierCurrency[0]->bankMemo_by as $memo)
-                                @if($memo->memoDetail)
-                                    <tr style="width: 100%">
-                                        <td valign="top" style="width:30%">
-                                            {{$memo->memoHeader}} : <br>
-                                        </td>
-                                        <td style="width: 2%">:</td>
-                                        <td valign="top" style="width: 68%">
-                                            {{$memo->memoDetail}}<br>
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        @endif
-                    </table>
-                </td>
-            </tr>
+                    {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] only as folllow and debit the same to 
+                    our above mentioned account under advice to us.<br>
 
-            <tr>
-                <td>
-                    <table style="width: 100%">
-                        @if(isset($entity->payee_memo) && $entity->payee_memo != null )
-                            @foreach($entity->payee_memo as $payee_memo)
-                                @if($payee_memo->memoDetail)
-                                    <tr style="width: 100%">
-                                        <td valign="top" style="width:30%">
-                                            {{$payee_memo->memoHeader}}
-                                        </td>
-                                        <td style="width: 2%">:</td>
-                                        <td valign="top" style="width: 68%">
-                                            {{$payee_memo->memoDetail}}
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        @endif
-                    </table>
+                    <br><br>
+                    <b>Beneficiary Name         :  </b> <b>@if($entity->nameOnCheque){{$entity->nameOnCheque}}@endif</b> <br>
+                    <b>Beneficiary Address      :  </b> <b>@if($entity->company){{$entity->company->CompanyAddress}}@endif</b>
+                    <br><br>
+
+                    <b>Beneficiary Bank         :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->bankName}}@endif</b> <br>
+                    <b>Branch and Address       :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->bankBranch}}@endif- @if($entity->bankaccount){{$entity->bankaccount->BranchAddress}}@endif</b>
+                    <br><br>
+
+                    <b>Beneficiary Account No   :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b> <br>
+                    <b>Swift Code               :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->accountSwiftCode}}@endif</b> <br>
+                    <b>IBAN No                  :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->accountIBAN}}@endif</b>
+                    <br><br>
+                    <b>Purpose of Remittance    :  </b> <b>@if($entity->BPVNarration){{$entity->BPVNarration}}@endif</b>
+                    <br><br>
+
                 </td>
             </tr>
-            <tr>
                 <td>
-                    Yours faithfully,<br>
+                    Thanking you, with best regards,<br>
                     <b>For :</b><br/><br/>
                     @if($entity->company)
                         <i><b> {{$entity->company->CompanyName}} </b></i>
@@ -303,11 +266,6 @@
                 </td>
                 <td valign="top" style="width: 50%">
                     <b>Authorized Signatory</b>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    Prepared By: {{$entity->chequePrintedByEmpName}}
                 </td>
             </tr>
         </table>
