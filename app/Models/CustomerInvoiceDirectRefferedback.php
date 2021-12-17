@@ -543,7 +543,8 @@ class CustomerInvoiceDirectRefferedback extends Model
         'createdDateAndTime',
         'timestamp',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'createdFrom'
     ];
 
     /**
@@ -627,7 +628,8 @@ class CustomerInvoiceDirectRefferedback extends Model
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
         'approvedByUserID' => 'integer',
-        'approvedByUserSystemID' => 'integer'
+        'approvedByUserSystemID' => 'integer',
+        'createdFrom' => 'integer'
     ];
 
     /**

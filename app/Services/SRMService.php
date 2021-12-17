@@ -221,7 +221,10 @@ class SRMService
                     $appointment = Appointment::select('id')
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
-                        ->where('approved_yn', 1)
+                        ->Where(function($query) {
+                            $query->where('approved_yn', 0)
+                                ->orWhere('approved_yn', 1);
+                        })
                         ->where('refferedBackYN', 0)
                         ->where('created_by', $supplierID)
                         ->get();
@@ -229,13 +232,12 @@ class SRMService
                     $appointmentApproved = Appointment::select('id')
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
-                        ->Where(function($query) {
+                        ->orWhere(function($query) {
                             $query->where('approved_yn', 0)
-                                ->orWhere('approved_yn', 1);
+                                ->where('approved_yn', 1);
                         })
                         ->where('refferedBackYN', 0)
-                        ->where('created_by', $supplierID)
-                        ->count();
+                        ->get();
 
                     $availableConcat = '';
                     if($row['limit_deliveries']==1){ 
@@ -251,7 +253,7 @@ class SRMService
                     $arr[$x]['status'] = $slotDetail->status;
                     $arr[$x]['slotCompanyId'] = $row['company_id'];
                     $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1: ($row['no_of_deliveries'] - sizeof($appointment)) );
-                    $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - $appointmentApproved;
+                    $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - sizeof($appointmentApproved);
                     $x++;
                 }
             }
