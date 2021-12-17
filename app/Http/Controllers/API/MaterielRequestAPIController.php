@@ -712,7 +712,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $priorities = Priority::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
 
 
