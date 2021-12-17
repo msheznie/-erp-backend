@@ -365,7 +365,7 @@ class SlotMasterAPIController extends AppBaseController
         $toDate =  new Carbon($input['dateTo']);
 
         if (isset($fromDate) && isset($toDate) && ($toDate->format('Y-m-d') < $fromDate->format('Y-m-d'))) {
-            return $this->sendError('To Date is greater than from date');
+            return $this->sendError('To Date must be greater than the From Date');
         }
 
         $begin = new DateTime($fromDate);
