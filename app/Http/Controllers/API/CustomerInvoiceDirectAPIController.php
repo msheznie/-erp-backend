@@ -3081,10 +3081,10 @@ WHERE
             return $this->sendError('You cannot refer back this Customer Invoice');
         }
 
-        $customerInvoiceArray = $customerInvoiceDirectData->toArray();
-        unset($customerInvoiceArray['isVatEligible']);
+        $customerInvoiceArray = array_except($customerInvoiceDirectData->toArray(),['isVatEligible','mfqInvoiceDetailID']);
 
         CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
+
 
         if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
             $fetchCustomerInvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
@@ -3101,6 +3101,11 @@ WHERE
         }
 
         $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
+        if(isset($customerInvoiceDetailArray[0])) {
+            unset($customerInvoiceDetailArray[0]['mfqInvoiceDetailID']);
+            unset($customerInvoiceDetailArray[0]['mfqInvoiceID']);
+        }
+
         if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
             CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
         }else{

@@ -231,7 +231,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $financeCategories = FinanceItemCategoryMaster::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
         $priorities = Priority::all();
 

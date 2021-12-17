@@ -493,7 +493,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         if ($input['contractUID'] != $detail->contractUID) {
             $input['contractID'] = NULL;
             $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractUID'])->first();
-            $input['contractID'] = $contract->ContractNumber;
+            $input['contractID'] = ($contract) ?  $contract->ContractNumber :  '';
 
 
         }

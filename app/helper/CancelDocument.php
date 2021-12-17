@@ -96,6 +96,7 @@ class CancelDocument
         }
 
         switch ($documentId) {
+
             // pr reqeuest
             case 1:
                 $purchaseRequest = PurchaseRequest::find($array['purchaseRequestID'])->with(['confirmed_by','created_by'])->first();
@@ -104,7 +105,7 @@ class CancelDocument
                 $array['doc_code'] = $array['purchaseRequestCode'];
                 break; 
             // po
-            case 2:
+            case 5:
                 $purchaseOrder = ProcumentOrder::find($array['purchaseOrderID'])->with(['confirmed_by','created_by'])->first();
                 $array = $purchaseOrder;
                 $array['doc_code'] = $array['purchaseOrderCode'];
@@ -156,7 +157,7 @@ class CancelDocument
                 }
         }
 
-        if($array->confirmed_by) {
+        if(isset($array->confirmed_by)) {
             $user = $array->confirmed_by;
                 if ($user && !is_null($user->empEmail)) {
                     $dataEmail['empEmail'] = $user->empEmail;

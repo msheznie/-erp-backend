@@ -712,7 +712,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $priorities = Priority::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
 
 
@@ -883,15 +883,24 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
+
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
+
 
         if ($itemRequest->refferedBackYN != -1) {
             return $this->sendError('You cannot refer back this request');
         }
 
         $itemRequestArray = $itemRequest->toArray();
+        if(isset($itemRequestArray['materialIssueStatusValue'])) {
+            unset($itemRequestArray['materialIssueStatusValue']);
+        }
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
