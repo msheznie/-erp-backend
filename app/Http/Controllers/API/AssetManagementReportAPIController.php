@@ -1416,9 +1416,12 @@ class AssetManagementReportAPIController extends AppBaseController
                         if ($val->documentSystemID == 11) {
                             $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
                             $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
-                        } else {
+                        } else if ($val->documentSystemID == 4){
                             $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
                             $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                        } else {
+                            $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
                         }
 
                         if ($request->currencyID == 2) {
@@ -1428,6 +1431,7 @@ class AssetManagementReportAPIController extends AppBaseController
                              $data[$x]['Currency'] = $companyCurrency->reportingcurrency->CurrencyCode;
                             $data[$x]['Amount'] = round($val->amountRpt, $companyCurrency->reportingcurrency->DecimalPlaces);
                         }
+                        
                         $x++;
                     }
                 }
@@ -1542,7 +1546,7 @@ FROM
 
         return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)
                                                   ->whereIn('assetID', $assetIds)
-                                                  ->with(['asset', 'chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
+                                                  ->with(['asset','chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('bookingDate', '>=', $fromDate)
                                                               ->whereDate('bookingDate', '<=', $toDate);
@@ -1550,6 +1554,12 @@ FROM
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                               ->whereDate('BPVdate', '<=', $toDate);
+                                                  },'meterial_issue'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                       $query->with(['master'=>function($query)use($companyID,$fromDate, $toDate){
+                                                           $query->whereIn('companySystemID',$companyID)
+                                                           ->whereDate('issueDate', '>=', $fromDate)
+                                                           ->whereDate('issueDate', '<=', $toDate);
+                                                       }]);
                                                   }])
                                                   ->where(function($query) use ($companyID, $fromDate, $toDate) {
                                                       $query->where(function($query) use ($companyID, $fromDate, $toDate) {
@@ -1567,7 +1577,16 @@ FROM
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
                                                                     ->where('documentSystemID', 4);
-                                                          });
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereHas('master',function($query)use($companyID,$fromDate, $toDate){
+                                                                    $query->whereIn('companySystemID',$companyID)
+                                                                            ->whereDate('issueDate', '>=', $fromDate)
+                                                                            ->whereDate('issueDate', '<=', $toDate);
+                                                                });
+                                                                });
+                                                      });
                                                   })
                                                   ->get();
 
