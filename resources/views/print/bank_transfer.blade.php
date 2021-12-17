@@ -174,17 +174,11 @@
 <body onload="window.print();window.close()">
 
 <div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    {{-- <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}
 </div>
 <div id="watermark"></div>
 
 @if ($entity != null)
-    {{-- @if($loop->last)
-         <div class="card-body content">
-             @else--}}
     <div class="card-body content">
-        {{--   @endif--}}
         <table style="width: 100%">
             <tr style="width: 100%">
                 <td valign="top" style="width: 100%">
@@ -221,17 +215,6 @@
                     <br><br><br>
 
                     Dear Sir,<br><br>
-                    {{-- <u><b>Sub : FUND TRANSFER</b></u> <br> <br> --}}
-                    {{-- By debiting our Account No.
-                    <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b>
-                    kindly transfer a sum
-                    of
-                    <b>@if(isset($entity->supplierTransactionCurrencyDetails)) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{' '.number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
-                    [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}
-                    and
-                    {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
-                    following account as detailed below.<br> --}}
-
                     Please arrange to transfer an amount of 
                     <b>@if(isset($entity->supplierTransactionCurrencyDetails)) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{' '.number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
                     [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}
@@ -257,60 +240,6 @@
 
                 </td>
             </tr>
-            {{-- @if(isset($entity->supplierTransactionCurrencyDetails) && isset($entity->bankcurrency))
-                @if($entity->supplierTransactionCurrencyDetails->currencyID != $entity->bankcurrency->currencyID)
-                <tr>
-                    <td>
-                        {{$entity->instruction}}
-                    </td>
-                </tr>
-                @endif
-            @endif --}}
-
-            {{-- <tr>
-                <td>
-                    <table style="width: 100%">
-                        @if($entity->memos != null)
-                            @foreach($entity->supplier->supplierCurrency[0]->bankMemo_by as $memo)
-                                @if($memo->memoDetail)
-                                    <tr style="width: 100%">
-                                        <td valign="top" style="width:30%">
-                                            {{$memo->memoHeader}} : <br>
-                                        </td>
-                                        <td style="width: 2%">:</td>
-                                        <td valign="top" style="width: 68%">
-                                            {{$memo->memoDetail}}<br>
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        @endif
-                    </table>
-                </td>
-            </tr> --}}
-
-            {{-- <tr>
-                <td>
-                    <table style="width: 100%">
-                        @if(isset($entity->payee_memo) && $entity->payee_memo != null )
-                            @foreach($entity->payee_memo as $payee_memo)
-                                @if($payee_memo->memoDetail)
-                                    <tr style="width: 100%">
-                                        <td valign="top" style="width:30%">
-                                            {{$payee_memo->memoHeader}}
-                                        </td>
-                                        <td style="width: 2%">:</td>
-                                        <td valign="top" style="width: 68%">
-                                            {{$payee_memo->memoDetail}}
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
-                        @endif
-                    </table>
-                </td>
-            </tr>
-            <tr> --}}
                 <td>
                     Thanking you, with best regards,<br>
                     <b>For :</b><br/><br/>
@@ -339,11 +268,6 @@
                     <b>Authorized Signatory</b>
                 </td>
             </tr>
-            {{-- <tr>
-                <td colspan="2">
-                    Prepared By: {{$entity->chequePrintedByEmpName}}
-                </td>
-            </tr> --}}
         </table>
     </div>
 
