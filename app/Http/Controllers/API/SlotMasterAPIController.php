@@ -346,12 +346,14 @@ class SlotMasterAPIController extends AppBaseController
 
         $messages = [
             'wareHouse.required' => 'Warehouse is required.',
-            'dateFrom.required' => 'From Date is required.'
+            'dateFrom.required' => 'From Date is required.',
+            'dateTo.required' => 'To Date is required.'
         ];
 
         $validator = \Validator::make($input, [
             'wareHouse' => 'required',
-            'dateFrom' => 'required'
+            'dateFrom' => 'required',
+            'dateTo' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
