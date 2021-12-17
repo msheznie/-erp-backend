@@ -221,7 +221,10 @@ class SRMService
                     $appointment = Appointment::select('id')
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
-                        ->where('approved_yn', 1)
+                        ->Where(function($query) {
+                            $query->where('approved_yn', 0)
+                                ->orWhere('approved_yn', 1);
+                        })
                         ->where('refferedBackYN', 0)
                         ->where('created_by', $supplierID)
                         ->get();
@@ -234,7 +237,6 @@ class SRMService
                                 ->where('approved_yn', 1);
                         })
                         ->where('refferedBackYN', 0)
-                        ->where('created_by', $supplierID)
                         ->get();
 
                     $availableConcat = '';
