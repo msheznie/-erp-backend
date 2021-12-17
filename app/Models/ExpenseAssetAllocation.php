@@ -107,4 +107,9 @@ class ExpenseAssetAllocation extends Model
     {
        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'documentSystemCode', 'PayMasterAutoId');
     }
+
+    public function meterial_issue()
+    {
+       return $this->belongsTo('App\Models\ItemIssueDetails', 'documentSystemCode', 'itemIssueAutoID');
+    }
 }
