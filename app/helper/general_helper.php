@@ -661,6 +661,7 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgetaddition';
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
+                    break;
                 case 104:
                     $docInforArr["documentCodeColumnName"] = 'returnFillingCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
