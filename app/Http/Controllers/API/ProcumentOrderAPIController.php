@@ -1501,7 +1501,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $financeCategories = FinanceItemCategoryMaster::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
         $financialYears = array(
             array('value' => intval(date("Y")), 'label' => date("Y")),
