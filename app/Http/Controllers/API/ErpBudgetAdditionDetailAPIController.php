@@ -169,7 +169,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
 
 
         if (!$budgetMaster) {
-            return $this->sendError('Budget Master not found');
+            return $this->sendError('Budget is not created for selected segment and financial year');
         }
 
         $budgetDetails = Budjetdetails::where([
