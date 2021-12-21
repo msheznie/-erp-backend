@@ -60,7 +60,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
         $company = Company::where('companySystemID', $companySystemID)->first();
         $companyCountry = isset($company->companyCountry) ? $company->companyCountry : null;
         switch ($categoryID) {
-            case 2:
+            case 2://Supplies of goods/ services taxed @5% - 1 (a)
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -93,7 +93,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 3:
+            case 3://Supplies of goods/ services taxed @0% - 1 (b)  
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -126,7 +126,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 4:
+            case 4: // Supplies of goods/ services tax exempt - 1 (c) 
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -159,7 +159,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 10:
+            case 10: // Purchases from outside of GCC subject to Reverse Charge Mechanism - 2 (b) 
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -196,7 +196,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 12:
+            case 12: // Exports - 3 (a) 
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -245,7 +245,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 15:
+            case 15: // Total goods imported - 4 (b)  
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -271,12 +271,18 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             $query->whereHas('sub_category', function($query) {
                                                                       $query->whereIn('subCatgeoryType', [2,3]);
                                                                   })
+                                                                  ->whereHas('supplier_invoice_details', function($query) {
+                                                                        $query->whereHas('grv_detail', function($query) { 
+                                                                            $query->where('itemFinanceCategoryID',1);
+                                                                        });
+                                                                  })
+                                                                  ->where('documentSystemID', 11)
+                                                                  ->whereHas('supplier_invoice', function($query) {
+                                                                        $query->where('documentType', 0);
+                                                                  })
                                                                   ->where('logisticYN', 0);
                                                         })->orWhere(function($query) {
                                                             $query->where('addVATonPO', 1)
-                                                                  ->whereHas('sub_category', function($query) {
-                                                                      $query->where('subCatgeoryType', 1);
-                                                                  })
                                                                   ->where('logisticYN', 1);
                                                         });
                                                   });
@@ -310,6 +316,15 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                             $query->whereHas('sub_category', function($query) {
                                                                       $query->whereIn('subCatgeoryType', [1]);
                                                                   })
+                                                                  ->whereHas('supplier_invoice_details', function($query) {
+                                                                        $query->whereHas('grv_detail', function($query) { 
+                                                                            $query->where('itemFinanceCategoryID',1);
+                                                                        });
+                                                                  })
+                                                                  ->where('documentSystemID', 11)
+                                                                  ->whereHas('supplier_invoice', function($query) {
+                                                                        $query->where('documentType', 0);
+                                                                  })
                                                                   ->where('exempt_vat_portion', '>', 0)
                                                                   ->where('logisticYN', 0);
                                                         });
@@ -322,7 +337,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                 $taxLedgerDetail = collect($taxLedgerDetailResultOne)->merge(collect($taxLedgerDetailResultTwo))->all();
                 break;
-            case 17:
+            case 17: // Total VAT due under 1(a) + 1(f) + 2(b) + 4(a)
                 $oneA = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 2)
                                               ->where('vatReturnFillingID', $vatReturnFillingMasterID)
                                               ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
@@ -339,18 +354,17 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxAmount = (($oneA) ? $oneA->totalTaxAmount : 0) + (($twoB) ? $twoB->totalTaxAmount : 0);
                 $taxableAmount = (($oneA) ? $oneA->totalTaxableAmount : 0) + (($twoB) ? $twoB->totalTaxableAmount : 0);
                 break;
-            case 20:
+            case 20: // Purchases (except import of goods) - 6 (a)  
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
                                                   ->where(function($q) use ($companyCountry){
-
                                                     $q->where(function($q)  use ($companyCountry){
                                                         $q->whereHas('supplier', function($query) use ($companyCountry){
                                                             $query->where('supplierCountryID',$companyCountry);
                                                         });
                                                     })
-                                                    ->where(function($q)  use ($companyCountry){
+                                                    ->orWhere(function($q)  use ($companyCountry){
                                                         $q->whereHas('supplier', function($query) use ($companyCountry){
                                                             $query->where('supplierCountryID', '!=', $companyCountry);
                                                         })
@@ -387,7 +401,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                   $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 21:
+            case 21: // Import of goods - 6 (b) 
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -420,7 +434,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                   $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 22:
+            case 22: // VAT on acquisition of fixed assets - 6 (c)  
                 $taxLedgerDetailData = TaxLedgerDetail::with(['supplier','customer','document_master', 'sub_category'])
                                                   ->whereDate('documentDate', '<=', $date)
                                                   ->where('companySystemID', $companySystemID)
@@ -453,7 +467,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
 
                   $taxLedgerDetail = $taxLedgerDetailData->get();
                 break;
-            case 25:
+            case 25: // Total VAT due [5(a) - 5(b)]
                 $fiveA = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 17)
                                               ->where('vatReturnFillingID', $vatReturnFillingMasterID)
                                               ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
@@ -467,7 +481,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxAmount = (($fiveA) ? $fiveA->totalTaxAmount : 0) - (($fiveB) ? $fiveB->totalTaxAmount : 0);
                 $taxableAmount = (($fiveA) ? $fiveA->totalTaxableAmount : 0) - (($fiveB) ? $fiveB->totalTaxableAmount : 0);
                 break;
-            case 26:
+            case 26: // Total input VAT credit [6(a) + 6(b) + 6(c) - 6(d)]
                 $sixA = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 20)
                                               ->where('vatReturnFillingID', $vatReturnFillingMasterID)
                                               ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
@@ -491,7 +505,7 @@ class VatReturnFillingMasterRepository extends BaseRepository
                 $taxAmount = (($sixA) ? $sixA->totalTaxAmount : 0) + (($sixB) ? $sixB->totalTaxAmount : 0) + (($sixC) ? $sixC->totalTaxAmount : 0) - (($sixD) ? $sixD->totalTaxAmount : 0);
                 $taxableAmount = (($sixA) ? $sixA->totalTaxableAmount : 0) + (($sixB) ? $sixB->totalTaxableAmount : 0) + (($sixC) ? $sixC->totalTaxableAmount : 0) - (($sixD) ? $sixD->totalTaxableAmount : 0);
                 break;
-            case 27:
+            case 27: // Total [7(a) - 7(b)]
                 $sevenA = VatReturnFillingDetail::where('vatReturnFillingSubCatgeoryID', 25)
                                               ->where('vatReturnFillingID', $vatReturnFillingMasterID)
                                               ->selectRaw('SUM(taxAmount) as totalTaxAmount, SUM(taxableAmount) as totalTaxableAmount')
