@@ -77,6 +77,7 @@ class InvoiceService
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
+            ->where('documentType', 0)
             ->orderBy('bookingSuppMasInvAutoID', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
     }
@@ -84,16 +85,25 @@ class InvoiceService
     public function getInvoiceDetailsById($id, $supplierID)
     {
 
-        return BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)
-            ->where('supplierID', $supplierID)
-            ->with(['grvdetail' => function ($query) {
+       /* 'grvdetail' => function ($query) {
                 $query->with('grvmaster');
             }, 'directdetail' => function ($query) {
                 $query->with('segment');
             }, 'detail' => function ($query) {
                 $query->with('grvmaster');
-            }, 'approved_by' => function ($query) {
-                $query->with(['employee' => function ($q) {
+            }*/
+
+        return BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)
+            ->where('supplierID', $supplierID)
+            ->where('approved', -1)
+            ->where('cancelYN', 0)
+            ->where('documentType', 0)
+            ->with(['detail', 'approved_by' => function ($query) {
+                $query->select(['employeeSystemID',
+                                'approvedDate',
+                                'approvedYN',
+                                'documentSystemCode'])
+                    ->with(['employee' => function ($q) {
                     $q->select(
                         [
                             "employeeSystemID",
@@ -102,8 +112,8 @@ class InvoiceService
                             "empFullName"
                         ]
                     );
-                }]);
-                $query->where('documentSystemID', 11);
+                }])
+                ->where('documentSystemID', 11);
             }, 'company',
                 'transactioncurrency' => function ($q) {
                     $q->select(

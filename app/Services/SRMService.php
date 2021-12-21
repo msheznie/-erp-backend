@@ -10,6 +10,7 @@ use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +22,17 @@ class SRMService
     private $supplierService = null;
     private $sharedService = null;
     private $invoiceService = null;
+    private $supplierInvoiceItemDetailRepository;
 
-    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService, InvoiceService $invoiceService)
+    public function __construct(POService $POService, SupplierService $supplierService,
+                                SharedService $sharedService, InvoiceService $invoiceService,
+                                SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo)
     {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
         $this->invoiceService   = $invoiceService;
+        $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
     }
 
     /**
@@ -466,10 +471,28 @@ class SRMService
     public function getInvoiceDetailsById(Request $request){
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $id = $request->input('extra.id');
+        $masterData = $this->invoiceService->getInvoiceDetailsById($id,$supplierID);
+        if(!empty($masterData)){
+            $masterData = $masterData->toArray();
+            $input['bookingSuppMasInvAutoID']    = $id;
+            $masterData['detail_data'] =  ['grvDetails' => [], 'logisticYN' => 0];
+
+            foreach ($masterData['detail'] as $detail){
+                $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
+                $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
+                if ($detailData['status']) {
+                    foreach ($detailData['data']['grvDetails'] as $detailItem){
+                        array_push($masterData['detail_data']['grvDetails'],$detailItem);
+                    }
+                    $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                }
+            }
+        }
+
         return [
             'success'   => true,
             'message'   => 'Record retrieved successfully',
-            'data'      => $this->invoiceService->getInvoiceDetailsById($id,$supplierID)
+            'data'      => $masterData
         ];
     }
 }

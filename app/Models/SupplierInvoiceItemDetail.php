@@ -293,4 +293,15 @@ class SupplierInvoiceItemDetail extends Model
     {
         return $this->belongsTo('App\Models\PoAdvancePayment', 'logisticID', 'poAdvPaymentID');
     }
+
+    public function grv()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
 }
