@@ -157,14 +157,14 @@ class SRMService
             DB::commit();
             return [
                 'success'   => true,
-                'message'   => 'Purchase Orders Appointment save successfully',
+                'message'   => 'Appointment save successfully',
                 'data'      => $data
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
             return [
                 'success'   => false,
-                'message'   => 'Purchase Orders Appointment save failed',
+                'message'   => 'Appointment save failed',
                 'data'      => $exception->getMessage()
             ];
         }
@@ -338,7 +338,7 @@ class SRMService
 
         return [
             'success'   => true,
-            'message'   => 'Calander appointment deleted',
+            'message'   => 'Appointment deleted successfully',
             'data'      => $data
         ];
     }
@@ -348,7 +348,7 @@ class SRMService
         $confirm = \Helper::confirmDocument($params);
         return [
             'success'   => $confirm['success'],
-            'message'   => $confirm['message'],
+            'message'   => "Appointment confirmed successfully",
             'data'      => $params
         ];
     }
