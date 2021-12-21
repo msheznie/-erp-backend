@@ -151,7 +151,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $budgetTransferMaster = $this->budgetTransferFormRepository->find($input['budgetTransferFormAutoID']);
 
         if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError('Budget Trasnfer is not created for selected segment and financial year');
         }
 
         $masterValidate = \Validator::make($budgetTransferMaster->toArray(), [

@@ -1225,8 +1225,8 @@ WHERE
             return $this->sendError('You cannot amend this delivery order');
         }
 
-        $deliveryOrderArray = $doData->toArray();
-        unset($deliveryOrderArray['isVatEligible']);
+        $deliveryOrderArray = array_except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
+
         $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
 
         $fetchDeliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
@@ -1240,6 +1240,8 @@ WHERE
 
         $doDetailArray = $fetchDeliveryOrderDetails->toArray();
 
+        unset($doDetailArray['assetMaintenanceID']);
+        
         $storeDeliveryOrderDetaillHistory = DeliveryOrderDetailRefferedback::insert($doDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $deliveryOrderID)

@@ -145,7 +145,7 @@ class CancelDocument
         }
 
 
-        if($array->created_by) {
+        if(isset($array->created_by)) {
             $user = $array->created_by;
                 if ($user && !is_null($user->empEmail)) {
                     $dataEmail['empEmail'] = $user->empEmail;

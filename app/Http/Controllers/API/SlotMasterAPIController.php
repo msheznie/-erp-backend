@@ -346,12 +346,14 @@ class SlotMasterAPIController extends AppBaseController
 
         $messages = [
             'wareHouse.required' => 'Warehouse is required.',
-            'dateFrom.required' => 'From Date is required.'
+            'dateFrom.required' => 'From Date is required.',
+            'dateTo.required' => 'To Date is required.'
         ];
 
         $validator = \Validator::make($input, [
             'wareHouse' => 'required',
-            'dateFrom' => 'required'
+            'dateFrom' => 'required',
+            'dateTo' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
@@ -363,7 +365,7 @@ class SlotMasterAPIController extends AppBaseController
         $toDate =  new Carbon($input['dateTo']);
 
         if (isset($fromDate) && isset($toDate) && ($toDate->format('Y-m-d') < $fromDate->format('Y-m-d'))) {
-            return $this->sendError('To Date is greater than from date');
+            return $this->sendError('To Date must be greater than the From Date');
         }
 
         $begin = new DateTime($fromDate);

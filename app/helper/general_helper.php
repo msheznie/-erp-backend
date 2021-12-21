@@ -227,6 +227,7 @@ class Helper
       
 
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
+         
             switch ($params["document"]) { // check the document id and set relavant parameters
                 case 1:
                 case 50:
@@ -661,6 +662,7 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgetaddition';
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
+                    break;
                 case 104:
                     $docInforArr["documentCodeColumnName"] = 'returnFillingCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
