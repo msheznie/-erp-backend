@@ -118,7 +118,20 @@ class CreateDepreciation implements ShouldQueue
                             if (round($depAmountRpt,2) == 0 && round($depAmountLocal,2) == 0) {
                                 $dateDEP = Carbon::parse($val->dateDEP);
                                 if ($dateDEP->lessThanOrEqualTo($depDate)) {
-                                    $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
+
+
+                                    $life_time_month = ($val->depMonth*12);
+                                    $life_time_period = $dateDEP->addMonths($life_time_month);
+
+                                    if($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
+                                    {
+                                        $differentMonths = $life_time_month;
+                                    }
+                                    else
+                                    {
+                                        $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
+                                    }
+                                    
                                     if ($differentMonths) {
                                         foreach ($differentMonths as $dt) {
                                             $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
@@ -135,6 +148,7 @@ class CreateDepreciation implements ShouldQueue
                                             }
                                         }
                                     }
+
                                 }
                             } else {
                                 if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {

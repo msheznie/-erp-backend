@@ -140,98 +140,109 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-
+      
         DB::beginTransaction();
         try {
-            $validator = \Validator::make($request->all(), [
-                'companyFinanceYearID' => 'required',
-                'companyFinancePeriodID' => 'required',
-            ]);
 
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
+            $is_pending_job_exist = FixedAssetDepreciationMaster::where('confirmedYN','=',0)->count();
 
-            $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
-
-            if (count($alreadyExist) > 0) {
-                return $this->sendError('Depreciation already processed for the selected month', 500);
-            }
-
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-            }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 9;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-            }
-            unset($inputParam);
-
-            $subMonth = new Carbon($input['FYPeriodDateFrom']);
-            $subMonthStart = $subMonth->subMonth()->startOfMonth()->format('Y-m-d');
-            $subMonthStartCarbon = new Carbon($subMonthStart);
-            $subMonthEnd = $subMonthStartCarbon->endOfMonth()->format('Y-m-d');
-
-            $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
-
-            if (!empty($lastMonthRun)) {
-                if ($lastMonthRun->approved == 0) {
-                    return $this->sendError('Last month depreciation is not approved. Please approve it before you run for this month', 500);
+            if($is_pending_job_exist == 0)
+            {
+                $validator = \Validator::make($request->all(), [
+                    'companyFinanceYearID' => 'required',
+                    'companyFinancePeriodID' => 'required',
+                ]);
+    
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
                 }
+    
+                $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
+    
+                if (count($alreadyExist) > 0) {
+                    return $this->sendError('Depreciation already processed for the selected month', 500);
+                }
+    
+                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                if (!$companyFinanceYear["success"]) {
+                    return $this->sendError($companyFinanceYear["message"], 500);
+                } else {
+                    $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                    $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                }
+    
+                $inputParam = $input;
+                $inputParam["departmentSystemID"] = 9;
+                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                if (!$companyFinancePeriod["success"]) {
+                    return $this->sendError($companyFinancePeriod["message"], 500);
+                } else {
+                    $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                    $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+                }
+                unset($inputParam);
+    
+                $subMonth = new Carbon($input['FYPeriodDateFrom']);
+                $subMonthStart = $subMonth->subMonth()->startOfMonth()->format('Y-m-d');
+                $subMonthStartCarbon = new Carbon($subMonthStart);
+                $subMonthEnd = $subMonthStartCarbon->endOfMonth()->format('Y-m-d');
+    
+                $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
+    
+                if (!empty($lastMonthRun)) {
+                    if ($lastMonthRun->approved == 0) {
+                        return $this->sendError('Last month depreciation is not approved. Please approve it before you run for this month', 500);
+                    }
+                }
+    
+                $company = Company::find($input['companySystemID']);
+                if ($company) {
+                    $input['companyID'] = $company->CompanyID;
+                }
+    
+                $documentMaster = DocumentMaster::find($input['documentSystemID']);
+                if ($documentMaster) {
+                    $input['documentID'] = $documentMaster->documentID;
+                }
+    
+                if ($companyFinanceYear["message"]) {
+                    $startYear = $companyFinanceYear["message"]['bigginingDate'];
+                    $finYearExp = explode('-', $startYear);
+                    $finYear = $finYearExp[0];
+                } else {
+                    $finYear = date("Y");
+                }
+    
+                $lastSerial = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+                    ->orderBy('depMasterAutoID', 'desc')
+                    ->first();
+    
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                }
+    
+                $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $input['depCode'] = $documentCode;
+                $input['serialNo'] = $lastSerialNumber;
+                $depDate = Carbon::parse($input['FYPeriodDateTo']);
+                $input['depDate'] = $input['FYPeriodDateTo'];
+                $input['depMonthYear'] = $depDate->month . '/' . $depDate->year;
+                $input['depLocalCur'] = $company->localCurrencyID;
+                $input['depRptCur'] = $company->reportingCurrency;
+                $input['createdPCID'] = gethostname();
+                $input['createdUserID'] = \Helper::getEmployeeID();
+                $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
+                DB::commit();
+                return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
+            }
+            else
+            {
+                return $this->sendError('There is a unapproved depreciation running. please confirm and proceed', 500);
             }
 
-            $company = Company::find($input['companySystemID']);
-            if ($company) {
-                $input['companyID'] = $company->CompanyID;
-            }
-
-            $documentMaster = DocumentMaster::find($input['documentSystemID']);
-            if ($documentMaster) {
-                $input['documentID'] = $documentMaster->documentID;
-            }
-
-            if ($companyFinanceYear["message"]) {
-                $startYear = $companyFinanceYear["message"]['bigginingDate'];
-                $finYearExp = explode('-', $startYear);
-                $finYear = $finYearExp[0];
-            } else {
-                $finYear = date("Y");
-            }
-
-            $lastSerial = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->orderBy('depMasterAutoID', 'desc')
-                ->first();
-
-            $lastSerialNumber = 1;
-            if ($lastSerial) {
-                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-            }
-
-            $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['depCode'] = $documentCode;
-            $input['serialNo'] = $lastSerialNumber;
-            $depDate = Carbon::parse($input['FYPeriodDateTo']);
-            $input['depDate'] = $input['FYPeriodDateTo'];
-            $input['depMonthYear'] = $depDate->month . '/' . $depDate->year;
-            $input['depLocalCur'] = $company->localCurrencyID;
-            $input['depRptCur'] = $company->reportingCurrency;
-            $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
-            DB::commit();
-            return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
