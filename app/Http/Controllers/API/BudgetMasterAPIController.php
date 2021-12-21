@@ -2141,6 +2141,8 @@ class BudgetMasterAPIController extends AppBaseController
                 $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
+
+        
         }
 
         $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
@@ -2170,18 +2172,26 @@ class BudgetMasterAPIController extends AppBaseController
         $mergeResult = collect($purchaseOrders->get())->merge($purchaseRequests->get());
 
         $mergeAll = $mergeResult->all();
+        $data = [];
 
-        return \DataTables::of($mergeAll)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        // $query->orderBy('documentSystemCode', $input['order'][0]['dir']);
-                    }
-                }
-            })
+        if($search) {
+            foreach($purchaseOrders->get() as $purchaseOrder) {
+                array_push($data,$purchaseOrder);
+            }
+
+            $res = collect($data);
+            $collection = collect([
+                ['id' => 1, 'name' => 'John'],
+                ['id' => 2, 'name' => 'Jane'],
+                ['id' => 3, 'name' => 'James'],
+            ]);
+            return \DataTables::collection($collection)->addIndexColumn()->toJson();
+        }else {
+            return \DataTables::of($mergeAll)
             ->addIndexColumn()
-            ->with('orderCondition', $sort)
             ->make(true);
+        }
+
 
     }
 
