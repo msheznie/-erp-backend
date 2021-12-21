@@ -157,14 +157,14 @@ class SRMService
             DB::commit();
             return [
                 'success'   => true,
-                'message'   => 'Purchase Orders Appointment save successfully',
+                'message'   => 'Appointment save successfully',
                 'data'      => $data
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
             return [
                 'success'   => false,
-                'message'   => 'Purchase Orders Appointment save failed',
+                'message'   => 'Appointment save failed',
                 'data'      => $exception->getMessage()
             ];
         }
@@ -268,10 +268,24 @@ class SRMService
     }
     public function getAppointmentDeliveries(Request $request)
     {
-
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $arr = [];
+        $appointment = Appointment::select('id')
+            ->where('slot_detail_id', $slotDetailID)
+            ->where('confirmed_yn', 1)
+            ->Where(function($query) {
+                $query->where('approved_yn', 0)
+                    ->orWhere('approved_yn', 1);
+            })
+            ->where('refferedBackYN', 0)
+            ->where('created_by', $supplierID)
+            ->get();
+
+        $slotMaster = SlotMaster::find($slotMasterID)->first();
+
+        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1: ($slotMaster['no_of_deliveries'] - sizeof($appointment)) );
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails']);
@@ -279,11 +293,11 @@ class SRMService
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
-
+        $arr['data'] = $data;
         return [
             'success'   => true,
             'message'   => 'Calander appointment deliveries get',
-            'data'      => $data
+            'data'      => $arr
         ];
     }
     public function getPoAppointments(Request $request)
@@ -324,7 +338,7 @@ class SRMService
 
         return [
             'success'   => true,
-            'message'   => 'Calander appointment deleted',
+            'message'   => 'Appointment deleted successfully',
             'data'      => $data
         ];
     }
@@ -334,7 +348,7 @@ class SRMService
         $confirm = \Helper::confirmDocument($params);
         return [
             'success'   => $confirm['success'],
-            'message'   => $confirm['message'],
+            'message'   => "Appointment confirmed successfully",
             'data'      => $params
         ];
     }

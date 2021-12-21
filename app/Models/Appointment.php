@@ -149,4 +149,9 @@ class Appointment extends Model
     {
         return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
     }
+
+    public function slot_detail()
+    {
+        return $this->hasOne('App\Models\SlotDetails', 'id', 'slot_detail_id');
+    }
 }
