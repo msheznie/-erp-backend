@@ -896,6 +896,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $purchaseRequestID = $input['purchaseRequestID'];
         $itemCode = $input['itemCode'];
+        $itemFinanceCategoryID = $input['itemFinanceCategoryID'];
         $isMRPulled = PulledItemFromMR::where('itemCodeSystem', $itemCode)->where('purcahseRequestID',$purchaseRequestID)->first();
         $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchaseRequestID)->where('itemCodeSystem',$itemCode)->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
 
@@ -940,7 +941,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            if($quantityInHand > $requestAndReorderTotal && !$isMRPulled){
+            if($quantityInHand > $requestAndReorderTotal && !$isMRPulled && $itemFinanceCategoryID==1){
                 $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 1]);
             } else {
                 $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 0]);
@@ -1222,6 +1223,26 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             foreach ($uniqueData as $key => $value) {
+                if(isset($value['item_code'])){
+                    $itemCode = $value['item_code'];
+                    $purcahseRequestID = $input['requestID'];
+                    $item = PurchaseRequestDetails::where('itemPrimaryCode',$itemCode)->first();
+                    $itemCodeSystem = $item->itemCode;
+                    $itemFinanceCategoryID = $item->itemFinanceCategoryID;
+
+                    $isMRPulled = PulledItemFromMR::where('itemCodeSystem', $itemCodeSystem)->where('purcahseRequestID',$purcahseRequestID)->first();
+                    $quantityInHand = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->sum('quantityInHand');
+                    $requestedQty = $value['qty'];
+                    $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCodeSystem)->sum('totalQty');
+                    $requestAndReorderTotal = $requestedQty + $reorderQty;
+        
+                    if($quantityInHand > $requestAndReorderTotal && !$isMRPulled && $itemFinanceCategoryID==1){
+                        $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->update(['is_eligible_mr' => 1]);
+                    } else {
+                        $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->update(['is_eligible_mr' => 0]);
+                    }
+                }
+
                 if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
                 }
