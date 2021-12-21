@@ -167,7 +167,6 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             'serviceLineSystemID'=> $input['serviceLineSystemID'],
         ])->first();
 
-
         if (!$budgetMaster) {
             return $this->sendError('Budget is not created for selected segment and financial year');
         }
