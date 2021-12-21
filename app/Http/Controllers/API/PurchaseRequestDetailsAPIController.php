@@ -896,8 +896,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $purchaseRequestID = $input['purchaseRequestID'];
         $itemCode = $input['itemCode'];
-
+        $isMRPulled = PulledItemFromMR::where('itemCodeSystem', $itemCode)->where('purcahseRequestID',$purchaseRequestID)->first();
         $total_requested_qnty =  PulledItemFromMR::where('purcahseRequestID',$purchaseRequestID)->where('itemCodeSystem',$itemCode)->groupBy('itemCodeSystem')->selectRaw('sum(mr_qnty) as sum')->first();
+
+        $quantityInHand = $input['quantityInHand'];
+        $requestedQty = $input['quantityRequested'];
+        $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCode)->sum('totalQty');
+        $requestAndReorderTotal = $requestedQty + $reorderQty;
 
         if(isset($total_requested_qnty)) {
             if($total_requested_qnty->sum <  $input['quantityRequested'] ) {
@@ -935,6 +940,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            if($quantityInHand > $requestAndReorderTotal && !$isMRPulled){
+                $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 1]);
+            } else {
+                $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 0]);
+            }
+
             $purchaseRequestDetailsRes = $this->purchaseRequestDetailsRepository->update($input, $id);
 
             if ($purchaseRequestDetails->quantityRequested != $input['quantityRequested']) {
@@ -1122,6 +1133,31 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $result['item'] = ItemAssigned::whereIn('companySystemID',$childCompanies)->where('itemCodeSystem',$itemCode)->first();
 
         return $this->sendResponse($result, 'Purchase Request Details retrieved successfully');
+    }
+
+    public function getWarehouseStockDetails(Request $request){
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['requestId'])
+                                               ->first();
+        $prRequestedDate = $purchaseRequest->PRRequestedDate;
+        
+        $itemMaster = ItemAssigned::with('unit')
+                                    ->where('itemCodeSystem',$input['itemCode'])
+                                    ->where('companySystemID',$input['companySystemID'])
+                                    ->first();
+
+        $item = ErpItemLedger::with('warehouse')
+                                     ->where('itemSystemCode',$input['itemCode'])
+                                     ->where('companySystemID',$input['companySystemID'])
+                                     ->whereDate('transactionDate', '<=', $prRequestedDate)
+                                     ->selectRaw('SUM(inOutQty) AS stockAmount, wareHouseSystemCode')
+                                     ->groupBy('wareHouseSystemCode')
+                                     ->get();
+
+        $result = [ 'item'=>$item,
+                    'itemMaster'=>$itemMaster];
+
+        return $this->sendResponse($result, 'Warehouse Stock Details retrieved successfully');
     }
 
 
