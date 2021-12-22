@@ -322,6 +322,69 @@ class TemplatesDetailsAPIController extends AppBaseController
         return $this->sendResponse($details, 'Templates Details retrieved successfully');
     }
 
+    public function getTemplateByGLCode(Request $request){
+        $id = $request->get('id');
+        $glCodeID = $request->get('glCodeID');
+
+         $companySystemID = $request->get('companySystemID');
+
+        $budgetTransferMaster = BudgetTransferForm::find($id);
+
+        if (empty($budgetTransferMaster)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
+            ->where('isFinalLevel', 1)
+            ->get();
+
+        $detIDs = collect($details)->pluck('detID')->toArray();
+        $templateMasterID = collect($details)->pluck('companyReportTemplateID')->toArray();
+
+        $glData = ReportTemplateLinks::where('glAutoID',$glCodeID)->whereIn('templateMasterID', $templateMasterID)->whereIn('templateDetailID',$detIDs)->get();
+
+        $templateDetail = ReportTemplateDetails::where('detID', $glData[0]->templateDetailID)->where('companyReportTemplateID',$glData[0]->templateMasterID)->get();
+
+        return $this->sendResponse($templateDetail, 'Template Description retrieved successfully');
+    }
+
+    public function getAllGLCodes(Request $request){
+
+        $id = $request->get('id');
+
+        $budgetTransferMaster = BudgetTransferForm::find($id);
+
+        if (empty($budgetTransferMaster)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
+            ->where('isFinalLevel', 1)
+            ->get();
+        $detIDs = collect($details)->pluck('detID')->toArray();
+        $templateMasterID = collect($details)->pluck('companyReportTemplateID')->toArray();
+
+        $glData = ReportTemplateLinks::whereNotNull('glAutoID')->whereIn('templateMasterID', $templateMasterID)->whereIn('templateDetailID',$detIDs)->get();
+
+        $glIds = collect($glData)->pluck('glAutoID')->toArray();
+
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->whereIn('chartOfAccountSystemID', $glIds)
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
+
+       return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+    }
 
     public function getAllGLCodesByTemplate(Request $request)
     {
