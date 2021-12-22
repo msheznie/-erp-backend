@@ -1763,6 +1763,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
         Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
+        Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails');
         Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
 
