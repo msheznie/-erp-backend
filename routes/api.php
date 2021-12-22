@@ -1297,6 +1297,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
         Route::get('getTemplatesDetailsById', 'TemplatesDetailsAPIController@getTemplatesDetailsById');
         Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
+        Route::get('getAllGLCodes', 'TemplatesDetailsAPIController@getAllGLCodes');
+        Route::get('getTemplateByGLCode', 'TemplatesDetailsAPIController@getTemplateByGLCode');
         Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
         Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
         Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
@@ -2197,7 +2199,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_addition', 'ErpBudgetAdditionAPIController');
         Route::post('budget_additions', 'ErpBudgetAdditionAPIController@index');
         Route::get('getTemplatesDetailsByBudgetAddition', 'ErpBudgetAdditionAPIController@getTemplatesDetailsByBudgetAddition');
+        Route::get('getAllGLCodesByBudgetAddition', 'ErpBudgetAdditionAPIController@getAllGLCodesByBudgetAddition');
         Route::get('getDetailsByBudgetAddition', 'ErpBudgetAdditionDetailAPIController@getDetailsByBudgetAddition');
+        Route::get('getTemplateByGLCodeByBudgetAddition', 'ErpBudgetAdditionAPIController@getTemplateByGLCodeByBudgetAddition');
         Route::get('getBudgetAdditionFormData', 'ErpBudgetAdditionAPIController@getBudgetAdditionFormData');
         Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
         Route::post('getBudgetAdditionApprovalByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovalByUser');
