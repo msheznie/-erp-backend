@@ -85,7 +85,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
                 if (array_key_exists('approved', $input)) {
                     if ($input['approved'] == 0 && !is_null($input['approved'])) {
-                        $query->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr');
+                        // $query->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr');
                     }
                 }
 
