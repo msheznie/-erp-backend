@@ -48,6 +48,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\ReportTemplateDetails;
 use App\Models\SupplierMaster;
 use App\Models\User;
+use App\Models\SupplierRegistrationLink;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -2245,6 +2246,25 @@ class Helper
                             if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
                                 $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
+                            
+                            if ($input["documentSystemID"] == 107)
+                            {
+
+                                $suppiler_info = SupplierRegistrationLink::where('id','=',$docApproved->documentSystemCode)->first();
+                                if(isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email))
+                                {
+                                  
+                                        $dataEmail['empEmail'] = $docApproved->reference_email;
+                                        $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                        $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that you are registration have been approved </p>';
+                                        $dataEmail['alertMessage'] = $docApproved->documentID." Registration Approved";
+                                        $dataEmail['emailAlertMessage'] = $temp;
+                                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+
+                            }
+                            //
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
