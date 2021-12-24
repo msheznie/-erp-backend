@@ -2380,6 +2380,20 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approvals', 'SupplierRegistrationApprovalController@index');
             Route::post('approvals/status', 'SupplierRegistrationApprovalController@update');
         });
+
+
+        Route::resource('appointments', 'AppointmentAPIController');
+
+        Route::resource('appointment_details', 'AppointmentDetailsAPIController');
+
+        Route::resource('po_categories', 'PoCategoryAPIController');
+
+        Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
+
+        Route::resource('item_serials', 'ItemSerialAPIController');
+        Route::post('generateItemSerialNumbers', 'ItemSerialAPIController@generateItemSerialNumbers');
+        Route::post('serialItemDeleteAllDetails', 'ItemSerialAPIController@serialItemDeleteAllDetails');
+        Route::get('getGeneratedSerialNumbers', 'ItemSerialAPIController@getGeneratedSerialNumbers');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2549,12 +2563,5 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
-Route::resource('appointments', 'AppointmentAPIController');
 
-Route::resource('appointment_details', 'AppointmentDetailsAPIController');
-
-Route::resource('po_categories', 'PoCategoryAPIController');
-
-
-
-Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
+Route::resource('document_sub_products', 'DocumentSubProductAPIController');
