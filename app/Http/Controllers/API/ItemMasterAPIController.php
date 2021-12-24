@@ -799,7 +799,7 @@ class ItemMasterAPIController extends AppBaseController
     public function updateItemMaster(Request $request)
     {
 
- 
+        
 
         $input = $request->all();
         $id = $input['itemCodeSystem'];
@@ -849,10 +849,79 @@ class ItemMasterAPIController extends AppBaseController
             $input['faFinanceCatID'] = null;
         }
 
+
+             
+        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
+
+ 
+        $count = 0;
+        $image_path = [];
+        $path_dir['path'] = '';
+
+       
+        if($remove_items != null || !empty($remove_items))
+        {
+            foreach($remove_items as $key=>$val)
+            { 
+                $re = Storage::disk($disk)->delete($val['db_path']);
+             
+            }
+        }
+
+
+      
+        if($imageData != null || !empty($imageData))
+        {
+            foreach($imageData as $key=>$val)
+            {   
+               
+                $path_dir['path'] = '';
+                 if (preg_match('/^https/', $val['path']))
+                 {  
+
+                    $path_dir['path'] = $val['db_path'];
+                 }
+                 else
+                 {
+                   
+
+                    $t=time();
+                    $tem = substr($t,5);
+                    $valtt = $this->quickRandom();
+                    $random_words = $id.'_'.$valtt.'_'.$tem;
+                    if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
+                        $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$id . '/';
+                    }   
+                    else
+                    {
+    
+                        $base_path = 'item-master/images/'.$id . '/';
+                    }
+                   
+    
+                    $path_dir['path'] = $this->storeImage($val['path'], $random_words, $base_path,$disk);
+                 }
+        
+    
+  
+                array_push($image_path,$path_dir);                   
+            }
+
+          
+
+
+            $itemMaster->itemPicture = json_encode($image_path);
+        }
+
+
+    
+
         if($itemMaster->itemApprovedYN == 1){
             //check policy 9
             $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],9);
             if($policy){
+
+                $input['itemPicture'] = $itemMaster->itemPicture;
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
                 $itemMaster->itemPicture = $input['itemPicture'];
@@ -867,11 +936,14 @@ class ItemMasterAPIController extends AppBaseController
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
                 $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture']);
                 $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture']);
+      
+            
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if($old != $modified_array[$key]){
                         $description = $employee->empName." Updated item master (".$itemMaster->itemCodeSystem.") from ".$old." To ".$modified_array[$key]."";
                         UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$itemMaster->documentSystemID,$itemMaster->primaryCompanySystemID,$itemMaster->itemCodeSystem,$description,$modified_array[$key],$old,$key);
+                      
                     }
                 }
 
@@ -880,7 +952,7 @@ class ItemMasterAPIController extends AppBaseController
 
             return $this->sendError('Item Master already approved. You cannot edit');
         }
-
+    
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         if ($company) {
@@ -929,95 +1001,23 @@ class ItemMasterAPIController extends AppBaseController
         
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
                          'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID');
-
+                       
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
                 if(in_array($key,$afterConfirm)){
                     $itemMaster->$key = $value;
                 }
             }else{
-                $itemMaster->$key = $value;
-            }
-        }
-     
-        $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
-
- 
-        $count = 0;
-        $image_path = [];
-        $path_dir['path'] = '';
-
-       
-        if($remove_items != null || !empty($remove_items))
-        {
-            foreach($remove_items as $key=>$val)
-            { 
-                $re = Storage::disk($disk)->delete($val['db_path']);
-             
-            }
-        }
-
-
-      
-        if($imageData != null || !empty($imageData))
-        {
-            foreach($imageData as $key=>$val)
-            {   
+                if($key != 'itemPicture')
+                {
+                    $itemMaster->$key = $value;
+                }
                
-                $path_dir['path'] = '';
-                 if (preg_match('/^https/', $val['path']))
-                 {  
-                //     $rr = base64_decode($val);
-                //      $file_path = parse_url($val);
-
-                //      $bucket_name = env('AWS_BUCKET').'/';
-                //     $file_name = explode($bucket_name,$file_path['path']);
-                //    // $my_url = urlencode($val);
-
-                //      $data_info = file_get_contents('https://s3.us-west-1.amazonaws.com/gearsdev.testbucket/1/G_ERP/item-master/images/312/1/312_1.jpeg?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAX7MLAY73NRLXZDLA%2F20211103%2Fus-west-1%2Fs3%2Faws4_request&X-Amz-Date=20211103T102110Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=7458257fac12166f3c155afd5db69f562d8e092990a1dd3b22b6954055cf4864');
-
-                //     return $this->sendResponse($data_info, 'Itemmaster updated successfully d');
-                //     die();
-                    $path_dir['path'] = $val['db_path'];
-                 }
-                 else
-                 {
-                   
-
-                    $t=time();
-                    $tem = substr($t,5);
-                    $valtt = $this->quickRandom();
-                    $random_words = $id.'_'.$valtt.'_'.$tem;
-                    if (Helper::checkPolicy($input['primaryCompanySystemID'], 50)) {
-                        $base_path = $input['primaryCompanySystemID'].'/G_ERP/item-master/images/'.$id . '/';
-                    }   
-                    else
-                    {
-    
-                        $base_path = 'item-master/images/'.$id . '/';
-                    }
-                   
-    
-                    $path_dir['path'] = $this->storeImage($val['path'], $random_words, $base_path,$disk);
-                 }
-        
-    
-  
-                array_push($image_path,$path_dir);                   
             }
-
-          
-
-
-            $itemMaster->itemPicture = json_encode($image_path);
         }
-
-
-
         
-   
 
-
+    
         $itemMaster->save();
         return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully d');
 
@@ -1090,31 +1090,34 @@ class ItemMasterAPIController extends AppBaseController
          
             
          
-           $itemMaster->itemPicture = null;
+            $itemMaster->itemPicture = null;
             $data = [];
-
-            foreach($decode_images as $decode_image)
+            if(isset($decode_images) && !empty($decode_images))
             {
-                $baseimg = '';
-
-
-            
-                if (Storage::disk('s3')->exists($decode_image->path))
+                foreach($decode_images as $decode_image)
                 {
-                    // $type = pathinfo($path, PATHINFO_EXTENSION);
-                    // $data_info = file_get_contents($path);
+                    $baseimg = '';
+    
+    
                 
-                    // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
-                    $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
-
-                    $info['flag'] = true;
-                    $info['path'] = $baseimg;
-                    $info['db_path'] = $decode_image->path;
-
-                    array_push($data,$info);
+                    if (Storage::disk('s3')->exists($decode_image->path))
+                    {
+                        // $type = pathinfo($path, PATHINFO_EXTENSION);
+                        // $data_info = file_get_contents($path);
+                    
+                        // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
+                        $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
+    
+                        $info['flag'] = true;
+                        $info['path'] = $baseimg;
+                        $info['db_path'] = $decode_image->path;
+    
+                        array_push($data,$info);
+                    }
+                
                 }
-            
             }
+
       
                 if(count($data) == 0)
                 {
