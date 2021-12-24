@@ -59,24 +59,9 @@ class SRMService
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
-            ->with(['currency',
-                'created_by',
-                'detail.appointmentDetails' => function ($query) {
-                    $query->whereHas('appointment', function ($q){
-                        $q->where('refferedBackYN', '!=', -1);
-                    });
-                }, 'detail.unit', 'detail' => function ($query) {
-                    $query->where('goodsRecievedYN', '!=', 2);
-                }])
             ->where('supplierID', $supplierID)
-            ->where('approved', -1)
-            ->where('poConfirmedYN', 1)
-            ->where('poCancelledYN', 0)
-            ->where('poClosedYN', 0)
-            ->where('grvRecieved', "<>", 2)
-            ->where('WO_confirmedYN', 1)
-            ->where('manuallyClosed', 0)
-            ->where('poType_N', '<>', 5)
+            ->where('documentSystemID', 2)
+            ->with(['currency', 'created_by'])
             ->orderBy('createdDateTime', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
         return [
