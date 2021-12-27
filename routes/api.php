@@ -2394,6 +2394,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateItemSerialNumbers', 'ItemSerialAPIController@generateItemSerialNumbers');
         Route::post('serialItemDeleteAllDetails', 'ItemSerialAPIController@serialItemDeleteAllDetails');
         Route::get('getGeneratedSerialNumbers', 'ItemSerialAPIController@getGeneratedSerialNumbers');
+        Route::get('getSerialNumbersForOut', 'ItemSerialAPIController@getSerialNumbersForOut');
+        Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

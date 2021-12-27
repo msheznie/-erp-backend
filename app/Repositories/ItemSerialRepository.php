@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ItemSerial;
 use App\Models\GRVDetails;
+use App\Models\ItemIssueDetails;
 use App\Models\DocumentSubProduct;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -40,23 +41,32 @@ class ItemSerialRepository extends BaseRepository
     }
 
 
-    public function mapSubProducts($productSerial, $documentSystemID, $documentDetailID)
+    public function mapSubProducts($productSerialId, $documentSystemID, $documentDetailID, $productInID = null)
     {
         $subProduct = [
             'documentSystemID' => $documentSystemID,
             'documentDetailID' => $documentDetailID,
-            'productSerialID' => $productSerial->id,
+            'productSerialID' => $productSerialId,
             'quantity' => 1,
             'sold' => 0,
             'soldQty' => 0
         ];
+
+        if (!is_null($productInID)) {
+            $subProduct['productInID'] = $productInID;
+        }
+
         switch ($documentSystemID) {
             case 3:
                 $grvDetail = GRVDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($grvDetail) ? $grvDetail->grvAutoID : null;
 
                 break;
-            
+            case 8:
+                $issueDedtail = ItemIssueDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($issueDedtail) ? $issueDedtail->itemIssueAutoID : null;
+
+                break;
             default:
                 # code...
                 break;

@@ -95,6 +95,7 @@ class DocumentSubProduct extends Model
         'productBatchID',
         'quantity',
         'sold',
+        'productInID',
         'soldQty'
     ];
 
@@ -110,6 +111,7 @@ class DocumentSubProduct extends Model
         'documentDetailID' => 'integer',
         'productSerialID' => 'integer',
         'productBatchID' => 'integer',
+        'productInID' => 'integer',
         'quantity' => 'float',
         'sold' => 'integer',
         'soldQty' => 'float'

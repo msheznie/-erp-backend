@@ -115,5 +115,18 @@ class ItemSerial extends Model
         
     ];
 
-    
+    public function document_product()
+    {
+        return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productSerialID');
+    }
+
+     public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseSystemID', 'wareHouseSystemCode');
+    }
+
+     public function bin_location()
+    {
+        return $this->belongsTo('App\Models\WarehouseBinLocation', 'binLocation', 'binLocationID');
+    }
 }
