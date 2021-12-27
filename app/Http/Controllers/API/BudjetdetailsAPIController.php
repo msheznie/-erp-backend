@@ -457,6 +457,143 @@ class BudjetdetailsAPIController extends AppBaseController
         return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
     }
 
+    public function exportReport(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        /** @var BudgetMaster $budgetMaster */
+        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($input['id']);
+
+        if (empty($budgetMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_master')]));
+        }
+
+        $companyFinanceYear = CompanyFinanceYear::find($budgetMaster->companyFinanceYearID);
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected financial year is not found.', 500);
+        }
+
+        $result = CarbonPeriod::create($companyFinanceYear->bigginingDate, '1 month', $companyFinanceYear->endingDate);
+        $monthArray = [];
+        foreach ($result as $dt) {
+            $temp['year'] = $dt->format("Y");
+            $temp['monthID'] = floatval($dt->format("m"));
+            $temp['monthName'] = (Months::find(floatval($dt->format("m")))) ? Months::find(floatval($dt->format("m")))->monthDes : "";
+
+            $monthArray[] = $temp;
+        }
+
+        $finalArray = ReportTemplateDetails::selectRaw('*,0 as expanded')
+            ->with(['subcategory' => function ($q) use ($budgetMaster){
+                $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster){
+                    $q->with('subcategory')
+                        ->orderBy('sortOrder', 'asc')
+                        ->withCount(['items' => function($query) use ($budgetMaster) {
+                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                        }])
+                        ->with(['items' => function($query) use ($budgetMaster) {
+                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                        }])
+                        ->whereHas('items', function($query) use ($budgetMaster) {
+                            $query->where('companySystemID', $budgetMaster->companySystemID)
+                                ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                        });
+                }, 'subcategory' => function ($q) use ($budgetMaster) {
+                    $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                        $q->with('subcategory')
+                            ->orderBy('sortOrder', 'asc')
+                            ->withCount(['items' => function($query) use ($budgetMaster) {
+                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                    ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                    ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                            }])
+                            ->with(['items' => function($query) use ($budgetMaster) {
+                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                    ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                    ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                            }])
+                            ->whereHas('items', function($query) use ($budgetMaster) {
+                                $query->where('companySystemID', $budgetMaster->companySystemID)
+                                    ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                    ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                            });
+                    }, 'subcategory' => function ($q) use ($budgetMaster) {
+                        $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                            $q->with('subcategory')
+                                ->orderBy('sortOrder', 'asc')
+                                ->withCount(['items' => function($query) use ($budgetMaster) {
+                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                        ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                        ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                }])
+                                ->with(['items' => function($query) use ($budgetMaster) {
+                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                        ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                        ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                }])
+                                ->whereHas('items', function($query) use ($budgetMaster) {
+                                    $query->where('companySystemID', $budgetMaster->companySystemID)
+                                        ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                        ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                });
+                        }, 'subcategory' => function ($q) use ($budgetMaster) {
+                            $q->with(['gllink','gl_codes' => function ($q) use ($budgetMaster) {
+                                $q->with('subcategory')
+                                    ->orderBy('sortOrder', 'asc')
+                                    ->withCount(['items' => function($query) use ($budgetMaster) {
+                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                            ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                    }])
+                                    ->with(['items' => function($query) use ($budgetMaster) {
+                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                            ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                    }])
+                                    ->whereHas('items', function($query) use ($budgetMaster) {
+                                        $query->where('companySystemID', $budgetMaster->companySystemID)
+                                            ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
+                                            ->where('companyFinanceYearID', $budgetMaster->companyFinanceYearID);
+                                    });
+                            }]);
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategorytot' => function ($q) {
+                $q->with('subcategory');
+            }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
+
+        $x = 0;
+
+        $templateName = "export_report.budget_details";
+
+        $reportData = ['budgetDetails' => $finalArray,'months' => $monthArray];
+
+        \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                $sheet->loadView($templateName, $reportData);
+            });
+        })->download('csv');
+
+//        return $this->sendResponse(array(), 'successfully export');
+       return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+
+    }
+
     public function bulkUpdateBudgetDetails(Request $request)
     {
         $input = $request->all();
