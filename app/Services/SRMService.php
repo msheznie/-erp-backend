@@ -294,7 +294,7 @@ class SRMService
         $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1: ($slotMaster['no_of_deliveries'] - sizeof($appointment)) );
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails']);
+            $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
         }, 'created_by'])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
