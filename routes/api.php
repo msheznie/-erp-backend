@@ -11,6 +11,7 @@
 |
 */
 
+
 Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -338,6 +339,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('purchase_requests', 'PurchaseRequestAPIController');
         Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
         Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+        Route::get('getEligibleMr', 'PurchaseRequestAPIController@getEligibleMr');
+        Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse');
+        Route::post('createPrMaterialRequest', 'PurchaseRequestAPIController@createPrMaterialRequest');
         Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
         Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
         //confirmation
@@ -1276,6 +1280,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
         Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
         Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+        Route::post('exportBudgetGLCodeWise', 'BudgetMasterAPIController@exportBudgetGLCodeWise');
+        Route::post('exportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@exportBudgetTemplateCategoryWise');
+        Route::post('exportBudgetGLCodeWiseDetails', 'BudgetMasterAPIController@exportBudgetGLCodeWiseDetails');
         Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
         Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
         Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
@@ -1287,6 +1294,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
         Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
+        Route::post('exportDetailsByBudget', 'BudjetdetailsAPIController@exportReport');
         Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails');
         Route::get('getBudgetDetailTotalSummary', 'BudjetdetailsAPIController@getBudgetDetailTotalSummary');
         Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails');

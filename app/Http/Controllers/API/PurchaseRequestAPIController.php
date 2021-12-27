@@ -72,6 +72,7 @@ use App\helper\CancelDocument;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\WarehouseMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -79,6 +80,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\SegmentAllocatedItemRepository;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\GenerateMaterialRequestItem;
+use App\Models\MaterielRequestDetails;
+
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -305,6 +309,114 @@ class PurchaseRequestAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getEligibleMr(Request $request){
+        $input = $request->all();
+        $RequestID = $input['RequestID'];
+        $eligibleMr = PurchaseRequestDetails::where('purchaseRequestID',$RequestID)->where('is_eligible_mr', 1)->get();
+        return $this->sendResponse($eligibleMr, 'Record retrieved successfully');
+    }
+
+    public function getWarehouse(Request $request){
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $subCompanies = [$companyId];
+        }
+
+        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
+        $warehouseData = $wareHouses->where('isActive', 1);
+        return $this->sendResponse($warehouseData, 'Record retrieved successfully');
+    }
+
+    public function createPrMaterialRequest(Request $request){
+        
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $purchaseRequestID = $input['purchaseRequestID'];
+            $wareHouseSystemCode = $input['wareHouseSystemCode'];
+            $prDetails = PurchaseRequest::where('purchaseRequestID',$purchaseRequestID)->first();
+            $inputData = [  'priority'=>$prDetails->priority,
+                            'comments'=>'Generated From PR-'.' ' .$prDetails->purchaseRequestCode,
+                            'serviceLineSystemID'=>$prDetails->serviceLineSystemID,
+                            'location'=>$wareHouseSystemCode,
+                            ];
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $inputData['createdPcID'] = gethostname();
+            $inputData['createdUserID'] = $employee->empID;
+            $inputData['createdUserSystemID'] = $employee->employeeSystemID;
+            $inputData['RequestedDate'] = now();
+            $inputData['departmentID'] = 'IM';
+            $inputData['departmentSystemID'] = 10;
+            $inputData['documentSystemID'] =  9;
+            $inputData['ConfirmedYN'] =  0;
+            $inputData['RollLevForApp_curr'] = 1;
+            $inputData['companySystemID'] = $input['companySystemID'];
+
+            $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $inputData['documentSystemID'])
+            ->orderBy('serialNumber', 'desc')
+            ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
+            }
+
+            $inputData['serialNumber'] = $lastSerialNumber;
+
+            $segment = SegmentMaster::where('serviceLineSystemID', $prDetails->serviceLineSystemID)->first();
+            if ($segment) {
+                $inputData['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+
+            $document = DocumentMaster::where('documentSystemID', $inputData['documentSystemID'])->first();
+            if ($document) {
+                $inputData['documentID'] = $document->documentID;
+            }
+
+            $company = Company::where('companySystemID', $inputData['companySystemID'])->first();
+            if ($company) {
+                $inputData['companyID'] = $company->CompanyID;
+            }
+
+            $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+            $inputData['RequestCode'] = $inputData['companyID'] . '\\' . $inputData['departmentID'] . '\\' . $inputData['serviceLineCode'] . '\\' . $inputData['documentID'] . $code;    
+
+            $MaterialRequest = MaterielRequest::create($inputData);
+            $MaterialRequestID = $MaterialRequest->RequestID;
+            $input['MaterialRequestID'] = $MaterialRequestID;
+            
+            $db = isset($input['db']) ? $input['db'] : "";
+            if(isset($MaterialRequest))
+            {   
+                $isJobData = ['is_job_run'=>1];
+                $isJobUpdate = MaterielRequest::where('RequestID', $MaterialRequestID)->update($isJobData);
+                GenerateMaterialRequestItem::dispatch($input,$db);
+                DB::commit();
+                return $this->sendResponse($MaterialRequest, 'Material request & material items created successfully');
+
+            }
+            else
+            {
+                DB::rollBack();
+                return $this->sendError('Unable to create material items', 422);
+            }
+            
+            
+            } catch (\Exception $exception) {
+                
+                return $this->sendError($exception->getMessage(), 500);
+            }
     }
 
     /**
@@ -584,7 +696,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part Number'] = $item->partNumber;
+                        $data[$x]['Part No/Ref.Number'] = $item->partNumber;
                         if ($item->uom) {
                             $data[$x]['Unit'] = $item->uom->UnitShortCode;
                         } else {
@@ -608,7 +720,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['PR Status'] = '';
                                     $data[$x]['Item Code'] = '';
                                     $data[$x]['Item Description'] = '';
-                                    $data[$x]['Part Number'] = '';
+                                    $data[$x]['Part No/Ref.Number'] = '';
                                     $data[$x]['Unit'] = '';
                                     $data[$x]['PR Qty'] = '';
                                 }
@@ -682,7 +794,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['PR Status'] = '';
                                             $data[$x]['Item Code'] = '';
                                             $data[$x]['Item Description'] = '';
-                                            $data[$x]['Part Number'] = '';
+                                            $data[$x]['Part No/Ref.Number'] = '';
                                             $data[$x]['Unit'] = '';
                                             $data[$x]['PR Qty'] = '';
                                             $data[$x]['PO Number'] = '';
@@ -759,7 +871,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 } else {
                     $data[$x]['Item Code'] = 'Item Code';
                     $data[$x]['Item Description'] = 'Item Description';
-                    $data[$x]['Part Number'] = '';
+                    $data[$x]['Part No/Ref.Number'] = '';
                     $data[$x]['Unit'] = '';
                     $data[$x]['PR Qty'] = '';
                     $data[$x]['PO Number'] = '';

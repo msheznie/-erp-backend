@@ -271,7 +271,8 @@ class MaterielRequest extends Model
         'cancelledByEmpName',
         'cancelledComments',
         'cancelledDate',
-        'isSelectedToPR'
+        'isSelectedToPR',
+        'is_job_run'
     ];
 
     /**
@@ -327,7 +328,8 @@ class MaterielRequest extends Model
         'cancelledByEmpName' => 'string',
         'cancelledComments' => 'string',
         'cancelledDate' => 'string',
-        'isSelectedToPR'  => 'integer'
+        'isSelectedToPR'  => 'integer',
+        'is_job_run' => 'integer',
     ];
 
     /**
