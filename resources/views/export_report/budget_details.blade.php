@@ -145,7 +145,7 @@
                                <tr>
                                      <td></td>
                                      <td>
-                                         <strong></strong><strong>{{ $item2->glDescription }}</strong>
+                                         <strong></strong><strong>{{ $item2->glDescription }} | {{ $item2->glCode }}</strong>
                                      </td>
                                    <?php $totBudgetYear = 0 ?>
                                    @foreach($item2->items as $item3)
