@@ -130,7 +130,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
     {
 
 
-        $input = array_except($request->all(), 'uom_default');
+        return$input = array_except($request->all(), 'uom_default');
         $input = $this->convertArrayToValue($input);
 
 
