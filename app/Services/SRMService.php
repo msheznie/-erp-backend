@@ -5,6 +5,7 @@ namespace App\Services;
 use App\helper\Helper;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
+use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
@@ -157,6 +158,15 @@ class SRMService
                     $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
                     $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
+                }
+                foreach ($data as $val) {
+                    $data_details['appointment_details_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
+                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
+                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                    AppointmentDetailsRefferedBack::create($data_details);
                 }
             }
 
