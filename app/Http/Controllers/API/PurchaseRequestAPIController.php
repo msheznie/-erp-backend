@@ -584,7 +584,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part Number'] = $item->partNumber;
+                        $data[$x]['Part No/Ref.Number'] = $item->partNumber;
                         if ($item->uom) {
                             $data[$x]['Unit'] = $item->uom->UnitShortCode;
                         } else {
@@ -608,7 +608,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['PR Status'] = '';
                                     $data[$x]['Item Code'] = '';
                                     $data[$x]['Item Description'] = '';
-                                    $data[$x]['Part Number'] = '';
+                                    $data[$x]['Part No/Ref.Number'] = '';
                                     $data[$x]['Unit'] = '';
                                     $data[$x]['PR Qty'] = '';
                                 }
@@ -682,7 +682,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['PR Status'] = '';
                                             $data[$x]['Item Code'] = '';
                                             $data[$x]['Item Description'] = '';
-                                            $data[$x]['Part Number'] = '';
+                                            $data[$x]['Part No/Ref.Number'] = '';
                                             $data[$x]['Unit'] = '';
                                             $data[$x]['PR Qty'] = '';
                                             $data[$x]['PO Number'] = '';
@@ -759,7 +759,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 } else {
                     $data[$x]['Item Code'] = 'Item Code';
                     $data[$x]['Item Description'] = 'Item Description';
-                    $data[$x]['Part Number'] = '';
+                    $data[$x]['Part No/Ref.Number'] = '';
                     $data[$x]['Unit'] = '';
                     $data[$x]['PR Qty'] = '';
                     $data[$x]['PO Number'] = '';
