@@ -559,7 +559,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
         if ($request['type'] == 'all') {
-            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType', 'allocation','template_details'=>
+            $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType', 'allocation','templateCategoryDetails'=>
                 function($query){
                     $query->with(['master']);
                 }
