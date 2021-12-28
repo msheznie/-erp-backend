@@ -707,7 +707,18 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
 
         if($fromDataBudgetCheck == 0){
-            return $this->sendError('Selected account code is not available in the budget. Please allocate and try again.', 500);
+            $budgetAmount = 0;
+            $total = array();
+            $total['totalLocal'] = 0;
+            $total['totalRpt'] = 0;
+            $total['committedAmount'] = 0;
+            $total['actuallConsumptionAmount'] = 0;
+            $total['pendingDocumentAmount'] = 0;
+            $total['balance'] = 0;
+
+
+            $companyData = Company::with(['reportingcurrency'])->find($input['companySystemID']);
+            return $this->sendResponse(['budgetAmount' => abs($budgetAmount),'total' => $total, 'companyData' => $companyData], 'successfully');
         }
 
         $checkBalance = Budjetdetails::select(DB::raw("
