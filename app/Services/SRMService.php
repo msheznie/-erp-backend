@@ -374,7 +374,7 @@ class SRMService
     }
     public function confirmSupplierAppointment(Request $request)
     {
-        $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'));
+        $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
         $confirm = \Helper::confirmDocument($params);
         return [
             'success'   => $confirm['success'],
