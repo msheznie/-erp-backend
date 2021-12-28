@@ -144,6 +144,15 @@ class SRMService
                 $appointment = Appointment::create($dataMaster);
             }
 
+            if($amend){
+                Appointment::where('id', $appointmentID)
+                    ->update([
+                        'approved_yn' => 0,
+                        'confirmed_yn' => 0,
+                        'refferedBackYN' => 0
+                    ]);
+            }
+
             if (!empty($data) && $appointmentID > 0) {
                 foreach ($data as $val) {
                     AppointmentDetails::where('appointment_id', $appointmentID)
