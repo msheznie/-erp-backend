@@ -112,5 +112,8 @@ class SlotDetails extends Model
         
     ];
 
-    
+    public function slot_master()
+    {
+        return $this->hasOne('App\Models\SlotMaster', 'id', 'slot_master_id');
+    }
 }

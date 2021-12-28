@@ -24,6 +24,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ItemTracking;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
@@ -478,6 +479,12 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
 
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($gRVMaster->documentSystemID, $gRVMaster->grvAutoID);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
+            }
+
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
@@ -817,7 +824,7 @@ class GRVMasterAPIController extends AppBaseController
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {

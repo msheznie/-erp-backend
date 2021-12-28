@@ -16,6 +16,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
 use App\Models\FinanceItemCategorySub;
@@ -132,7 +133,7 @@ class GRVDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
-            $input = array_except($input, ['unit', 'po_master', 'prn_master']);
+            $input = array_except($input, ['unit', 'po_master', 'prn_master', 'item_by']);
             $input = $this->convertArrayToValue($input);
 
             //$empInfo = self::getEmployeeInfo();
@@ -158,6 +159,11 @@ class GRVDetailsAPIController extends AppBaseController
 
             if(!isset($input['binNumber'])) {
                 $input['binNumber'] = 0;
+            }
+
+            $itemTracking = ItemTracking::validateTrackingQuantity($input['noQty'], $id, $grvMaster->documentSystemID);
+            if (!$itemTracking['status']) {
+                return $this->sendError($itemTracking['message']);
             }
 
             $markupUpdatedBy=isset($input['by'])?$input['by']:'';
@@ -642,7 +648,7 @@ class GRVDetailsAPIController extends AppBaseController
         $items = GRVDetails::where('grvAutoID', $grvAutoID)
             ->with(['unit' => function ($query) {
             }, 'po_master' => function ($query) {
-            }, 'prn_master'])
+            }, 'prn_master', 'item_by'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');

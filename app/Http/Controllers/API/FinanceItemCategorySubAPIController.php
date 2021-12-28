@@ -131,7 +131,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function getSubcategoryExpiryStatus(Request $request){
         $input = $request->all();
-        $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN')->first();
+        $expiryStatus = FinanceItemCategorySub::where('itemCategorySubID',$input)->Select('expiryYN', 'trackingType')->first();
         return $this->sendResponse($expiryStatus, 'Finance Item Category Subs retrieved successfully');
 
     }
@@ -394,6 +394,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
             'includePLForGRVYN' => isset($input['includePLForGRVYN']) ? $input['includePLForGRVYN'] :null,
+            'trackingType' => isset($input['trackingType']) ? $input['trackingType'] :null,
             'financeGLcodebBS' => $input['financeGLcodebBS'],
             'financeGLcodePL' => $input['financeGLcodePL'],
             'financeGLcodeRevenue' => $input['financeGLcodeRevenue'],

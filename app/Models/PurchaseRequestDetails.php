@@ -120,7 +120,8 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedComment',
         'isMRPulled',
         'altUnit',
-        'altUnitValue'
+        'altUnitValue',
+        'is_eligible_mr'
     ];
 
     /**
@@ -175,7 +176,8 @@ class PurchaseRequestDetails extends Model
         'manuallyClosedComment' => 'string',
         'isMRPulled' => 'boolean',
         'altUnit'  => 'integer',
-        'altUnitValue'  => 'float'
+        'altUnitValue'  => 'float',
+        'is_eligible_mr' => 'boolean'
     ];
 
     /**

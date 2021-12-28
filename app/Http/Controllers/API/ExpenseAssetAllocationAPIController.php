@@ -9,6 +9,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\FixedAssetMaster;
+use App\Models\ItemIssueDetails;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -142,9 +143,10 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->supplier_invoice_master->supplierTransactionCurrencyID) ? $directDetail->supplier_invoice_master->supplierTransactionCurrencyID : null;
-        } else {
+        } 
+        else if($input['documentSystemID'] == 4) {
             $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
-
+            
             if (!$directDetail) {
                 return $this->sendError("Payment voucher detail not found");
             }
@@ -153,6 +155,19 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
+        }
+        else
+        {
+                $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']); 
+                if (!$meterialissue) {
+                    return $this->sendError("Meterial issues detail not found");
+                }
+                $detailTotal = $meterialissue->issueCostLocalTotal;
+                $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
+                $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
+                $transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
+              
+            
         }
 
         $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);

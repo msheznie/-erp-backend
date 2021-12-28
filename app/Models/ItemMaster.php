@@ -119,6 +119,7 @@ class ItemMaster extends Model
         'vatSubCategory',
         'expiryYN',
         'faCatID',
+        'trackingType',
         'faSubCatID',
         'faSubCatID2',
         'faSubCatID3'
@@ -133,6 +134,7 @@ class ItemMaster extends Model
         'itemCodeSystem' => 'integer',
         'primaryItemCode' => 'string',
         'runningSerialOrder' => 'integer',
+        'trackingType' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'primaryCompanySystemID' => 'integer',
