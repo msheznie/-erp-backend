@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AppointmentDetailsRefferedBack extends Model
 {
-    public $table = 'appointment_details_reffered_back';
+    public $table = 'appointmentDetailsRefferedBackHistory';
 
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';

@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
+use App\Models\AppointmentRefferedBack;
 use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
@@ -140,11 +141,15 @@ class SRMService
             $dataMaster['company_id'] = $slotCompanyId;
             $slotData['status'] = 1;  
             SlotDetails::where('id', $slotDetailID)->update($slotData);
-            if ($appointmentID <= 0) { 
+            if ($appointmentID <= 0 && !$amend) {
                 $appointment = Appointment::create($dataMaster);
             }
 
             if($amend){
+                $dataMaster['appointment_id'] = $appointmentID;
+
+                AppointmentRefferedBack::create($dataMaster);
+
                 Appointment::where('id', $appointmentID)
                     ->update([
                         'approved_yn' => 0,
@@ -153,14 +158,14 @@ class SRMService
                     ]);
             }
 
-            if (!empty($data) && $appointmentID > 0) {
+            if (!empty($data) && $appointmentID > 0 && !$amend) {
                 foreach ($data as $val) {
                     AppointmentDetails::where('appointment_id', $appointmentID)
                         ->delete();
                 }
             }
 
-            if (!empty($data)) {
+            if (!empty($data) && !$amend) {
                 foreach ($data as $val) {
                     $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
                     $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
@@ -169,16 +174,17 @@ class SRMService
                     $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
-                if($amend){
-                    foreach ($data as $val) {
-                        $data_details['appointment_details_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                        $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                        $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                        $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                        $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                        $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
-                        AppointmentDetailsRefferedBack::create($data_details);
-                    }
+            }
+
+            if (!empty($data) && $amend) {
+                foreach ($data as $val) {
+                    $data_details['appointment_details_id'] = $slotDetailID;
+                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
+                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
+                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                    AppointmentDetailsRefferedBack::create($data_details);
                 }
             }
 
