@@ -787,7 +787,15 @@ class Helper
                             }
                        
                             //confirm the document
-                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'reference_email' => $params['email']]);
+                            if(isset($params['email']))
+                            {
+                                $email_in = $params['email'];
+                            }
+                            else
+                            {
+                                $email_in = null;
+                            }
+                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'reference_email' => $email_in]);
 
                             //get the policy
                             $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
