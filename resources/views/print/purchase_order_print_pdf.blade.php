@@ -596,7 +596,7 @@
                 <th style="text-align: center">#</th>
                 <th style="text-align: center">Item Code</th>
                 <th style="text-align: center">Item Description</th>
-                <th style="text-align: center">Sup.Part No</th>
+                <th style="text-align: center">Part No / Ref.Number</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
                 @if($allowAltUom)

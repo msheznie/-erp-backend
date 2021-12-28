@@ -942,7 +942,7 @@ WHERE
                             'Item Description' => $val->itemDescription,
                             'Is Locally Made' => $val->isLocalMade,
                             'Unit' => $val->unitShortCode,
-                            'Part No/Ref.Number' => $val->supplierPartNumber,
+                            'Part No / Ref.Number' => $val->supplierPartNumber,
                             'Finance Category' => $val->financecategory,
                             'Finance Category Sub' => $val->financecategorysub,
                             'Account Code' => $val->AccountCode,
