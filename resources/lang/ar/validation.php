@@ -186,7 +186,7 @@ return [
         'startingBalance_transaction' => 'Starting Balance',
         'endingBalance_transaction' => 'Closing Balance',
         'counterID' => 'Counter',
-        'secondaryItemCode' => 'Mfg. Part No',
+        'secondaryItemCode' => 'Part No / Ref.Number',
         'itemDescription' => 'Item Description',
         'unit' => 'Unit of Measure',
         'shiftID' => 'Shift',

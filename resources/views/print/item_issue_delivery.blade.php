@@ -319,7 +319,7 @@
                 <th class="text-center vertical-align"  style="width: 3%">Quantity Delivered</th>
                 <th class="text-center vertical-align"  style="width: 4%">Quantity Back Load</th>
                 <th class="text-center vertical-align"  style="width: 5%">{{$entity->companyID}} Item Code</th>
-                <th class="text-center vertical-align"  style="width: 5%">Part No/Ref.Number</th>
+                <th class="text-center vertical-align"  style="width: 5%">Part No / Ref.Number</th>
                 <th class="text-center vertical-align"  style="width: 5%">Client Product Code</th>
                 <th class="text-center vertical-align"  style="width: 14%">Item Description</th>
                 <th class="text-center vertical-align"   colspan="2" style="width: 5%">"Material PO no(enter 13 digits) including PO line

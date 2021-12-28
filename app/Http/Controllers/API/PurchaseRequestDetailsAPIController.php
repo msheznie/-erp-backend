@@ -1407,7 +1407,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 'Company Name' => $order->CompanyName,
                 'Request Code' => $order->purchaseRequestCode,
                 'Requested Date' => date("Y-m-d", strtotime($order->PRRequestedDate)),
-                'Part No/Ref.Number' => $order->partNumber,
+                'Part No / Ref.Number' => $order->partNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
                 'Requested Qty' => $qua_req,
