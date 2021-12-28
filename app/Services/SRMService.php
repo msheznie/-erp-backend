@@ -113,7 +113,8 @@ class SRMService
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
-        $appointmentID = $request->input('extra.appointmentID');;
+        $appointmentID = $request->input('extra.appointmentID');
+        $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
@@ -159,14 +160,16 @@ class SRMService
                     $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
-                foreach ($data as $val) {
-                    $data_details['appointment_details_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
-                    AppointmentDetailsRefferedBack::create($data_details);
+                if($amend){
+                    foreach ($data as $val) {
+                        $data_details['appointment_details_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                        $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                        $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
+                        $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
+                        $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
+                        $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                        AppointmentDetailsRefferedBack::create($data_details);
+                    }
                 }
             }
 
