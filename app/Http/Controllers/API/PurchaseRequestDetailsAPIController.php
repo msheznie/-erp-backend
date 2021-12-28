@@ -902,7 +902,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $quantityInHand = $input['quantityInHand'];
         $requestedQty = $input['quantityRequested'];
-        $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCode)->sum('totalQty');
+        $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCode)->sum('rolQuantity');
         $requestAndReorderTotal = $requestedQty + $reorderQty;
 
         if(isset($total_requested_qnty)) {
@@ -942,9 +942,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             if($quantityInHand > $requestAndReorderTotal && !$isMRPulled && $itemFinanceCategoryID==1){
-                $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 1]);
+                $input['is_eligible_mr'] = 1;
             } else {
-                $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 0]);
+                $input['is_eligible_mr'] = 0;
             }
 
             $purchaseRequestDetailsRes = $this->purchaseRequestDetailsRepository->update($input, $id);
