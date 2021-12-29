@@ -436,6 +436,56 @@ class ItemSerialAPIController extends AppBaseController
                                         $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                   }, 'warehouse', 'bin_location'])
+                                  ->whereHas('document_in_product', function($query) use ($input) { 
+                                        $query->where(function($query) use ($input) {
+                                            $query->whereHas('grv_master', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('material_issue', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('material_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                });
+                                        })
+                                        ->where('sold', 0);
+                                    })
+                                  ->get();
+
+        return $this->sendResponse($itemSerials, 'product serial retrived successfully');
+    }
+
+    public function getSerialNumbersForReturn(Request $request)
+    {
+        $input = $request->all();
+
+        $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
+                                  ->where(function($query) use ($input){
+                                        $query->where(function($query) use ($input) {
+                                                $query->where('soldFlag', 0)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->where('soldFlag', 1)
+                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            });
+                                  })
+                                  ->with(['document_in_product', 'document_product' => function($query) use ($input) {
+                                        $query->where('documentSystemID', $input['documentSystemID'])
+                                              ->where('documentDetailID', $input['documentDetailID']);
+                                  }, 'warehouse', 'bin_location'])
+                                  ->whereHas('document_in_product', function($query) use ($input){
+                                        $query->where(function($query) {
+                                            $query->whereHas('material_issue', function($query) {
+                                                $query->where('approved', -1);
+                                            })
+                                            ->where('documentSystemID', 8);
+                                        })
+                                        ->where('documentSystemCode', $input['rootDocumentID']);
+                                  })
                                   ->get();
 
         return $this->sendResponse($itemSerials, 'product serial retrived successfully');
@@ -498,6 +548,80 @@ class ItemSerialAPIController extends AppBaseController
                     }
 
                     $cehckSerial->soldFlag = 0;
+                    $cehckSerial->save();
+
+                    DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productSerialID', $input['id'])
+                                                             ->delete();
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'product serial generated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage(), 422);
+        }
+    }
+
+    public function updateReturnStatusOfSerial(Request $request) 
+    {
+        $input = $request->all();
+
+        $cehckSerial = ItemSerial::find($input['id']);
+
+        if (!$cehckSerial) {
+            return $this->sendError("Serial not found");
+        }
+
+
+
+        DB::beginTransaction();
+        try {
+
+            if (isset($input['isChecked']) && $input['isChecked']) {
+
+                $checkCountOfOut = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->count();
+
+                if (($checkCountOfOut + 1) > floatval($input['noQty'])) {
+                    return $this->sendError("Out quantity cannot be greater than received quantity");
+                }
+
+
+                $cehckSerial->soldFlag = 0;
+                $cehckSerial->save();
+
+                $checkInData = DocumentSubProduct::where('productSerialID', $input['id'])
+                                                 ->where('sold', 0)
+                                                 ->first();     
+                                                 
+                if (!$checkInData) {
+                    return $this->sendError("Serial has been sold.");
+                }      
+
+                $this->itemSerialRepository->mapSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $checkInData->id);
+
+                $checkInData->sold = 1;
+                $checkInData->soldQty = 1;
+                $checkInData->save();
+            } else {
+                $checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productSerialID', $input['id'])
+                                                             ->first();
+
+                if ($checkDocumentSubProduct) {
+                    $soldProduct = DocumentSubProduct::find($checkDocumentSubProduct->productInID);
+                    if ($soldProduct) {
+                        $soldProduct->sold = 0;
+                        $soldProduct->soldQty = 0;
+                        $soldProduct->save();
+                    }
+
+                    $cehckSerial->soldFlag = 1;
                     $cehckSerial->save();
 
                     DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])

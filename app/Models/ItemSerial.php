@@ -115,6 +115,11 @@ class ItemSerial extends Model
         
     ];
 
+    public function document_in_product()
+    {
+        return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productSerialID')->whereIn('documentSystemID', [3, 8, 12]);
+    }
+
     public function document_product()
     {
         return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productSerialID');

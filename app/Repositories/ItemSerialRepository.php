@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ItemSerial;
 use App\Models\GRVDetails;
 use App\Models\ItemIssueDetails;
+use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -65,6 +66,11 @@ class ItemSerialRepository extends BaseRepository
             case 8:
                 $issueDedtail = ItemIssueDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($issueDedtail) ? $issueDedtail->itemIssueAutoID : null;
+
+                break;
+            case 12:
+                $issueDedtail = ItemReturnDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($issueDedtail) ? $issueDedtail->itemReturnAutoID : null;
 
                 break;
             default:
