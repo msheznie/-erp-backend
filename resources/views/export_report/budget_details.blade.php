@@ -2,6 +2,45 @@
 <table>
     <thead>
     <tr>
+        @php
+            $bigginingDt = new DateTime($entity['finance_year_by']['bigginingDate']);
+            $bigginingDate = $bigginingDt->format('m/d/Y');
+
+            $endingDt = new DateTime($entity['finance_year_by']['endingDate']);
+            $endingDate = $endingDt->format('m/d/Y');
+
+
+        @endphp
+        <td>Finance Year : {{ $bigginingDate }} - {{ $endingDate }}</td>
+        <td> </td>
+        <td> </td>
+        <td> </td>
+        <td>Year : {{ $entity['Year'] }}</td>
+        <td> </td>
+        <td> </td>
+        <td> </td>
+        <td>Currency : {{ $currency['reportingcurrency']['CurrencyCode'] }}</td>
+    </tr>
+    <tr>
+
+        <td>Segment : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td> </td>
+        <td> </td>
+        <td> </td>
+        <td>Template : {{ $entity['template_master']['description'] }}</td>
+        <td> </td>
+        <td> </td>
+        <td> </td>
+        <td>Send Notification at {{ $entity['sentNotificationAt'] }}%</td>
+    </tr>
+    <tr></tr>
+    <tr></tr>
+
+
+
+
+
+    <tr>
         <th>#</th>
         <th>Category</th>
         @foreach ($months as $month)
