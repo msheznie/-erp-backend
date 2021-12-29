@@ -172,7 +172,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 if (!$meterialissue) {
                     return $this->sendError("Meterial issues detail not found");
                 }
-                $detailTotal = $meterialissue->issueCostRptTotal;
+                $detailTotal = round($meterialissue->issueCostRptTotal,2);
                 $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
                 $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
                 //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
@@ -191,9 +191,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
         $newTotal = $allocatedSum + floatval($input['amount']);
 
+
         if ($newTotal > $detailTotal) {
             return $this->sendError("Allocated amount cannot be greater than detail amount.");
         }
+
+     
 
         $expenseAssetAllocation = $this->expenseAssetAllocationRepository->create($input);
 
