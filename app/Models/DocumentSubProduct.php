@@ -131,5 +131,20 @@ class DocumentSubProduct extends Model
     {
         return $this->belongsTo('App\Models\ItemSerial', 'productSerialID', 'id');
     }
+
+    public function grv_master()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'documentSystemCode', 'grvAutoID')->where('documentSystemID', 3);
+    }
+
+     public function material_issue()
+    {
+        return $this->belongsTo('App\Models\ItemIssueMaster', 'documentSystemCode', 'itemIssueAutoID')->where('documentSystemID', 8);
+    } 
+
+    public function material_return()
+    {
+        return $this->belongsTo('App\Models\ItemReturnMaster', 'documentSystemCode', 'itemReturnAutoID')->where('documentSystemID', 12);
+    }
     
 }

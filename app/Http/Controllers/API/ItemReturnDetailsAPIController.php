@@ -179,7 +179,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['itemReturnCode'] = $itemReturn->itemReturnCode;
 
 
-        $itemAssign = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+        $itemAssign = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $input['itemCodeSystem'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -189,6 +190,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         $input['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
         $input['itemDescription'] = $itemAssign->itemDescription;
+        $input['trackingType'] = isset($itemAssign->item_master->trackingType) ? $itemAssign->item_master->trackingType : null;
 
 
         $itemIssuesCount = ItemIssueMaster::whereHas('details', function ($q) use ($input) {
@@ -529,6 +531,33 @@ class ItemReturnDetailsAPIController extends AppBaseController
         }
 
         $itemReturnDetails->delete();
+
+        if ($itemReturnDetails->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['soldFlag' => 0]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
+        }
 
         return $this->sendResponse($id, 'Item Return Details deleted successfully');
     }

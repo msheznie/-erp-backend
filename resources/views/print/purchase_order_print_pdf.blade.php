@@ -657,6 +657,9 @@
                     <td colspan="2"></td>
                     <td>{{$met->category->costCatDes}}</td>
                     <td colspan="{{6 + $subColspan}}"></td>
+                    @if($allowAltUom)
+                    <td colspan="2"></td>
+                    @endif
                     <td class="text-right">{{number_format($met->amount, $numberFormatting)}}</td>
                 </tr>
             @endforeach

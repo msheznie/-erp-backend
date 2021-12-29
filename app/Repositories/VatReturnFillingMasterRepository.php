@@ -429,6 +429,15 @@ class VatReturnFillingMasterRepository extends BaseRepository
                                                         $query->whereHas('type', function($query) { 
                                                             $query->where('id', 1);
                                                         });
+                                                  })
+                                                   ->whereHas('supplier_invoice_details', function($query) {
+                                                        $query->whereHas('grv_detail', function($query) { 
+                                                            $query->where('itemFinanceCategoryID','!=',3);
+                                                        });
+                                                  })
+                                                  ->where('documentSystemID', 11)
+                                                  ->whereHas('supplier_invoice', function($query) {
+                                                        $query->where('documentType', 0);
                                                   });
 
 
