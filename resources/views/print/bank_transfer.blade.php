@@ -217,7 +217,9 @@
                     Dear Sir,<br><br>
                     Please arrange to transfer an amount of 
                     <b>@if(isset($entity->supplierTransactionCurrencyDetails)) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{' '.number_format($entity->totalAmount,$entity->decimalPlaces)}}</b>
-                    [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}] only as folllow and debit the same to 
+                    [@if($entity->supplierTransactionCurrencyDetails) {{$entity->supplierTransactionCurrencyDetails->CurrencyCode}}@endif {{$entity->amount_word}}
+                    and
+                    {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] only as folllow and debit the same to 
                     our above mentioned account under advice to us.<br>
 
                     <br><br>
