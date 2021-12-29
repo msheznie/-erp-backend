@@ -11,6 +11,7 @@
 |
 */
 
+
 Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -338,6 +339,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('purchase_requests', 'PurchaseRequestAPIController');
         Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
         Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+        Route::get('getEligibleMr', 'PurchaseRequestAPIController@getEligibleMr');
+        Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse');
+        Route::post('createPrMaterialRequest', 'PurchaseRequestAPIController@createPrMaterialRequest');
         Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
         Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
         //confirmation
@@ -1276,6 +1280,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
         Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
         Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+        Route::post('exportBudgetGLCodeWise', 'BudgetMasterAPIController@exportBudgetGLCodeWise');
+        Route::post('exportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@exportBudgetTemplateCategoryWise');
+        Route::post('exportBudgetGLCodeWiseDetails', 'BudgetMasterAPIController@exportBudgetGLCodeWiseDetails');
         Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
         Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
         Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
@@ -1287,6 +1294,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
         Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
+        Route::post('exportDetailsByBudget', 'BudjetdetailsAPIController@exportReport');
         Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails');
         Route::get('getBudgetDetailTotalSummary', 'BudjetdetailsAPIController@getBudgetDetailTotalSummary');
         Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails');
@@ -1297,6 +1305,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
         Route::get('getTemplatesDetailsById', 'TemplatesDetailsAPIController@getTemplatesDetailsById');
         Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
+        Route::get('getAllGLCodes', 'TemplatesDetailsAPIController@getAllGLCodes');
+        Route::get('getTemplateByGLCode', 'TemplatesDetailsAPIController@getTemplateByGLCode');
         Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
         Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
         Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
@@ -1763,6 +1773,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
         Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
         Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
+        Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails');
         Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
         Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
 
@@ -2197,7 +2208,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_addition', 'ErpBudgetAdditionAPIController');
         Route::post('budget_additions', 'ErpBudgetAdditionAPIController@index');
         Route::get('getTemplatesDetailsByBudgetAddition', 'ErpBudgetAdditionAPIController@getTemplatesDetailsByBudgetAddition');
+        Route::get('getAllGLCodesByBudgetAddition', 'ErpBudgetAdditionAPIController@getAllGLCodesByBudgetAddition');
         Route::get('getDetailsByBudgetAddition', 'ErpBudgetAdditionDetailAPIController@getDetailsByBudgetAddition');
+        Route::get('getTemplateByGLCodeByBudgetAddition', 'ErpBudgetAdditionAPIController@getTemplateByGLCodeByBudgetAddition');
         Route::get('getBudgetAdditionFormData', 'ErpBudgetAdditionAPIController@getBudgetAdditionFormData');
         Route::resource('budget_addition_details', 'ErpBudgetAdditionDetailAPIController');
         Route::post('getBudgetAdditionApprovalByUser', 'ErpBudgetAdditionAPIController@getBudgetAdditionApprovalByUser');
@@ -2375,6 +2388,24 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approvals', 'SupplierRegistrationApprovalController@index');
             Route::post('approvals/status', 'SupplierRegistrationApprovalController@update');
         });
+
+
+        Route::resource('appointments', 'AppointmentAPIController');
+
+        Route::resource('appointment_details', 'AppointmentDetailsAPIController');
+
+        Route::resource('po_categories', 'PoCategoryAPIController');
+
+        Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
+
+        Route::resource('item_serials', 'ItemSerialAPIController');
+        Route::post('generateItemSerialNumbers', 'ItemSerialAPIController@generateItemSerialNumbers');
+        Route::post('serialItemDeleteAllDetails', 'ItemSerialAPIController@serialItemDeleteAllDetails');
+        Route::get('getGeneratedSerialNumbers', 'ItemSerialAPIController@getGeneratedSerialNumbers');
+        Route::get('getSerialNumbersForOut', 'ItemSerialAPIController@getSerialNumbersForOut');
+        Route::get('getSerialNumbersForReturn', 'ItemSerialAPIController@getSerialNumbersForReturn');
+        Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
+        Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2544,12 +2575,5 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
-Route::resource('appointments', 'AppointmentAPIController');
 
-Route::resource('appointment_details', 'AppointmentDetailsAPIController');
-
-Route::resource('po_categories', 'PoCategoryAPIController');
-
-
-
-Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
+Route::resource('document_sub_products', 'DocumentSubProductAPIController');

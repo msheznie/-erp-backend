@@ -26,7 +26,7 @@ class CreateErpBudgetAdditionDetailAPIRequest extends APIRequest
     {
         return [
             'budgetAdditionFormAutoID' => 'required',
-            'templateDetailID' => 'required|numeric|min:1',
+            'templateDetailID' => 'required|min:1',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'chartOfAccountSystemID' => 'required|numeric|min:1',
             'adjustmentAmountRpt' => 'required|numeric',
