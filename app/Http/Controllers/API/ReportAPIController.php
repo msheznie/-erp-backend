@@ -1476,7 +1476,7 @@ WHERE
             ->whereBetween('createdDateTime', [$startDate, $endDate])
             ->whereIn('supplierID', $suppliers)
             ->whereIn('serviceLineSystemID', $segment)
-            ->when($option >= 0, function ($q) use ($option) {
+            ->when($option >= 0, function ($q) use ($option,$endDate) {
                 if ($option == 0 || $option == 1 || $option == 2) {
                     $q->where('grvRecieved', $option)
                         ->where('poClosedYN', 0)
@@ -1488,6 +1488,13 @@ WHERE
                 } else if ($option == 4) {
                     $q->where('poConfirmedYN', 1)
                         ->where('approved', 0);
+                }
+                else if ($option == 5) {
+                    $q->where('grvRecieved', 1)
+                        ->where('poClosedYN', 0)
+                        ->where('poConfirmedYN', 1)
+                        ->where('approved', -1)
+                        ->whereDate('expectedDeliveryDate','<',$endDate);
                 }
             });
         return $data;
