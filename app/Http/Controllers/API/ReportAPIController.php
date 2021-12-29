@@ -1461,6 +1461,8 @@ WHERE
         //poType_N: 5  -- main work order
         //poType_N: 6  -- sub work order
 
+        $current_date = date("Y-m-d");
+
         $data = ProcumentOrder::selectRaw('*')
             ->with(['created_by', 'icv_category', 'icv_sub_category', 'currency', 'segment', 'supplier' => function ($q) {
                 $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,jsrsExpiry,jsrsNo,
@@ -1476,7 +1478,7 @@ WHERE
             ->whereBetween('createdDateTime', [$startDate, $endDate])
             ->whereIn('supplierID', $suppliers)
             ->whereIn('serviceLineSystemID', $segment)
-            ->when($option >= 0, function ($q) use ($option,$endDate) {
+            ->when($option >= 0, function ($q) use ($option,$current_date) {
                 if ($option == 0 || $option == 1 || $option == 2) {
                     $q->where('grvRecieved', $option)
                         ->where('poClosedYN', 0)
@@ -1490,11 +1492,11 @@ WHERE
                         ->where('approved', 0);
                 }
                 else if ($option == 5) {
-                    $q->where('grvRecieved', 1)
+                    $q->where('grvRecieved','!=',2)
                         ->where('poClosedYN', 0)
                         ->where('poConfirmedYN', 1)
                         ->where('approved', -1)
-                        ->whereDate('expectedDeliveryDate','<',$endDate);
+                        ->whereDate('expectedDeliveryDate','<',$current_date);
                 }
             });
         return $data;
