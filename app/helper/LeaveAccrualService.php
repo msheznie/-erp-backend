@@ -9,6 +9,9 @@ use App\Models\LeaveGroup;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\SME;
+use App\helper\LeaveBalanceValidationHelper;
+
 
 class LeaveAccrualService
 {
@@ -27,6 +30,8 @@ class LeaveAccrualService
     public $header_data = [];
     public $finance_year;
     public $accrualMasterID = null;
+    public $year_det;
+    public $month_det;
 
     public function __construct($company_data, $accrual_type_det, $header_data)
     {
@@ -49,14 +54,13 @@ class LeaveAccrualService
         if(!$status){ return []; }
 
         if(!$this->dailyBasis){
-            $finance_year = CompanyFinanceYear::active_finance_year($this->company_id, $this->date);
+            $leaveBalanceBasedOn = LeaveBalanceValidationHelper::validate($this->company_id,$this->date);
 
-            if(empty($finance_year)){
-                Log::error("Company finance year details not found on ". $this->log_suffix());
-                return [];
+            if(!$leaveBalanceBasedOn['status']){
+                Log::error($leaveBalanceBasedOn['message']." ".$this->log_suffix());
+                return $leaveBalanceBasedOn['message'];
             }
-
-            $this->finance_year = $finance_year;
+            $this->year_det = $leaveBalanceBasedOn['details'];
         }
 
         foreach ($this->leave_groups as $group){
@@ -138,7 +142,12 @@ class LeaveAccrualService
         $year_date_filter = "dailyAccrualDate = '{$this->date}'";
         if(!$this->dailyBasis){
             $dailyBasisYN = 0;
-            $year_date_filter = "company_finance_year_id = ".$this->finance_year['companyFinanceYearID'];
+            $year_date_filter = "company_finance_year_id = ".$this->year_det['id'];
+            if ($this->year_det['accrualPolicyValue'] == 2){
+                $yearFirstDate = $this->year_det['startDate'];
+                $yearEndDate =  $this->year_det['endDate'];
+                $year_date_filter = " '{$this->date}' BETWEEN '{$yearFirstDate}' AND '{$yearEndDate}'";
+            }
         }
 
         return "SELECT {$str}
@@ -158,10 +167,18 @@ class LeaveAccrualService
 
     function pending_sql_monthly($str, $leaveGroupID, $master_id_filter): string
     {
+        $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
+
         $year = Carbon::parse( $this->date )->format('Y');
         $month = Carbon::parse( $this->date )->format('m');
-        $lastDate = Carbon::parse( $this->date )->format('Y-m-t');
+        $lastDate = $this->month_det['dateTo'];
 
+        $month_date_filter = "AND `year` = {$year} AND `month` = {$month}";
+
+        if ($this->year_det['accrualPolicyValue'] == 3){
+            $month_date_filter = "AND company_finance_year_id = ".$this->month_det['id'];
+            
+        }
         return "SELECT {$str}
             FROM srp_employeesdetails AS emp
             JOIN srp_erp_leavegroupdetails AS gd ON gd.leaveGroupID = emp.leaveGroupID AND policyMasterID = 3             
@@ -171,7 +188,7 @@ class LeaveAccrualService
             (EIdNo, srp_erp_leavetype.leaveTypeID) NOT IN (
                 SELECT empID, leaveType FROM srp_erp_leaveaccrualmaster AS m
                 JOIN srp_erp_leaveaccrualdetail AS d ON m.leaveaccrualMasterID = d.leaveaccrualMasterID 
-                WHERE m.policyMasterID = 3 AND `year` = {$year} AND `month` = {$month} AND m.manualYN = 0 {$master_id_filter}
+                WHERE m.policyMasterID = 3 {$month_date_filter} AND m.manualYN = 0 {$master_id_filter}
                 GROUP BY empID, leaveType
             )";
     }
@@ -215,13 +232,14 @@ class LeaveAccrualService
     }
 
     function create_header(){
-        $finance_year = CompanyFinanceYear::active_finance_year($this->company_id, $this->date);
 
-        if(empty($finance_year)){
-            return ['status'=> false, 'message'=> 'Company finance year details not found'];
+        $leaveBalanceBasedOn = LeaveBalanceValidationHelper::validate($this->company_id,$this->date);
+
+        if(!$leaveBalanceBasedOn['status']){
+            return ['status'=> false, 'message'=> $leaveBalanceBasedOn['message']];
+
         }
-
-        $this->finance_year = $finance_year;
+        $this->year_det = $leaveBalanceBasedOn['details'];
 
         $doc_code = HrDocumentCodeService::generate($this->company_id, $this->company_code, 'LAM');
 
@@ -245,7 +263,11 @@ class LeaveAccrualService
         ];
 
         if($this->policy == 1){
-            $data['company_finance_year_id'] = $finance_year['companyFinanceYearID'];
+            $data['company_finance_year_id'] = $this->year_det['id'];
+        }elseif($this->policy == 3){
+            $this->month_det = LeaveBalanceValidationHelper::validate_month($this->company_id,$this->date)['details'];
+            $data['company_finance_year_id'] = $this->month_det['id'];
+
         }
 
         $master = LeaveAccrualMaster::create($data);
@@ -257,8 +279,8 @@ class LeaveAccrualService
 
     function create_details(){
         $group_id = $this->header_data['leaveGroupID'];
-        $financeYear = Carbon::parse( $this->finance_year['startDate'] )->format('Y');
-        $financeYearEnd = Carbon::parse( $this->finance_year['endDate'] )->format('Y');
+        $year = Carbon::parse( $this->year_det['startDate'] )->format('Y');
+        $yearEnd = Carbon::parse( $this->year_det['endDate'] )->format('Y');
 
         $detail = [];
 
@@ -277,9 +299,9 @@ class LeaveAccrualService
                 'leaveType' => $val->leaveTypeID,
                 'daysEntitled' => $daysEntitled,
                 'hoursEntitled' => $hoursEntitled,
-                'description' => 'Leave Accrual ' . $financeYear,
-                'initalDate' => $financeYear,
-                'nextDate' => $financeYearEnd,
+                'description' => 'Leave Accrual ' . $year,
+                'initalDate' => $year,
+                'nextDate' => $yearEnd,
                 'createDate' => $this->date_time,
                 'createdPCid' => gethostname()
             );
