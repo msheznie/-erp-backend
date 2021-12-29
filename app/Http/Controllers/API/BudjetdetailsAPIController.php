@@ -460,6 +460,14 @@ class BudjetdetailsAPIController extends AppBaseController
     public function exportReport(Request $request)
     {
         $input = $request->all();
+        $id = $request->id;
+        $budgetMaster = $this->budgetMasterRepository->with(['confirmed_by','segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($id);
+
+        if (empty($budgetMaster)) {
+            return $this->sendError('Budget Master not found');
+        }
+
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -577,11 +585,15 @@ class BudjetdetailsAPIController extends AppBaseController
                 $q->with('subcategory');
             }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
 
+        $currencyData = \Helper::companyCurrency($budgetMaster->companySystemID);
+
         $x = 0;
 
         $templateName = "export_report.budget_details";
 
-        $reportData = ['budgetDetails' => $finalArray,'months' => $monthArray];
+        $reportData = ['budgetDetails' => $finalArray,'months' => $monthArray, 'entity' => $budgetMaster, 'currency' => $currencyData];
+
+
 
         \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
