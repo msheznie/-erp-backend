@@ -4,10 +4,10 @@
     <tr>
         @php
             $bigginingDt = new DateTime($entity['finance_year_by']['bigginingDate']);
-            $bigginingDate = $bigginingDt->format('m/d/Y');
+            $bigginingDate = $bigginingDt->format('d/m/Y');
 
             $endingDt = new DateTime($entity['finance_year_by']['endingDate']);
-            $endingDate = $endingDt->format('m/d/Y');
+            $endingDate = $endingDt->format('d/m/Y');
 
 
         @endphp
