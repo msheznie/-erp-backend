@@ -72,6 +72,9 @@ class CreateDepreciation implements ShouldQueue
                 if (count($faMaster) > 0) {
                     $finalData = [];
                     foreach ($faMaster as $val) {
+
+                        $amount_local = 0;
+                
                         $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
                         $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountLocal : 0;
                         $nbvLocal = $val->COSTUNIT - $depAmountLocal;
@@ -79,6 +82,7 @@ class CreateDepreciation implements ShouldQueue
                         $monthlyLocal = (($val->COSTUNIT - $val->salvage_value) * ($val->DEPpercentage / 100)) / 12;
                         $monthlyRpt = (($val->costUnitRpt - $val->salvage_value_rpt) * ($val->DEPpercentage / 100)) / 12;
 
+                
                         if (round($nbvLocal,2) > $val->salvage_value || round($nbvRpt,2) > $val->salvage_value_rpt) {
                             $data['depMasterAutoID'] = $depMasterAutoID;
                             $data['companySystemID'] = $depMaster->companySystemID;
@@ -105,10 +109,14 @@ class CreateDepreciation implements ShouldQueue
 
                             if ($nbvLocal < $monthlyLocal) {
                                 $data['depAmountLocal'] = $nbvLocal;
+                                $amount_local = $nbvLocal;
                             } else {
                                 $data['depAmountLocal'] = $monthlyLocal;
+                                $amount_local = $monthlyLocal;
                             }
 
+                      
+    
                             if ($nbvRpt < $monthlyRpt) {
                                 $data['depAmountRpt'] = $nbvRpt;
                             } else {
@@ -116,45 +124,56 @@ class CreateDepreciation implements ShouldQueue
                             }
 
                             if (round($depAmountRpt,2) == 0 && round($depAmountLocal,2) == 0) {
+
+                               
                                 $dateDEP = Carbon::parse($val->dateDEP);
+                                $dateDEP1 = Carbon::parse($val->dateDEP);
+
+                          
                                 if ($dateDEP->lessThanOrEqualTo($depDate)) {
 
 
-                                    $life_time_month = ($val->depMonth*12);
+                                    $life_time_month = ($val->depMonth*12) - 1;
+                              
                                     $life_time_period = $dateDEP->addMonths($life_time_month);
 
-                   
+                               
                                     if($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
                                     {
-                                      
-                                        $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
+                                        
+                                        $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
                                      
                                     }
                                     else
                                     {
-                                        $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
+                                        $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
                                      
                                     }
-
-                             
+                                    
+                                  
                                     if ($differentMonths) {
-                                     
                                         foreach ($differentMonths as $dt) {
-
                                            
                                             $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
                                             if ($companyFinanceYearID) {
+                                               
+                                               
                                                 $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
                                                 $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
                                                 $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
-                                                $companyFinancePeriodID = CompanyFinancePeriod::ofCompany($depMaster->companySystemID)->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
-                                                $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
-                                                $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
-                                                $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
+                                                $companyFinancePeriodID1 = CompanyFinancePeriod::ofCompany($depMaster->companySystemID)->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
+
+                                                
+                                                $data['FYperiodID'] = $companyFinancePeriodID1->companyFinancePeriodID;
+                                                $data['depForFYperiodStartDate'] = $companyFinancePeriodID1->dateFrom;
+                                                $data['depForFYperiodEndDate'] = $companyFinancePeriodID1->dateTo;
                                                 $data['timestamp'] = NOW();
                                                 array_push($finalData, $data);
                                             }
                                         }
+
+                                        
+                                    
                                     }
 
                                 }
@@ -171,6 +190,10 @@ class CreateDepreciation implements ShouldQueue
                                 }
                             }
                         }
+
+                       
+                        
+                    
                     }
                     if (count($finalData) > 0) {
                         foreach (array_chunk($finalData,1000) as $t) {
