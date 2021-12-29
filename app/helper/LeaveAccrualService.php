@@ -58,7 +58,7 @@ class LeaveAccrualService
 
             if(!$leaveBalanceBasedOn['status']){
                 Log::error($leaveBalanceBasedOn['message']." ".$this->log_suffix());
-                return $leaveBalanceBasedOn['message'];
+                return [];
             }
             $this->year_det = $leaveBalanceBasedOn['details'];
         }
