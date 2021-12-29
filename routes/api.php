@@ -2387,6 +2387,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('/attach', 'SupplierRegistrationController@linkKYCWithSupplier');
             Route::post('approvals', 'SupplierRegistrationApprovalController@index');
             Route::post('approvals/status', 'SupplierRegistrationApprovalController@update');
+            Route::post('/supplierCreation', 'SupplierRegistrationApprovalController@supplierCreation');
         });
 
 
