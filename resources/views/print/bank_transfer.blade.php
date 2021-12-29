@@ -181,14 +181,17 @@
     <div class="card-body content">
         <table style="width: 100%">
             <tr style="width: 100%">
-                <td valign="top" style="width: 100%">
-                    <h6>
+                <td valign="top" style="width: 80%">
+                    <b>
                         <span class="font-weight-bold">Doc Ref No</span>
                         <span style="margin-left: 10px">{{$entity->BPVcode}}</span>
-                    </h6>
+                    </b>
                 </td>
-                <td>
-                    <h6> {{ \App\helper\Helper::dateFormat($date)}} </h6>
+                <td valign="top" style="width: 20%">
+                    <b>
+                        <span>Date:</span>
+                        <span>{{ \App\helper\Helper::dateFormat($date)}}</span>
+                    </b>
                 </td>
             </tr>
 
