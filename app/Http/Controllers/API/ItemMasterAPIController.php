@@ -130,7 +130,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 $partNo = isset($item['secondaryItemCode']) ? $item['secondaryItemCode'] : '';
 
-                $messages = array('secondaryItemCode.unique' => 'Part No/Ref.Number ' . $partNo . ' already exists');
+                $messages = array('secondaryItemCode.unique' => 'Part No / Ref.Number ' . $partNo . ' already exists');
                 $validator = \Validator::make((array)$item, ['secondaryItemCode' => 'unique:itemmaster'], $messages);
 
                 if ($validator->fails()) {
@@ -242,7 +242,7 @@ class ItemMasterAPIController extends AppBaseController
             $x = 0;
             foreach ($items as $val) {
                 $data[$x]['Item Code'] = $val['primaryCode'];
-                $data[$x]['Part No/Ref.Number'] = $val['secondaryItemCode'];
+                $data[$x]['Part No / Ref.Number'] = $val['secondaryItemCode'];
                 $data[$x]['Item Description'] = $val['itemDescription'];
 
                 if ($val['unit_by']) {
@@ -622,7 +622,7 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validatorResult['message']);
         }
 
-        $messages = array('secondaryItemCode.unique' => 'Part No/Ref.Number ' . $partNo . ' already exists');
+        $messages = array('secondaryItemCode.unique' => 'Part No / Ref.Number ' . $partNo . ' already exists');
         $ruleArray = array(
             'primaryCompanySystemID' => 'required|numeric|min:1',
             'itemDescription' => 'required',

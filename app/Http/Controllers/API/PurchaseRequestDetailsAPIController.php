@@ -902,7 +902,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $quantityInHand = $input['quantityInHand'];
         $requestedQty = $input['quantityRequested'];
-        $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCode)->sum('totalQty');
+        $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCode)->sum('rolQuantity');
         $requestAndReorderTotal = $requestedQty + $reorderQty;
 
         if(isset($total_requested_qnty)) {
@@ -942,9 +942,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             if($quantityInHand > $requestAndReorderTotal && !$isMRPulled && $itemFinanceCategoryID==1){
-                $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 1]);
+                $input['is_eligible_mr'] = 1;
             } else {
-                $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCode)->update(['is_eligible_mr' => 0]);
+                $input['is_eligible_mr'] = 0;
             }
 
             $purchaseRequestDetailsRes = $this->purchaseRequestDetailsRepository->update($input, $id);
@@ -1223,25 +1223,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             foreach ($uniqueData as $key => $value) {
-                if(isset($value['item_code'])){
-                    $itemCode = $value['item_code'];
-                    $purcahseRequestID = $input['requestID'];
-                    $item = PurchaseRequestDetails::where('itemPrimaryCode',$itemCode)->first();
-                    $itemCodeSystem = $item->itemCode;
-                    $itemFinanceCategoryID = $item->itemFinanceCategoryID;
-
-                    $isMRPulled = PulledItemFromMR::where('itemCodeSystem', $itemCodeSystem)->where('purcahseRequestID',$purcahseRequestID)->first();
-                    $quantityInHand = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->sum('quantityInHand');
-                    $requestedQty = $value['qty'];
-                    $reorderQty = ItemAssigned::where('itemCodeSystem', $itemCodeSystem)->sum('totalQty');
-                    $requestAndReorderTotal = $requestedQty + $reorderQty;
-        
-                    if($quantityInHand > $requestAndReorderTotal && !$isMRPulled && $itemFinanceCategoryID==1){
-                        $updateEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->update(['is_eligible_mr' => 1]);
-                    } else {
-                        $updateNotEligibleMR = PurchaseRequestDetails::where('itemCode',$itemCodeSystem)->update(['is_eligible_mr' => 0]);
-                    }
-                }
 
                 if (isset($value['item_code']) || (isset($value['item_description']) && $allowItemToTypePolicy)) {
                     $validateHeaderCode = true;
@@ -1280,7 +1261,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             if (count($record) > 0) {
-                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);             
+                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);            
             } else {
                 return $this->sendError('No Records found!', 500);
             }
@@ -1426,7 +1407,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 'Company Name' => $order->CompanyName,
                 'Request Code' => $order->purchaseRequestCode,
                 'Requested Date' => date("Y-m-d", strtotime($order->PRRequestedDate)),
-                'Part No/Ref.Number' => $order->partNumber,
+                'Part No / Ref.Number' => $order->partNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
                 'Requested Qty' => $qua_req,
