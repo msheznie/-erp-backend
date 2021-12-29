@@ -143,6 +143,11 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->supplier_invoice_master->supplierTransactionCurrencyID) ? $directDetail->supplier_invoice_master->supplierTransactionCurrencyID : null;
+
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
         } 
         else if($input['documentSystemID'] == 4) {
             $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
@@ -155,6 +160,11 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
+
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
         }
         else
         {
@@ -162,18 +172,18 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 if (!$meterialissue) {
                     return $this->sendError("Meterial issues detail not found");
                 }
-                $detailTotal = $meterialissue->issueCostLocalTotal;
+                $detailTotal = $meterialissue->issueCostRptTotal;
                 $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
                 $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
-                $transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
+                //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
+
+                $input['amountRpt'] = $input['amount'];
+                $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
               
             
         }
 
-        $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
-
-        $input['amountRpt'] = $currencyConversion['reportingAmount'];
-        $input['amountLocal'] = $currencyConversion['localAmount'];
+        
         
         $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
