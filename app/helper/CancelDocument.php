@@ -145,10 +145,10 @@ class CancelDocument
         }
 
 
-        if($array->created_by) {
+        if(isset($array->created_by)) {
             $user = $array->created_by;
                 if ($user && !is_null($user->empEmail)) {
-                    $dataEmail['empEmail'] = $user->empEmail;
+                    $dataEmail['empEmail'] = "$user->empEmail";
                     $dataEmail['companySystemID'] = $array->companySystemID;
                     $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                     $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
@@ -174,9 +174,7 @@ class CancelDocument
 
     public static function getApprovedUsers($data,$documentSystemCode) {
         $users = [];
-        if($data['approved'] == -1) {
-          return  DocumentApproved::join('employees','employees.employeeSystemID','=','erp_documentapproved.employeeSystemID')->where('documentSystemID',$data["documentSystemID"])->where('documentSystemCode',$documentSystemCode)->groupBy('employees.employeeSystemID')->get();
-        }
+        return  DocumentApproved::join('employees','employees.employeeSystemID','=','erp_documentapproved.employeeSystemID')->where('documentSystemID',$data["documentSystemID"])->where('documentSystemCode',$documentSystemCode)->groupBy('employees.employeeSystemID')->get();
     }
 
 }

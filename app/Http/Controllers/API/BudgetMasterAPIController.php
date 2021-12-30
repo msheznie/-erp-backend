@@ -2135,15 +2135,15 @@ class BudgetMasterAPIController extends AppBaseController
                                            ->where('budgetBlockYN', -1);
         
         $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
-                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
-            });
+        // if ($search) {
+        //     $search = str_replace("\\", "\\\\", $search);
+        //     $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
+        //         $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+        //             ->orWhere('comments', 'LIKE', "%{$search}%");
+        //     });
 
         
-        }
+        // }
 
         $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
                                            ->with(['financeCategory', 'segment', 'supplier', 'created_by','currency', 'document_by', 'budget_transfer_addition'])
@@ -2159,13 +2159,59 @@ class BudgetMasterAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseOrders = $purchaseOrders->where(function ($query) use ($search) {
-                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%")
-                    ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            // $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
+            //             ->where('companySystemID', $input['companySystemID'])
+            //             ->where('poCancelledYN', 0)
+            //             ->where('approved', 0)
+            //             ->where(function($query) {
+            //                 $query->whereNull('projectID')
+            //                     ->orWhere('projectID', 0);
+            //             })
+            //             ->where('budgetBlockYN', -1)->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+            //             ->orWhere('narration', 'LIKE', "%{$search}%")
+            //             ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+            //             ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
+            //             ->orWhere('supplierName', 'LIKE', "%{$search}%");
+
+             $purchaseRequests =  DB::table('erp_purchaserequest')->selectRaw('purchaseRequestID as documentSystemCode, erp_purchaserequest.documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, erp_purchaserequest.createdDateTime, cancelledYN, manuallyClosed, erp_purchaserequest.refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, erp_purchaserequest.serviceLineSystemID, location, priority, erp_purchaserequest.createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
+             ->join('financeitemcategorymaster','itemCategoryID','=','erp_purchaserequest.financeCategory')
+             ->join('serviceline','erp_purchaserequest.serviceLineSystemID','=','serviceline.serviceLineSystemID')
+             ->join('suppliermaster','erp_purchaserequest.supplierCodeSystem','=','suppliermaster.supplierCodeSystem')
+             ->join('employees','erp_purchaserequest.createdUserSystemID','=','employeeSystemID')
+             ->join('currencymaster','currencyID','=','erp_purchaserequest.currency')
+             ->join('erp_documentmaster','erp_purchaserequest.documentSystemID','=','erp_documentmaster.documentSystemID')
+             ->join('budget_review_transfer_addition','documentSystemCode','=','erp_purchaserequest.purchaseRequestID')
+             ->where('erp_purchaserequest.companySystemID', $input['companySystemID'])
+            ->where('cancelledYN', 0)
+            ->where('approved', 0)
+            ->where('budgetBlockYN', -1)
+            ->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
             });
+
+            return DataTables()->query((DB::table('erp_purchaseordermaster')->selectRaw('purchaseOrderID as documentSystemCode, erp_purchaseordermaster.documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,erp_purchaseordermaster.createdDateTime, poConfirmedDate as confirmedDate, erp_purchaseordermaster.approvedDate, poCancelledYN as cancelledYN, manuallyClosed, erp_purchaseordermaster.refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, erp_purchaseordermaster.serviceLineSystemID, "" as location, "" as priority, erp_purchaseordermaster.createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
+             ->join('financeitemcategorymaster','itemCategoryID','=','financeCategory')
+             ->join('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
+             ->join('suppliermaster','erp_purchaseordermaster.supplierID','=','suppliermaster.supplierCodeSystem')
+             ->join('employees','erp_purchaseordermaster.createdUserSystemID','=','employeeSystemID')
+             ->join('currencymaster','supplierTransactionCurrencyID','=','currencyID')
+             ->join('erp_documentmaster','erp_purchaseordermaster.documentSystemID','=','erp_documentmaster.documentSystemID')
+             ->join('budget_review_transfer_addition','documentSystemCode','=','erp_purchaseordermaster.purchaseOrderID')
+            ->where('erp_purchaseordermaster.companySystemID', $input['companySystemID'])
+            ->where('poCancelledYN', 0)
+            ->where('approved', 0)
+            ->where(function($query) {
+                 $query->whereNull('projectID')
+                       ->orWhere('projectID', 0);
+               })
+            ->where('budgetBlockYN', -1)->where('budgetBlockYN', -1)
+            ->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+            ->orWhere('narration', 'LIKE', "%{$search}%")
+            ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+            ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
+            ->orWhere('suppliermaster.supplierName', 'LIKE', "%{$search}%")
+            ->union($purchaseRequests)))->toJson();
         }
 
 
@@ -2174,23 +2220,9 @@ class BudgetMasterAPIController extends AppBaseController
         $mergeAll = $mergeResult->all();
         $data = [];
 
-        if($search) {
-            foreach($purchaseOrders->get() as $purchaseOrder) {
-                array_push($data,$purchaseOrder);
-            }
-
-            $res = collect($data);
-            $collection = collect([
-                ['id' => 1, 'name' => 'John'],
-                ['id' => 2, 'name' => 'Jane'],
-                ['id' => 3, 'name' => 'James'],
-            ]);
-            return \DataTables::collection($collection)->addIndexColumn()->toJson();
-        }else {
-            return \DataTables::of($mergeAll)
-            ->addIndexColumn()
-            ->make(true);
-        }
+        return \DataTables::of($purchaseOrders)
+        ->addIndexColumn()
+        ->make(true);
 
 
     }
