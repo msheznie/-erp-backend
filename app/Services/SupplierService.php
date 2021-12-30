@@ -53,7 +53,8 @@ class SupplierService
         $params = [
             'autoID'    => $data['autoID'],
             'company'   => $data['company'],
-            'document'  => $data['documentID']
+            'document'  => $data['documentID'],
+            'email'  => $data['email']
         ];
 
         $confirm = Helper::confirmDocument($params);

@@ -414,7 +414,8 @@ class SRMService
         $data = $this->supplierService->createSupplierApprovalSetup([
             'autoID'    => $supplierLink->id,
             'company'   => $supplierLink->company_id,
-            'documentID'  => 107 // 107 mean documentMaster id of "Supplier Registration" document in ERP
+            'documentID'  => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
+            'email'  =>   $supplierLink->email
         ]);
 
         return [
