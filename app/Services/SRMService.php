@@ -512,6 +512,9 @@ class SRMService
                     $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
                 }
             }
+            $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->with(['segment'])
+            ->get();;
         }
 
         return [
