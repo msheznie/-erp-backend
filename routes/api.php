@@ -11,8 +11,6 @@
 |
 */
 
-Route::post('getCompanies', 'CompanyAPIController@getCompanies');
-Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
@@ -76,6 +74,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
         Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
 
+        Route::post('getCompanies', 'CompanyAPIController@getCompanies');
+        Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+        
         Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
         Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
 
