@@ -1312,6 +1312,10 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueDetailArray = $fetchDetails->toArray();
 
+        if(isset($itemIssueDetailArray[0])) {
+         unset($itemIssueDetailArray[0]['trackingType']);
+        }
+        
         $storeSRDetailHistory = ItemIssueDetailsRefferedBack::insert($itemIssueDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -1326,6 +1330,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        if(isset($DocumentApprovedArray[0])) {
+            unset($DocumentApprovedArray[0]['reference_email']);
+        }
 
         $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 

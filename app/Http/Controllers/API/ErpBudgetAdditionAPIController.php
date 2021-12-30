@@ -335,6 +335,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+
+        
         if ($erpBudgetAddition->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
