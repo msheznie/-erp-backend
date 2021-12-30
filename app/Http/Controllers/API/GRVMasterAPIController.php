@@ -1479,6 +1479,8 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         $grvMasterDataArray = $grvMasterData->toArray();
 
+        unset($grvMasterDataArray['mfqJobID']);
+
         $storeGoodReceiptHistory = GrvMasterRefferedback::insert($grvMasterDataArray);
 
         $fetchGoodReceiptDetails = GRVDetails::where('grvAutoID', $grvAutoID)
@@ -1489,6 +1491,9 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                 $bookDetail['timesReferred'] = $grvMasterData->timesReferred;
             }
         }
+
+        unset($fetchGoodReceiptDetails[0]['trackingType']);
+
 
         $GoodReceiptVoucherDetailArray = $fetchGoodReceiptDetails->toArray();
 
@@ -1506,6 +1511,9 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+        if(isset($DocumentApprovedArray[0])) {
+            unset($DocumentApprovedArray[0]['reference_email']);
+        }
 
         $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
