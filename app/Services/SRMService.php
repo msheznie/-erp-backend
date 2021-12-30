@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
