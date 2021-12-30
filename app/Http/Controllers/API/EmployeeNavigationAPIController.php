@@ -206,6 +206,7 @@ class EmployeeNavigationAPIController extends AppBaseController
 
     public function getuserGroupAssignedCompanies(Request $request){
         $id = Auth::id();
+
         $user = $this->userRepository->findWithoutFail($id);
 
         $selectedCompanyId = (isset($request['selectedCompanyId'])) ? $request['selectedCompanyId'] : 0;

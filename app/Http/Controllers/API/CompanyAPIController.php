@@ -525,6 +525,7 @@ class CompanyAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+
         $companies = Company::whereIn('companySystemID',$childCompanies)->with(['reportingcurrency','localcurrency','exchange_gl','country','vat_input_gl','vat_output_gl']);
 
         $search = $request->input('search.value');
@@ -549,6 +550,7 @@ class CompanyAPIController extends AppBaseController
                     });
             });
         }
+
 
         return \DataTables::eloquent($companies)
             ->order(function ($query) use ($input) {
