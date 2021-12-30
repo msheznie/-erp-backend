@@ -101,7 +101,7 @@ class LeaveAccrualInitiate implements ShouldQueue
 
                             Log::info("{$acc_type} {$group['description']} (leave group) adding to process queue " . $this->log_suffix(__LINE__) );
 
-                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group)->delay(now()->addSecond(2));
+                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group)->delay(now()->addMinute(2));
                         }
                     }
                 }
