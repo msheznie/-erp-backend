@@ -292,7 +292,7 @@
                 <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
-                <th class="text-left">Part No/Ref.Number</th>
+                <th class="text-left">Part No / Ref.Number</th>
                 <th class="text-left">UOM</th>
                 <th class="text-left">QTY Requested</th>
                  @if($request->allowAltUom)

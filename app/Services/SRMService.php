@@ -5,11 +5,17 @@ namespace App\Services;
 use App\helper\Helper;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
+use App\Models\AppointmentDetailsRefferedBack;
+use App\Models\AppointmentRefferedBack;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +27,17 @@ class SRMService
     private $supplierService = null;
     private $sharedService = null;
     private $invoiceService = null;
+    private $supplierInvoiceItemDetailRepository;
 
-    public function __construct(POService $POService, SupplierService $supplierService, SharedService $sharedService, InvoiceService $invoiceService)
+    public function __construct(POService $POService, SupplierService $supplierService,
+                                SharedService $sharedService, InvoiceService $invoiceService,
+                                SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo)
     {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
         $this->invoiceService   = $invoiceService;
+        $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
     }
 
     /**
@@ -55,7 +65,8 @@ class SRMService
         $page = $request->input('extra.page');
         $data = ProcumentOrder::where('approved', -1)
             ->where('supplierID', $supplierID)
-            ->with(['currency', 'created_by'])
+            ->where('poType_N', '!=', 5)
+            ->with(['currency', 'created_by', 'segment', 'supplier'])
             ->orderBy('createdDateTime', 'desc')
             ->paginate($per_page, ['*'], 'page', $page);
         return [
@@ -106,7 +117,8 @@ class SRMService
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
-        $appointmentID = $request->input('extra.appointmentID');;
+        $appointmentID = $request->input('extra.appointmentID');
+        $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
@@ -132,18 +144,23 @@ class SRMService
             $dataMaster['company_id'] = $slotCompanyId;
             $slotData['status'] = 1;  
             SlotDetails::where('id', $slotDetailID)->update($slotData);
-            if ($appointmentID <= 0) { 
+            if ($appointmentID <= 0 && !$amend) {
                 $appointment = Appointment::create($dataMaster);
             }
 
-            if (!empty($data) && $appointmentID > 0) {
+            if($amend){
+                $dataMaster['appointment_id'] = $appointmentID;
+                self::amendPoAppointment($dataMaster, $appointmentID);
+            }
+
+            if (!empty($data) && $appointmentID > 0 && !$amend) {
                 foreach ($data as $val) {
                     AppointmentDetails::where('appointment_id', $appointmentID)
                         ->delete();
                 }
             }
 
-            if (!empty($data)) {
+            if (!empty($data) && !$amend) {
                 foreach ($data as $val) {
                     $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
                     $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
@@ -154,21 +171,35 @@ class SRMService
                 }
             }
 
+            if (!empty($data) && $amend) {
+                foreach ($data as $val) {
+                    $data_details['appointment_details_id'] = $slotDetailID;
+                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
+                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
+                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
+                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
+                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                    AppointmentDetailsRefferedBack::create($data_details);
+                }
+                self::poAppointmentReferback($appointmentID, $slotCompanyId);
+            }
+
             DB::commit();
             return [
                 'success'   => true,
-                'message'   => 'Purchase Orders Appointment save successfully',
+                'message'   => 'Appointment save successfully',
                 'data'      => $data
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
             return [
                 'success'   => false,
-                'message'   => 'Purchase Orders Appointment save failed',
+                'message'   => 'Appointment save failed',
                 'data'      => $exception->getMessage()
             ];
         }
     }
+
     public function getSupplierInvitationInfo(Request $request)
     {
         $invitationToken = $request->input('extra.token');
@@ -268,22 +299,36 @@ class SRMService
     }
     public function getAppointmentDeliveries(Request $request)
     {
-
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $arr = [];
+        $appointment = Appointment::select('id')
+            ->where('slot_detail_id', $slotDetailID)
+            ->where('confirmed_yn', 1)
+            ->Where(function($query) {
+                $query->where('approved_yn', 0)
+                    ->orWhere('approved_yn', 1);
+            })
+            ->where('refferedBackYN', 0)
+            ->where('created_by', $supplierID)
+            ->get();
+
+        $slotMaster = SlotMaster::find($slotMasterID)->first();
+
+        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1: ($slotMaster['no_of_deliveries'] - sizeof($appointment)) );
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails']);
+            $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
         }, 'created_by'])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
-
+        $arr['data'] = $data;
         return [
             'success'   => true,
             'message'   => 'Calander appointment deliveries get',
-            'data'      => $data
+            'data'      => $arr
         ];
     }
     public function getPoAppointments(Request $request)
@@ -324,17 +369,17 @@ class SRMService
 
         return [
             'success'   => true,
-            'message'   => 'Calander appointment deleted',
+            'message'   => 'Appointment deleted successfully',
             'data'      => $data
         ];
     }
     public function confirmSupplierAppointment(Request $request)
     {
-        $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'));
+        $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
         $confirm = \Helper::confirmDocument($params);
         return [
             'success'   => $confirm['success'],
-            'message'   => $confirm['message'],
+            'message'   => "Appointment confirmed successfully",
             'data'      => $params
         ];
     }
@@ -369,7 +414,8 @@ class SRMService
         $data = $this->supplierService->createSupplierApprovalSetup([
             'autoID'    => $supplierLink->id,
             'company'   => $supplierLink->company_id,
-            'documentID'  => 107 // 107 mean documentMaster id of "Supplier Registration" document in ERP
+            'documentID'  => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
+            'email'  =>   $supplierLink->email
         ]);
 
         return [
@@ -452,10 +498,68 @@ class SRMService
     public function getInvoiceDetailsById(Request $request){
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $id = $request->input('extra.id');
+        $masterData = $this->invoiceService->getInvoiceDetailsById($id,$supplierID);
+        if(!empty($masterData)){
+            $masterData = $masterData->toArray();
+            $input['bookingSuppMasInvAutoID']    = $id;
+            $masterData['detail_data'] =  ['grvDetails' => [], 'logisticYN' => 0];
+
+            foreach ($masterData['detail'] as $detail){
+                $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
+                $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
+                if ($detailData['status']) {
+                    foreach ($detailData['data']['grvDetails'] as $detailItem){
+                        array_push($masterData['detail_data']['grvDetails'],$detailItem);
+                    }
+                    $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                }
+            }
+            $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->with(['segment'])
+            ->get();;
+        }
+
         return [
             'success'   => true,
             'message'   => 'Record retrieved successfully',
-            'data'      => $this->invoiceService->getInvoiceDetailsById($id,$supplierID)
+            'data'      => $masterData
         ];
+    }
+
+    private function amendPoAppointment($dataMaster, $appointmentID)
+    {
+        AppointmentRefferedBack::create($dataMaster);
+
+        Appointment::where('id', $appointmentID)
+            ->update([
+                'approved_yn' => 0,
+                'confirmed_yn' => 0,
+                'refferedBackYN' => 0
+            ]);
+    }
+
+    private function poAppointmentReferback($appointmentID, $slotCompanyId)
+    {
+        $appointment = Appointment::find($appointmentID);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $appointmentID)
+            ->where('companySystemID', $slotCompanyId)
+            ->where('documentSystemID', 106)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $appointment->refferedBackYN;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        DocumentApproved::where('documentSystemCode', $appointmentID)
+            ->where('companySystemID', $slotCompanyId)
+            ->where('documentSystemID', 106)
+            ->delete();
     }
 }

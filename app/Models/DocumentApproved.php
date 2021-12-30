@@ -99,6 +99,7 @@ class DocumentApproved extends Model
         'approvedForEmpID',
         'isApprovedFromPC',
         'approvedPCID',
+        'reference_email',
         'timeStamp'
     ];
 
@@ -134,7 +135,8 @@ class DocumentApproved extends Model
         'isDeligationApproval' => 'integer',
         'approvedForEmpID' => 'string',
         'isApprovedFromPC' => 'integer',
-        'approvedPCID' => 'string'
+        'approvedPCID' => 'string',
+        'reference_email' => 'string'
     ];
 
     /**

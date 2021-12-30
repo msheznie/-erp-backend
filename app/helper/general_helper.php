@@ -48,6 +48,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\ReportTemplateDetails;
 use App\Models\SupplierMaster;
 use App\Models\User;
+use App\Models\SupplierRegistrationLink;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -227,6 +228,7 @@ class Helper
       
 
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
+         
             switch ($params["document"]) { // check the document id and set relavant parameters
                 case 1:
                 case 50:
@@ -785,7 +787,15 @@ class Helper
                             }
                        
                             //confirm the document
-                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                            if(isset($params['email']))
+                            {
+                                $email_in = $params['email'];
+                            }
+                            else
+                            {
+                                $email_in = null;
+                            }
+                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'reference_email' => $email_in]);
 
                             //get the policy
                             $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
@@ -1290,7 +1300,7 @@ class Helper
      * @return mixed
      */
     public static function approveDocument($input)
-    {  
+    {
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
@@ -2244,6 +2254,25 @@ class Helper
                             if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
                                 $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
+                            
+                            if ($input["documentSystemID"] == 107)
+                            {
+
+                                $suppiler_info = SupplierRegistrationLink::where('id','=',$docApproved->documentSystemCode)->first();
+                                if(isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email))
+                                {
+                                  
+                                        $dataEmail['empEmail'] = $docApproved->reference_email;
+                                        $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                        $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that you are registration have been approved </p>';
+                                        $dataEmail['alertMessage'] = $docApproved->documentID." Registration Approved";
+                                        $dataEmail['emailAlertMessage'] = $temp;
+                                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+
+                            }
+                            //
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);

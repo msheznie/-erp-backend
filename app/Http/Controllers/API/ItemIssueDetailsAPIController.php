@@ -18,6 +18,8 @@ use App\Http\Requests\API\UpdateItemIssueDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\PurchaseOrderDetails;
 use App\Models\DeliveryOrder;
 use App\Models\ErpItemLedger;
@@ -320,6 +322,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] =  (isset($input['qntyMaterialIssue'])) ? $input['qntyMaterialIssue'] : $item->quantityRequested;
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
         }
+
+        
+
+        $itemMaster = ItemMaster::find($input['itemCodeSystem']);
+
+        $input['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
       
         if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
            
@@ -1000,7 +1008,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var ItemIssueDetails $itemIssueDetails */
-        $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
+        $itemIssueDetails = $this->itemIssueDetailsRepository->with(['item_by'])->findWithoutFail($id);
 
         if (empty($itemIssueDetails)) {
             return $this->sendError('Materiel Issue Details not found');
@@ -1032,6 +1040,34 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 }
             }
         }
+
+        if ($itemIssueDetails->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['soldFlag' => 0]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
+        }
+
 
         $itemIssueDetails->delete();
 

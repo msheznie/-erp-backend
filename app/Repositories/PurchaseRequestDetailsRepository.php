@@ -152,6 +152,16 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $insertData['comments'] = $input['comment'];
                         }
 
+                        $requestedQty = $input['qty'];
+                        $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
+                        $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
+                        $requestAndReorderTotal = $requestedQty + $reorderQty;
+                        if($$insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                            $insertData['is_eligible_mr'] = 1;
+                        } else {
+                            $insertData['is_eligible_mr'] = 0;
+                        }
+
                         if (!$nullValues) {
                             $purchaseRequestDetails = $this->model->create($insertData);
                             $successCount = $successCount +1;
@@ -437,6 +447,16 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
                                 if (isset($input['comment'])) {
                                     $insertData['comments'] = $input['comment'];
+                                }
+
+                                $requestedQty = $input['qty'];
+                                $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
+                                $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
+                                $requestAndReorderTotal = $requestedQty + $reorderQty;
+                                if($quantityInHand > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                                    $insertData['is_eligible_mr'] = 1;
+                                } else {
+                                    $insertData['is_eligible_mr'] = 0;
                                 }
 
                                 if (!$lineError && !$nullValues) {
