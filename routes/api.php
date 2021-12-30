@@ -11,6 +11,8 @@
 |
 */
 
+Route::post('getCompanies', 'CompanyAPIController@getCompanies');
+Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
@@ -2067,8 +2069,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
         Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
-        Route::post('getCompanies', 'CompanyAPIController@getCompanies');
-        Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+
         Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps');
         Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp');
         Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp');

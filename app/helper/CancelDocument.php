@@ -174,9 +174,7 @@ class CancelDocument
 
     public static function getApprovedUsers($data,$documentSystemCode) {
         $users = [];
-        if($data['approved'] == -1) {
-          return  DocumentApproved::join('employees','employees.employeeSystemID','=','erp_documentapproved.employeeSystemID')->where('documentSystemID',$data["documentSystemID"])->where('documentSystemCode',$documentSystemCode)->groupBy('employees.employeeSystemID')->get();
-        }
+        return  DocumentApproved::join('employees','employees.employeeSystemID','=','erp_documentapproved.employeeSystemID')->where('documentSystemID',$data["documentSystemID"])->where('documentSystemCode',$documentSystemCode)->groupBy('employees.employeeSystemID')->get();
     }
 
 }
