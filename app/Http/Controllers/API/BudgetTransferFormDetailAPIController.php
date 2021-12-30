@@ -473,7 +473,11 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             ->first();
 
         if (!empty($checkBalance)) {
-            if ($input['adjustmentAmountRpt'] > abs($checkBalance->balance)) {
+            if ($checkBalance->balance <= 0) {
+                $msg = "You cannot transfer from a negative balance amount or a zero balance amount";
+                throw new \Exception($msg, 500);
+            }
+            if ($input['adjustmentAmountRpt'] > abs($checkBalance->balance) && $checkBalance->balance > 0) {
                 $balanceShow = abs($checkBalance->balance);
                 $msg = "You cannot transfer more than the balance amount, Balance amount is {$balanceShow}";
                 throw new \Exception($msg, 500);
