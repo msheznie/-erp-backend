@@ -228,6 +228,10 @@ class ItemSerialAPIController extends AppBaseController
             return $this->sendError('Serial code cannot be duplicate');
         }
 
+        if (isset($input['serialCode']) && strlen($input['serialCode']) > 50) {
+            return $this->sendError('Serial code length cannot greater than 50');
+        }
+
         if (!is_null($input['expireDate'])) {
             $input['expireDate'] = new Carbon($input['expireDate']);
         }
@@ -332,6 +336,10 @@ class ItemSerialAPIController extends AppBaseController
             while ($iterate < $noOfQty) {
                 $productSerial = isset($input['prefix']) ? $input['prefix'].$startSN : $startSN;
                 $startSN++;
+
+                if (strlen($productSerial) > 50) {
+                    return $this->sendError("Serial length cannot be greater than 50", 500);
+                }
 
                 $checkProductSerialDuplication = ItemSerial::where('itemSystemCode', $input['itemID'])
                                                            ->where('serialCode', $productSerial)
