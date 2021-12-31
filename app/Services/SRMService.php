@@ -595,19 +595,19 @@ class SRMService
         DocumentReferedHistory::insert($DocumentApprovedArray);
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-        ->where('companySystemID', $companySystemID)
-        ->where('documentSystemID', $documentSystemID)
-        ->delete();
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->delete();
 
-    if ($deleteApproval) { 
-        $kycFormDetails->confirmed_yn = 0;
-        $kycFormDetails->confirmed_by_emp_id = null; 
-        $kycFormDetails->confirmed_by_name = null;
-        $kycFormDetails->confirmed_date = null;
-        $kycFormDetails->RollLevForApp_curr = 1;
-        $kycFormDetails->save();
-    }   
-     return [
+        if ($deleteApproval) {
+            $kycFormDetails->confirmed_yn = 0;
+            $kycFormDetails->confirmed_by_emp_id = null;
+            $kycFormDetails->confirmed_by_name = null;
+            $kycFormDetails->confirmed_date = null;
+            $kycFormDetails->RollLevForApp_curr = 1;
+            $kycFormDetails->save();
+        }
+        return [
             'success'   => true,
             'message'   => 'Supplier Ammend',
             'data'      => $kycFormDetails

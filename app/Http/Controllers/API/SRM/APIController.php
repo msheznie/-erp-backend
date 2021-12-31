@@ -85,7 +85,7 @@ class APIController extends Controller
             case GET_INVOICE_DETAILS:
                 return $this->SRMService->getInvoiceDetailsById($request);
             case SUPPLIER_REGISTRATION_APPROVAL_AMMEND:
-                    return $this->SRMService->supplierRegistrationApprovalAmmend($request);
+                return $this->SRMService->supplierRegistrationApprovalAmmend($request);
             default:
                 return [
                     'success'   => false,
@@ -101,7 +101,8 @@ class APIController extends Controller
      * @return JsonResponse
      * @throws Throwable
      */
-    public function fetch(Request $request){
+    public function fetch(Request $request)
+    {
         try {
             \Log::debug('=========$request==========');
             \Log::debug([$request->all()]);
