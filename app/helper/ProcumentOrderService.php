@@ -29,15 +29,18 @@ use App\helper\CommonJobService;
 use App\Models\PurchaseRequestDetails;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\Repositories\SegmentAllocatedItemRepository;
+
 use Illuminate\Support\Facades\Log;
 
 class ProcumentOrderService
 {
     private $purchaseRequestDetailsRepository;
-
+    private $segmentAllocatedItemRepository;
     
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo)
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepository)
     {
+        $this->$segmentAllocatedItemRepository = $segmentAllocatedItemRepository;
     }
 
     public static function  addMultipleItems($records,$purchaseOrder,$db) {
@@ -49,11 +52,55 @@ class ProcumentOrderService
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 0;
         $procumentOrder->save();
-        $procumentOrderDetails = PurchaseOrderDetails::insert($valiatedItems);
+        self::allocateSegments($valiatedItems,$procumentOrder['documentSystemID']);
         Log::info('Add Mutiple Items End');
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 1;
         $procumentOrder->save();
+    }
+
+    public static function allocateSegments($items,$documentSystemID) {
+        foreach($items as $item) {
+            $procumentOrderDetails = PurchaseOrderDetails::create($item);
+
+            $allocationData = [
+                'serviceLineSystemID' =>  $procumentOrderDetails['serviceLineSystemID'],
+                'documentSystemID' => $documentSystemID,
+                'docAutoID' =>  $procumentOrderDetails['purchaseOrderMasterID'],
+                'docDetailID' => $procumentOrderDetails['purchaseOrderDetailsID']
+            ];
+
+            $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', $allocationData['serviceLineSystemID'])
+            ->where('documentSystemID', $allocationData['documentSystemID'])
+            ->where('documentMasterAutoID', $allocationData['docAutoID'])
+            ->where('documentDetailAutoID', $allocationData['docDetailID'])
+            ->first();
+
+            if ($checkAlreadyAllocated) {
+                return ['status' => false, 'message' => 'Item already allocated for selected segment'];
+            }
+
+            $procumentOrder = ProcumentOrder::find($allocationData['docAutoID']);
+
+            $itemData = PurchaseOrderDetails::find($allocationData['docDetailID']);
+
+            $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $allocationData['documentSystemID'])
+            ->where('documentMasterAutoID', $allocationData['docAutoID'])
+            ->where('documentDetailAutoID', $allocationData['docDetailID'])
+            ->sum('allocatedQty');
+
+            $allocationData = [
+                'documentSystemID' => $allocationData['documentSystemID'],
+                'documentMasterAutoID' => $allocationData['docAutoID'],
+                'documentDetailAutoID' => $allocationData['docDetailID'],
+                'detailQty' => $itemData->noQty,
+                'allocatedQty' => $itemData->noQty - $allocatedQty,
+                'serviceLineSystemID' => $allocationData['serviceLineSystemID']
+            ];
+
+            $createRes = SegmentAllocatedItem::create($allocationData);
+
+        }
     }
 
     public static function validateItem($items,$purchaseOrder) {
@@ -78,6 +125,9 @@ class ProcumentOrderService
                     $item['unitOfMeasure'] = trim($orgItem['unit']);
                     $item['altUnit'] = trim($orgItem['unit']);
                     $item['altUnitValue'] = trim($item['noQty']);
+
+
+
                     array_push($validatedItemsArray,$item);
                 }
             }
