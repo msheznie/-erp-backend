@@ -57,8 +57,7 @@ class SupplierService
             'email'  => $data['email']
         ];
 
-        $confirm = Helper::confirmDocument($params);
-
+        $confirm = Helper::confirmDocument($params); 
         throw_unless($confirm && $confirm['success'], $confirm['message']);
 
         return [

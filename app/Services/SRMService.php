@@ -29,10 +29,13 @@ class SRMService
     private $invoiceService = null;
     private $supplierInvoiceItemDetailRepository;
 
-    public function __construct(POService $POService, SupplierService $supplierService,
-                                SharedService $sharedService, InvoiceService $invoiceService,
-                                SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo)
-    {
+    public function __construct(
+        POService $POService,
+        SupplierService $supplierService,
+        SharedService $sharedService,
+        InvoiceService $invoiceService,
+        SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo
+    ) {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
@@ -142,13 +145,13 @@ class SRMService
             $dataMaster['document_id'] = $document->documentID;
             $dataMaster['document_system_id'] = $document->documentSystemID;
             $dataMaster['company_id'] = $slotCompanyId;
-            $slotData['status'] = 1;  
+            $slotData['status'] = 1;
             SlotDetails::where('id', $slotDetailID)->update($slotData);
             if ($appointmentID <= 0 && !$amend) {
                 $appointment = Appointment::create($dataMaster);
             }
 
-            if($amend){
+            if ($amend) {
                 $dataMaster['appointment_id'] = $appointmentID;
                 self::amendPoAppointment($dataMaster, $appointmentID);
             }
@@ -254,7 +257,7 @@ class SRMService
                     $appointment = Appointment::select('id')
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
-                        ->Where(function($query) {
+                        ->Where(function ($query) {
                             $query->where('approved_yn', 0)
                                 ->orWhere('approved_yn', 1);
                         })
@@ -265,7 +268,7 @@ class SRMService
                     $appointmentApproved = Appointment::select('id')
                         ->where('slot_detail_id', $slotDetail->id)
                         ->where('confirmed_yn', 1)
-                        ->orWhere(function($query) {
+                        ->orWhere(function ($query) {
                             $query->where('approved_yn', 0)
                                 ->where('approved_yn', 1);
                         })
@@ -273,8 +276,8 @@ class SRMService
                         ->get();
 
                     $availableConcat = '';
-                    if($row['limit_deliveries']==1){ 
-                       $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
+                    if ($row['limit_deliveries'] == 1) {
+                        $availableConcat = ' (' . sizeof($appointment) . '/' . $row['no_of_deliveries'] . ')';
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
@@ -285,7 +288,7 @@ class SRMService
                     $arr[$x]['color'] = '#ffc107';
                     $arr[$x]['status'] = $slotDetail->status;
                     $arr[$x]['slotCompanyId'] = $row['company_id'];
-                    $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1: ($row['no_of_deliveries'] - sizeof($appointment)) );
+                    $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1 : ($row['no_of_deliveries'] - sizeof($appointment)));
                     $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - sizeof($appointmentApproved);
                     $x++;
                 }
@@ -306,7 +309,7 @@ class SRMService
         $appointment = Appointment::select('id')
             ->where('slot_detail_id', $slotDetailID)
             ->where('confirmed_yn', 1)
-            ->Where(function($query) {
+            ->Where(function ($query) {
                 $query->where('approved_yn', 0)
                     ->orWhere('approved_yn', 1);
             })
@@ -316,7 +319,7 @@ class SRMService
 
         $slotMaster = SlotMaster::find($slotMasterID)->first();
 
-        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1: ($slotMaster['no_of_deliveries'] - sizeof($appointment)) );
+        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
@@ -384,15 +387,16 @@ class SRMService
         ];
     }
 
-    public static function getSupplierIdByUUID($uuid){
+    public static function getSupplierIdByUUID($uuid)
+    {
 
-        if($uuid){
-            $supplier = SupplierRegistrationLink::where('uuid',$uuid)
-                                ->with(['supplier'])
-                                ->whereHas('supplier')
-                                ->first();
+        if ($uuid) {
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
+                ->with(['supplier'])
+                ->whereHas('supplier')
+                ->first();
 
-            if(!empty($supplier)){
+            if (!empty($supplier)) {
                 return $supplier->supplier_master_id;
             }
         }
@@ -406,7 +410,8 @@ class SRMService
      * @return array
      * @throws Throwable
      */
-    public function supplierRegistrationApprovalSetup(Request $request){
+    public function supplierRegistrationApprovalSetup(Request $request)
+    {
         $supplierLink = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))->first();
 
         throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
@@ -431,7 +436,8 @@ class SRMService
      * @return mixed
      * @throws Throwable
      */
-    public function fetch(array $data) {
+    public function fetch(array $data)
+    {
         $apiKey = $data['apiKey'];
         throw_unless($apiKey, "APIS key must be passed");
 
@@ -454,7 +460,8 @@ class SRMService
      * @return mixed
      * @throws Throwable
      */
-    public function callSRMAPIs(array $data) {
+    public function callSRMAPIs(array $data)
+    {
         throw_unless($data['apiKey'], "Pass apiKey from calling SRM APIs");
         throw_unless($data['request'], "Pass request from calling SRM APIs");
 
@@ -480,12 +487,13 @@ class SRMService
      * @return array
      * @throws Throwable
      */
-    public function getInvoicesList(Request $request){
+    public function getInvoicesList(Request $request)
+    {
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         return [
             'success'   => true,
             'message'   => 'Record retrieved successfully',
-            'data'      =>  $this->invoiceService->getInvoicesList($request,$supplierID)
+            'data'      =>  $this->invoiceService->getInvoicesList($request, $supplierID)
         ];
     }
 
@@ -495,28 +503,29 @@ class SRMService
      * @return array
      * @throws Throwable
      */
-    public function getInvoiceDetailsById(Request $request){
+    public function getInvoiceDetailsById(Request $request)
+    {
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $id = $request->input('extra.id');
-        $masterData = $this->invoiceService->getInvoiceDetailsById($id,$supplierID);
-        if(!empty($masterData)){
+        $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
+        if (!empty($masterData)) {
             $masterData = $masterData->toArray();
             $input['bookingSuppMasInvAutoID']    = $id;
             $masterData['detail_data'] =  ['grvDetails' => [], 'logisticYN' => 0];
 
-            foreach ($masterData['detail'] as $detail){
+            foreach ($masterData['detail'] as $detail) {
                 $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
                 $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
                 if ($detailData['status']) {
-                    foreach ($detailData['data']['grvDetails'] as $detailItem){
-                        array_push($masterData['detail_data']['grvDetails'],$detailItem);
+                    foreach ($detailData['data']['grvDetails'] as $detailItem) {
+                        array_push($masterData['detail_data']['grvDetails'], $detailItem);
                     }
                     $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
                 }
             }
             $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-            ->with(['segment'])
-            ->get();;
+                ->with(['segment'])
+                ->get();;
         }
 
         return [
@@ -561,5 +570,47 @@ class SRMService
             ->where('companySystemID', $slotCompanyId)
             ->where('documentSystemID', 106)
             ->delete();
+    }
+    public function supplierRegistrationApprovalAmmend(Request $request)
+    {
+        $kycFormDetails = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))
+            ->first();
+        $id =  $kycFormDetails->id;
+        $companySystemID =  $kycFormDetails->company_id;
+        $documentSystemID = 107;
+        $timesReferred = $kycFormDetails->timesReferred;
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+        DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+        ->where('companySystemID', $companySystemID)
+        ->where('documentSystemID', $documentSystemID)
+        ->delete();
+
+    if ($deleteApproval) { 
+        $kycFormDetails->confirmed_yn = 0;
+        $kycFormDetails->confirmed_by_emp_id = null; 
+        $kycFormDetails->confirmed_by_name = null;
+        $kycFormDetails->confirmed_date = null;
+        $kycFormDetails->RollLevForApp_curr = 1;
+        $kycFormDetails->save();
+    }   
+     return [
+            'success'   => true,
+            'message'   => 'Supplier Ammend',
+            'data'      => $kycFormDetails
+        ];
     }
 }
