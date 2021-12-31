@@ -428,7 +428,7 @@ class ItemSerialAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
+        $itemSerials = ItemSerial::where('wareHouseSystemID',$input['warehouse'])->where('itemSystemCode', $input['itemSystemCode'])
                                   ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
                                                 $query->where('soldFlag', 0)

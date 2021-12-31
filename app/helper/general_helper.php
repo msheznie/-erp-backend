@@ -2871,6 +2871,7 @@ class Helper
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 case 104:
                     $docInforArr["tableName"] = 'vat_return_filling_master';
                     $docInforArr["modelName"] = 'VatReturnFillingMaster';
