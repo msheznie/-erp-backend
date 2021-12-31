@@ -8,6 +8,7 @@ use App\Http\Requests\API\UpdateErpBudgetAdditionDetailAPIRequest;
 use App\Models\BudgetMaster;
 use App\Models\Budjetdetails;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\CompanyFinanceYearperiodMaster;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Models\SegmentMaster;
 use App\Repositories\ErpBudgetAdditionDetailRepository;
@@ -180,27 +181,32 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             'budgetmasterID' => $budgetMaster['budgetmasterID'],
             'companySystemID' => $budgetAdditionMaster->companySystemID,
             'templateDetailID' => $input['templateDetailID'],
+            'gLCode' => $input['gLCode'],
             'Year' => $budgetAdditionMaster['year'],
         ])->first();
-        $newBudgetDetails = array();
-        $newBudgetDetails['budgetmasterID'] = $budgetMaster['budgetmasterID'];
-        $newBudgetDetails['companySystemID'] = $budgetAdditionMaster->companySystemID;
-        $newBudgetDetails['companyId'] = $budgetAdditionMaster->companyID;
-        $newBudgetDetails['companyFinanceYearID'] =  $budgetMaster['companyFinanceYearID'];
-        $newBudgetDetails['serviceLineSystemID'] =  $input['serviceLineSystemID'];
-        $newBudgetDetails['serviceLine'] =  $input['serviceLineCode'];
-        $newBudgetDetails['templateDetailID'] =  $input['templateDetailID'];
-        $newBudgetDetails['chartOfAccountID'] =  $input['chartOfAccountSystemID'];
-        $newBudgetDetails['glCode'] =  $chartOfAccount->AccountCode;
-        $newBudgetDetails['glCodeType'] =  $chartOfAccount->controlAccounts;
-        $newBudgetDetails['Year'] =  $budgetAdditionMaster['year'];
-        $newBudgetDetails['month'] =  $budgetAdditionMaster['month'];
-        $newBudgetDetails['createdByUserSystemID'] =  $budgetAdditionMaster['createdUserSystemID'];
-        $newBudgetDetails['createdByUserID'] =  $budgetAdditionMaster['createdUserID'];
+
 
         if (!$budgetDetails) {
-
-            $budgetDetails = $this->budgetDetailsRepository->create($newBudgetDetails);
+            $companyFinanceMonths = CompanyFinanceYearperiodMaster::where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->get();
+            foreach ($companyFinanceMonths as $companyFinanceMonth) {
+                $month = \Carbon\Carbon::parse($companyFinanceMonth->dateFrom);
+                $newBudgetDetails = array();
+                $newBudgetDetails['budgetmasterID'] = $budgetMaster['budgetmasterID'];
+                $newBudgetDetails['companySystemID'] = $budgetAdditionMaster->companySystemID;
+                $newBudgetDetails['companyId'] = $budgetAdditionMaster->companyID;
+                $newBudgetDetails['companyFinanceYearID'] = $budgetMaster['companyFinanceYearID'];
+                $newBudgetDetails['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $newBudgetDetails['serviceLine'] = $input['serviceLineCode'];
+                $newBudgetDetails['templateDetailID'] = $input['templateDetailID'];
+                $newBudgetDetails['chartOfAccountID'] = $input['chartOfAccountSystemID'];
+                $newBudgetDetails['glCode'] = $chartOfAccount->AccountCode;
+                $newBudgetDetails['glCodeType'] = $chartOfAccount->controlAccounts;
+                $newBudgetDetails['Year'] = $budgetAdditionMaster['year'];
+                $newBudgetDetails['month'] = $month->format('m');
+                $newBudgetDetails['createdByUserSystemID'] = $budgetAdditionMaster['createdUserSystemID'];
+                $newBudgetDetails['createdByUserID'] = $budgetAdditionMaster['createdUserID'];
+                $budgetDetails = $this->budgetDetailsRepository->create($newBudgetDetails);
+            }
         }
 
 
