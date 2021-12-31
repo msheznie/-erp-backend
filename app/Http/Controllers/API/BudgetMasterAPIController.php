@@ -2988,7 +2988,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
 
-            return DataTables()->query((DB::table('erp_purchaseordermaster')->selectRaw('purchaseOrderID as documentSystemCode, erp_purchaseordermaster.documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,erp_purchaseordermaster.createdDateTime, poConfirmedDate as confirmedDate, erp_purchaseordermaster.approvedDate, poCancelledYN as cancelledYN, manuallyClosed, erp_purchaseordermaster.refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, erp_purchaseordermaster.serviceLineSystemID, "" as location, "" as priority, erp_purchaseordermaster.createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
+            return DataTables()->query((DB::table('erp_purchaseordermaster')->selectRaw('purchaseOrderID as documentSystemCode, erp_purchaseordermaster.documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,erp_purchaseordermaster.createdDateTime, poConfirmedDate as confirmedDate, erp_purchaseordermaster.approvedDate, poCancelledYN as cancelledYN, manuallyClosed, erp_purchaseordermaster.refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, erp_purchaseordermaster.serviceLineSystemID, "" as location, "" as priority, erp_purchaseordermaster.createdUserSystemID, erp_purchaseordermaster.poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
              ->join('financeitemcategorymaster','itemCategoryID','=','financeCategory')
              ->join('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
              ->join('suppliermaster','erp_purchaseordermaster.supplierID','=','suppliermaster.supplierCodeSystem')
@@ -3018,7 +3018,7 @@ class BudgetMasterAPIController extends AppBaseController
         $mergeAll = $mergeResult->all();
         $data = [];
 
-        return \DataTables::of($purchaseOrders)
+        return \DataTables::of($mergeAll)
         ->addIndexColumn()
         ->make(true);
 
