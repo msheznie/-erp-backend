@@ -355,7 +355,7 @@ class ItemSerialAPIController extends AppBaseController
 
                 $saveData = [
                     'itemSystemCode' => $input['itemID'],
-                    'wareHouseSystemCode' => $input['wareHouseSystemCode'],
+                    'wareHouseSystemID' => $input['wareHouseSystemCode'],
                     'serialCode' => $productSerial,
                 ];
 
