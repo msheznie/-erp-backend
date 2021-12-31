@@ -232,6 +232,10 @@ class ItemSerialAPIController extends AppBaseController
             return $this->sendError('Serial code length cannot greater than 50');
         }
 
+        // if (!preg_match('/^[a-zA-Z0-9]+$/', $input['serialCode'])) {
+        //     return $this->sendError('Serial code can contain only / and - in special character');
+        // }
+
         if (!is_null($input['expireDate'])) {
             $input['expireDate'] = new Carbon($input['expireDate']);
         }

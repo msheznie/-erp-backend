@@ -30,7 +30,8 @@ class ItemTracking
 		$errorMessage = [];
 		switch ($documentSystemID) {
 			case 3:
-				$checkTrackingAvaliability = GRVDetails::where('grvAutoID', $documentSystemCode)
+				$checkTrackingAvaliability = GRVDetails::with(['item_by'])
+														->where('grvAutoID', $documentSystemCode)
 														->where('trackingType', 2)
 														->get();
 
@@ -47,8 +48,22 @@ class ItemTracking
 													   ->count();
 
 					if ($trackingCheck != $value->noQty) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not done/fully done.";
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 					}
+
+					if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
+						$expireCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->whereHas('serial_data', function($query) {
+													   		$query->whereNull('expireDate');
+													   })
+													   ->count();
+
+						if ($expireCheck > 0) {
+							$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+						}
+					}
+
 				}
 
 
@@ -71,7 +86,7 @@ class ItemTracking
 													   ->count();
 
 					if ($trackingCheck != $value->qtyIssued) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not done/fully done.";
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 					}
 				}
 
@@ -95,7 +110,7 @@ class ItemTracking
 													   ->count();
 
 					if ($trackingCheck != $value->qtyIssued) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not done/fully done.";
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 					}
 				}
 
