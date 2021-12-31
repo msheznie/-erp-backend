@@ -204,6 +204,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $insertData['companySystemID'] = $item->companySystemID;
                             $insertData['companyID'] = $item->companyID;
                             $insertData['unitOfMeasure'] = $item->itemUnitOfMeasure;
+                            $insertData['altUnit'] = $item->itemUnitOfMeasure;
                             $insertData['maxQty'] = $item->maximunQty;
                             $insertData['minQty'] = $item->minimumQty;
 
@@ -452,7 +453,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
 
                                 $quantityOnOrder = $poQty - $grvQty;
                                 $insertData['poQuantity'] = $poQty;
-                                $insertData['quantityOnOrder'] = $quantityOnOrder;
+                                $insertData['quantityOnOrder'] = round($quantityOnOrder,2);
                                 $insertData['quantityInHand'] = $quantityInHand;
                                 $insertData['purchaseRequestID'] = $purchaseRequestID;
 
