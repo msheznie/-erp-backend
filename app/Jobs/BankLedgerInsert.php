@@ -98,7 +98,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['localCurrencyER'] = $masterData->localCurrencyER;
                         $data['companyRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['companyRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountBank * -1 : $masterData->payAmountBank;
+                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountBank * -1 : $masterData->payAmountBank;
                         $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 : $masterData->payAmountSuppTrans;
                         $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 : $masterData->payAmountCompLocal;
                         $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 : $masterData->payAmountCompRpt;
@@ -173,7 +173,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
                                 $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
                                 $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-                                $data['payAmountBank'] = ABS($custReceivePayment->bankAmount);
+                                $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->bankAmount) : ABS($custReceivePayment->bankAmount) * -1;
                                 $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->bankAmount) : ABS($custReceivePayment->bankAmount) * -1;
                                 $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->localAmount) : ABS($custReceivePayment->localAmount) * -1;
                                 $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ABS($custReceivePayment->companyRptAmount) : ABS($custReceivePayment->companyRptAmount) * -1;

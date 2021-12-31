@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\DB;
 */
 class PurchaseRequestDetailsRepository extends BaseRepository
 {
+
+
     /**
      * @var array
      */
@@ -82,7 +84,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
         return PurchaseRequestDetails::class;
     }
 
-    public function storePrDetails($prDetailsArray, $purchaseRequestID, $totalItemsToUpload)
+    public function storePrDetails($prDetailsArray, $purchaseRequestID, $totalItemsToUpload, $segmentAllocatedItemRepository)
     {
         $successCount = 0;
         $duplicateCount = 0;
@@ -152,9 +154,34 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $insertData['comments'] = $input['comment'];
                         }
 
+                        $requestedQty = $input['qty'];
+                        $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
+                        $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
+                        $requestAndReorderTotal = $requestedQty + $reorderQty;
+                        if($$insertData['quantityInHand'] > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                            $insertData['is_eligible_mr'] = 1;
+                        } else {
+                            $insertData['is_eligible_mr'] = 0;
+                        }
+
+
+                           
+
                         if (!$nullValues) {
                             $purchaseRequestDetails = $this->model->create($insertData);
                             $successCount = $successCount +1;
+                            $allocationData = [
+                                'serviceLineSystemID' => $purchaseRequest->serviceLineSystemID,
+                                'documentSystemID' => $purchaseRequest->documentSystemID,
+                                'docAutoID' => $purchaseRequestID,
+                                'docDetailID' => $purchaseRequestDetails->purchaseRequestDetailsID
+                            ];
+        
+                            $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+        
+                            if (!$segmentAllocatedItem['status']) {
+                                return $this->sendError($segmentAllocatedItem['message']);
+                            }
                         }
 
                         if ($nullValues) {
@@ -435,13 +462,39 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                                     $nullValues = true;
                                 }
 
+                                $insertData['totalCost'] = $insertData['estimatedCost']*$insertData['quantityRequested'];
+                                $insertData['altUnitValue'] = $insertData['quantityRequested'];
                                 if (isset($input['comment'])) {
                                     $insertData['comments'] = $input['comment'];
                                 }
 
+                                $requestedQty = $input['qty'];
+                                $reorderQty = ItemAssigned::where('itemPrimaryCode', $input['item_code'])->where('companySystemID', $companySystemID)->sum('rolQuantity');
+                                $itemFinanceCategoryID = $insertData['itemFinanceCategoryID'];
+                                $requestAndReorderTotal = $requestedQty + $reorderQty;
+                                if($quantityInHand > $requestAndReorderTotal && $itemFinanceCategoryID==1){
+                                    $insertData['is_eligible_mr'] = 1;
+                                } else {
+                                    $insertData['is_eligible_mr'] = 0;
+                                }
+
+
                                 if (!$lineError && !$nullValues) {
                                     $purchaseRequestDetails = $this->model->create($insertData);
                                     $successCount = $successCount +1;
+
+                                    $allocationData = [
+                                        'serviceLineSystemID' => $purchaseRequest->serviceLineSystemID,
+                                        'documentSystemID' => $purchaseRequest->documentSystemID,
+                                        'docAutoID' => $purchaseRequestID,
+                                        'docDetailID' => $purchaseRequestDetails->purchaseRequestDetailsID
+                                    ];
+                
+                                    $segmentAllocatedItem = $segmentAllocatedItemRepository->allocateSegmentWiseItem($allocationData);
+                
+                                    if (!$segmentAllocatedItem['status']) {
+                                        return $this->sendError($segmentAllocatedItem['message']);
+                                    }
                                 }
 
                                 if ($nullValues) {

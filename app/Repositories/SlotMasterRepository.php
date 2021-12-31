@@ -77,15 +77,15 @@ class SlotMasterRepository extends AppBaseController
         });
 
         if($toTime <= $fromTime){ 
-            return ['status' => false, 'message' => 'Time To field is invalid'];
+            return ['status' => false, 'message' => 'Time To cannot be less than or equal to Time From'];
         }
 
         if( $fromDate <= $dt->toDateString()){
-            return ['status' => false, 'message' => 'From Date is invalid'];
+            return ['status' => false, 'message' => 'Invalid From Date is selected'];
         }
 
         if($fromDate->toDateString() === $dt->toDateString() && $fromTime <= $dt->toTimeString()){
-            return ['status' => false, 'message' => 'Time From field is invalid'];
+            return ['status' => false, 'message' => 'Invalid Time From is selected'];
         }
 
         if (count($weekDayCount) == 0) {
@@ -99,7 +99,7 @@ class SlotMasterRepository extends AppBaseController
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
         if($limitYN == 1){
                 if(!isset($input['noofdeliveries'])){
-                    return ['status' => false, 'message' => 'Invalid No of deliveries'];
+                    return ['status' => false, 'message' => 'No of deliveries is required'];
                 }
                 if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
                     return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
@@ -137,7 +137,7 @@ class SlotMasterRepository extends AppBaseController
                 ->first();
             }
             if (!empty($dateRangeExist)) {
-                return ['status' => false, 'message' => 'Slot is available for selected date range'];
+                return ['status' => false, 'message' => 'The slot is available for selected date range'];
             } 
             $insertResp = $slotMaster->create($data);
             if ($insertResp) {
@@ -164,7 +164,7 @@ class SlotMasterRepository extends AppBaseController
         $messages = [
             'wareHouse.required' => 'Warehouse is required.',
             'dateFrom.required' => 'From Date is required.',
-            'dateTo.required' => 'To is required.',
+            'dateTo.required' => 'To Date is required.',
             'dateFromTime.required' => 'Time From is required.',
             'dateToTime.required' => 'Time To is required.',
         ];

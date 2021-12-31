@@ -403,7 +403,7 @@
                 <th>#</th>
                 <th>Item Code</th>
                 <th>Item Description</th>
-                <th>Part No</th>
+                <th>Part No / Ref.Number</th>
                 <th>UOM</th>
                 <th>Qty</th>
                 <th>Unit Rate</th>

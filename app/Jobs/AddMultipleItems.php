@@ -25,12 +25,13 @@ class AddMultipleItems implements ShouldQueue
     public $purchaseOrder;
     public $timeout = 500;
     public $db;
+    public $authID;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($record,$purchaseOrder,$db)
+    public function __construct($record,$purchaseOrder,$db,$authID)
     {
         Log::info('Add Mutiple Items Started in Constructor - DB'.$db);
 
@@ -53,7 +54,7 @@ class AddMultipleItems implements ShouldQueue
      */
     public function handle()
     {
-        ProcumentOrderService::addMultipleItems($this->record,$this->purchaseOrder, $this->db);
+        ProcumentOrderService::addMultipleItems($this->record,$this->purchaseOrder, $this->db,$this->authID);
     }
 
 

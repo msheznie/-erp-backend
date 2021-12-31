@@ -786,7 +786,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
 
-        $locations = Location::all();
+       $locations = Location::where('is_deleted',0)->get();
 
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {

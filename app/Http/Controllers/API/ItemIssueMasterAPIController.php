@@ -33,6 +33,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\WarehouseBinLocation;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueDetailsRefferedBack;
 use App\Models\ItemIssueMaster;
@@ -58,6 +59,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
+use App\helper\ItemTracking;
 
 /**
  * Class ItemIssueMasterController
@@ -509,6 +511,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($itemIssueMaster->documentSystemID, $itemIssueMaster->itemIssueAutoID);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
             }
 
             $inputParam = $input;
@@ -990,7 +998,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $segments = $segments->where('isActive', 1);
         }
         $segments = $segments->get();
-
+        $wareHouseBinLocations = array();
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -1025,6 +1033,20 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
+        $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        if ($warehouseBinLocationPolicy) {
+            $request['warehouseSystemCode'] = 0;
+           
+            $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $companyId)
+                ->where('isDeleted', 0)
+                ->where('isActive', -1)
+                ->get();
+        }
+
         $types = ItemIssueType::whereIn('itemIssueTypeID', $typeId)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
@@ -1043,6 +1065,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'wareHouseLocation' => $wareHouseLocation,
+            'wareHouseBinLocations' => $wareHouseBinLocations,
             'financialYears' => $financialYears,
             'types' => $types,
             'companyFinanceYear' => $companyFinanceYear,
@@ -1289,6 +1312,10 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueDetailArray = $fetchDetails->toArray();
 
+        if(isset($itemIssueDetailArray[0])) {
+         unset($itemIssueDetailArray[0]['trackingType']);
+        }
+        
         $storeSRDetailHistory = ItemIssueDetailsRefferedBack::insert($itemIssueDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -1303,6 +1330,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        if(isset($DocumentApprovedArray[0])) {
+            unset($DocumentApprovedArray[0]['reference_email']);
+        }
 
         $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 

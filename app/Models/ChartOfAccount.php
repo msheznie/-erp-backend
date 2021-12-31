@@ -181,6 +181,16 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\AllocationMaster','AllocationID','AutoID');
     }
 
+    public function templateCategoryDetails()
+    {
+        return $this->belongsTo('App\Models\ReportTemplateDetails','reportTemplateCategory','detID');
+    }
+
+    public function template_details()
+    {
+        return $this->belongsTo('App\Models\ReportTemplateDetails','chartOfAccountSystemID','detID');
+    }
+
     public function chartofaccount_assigned(){
         return $this->hasOne('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
     }

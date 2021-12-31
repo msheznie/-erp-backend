@@ -223,7 +223,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'Supplier Code' => $order->supplierPrimaryCode,
                 'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
                 'supplier Name' => $order->supplierName,
-                'Part Number' => $order->supplierPartNumber,
+                'Part No / Ref.Number' => $order->supplierPartNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
                 'PO Qty' => $qua_req,

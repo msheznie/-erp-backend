@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\ItemTracking;
 
 /**
  * Class ItemReturnMasterController
@@ -408,6 +409,12 @@ class ItemReturnMasterAPIController extends AppBaseController
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($itemReturnMaster->documentSystemID, $id);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
             }
 
             $inputParam = $input;

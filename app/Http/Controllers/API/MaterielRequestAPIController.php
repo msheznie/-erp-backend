@@ -712,7 +712,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $priorities = Priority::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
 
 
@@ -902,6 +902,11 @@ class MaterielRequestAPIController extends AppBaseController
             unset($itemRequestArray['material_issue']);
         }
 
+        if(isset($itemRequestArray['is_job_run'])) {
+            unset($itemRequestArray['is_job_run']);
+        }
+
+
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
         $fetchDetails = MaterielRequestDetails::where('RequestID', $id)
@@ -929,6 +934,10 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        if(isset($DocumentApprovedArray[0])) {
+            unset($DocumentApprovedArray[0]['reference_email']);
+        }
 
         $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 

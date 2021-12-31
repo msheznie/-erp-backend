@@ -1092,7 +1092,7 @@ FROM
                             $data[$x]['Item Code'] = $val->itemPrimaryCode;
                             $data[$x]['Item Desc'] = $val->itemDescription;
                             $data[$x]['UOM'] = $val->UnitShortCode;
-                            $data[$x]['Part #'] = $val->partNumber;
+                            $data[$x]['Part No / Ref.Number'] = $val->partNumber;
                             $data[$x]['Qty'] = $val->inOutQty;
                             $data[$x]['Cost (USD)'] = round($val->cost, 2);
                             $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
@@ -1136,7 +1136,7 @@ FROM
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
-                                $data[$x]['Part Number'] = $val->secondaryItemCode;
+                                $data[$x]['Part No / Ref.Number'] = $val->secondaryItemCode;
                                 $data[$x]['Category'] = $val->categoryDescription;
                                 $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
@@ -1286,7 +1286,7 @@ FROM
                                     'Item Code' => $val->itemPrimaryCode,
                                     'Item Description' => $val->itemDescription,
                                     'UOM' => $val->UnitShortCode,
-                                    'Part Number' => $val->secondaryItemCode,
+                                    'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
                                     'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
@@ -1309,7 +1309,7 @@ FROM
                                     'Item Code' => $val->itemPrimaryCode,
                                     'Item Description' => $val->itemDescription,
                                     'UOM' => $val->UnitShortCode,
-                                    'Part Number' => $val->secondaryItemCode,
+                                    'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
                                     'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
@@ -1344,7 +1344,7 @@ FROM
                     foreach ($output as $item){
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part Number'] = $item->secondaryItemCode;
+                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
                         $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
                         $data[$x]['Stock Qty'] = $item->stock;
                         $data[$x]['Qty On Order'] = $item->onOrder;
@@ -1382,7 +1382,7 @@ FROM
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Description'] = $item->itemDescription;
                         $data[$x]['UOM'] = $item->UnitShortCode;
-                        $data[$x]['Part #'] = $item->secondaryItemCode;
+                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
                         $data[$x]['Category'] = $item->categoryLabel;
                         if($reportTypeID == 'IMI'){
                             $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;

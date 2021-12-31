@@ -1501,7 +1501,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $financeCategories = FinanceItemCategoryMaster::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
         $financialYears = array(
             array('value' => intval(date("Y")), 'label' => date("Y")),
@@ -8526,7 +8526,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 
-                AddMultipleItems::dispatch(array_filter($record),($purchaseOrder->toArray()),$db);
+                AddMultipleItems::dispatch(array_filter($record),($purchaseOrder->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
             }

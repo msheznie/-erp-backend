@@ -16,11 +16,14 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
 use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\ItemSerial;
+use App\Models\DocumentSubProduct;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
 use App\Models\PoAdvancePayment;
@@ -132,7 +135,7 @@ class GRVDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
-            $input = array_except($input, ['unit', 'po_master', 'prn_master']);
+            $input = array_except($input, ['unit', 'po_master', 'prn_master', 'item_by']);
             $input = $this->convertArrayToValue($input);
 
             //$empInfo = self::getEmployeeInfo();
@@ -158,6 +161,11 @@ class GRVDetailsAPIController extends AppBaseController
 
             if(!isset($input['binNumber'])) {
                 $input['binNumber'] = 0;
+            }
+
+            $itemTracking = ItemTracking::validateTrackingQuantity($input['noQty'], $id, $grvMaster->documentSystemID);
+            if (!$itemTracking['status']) {
+                return $this->sendError($itemTracking['message']);
             }
 
             $markupUpdatedBy=isset($input['by'])?$input['by']:'';
@@ -428,7 +436,7 @@ class GRVDetailsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var GRVDetails $gRVDetails */
-        $gRVDetails = $this->gRVDetailsRepository->findWithoutFail($id);
+        $gRVDetails = $this->gRVDetailsRepository->with(['item_by'])->findWithoutFail($id);
 
         if (empty($gRVDetails)) {
             return $this->sendError('GRV Details not found');
@@ -462,6 +470,29 @@ class GRVDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            if ($gRVDetails->trackingType == 2) {
+                $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
+                                                             ->where('documentDetailID', $id)
+                                                             ->where('sold', 1)
+                                                             ->first();
+
+                if ($validateSubProductSold) {
+                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                }
+
+                $subProduct = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
+                                                 ->where('documentDetailID', $id);
+
+                $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+                if (count($serialIds) > 0) {
+                    $deleteSerial = ItemSerial::whereIn('id', $serialIds)
+                                              ->delete();
+
+                    $subProduct->delete();
+                }
+            }
 
             // delete the grv detail
             $gRVDetails->delete();
@@ -642,7 +673,7 @@ class GRVDetailsAPIController extends AppBaseController
         $items = GRVDetails::where('grvAutoID', $grvAutoID)
             ->with(['unit' => function ($query) {
             }, 'po_master' => function ($query) {
-            }, 'prn_master'])
+            }, 'prn_master', 'item_by'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
@@ -834,6 +865,10 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                         $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
                         $GRVDetail_arr['noQty'] = $new['noQty'];
+
+                        $itemMaster = ItemMaster::find($new['itemCode']);
+
+                        $GRVDetail_arr['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
                         $GRVDetail_arr['prvRecievedQty'] = $new['receivedQty'];
                         $GRVDetail_arr['poQty'] = $new['poQty'];
                         $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
@@ -1038,7 +1073,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $itemAssign = ItemAssigned::find($input['itemCode']);
+            $itemAssign = ItemAssigned::with(['item_master'])->find($input['itemCode']);
 
             if (empty($itemAssign)) {
                 return $this->sendError('Item not assigned');
@@ -1089,6 +1124,7 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['purchaseOrderMastertID'] = 0;
             $GRVDetail_arr['purchaseOrderDetailsID'] = 0;
             $GRVDetail_arr['itemCode'] = $itemAssign->itemCodeSystem;
+            $GRVDetail_arr['trackingType'] = (isset($itemAssign->item_master->trackingType)) ? $itemAssign->item_master->trackingType : null;
             $GRVDetail_arr['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
             $GRVDetail_arr['itemDescription'] = $itemAssign->itemDescription;
             $GRVDetail_arr['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
@@ -1180,7 +1216,7 @@ class GRVDetailsAPIController extends AppBaseController
     public function updateGRVDetailsDirect(Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['unit', 'po_master']);
+        $input = array_except($input, ['unit', 'po_master', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
         $id=$input['grvDetailsID'];
@@ -1659,6 +1695,10 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['purhaseReturnAutoID'] = $new['purhaseReturnAutoID'];
                         $GRVDetail_arr['purhasereturnDetailID'] = $new['purhasereturnDetailID'];
                         $GRVDetail_arr['itemCode'] = $new['itemCode'];
+
+                        $itemMaster = ItemMaster::find($new['itemCode']);
+                        $GRVDetail_arr['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
+                        
                         $GRVDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                         $GRVDetail_arr['itemDescription'] = $new['itemDescription'];
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];

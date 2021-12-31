@@ -125,6 +125,7 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
                                                              ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
                                                    })
                                                     ->where('erp_purchaseorderadvpayment.grvAutoID', $bookInvSuppDetail->grvAutoID)
+                                                    ->where('erp_purchaseorderadvpayment.poID', $bookInvSuppDetail->purchaseOrderID)
                                                     ->where('erp_purchaseorderadvpayment.supplierID',$bookInvSuppMaster->supplierID)
                                                     ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');          
             $grvDetails = $grvDetails->get();   
@@ -138,6 +139,7 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
 
 
             $grvDetails = GRVDetails::where('erp_grvdetails.grvAutoID', $bookInvSuppDetail->grvAutoID)
+                                   ->where('erp_grvdetails.purchaseOrderMastertID', $bookInvSuppDetail->purchaseOrderID)
                                    ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
                                         $join->mergeBindings($pulledQry)
                                              ->on('pulledQry.grvDetailsID', '=', 'erp_grvdetails.grvDetailsID');
@@ -147,7 +149,12 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
                                              ->where('erp_bookinvsupp_item_det.bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
                                    })
                                    ->with(['supplier_invoice_item_detail' => function($query) use ($bookingSupInvoiceDetAutoID){
-                                        $query->where('bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID);
+                                        $query->where('bookingSupInvoiceDetAutoID', $bookingSupInvoiceDetAutoID)
+                                              ->with(['grv' => function($q){
+                                                  $q->select(['grvAutoID','grvPrimaryCode']);
+                                              },'order' => function($q){
+                                                  $q->select(['purchaseOrderID','purchaseOrderCode']);
+                                              }]);
                                    }]);
 
             if ($valEligible && !$rcmActivated) {

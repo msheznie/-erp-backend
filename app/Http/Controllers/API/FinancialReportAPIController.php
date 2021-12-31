@@ -2915,7 +2915,6 @@ class FinancialReportAPIController extends AppBaseController
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
                         ) AS erp_qry_GL UNION ALL
                     SELECT
                         * 
@@ -2971,7 +2970,6 @@ class FinancialReportAPIController extends AppBaseController
                         AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         erp_generalledger.companySystemID,
