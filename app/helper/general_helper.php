@@ -2273,7 +2273,7 @@ class Helper
                                 if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that you are appoinment has been approved </p>';
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved </p>';
                                     $dataEmail['alertMessage'] = $docApproved->documentID . " Appoinment Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
