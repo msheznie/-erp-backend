@@ -771,7 +771,7 @@
       
             @if ($podata->detail)
                 @foreach ($podata->detail as $det)
-                @if ($det->item->specification)
+                @if (isset($det->item->specification->html))
 
 
                    <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">
