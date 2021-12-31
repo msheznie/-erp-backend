@@ -1261,7 +1261,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
 
             if (count($record) > 0) {
-                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount);            
+                $res = $this->purchaseRequestDetailsRepository->storePrDetails($record, $input['requestID'], $totalItemCount,$this->segmentAllocatedItemRepository);            
             } else {
                 return $this->sendError('No Records found!', 500);
             }

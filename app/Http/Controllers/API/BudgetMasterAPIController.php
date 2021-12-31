@@ -2971,7 +2971,7 @@ class BudgetMasterAPIController extends AppBaseController
             //             ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
             //             ->orWhere('supplierName', 'LIKE', "%{$search}%");
 
-             $purchaseRequests =  DB::table('erp_purchaserequest')->selectRaw('purchaseRequestID as documentSystemCode, erp_purchaserequest.documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, erp_purchaserequest.createdDateTime, cancelledYN, manuallyClosed, erp_purchaserequest.refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, erp_purchaserequest.serviceLineSystemID, location, priority, erp_purchaserequest.createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
+             $purchaseRequests =  DB::table('erp_purchaserequest')->selectRaw('CurrencyCode,DecimalPlaces,ServiceLineDes,budget_review_transfer_addition.budgetTransferType,empName,primarySupplierCode,suppliermaster.supplierName,purchaseRequestID as documentSystemCode, erp_purchaserequest.documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, erp_purchaserequest.createdDateTime, cancelledYN, manuallyClosed, erp_purchaserequest.refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, erp_purchaserequest.serviceLineSystemID, location, priority, erp_purchaserequest.createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
              ->join('financeitemcategorymaster','itemCategoryID','=','erp_purchaserequest.financeCategory')
              ->join('serviceline','erp_purchaserequest.serviceLineSystemID','=','serviceline.serviceLineSystemID')
              ->join('suppliermaster','erp_purchaserequest.supplierCodeSystem','=','suppliermaster.supplierCodeSystem')
@@ -2988,28 +2988,31 @@ class BudgetMasterAPIController extends AppBaseController
                     ->orWhere('comments', 'LIKE', "%{$search}%");
             });
 
-            return DataTables()->query((DB::table('erp_purchaseordermaster')->selectRaw('purchaseOrderID as documentSystemCode, erp_purchaseordermaster.documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,erp_purchaseordermaster.createdDateTime, poConfirmedDate as confirmedDate, erp_purchaseordermaster.approvedDate, poCancelledYN as cancelledYN, manuallyClosed, erp_purchaseordermaster.refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, erp_purchaseordermaster.serviceLineSystemID, "" as location, "" as priority, erp_purchaseordermaster.createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
-             ->join('financeitemcategorymaster','itemCategoryID','=','financeCategory')
-             ->join('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
-             ->join('suppliermaster','erp_purchaseordermaster.supplierID','=','suppliermaster.supplierCodeSystem')
-             ->join('employees','erp_purchaseordermaster.createdUserSystemID','=','employeeSystemID')
-             ->join('currencymaster','supplierTransactionCurrencyID','=','currencyID')
-             ->join('erp_documentmaster','erp_purchaseordermaster.documentSystemID','=','erp_documentmaster.documentSystemID')
-             ->join('budget_review_transfer_addition','documentSystemCode','=','erp_purchaseordermaster.purchaseOrderID')
-            ->where('erp_purchaseordermaster.companySystemID', $input['companySystemID'])
-            ->where('poCancelledYN', 0)
-            ->where('approved', 0)
-            ->where(function($query) {
-                 $query->whereNull('projectID')
-                       ->orWhere('projectID', 0);
-               })
-            ->where('budgetBlockYN', -1)->where('budgetBlockYN', -1)
-            ->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-            ->orWhere('narration', 'LIKE', "%{$search}%")
-            ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
-            ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
-            ->orWhere('suppliermaster.supplierName', 'LIKE', "%{$search}%")
-            ->union($purchaseRequests)))->toJson();
+            $total = (DB::table('erp_purchaseordermaster')->selectRaw('CurrencyCode,DecimalPlaces,ServiceLineDes,budget_review_transfer_addition.budgetTransferType,primarySupplierCode,empName,suppliermaster.supplierName,purchaseOrderID as documentSystemCode, erp_purchaseordermaster.documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,erp_purchaseordermaster.createdDateTime, poConfirmedDate as confirmedDate, erp_purchaseordermaster.approvedDate, poCancelledYN as cancelledYN, manuallyClosed, erp_purchaseordermaster.refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, erp_purchaseordermaster.serviceLineSystemID, "" as location, "" as priority, erp_purchaseordermaster.createdUserSystemID, erp_purchaseordermaster.poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
+            ->join('financeitemcategorymaster','itemCategoryID','=','financeCategory')
+            ->join('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
+            ->join('suppliermaster','erp_purchaseordermaster.supplierID','=','suppliermaster.supplierCodeSystem')
+            ->join('employees','erp_purchaseordermaster.createdUserSystemID','=','employeeSystemID')
+            ->join('currencymaster','supplierTransactionCurrencyID','=','currencyID')
+            ->join('erp_documentmaster','erp_purchaseordermaster.documentSystemID','=','erp_documentmaster.documentSystemID')
+            ->join('budget_review_transfer_addition','documentSystemCode','=','erp_purchaseordermaster.purchaseOrderID')
+           ->where('erp_purchaseordermaster.companySystemID', $input['companySystemID'])
+           ->where('poCancelledYN', 0)
+           ->where('approved', 0)
+           ->where(function($query) {
+                $query->whereNull('projectID')
+                      ->orWhere('projectID', 0);
+              })
+           ->where('budgetBlockYN', -1)->where('budgetBlockYN', -1)
+           ->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+           ->orWhere('narration', 'LIKE', "%{$search}%")
+           ->orWhere('referenceNumber', 'LIKE', "%{$search}%")
+           ->orWhere('supplierPrimaryCode', 'LIKE', "%{$search}%")
+           ->orWhere('suppliermaster.supplierName', 'LIKE', "%{$search}%")
+           ->union($purchaseRequests));
+
+
+            return DataTables()->query($total)->addIndexColumn()->toJson();
         }
 
 
@@ -3018,7 +3021,7 @@ class BudgetMasterAPIController extends AppBaseController
         $mergeAll = $mergeResult->all();
         $data = [];
 
-        return \DataTables::of($purchaseOrders)
+        return \DataTables::of($mergeAll)
         ->addIndexColumn()
         ->make(true);
 
