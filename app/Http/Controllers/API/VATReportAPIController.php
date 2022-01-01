@@ -675,6 +675,29 @@ class VATReportAPIController extends AppBaseController
                                             });
                                 }
                             })
+                            ->when($reportTypeID == 5, function ($query) use ($supplierIds) {
+                                $query->when(count($supplierIds) > 0, function ($query) use ($supplierIds) {
+                                    $query->whereIn('partyAutoID',$supplierIds);
+                                })
+                                ->whereHas('item_detail', function($query) {
+                                    $query->where('financeCategoryMaster', 3);
+                                });
+                            })
+                            ->when($reportTypeID == 5, function ($query) use ($accountTypeIds) {
+                                 if (sizeof($accountTypeIds) == 1) {
+                                    $query->when($accountTypeIds[0] == 1, function ($query) {
+                                                $query->whereNotNull('inputVatTransferAccountID');
+                                          })
+                                          ->when($accountTypeIds[0] == 2,function ($query) {
+                                                $query->whereNotNull('inputVATGlAccountID');
+                                          });
+                                } else {
+                                    $query->where(function ($query) {
+                                                $query->whereNotNull('inputVatTransferAccountID')
+                                                      ->orWhereNotNull('inputVATGlAccountID');
+                                            });
+                                }
+                            })
                             ->with(['supplier','customer','rptcurrency','localcurrency','document_master','main_category', 'sub_category', 'transcurrency', 'country', 'company' => function($query) {
                                 $query->with(['country']);
                             }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice']);

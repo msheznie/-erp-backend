@@ -7,6 +7,8 @@ use App\Models\PoAddons;
 use App\Models\ProcumentOrder;
 use App\Models\SlotMaster;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use function Clue\StreamFilter\fun;
 
 class POService
 {
@@ -64,14 +66,15 @@ class POService
                 $to = new Carbon($date);
 
                 $item->lastThreeMonthIssued = (ErpItemLedger::where('itemSystemCode', $item->itemCode)
-                    ->where('companySystemID', $item->companySystemID)
-                    ->where('documentSystemID', 8)
-                    ->whereBetween('transactionDate', [$from, $to])
-                    ->sum('inOutQty')) * -1;
+                        ->where('companySystemID', $item->companySystemID)
+                        ->where('documentSystemID', 8)
+                        ->whereBetween('transactionDate', [$from, $to])
+                        ->sum('inOutQty')) * -1;
             }
         }
         return $output;
     }
+
     public function getPoAddons($purchaseOrderID)
     {
         $orderAddons = PoAddons::where('poId', $purchaseOrderID)
@@ -80,21 +83,34 @@ class POService
             ->get();
         return $orderAddons;
     }
-    public function getAppointmentSlots($companyID, $wareHouseID)
+
+    public function getAppointmentSlots($tenantID)
     {
         $slot = new SlotMaster();
-        $data = $slot->getSlotData($companyID, $wareHouseID);
+        $data = $slot->getSlotData($tenantID);
         return $data;
     }
-    public function getPurchaseOrders($comapnyID, $wareHouseID, $supplierID, $tenantID)
+
+    public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID)
     {
-        return ProcumentOrder::with(['detail' => function ($query) {
-            $query->with('unit');
+        return ProcumentOrder::with(['detail.appointmentDetails' => function ($query) {
+            $query->whereHas('appointment', function ($q){
+                $q->where('refferedBackYN', '!=', -1);
+            });
+        }, 'detail.unit', 'detail' => function ($query) {
+            $query->where('goodsRecievedYN', '!=', 2);
         }])
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('poClosedYN', 0)
+            ->where('grvRecieved', "<>", 2)
+            ->where('WO_confirmedYN', 1)
+            ->where('manuallyClosed', 0)
+            ->where('poType_N', '<>', 5)
             ->where('supplierID', $supplierID)
-            ->where('documentSystemID', 2)
+            ->orderBy('purchaseOrderID', 'desc')
             ->get();
     }
 }

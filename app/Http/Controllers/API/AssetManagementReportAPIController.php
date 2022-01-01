@@ -63,11 +63,8 @@ class AssetManagementReportAPIController extends AppBaseController
         $assets = [];
         $expenseGL = [];
         if (isset($request['reportID']) && $request['reportID'] == "AEA") {
-            $assets = ItemAssigned::where('companySystemID', $selectedCompanyId)
-                                  ->where('isActive', 1)
-                                  ->where('isAssigned', -1)
-                                   ->where('financeCategoryMaster', 3)
-                                   ->get();
+
+            $assets = FixedAssetMaster::where('confirmedYN',1)->where('approved',-1)->where('companySystemID',$selectedCompanyId)->get();
 
 
             $expenseGL = ChartOfAccountsAssigned::where('companySystemID', $selectedCompanyId)
@@ -1413,15 +1410,18 @@ class AssetManagementReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
                         $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['Asset Code'] = isset($val->asset->primaryCode) ? $val->asset->primaryCode : "";
-                        $data[$x]['Asset Description'] = isset($val->asset->itemDescription) ? $val->asset->itemDescription : "";
+                        $data[$x]['Asset Code'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x]['Asset Description'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
 
                         if ($val->documentSystemID == 11) {
                             $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
                             $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
-                        } else {
+                        } else if ($val->documentSystemID == 4){
                             $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
                             $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                        } else {
+                            $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
                         }
 
                         if ($request->currencyID == 2) {
@@ -1431,6 +1431,7 @@ class AssetManagementReportAPIController extends AppBaseController
                              $data[$x]['Currency'] = $companyCurrency->reportingcurrency->CurrencyCode;
                             $data[$x]['Amount'] = round($val->amountRpt, $companyCurrency->reportingcurrency->DecimalPlaces);
                         }
+                        
                         $x++;
                     }
                 }
@@ -1540,12 +1541,12 @@ FROM
             $companyID = (array)$request->companySystemID;
         }
 
-        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('itemCodeSystem')->toArray() : [];
+        $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
         $chartOfAccountIds = (isset($request->glAccounts) && count($request->glAccounts) > 0) ? collect($request->glAccounts)->pluck('chartOfAccountSystemID')->toArray() : [];
 
         return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)
                                                   ->whereIn('assetID', $assetIds)
-                                                  ->with(['asset', 'chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
+                                                  ->with(['asset','chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('bookingDate', '>=', $fromDate)
                                                               ->whereDate('bookingDate', '<=', $toDate);
@@ -1553,6 +1554,12 @@ FROM
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                               ->whereDate('BPVdate', '<=', $toDate);
+                                                  },'meterial_issue'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                       $query->with(['master'=>function($query)use($companyID,$fromDate, $toDate){
+                                                           $query->whereIn('companySystemID',$companyID)
+                                                           ->whereDate('issueDate', '>=', $fromDate)
+                                                           ->whereDate('issueDate', '<=', $toDate);
+                                                       }]);
                                                   }])
                                                   ->where(function($query) use ($companyID, $fromDate, $toDate) {
                                                       $query->where(function($query) use ($companyID, $fromDate, $toDate) {
@@ -1570,7 +1577,16 @@ FROM
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
                                                                     ->where('documentSystemID', 4);
-                                                          });
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereHas('master',function($query)use($companyID,$fromDate, $toDate){
+                                                                    $query->whereIn('companySystemID',$companyID)
+                                                                            ->whereDate('issueDate', '>=', $fromDate)
+                                                                            ->whereDate('issueDate', '<=', $toDate);
+                                                                });
+                                                                });
+                                                      });
                                                   })
                                                   ->get();
 

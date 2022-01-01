@@ -332,6 +332,9 @@ class TaxLedgerDetail extends Model
         'recovertabilityPercentage',
         'returnFilledDetailID',
         'recoverabilityAmount',
+        'logisticYN',
+        'addVATonPO',
+        'exempt_vat_portion',
         'createdDateTime'
     ];
 
@@ -342,6 +345,8 @@ class TaxLedgerDetail extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'addVATonPO' => 'integer',
+        'logisticYN' => 'integer',
         'documentSystemID' => 'integer',
         'documentMasterAutoID' => 'integer',
         'localCurrencyID' => 'integer',
@@ -378,6 +383,7 @@ class TaxLedgerDetail extends Model
         'localER' => 'float',
         'reportingER' => 'float',
         'taxableAmountLocal' => 'float',
+        'exempt_vat_portion' => 'float',
         'taxableAmountReporting' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
@@ -486,5 +492,17 @@ class TaxLedgerDetail extends Model
 
     public function supplier_invoice_details(){
         return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
+    } 
+
+    public function grv_detail(){
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
+    } 
+
+    public function purchase_return_detail(){
+        return $this->belongsTo('App\Models\SupplierInvoiceItemDetail','documentDetailID', 'id');
+    } 
+
+    public function item_detail(){
+        return $this->belongsTo('App\Models\ItemMaster','itemSystemCode', 'itemCodeSystem');
     } 
 }

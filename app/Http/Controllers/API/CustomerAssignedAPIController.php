@@ -69,8 +69,11 @@ class CustomerAssignedAPIController extends AppBaseController
      */
     public function store(CreateCustomerAssignedAPIRequest $request)
     {
+       
         $input = $request->all();
         $id = Auth::id();
+        $companies = $input['companySystemID'];
+        unset($input['companySystemID']);
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
@@ -79,36 +82,46 @@ class CustomerAssignedAPIController extends AppBaseController
 
         if( array_key_exists ('customerAssignedID' , $input )){
 
-            if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
-                $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['customerCodeSystem'], 'customer', true);
+         
+                if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+                    $validatorResult = \Helper::checkCompanyForMasters($companies, $input['customerCodeSystem'], 'customer', true);
+                    if (!$validatorResult['success']) {
+                        return $this->sendError($validatorResult['message']);
+                    }
+                    $input['isAssigned'] = -1;
+                }
+                $data = [
+                    'isAssigned'    => $input['isAssigned'],
+                    'isActive'      => $input['isActive'],
+                    'vatEligible'   => $input['vatEligible'],
+                    'vatNumber'     => $input['vatNumber'],
+                    'vatPercentage' => $input['vatPercentage']
+                ];
+    
+                $customerAssigneds = $this->customerAssignedRepository->update($data, $input['customerAssignedID']);
+
+          
+
+
+        }else{
+
+            foreach($companies as $companie)
+            {
+                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['customerCodeSystem'], 'customer');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }
+    
+                $input = $this->convertArrayToValue($input);
                 $input['isAssigned'] = -1;
-            }
-            $data = [
-                'isAssigned'    => $input['isAssigned'],
-                'isActive'      => $input['isActive'],
-                'vatEligible'   => $input['vatEligible'],
-                'vatNumber'     => $input['vatNumber'],
-                'vatPercentage' => $input['vatPercentage']
-            ];
-
-            $customerAssigneds = $this->customerAssignedRepository->update($data, $input['customerAssignedID']);
-        }else{
-            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['customerCodeSystem'], 'customer');
-            if (!$validatorResult['success']) {
-                return $this->sendError($validatorResult['message']);
+                $company = Company::where('companySystemID', $companie['id'])->first();
+                if($company){
+                    $input['companyID'] = $company->CompanyID;
+                }
+                $input['companySystemID'] = $companie['id'];
+                $customerAssigneds = $this->customerAssignedRepository->create($input);
             }
 
-            $input = $this->convertArrayToValue($input);
-            $input['isAssigned'] = -1;
-            $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            if($company){
-                $input['companyID'] = $company->CompanyID;
-            }
-
-            $customerAssigneds = $this->customerAssignedRepository->create($input);
         }
 
         return $this->sendResponse($customerAssigneds->toArray(), trans('custom.save', ['attribute' => trans('custom.customer_assigneds')]));

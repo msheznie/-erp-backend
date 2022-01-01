@@ -8,10 +8,12 @@ use App\Http\Requests\API\UpdateErpBudgetAdditionDetailAPIRequest;
 use App\Models\BudgetMaster;
 use App\Models\Budjetdetails;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\CompanyFinanceYearperiodMaster;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Models\SegmentMaster;
 use App\Repositories\ErpBudgetAdditionDetailRepository;
 use App\Repositories\ErpBudgetAdditionRepository;
+use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -29,10 +31,13 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
 
     private $erpBudgetAdditionRepository;
 
-    public function __construct(ErpBudgetAdditionDetailRepository $erpBudgetAdditionDetailRepo, ErpBudgetAdditionRepository $erpBudgetAdditionRepository)
+    private $budgetDetailsRepository;
+
+    public function __construct(ErpBudgetAdditionDetailRepository $erpBudgetAdditionDetailRepo, ErpBudgetAdditionRepository $erpBudgetAdditionRepository, BudjetdetailsRepository $budgetDetailsRepository)
     {
         $this->erpBudgetAdditionDetailRepository = $erpBudgetAdditionDetailRepo;
         $this->erpBudgetAdditionRepository = $erpBudgetAdditionRepository;
+        $this->budgetDetailsRepository = $budgetDetailsRepository;
     }
 
     /**
@@ -118,6 +123,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
      */
     public function store(CreateErpBudgetAdditionDetailAPIRequest $request)
     {
+
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
@@ -167,20 +173,40 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             'serviceLineSystemID'=> $input['serviceLineSystemID'],
         ])->first();
 
-
         if (!$budgetMaster) {
-            return $this->sendError('Budget Master not found');
+            return $this->sendError('Budget is not created for selected segment and financial year');
         }
 
         $budgetDetails = Budjetdetails::where([
             'budgetmasterID' => $budgetMaster['budgetmasterID'],
             'companySystemID' => $budgetAdditionMaster->companySystemID,
             'templateDetailID' => $input['templateDetailID'],
+            'gLCode' => $input['gLCode'],
             'Year' => $budgetAdditionMaster['year'],
         ])->first();
-        
+
+
         if (!$budgetDetails) {
-            return $this->sendError('Budget Details not found');
+            $companyFinanceMonths = CompanyFinanceYearperiodMaster::where('companyFinanceYearID',$budgetMaster['companyFinanceYearID'])->get();
+            foreach ($companyFinanceMonths as $companyFinanceMonth) {
+                $month = \Carbon\Carbon::parse($companyFinanceMonth->dateFrom);
+                $newBudgetDetails = array();
+                $newBudgetDetails['budgetmasterID'] = $budgetMaster['budgetmasterID'];
+                $newBudgetDetails['companySystemID'] = $budgetAdditionMaster->companySystemID;
+                $newBudgetDetails['companyId'] = $budgetAdditionMaster->companyID;
+                $newBudgetDetails['companyFinanceYearID'] = $budgetMaster['companyFinanceYearID'];
+                $newBudgetDetails['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $newBudgetDetails['serviceLine'] = $input['serviceLineCode'];
+                $newBudgetDetails['templateDetailID'] = $input['templateDetailID'];
+                $newBudgetDetails['chartOfAccountID'] = $input['chartOfAccountSystemID'];
+                $newBudgetDetails['glCode'] = $chartOfAccount->AccountCode;
+                $newBudgetDetails['glCodeType'] = $chartOfAccount->controlAccounts;
+                $newBudgetDetails['Year'] = $budgetAdditionMaster['year'];
+                $newBudgetDetails['month'] = $month->format('m');
+                $newBudgetDetails['createdByUserSystemID'] = $budgetAdditionMaster['createdUserSystemID'];
+                $newBudgetDetails['createdByUserID'] = $budgetAdditionMaster['createdUserID'];
+                $budgetDetails = $this->budgetDetailsRepository->create($newBudgetDetails);
+            }
         }
 
 
@@ -291,6 +317,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateErpBudgetAdditionDetailAPIRequest $request)
     {
+
         $input = $request->all();
 
         /** @var ErpBudgetAdditionDetail $erpBudgetAdditionDetail */

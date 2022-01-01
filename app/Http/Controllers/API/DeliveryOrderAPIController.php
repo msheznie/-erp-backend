@@ -12,6 +12,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
@@ -1224,8 +1225,8 @@ WHERE
             return $this->sendError('You cannot amend this delivery order');
         }
 
-        $deliveryOrderArray = $doData->toArray();
-        unset($deliveryOrderArray['isVatEligible']);
+        $deliveryOrderArray = array_except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
+
         $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
 
         $fetchDeliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
@@ -1239,6 +1240,8 @@ WHERE
 
         $doDetailArray = $fetchDeliveryOrderDetails->toArray();
 
+        unset($doDetailArray['assetMaintenanceID']);
+        
         $storeDeliveryOrderDetaillHistory = DeliveryOrderDetailRefferedback::insert($doDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $deliveryOrderID)
@@ -1309,5 +1312,21 @@ WHERE
                 }])
             ->get();
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+    public function isLinkItem(Request $request) {
+        $input = $request->all();
+        $companyId = $input['companySystemID'];
+
+        $addNewItem = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+        ->where('companySystemID', $companyId)
+        ->first();
+
+        if($addNewItem) {
+            return $this->sendResponse($addNewItem->isYesNO, 'Details retrieved successfully');
+        }else {
+            return $this->sendResponse(false, 'Details retrieved successfully');
+        }
+
     }
 }

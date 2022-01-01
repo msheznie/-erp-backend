@@ -1621,6 +1621,7 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($company->CompanyName)){
            $companyName =  $company->CompanyName;
         }
+        $logo = $company->getLogoUrlAttribute();
 
         // Generate Hash Token for the current timestamp
         $token = md5(Carbon::now()->format('YmdHisu'));
@@ -1629,7 +1630,7 @@ class SupplierMasterAPIController extends AppBaseController
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
         if($isCreated){
-            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><img width='300' height='213' src='".$logo."'><br /><b>"));
 
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         }else{

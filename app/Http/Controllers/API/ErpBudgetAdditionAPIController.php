@@ -6,6 +6,8 @@ use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateErpBudgetAdditionAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionAPIRequest;
 use App\Models\BudgetMaster;
+use App\Models\BudgetTransferForm;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\ReportTemplateDetails;
@@ -16,6 +18,7 @@ use App\Models\ErpBudgetAddition;
 use App\Models\Months;
 use App\Models\ErpBudgetAdditionDetail;
 use App\Models\ReportTemplate;
+use App\Models\ReportTemplateLinks;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\Year;
@@ -153,6 +156,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
      */
     public function store(CreateErpBudgetAdditionAPIRequest $request)
     {
+
+
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
@@ -330,6 +335,8 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+
+        
         if ($erpBudgetAddition->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
@@ -620,6 +627,69 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         return $this->sendResponse($template_details, 'Templates Details retrieved successfully');
+    }
+    public function getAllGLCodesByBudgetAddition(Request $request){
+        $id = $request->get('id');
+
+        $budgetAdditionMaster = ErpBudgetAddition::find($id);
+
+        if (empty($budgetAdditionMaster)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        $templateMaster = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetAdditionMaster->templatesMasterAutoID)
+            ->where('isFinalLevel', 1)
+            ->get();
+        $detIDs = collect($details)->pluck('detID')->toArray();
+        $templateMasterID = collect($details)->pluck('companyReportTemplateID')->toArray();
+
+        $glData = ReportTemplateLinks::whereNotNull('glAutoID')->whereIn('templateMasterID', $templateMasterID)->whereIn('templateDetailID',$detIDs)->get();
+
+        $glIds = collect($glData)->pluck('glAutoID')->toArray();
+
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->whereIn('chartOfAccountSystemID', $glIds)
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
+
+        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+    }
+
+    public function getTemplateByGLCodeByBudgetAddition(Request $request) {
+
+        $id = $request->get('id');
+        $glCodeID = $request->get('glCodeID');
+
+        $companySystemID = $request->get('companySystemID');
+
+        $budgetAdditionMaster = ErpBudgetAddition::find($id);
+
+        if (empty($budgetAdditionMaster)) {
+            return $this->sendError('Budget Addition not found');
+        }
+
+        $templateMaster = ReportTemplate::find($budgetAdditionMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetAdditionMaster->templatesMasterAutoID)
+            ->where('isFinalLevel', 1)
+            ->get();
+
+        $detIDs = collect($details)->pluck('detID')->toArray();
+        $templateMasterID = collect($details)->pluck('companyReportTemplateID')->toArray();
+
+        $glData = ReportTemplateLinks::where('glAutoID',$glCodeID)->whereIn('templateMasterID', $templateMasterID)->whereIn('templateDetailID',$detIDs)->get();
+
+        $templateDetail = ReportTemplateDetails::where('detID', $glData[0]->templateDetailID)->where('companyReportTemplateID',$glData[0]->templateMasterID)->get();
+
+        return $this->sendResponse($templateDetail, 'Template Description retrieved successfully');
     }
 
     public function getBudgetAdditionApprovalByUser(Request $request)

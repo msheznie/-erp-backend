@@ -331,7 +331,7 @@
                 <th>#</th>
                 <th>Item Code</th>
                 <th>Item Description</th>
-                <th>Part No</th>
+                <th>Part No / Ref.Number</th>
                 <th>Qty</th>
                 <th>Unit Cost</th>
                 <th>Discount</th>

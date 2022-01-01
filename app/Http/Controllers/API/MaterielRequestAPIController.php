@@ -48,6 +48,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\helper\CancelDocument;
 use Response;
 
 /**
@@ -711,7 +712,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $priorities = Priority::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
 
 
@@ -882,15 +883,29 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
+
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
+
 
         if ($itemRequest->refferedBackYN != -1) {
             return $this->sendError('You cannot refer back this request');
         }
 
         $itemRequestArray = $itemRequest->toArray();
+        if(isset($itemRequestArray['materialIssueStatusValue'])) {
+            unset($itemRequestArray['materialIssueStatusValue']);
+        }
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
+
+        if(isset($itemRequestArray['is_job_run'])) {
+            unset($itemRequestArray['is_job_run']);
+        }
+
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
@@ -919,6 +934,10 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        if(isset($DocumentApprovedArray[0])) {
+            unset($DocumentApprovedArray[0]['reference_email']);
+        }
 
         $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
@@ -965,6 +984,7 @@ class MaterielRequestAPIController extends AppBaseController
         $input = $request->all();
 
         $requestID = $input['RequestID'];
+
 
         $materielRequest = MaterielRequest::find($requestID);
 
@@ -1035,6 +1055,7 @@ class MaterielRequestAPIController extends AppBaseController
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($materielRequest, 'Materiel Request successfully canceled');
     }

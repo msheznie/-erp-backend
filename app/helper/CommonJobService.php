@@ -6,12 +6,21 @@ use App\Models\Company;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 
 class CommonJobService
 {
     public static function db_switch( $db ){
-        Config::set("database.connections.mysql.database", $db);
-        DB::reconnect('mysql');
+        Log::info("database Name in common service  start-".$db);
+        if($db)
+        {
+            Log::info("database Name in common service -".$db);
+            Config::set("database.connections.mysql.database", $db);
+            // DB::reconnect('mysql');
+            DB::purge('mysql');
+        }
+
+        Log::info("database Name in common service  end-".Config::get("database.connections.mysql.database"));
 
         return true;
     }

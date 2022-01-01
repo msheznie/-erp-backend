@@ -117,7 +117,12 @@ class ItemMaster extends Model
         'timesReferred',
         'isPOSItem',
         'vatSubCategory',
-        'expiryYN'
+        'expiryYN',
+        'faCatID',
+        'trackingType',
+        'faSubCatID',
+        'faSubCatID2',
+        'faSubCatID3'
     ];
 
     /**
@@ -129,6 +134,7 @@ class ItemMaster extends Model
         'itemCodeSystem' => 'integer',
         'primaryItemCode' => 'string',
         'runningSerialOrder' => 'integer',
+        'trackingType' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'primaryCompanySystemID' => 'integer',
@@ -169,7 +175,11 @@ class ItemMaster extends Model
         'timesReferred' => 'integer',
         'isPOSItem' => 'integer',
         'vatSubCategory'=>'integer',
-        'expiryYN'=>'integer'
+        'expiryYN'=>'integer',
+        'faCatID'=>'integer',
+        'faSubCatID'=>'integer',
+        'faSubCatID2'=>'integer',
+        'faSubCatID3'=>'integer'
     ];
 
     /**

@@ -97,7 +97,7 @@ class SlotMaster extends Model
         'from_date',
         'no_of_deliveries',
         'to_date',
-        'warehouse_id'
+        'warehouse_id','limit_deliveries'
     ];
 
     /**
@@ -112,7 +112,8 @@ class SlotMaster extends Model
         'id' => 'integer',
         'no_of_deliveries' => 'integer',
         'to_date' => 'datetime',
-        'warehouse_id' => 'integer'
+        'warehouse_id' => 'integer',
+        'limit_deliveries' => 'integer'
     ];
 
     /**
@@ -127,7 +128,7 @@ class SlotMaster extends Model
         return $this->hasMany('App\Models\SlotDetails', 'slot_master_id', 'id');
     }
 
-    public function getSlotData($companyID, $wareHouseID)
+    public function getSlotData($tenantID)
     {
         return SlotMaster::with(['slot_details', 'ware_house'])
             /* ->where('company_id', $companyID) */

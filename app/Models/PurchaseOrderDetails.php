@@ -391,4 +391,9 @@ class PurchaseOrderDetails extends Model
         return $this->hasOne('App\Models\ItemMaster', 'itemCodeSystem', 'itemCode');
 
     }
+
+    public function appointmentDetails()
+    {
+        return $this->hasMany('App\Models\AppointmentDetails',  'po_detail_id', 'purchaseOrderDetailsID');
+    }
 }

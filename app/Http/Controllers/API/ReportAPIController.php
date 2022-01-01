@@ -178,9 +178,9 @@ class ReportAPIController extends AppBaseController
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
-                    /*IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,*/
-                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0))) as qtyToReceive,
+                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-IFNULL(gdet.noQty,0)) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
+                    /*IFNULL((erp_purchaseorderdetails.noQty-IFNULL(gdet.noQty,0)),0) as qtyToReceive,*/
+                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-IFNULL(gdet.noQty,0)),0))) as qtyToReceive,
                     IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) as noQty,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
@@ -859,9 +859,9 @@ WHERE
                           erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
+                    IF((IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0))-IFNULL(gdet.noQty,0)) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
                     /*IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,*/
-                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0))) as qtyToReceive,
+                    IF(podet.manuallyClosed = 1,0,(IFNULL((erp_purchaseorderdetails.noQty-IFNULL(gdet.noQty,0)),0))) as qtyToReceive,
                     IF(podet.manuallyClosed = 1,IFNULL(gdet.noQty,0),IFNULL(erp_purchaseorderdetails.noQty,0)) as noQty,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
@@ -942,7 +942,7 @@ WHERE
                             'Item Description' => $val->itemDescription,
                             'Is Locally Made' => $val->isLocalMade,
                             'Unit' => $val->unitShortCode,
-                            'Part No' => $val->supplierPartNumber,
+                            'Part No / Ref.Number' => $val->supplierPartNumber,
                             'Finance Category' => $val->financecategory,
                             'Finance Category Sub' => $val->financecategorysub,
                             'Account Code' => $val->AccountCode,
@@ -1461,6 +1461,8 @@ WHERE
         //poType_N: 5  -- main work order
         //poType_N: 6  -- sub work order
 
+        $current_date = date("Y-m-d");
+
         $data = ProcumentOrder::selectRaw('*')
             ->with(['created_by', 'icv_category', 'icv_sub_category', 'currency', 'segment', 'supplier' => function ($q) {
                 $q->selectRaw('IF(isLCCYN = 1, "YES", "NO" ) AS isLcc,jsrsExpiry,jsrsNo,
@@ -1476,7 +1478,7 @@ WHERE
             ->whereBetween('createdDateTime', [$startDate, $endDate])
             ->whereIn('supplierID', $suppliers)
             ->whereIn('serviceLineSystemID', $segment)
-            ->when($option >= 0, function ($q) use ($option) {
+            ->when($option >= 0, function ($q) use ($option,$current_date) {
                 if ($option == 0 || $option == 1 || $option == 2) {
                     $q->where('grvRecieved', $option)
                         ->where('poClosedYN', 0)
@@ -1488,6 +1490,13 @@ WHERE
                 } else if ($option == 4) {
                     $q->where('poConfirmedYN', 1)
                         ->where('approved', 0);
+                }
+                else if ($option == 5) {
+                    $q->where('grvRecieved','!=',2)
+                        ->where('poClosedYN', 0)
+                        ->where('poConfirmedYN', 1)
+                        ->where('approved', -1)
+                        ->whereDate('expectedDeliveryDate','<',$current_date);
                 }
             });
         return $data;

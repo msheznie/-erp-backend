@@ -187,7 +187,8 @@ class PurchaseRequestRepository extends BaseRepository
                 'erp_purchaserequest.documentSystemID',
                 'erp_purchaserequest.manuallyClosed',
                 'erp_purchaserequest.prClosedYN',
-                'erp_purchaserequest.budgetYear'
+                'erp_purchaserequest.budgetYear',
+                'erp_purchaserequest.isBulkItemJobRun'
             ]);
 
 

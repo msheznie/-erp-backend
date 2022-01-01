@@ -189,20 +189,22 @@ class InventoryReportAPIController extends AppBaseController
         if($currency == 1)
         {
             $cur = 'wacLocal';
+            $cur_id = 'erp_itemledger.wacLocalCurrencyID';
         }
         else
         {
             $cur = 'wacRpt';
+            $cur_id = 'erp_itemledger.wacRptCurrencyID';
         }
-
+ 
         return ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
                                     ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
-                                    ->join('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+                                    ->join('currencymaster', $cur_id, '=', 'currencymaster.currencyID')
                                     ->join('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                                     ->whereIn('wareHouseSystemCode', $warehouse)
                                     ->whereIn('itemPrimaryCode', $items)
                                     ->groupBy('itemPrimaryCode')
-                                    ->selectRaw('unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription')
+                                    ->selectRaw('itemLedgerAutoID,unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription')
                                     ->get();
 
     }
@@ -213,9 +215,12 @@ class InventoryReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
 
-            case 'INVIS':        
-                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
-                      
+            case 'INVIS':    
+                
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
+   
                 $array = array();
                 if (!empty($filter_val)) {
                     foreach ($filter_val as $element)
@@ -239,14 +244,13 @@ class InventoryReportAPIController extends AppBaseController
                 $GrandClosing = array_sum($GrandClosing);
         
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
-                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $output = array(
                     'categories' => $array,
                     'grandOpeningBalance' => $GrandOpeningBalance,
                     'grandInwards' => $GrandInwards,
-                    'grandOutwards' => $GrandOutwards,
+                    'grandOutwards' => ($GrandOutwards < 0?$GrandOutwards*-1:$GrandOutwards),
                     'company' => $company,
-                    'currencyID' => $input['currency'],
+                    'currencyID' => $currency_id,
                     'grandClosing' => $GrandClosing,
                 );   
                 return $this->sendResponse($output, 'data retrieved retrieved successfully');
@@ -939,15 +943,18 @@ FROM
 
             case 'INVIS':
 
-  
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
                                           
-                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$request['currency'][0]);
+                $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
 
-                $currencyCode = ($request['currency'][0] == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
+                $currencyCode = ($currency_id == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
 
+                $decimal_val = ($currency_id == 1) ? $company->localcurrency->DecimalPlaces : $company->reportingcurrency->DecimalPlaces;
 
+          
                 foreach ($filter_val as $val) {
                     $data[] = array(
                         'Category' => $val->categoryDescription,
@@ -955,13 +962,13 @@ FROM
                         'Item Description' => $val->itemDescription,
                         'UOM' => $val->UnitShortCode,
                         'Opening Balance Qty' => $val->opening_balance_quantity,
-                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Opening Balance Val ('.$currencyCode.')' =>  number_format($val->opening_balance_value, $decimal_val, '.', ','),
                         'Inwards Qty' => $val->inwards_quantity,
-                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $val->LocalCurrencyDecimals, '.', ','),
-                        'Outwards Qty' => abs($val->outwards_quantity),
-                        'Outwards Val ('.$currencyCode.')' => number_format($val->outwards_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Inwards Val ('.$currencyCode.')' => number_format($val->inwards_value, $decimal_val, '.', ','),
+                        'Outwards Qty' => ($val->outwards_quantity < 0)?$val->outwards_quantity*-1:$val->outwards_quantity,
+                        'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
                         'Closing Balance Qty' => $val->closing_balance_quantity,
-                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $val->LocalCurrencyDecimals, '.', ','),
+                        'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
         
                     );
                 }
@@ -1085,7 +1092,7 @@ FROM
                             $data[$x]['Item Code'] = $val->itemPrimaryCode;
                             $data[$x]['Item Desc'] = $val->itemDescription;
                             $data[$x]['UOM'] = $val->UnitShortCode;
-                            $data[$x]['Part #'] = $val->partNumber;
+                            $data[$x]['Part No / Ref.Number'] = $val->partNumber;
                             $data[$x]['Qty'] = $val->inOutQty;
                             $data[$x]['Cost (USD)'] = round($val->cost, 2);
                             $data[$x]['Total Cost (USD)'] = round($val->totalCost, 2);
@@ -1129,7 +1136,7 @@ FROM
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Item Code'] = $val->itemPrimaryCode;
                                 $data[$x]['Item Description'] = $val->itemDescription;
-                                $data[$x]['Part Number'] = $val->secondaryItemCode;
+                                $data[$x]['Part No / Ref.Number'] = $val->secondaryItemCode;
                                 $data[$x]['Category'] = $val->categoryDescription;
                                 $data[$x]['Movement Category'] = $val->movementCatDescription;
                                 $data[$x]['UOM'] = $val->UnitShortCode;
@@ -1279,7 +1286,7 @@ FROM
                                     'Item Code' => $val->itemPrimaryCode,
                                     'Item Description' => $val->itemDescription,
                                     'UOM' => $val->UnitShortCode,
-                                    'Part Number' => $val->secondaryItemCode,
+                                    'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
                                     'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
@@ -1302,7 +1309,7 @@ FROM
                                     'Item Code' => $val->itemPrimaryCode,
                                     'Item Description' => $val->itemDescription,
                                     'UOM' => $val->UnitShortCode,
-                                    'Part Number' => $val->secondaryItemCode,
+                                    'Part No / Ref.Number' => $val->secondaryItemCode,
                                     'Sub Category' => $val->categoryDescription,
                                     'Stock Qty' => $val->Qty,
                                     'Total Value (USD)' => number_format($val->WacRptAmount, $val->RptCurrencyDecimals),
@@ -1337,7 +1344,7 @@ FROM
                     foreach ($output as $item){
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
-                        $data[$x]['Part Number'] = $item->secondaryItemCode;
+                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
                         $data[$x]['UOM'] = $item->unit? $item->unit->UnitShortCode: '-';
                         $data[$x]['Stock Qty'] = $item->stock;
                         $data[$x]['Qty On Order'] = $item->onOrder;
@@ -1375,7 +1382,7 @@ FROM
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Description'] = $item->itemDescription;
                         $data[$x]['UOM'] = $item->UnitShortCode;
-                        $data[$x]['Part #'] = $item->secondaryItemCode;
+                        $data[$x]['Part No / Ref.Number'] = $item->secondaryItemCode;
                         $data[$x]['Category'] = $item->categoryLabel;
                         if($reportTypeID == 'IMI'){
                             $data[$x]['Total Units Issued '.$fromDate .' - '. $toDate] = $item->TotalUnitsIssue;

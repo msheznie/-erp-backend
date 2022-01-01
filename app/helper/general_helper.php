@@ -48,6 +48,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\ReportTemplateDetails;
 use App\Models\SupplierMaster;
 use App\Models\User;
+use App\Models\SupplierRegistrationLink;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -109,6 +110,26 @@ class Helper
      * @param $selectedCompanyId - current company id
      * @return array
      */
+
+    public static function checkDomai()
+    {
+
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $url = $_SERVER['HTTP_HOST'];
+        if (env('IS_MULTI_TENANCY') == true) {
+
+
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+
+            $search = '*';
+            $redirectUrl = str_replace($search, $subDomain, $redirectUrl);
+        }
+
+        return $redirectUrl;
+    }
+
     public static function getGroupCompany($selectedCompanyId)
     {
         $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
@@ -181,28 +202,13 @@ class Helper
      * no return values
      */
 
-    public static function checkDomai()
-    {   
 
-        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
-        $url = $_SERVER['HTTP_HOST'];
-        if (env('IS_MULTI_TENANCY') == true) {
-            
-            
-            $url_array = explode('.', $url);
-            $subDomain = $url_array[0];
-
-           
-            $search = '*';
-            $redirectUrl = str_replace ($search, $subDomain, $redirectUrl);
-           
-        }   
-        
-        return $redirectUrl;
-    }
 
     public static function confirmDocument($params)
     {
+        //Skip Employee Info when Confirming;
+        $empInfoSkip = array(106, 107); // 107 mean documentMaster id of "Supplier Registration" document in ERP
+
         /** check document is already confirmed*/
         if (!array_key_exists('autoID', $params)) {
             return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
@@ -218,7 +224,10 @@ class Helper
 
         DB::beginTransaction();
         try {
+
+
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
+
             switch ($params["document"]) { // check the document id and set relavant parameters
                 case 1:
                 case 50:
@@ -653,6 +662,7 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgetaddition';
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
+                    break;
                 case 104:
                     $docInforArr["documentCodeColumnName"] = 'returnFillingCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -697,6 +707,28 @@ class Helper
                     $docInforArr["modelName"] = 'ERPAssetTransfer';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 106: //Appointment
+                    $docInforArr["documentCodeColumnName"] = 'primary_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'appointment';
+                    $docInforArr["modelName"] = 'Appointment';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
+                case 107: //Supper registration
+                    $docInforArr["documentCodeColumnName"] = 'id';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -704,7 +736,7 @@ class Helper
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
-                if (in_array($params["document"], [20,71])) {
+                if (in_array($params["document"], [20, 71])) {
                     $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
                         ->where('companySystemID', $params['company'])
                         ->where('isYesNO', 1)
@@ -746,9 +778,14 @@ class Helper
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
 
                         if (!$isConfirm) {
-                            // get current employee detail
-                            $empInfo = self::getEmployeeInfo();
-                            //confirm the document
+                            // get current employee detail.
+                            if (!in_array($params['document'], $empInfoSkip)) {
+                                $empInfo = self::getEmployeeInfo();
+                            } else {
+                                $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
+                            }
+
+
                             $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
                             //get the policy
@@ -863,12 +900,19 @@ class Helper
                                 /** get source document master record*/
                                 $sorceDocument = $namespacedModel::find($params["autoID"]);
 
+                                //confirm the document
+                                if (isset($params['email'])) {
+                                    $email_in = $params['email'];
+                                } else {
+                                    $email_in = null;
+                                }
+
                                 $documentApproved = [];
                                 if ($output) {
                                     if ($output->approvalrole) {
                                         foreach ($output->approvalrole as $val) {
                                             if ($val->approvalGroupID) {
-                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW());
+                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
                                             } else {
                                                 return ['success' => false, 'message' => 'Please set the approval group'];
                                             }
@@ -932,9 +976,9 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
+
                                         $redirectUrl =  self::checkDomai();
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
-
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
@@ -1765,6 +1809,30 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                 break;
+            case 106:
+                $docInforArr["tableName"] = 'appointment';
+                $docInforArr["modelName"] = 'Appointment';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+            case 107:  //Supper registration
+                $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1869,6 +1937,15 @@ class Helper
                                 }
                             }
                         }
+
+                        if ($input['documentSystemID'] == 107) {
+                            // pass below data for taking action in controller
+                            $more_data = [
+                                'numberOfLevels' => $approvalLevel->noOfLevels,
+                                'currentLevel' => $input["rollLevelOrder"]
+                            ];
+                        }
+
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
@@ -2056,7 +2133,7 @@ class Helper
                             }
 
 
-                            
+
                             if ($input["documentSystemID"] == 21) {
                                 //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
                                 if ($sourceModel->pdcChequeYN == 0) {
@@ -2175,10 +2252,40 @@ class Helper
                             if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51 || $input["documentSystemID"] == 2 || $input["documentSystemID"] == 5 || $input["documentSystemID"] == 52 || $input["documentSystemID"] == 4) {
                                 $sendingEmail = self::sendingEmailNotificationPolicy($masterData);
                             }
+
+                            if ($input["documentSystemID"] == 107) {
+
+                                $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
+                                if (isset($suppiler_info) && isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
+
+                                    $dataEmail['empEmail'] = $docApproved->reference_email;
+                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved </p>';
+                                    $dataEmail['alertMessage'] = $docApproved->documentID . " Registration Approved";
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 106) {
+
+                                $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
+                                if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
+                                    $dataEmail['empEmail'] = $docApproved->reference_email;
+                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved </p>';
+                                    $dataEmail['alertMessage'] = $docApproved->documentID . " Appoinment Approved";
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+                            }
+                            //
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }
+
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
@@ -2250,6 +2357,9 @@ class Helper
                                     //     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                     // }
 
+
+
+
                                     $redirectUrl =  self::checkDomai();
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
                                     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
@@ -2296,7 +2406,6 @@ class Helper
                                 $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
-
                         $sendEmail = \Email::sendEmail($emails);
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
@@ -2762,9 +2871,22 @@ class Helper
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 case 104:
                     $docInforArr["tableName"] = 'vat_return_filling_master';
                     $docInforArr["modelName"] = 'VatReturnFillingMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 106:
+                    $docInforArr["tableName"] = 'appointment';
+                    $docInforArr["modelName"] = 'Appointment';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 107:
+                    $docInforArr["tableName"] = 'srm_supplier_registration_link';
+                    $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
@@ -2773,6 +2895,7 @@ class Helper
             }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+
             if ($docApprove) {
 
                 if ($docApprove->approvedYN == -1) {
@@ -2790,7 +2913,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102,65, 104])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
@@ -5501,5 +5624,15 @@ class Helper
         }
 
         return $sort;
+    }
+
+    // check wether the item assgined to the company
+    public static function IsItemAssigned($item_code, $company_id)
+    {
+        $itemAssigned =  Models\ItemAssigned::where('companySystemID', $company_id)->where('itemCodeSystem', $item_code)->get();
+        if ($itemAssigned) {
+            return true;
+        }
+        return false;
     }
 }

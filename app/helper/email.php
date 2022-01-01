@@ -15,6 +15,7 @@ namespace App\helper;
 use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
+use App\Models\SupplierRegistrationLink;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetVerification;
@@ -63,6 +64,7 @@ use App\Models\SupplierMaster;
 use App\Models\CurrencyConversionMaster;
 use App\Models\ERPAssetTransfer;
 use App\Models\ContingencyBudgetPlan;
+use App\Models\Appointment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Response;
@@ -87,9 +89,12 @@ class email
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox.</font>";
-
+        $empInfoSkip = array(106, 107);
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
+
+
+
         foreach ($array as $data) {
 
             $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
@@ -99,6 +104,10 @@ class email
                 $data['empName'] = $employee->empName;
                 $data['empEmail'] = $employee->empEmail;
             } else {
+                if (in_array($data['docSystemID'], $empInfoSkip)) {
+                    continue;
+                   // return ['success' => true, 'message' => 'Successfully Inserted'];
+                }
                 return ['success' => false, 'message' => 'Employee Not Found'];
             }
 
@@ -117,7 +126,7 @@ class email
             } else {
                 return ['success' => false, 'message' => 'Document Not Found'];
             }
-            
+
             switch ($data['docSystemID']) { // check the document id and set relevant parameters
                 case 1:
                 case 50:
@@ -404,7 +413,7 @@ class email
                         $data['docCode'] = $assetVerification->salesReturnCode;
                     }
                     break;
-                 case 96:
+                case 96:
                     $currencyConversion = CurrencyConversionMaster::find($data['docSystemCode']);
                     if (!empty($currencyConversion)) {
                         $data['docApprovedYN'] = $currencyConversion->approvedYN;
@@ -412,24 +421,24 @@ class email
                     }
                     break;
 
-                 case 103:
-                        $erpAssetTransfer = ERPAssetTransfer::find($data['docSystemCode']);
-                        if (!empty($erpAssetTransfer)) {
-                            $data['docApprovedYN'] = $erpAssetTransfer->approved_yn;
-                            $data['docCode'] = $erpAssetTransfer->document_code;
-                        }
-                 break;
+                case 103:
+                    $erpAssetTransfer = ERPAssetTransfer::find($data['docSystemCode']);
+                    if (!empty($erpAssetTransfer)) {
+                        $data['docApprovedYN'] = $erpAssetTransfer->approved_yn;
+                        $data['docCode'] = $erpAssetTransfer->document_code;
+                    }
+                    break;
 
                 case 100:
                     $contingencyBudgetPlan = ContingencyBudgetPlan::find($data['docSystemCode']);
-                    if(!empty($contingencyBudgetPlan)){
+                    if (!empty($contingencyBudgetPlan)) {
                         $data['docApprovedYN'] = $contingencyBudgetPlan->approvedYN;
                         $data['docCode'] = $contingencyBudgetPlan->contingencyBudgetNo;
                     }
                     break;
                 case 102:
                     $budgetAddition = ErpBudgetAddition::find($data['docSystemCode']);
-                    if(!empty($budgetAddition)){
+                    if (!empty($budgetAddition)) {
                         $data['docApprovedYN'] = $budgetAddition->approvedYN;
                         $data['docCode'] = $budgetAddition->additionVoucherNo;
                     }
@@ -439,6 +448,21 @@ class email
                     if (!empty($budget)) {
                         $data['docApprovedYN'] = $vrf->approvedYN;
                         $data['docCode'] = $vrf->returnFillingCode;
+                    }
+                    break;
+                case 106:
+                    $appointment = Appointment::find($data['docSystemCode']);
+                    if (!empty($appointment)) {
+                        $data['docApprovedYN'] = $appointment->approved_yn;
+                        $data['docCode'] = $appointment->primary_code;
+                    }
+                    break;
+                case 107:
+                    $supplierLink = SupplierRegistrationLink::find($data['docSystemCode']);
+
+                    if (!empty($supplierLink)) {
+                        $data['docApprovedYN'] = $supplierLink->approved_yn;
+                        $data['docCode'] = $supplierLink->id;
                     }
                     break;
                 default:
@@ -453,16 +477,16 @@ class email
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
             if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
-                                                ->where('companyPolicyCategoryID', 37)
-                                                ->where('isYesNO', 1)
-                                                ->exists();
+                    ->where('companyPolicyCategoryID', 37)
+                    ->where('isYesNO', 1)
+                    ->exists();
 
                 if ($hasPolicy) {
                     Log::info('Email send start');
                     $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
-                    if(isset($data['empEmail']) && $data['empEmail']) {
+                    if (isset($data['empEmail']) && $data['empEmail']) {
                         $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                        if($data['empEmail']) {
+                        if ($data['empEmail']) {
                             Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
                         }
                     }
@@ -470,8 +494,8 @@ class email
                     $count = $count + 1;
                     Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
                     Log::info('Email send end count : ' . $count);
-                }else{
-                     Alert::create($data);
+                } else {
+                    Alert::create($data);
                 }
             }
         }
@@ -483,35 +507,36 @@ class email
     public static function sendEmailErp($data)
     {
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
-                                        ->where('companyPolicyCategoryID', 37)
-                                        ->where('isYesNO', 1)
-                                        ->exists();
+            ->where('companyPolicyCategoryID', 37)
+            ->where('isYesNO', 1)
+            ->exists();
 
         if ($hasPolicy) {
             Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
-            if(isset($data['empEmail']) && $data['empEmail']){
+            if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
-                if($data['empEmail']){
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'],$data['attachmentFileName']));
+                if ($data['empEmail']) {
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
                 }
             }
-            Log::info('email sent success fully to :' . $data['empEmail']);
+            Log::info('email sent success fully to - :' . $data['empEmail']);
             Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
-        }else{
-             Alert::create($data);
+        } else {
+            Alert::create($data);
         }
 
         return ['success' => true, 'message' => 'Successfully Inserted'];
     }
 
-    public static function emailAddressFormat($email){
+    public static function emailAddressFormat($email)
+    {
 
-        if($email){
-            $email = str_replace(" ","",$email);
+        if ($email) {
+            $email = str_replace(" ", "", $email);
 
-            if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Log::info(' Email not valid : '. $email);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::info(' Email not valid : ' . $email);
                 $email = ''; // Email not valid
             }
         }

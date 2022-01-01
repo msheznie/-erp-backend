@@ -1,11 +1,5 @@
 
 
-
-<!-- <link href="{{ asset('assets/css/app.css') }}" rel="stylesheet"> -->
-<!-- <link rel="stylesheet" href="{{ public_path('assets/css/app.css') }}"> -->
-<!-- <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}" media="all" /> -->
-<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
-<!-- <link rel="stylesheet" href="{{ ltrim(public_path('assets/css/app.css'), '/') }}" /> -->
 <style type="text/css">
     <!--
     @page {
@@ -23,15 +17,15 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
-    h3 {
+    #watermark h3, .content h3 {
         font-size: 1.53125rem;
     }
 
-    h6 {
+     #watermark h6, .content h6 {
         font-size: 0.875rem;
     }
 
-    h6, h3 {
+     #watermark h6, .content h6 ,#watermark h3,  .content h3 {
         margin-bottom: 0.1rem;
         font-weight: 500;
         line-height: 1.2;
@@ -168,7 +162,7 @@
     }
 
 </style>
-
+<link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 <div class="footer">
     <table style="width:100%; margin-top: 2%">
         <tr>
@@ -602,7 +596,7 @@
                 <th style="text-align: center">#</th>
                 <th style="text-align: center">Item Code</th>
                 <th style="text-align: center">Item Description</th>
-                <th style="text-align: center">Sup.Part No</th>
+                <th style="text-align: center">Part No / Ref.Number</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
                 @if($allowAltUom)
@@ -663,6 +657,9 @@
                     <td colspan="2"></td>
                     <td>{{$met->category->costCatDes}}</td>
                     <td colspan="{{6 + $subColspan}}"></td>
+                    @if($allowAltUom)
+                    <td colspan="2"></td>
+                    @endif
                     <td class="text-right">{{number_format($met->amount, $numberFormatting)}}</td>
                 </tr>
             @endforeach
@@ -774,7 +771,7 @@
       
             @if ($podata->detail)
                 @foreach ($podata->detail as $det)
-                @if ($det->item->specification)
+                @if (isset($det->item->specification->html))
 
 
                    <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">

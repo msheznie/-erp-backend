@@ -223,7 +223,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'Supplier Code' => $order->supplierPrimaryCode,
                 'Approved Date' => date("Y-m-d", strtotime($order->approvedDate)),
                 'supplier Name' => $order->supplierName,
-                'Part Number' => $order->supplierPartNumber,
+                'Part No / Ref.Number' => $order->supplierPartNumber,
                 'UOM' => $order->UnitShortCode,
                 'Currency' => $order->CurrencyCode,
                 'PO Qty' => $qua_req,
@@ -253,8 +253,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
-            }, 'vat_sub_category','altUom'])
-            ->get();
+            }, 'vat_sub_category','altUom'])->skip($input['skip'])->take($input['limit'])->get();
+        
+        $index = $input['skip'] + 1;
+        foreach($items as $item) {
+            $item['index'] = $index;
+            $index++;
+        }
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
     }

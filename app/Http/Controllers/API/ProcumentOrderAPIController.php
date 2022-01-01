@@ -144,7 +144,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ERPAssetTransfer;
-
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\AddMultipleItems;
+use App\helper\CancelDocument;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -196,17 +198,7 @@ class ProcumentOrderAPIController extends AppBaseController
       
         $input = $this->convertArrayToValue($input);
 
-        if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-
-            $validator = \Validator::make($input, [
-                'supCategoryICVMasterID' => 'required|numeric|min:1',
-                'supCategorySubICVID' => 'required|numeric|min:1',
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
-        } else if (isset($input['preCheck']) && $input['preCheck']) {
+       if (isset($input['preCheck']) && $input['preCheck']) {
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             if (!empty($company) && $company->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
@@ -881,19 +873,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
-
-            if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-
-                $validator = \Validator::make($input, [
-                    'supCategoryICVMasterID' => 'required|numeric|min:1',
-                    'supCategorySubICVID' => 'required|numeric|min:1',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-            }
-
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $procumentOrder->companySystemID)
                 ->first();
@@ -1522,7 +1501,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $financeCategories = FinanceItemCategoryMaster::all();
 
-        $locations = Location::all();
+        $locations = Location::where('is_deleted',0)->get();
 
         $financialYears = array(
             array('value' => intval(date("Y")), 'label' => date("Y")),
@@ -1811,7 +1790,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             foreach ($output->detail as $item) {
 
-                if(isset($item->item->specification) || $item->item->specification != null)
+                if(isset($item->item->specification) || (isset($item->item->specification) && $item->item->specification != null))
                 {
                     $is_specification = true; 
                 }
@@ -2225,7 +2204,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
-
         $employee = \Helper::getEmployeeInfo();
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
@@ -2320,6 +2298,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+        
+        CancelDocument::sendEmail($input);
 
         return $this->sendResponse($purchaseOrderID, 'Order canceled successfully ');
     }
@@ -8432,5 +8412,130 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $tracingData['childs'][] = $tempPR;
         }
         return [$tracingData];
+    }
+
+    public function downloadPoItemUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_template.xlsx', 'procument_order_item_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
+    }
+
+    public function poItemsUpload(request $request)
+    {
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+
+            $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['requestID'])
+                                               ->first();
+
+
+            if (empty($purchaseOrder)) {
+                return $this->sendError('Procument Order not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+                                                ->where('companySystemID', $purchaseOrder->companySystemID)
+                                                ->first();
+
+            if ($allowItemToType) {
+                if ($allowItemToType->isYesNO) {
+                    $allowItemToTypePolicy = true;
+                }
+            }
+
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['no_qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+                
+                if (isset($value['unit_cost'])) {
+                    $validateHeaderQty = true;
+                }
+
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['no_qty']) && !is_null($value['no_qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'no_qty', 'unit_cost'))->get()->toArray();
+
+
+            $uploadSerialNumber = array_filter(collect($record)->toArray());
+
+            if ($purchaseOrder->cancelledYN == -1) {
+                return $this->sendError('This Purchase Order already closed. You can not add.', 500);
+            }
+
+            if ($purchaseOrder->approved == 1) {
+                return $this->sendError('This Purchase Order fully approved. You can not add.', 500);
+            }
+
+
+            if (count($record) > 0) {
+                $db = isset($input['db']) ? $input['db'] : ""; 
+                AddMultipleItems::dispatch(array_filter($record),($purchaseOrder->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }

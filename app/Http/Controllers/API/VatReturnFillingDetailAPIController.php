@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateVatReturnFillingDetailAPIRequest;
 use App\Http\Requests\API\UpdateVatReturnFillingDetailAPIRequest;
 use App\Models\VatReturnFillingDetail;
 use App\Repositories\VatReturnFillingDetailRepository;
+use App\Repositories\VatReturnFillingMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -21,10 +22,12 @@ class VatReturnFillingDetailAPIController extends AppBaseController
 {
     /** @var  VatReturnFillingDetailRepository */
     private $vatReturnFillingDetailRepository;
+    private $vatReturnFillingMasterRepository;
 
-    public function __construct(VatReturnFillingDetailRepository $vatReturnFillingDetailRepo)
+    public function __construct(VatReturnFillingDetailRepository $vatReturnFillingDetailRepo, VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
     {
         $this->vatReturnFillingDetailRepository = $vatReturnFillingDetailRepo;
+        $this->vatReturnFillingMasterRepository = $vatReturnFillingMasterRepo;
     }
 
     /**
@@ -227,6 +230,8 @@ class VatReturnFillingDetailAPIController extends AppBaseController
         }
 
         $vatReturnFillingDetail = $this->vatReturnFillingDetailRepository->update($input, $id);
+
+        $this->vatReturnFillingMasterRepository->updateFillingFormula($vatReturnFillingDetail->vatReturnFillingID);
 
         return $this->sendResponse($vatReturnFillingDetail->toArray(), 'VatReturnFillingDetail updated successfully');
     }

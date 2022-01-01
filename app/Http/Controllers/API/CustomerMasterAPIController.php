@@ -1054,7 +1054,7 @@ class CustomerMasterAPIController extends AppBaseController
                 'Primary Company' => array(),
                 'Finance Category' => array(),
                 'Finance Sub Category' => array(),
-                'Mfg. Part No' => array(),
+                'Part No / Ref.Number' => array(),
                 'Item Description'=> array(),
                 'Unit of Measure'=>array()
             );
@@ -2589,7 +2589,7 @@ class CustomerMasterAPIController extends AppBaseController
                                 if(isset($secondary_Exists))
                                 {
                                     $valueNotExit = true;
-                                    array_push($item_error['Mfg. Part No'], 'line number '.$count.' Mfg. Part No already exists');
+                                    array_push($item_error['Part No / Ref.Number'], 'line number '.$count.' Part No / Ref.Number already exists');
                                 }
                                 else
                                 {
@@ -2601,7 +2601,7 @@ class CustomerMasterAPIController extends AppBaseController
                              else
                             {
                                 $nullValue = true;
-                                array_push($item_error['Mfg. Part No'], 'line number '.$count.' null value');
+                                array_push($item_error['Part No / Ref.Number'], 'line number '.$count.' null value');
                             }
 
 
