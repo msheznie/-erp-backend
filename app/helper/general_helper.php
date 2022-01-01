@@ -2260,8 +2260,21 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that you are registration have been approved </p>';
+                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved </p>';
                                     $dataEmail['alertMessage'] = $docApproved->documentID . " Registration Approved";
+                                    $dataEmail['emailAlertMessage'] = $temp;
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 106) {
+
+                                $suppiler_info = SupplierRegistrationLink::where('id', '=', $docApproved->documentSystemCode)->first();
+                                if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
+                                    $dataEmail['empEmail'] = $docApproved->reference_email;
+                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved </p>';
+                                    $dataEmail['alertMessage'] = $docApproved->documentID . " Appoinment Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -2858,6 +2871,7 @@ class Helper
                     $docInforArr["modelName"] = 'ErpBudgetAddition';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 case 104:
                     $docInforArr["tableName"] = 'vat_return_filling_master';
                     $docInforArr["modelName"] = 'VatReturnFillingMaster';

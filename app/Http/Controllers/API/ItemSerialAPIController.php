@@ -355,7 +355,7 @@ class ItemSerialAPIController extends AppBaseController
 
                 $saveData = [
                     'itemSystemCode' => $input['itemID'],
-                    'wareHouseSystemCode' => $input['wareHouseSystemCode'],
+                    'wareHouseSystemID' => $input['wareHouseSystemCode'],
                     'serialCode' => $productSerial,
                 ];
 
@@ -428,7 +428,7 @@ class ItemSerialAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
+        $itemSerials = ItemSerial::where('wareHouseSystemID',$input['warehouse'])->where('itemSystemCode', $input['itemSystemCode'])
                                   ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
                                                 $query->where('soldFlag', 0)
