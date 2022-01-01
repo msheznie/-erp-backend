@@ -2394,6 +2394,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::resource('appointments', 'AppointmentAPIController');
+        
 
         Route::resource('appointment_details', 'AppointmentDetailsAPIController');
 
