@@ -2502,10 +2502,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $purchaseRequestArray = $purchaseRequest->toArray();
 
-        if(isset($purchaseRequestArray['isBulkItemJobRun'])) {
-            unset($purchaseRequestArray['isBulkItemJobRun']);
-        }
-
 
         $storePORequestHistory = PurchaseRequestReferred::insert($purchaseRequestArray);
 
@@ -2519,17 +2515,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $purchaseRequestDetailArray = $fetchPurchaseRequestDetails->toArray();
-        if(isset($purchaseRequestDetailArray[0]['isMRPulled'])) {
-            unset($purchaseRequestDetailArray[0]['isMRPulled']);
-        }
-
-        if(isset($purchaseRequestDetailArray[0]['is_eligible_mr'])) {
-            unset($purchaseRequestDetailArray[0]['is_eligible_mr']);
-        }
 
 
         
-        $storePRDetailHistory = PrDetailsReferedHistory::insert($purchaseRequestDetailArray[0]);
+        $storePRDetailHistory = PrDetailsReferedHistory::insert($purchaseRequestDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
             ->where('companySystemID', $purchaseRequest->companySystemID)
@@ -2545,9 +2534,6 @@ class PurchaseRequestAPIController extends AppBaseController
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 
         
-        if(isset($DocumentApprovedArray[0])) {
-            unset($DocumentApprovedArray[0]['reference_email']);
-        }
         $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
