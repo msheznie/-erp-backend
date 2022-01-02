@@ -238,7 +238,12 @@ class CustomerInvoiceDirectDetRefferedback extends Model
         'clientContractID',
         'contractID',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'mfqInvoiceDetailID'
     ];
 
     /**
