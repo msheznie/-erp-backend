@@ -323,7 +323,11 @@ class SRMService
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
-        }, 'created_by'])
+        }, 'created_by', 'detail.getPoMaster.detail.appointmentDetails' => function ($query) {
+            $query->whereHas('appointment', function ($q){
+                $q->where('refferedBackYN', '!=', -1);
+            });
+        }])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
