@@ -606,6 +606,7 @@ class SRMService
             $kycFormDetails->confirmed_by_name = null;
             $kycFormDetails->confirmed_date = null;
             $kycFormDetails->RollLevForApp_curr = 1;
+            $kycFormDetails->refferedBackYN = 0;
             $kycFormDetails->save();
         }
         return [
