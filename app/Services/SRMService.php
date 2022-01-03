@@ -380,14 +380,10 @@ class SRMService
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
         $confirm = \Helper::confirmDocument($params);
-        if($confirm['success'] === true){
-            $message  = "Appointment confirmed successfully";
-        } else {
-            $message  = "Appointment confirmation failed";
-        }
+
         return [
             'success'   => $confirm['success'],
-            'message'   => $message,
+            'message'   => $confirm['message'],
             'data'      => $params
         ];
     }
