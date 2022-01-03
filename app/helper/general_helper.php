@@ -122,9 +122,10 @@ class Helper
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
 
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
 
             $search = '*';
-            $redirectUrl = str_replace($search, $subDomain, $redirectUrl);
+            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
         }
 
         return $redirectUrl;
