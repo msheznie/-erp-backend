@@ -104,9 +104,14 @@ class GRVMasterRepository extends BaseRepository
         return GRVMaster::class;
     }
 
-    public function isGrvEligibleForCancellation($input){
+    public function isGrvEligibleForCancellation($input, $type = null){
 
         $grv = GRVMaster::find($input['grvAutoID']);
+        $document = 'cancel';
+
+        if ($type == "reversal") {
+            $document = 'reverse';
+        }
 
         if (empty($grv)) {
             return $array = [
@@ -118,7 +123,7 @@ class GRVMasterRepository extends BaseRepository
         if ($grv->approved != -1) {
             return $array = [
                 'status' => 0,
-                'msg' => 'You cannot cancel, This document not approved.',
+                'msg' => 'You cannot '.$document.', This document not approved.',
             ];
         }
 
@@ -133,7 +138,7 @@ class GRVMasterRepository extends BaseRepository
         if ($checkInAllocation) {
             return $array = [
                 'status' => 0,
-                'msg' => 'You cannot cancel the GRV. The GRV is already added to Asset Allocation',
+                'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
             ];
         }
 
@@ -150,7 +155,7 @@ class GRVMasterRepository extends BaseRepository
             case 1: //Inventory - Don't allow to cancel and ask user to create a purchase return for Inventory GRVs
                 return $array = [
                     'status' => 0,
-                    'msg' => 'You cannot cancel inventory type GRV. Please do a purchase return for this GRV',
+                    'msg' => 'You cannot '.$document.' inventory type GRV. Please do a purchase return for this GRV',
                 ];
                 break;
             case 2: // Service - Don't allow to cancel the GRV, If the GRV is added to BSI
@@ -161,7 +166,7 @@ class GRVMasterRepository extends BaseRepository
                 if($isExistBSI){
                     return $array = [
                         'status' => 0,
-                        'msg' => 'You cannot cancel the GRV. The GRV is already added to Supplier Invoice ',
+                        'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Supplier Invoice ',
                     ];
                 }
 
@@ -170,7 +175,7 @@ class GRVMasterRepository extends BaseRepository
                     if($isAssetAllocationExist){
                         return $array = [
                             'status' => 0,
-                            'msg' => 'You cannot cancel the GRV. The GRV is already added to Asset Allocation',
+                            'msg' => 'You cannot '.$document.' the GRV. The GRV is already added to Asset Allocation',
                         ];
                     }
                     break;

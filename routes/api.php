@@ -1845,7 +1845,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
 
         Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
+        Route::get('reverseGRVPreCheck', 'GRVMasterAPIController@reverseGRVPreCheck');
         Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
+        Route::post('reverseGRV', 'GRVMasterAPIController@reverseGRV');
 
         Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
 
