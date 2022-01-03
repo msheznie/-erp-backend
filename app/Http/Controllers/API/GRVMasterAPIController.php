@@ -410,6 +410,14 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        if ($input['grvLocation'] != $gRVMaster->grvLocation) {
+            $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['grvLocation'], $id, $gRVMaster->documentSystemID);
+
+            if (!$resWareHouseUpdate['status']) {
+                return $this->sendError($resWareHouseUpdate['message'], 500);
+            }
+        }
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;

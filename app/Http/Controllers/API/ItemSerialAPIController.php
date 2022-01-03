@@ -232,9 +232,9 @@ class ItemSerialAPIController extends AppBaseController
             return $this->sendError('Serial code length cannot greater than 50');
         }
 
-        // if (!preg_match('/^[a-zA-Z0-9]+$/', $input['serialCode'])) {
-        //     return $this->sendError('Serial code can contain only / and - in special character');
-        // }
+        if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['serialCode'])) {
+            return $this->sendError('Serial code can contain only / and - in special character');
+        }
 
         if (!is_null($input['expireDate'])) {
             $input['expireDate'] = new Carbon($input['expireDate']);
@@ -353,6 +353,10 @@ class ItemSerialAPIController extends AppBaseController
                     $duplicateSerials[] = $productSerial;
                 }
 
+                if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $productSerial)) {
+                    return $this->sendError('Serial code can contain only / and - in special character');
+                }
+
                 $saveData = [
                     'itemSystemCode' => $input['itemID'],
                     'wareHouseSystemID' => $input['wareHouseSystemCode'],
@@ -428,8 +432,9 @@ class ItemSerialAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $itemSerials = ItemSerial::where('wareHouseSystemID',$input['warehouse'])->where('itemSystemCode', $input['itemSystemCode'])
-                                  ->where(function($query) use ($input){
+        $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
+                                 ->where('wareHouseSystemID',$input['warehouse'])
+                                 ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
                                                 $query->where('soldFlag', 0)
                                                       ->whereDoesntHave('document_product', function($query) use ($input) {
@@ -470,6 +475,7 @@ class ItemSerialAPIController extends AppBaseController
         $input = $request->all();
 
         $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
+                                 ->where('wareHouseSystemID',$input['wareHouseSystemCode'])
                                   ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
                                                 $query->where('soldFlag', 0)
