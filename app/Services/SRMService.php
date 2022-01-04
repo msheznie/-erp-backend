@@ -175,19 +175,6 @@ class SRMService
                 }
             }
 
-            if (!empty($data) && $amend) {
-                foreach ($data as $val) {
-                    $data_details['appointment_details_id'] = $slotDetailID;
-                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
-                    AppointmentDetailsRefferedBack::create($data_details);
-                }
-
-            }
-
             DB::commit();
             return [
                 'success'   => true,
