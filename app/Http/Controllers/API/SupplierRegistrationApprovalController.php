@@ -272,7 +272,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
             ->update($dataPrimary); 
 
-        $supplierAssigned['supplierCodeSytem'] =  $supplierMasters['supplierCodeSystem'];
+        /* $supplierAssigned['supplierCodeSytem'] =  $supplierMasters['supplierCodeSystem'];
         $supplierAssigned['companySystemID'] =  $supplierMasters['primaryCompanySystemID'];
         $supplierAssigned['companyID'] =  $supplierMasters['primaryCompanyID']; 
         $supplierAssigned['uniqueTextcode'] =  $supplierMasters['uniqueTextcode'];
@@ -315,7 +315,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $supplierAssigned['jsrsExpiry'] =  $supplierMasters['jsrsExpiry']; 
         $supplierAssigned['isActive'] =  $supplierMasters['isActive']; 
         $supplierAssigned['isAssigned'] = -1; 
-        $supplierAssign = SupplierAssigned::create($supplierAssigned); 
+        $supplierAssign = SupplierAssigned::create($supplierAssigned);  */
 
 
         $supplierCurrency = new SupplierCurrency();
