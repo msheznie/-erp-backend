@@ -443,6 +443,14 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $input['wareHouseFromCode'] = $checkWareHouseActive->wareHouseCode;
             $input['wareHouseFromDes'] = $checkWareHouseActive->wareHouseDescription;
+
+            if ($input['wareHouseFrom'] != $itemIssueMaster->wareHouseFrom) {
+                $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['wareHouseFrom'], $id, $itemIssueMaster->documentSystemID);
+
+                if (!$resWareHouseUpdate['status']) {
+                    return $this->sendError($resWareHouseUpdate['message'], 500);
+                }
+            }
         }
 
         if (isset($input['issueDate'])) {

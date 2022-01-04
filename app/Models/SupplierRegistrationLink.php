@@ -32,7 +32,8 @@ class SupplierRegistrationLink extends Model
         'approved_by_emp_id',
         'RollLevForApp_curr',
         'timesReferred',
-        'confirmed_yn'
+        'confirmed_yn',
+        'refferedBackYN'
     ];
 
     protected $casts = [

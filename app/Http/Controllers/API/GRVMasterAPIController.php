@@ -31,10 +31,12 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
+use App\Models\ErpItemLedger;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PurchaseReturnDetails;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
@@ -407,6 +409,14 @@ class GRVMasterAPIController extends AppBaseController
                 if (!$checkGLIsAssigned) {
                     return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
                 }
+            }
+        }
+
+        if ($input['grvLocation'] != $gRVMaster->grvLocation) {
+            $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['grvLocation'], $id, $gRVMaster->documentSystemID);
+
+            if (!$resWareHouseUpdate['status']) {
+                return $this->sendError($resWareHouseUpdate['message'], 500);
             }
         }
 
@@ -1544,6 +1554,24 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         return $this->sendError($errorMsg, 500);
     }
 
+    public function reverseGRVPreCheck(Request $request)
+    {
+        $input = $request->all();
+        $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
+        if ($isEligible['status'] == 0) {
+            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for reversal';
+            return $this->sendError($errorMsg, 500);
+        }
+
+        $isExistBSI = PurchaseReturnDetails::where('grvAutoID',$input['grvAutoID'])->exists();
+
+        if ($isExistBSI) {
+            return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
+        }
+
+        return $this->sendResponse([], 'GRV Eligible for reversal');
+    }
+
     public function cancelGRV(Request $request)
     {
 
@@ -1603,9 +1631,63 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             // cancelation email
             CancelDocument::sendEmail($input);
 
+            DB::commit();
             return $this->sendResponse($grv, 'GRV successfully canceled');
 
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+
+    }
+
+    public function reverseGRV(Request $request)
+    {
+        $input = $request->all();
+        $employee = Helper::getEmployeeInfo();
+
+        // precheck
+        $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
+        if ($isEligible['status'] == 0) {
+            $errorMsg = (isset($isEligible['msg']) && $isEligible['msg'] != '') ? $isEligible['msg'] : 'GRV Not Eligible for cancellation';
+            return $this->sendError($errorMsg, 500);
+        }
+
+        $isExistBSI = PurchaseReturnDetails::where('grvAutoID',$input['grvAutoID'])->exists();
+
+        if ($isExistBSI) {
+            return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
+        }
+
+        DB::beginTransaction();
+        try {
+            // update grv master
+            $grv = GRVMaster::find($input['grvAutoID']);
+            $grv->grvConfirmedYN = 0;
+            $grv->grvConfirmedByName = null;
+            $grv->grvConfirmedByEmpID = null;
+            $grv->grvConfirmedByEmpSystemID = null;
+            $grv->grvConfirmedDate = null;
+            $grv->RollLevForApp_curr = 0;
+            $grv->approved = 0;
+            $grv->approvedByUserID = null;
+            $grv->approvedByUserSystemID = null;
+            $grv->approvedDate = null;
+            $grv->save();
+
+            // update erp_unbilledgrvgroupby
+            UnbilledGrvGroupBy::where('grvAutoID', $input['grvAutoID'])->delete();
+            $generalLedger = GeneralLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
+            $itemLedger = ErpItemLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
+            $itemLedger = DocumentApproved::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
+
+            AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');
+
+            // cancelation email
+            // CancelDocument::sendEmail($input);
+
             DB::commit();
+            return $this->sendResponse($grv, 'GRV successfully reversed');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());

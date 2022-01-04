@@ -4,6 +4,7 @@ namespace App\helper;
 use Carbon\Carbon;
 use App\Models\DocumentSubProduct;
 use App\Models\GRVDetails;
+use App\Models\ItemSerial;
 use App\Models\ItemIssueDetails;
 use App\Models\CustomerAssigned;
 use App\Models\ItemReturnDetails;
@@ -125,6 +126,87 @@ class ItemTracking
 			return ['status' => false, 'message' => $errorMessage];
         }
 		
+		return ['status' => true];
+	}
+
+	public static function updateTrackingDetailWareHouse($wareHouseSystemID, $documentSystemCode, $documentSystemID)
+	{
+		switch ($documentSystemID) {
+			case 3:
+				$checkProduct =  DocumentSubProduct::where('documentSystemCode', $documentSystemCode)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->where('sold', 1)
+													   ->first();
+
+				if ($checkProduct) {
+					return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+				}
+
+				$updateWareHouse = ItemSerial::whereHas('document_product', function($query) use ($documentSystemCode, $documentSystemID) {
+												$query->where('documentSystemCode', $documentSystemCode)
+													   ->where('documentSystemID', $documentSystemID);
+											})
+											->update(['wareHouseSystemID' => $wareHouseSystemID]);
+
+				break;
+			case 8:
+				$validateSubProductSold = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                                         ->where('documentSystemCode', $documentSystemCode)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+	            if ($validateSubProductSold) {
+	            	return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+	            }
+
+	            $subProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+	                                             ->where('documentSystemCode', $documentSystemCode);
+
+	            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+	            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+	            if (count($productInIDs) > 0) {
+	                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+	                                          ->update(['soldFlag' => 0]);
+
+	                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+	                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+	                $subProduct->delete();
+	            }
+				break;
+
+			case 12:
+				$validateSubProductSold = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                                         ->where('documentSystemCode', $documentSystemCode)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+	            if ($validateSubProductSold) {
+	                return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
+	            }
+
+	            $subProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+	                                             ->where('documentSystemCode', $documentSystemCode);
+
+	            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+	            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+	            if (count($productInIDs) > 0) {
+	                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+	                                          ->update(['soldFlag' => 0]);
+
+	                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+	                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+	                $subProduct->delete();
+	            }
+				break;
+			default:
+				# code...
+				break;
+		}
+
 		return ['status' => true];
 	}
 }

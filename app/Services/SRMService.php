@@ -380,9 +380,10 @@ class SRMService
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
         $confirm = \Helper::confirmDocument($params);
+
         return [
             'success'   => $confirm['success'],
-            'message'   => "Appointment confirmed successfully",
+            'message'   => $confirm['message'],
             'data'      => $params
         ];
     }
@@ -605,6 +606,7 @@ class SRMService
             $kycFormDetails->confirmed_by_name = null;
             $kycFormDetails->confirmed_date = null;
             $kycFormDetails->RollLevForApp_curr = 1;
+            $kycFormDetails->refferedBackYN = 0;
             $kycFormDetails->save();
         }
         return [
