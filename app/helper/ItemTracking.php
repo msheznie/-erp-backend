@@ -9,6 +9,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\CustomerAssigned;
 use App\Models\ItemReturnDetails;
 use App\Models\Company;
+use App\Models\PurchaseReturnDetails;
 use App\Models\CustomerMaster;
 
 class ItemTracking
@@ -115,6 +116,28 @@ class ItemTracking
 					}
 				}
 
+				break;
+			case 24:
+				$checkTrackingAvaliability = PurchaseReturnDetails::where('trackingType', 2)
+														->where('purhaseReturnAutoID', $documentSystemCode)
+														->get();
+
+				if (count($checkTrackingAvaliability) == 0) {
+					return ['status' => true];
+				}
+
+				foreach ($checkTrackingAvaliability as $key => $value) {
+					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->purhasereturnDetailID)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->whereHas('serial_data', function($query) {
+													   		$query->whereNotNull('serialCode');
+													   })
+													   ->count();
+
+					if ($trackingCheck != $value->noQty) {
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+					}
+				}
 
 				break;
 			default:

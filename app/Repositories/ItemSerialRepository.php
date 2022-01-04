@@ -7,6 +7,7 @@ use App\Models\GRVDetails;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
+use App\Models\PurchaseReturnDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -71,6 +72,11 @@ class ItemSerialRepository extends BaseRepository
             case 12:
                 $issueDedtail = ItemReturnDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($issueDedtail) ? $issueDedtail->itemReturnAutoID : null;
+
+                break; 
+            case 24:
+                $returnDedtail = PurchaseReturnDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->purhaseReturnAutoID : null;
 
                 break;
             default:

@@ -451,7 +451,7 @@ class ItemSerialAPIController extends AppBaseController
                                   })
                                   ->with(['document_product' => function($query) use ($input) {
                                         $query->where('documentSystemID', $input['documentSystemID'])
-                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                              ->where('documentDetailID', $input['documentDetailID']);
                                   }, 'warehouse', 'bin_location'])
                                   ->whereHas('document_in_product', function($query) use ($input) { 
                                         $query->where(function($query) use ($input) {
@@ -461,9 +461,10 @@ class ItemSerialAPIController extends AppBaseController
                                                     $query->where('approved', -1);
                                                 })->orWhereHas('material_return', function($query) use ($input) {
                                                     $query->where('approved', -1);
+                                                })->orWhereHas('purchase_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
                                                 });
-                                        })
-                                        ->where('sold', 0);
+                                        });
                                     })
                                   ->get();
 
