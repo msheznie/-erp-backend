@@ -128,6 +128,12 @@ class SRMService
 
         $lastSerial = Appointment::orderBy('serial_no', 'desc')
             ->first();
+
+        // Amend Appointment
+        if ($amend) {
+            return self::amendPoAppointment($appointmentID, $slotCompanyId);
+        }
+
         DB::beginTransaction();
         try {
 
@@ -151,11 +157,6 @@ class SRMService
                 $appointment = Appointment::create($dataMaster);
             }
 
-            if ($amend) {
-                $dataMaster['appointment_id'] = $appointmentID;
-                self::amendPoAppointment($dataMaster, $appointmentID);
-            }
-
             if (!empty($data) && $appointmentID > 0 && !$amend) {
                 foreach ($data as $val) {
                     AppointmentDetails::where('appointment_id', $appointmentID)
@@ -172,19 +173,6 @@ class SRMService
                     $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
-            }
-
-            if (!empty($data) && $amend) {
-                foreach ($data as $val) {
-                    $data_details['appointment_details_id'] = $slotDetailID;
-                    $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
-                    AppointmentDetailsRefferedBack::create($data_details);
-                }
-                self::poAppointmentReferback($appointmentID, $slotCompanyId);
             }
 
             DB::commit();
@@ -244,7 +232,7 @@ class SRMService
             'data'      => $isUpdated
         ];
     }
-    public function getAppointmentSlots(Request $request)
+    public function  getAppointmentSlots(Request $request)
     {
         $tenantID = $request->input('tenantId');
         $data =  $this->POService->getAppointmentSlots($tenantID);
@@ -289,7 +277,7 @@ class SRMService
                     $arr[$x]['status'] = $slotDetail->status;
                     $arr[$x]['slotCompanyId'] = $row['company_id'];
                     $arr[$x]['remaining_appointments'] = ($row['limit_deliveries'] == 0 ? 1 : ($row['no_of_deliveries'] - sizeof($appointment)));
-                    $arr[$x]['remaining_approved_pending_appointments_count'] = $row['no_of_deliveries'] - sizeof($appointmentApproved);
+                    $arr[$x]['remaining_approved_pending_appointments_count'] = ($row['limit_deliveries'] == 0 ? 1 : ($row['no_of_deliveries'] - sizeof($appointmentApproved)));
                     $x++;
                 }
             }
@@ -323,7 +311,11 @@ class SRMService
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
-        }, 'created_by'])
+        }, 'created_by', 'detail.getPoMaster.detail.appointmentDetails' => function ($query) {
+            $query->whereHas('appointment', function ($q){
+                $q->where('refferedBackYN', '!=', -1);
+            });
+        }])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
@@ -536,16 +528,43 @@ class SRMService
         ];
     }
 
-    private function amendPoAppointment($dataMaster, $appointmentID)
+    private function amendPoAppointment($appointmentID, $slotCompanyId)
     {
-        AppointmentRefferedBack::create($dataMaster);
+        $amendedAppointment = Appointment::where('id', $appointmentID)
+            ->select('appointment.id AS appointment_id', 'appointment.*')
+            ->get()->toArray();
+        $insertAppointment = AppointmentRefferedBack::insert($amendedAppointment);
 
-        Appointment::where('id', $appointmentID)
-            ->update([
-                'approved_yn' => 0,
-                'confirmed_yn' => 0,
-                'refferedBackYN' => 0
-            ]);
+        $amendedAppointmentDetails = AppointmentDetails::where('appointment_id', $appointmentID)
+            ->select('appointment_details.id AS appointment_details_id', 'appointment_details.*')
+            ->get()->toArray();
+        $insertAppointmentDetails = AppointmentDetailsRefferedBack::insert($amendedAppointmentDetails);
+
+        if($insertAppointment && $insertAppointmentDetails){
+
+            $statusChange = Appointment::where('id', $appointmentID)
+                ->update([
+                    'approved_yn' => 0,
+                    'confirmed_yn' => 0,
+                    'refferedBackYN' => 0
+                ]);
+
+            if($statusChange){
+                self::poAppointmentReferback($appointmentID, $slotCompanyId);
+
+                return [
+                    'success'   => true,
+                    'message'   => 'Appointment amended successfully',
+                    'data'      => [$insertAppointment, $insertAppointmentDetails]
+                ];
+            }
+        }
+
+        return [
+            'success'   => false,
+            'message'   => 'Appointment amendment failed',
+            'data'      => 'failed'
+        ];
     }
 
     private function poAppointmentReferback($appointmentID, $slotCompanyId)
