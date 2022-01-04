@@ -32,6 +32,7 @@ use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\ErpItemLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
@@ -1679,7 +1680,8 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             UnbilledGrvGroupBy::where('grvAutoID', $input['grvAutoID'])->delete();
             $generalLedger = GeneralLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
             $itemLedger = ErpItemLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
-            $itemLedger = DocumentApproved::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
+            $approvers = DocumentApproved::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
+            $taxLedger = TaxLedgerDetail::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentMasterAutoID' => $input['grvAutoID']])->delete();
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');
 
