@@ -20,6 +20,8 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
+use App\Models\ItemSerial;
+use App\Models\DocumentSubProduct;
 use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
 use App\Models\SegmentMaster;
@@ -530,10 +532,14 @@ class ItemReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Item Return Details not found');
         }
 
-        $itemReturnDetails->delete();
+        $itemReturn = ItemReturnMaster::where('itemReturnAutoID', $itemReturnDetails->itemReturnAutoID)->first();
+
+        if (empty($itemReturn)) {
+            return $this->sendError('Materiel return not found');
+        }
 
         if ($itemReturnDetails->trackingType == 2) {
-            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $itemReturn->documentSystemID)
                                                          ->where('documentDetailID', $id)
                                                          ->where('sold', 1)
                                                          ->first();
@@ -542,7 +548,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
             }
 
-            $subProduct = DocumentSubProduct::where('documentSystemID', $itemIssue->documentSystemID)
+            $subProduct = DocumentSubProduct::where('documentSystemID', $itemReturn->documentSystemID)
                                              ->where('documentDetailID', $id);
 
             $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
@@ -558,6 +564,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 $subProduct->delete();
             }
         }
+
+        $itemReturnDetails->delete();
 
         return $this->sendResponse($id, 'Item Return Details deleted successfully');
     }

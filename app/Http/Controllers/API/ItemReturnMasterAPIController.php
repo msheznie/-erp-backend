@@ -402,6 +402,14 @@ class ItemReturnMasterAPIController extends AppBaseController
                     return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
                 }
             }
+
+            if ($input['wareHouseLocation'] != $itemReturnMaster->wareHouseLocation) {
+                $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['wareHouseLocation'], $id, $itemReturnMaster->documentSystemID);
+
+                if (!$resWareHouseUpdate['status']) {
+                    return $this->sendError($resWareHouseUpdate['message'], 500);
+                }
+            }
         }
 
         if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
