@@ -535,12 +535,45 @@ class SRMService
     private function amendPoAppointment($appointmentID, $slotCompanyId)
     {
         $amendedAppointment = Appointment::where('id', $appointmentID)
-            ->select('appointment.id AS appointment_id', 'appointment.*')
-            ->get()->toArray();
+                ->select('appointment.id AS appointment_id',
+                    'appointment.supplier_id',
+                    'appointment.document_system_id',
+                    'appointment.serial_no',
+                    'appointment.primary_code',
+                    'appointment.document_id',
+                    'appointment.status',
+                    'appointment.slot_detail_id',
+                    'appointment.company_id',
+                    'appointment.tenat_id',
+                    'appointment.created_by',
+                    'appointment.updated_at',
+                    'appointment.created_at',
+                    'appointment.confirmed_by_emp_id',
+                    'appointment.confirmedByName',
+                    'appointment.confirmedByEmpID',
+                    'appointment.confirmed_date',
+                    'appointment.approved_yn',
+                    'appointment.approved_date',
+                    'appointment.approved_by_emp_name',
+                    'appointment.approved_by_emp_id',
+                    'appointment.current_level_no',
+                    'appointment.timesReferred',
+                    'appointment.confirmed_yn',
+                    'appointment.refferedBackYN'
+                )->get()->toArray();
         $insertAppointment = AppointmentRefferedBack::insert($amendedAppointment);
 
         $amendedAppointmentDetails = AppointmentDetails::where('appointment_id', $appointmentID)
-            ->select('appointment_details.id AS appointment_details_id', 'appointment_details.*')
+            ->select('appointment_details.id AS appointment_details_id',
+                'appointment_details.appointment_id',
+                'appointment_details.po_master_id',
+                'appointment_details.po_detail_id',
+                'appointment_details.item_id',
+                'appointment_details.qty',
+                'appointment_details.created_by',
+                'appointment_details.updated_at',
+                'appointment_details.created_at'
+            )
             ->get()->toArray();
         $insertAppointmentDetails = AppointmentDetailsRefferedBack::insert($amendedAppointmentDetails);
 
