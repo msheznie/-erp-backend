@@ -314,8 +314,17 @@ class PurchaseRequestAPIController extends AppBaseController
     public function getEligibleMr(Request $request){
         $input = $request->all();
         $RequestID = $input['RequestID'];
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID' , $RequestID)->first();
         $eligibleMr = PurchaseRequestDetails::where('purchaseRequestID',$RequestID)->where('is_eligible_mr', 1)->get();
-        return $this->sendResponse($eligibleMr, 'Record retrieved successfully');
+        
+        $checkPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 65)
+        ->where('companySystemID',  $purchaseRequest->companySystemID)
+        ->first();
+
+        $data = ['eligibleMr'=>$eligibleMr,
+                 'checkPolicy'=>$checkPolicy];
+        
+        return $this->sendResponse($data, 'Record retrieved successfully');
     }
 
     public function getWarehouse(Request $request){

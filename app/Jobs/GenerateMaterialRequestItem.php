@@ -82,6 +82,9 @@ class GenerateMaterialRequestItem implements ShouldQueue
                             'totalCost'=>$prDetails->totalCost,
                             'unitOfMeasure'=>$prDetails->unitOfMeasure,];
                 $createMrDetails = MaterielRequestDetails::create($prData);
+                if($createMrDetails){
+                    $prDetails->delete();
+                }
             }
             
             $isJobData = ['is_job_run'=>0];
