@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\API\SRM;
 
 use App\Http\Controllers\Controller;
+use App\Models\CountryMaster;
+use App\Models\CurrencyMaster;
+use App\Models\SupplierCategoryMaster;
+use App\Models\SupplierCategorySub;
 use App\Services\POService;
 use App\Services\SRMService;
 use GuzzleHttp\Exception\RequestException;
@@ -29,7 +33,7 @@ define('SUPPLIER_REGISTRATION_APPROVAL_SETUP', 'SUPPLIER_REGISTRATION_APPROVAL_S
 define('GET_INVOICES', 'GET_INVOICES');
 define('GET_INVOICE_DETAILS', 'GET_INVOICE_DETAILS');
 define('SUPPLIER_REGISTRATION_APPROVAL_AMMEND', 'SUPPLIER_REGISTRATION_APPROVAL_AMMEND');
-
+define('GET_ERP_FORM_DATA', 'GET_ERP_FORM_DATA');
 
 class APIController extends Controller
 {
@@ -86,6 +90,8 @@ class APIController extends Controller
                 return $this->SRMService->getInvoiceDetailsById($request);
             case SUPPLIER_REGISTRATION_APPROVAL_AMMEND:
                 return $this->SRMService->supplierRegistrationApprovalAmmend($request);
+            case GET_ERP_FORM_DATA:
+                return $this->SRMService->getERPFormData($request);
             default:
                 return [
                     'success'   => false,
@@ -115,6 +121,63 @@ class APIController extends Controller
                     'uuid' => $request->input('uuid')
                 ]
             ]);
+
+            if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
+                foreach ($response->data as $data1) {
+                    foreach ($data1 as $data2) {
+                        foreach ($data2 as $data3) {
+                            $arrdata = [];
+                            if ($data3->form_field_id == 1) { //Category 
+                                $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode')->where('supCategoryMasterID', $data3->form_data_id)->first();
+                                $arrdata = [
+                                    'created_at' => $data3->created_at,
+                                    'id' => $data3->id,
+                                    'status' => $data3->status,
+                                    'text' => $category->categoryDescription,
+                                    'updated_at' => null,
+                                    'value' => $category->categoryCode
+                                ];
+                                $data3->data[0] = $arrdata;
+                            } else if ($data3->form_field_id == 2) { // Sub Category
+                                $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode')->where('supCategorySubID', $data3->form_data_id)->first();
+                                $arrdata = [
+                                    'created_at' => $data3->created_at,
+                                    'id' => $data3->id,
+                                    'status' =>  $data3->status,
+                                    'text' =>   $subCategory->categoryDescription,
+                                    'updated_at' => null,
+                                    'value' => $subCategory->subCategoryCode
+                                ];
+                                $data3->data[0] = $arrdata;
+                            } else if ($data3->form_field_id == 28) { // Preferred Functional Currency
+                                $currency = CurrencyMaster::select('CurrencyCode')->where('currencyID', $data3->form_data_id)->first();
+                                $arrdata = [
+                                    'created_at' => $data3->created_at,
+                                    'id' => $data3->id,
+                                    'status' =>  $data3->status,
+                                    'text' =>  $currency->CurrencyCode,
+                                    'updated_at' => null,
+                                    'value' => $currency->CurrencyCode
+                                ];
+                                $data3->data[0] = $arrdata;
+                            } else if ($data3->form_field_id == 46) { // Country
+                                $country = CountryMaster::select('countryName', 'countryCode')->where('countryID', $data3->form_data_id)->first();
+                                $arrdata = [
+                                    'created_at' => $data3->created_at,
+                                    'id' => $data3->id,
+                                    'status' =>  $data3->status,
+                                    'text' =>  $country->countryName,
+                                    'updated_at' => null,
+                                    'value' => $country->countryCode
+                                ];
+                                $data3->data[0] = $arrdata;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return response()->json($response);
 
             \Log::debug('==========$response=========');
             \Log::debug([$response]);

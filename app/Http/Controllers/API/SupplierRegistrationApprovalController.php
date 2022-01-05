@@ -14,6 +14,7 @@ use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
@@ -239,15 +240,20 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $data['address'] = $supplierFormValues['address'];
         $data['registrationNumber'] = $supplierFormValues['registrationNumber'];
         $data['isActive'] = 1;
-        if ($supplierFormValues['country_id'] != "0" || $supplierFormValues['country_id'] != 0) {
-            $country = CountryMaster::select('countryID')->where('countryName', $supplierFormValues['country_id'])->first();
+        if ($supplierFormValues['country_id'] != "0") {
+            $country = CountryMaster::select('countryID')->where('countryID', $supplierFormValues['country_id'])->first();
             $data['countryID'] = $country['countryID'];
             $data['supplierCountryID'] =  $country['countryID'];
         }
-        if ($supplierFormValues['currency'] != "0" || $supplierFormValues['currency'] != 0) {
-            $currency = CurrencyMaster::select('currencyID')->where('CurrencyCode', $supplierFormValues['currency'])->first();
+        if ($supplierFormValues['currency'] != "0") {
+            $currency = CurrencyMaster::select('currencyID')->where('currencyID', $supplierFormValues['currency'])->first();
             $data['currency'] = $currency['currencyID'];
         }
+        if ($supplierFormValues['supCategoryMasterID'] != "0") {
+            $supplierCat = SupplierCategoryMaster::select('supCategoryMasterID')->where('supCategoryMasterID', $supplierFormValues['supCategoryMasterID'])->first();
+            $data['supCategoryMasterID'] = $supplierCat['supCategoryMasterID'];
+        }
+        
 
         $data['vatEligible'] =  $supplierFormValues['vatEligible'];
         $data['vatNumber'] =  $supplierFormValues['vatNumber'];
@@ -270,53 +276,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $supplierMasters = SupplierMaster::create($data); 
         $dataPrimary['primarySupplierCode'] = 'S0' . strval($supplierMasters['supplierCodeSystem']);
         SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])
-            ->update($dataPrimary); 
-
-        /* $supplierAssigned['supplierCodeSytem'] =  $supplierMasters['supplierCodeSystem'];
-        $supplierAssigned['companySystemID'] =  $supplierMasters['primaryCompanySystemID'];
-        $supplierAssigned['companyID'] =  $supplierMasters['primaryCompanyID']; 
-        $supplierAssigned['uniqueTextcode'] =  $supplierMasters['uniqueTextcode'];
-        $supplierAssigned['primarySupplierCode'] =  $dataPrimary['primarySupplierCode'];
-        $supplierAssigned['secondarySupplierCode'] =  $supplierMasters['secondarySupplierCode'];
-        $supplierAssigned['supplierName'] =  $supplierMasters['supplierName'];
-        $supplierAssigned['liabilityAccountSysemID'] =  $supplierMasters['liabilityAccountSysemID'];
-        $supplierAssigned['liabilityAccount'] =  $supplierMasters['liabilityAccount'];
-        $supplierAssigned['UnbilledGRVAccountSystemID'] =  $supplierMasters['UnbilledGRVAccountSystemID'];
-        $supplierAssigned['UnbilledGRVAccount'] =  $supplierMasters['UnbilledGRVAccount'];
-        $supplierAssigned['address'] =  $supplierMasters['address'];
-        $supplierAssigned['countryID'] =  $supplierMasters['countryID'];
-        $supplierAssigned['supplierCountryID'] =  $supplierMasters['supplierCountryID'];
-        $supplierAssigned['telephone'] =  $supplierMasters['telephone'];
-        $supplierAssigned['fax'] =  $supplierMasters['fax'];
-        $supplierAssigned['supEmail'] =  $supplierMasters['supEmail'];
-        $supplierAssigned['webAddress'] =  $supplierMasters['webAddress'];
-        $supplierAssigned['currency'] =  $supplierMasters['currency'];
-        $supplierAssigned['nameOnPaymentCheque'] =  $supplierMasters['nameOnPaymentCheque'];
-        $supplierAssigned['creditLimit'] =  $supplierMasters['creditLimit'];
-        $supplierAssigned['creditPeriod'] =  $supplierMasters['creditPeriod'];
-        $supplierAssigned['supCategoryMasterID'] =  $supplierMasters['supCategoryMasterID'];
-        $supplierAssigned['supCategorySubID'] =  $supplierMasters['supCategorySubID'];
-        $supplierAssigned['registrationNumber'] =  $supplierMasters['registrationNumber'];
-        $supplierAssigned['registrationExprity'] =  $supplierMasters['registrationExprity'];
-        $supplierAssigned['supplierImportanceID'] =  $supplierMasters['supplierImportanceID'];
-        $supplierAssigned['supplierNatureID'] =  $supplierMasters['supplierNatureID'];
-        $supplierAssigned['supplierTypeID'] =  $supplierMasters['supplierTypeID'];
-        $supplierAssigned['WHTApplicable'] =  $supplierMasters['WHTApplicable'];
-        $supplierAssigned['vatEligible'] =  $supplierMasters['vatEligible'];
-        $supplierAssigned['vatNumber'] =  $supplierMasters['vatNumber'];
-        $supplierAssigned['vatPercentage'] =  $supplierMasters['vatPercentage'];
-        $supplierAssigned['supCategoryICVMasterID'] =  $supplierMasters['supCategoryICVMasterID']; 
-        $supplierAssigned['supCategorySubICVID'] =  $supplierMasters['supCategorySubICVID']; 
-        $supplierAssigned['isLCCYN'] =  $supplierMasters['isLCCYN']; 
-        $supplierAssigned['isMarkupPercentage'] =  $supplierMasters['isMarkupPercentage']; 
-        $supplierAssigned['isRelatedPartyYN'] =  $supplierMasters['isRelatedPartyYN']; 
-        $supplierAssigned['isCriticalYN'] =  $supplierMasters['isCriticalYN']; 
-        $supplierAssigned['jsrsNo'] =  $supplierMasters['jsrsNo']; 
-        $supplierAssigned['jsrsExpiry'] =  $supplierMasters['jsrsExpiry']; 
-        $supplierAssigned['isActive'] =  $supplierMasters['isActive']; 
-        $supplierAssigned['isAssigned'] = -1; 
-        $supplierAssign = SupplierAssigned::create($supplierAssigned);  */
-
+            ->update($dataPrimary);  
 
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $supplierMasters['supplierCodeSystem'];

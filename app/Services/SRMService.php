@@ -7,6 +7,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\CountryMaster;
+use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -14,6 +16,8 @@ use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
+use App\Models\SupplierCategoryMaster;
+use App\Models\SupplierCategorySub;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
@@ -632,6 +636,25 @@ class SRMService
             'success'   => true,
             'message'   => 'Supplier Ammend',
             'data'      => $kycFormDetails
+        ];
+    }
+    public function getERPFormData(Request $request){ 
+        $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
+        $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
+        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get();
+        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','subCategoryCode','categoryDescription')->get();
+        
+        $formData =  array(
+            'currencyMaster' => $currencyMaster,
+            'countryMaster' => $countryMaster,
+            'supplierCategoryMaster' => $supplierCategoryMaster,
+            'supplierCategorySubMaster' => $supplierCategorySubMaster,
+        );
+        
+        return [
+            'success'   => true,
+            'message'   => 'ERP Form Data Retrieved',
+            'data'      => $formData
         ];
     }
 }
