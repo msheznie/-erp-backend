@@ -150,12 +150,12 @@ class APIController extends Controller
                                 ];
                                 $data3->data[0] = $arrdata;
                             } else if ($data3->form_field_id == 28) { // Preferred Functional Currency
-                                $currency = CurrencyMaster::select('CurrencyCode')->where('currencyID', $data3->form_data_id)->first();
+                                $currency = CurrencyMaster::select('CurrencyCode','CurrencyName')->where('currencyID', $data3->form_data_id)->first();
                                 $arrdata = [
                                     'created_at' => $data3->created_at,
                                     'id' => $data3->id,
                                     'status' =>  $data3->status,
-                                    'text' =>  $currency->CurrencyCode,
+                                    'text' =>  $currency->CurrencyName.' ('.$currency->CurrencyCode.')',
                                     'updated_at' => null,
                                     'value' => $currency->CurrencyCode
                                 ];
