@@ -161,14 +161,14 @@ class APIController extends Controller
                                 ];
                                 $data3->data[0] = $arrdata;
                             } else if ($data3->form_field_id == 46) { // Country
-                                $country = CountryMaster::select('countryName', 'countryCode')->where('countryID', $data3->form_data_id)->first();
+                                $countryMaster = CountryMaster::select('countryName', 'countryCode')->where('countryID', $data3->form_data_id)->first();
                                 $arrdata = [
                                     'created_at' => $data3->created_at,
                                     'id' => $data3->id,
                                     'status' =>  $data3->status,
-                                    'text' =>  $country->countryName,
+                                    'text' =>  $countryMaster->countryName,
                                     'updated_at' => null,
-                                    'value' => $country->countryCode
+                                    'value' => $countryMaster->countryCode
                                 ];
                                 $data3->data[0] = $arrdata;
                             }
