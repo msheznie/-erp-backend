@@ -19,6 +19,7 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
+use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierInvoiceItemDetail;
@@ -525,6 +526,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_add_supplier_invoice_detail_this_document_already_confirmed'),500);
         }
 
+
         DB::beginTransaction();
         try {
 
@@ -649,20 +651,38 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if (isset($temp['isChecked']) && $temp['isChecked']) {
 
-                    $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
-                    //erp_purchaseorderadvpayment
-                    //reqAmountInPOTransCur
-                    $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
-                                              ->where('supplierID',$temp['supplierID'])
-                                              ->sum('reqAmountInPOTransCur');
+                    if ($bookInvSuppMaster->documentType == 0) {
+                        $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
+                        //erp_purchaseorderadvpayment
+                        //reqAmountInPOTransCur
+                        $padpTotal = PoAdvancePayment::where('poID',$temp['purchaseOrderID'])
+                                                  ->where('supplierID',$temp['supplierID'])
+                                                  ->sum('reqAmountInPOTransCur');
 
-                    $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
-                        ->where('supplierID', $temp['supplierID'])
-                        ->sum('totTransactionAmount');
+                        $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
+                            ->where('supplierID', $temp['supplierID'])
+                            ->sum('totTransactionAmount');
 
-                    if ($checkPreTotal > ($poMasterTotal->poTotalSupplierTransactionCurrency + $padpTotal)) {
-                        $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
-                        $itemExistArray[] = [$itemDrt];
+                        if ($checkPreTotal > ($poMasterTotal->poTotalSupplierTransactionCurrency + $padpTotal)) {
+                            $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
+                            $itemExistArray[] = [$itemDrt];
+                        }
+                    } else {
+                        $grvMasterTotal = GRVMaster::find($temp['grvAutoID']);
+                        //erp_purchaseorderadvpayment
+                        //reqAmountInPOTransCur
+                        $padpTotal = PoAdvancePayment::where('grvAutoID',$temp['grvAutoID'])
+                                                  ->where('supplierID',$temp['supplierID'])
+                                                  ->sum('reqAmountInPOTransCur');
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $temp['grvAutoID'])
+                            ->where('supplierID', $temp['supplierID'])
+                            ->sum('totTransactionAmount');
+
+                        if ($checkPreTotal > ($grvMasterTotal->grvTotalSupplierTransactionCurrency + $padpTotal)) {
+                            $itemDrt = 'Supplier Invoice amount is greater than ' . $grvMasterTotal->grvPrimaryCode . ' GRV amount. Please check again.';
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
                 }
             }
