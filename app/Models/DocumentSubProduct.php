@@ -146,5 +146,9 @@ class DocumentSubProduct extends Model
     {
         return $this->belongsTo('App\Models\ItemReturnMaster', 'documentSystemCode', 'itemReturnAutoID')->where('documentSystemID', 12);
     }
-    
+
+    public function purchase_return()
+    {
+        return $this->belongsTo('App\Models\PurchaseReturn', 'documentSystemCode', 'purhaseReturnAutoID')->where('documentSystemID', 24);
+    }
 }
