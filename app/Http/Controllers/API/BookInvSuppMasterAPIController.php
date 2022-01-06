@@ -1131,6 +1131,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $directGRV = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
+                                    ->where('companySystemID', $companyId)
+                                    ->first();
+
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1138,6 +1142,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'years' => $years,
             'tax' => $taxMaster,
             'assetAllocatePolicy' => ($assetAllocatePolicy && $assetAllocatePolicy->isYesNO == 1) ? true : false,
+            'directGRVPolicy' => ($directGRV && $directGRV->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
