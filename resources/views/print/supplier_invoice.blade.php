@@ -236,7 +236,7 @@
 
                 <div>
                     <span style="font-size: 18px">
-                        @if($masterdata->documentType == 0)
+                        @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
                             Booking Invoice
                         @endif
                         @if($masterdata->documentType == 1)
@@ -392,7 +392,7 @@
             </td>
         </tr>
     </table>
-    @if($masterdata->documentType == 0)
+    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
@@ -452,7 +452,7 @@
             </table>
         </div>
     @endif
-    @if($masterdata->documentType == 0)
+    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
