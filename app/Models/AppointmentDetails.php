@@ -106,7 +106,7 @@ class AppointmentDetails extends Model
         return $this->hasOne('App\Models\ProcumentOrder', 'purchaseOrderID', 'po_master_id');
     }
     public function getPoDetails(){ 
-        return $this->hasOne('App\Models\ProcumentOrderDetail', 'purchaseOrderDetailsID', 'po_detail_id');
+        return $this->hasOne('App\Models\PurchaseOrderDetails', 'purchaseOrderDetailsID', 'po_detail_id');
     }
     public function appointment(){
         return $this->belongsTo('App\Models\Appointment', 'appointment_id', 'id');
