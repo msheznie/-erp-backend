@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ItemSerial;
 use App\Models\GRVDetails;
 use App\Models\ItemIssueDetails;
+use App\Models\StockTransferDetails;
 use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
 use App\Models\PurchaseReturnDetails;
@@ -77,6 +78,11 @@ class ItemSerialRepository extends BaseRepository
             case 24:
                 $returnDedtail = PurchaseReturnDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->purhaseReturnAutoID : null;
+
+                break;
+            case 13:
+                $returnDedtail = StockTransferDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->stockTransferAutoID : null;
 
                 break;
             default:
