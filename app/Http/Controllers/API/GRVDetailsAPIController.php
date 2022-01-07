@@ -1165,6 +1165,7 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['includePLForGRVYN'] = $financeCategorySub->includePLForGRVYN;
             $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
             $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
+            $GRVDetail_arr['wasteQty'] = $input['wasteQty'];
             $GRVDetail_arr['noQty'] = $input['noQty'];
             $GRVDetail_arr['prvRecievedQty'] = 0;
             $GRVDetail_arr['poQty'] = 0;
@@ -1266,6 +1267,7 @@ class GRVDetailsAPIController extends AppBaseController
             // checking the qty request is matching with sum total
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
             $GRVDetail_arr['noQty'] = $input['noQty'];
+            $GRVDetail_arr['wasteQty'] = $input['wasteQty'];
             $totalNetcost = $input['unitCost'] * $input['noQty'];
             $GRVDetail_arr['unitCost'] = $input['unitCost'];
             $GRVDetail_arr['netAmount'] = $totalNetcost;

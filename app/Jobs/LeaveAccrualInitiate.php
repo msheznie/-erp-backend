@@ -57,7 +57,7 @@ class LeaveAccrualInitiate implements ShouldQueue
         else{
 
             $service_types = CommonJobService::leave_accrual_service_types();
-
+            $seconds = 0;
             foreach ($company_list as $company){
                 $company = $company->toArray();
                 ['code'=> $company_code, 'name'=> $company_name] = $company;
@@ -96,12 +96,15 @@ class LeaveAccrualInitiate implements ShouldQueue
                     Log::info(count($groups). " groups found for {$acc_type} " . $this->log_suffix(__LINE__));
 
                     if(count($groups) > 0){
+                        
                         foreach ($groups as $group){
                             $group = array_only($group, ['leaveGroupID', 'description']);
 
                             Log::info("{$acc_type} {$group['description']} (leave group) adding to process queue " . $this->log_suffix(__LINE__) );
 
-                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group)->delay(now()->addMinute(2));
+                            $seconds += 30;
+                            LeaveAccrualProcess::dispatch($db, $company, $accrual_type_det, $group)->delay(now()->addSeconds($seconds));
+                            
                         }
                     }
                 }
