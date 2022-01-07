@@ -318,6 +318,33 @@ class FcmTokenAPIController extends AppBaseController
         return $this->sendSuccess('Fcm Token deleted successfully');
     }
 
+    public function redirectHome(Request $request)
+    {
+        try {
+
+            $scheme = request()->secure() ? 'https' : 'http';
+
+            $url = $request->getHttpHost();
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+            if ($subDomain == 'www') {
+                $subDomain = $url_array[1];
+            }
+
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+            if ($tenantDomain != 'localhost:8000') {
+                $homeUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
+            } else {
+                $homeUrl = null;
+            }
+
+            return $this->sendResponse(['homeUrl' => $homeUrl], 'Successfully Redirected to Home');
+        } catch (\Exception $exception) {
+            return $this->sendError('Something went wrong');
+        }
+    }
+
     public function logoutApiUser(Request $request)
     {
         try {
@@ -340,8 +367,10 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            if ($subDomain != 'localhost:8000') {
-                 $logoutUrl = $scheme."://".$subDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+            if ($tenantDomain != 'localhost:8000') {
+                 $logoutUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
             } else {
                  $logoutUrl = null;
             }
