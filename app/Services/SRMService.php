@@ -315,7 +315,7 @@ class SRMService
         $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoDetails' =>function($query){
+            $query->with(['getPoMaster', 'getPoDetails' =>function($query){
                 $query->with(['unit','appointmentDetails' => function($q){
                     $q->whereHas('appointment', function ($q){
                         $q->where('refferedBackYN', '!=', -1);
