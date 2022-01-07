@@ -454,22 +454,25 @@ class BookInvSuppDetAPIController extends AppBaseController
                 ]);
         }
 
-        // updating po master flag
-        $poMasterTableTotal = ProcumentOrder::find($poMasterAutoID);
+        if ($poMasterAutoID > 0) {
+            // updating po master flag
+            $poMasterTableTotal = ProcumentOrder::find($poMasterAutoID);
 
-        $getTotal = BookInvSuppDet::where('purchaseOrderID', $poMasterAutoID)
-            ->sum('totTransactionAmount');
+            $getTotal = BookInvSuppDet::where('purchaseOrderID', $poMasterAutoID)
+                ->sum('totTransactionAmount');
 
-        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
-            $poMasterTableTotal->invoicedBooked = 2;
-        } else if(round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)){
-            $poMasterTableTotal->invoicedBooked = 2;
-        } else if ($getTotal != 0) {
-            $poMasterTableTotal->invoicedBooked = 1;
-        } else if ($getTotal == 0) {
-            $poMasterTableTotal->invoicedBooked = 0;
+            if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
+                $poMasterTableTotal->invoicedBooked = 2;
+            } else if(round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)){
+                $poMasterTableTotal->invoicedBooked = 2;
+            } else if ($getTotal != 0) {
+                $poMasterTableTotal->invoicedBooked = 1;
+            } else if ($getTotal == 0) {
+                $poMasterTableTotal->invoicedBooked = 0;
+            }
+            $poMasterTableTotal->save();
         }
-        $poMasterTableTotal->save();
+
 
         SupplierInvoiceItemDetail::where('bookingSupInvoiceDetAutoID', $id)->delete();
 

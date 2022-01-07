@@ -510,6 +510,9 @@ HAVING ROUND(
                 $value->balanceAmount = collect($grv_details)->sum('balanceAmount');
                 $value->balanceAmountCheck = collect($grv_details)->sum('balanceAmount');
 
+                $grv_details = collect($grv_details)->where('balanceAmount', '>', 0)->all();
+
+
                 $value->grv_details = $grv_details;
             }
         }
