@@ -399,6 +399,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
 
             $totalSupplierPayment = PaySupplierInvoiceDetail::where('purchaseOrderID', $purchaseOrderID)
+                                                            ->where('matchingDocID',0)
                                                             ->whereHas('payment_master', function($query) {
                                                                     $query->where('refferedBackYN', 0);
                                                             })
