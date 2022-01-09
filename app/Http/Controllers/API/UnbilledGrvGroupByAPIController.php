@@ -441,7 +441,7 @@ HAVING ROUND(
                                                              ->on('returnedLogistic.poAdvPaymentID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
                                                    })
                                                     ->where('erp_purchaseorderadvpayment.grvAutoID', $value->grvAutoID)
-                                                    ->when($purchaseOrderID > 0, function($query) {
+                                                    ->when($purchaseOrderID > 0, function($query) use($value){
                                                         $query->where('poID', $value->purchaseOrderID);
                                                     })
                                                     ->where('erp_purchaseorderadvpayment.supplierID',$value->supplierID)
@@ -462,7 +462,7 @@ HAVING ROUND(
 
 
 
-                $grvDetails = GRVDetails::when($purchaseOrderID > 0, function($query) {
+                $grvDetails = GRVDetails::when($purchaseOrderID > 0, function($query) use($value){
                                             $query->where('purchaseOrderMastertID', $value->purchaseOrderID);
                                         })
                                        ->where('grvAutoID', $value->grvAutoID)
