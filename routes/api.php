@@ -409,7 +409,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
         Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
 
-        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+        Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
+        Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
+
+        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');      
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
 
@@ -1042,6 +1045,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview');
         Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
         Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
+
+        Route::resource('expense_claim_masters', 'ExpenseClaimMasterAPIController');
+        Route::post('getExpenseClaimMasterByCompany', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterByCompany');
+        Route::get('getExpenseClaimMasterPaymentStatusHistory', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterPaymentStatusHistory');
+
+        Route::resource('expense_claim_details_masters', 'ExpenseClaimDetailsMasterAPIController');
+        Route::get('getDetailsByExpenseClaimMaster', 'ExpenseClaimDetailsMasterAPIController@getDetailsByExpenseClaimMaster');
+        Route::get('preCheckECDetailMasterEdit', 'ExpenseClaimDetailsMasterAPIController@preCheckECDetailMasterEdit');
+
+
+        Route::resource('expense_claim_categories_masters', 'ExpenseClaimCategoriesMasterAPIController');
+
 
         Route::resource('logistic_details', 'LogisticDetailsAPIController');
         Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
@@ -2583,3 +2598,5 @@ Route::get('runCronJob/{cron}', function ($cron) {
 
 
 Route::resource('document_sub_products', 'DocumentSubProductAPIController');
+
+
