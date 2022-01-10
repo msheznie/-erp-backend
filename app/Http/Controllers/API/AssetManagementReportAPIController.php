@@ -19,6 +19,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
+use App\Models\AssetDisposalMaster;
 use App\Models\ItemAssigned;
 use App\Models\CompanyFinancePeriod;
 use App\Models\ExpenseAssetAllocation;
@@ -331,6 +332,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
+
+                $masterData = AssetDisposalMaster::with(['disposal_type' => function ($query) {
+                    $query->with('chartofaccount');
+                }])->find(2);
+
 
                 $outputArr = array();
                 if ($output) {
@@ -1611,6 +1617,7 @@ FROM
         $qry = 'SELECT
                     erp_fa_asset_disposalmaster.companyID,
                     companymaster.CompanyName,
+                    customermaster.CustomerName,
                     erp_fa_asset_disposalmaster.disposalDocumentDate AS disposalDate,
                     erp_fa_asset_disposalmaster.disposalDocumentCode,
                     erp_fa_asset_disposalmaster.disposalType,
@@ -1619,6 +1626,7 @@ FROM
                     erp_fa_asset_disposaldetail.faCode AS AssetCODE,
                     erp_fa_asset_disposaldetail.faUnitSerialNo AS AssetSerialNumber,
                     erp_fa_asset_disposaldetail.assetDescription AS AssetDescription,
+                    round(erp_fa_asset_disposaldetail.sellingPriceLocal,2) AS SellingPrice,
                     erp_fa_asset_disposaldetail.COSTUNIT AS AssetCostLocal,
                     erp_fa_asset_disposaldetail.COSTUNIT - erp_fa_asset_disposaldetail.netBookValueLocal AS AccumulatedDepreciationLocal,
                     erp_fa_asset_disposaldetail.netBookValueLocal AS NetBookVALUELocal,
@@ -1635,6 +1643,7 @@ FROM
                     INNER JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                     INNER JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                     INNER JOIN companymaster ON erp_fa_asset_disposalmaster.companySystemID = companymaster.companySystemID
+                    INNER JOIN customermaster ON erp_fa_asset_disposalmaster.customerID = customermaster.customerCodeSystem
                     LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE
