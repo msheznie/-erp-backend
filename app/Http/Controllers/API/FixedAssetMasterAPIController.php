@@ -329,7 +329,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                         GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty]);
 
                     } else {
-                        $qtyRange = range(1, $grvDetails->noQty-$grvDetails->assetAllocatedQty);
+
+                    
+                        $qtyRange = range(1, round($grvDetails->noQty)-$grvDetails->assetAllocatedQty);
+
                         $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
