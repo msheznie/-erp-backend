@@ -330,9 +330,11 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                     } else {
 
-                    
-                        $qtyRange = range(1, round($grvDetails->noQty)-$grvDetails->assetAllocatedQty);
+                        $ceil_qty = ceil($grvDetails->noQty);
 
+                        $qtyRange = range(1, $ceil_qty-$grvDetails->assetAllocatedQty);
+
+                  
                         $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
@@ -415,8 +417,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $assetAllocatedQty++;
                             }
                         }
+
+                        $allocate_qty = $assetAllocatedQty;
+                        if($ceil_qty > $assetAllocatedQty)
+                        {
+                            $allocate_qty = $ceil_qty;
+                        }
+       
+
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$allocate_qty]);
                     }
-                    GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$assetAllocatedQty]);
+                   
                     DB::commit();
                 }
             }
