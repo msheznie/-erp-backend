@@ -2552,6 +2552,7 @@ Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 Route::group(['prefix' => 'srm'], function (){
     Route::group(['middleware' => ['tenantById']], function (){
         Route::post('requests', 'SRM\APIController@handleRequest');
+        Route::get('getProcumentOrderPrintPDFSRM', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     });
 
     Route::group(['middleware' => ['tenant']], function (){
