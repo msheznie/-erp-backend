@@ -1,0 +1,371 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateExpenseClaimMasterAPIRequest;
+use App\Http\Requests\API\UpdateExpenseClaimMasterAPIRequest;
+use App\Models\ExpenseClaimMaster;
+use App\Repositories\ExpenseClaimMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ExpenseClaimMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class ExpenseClaimMasterAPIController extends AppBaseController
+{
+    /** @var  ExpenseClaimMasterRepository */
+    private $expenseClaimMasterRepository;
+
+    public function __construct(ExpenseClaimMasterRepository $expenseClaimMasterRepo)
+    {
+        $this->expenseClaimMasterRepository = $expenseClaimMasterRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/expenseClaimMasters",
+     *      summary="Get a listing of the ExpenseClaimMasters.",
+     *      tags={"ExpenseClaimMaster"},
+     *      description="Get all ExpenseClaimMasters",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ExpenseClaimMaster")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->expenseClaimMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->expenseClaimMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $expenseClaimMasters = $this->expenseClaimMasterRepository->all();
+
+        return $this->sendResponse($expenseClaimMasters->toArray(), 'Expense Claim Masters retrieved successfully');
+    }
+
+    /**
+     * @param CreateExpenseClaimMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/expenseClaimMasters",
+     *      summary="Store a newly created ExpenseClaimMaster in storage",
+     *      tags={"ExpenseClaimMaster"},
+     *      description="Store ExpenseClaimMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ExpenseClaimMaster that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ExpenseClaimMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ExpenseClaimMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateExpenseClaimMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $expenseClaimMaster = $this->expenseClaimMasterRepository->create($input);
+
+        return $this->sendResponse($expenseClaimMaster->toArray(), 'Expense Claim Master saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/expenseClaimMasters/{id}",
+     *      summary="Display the specified ExpenseClaimMaster",
+     *      tags={"ExpenseClaimMaster"},
+     *      description="Get ExpenseClaimMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ExpenseClaimMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ExpenseClaimMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ExpenseClaimMaster $expenseClaimMaster */
+        $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
+
+        if (empty($expenseClaimMaster)) {
+            return $this->sendError('Expense Claim Master not found');
+        }
+
+        return $this->sendResponse($expenseClaimMaster->toArray(), 'Expense Claim Master retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateExpenseClaimMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/expenseClaimMasters/{id}",
+     *      summary="Update the specified ExpenseClaimMaster in storage",
+     *      tags={"ExpenseClaimMaster"},
+     *      description="Update ExpenseClaimMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ExpenseClaimMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ExpenseClaimMaster that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ExpenseClaimMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ExpenseClaimMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateExpenseClaimMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ExpenseClaimMaster $expenseClaimMaster */
+        $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
+
+        if (empty($expenseClaimMaster)) {
+            return $this->sendError('Expense Claim Master not found');
+        }
+
+        $expenseClaimMaster = $this->expenseClaimMasterRepository->update($input, $id);
+
+        return $this->sendResponse($expenseClaimMaster->toArray(), 'ExpenseClaimMaster updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/expenseClaimMasters/{id}",
+     *      summary="Remove the specified ExpenseClaimMaster from storage",
+     *      tags={"ExpenseClaimMaster"},
+     *      description="Delete ExpenseClaimMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ExpenseClaimMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ExpenseClaimMaster $expenseClaimMaster */
+        $expenseClaimMaster = $this->expenseClaimMasterRepository->findWithoutFail($id);
+
+        if (empty($expenseClaimMaster)) {
+            return $this->sendError('Expense Claim Master not found');
+        }
+
+        $expenseClaimMaster->delete();
+
+        return $this->sendSuccess('Expense Claim Master deleted successfully');
+    }
+
+    public function getExpenseClaimMasterByCompany(Request $request)
+    {
+
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'glCodeAssignedYN', 'approvedYN', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $expenseClaims = $this->expenseClaimMasterRepository->expenseClaimMasterListQuery($request, $input, $search);
+
+        return \DataTables::of($expenseClaims)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('expenseClaimMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getExpenseClaimMasterPaymentStatusHistory(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $detail = \DB::select('SELECT
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.BPVcode,
+                                erp_paysupplierinvoicemaster.documentID,
+                                erp_paysupplierinvoicemaster.companyID,
+                                erp_paysupplierinvoicemaster.BPVdate,
+                                erp_paysupplierinvoicemaster.BPVNarration,
+                                erp_paysupplierinvoicemaster.createdUserID,
+                                employees.empName,
+                                erp_directpaymentdetails.expenseClaimMasterAutoID 
+                            FROM
+                                ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
+                                LEFT JOIN employees ON erp_paysupplierinvoicemaster.createdUserID = employees.empID 
+                            WHERE
+                                erp_directpaymentdetails.expenseClaimMasterAutoID = ' . $id . '
+                            GROUP BY
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.documentSystemID,
+                                erp_paysupplierinvoicemaster.companySystemID,
+                                erp_directpaymentdetails.expenseClaimMasterAutoID 
+                            HAVING
+                                ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) ) UNION ALL
+                            SELECT
+                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
+                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
+                                hrms_monthlyadditionsmaster.documentID,
+                                hrms_monthlyadditionsmaster.CompanyID,
+                                hrms_monthlyadditionsmaster.dateMA,
+                                hrms_monthlyadditionsmaster.description,
+                                hrms_monthlyadditionsmaster.modifieduser,
+                                employees.empName,
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
+                            FROM
+                                ( hrms_monthlyadditionsmaster INNER JOIN hrms_monthlyadditiondetail ON hrms_monthlyadditionsmaster.monthlyAdditionsMasterID = hrms_monthlyadditiondetail.monthlyAdditionsMasterID )
+                                LEFT JOIN employees ON hrms_monthlyadditionsmaster.modifieduser = employees.empID 
+                            WHERE
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID = ' . $id . '
+                            GROUP BY
+                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
+                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
+                                hrms_monthlyadditionsmaster.documentSystemID,
+                                hrms_monthlyadditionsmaster.companySystemID,
+                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
+                            HAVING
+                                ( ( ( hrms_monthlyadditiondetail.expenseClaimMasterAutoID ) <> 0 ) );
+                            ;');
+
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+}
