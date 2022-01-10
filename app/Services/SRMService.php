@@ -24,6 +24,7 @@ use App\Services\Shared\SharedService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use function Clue\StreamFilter\fun;
 
 class SRMService
 {
@@ -314,12 +315,14 @@ class SRMService
         $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails', 'getPoDetails.unit']);
-        }, 'created_by', 'detail.getPoMaster.detail.appointmentDetails' => function ($query) {
-            $query->whereHas('appointment', function ($q){
-                $q->where('refferedBackYN', '!=', -1);
-            });
-        }])
+            $query->with(['getPoMaster', 'getPoDetails' =>function($query){
+                $query->with(['unit','appointmentDetails' => function($q){
+                    $q->whereHas('appointment', function ($q){
+                        $q->where('refferedBackYN', '!=', -1);
+                    });
+                }]);
+            }]);
+        }, 'created_by'])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
@@ -336,7 +339,7 @@ class SRMService
 
         $data = Appointment::with(['detail' => function ($q) {
             $q->with(['getPoDetails' => function ($q1) {
-                $q1->with(['productmentOrder', 'unit']);
+                $q1->with(['order', 'unit']);
             }]);
         }])
             ->where('id', $appointmentID)->first();
