@@ -140,7 +140,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-      
+        
+ 
         DB::beginTransaction();
         try {
 
@@ -148,6 +149,46 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             if($is_pending_job_exist == 0)
             {
+                
+                $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
+
+
+                $assest_fixds = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                    $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
+                    $query->whereHas('master_by', function ($query) {
+                        $query->where('approved', -1);
+                    });
+                    $query->groupBy('faID');
+                }])->WhereDate('dateDEP','<',$doc_date->dateTo)->isDisposed()->get();
+
+             
+
+                foreach($assest_fixds as $key=>$val)
+                {
+                    $cos_unit = $val->COSTUNIT;
+                    $dep_amount = $val->depperiod_by;
+
+                  
+                    if(isset($dep_amount) && !empty($dep_amount) && count($dep_amount) > 0)
+                    {
+                      
+                        $dep_local_amount = $dep_amount[0]->depAmountLocal;
+                        if($cos_unit == $dep_local_amount ||$cos_unit < $dep_local_amount )
+                        {
+                            unset($assest_fixds[$key]);
+                        }
+                    
+                    }
+
+              
+                }  
+         
+
+               $count_assest = count($assest_fixds);
+
+               if($count_assest > 0)
+               {    
+
                 $validator = \Validator::make($request->all(), [
                     'companyFinanceYearID' => 'required',
                     'companyFinancePeriodID' => 'required',
@@ -162,7 +203,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 if (count($alreadyExist) > 0) {
                     return $this->sendError('Depreciation already processed for the selected month', 500);
                 }
-    
+                
+
+                
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500);
@@ -237,6 +280,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
                 DB::commit();
                 return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
+
+               }
+               else{
+
+                return $this->sendError('There is a no assest for this date period. please choose different date period', 500);
+               }
+                
+
             }
             else
             {
