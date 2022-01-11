@@ -282,14 +282,64 @@ class InventoryReportAPIController extends AppBaseController
 
     }
 
+    private function scrapInventoryReportSupplierWise($from, $toDate,$category,$items,$currency)
+    {
+
+        $fromDate = new Carbon($from);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $items = (array)$items;
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+            $cur_id = 'erp_itemledger.wacLocalCurrencyID';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+            $cur_id = 'erp_itemledger.wacRptCurrencyID';
+        }
+
+        return GRVDetails::with(['grv_master','unit'])->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+
+    }
+
     /*generate report according to each report id*/
     public function generateReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
 
-            case 'INVSI':
+            case 'INVSIS':
                 
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
+
+                $array = array();
+                if (!empty($filter_val)) {
+                    foreach ($filter_val as $element)
+                    {
+                        $array[$element->grv_master->supplierName][]  = $element;
+                    }
+                }
+        
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+                $output = array(
+                    'items' => $array,
+                    'company' => $company,
+                    'currencyID' => $currency_id,
+                );
+                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+
+                 break;   case 'INVSI':
+
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
                 $filter_val = $this->scrapInventoryReport($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
@@ -301,8 +351,8 @@ class InventoryReportAPIController extends AppBaseController
                         $array[$element->itemPrimaryCode][]  = $element;
                     }
                 }
-        
-                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
                     'items' => $array,
                     'company' => $company,
@@ -1037,6 +1087,31 @@ FROM
     {
         $reportID = $request->reportID;
         switch ($reportID) {
+
+            case 'INVSIS':
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                $items = $request['Items'];
+
+                $items = (array)$items;
+                $items = collect($items)->pluck('itemPrimaryCode');
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                $templateName = "export_report.scrap_inventory_supplier_wise_report";
+
+                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
+
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
 
             case 'INVSI':
 
