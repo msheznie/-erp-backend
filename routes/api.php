@@ -2504,6 +2504,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
     Route::get('test', 'TenantAPIController@test');
+
+    Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
 });
 
 
