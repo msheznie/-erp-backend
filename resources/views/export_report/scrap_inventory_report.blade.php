@@ -35,15 +35,23 @@
             $fromDate = date('Y/m/d', strtotime($fromDate));
             $toDate = date('Y/m/d', strtotime($toDate));
 
+                $grvArray = array();
                 $details = GRVDetails::whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+                foreach($details as $detail){
+                    array_push($grvArray,$detail->itemPrimaryCode);
+                }
+                $details = array_unique($grvArray);
+
         @endphp
         @foreach($details as $item)
         <tbody>
         <tr><td></td></tr>
-        <tr><td>Item: {{$item->itemPrimaryCode}}</td></tr>
+        <tr><td>Item: {{$item}}</td></tr>
         <tr><td></td></tr>
         @php
-            $grvItems = GRVDetails::where('itemPrimaryCode',$item->itemPrimaryCode)->get();
+            $grvItems = GRVDetails::where('itemPrimaryCode',$item)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+            $totWaste = 0;
+            $totQty = 0;
         @endphp
         @foreach($grvItems as $grvItem)
             @php
@@ -60,12 +68,26 @@
 {{--            <td>{{ $grvItem->prvRecievedQty }}</td>--}}
             <td>{{ $grvItem->wasteQty }}</td>
             <td>{{ $grvItem->noQty }}</td>
-            <td>{{ $grvItem->unitCost }}</td>
-            <td>{{ $grvItem->netAmount }}</td>
+            <td>{{ number_format($grvItem->unitCost,3) }}</td>
+            <td>{{ number_format($grvItem->netAmount,3) }}</td>
             <td>{{ $grvItem->grvNarration }}</td>
+            <td style="display: none">{{ $totWaste += $grvItem->wasteQty }}</td>
+            <td style="display: none">{{ $totQty += $grvItem->noQty }}</td>
         </tr>
 
         @endforeach
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>Total</td>
+            <td>{{ $totWaste }}</td>
+            <td>{{ $totQty }}</td>
+
+        </tr>
         </tbody>
         @endforeach
     </table>
