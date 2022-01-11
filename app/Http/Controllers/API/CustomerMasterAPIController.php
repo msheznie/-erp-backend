@@ -399,7 +399,9 @@ class CustomerMasterAPIController extends AppBaseController
     {
        
         $input = $request->all();
-
+        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
+            return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
        
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);
