@@ -263,6 +263,10 @@ class SupplierMaster extends Model
         
     ];
 
+    public function company() {
+        return $this->belongsTo('App\Models\Company','primaryCompanySystemID','companySystemID');
+    }
+
     public function categoryMaster(){
         return $this->hasOne('App\Models\SupplierCategoryMaster', 'supCategoryMasterID','supCategoryMasterID');
     }
