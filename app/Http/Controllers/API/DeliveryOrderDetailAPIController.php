@@ -200,7 +200,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                // return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -290,6 +290,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['unitOfMeasureIssued'] = $item->unit;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['trackingType'] = $item->trackingType;
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
@@ -1150,6 +1151,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             $DODetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
                             $DODetail_arr['itemFinanceCategorySubID'] = $item->financeCategorySub;
+                            $DODetail_arr['trackingType'] = $item->trackingType;
 
                             $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $new['companySystemID'])
                                 ->where('mainItemCategoryID', $DODetail_arr['itemFinanceCategoryID'])

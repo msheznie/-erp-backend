@@ -133,7 +133,8 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-        $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
+        $item = ItemAssigned::with(['item_master'])
+            ->where('idItemAssigned', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -160,6 +161,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['itemUnitOfMeasure'] = $item->itemUnitOfMeasure;
 
         $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
+        $input['trackingType'] = isset($item->item_master->trackingType) ? $item->item_master->trackingType : null;
         $input['convertionMeasureVal'] = 1;
 
         $input['qtyIssued'] = 0;

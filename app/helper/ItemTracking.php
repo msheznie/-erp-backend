@@ -11,6 +11,9 @@ use App\Models\ItemReturnDetails;
 use App\Models\Company;
 use App\Models\StockTransferDetails;
 use App\Models\PurchaseReturnDetails;
+use App\Models\DeliveryOrderDetail;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 
 class ItemTracking
@@ -159,6 +162,60 @@ class ItemTracking
 													   ->count();
 
 					if ($trackingCheck != $value->qty) {
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+					}
+				}
+
+				break;
+			case 71:
+				$checkTrackingAvaliability = DeliveryOrderDetail::where('trackingType', 2)
+														->where('deliveryOrderID', $documentSystemCode)
+														->get();
+
+				if (count($checkTrackingAvaliability) == 0) {
+					return ['status' => true];
+				}
+
+				foreach ($checkTrackingAvaliability as $key => $value) {
+					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->deliveryOrderDetailID)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->whereHas('serial_data', function($query) {
+													   		$query->whereNotNull('serialCode');
+													   })
+													   ->count();
+
+					if ($trackingCheck != $value->qtyIssued) {
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+					}
+				}
+
+				break;
+			case 20:
+
+				$customerInvoiceData = CustomerInvoiceDirect::find($documentSystemCode);
+
+				if ($customerInvoiceData && $customerInvoiceData->isPerforma != 2) {
+					return ['status' => true];
+				}
+
+
+				$checkTrackingAvaliability = CustomerInvoiceItemDetails::where('trackingType', 2)
+														->where('custInvoiceDirectAutoID', $documentSystemCode)
+														->get();
+
+				if (count($checkTrackingAvaliability) == 0) {
+					return ['status' => true];
+				}
+
+				foreach ($checkTrackingAvaliability as $key => $value) {
+					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->customerItemDetailID)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->whereHas('serial_data', function($query) {
+													   		$query->whereNotNull('serialCode');
+													   })
+													   ->count();
+
+					if ($trackingCheck != $value->qtyIssued) {
 						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 					}
 				}

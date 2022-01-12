@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\ItemTracking;
 use Illuminate\Support\Facades\Storage;
 /**
  * Class DeliveryOrderController
@@ -304,7 +305,7 @@ class DeliveryOrderAPIController extends AppBaseController
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'detail' => function($query){
-            $query->with(['quotation','uom_default']);
+            $query->with(['quotation','uom_default', 'item_by']);
         },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($deliveryOrder)) {
@@ -461,6 +462,13 @@ class DeliveryOrderAPIController extends AppBaseController
             } else {
                 return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
             }
+
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($deliveryOrder->documentSystemID, $id);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
+            }
+
 
             $messages = [
                 'transactionCurrencyID.required' => 'Currency field is required',

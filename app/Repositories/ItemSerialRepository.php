@@ -9,6 +9,8 @@ use App\Models\StockTransferDetails;
 use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
 use App\Models\PurchaseReturnDetails;
+use App\Models\DeliveryOrderDetail;
+use App\Models\CustomerInvoiceItemDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -83,6 +85,16 @@ class ItemSerialRepository extends BaseRepository
             case 13:
                 $returnDedtail = StockTransferDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->stockTransferAutoID : null;
+
+                break;
+            case 71:
+                $deliveryOrderDetail = DeliveryOrderDetail::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($deliveryOrderDetail) ? $deliveryOrderDetail->deliveryOrderID : null;
+
+                break;
+            case 20:
+                $deliveryOrderDetail = CustomerInvoiceItemDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($deliveryOrderDetail) ? $deliveryOrderDetail->custInvoiceDirectAutoID : null;
 
                 break;
             default:
