@@ -596,14 +596,8 @@ class CustomerMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
-       return 'update';
 
-        return$input = $request->all();
-
-        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
-            return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
-        }
-
+        $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
