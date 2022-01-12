@@ -310,7 +310,7 @@ class SRMService
             ->where('created_by', $supplierID)
             ->get();
 
-        $slotMaster = SlotMaster::find($slotMasterID)->first();
+        $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
 
         $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
@@ -319,7 +319,9 @@ class SRMService
                 $query->with(['unit','appointmentDetails' => function($q){
                     $q->whereHas('appointment', function ($q){
                         $q->where('refferedBackYN', '!=', -1);
-                    });
+                    })->groupBy('po_detail_id')
+                        ->select('id', 'appointment_id','qty','po_detail_id')
+                        ->selectRaw('sum(qty) as qty');
                 }]);
             }]);
         }, 'created_by'])
