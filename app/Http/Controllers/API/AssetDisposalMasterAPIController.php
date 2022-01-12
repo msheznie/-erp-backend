@@ -351,6 +351,25 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+            $company_id = $input['companySystemID'];
+
+            $masterData = AssetDisposalMaster::whereHas('disposal_type' , function ($query) use($company_id) {
+                $query->whereHas('chartofaccount',function($query) use($company_id){
+                    $query->whereHas('chartofaccount_assigned',function($query) use($company_id){
+                        $query->where('companySystemID',$company_id);
+                    });
+                });
+            })->find($id);
+
+            if(!isset($masterData))
+            {
+                return $this->sendError('Chart of account for selected disposal type is not assigned to company', 500);
+            }
+           
+
+         
+
+
             /** @var AssetDisposalMaster $assetDisposalMaster */
             $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
 
