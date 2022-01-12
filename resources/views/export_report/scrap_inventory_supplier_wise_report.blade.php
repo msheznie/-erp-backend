@@ -15,21 +15,7 @@
             <th>{{ $tDate }}</th>
 
         <tr>
-        <tr>
-            <th>Date</th>
-            <th>Document Code</th>
-            <th>Reference No</th>
-            <th>Vehicle No</th>
-            <th>Item Short Code</th>
-            <th>Item Description</th>
-            <th>UOM</th>
-            {{--            <th>Received Qty</th>--}}
-            <th>Waste Qty</th>
-            <th>Net Qty</th>
-            <th>Unit Rate</th>
-            <th>Total</th>
-            <th>Remarks</th>
-        </tr>
+
         </thead>
         @php
             $fromDate = date('Y/m/d', strtotime($fromDate));
@@ -44,6 +30,27 @@
 
         @endphp
         @foreach($details as $item)
+            @php
+                $grvTotalWaste = GRVDetails::where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->sum('wasteQty');
+            @endphp
+            @if($grvTotalWaste != 0)
+           <thead>
+            <tr>
+                <th>Date</th>
+                <th>Document Code</th>
+                <th>Reference No</th>
+                <th>Vehicle No</th>
+                <th>Item Short Code</th>
+                <th>Item Description</th>
+                <th>UOM</th>
+                {{--            <th>Received Qty</th>--}}
+                <th>Waste Qty</th>
+                <th>Net Qty</th>
+                <th>Unit Rate</th>
+                <th>Total</th>
+                <th>Remarks</th>
+            </tr>
+           </thead>
             <tbody>
             <tr><td></td></tr>
             <tr><td>Supplier: {{$item}}</td></tr>
@@ -75,8 +82,10 @@
                     <td>{{ number_format($grvItem->unitCost,3) }}</td>
                     <td>{{ number_format($grvItem->netAmount,3) }}</td>
                     <td>{{ $grvItem->grvNarration }}</td>
-                    <td style="display: none">{{ $totWaste += $grvItem->wasteQty }}</td>
-                    <td style="display: none">{{ $totQty += $grvItem->noQty }}</td>
+                    @php
+                    $totWaste += $grvItem->wasteQty;
+                    $totQty += $grvItem->noQty;
+                    @endphp
                 </tr>
                 @endif
 
@@ -94,6 +103,7 @@
 
             </tr>
             </tbody>
+            @endif
         @endforeach
     </table>
 </div>
