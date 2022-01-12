@@ -795,7 +795,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by'])->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by','company'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');

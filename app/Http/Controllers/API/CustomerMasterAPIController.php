@@ -300,6 +300,7 @@ class CustomerMasterAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccounts' => $chartOfAccounts,
             'country' => $country,
+            'company' => $customer->company,
             'contactTypes' => $contactTypes,
             'isCustomerCatalogPolicyOn'=>$hasPolicy
         );
