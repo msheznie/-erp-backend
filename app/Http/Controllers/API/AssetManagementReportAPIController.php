@@ -1263,7 +1263,6 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $data[$x]['Customer Name'] = $val->CustomerName;
 
-                    $data[$x]['Customer Invoice'] = $val->customerInvoiceNo;
 
                     $x++;
                 }
@@ -1628,7 +1627,6 @@ FROM
                     erp_fa_asset_disposalmaster.companyID,
                     companymaster.CompanyName,
                     customermaster.CustomerName,
-                    erp_custinvoicedirect.bookingInvCode AS customerInvoiceNo,
                     erp_fa_asset_disposalmaster.disposalDocumentDate AS disposalDate,
                     erp_fa_asset_disposalmaster.disposalDocumentCode,
                     erp_fa_asset_disposalmaster.disposalType,
@@ -1658,7 +1656,6 @@ FROM
                     INNER JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                     INNER JOIN companymaster ON erp_fa_asset_disposalmaster.companySystemID = companymaster.companySystemID
                     LEFT JOIN customermaster ON erp_fa_asset_disposalmaster.customerID = customermaster.customerCodeSystem
-                    LEFT JOIN erp_custinvoicedirect ON erp_fa_asset_disposalmaster.disposalDocumentCode = erp_custinvoicedirect.customerInvoiceNo
                     LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE
