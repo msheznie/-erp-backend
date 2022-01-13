@@ -304,7 +304,7 @@ class SRMService
             ->where('confirmed_yn', 1)
             ->Where(function ($query) {
                 $query->where('approved_yn', 0)
-                    ->orWhere('approved_yn', 1);
+                    ->orWhere('approved_yn', -1);
             })
             ->where('refferedBackYN', 0)
             ->where('created_by', $supplierID)
