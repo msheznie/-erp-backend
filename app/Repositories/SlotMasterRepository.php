@@ -76,7 +76,7 @@ class SlotMasterRepository extends AppBaseController
             }
         });
 
-        if($toTime <= $fromTime){ 
+        if($toTime <= $fromTime){
             return ['status' => false, 'message' => 'Time To cannot be less than or equal to Time From'];
         }
 
@@ -94,16 +94,16 @@ class SlotMasterRepository extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
         $fromDate = $fromDate->format('Y-m-d') . ' ' . $fromTime;
-        $toDate = $toDate->format('Y-m-d') . ' ' . $toTime; 
+        $toDate = $toDate->format('Y-m-d') . ' ' . $toTime;
         $dateRangeExist = '';
         $limitYN = (isset($input['limit_deliveries'])&&$input['limit_deliveries']==true)?1:0;
         if($limitYN == 1){
-                if(!isset($input['noofdeliveries'])){
-                    return ['status' => false, 'message' => 'No of deliveries is required'];
-                }
-                if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
-                    return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
-                } 
+            if(!isset($input['noofdeliveries'])){
+                return ['status' => false, 'message' => 'No of deliveries is required'];
+            }
+            if( isset($input['noofdeliveries']) && $input['noofdeliveries'] <=0){
+                return ['status' => false, 'message' => 'No of deliveries cannot be less than or equal to 0'];
+            }
         }
 
         DB::beginTransaction();
@@ -117,28 +117,58 @@ class SlotMasterRepository extends AppBaseController
         try {
             if ($slotMasterID > 0) {
                 $this->deleteSlot($slotMasterID);
-            } 
-            if ($slotMasterID > 0) {
-                $dateRangeExist = DB::table('slot_master')
-                ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
-                //->orWhereRaw("(to_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
-                ->where('warehouse_id', '=', $input['wareHouse'])
-                ->where('id', '!=', $input['slotMasterID'])
-                ->first();
             }
-    
-            if($slotMasterID == 0){ 
-                $dateRangeExist = DB::table('slot_master')
-                ->selectRaw('id')
-                ->whereRaw("(from_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
-                //->orWhereRaw("(to_date >= '$fromDateTime' AND to_date <= '$toDateTime')")
-                ->where('warehouse_id', '=', $input['wareHouse'])
-                ->first();
+
+            $frmDateOnly=Carbon::parse($fromDate);
+            $toDateOnly=Carbon::parse($toDate);
+
+            $diff = $frmDateOnly->diffInDays($toDateOnly);
+
+            for ($x = 0; $x <= $diff; $x++) {
+                $wareHouse=$input['wareHouse'];
+                $addedDays = $frmDateOnly->addDays($x);
+                $dateFrm = $addedDays->format('Y-m-d');
+
+                $fTim = new Carbon($fromTime);
+                $fTimF = $fTim->addSeconds(1)->format('H-i-s');
+
+                $tTim = new Carbon($toTime);
+                $tTimF = $tTim->subSeconds(1)->format('H-i-s');
+
+
+                $dateFrmTime = $dateFrm.' '.$fTimF;
+                $dateFrmToTime = $dateFrm.' '.$tTimF;
+
+                /*$dateRangeExist =  DB::select("SELECT * FROM slot_master WHERE warehouse_id = $wareHouse AND (
+            ( ( '$dateFrmTime' BETWEEN from_date AND to_date ) OR ( '$dateFrmToTime' BETWEEN from_date AND to_date ) )
+                OR
+                ( ( from_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) OR ( to_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) ))");*/
+
+
+                if ($slotMasterID > 0) {
+                    $dateRangeExist = DB::table('slot_master')
+                        ->selectRaw('id')
+                        ->whereRaw("((( '$dateFrmTime' BETWEEN from_date AND to_date ) OR ( '$dateFrmToTime' BETWEEN from_date AND to_date))OR
+		                                ((from_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) OR ( to_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' )))")
+                        ->where('warehouse_id', '=', $input['wareHouse'])
+                        ->where('id', '!=', $input['slotMasterID'])
+                        ->first();
+                }
+
+                if($slotMasterID == 0){
+                    $dateRangeExist = DB::table('slot_master')
+                        ->selectRaw('id')
+                        ->whereRaw("((( '$dateFrmTime' BETWEEN from_date AND to_date) OR ( '$dateFrmToTime' BETWEEN from_date AND to_date)) OR
+		                                ((from_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' ) OR ( to_date BETWEEN '$dateFrmTime' AND '$dateFrmToTime' )))")
+                        ->where('warehouse_id', '=', $input['wareHouse'])
+                        ->first();
+                }
+                if (!empty($dateRangeExist)) {
+                    return ['status' => false, 'message' => 'The slot is available for selected date range'];
+                }
             }
-            if (!empty($dateRangeExist)) {
-                return ['status' => false, 'message' => 'The slot is available for selected date range'];
-            } 
+
+
             $insertResp = $slotMaster->create($data);
             if ($insertResp) {
                 $this->insertCalanderScheduleDays(
