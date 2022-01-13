@@ -167,8 +167,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 ->assetType(1)
                 ->isDisposed()->get();
 
-                
-      
 
                 foreach($assest_fixds as $key=>$val)
                 {
