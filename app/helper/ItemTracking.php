@@ -14,6 +14,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\SalesReturnDetail;
 use App\Models\CustomerMaster;
 
 class ItemTracking
@@ -216,6 +217,29 @@ class ItemTracking
 													   ->count();
 
 					if ($trackingCheck != $value->qtyIssued) {
+						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+					}
+				}
+
+				break;
+			case 87:
+				$checkTrackingAvaliability = SalesReturnDetail::where('trackingType', 2)
+														->where('salesReturnID', $documentSystemCode)
+														->get();
+
+				if (count($checkTrackingAvaliability) == 0) {
+					return ['status' => true];
+				}
+
+				foreach ($checkTrackingAvaliability as $key => $value) {
+					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->salesReturnDetailID)
+													   ->where('documentSystemID', $documentSystemID)
+													   ->whereHas('serial_data', function($query) {
+													   		$query->whereNotNull('serialCode');
+													   })
+													   ->count();
+
+					if ($trackingCheck != $value->qtyReturned) {
 						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 					}
 				}

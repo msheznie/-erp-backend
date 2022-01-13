@@ -151,4 +151,19 @@ class DocumentSubProduct extends Model
     {
         return $this->belongsTo('App\Models\PurchaseReturn', 'documentSystemCode', 'purhaseReturnAutoID')->where('documentSystemID', 24);
     }
+
+     public function delivery_order()
+    {
+        return $this->belongsTo('App\Models\DeliveryOrder', 'documentSystemCode', 'deliveryOrderID')->where('documentSystemID', 71);
+    }
+
+     public function customer_invoice()
+    {
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'documentSystemCode', 'custInvoiceDirectAutoID')->where('documentSystemID', 20);
+    }
+
+     public function sales_return()
+    {
+        return $this->belongsTo('App\Models\SalesReturn', 'documentSystemCode', 'id')->where('documentSystemID', 87);
+    }
 }

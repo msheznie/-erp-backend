@@ -444,19 +444,27 @@ class ItemSerialAPIController extends AppBaseController
                                  })
                                  ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
-                                                $query->where('soldFlag', 0)
-                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
-                                                            $query->where('documentSystemID', $input['documentSystemID'])
-                                                                  ->where('documentDetailID', $input['documentDetailID']);
-                                                      });
-                                            })->orWhere(function($query) use ($input) {
                                                 $query->where('soldFlag', 1)
                                                       ->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       });
                                             })->orWhere(function($query) use ($input) {
+                                                $query->where('soldFlag', 0)
+                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
                                                 $query->when($input['documentSystemID'] == 13, function($query) use ($input){
+                                                    $query->where('soldFlag', 0)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      }); 
+                                                });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->when(in_array($input['documentSystemID'], [71, 20]), function($query) use ($input){
                                                     $query->where('soldFlag', 0)
                                                       ->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
@@ -478,6 +486,12 @@ class ItemSerialAPIController extends AppBaseController
                                                 })->orWhereHas('material_return', function($query) use ($input) {
                                                     $query->where('approved', -1);
                                                 })->orWhereHas('purchase_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('sales_return', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
                                                     $query->where('approved', -1);
                                                 });
                                         });
@@ -515,9 +529,13 @@ class ItemSerialAPIController extends AppBaseController
                                   ->whereHas('document_in_product', function($query) use ($input){
                                         $query->where(function($query) {
                                             $query->whereHas('material_issue', function($query) {
-                                                $query->where('approved', -1);
-                                            })
-                                            ->where('documentSystemID', 8);
+                                                    $query->where('approved', -1);
+                                                })
+                                                ->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
+                                                });
                                         })
                                         ->where('documentSystemCode', $input['rootDocumentID']);
                                   })

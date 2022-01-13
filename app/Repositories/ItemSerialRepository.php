@@ -10,6 +10,7 @@ use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
 use App\Models\PurchaseReturnDetails;
 use App\Models\DeliveryOrderDetail;
+use App\Models\SalesReturnDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
@@ -95,6 +96,11 @@ class ItemSerialRepository extends BaseRepository
             case 20:
                 $deliveryOrderDetail = CustomerInvoiceItemDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($deliveryOrderDetail) ? $deliveryOrderDetail->custInvoiceDirectAutoID : null;
+
+                break;
+            case 87:
+                $salesReturnDetail = SalesReturnDetail::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($salesReturnDetail) ? $salesReturnDetail->salesReturnID : null;
 
                 break;
             default:
