@@ -147,11 +147,13 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
 
+
             if($is_pending_job_exist == 0)
             {
                 
                 $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
 
+                
 
                 $assest_fixds = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
@@ -159,9 +161,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                         $query->where('approved', -1);
                     });
                     $query->groupBy('faID');
-                }])->WhereDate('dateDEP','<',$doc_date->dateTo)->isDisposed()->get();
+                }])->WhereDate('dateDEP','<',$doc_date->dateTo)
+                ->ofCompany([$input['companySystemID']])
+                ->isApproved()
+                ->assetType(1)
+                ->isDisposed()->get();
 
-             
+                
+      
 
                 foreach($assest_fixds as $key=>$val)
                 {
@@ -186,6 +193,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
                $count_assest = count($assest_fixds);
 
+      
+          
                if($count_assest > 0)
                {    
 
