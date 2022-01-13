@@ -70,7 +70,7 @@
         @endphp
         @foreach($grvItems as $grvItem)
             @php
-            $dates = preg_split('/\s+/', $grvItem->createdDateTime, -1, PREG_SPLIT_NO_EMPTY);
+            $dates = preg_split('/\s+/', $grvItem->createdDateTime->format('d/m/y'), -1, PREG_SPLIT_NO_EMPTY);
             @endphp
             @if($grvItem->wasteQty != 0)
         <tr>
