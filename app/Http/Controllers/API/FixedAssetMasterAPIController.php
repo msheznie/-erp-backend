@@ -1013,6 +1013,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::all();
 
+        $checkUnqieStatusOfAssetCodeFormula = AssetFinanceCategory::whereNotNull('formula')
+                                                                  ->get()
+                                                                  ->pluck('formula')
+                                                                  ->toArray();
+
+
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
 
         $insuranceType = InsurancePolicyType::all();
@@ -1038,6 +1044,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
+            'auditCategoryEditable' => (count(array_unique($checkUnqieStatusOfAssetCodeFormula)) == 1) ? true : false,
             'insuranceType' => $insuranceType
         );
 
