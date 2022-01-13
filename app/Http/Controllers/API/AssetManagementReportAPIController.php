@@ -1261,8 +1261,6 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x]['Profit/Loss (Local)'] = round($val->ProfitLocal, $val->localCurrencyDeci);
                     $data[$x]['Profit/Loss (Reporting)'] = round($val->ProfitRpt, $val->reportCurrencyDeci);
 
-                    $data[$x]['Customer Name'] = $val->CustomerName;
-
 
                     $x++;
                 }
