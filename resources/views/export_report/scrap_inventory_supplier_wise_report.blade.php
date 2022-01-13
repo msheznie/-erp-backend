@@ -74,7 +74,7 @@ foreach($grvItems as $grvItem){
            <thead>
 {{--           <tr><td>{{ $result }}</td></tr>--}}
             <tr>
-                <th>Date  {{ $totWaste1 }}</th>
+                <th>Date</th>
                 <th>Document Code</th>
                 <th>Reference No</th>
                 <th>Vehicle No</th>
