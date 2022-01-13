@@ -29,17 +29,52 @@
             foreach($details as $detail){
                 array_push($grvArray,$detail->grv_master->supplierName);
             }
-            $details = array_unique($grvArray);
+
+
+            $grvItems = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+        $q->where('companySystemID', $companySystemID);
+        $q->whereIn('supplierPrimaryCode', $suppliers);
+    })->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+        $grvArrayItems = array();
+
+foreach($grvItems as $grvItem){
+            array_push($grvArrayItems,$grvItem->grv_master->supplierName);
+        }
+
+        $result=array_intersect($grvArrayItems,$grvArray);
+        $result=array_unique($result);
 
         @endphp
-        @foreach($details as $item)
+        @foreach($result as $item)
             @php
-                $grvTotalWaste = GRVDetails::where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->sum('wasteQty');
+                $grvTotalWaste = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+        $q->where('companySystemID', $companySystemID);
+        $q->whereIn('supplierPrimaryCode', $suppliers);
+    })->whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->sum('wasteQty');
             @endphp
-            @if($grvTotalWaste != 0)
+
+            @php
+                $grvItems = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+            $q->where('companySystemID', $companySystemID);
+            $q->whereIn('supplierPrimaryCode', $suppliers);
+        })->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+                    $totWaste1 = 0;
+                    $totQty1 = 0;
+            @endphp
+            @foreach($grvItems as $grvItem)
+                @if($grvItem->grv_master->supplierName == $item)
+                @php
+                    $totWaste1 += $grvItem->wasteQty;
+                    $totQty1 += $grvItem->noQty;
+                @endphp
+                @endif
+            @endforeach
+
+            @if($totWaste1 != 0)
            <thead>
+{{--           <tr><td>{{ $result }}</td></tr>--}}
             <tr>
-                <th>Date</th>
+                <th>Date  {{ $totWaste1 }}</th>
                 <th>Document Code</th>
                 <th>Reference No</th>
                 <th>Vehicle No</th>
@@ -71,7 +106,7 @@
                     $dates = preg_split('/\s+/', $grvItem->createdDateTime->format('d/m/y'), -1, PREG_SPLIT_NO_EMPTY);
 
                 @endphp
-{{--                @if($grvItem->grv_master->supplierName == $item)--}}
+                @if($grvItem->grv_master->supplierName == $item)
                     @if($grvItem->wasteQty != 0)
                 <tr>
                     <td>{{ $dates[0] }}</td>
@@ -113,7 +148,7 @@
                     $totQty += $grvItem->noQty;
                     @endphp
                 </tr>
-{{--                @endif--}}
+                @endif
                 @endif
 
             @endforeach
