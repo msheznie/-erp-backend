@@ -22,7 +22,10 @@
             $toDate = date('Y/m/d', strtotime($toDate));
 
                 $grvArray = array();
-                $details = GRVDetails::whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+                $details = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+            $q->where('companySystemID', $companySystemID);
+            $q->whereIn('supplierPrimaryCode', $suppliers);
+        })->whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
                 foreach($details as $detail){
                     array_push($grvArray,$detail->itemPrimaryCode);
                 }
@@ -55,8 +58,13 @@
         <tr><td></td></tr>
         <tr><td>Item: {{$item}}</td></tr>
         <tr><td></td></tr>
+
+
         @php
-            $grvItems = GRVDetails::where('itemPrimaryCode',$item)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+            $grvItems = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+            $q->where('companySystemID', $companySystemID);
+            $q->whereIn('supplierPrimaryCode', $suppliers);
+        })->where('itemPrimaryCode',$item)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
             $totWaste = 0;
             $totQty = 0;
         @endphp
@@ -76,8 +84,29 @@
 {{--            <td>{{ $grvItem->prvRecievedQty }}</td>--}}
             <td>{{ $grvItem->wasteQty }}</td>
             <td>{{ $grvItem->noQty }}</td>
-            <td>{{ number_format($grvItem->unitCost,3) }}</td>
-            <td>{{ number_format($grvItem->netAmount,3) }}</td>
+
+            @if($currency_id == 1)
+            <td>{{ number_format($grvItem->unitCost,$company->localcurrency->DecimalPlaces) }}</td>
+
+            @endif
+
+            @if($currency_id == 2)
+            <td>{{ number_format($grvItem->unitCost,$company->reportingcurrency->DecimalPlaces) }}</td>
+
+            @endif
+
+            @if($currency_id == 1)
+
+            <td>{{ number_format($grvItem->netAmount,$company->localcurrency->DecimalPlaces) }}</td>
+
+            @endif
+
+            @if($currency_id == 2)
+
+            <td>{{ number_format($grvItem->netAmount,$company->reportingcurrency->DecimalPlaces) }}</td>
+
+            @endif
+
             <td>{{ $grvItem->grvNarration }}</td>
                 @php
                 $totWaste += $grvItem->wasteQty;

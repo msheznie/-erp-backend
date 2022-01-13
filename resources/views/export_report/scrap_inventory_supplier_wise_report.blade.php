@@ -18,15 +18,18 @@
 
         </thead>
         @php
-            $fromDate = date('Y/m/d', strtotime($fromDate));
-            $toDate = date('Y/m/d', strtotime($toDate));
+        $fromDate = date('Y/m/d', strtotime($fromDate));
+        $toDate = date('Y/m/d', strtotime($toDate));
 
-                $grvArray = array();
-                $details = GRVDetails::whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
-                foreach($details as $detail){
-                    array_push($grvArray,$detail->grv_master->supplierName);
-                }
-                $details = array_unique($grvArray);
+            $grvArray = array();
+            $details = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+        $q->where('companySystemID', $companySystemID);
+        $q->whereIn('supplierPrimaryCode', $suppliers);
+    })->whereIn('itemPrimaryCode',$scrapDetails)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+            foreach($details as $detail){
+                array_push($grvArray,$detail->grv_master->supplierName);
+            }
+            $details = array_unique($grvArray);
 
         @endphp
         @foreach($details as $item)
@@ -56,7 +59,10 @@
             <tr><td>Supplier: {{$item}}</td></tr>
             <tr><td></td></tr>
             @php
-                $grvItems = GRVDetails::where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+                $grvItems = GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+            $q->where('companySystemID', $companySystemID);
+            $q->whereIn('supplierPrimaryCode', $suppliers);
+        })->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
                     $totWaste = 0;
                     $totQty = 0;
             @endphp
@@ -66,6 +72,7 @@
 
                 @endphp
                 @if($grvItem->grv_master->supplierName == $item)
+                    @if($grvItem->wasteQty != 0)
                 <tr>
                     <td>{{ $dates[0] }}</td>
                     <td>{{ $grvItem->grv_master->grvPrimaryCode }}</td>
@@ -79,14 +86,34 @@
 
                     <td>{{ $grvItem->wasteQty }}</td>
                     <td>{{ $grvItem->noQty }}</td>
-                    <td>{{ number_format($grvItem->unitCost,3) }}</td>
-                    <td>{{ number_format($grvItem->netAmount,3) }}</td>
+                    @if($currency_id == 1)
+                        <td>{{ number_format($grvItem->unitCost,$company->localcurrency->DecimalPlaces) }}</td>
+
+                    @endif
+
+                    @if($currency_id == 2)
+                        <td>{{ number_format($grvItem->unitCost,$company->reportingcurrency->DecimalPlaces) }}</td>
+
+                    @endif
+
+                    @if($currency_id == 1)
+
+                        <td>{{ number_format($grvItem->netAmount,$company->localcurrency->DecimalPlaces) }}</td>
+
+                    @endif
+
+                    @if($currency_id == 2)
+
+                        <td>{{ number_format($grvItem->netAmount,$company->reportingcurrency->DecimalPlaces) }}</td>
+
+                    @endif
                     <td>{{ $grvItem->grvNarration }}</td>
                     @php
                     $totWaste += $grvItem->wasteQty;
                     $totQty += $grvItem->noQty;
                     @endphp
                 </tr>
+                @endif
                 @endif
 
             @endforeach
