@@ -474,6 +474,10 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
 
+        if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
+            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -550,8 +554,12 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
+        $input = $this->convertArrayToValue($request->all());
+        
 
-        $input = $request->all();
+        if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
+            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
@@ -795,7 +803,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by'])->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by','company'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');

@@ -2473,67 +2473,70 @@ class Helper
         $prDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $masterData['autoID'])->get();
 
         foreach ($prDetails as $key => $value) {
-            $grvDetailsData = GRVDetails::find($value->grvDetailsID);
+            $grvDetailsData = GRVDetails::with(['grv_master'])->find($value->grvDetailsID);
 
-            $detailExistPODetail = PurchaseOrderDetails::find($grvDetailsData->purchaseOrderDetailsID);
+            if (isset($grvDetailsData->grv_master->grvTypeID) && $grvDetailsData->grv_master->grvTypeID == 2) {
+                $detailExistPODetail = PurchaseOrderDetails::find($grvDetailsData->purchaseOrderDetailsID);
 
-            $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
-                ->whereHas('grv_master', function ($query) {
-                    $query->where('grvCancelledYN', '!=', -1);
-                })
-                ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
-                ->WHERE('purchaseOrderDetailsID', $grvDetailsData->purchaseOrderDetailsID)
-                ->first();
+                $detailPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                    ->whereHas('grv_master', function ($query) {
+                        $query->where('grvCancelledYN', '!=', -1);
+                    })
+                    ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                    ->WHERE('purchaseOrderDetailsID', $grvDetailsData->purchaseOrderDetailsID)
+                    ->first();
 
-            // get the total received qty
-            $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
-                ->whereHas('grv_master', function ($query) {
-                    $query->where('grvCancelledYN', '!=', -1);
-                })
-                ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
-                ->first();
+                // get the total received qty
+                $masterPOSUM = GRVDetails::selectRaw('SUM(noQty - returnQty) as newNoQty')
+                    ->whereHas('grv_master', function ($query) {
+                        $query->where('grvCancelledYN', '!=', -1);
+                    })
+                    ->WHERE('purchaseOrderMastertID', $grvDetailsData->purchaseOrderMastertID)
+                    ->first();
 
-            $receivedQty = 0;
-            $goodsRecievedYN = 0;
-            $GRVSelectedYN = 0;
-            if ($detailPOSUM->newNoQty > 0) {
-                $receivedQty = $detailPOSUM->newNoQty;
-            }
-
-            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-            if ($receivedQty == 0) {
+                $receivedQty = 0;
                 $goodsRecievedYN = 0;
                 $GRVSelectedYN = 0;
-            } else {
-                if ($checkQuantity == 0) {
-                    $goodsRecievedYN = 2;
-                    $GRVSelectedYN = 1;
-                } else {
-                    $goodsRecievedYN = 1;
+                if ($detailPOSUM->newNoQty > 0) {
+                    $receivedQty = $detailPOSUM->newNoQty;
+                }
+
+                $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
+                if ($receivedQty == 0) {
+                    $goodsRecievedYN = 0;
                     $GRVSelectedYN = 0;
-                }
-            }
-
-            $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
-                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
-
-            $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')
-                ->WHERE('purchaseOrderMasterID', $grvDetailsData->purchaseOrderMastertID)
-                ->first();
-
-
-            if ($balanceQty["balanceQty"] == 0) {
-                $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
-                    ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
-            } else {
-                if ($masterPOSUM->newNoQty > 0) {
-                    $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
-                        ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
                 } else {
+                    if ($checkQuantity == 0) {
+                        $goodsRecievedYN = 2;
+                        $GRVSelectedYN = 1;
+                    } else {
+                        $goodsRecievedYN = 1;
+                        $GRVSelectedYN = 0;
+                    }
+                }
+
+                $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
+                    ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+
+                $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')
+                    ->WHERE('purchaseOrderMasterID', $grvDetailsData->purchaseOrderMastertID)
+                    ->first();
+
+
+                if ($balanceQty["balanceQty"] == 0) {
                     $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
-                        ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
+                        ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
+                } else {
+                    if ($masterPOSUM->newNoQty > 0) {
+                        $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                            ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
+                    } else {
+                        $updatePO = ProcumentOrder::find($grvDetailsData->purchaseOrderMastertID)
+                            ->update(['poClosedYN' => 0, 'grvRecieved' => 0]);
+                    }
                 }
             }
+
         }
 
         return ['success' => true];

@@ -17,6 +17,8 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
+use App\Models\GRVDetails;
+use App\Models\GrvDetailsPrn;
 use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
@@ -31,7 +33,18 @@ class InventoryReportAPIController extends AppBaseController
     {
         $reportID = $request->reportID;
         switch ($reportID) {
-            case 'INVIS':
+            case 'INVSI':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'items' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+                case 'INVIS':
                 $validator = \Validator::make($request->all(), [
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
@@ -170,6 +183,38 @@ class InventoryReportAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    public function getScarpInventoryFilterData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+
+        $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
+        $document = DocumentMaster::where('departmentSystemID', 10)->get();
+        $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
+
+
+        $item = DB::table('erp_grvdetails')->select('erp_grvdetails.companySystemID', 'erp_grvdetails.itemPrimaryCode', 'erp_grvdetails.itemDescription')
+        ->whereIn('erp_grvdetails.companySystemID', $companiesByGroup)
+        ->groupBy('erp_grvdetails.itemPrimaryCode')
+        //->take(50)
+        ->get();
+
+
+        $output = array(
+            'warehouse' => $warehouse,
+            'document' => $document,
+            'segment' => $segment,
+            'item' => $item,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
     private function itemSummaryReport($from, $toDate, $warhouse,$category,$items,$currency)
     {
 
@@ -209,18 +254,120 @@ class InventoryReportAPIController extends AppBaseController
 
     }
 
+    private function scrapInventoryReport($from, $toDate,$category,$items,$currency)
+    {
+
+        $fromDate = new Carbon($from);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $items = (array)$items;
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+            $cur_id = 'erp_itemledger.wacLocalCurrencyID';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+            $cur_id = 'erp_itemledger.wacRptCurrencyID';
+        }
+
+        return GRVDetails::with(['grv_master'])->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+
+    }
+
+    private function scrapInventoryReportSupplierWise($from, $toDate,$category,$items,$currency)
+    {
+
+        $fromDate = new Carbon($from);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $items = (array)$items;
+        $items = collect($items)->pluck('itemPrimaryCode');
+
+
+        if($currency == 1)
+        {
+            $cur = 'wacLocal';
+            $cur_id = 'erp_itemledger.wacLocalCurrencyID';
+        }
+        else
+        {
+            $cur = 'wacRpt';
+            $cur_id = 'erp_itemledger.wacRptCurrencyID';
+        }
+
+        return GRVDetails::with(['grv_master','unit'])->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+
+    }
+
     /*generate report according to each report id*/
     public function generateReport(Request $request)
     {
         $reportID = $request->reportID;
         switch ($reportID) {
 
-            case 'INVIS':    
+            case 'INVSIS':
                 
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
+                $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
+
+                $array = array();
+                if (!empty($filter_val)) {
+                    foreach ($filter_val as $element)
+                    {
+                        $array[$element->grv_master->supplierName][]  = $element;
+                    }
+                }
+        
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+                $output = array(
+                    'items' => $array,
+                    'company' => $company,
+                    'currencyID' => $currency_id,
+                );
+                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+
+                 break;   case 'INVSI':
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                $filter_val = $this->scrapInventoryReport($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
+
+                $array = array();
+                if (!empty($filter_val)) {
+                    foreach ($filter_val as $element)
+                    {
+                        $array[$element->itemPrimaryCode][]  = $element;
+                    }
+                }
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $output = array(
+                    'items' => $array,
+                    'company' => $company,
+                    'currencyID' => $currency_id,
+                );
+                return $this->sendResponse($output, 'data retrieved retrieved successfully');
+
+                 break;
+
+                 case 'INVIS':
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
                 $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
-   
+
                 $array = array();
                 if (!empty($filter_val)) {
                     foreach ($filter_val as $element)
@@ -228,22 +375,22 @@ class InventoryReportAPIController extends AppBaseController
                         $array[$element->categoryDescription][]  = $element;
                      }
                 }
-        
-        
-        
+
+
+
                 $GrandOpeningBalance = collect($filter_val)->pluck('opening_balance_value')->toArray();
                 $GrandOpeningBalance = array_sum($GrandOpeningBalance);
-        
+
                 $GrandInwards= collect($filter_val)->pluck('inwards_value')->toArray();
                 $GrandInwards = array_sum($GrandInwards);
-        
+
                 $GrandOutwards = collect($filter_val)->pluck('outwards_value')->toArray();
                 $GrandOutwards = array_sum($GrandOutwards);
-        
+
                 $GrandClosing = collect($filter_val)->pluck('closing_balance_value')->toArray();
                 $GrandClosing = array_sum($GrandClosing);
-        
-                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
                     'categories' => $array,
                     'grandOpeningBalance' => $GrandOpeningBalance,
@@ -252,7 +399,7 @@ class InventoryReportAPIController extends AppBaseController
                     'company' => $company,
                     'currencyID' => $currency_id,
                     'grandClosing' => $GrandClosing,
-                );   
+                );
                 return $this->sendResponse($output, 'data retrieved retrieved successfully');
 
                  break;
@@ -941,20 +1088,70 @@ FROM
         $reportID = $request->reportID;
         switch ($reportID) {
 
-            case 'INVIS':
+            case 'INVSIS':
 
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
-                                          
+                $items = $request['Items'];
+
+                $items = (array)$items;
+                $items = collect($items)->pluck('itemPrimaryCode');
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                $templateName = "export_report.scrap_inventory_supplier_wise_report";
+
+                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
+
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+
+            case 'INVSI':
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+                 $items = $request['Items'];
+
+                $items = (array)$items;
+                $items = collect($items)->pluck('itemPrimaryCode');
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                $templateName = "export_report.scrap_inventory_report";
+
+                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
+        
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+
+                case 'INVIS':
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                $currency_id = $input['currency'];
+
                 $filter_val = $this->itemSummaryReport($request->fromDate, $request->toDate, $request['Warehouse'],$request['category'],$request['Items'],$currency_id);
 
-                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID); 
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
                 $currencyCode = ($currency_id == 1) ? $company->localcurrency->CurrencyCode : $company->reportingcurrency->CurrencyCode;
 
                 $decimal_val = ($currency_id == 1) ? $company->localcurrency->DecimalPlaces : $company->reportingcurrency->DecimalPlaces;
 
-          
+
                 foreach ($filter_val as $val) {
                     $data[] = array(
                         'Category' => $val->categoryDescription,
@@ -969,12 +1166,12 @@ FROM
                         'Outwards Val ('.$currencyCode.')' => number_format(($val->outwards_value < 0)?$val->outwards_value*-1:$val->outwards_value, $decimal_val, '.', ','),
                         'Closing Balance Qty' => $val->closing_balance_quantity,
                         'Closing Balance Val ('.$currencyCode.')' => number_format($val->closing_balance_value, $decimal_val, '.', ','),
-        
+
                     );
                 }
-        
-                
-        
+
+
+
                  \Excel::create('inventory_summary_report', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -985,7 +1182,7 @@ FROM
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($request->type);
-        
+
                 return $this->sendResponse(array(), 'successfully export');
 
                 break;

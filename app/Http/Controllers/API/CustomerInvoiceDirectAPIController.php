@@ -79,6 +79,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
+use App\helper\ItemTracking;
 
 /**
  * Class CustomerInvoiceDirectController
@@ -779,6 +780,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 } else {
 
                     if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {   // item sales invoice || From Delivery Note|| From Sales Order|| From Quotation
+
+                        $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($customerInvoiceDirect->documentSystemiD, $id);
+
+                        if (!$trackingValidation['status']) {
+                            return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
+                        }
 
                         $checkQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->where(function ($q) {

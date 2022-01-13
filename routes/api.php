@@ -409,7 +409,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
         Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
 
-        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+        Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
+        Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
+
+        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');      
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
 
@@ -838,7 +841,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
         Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
+        Route::get('getScrapFilterData', 'InventoryReportAPIController@getScarpInventoryFilterData');
         Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
+
+        Route::post('generateScrapReport', 'InventoryReportAPIController@generateScrapReport');
+
         Route::post('generateINVReport', 'InventoryReportAPIController@generateReport');
         Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
@@ -1042,6 +1049,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview');
         Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
         Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
+
+        Route::resource('expense_claim_masters', 'ExpenseClaimMasterAPIController');
+        Route::post('getExpenseClaimMasterByCompany', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterByCompany');
+        Route::get('getExpenseClaimMasterPaymentStatusHistory', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterPaymentStatusHistory');
+
+        Route::resource('expense_claim_details_masters', 'ExpenseClaimDetailsMasterAPIController');
+        Route::get('getDetailsByExpenseClaimMaster', 'ExpenseClaimDetailsMasterAPIController@getDetailsByExpenseClaimMaster');
+        Route::get('preCheckECDetailMasterEdit', 'ExpenseClaimDetailsMasterAPIController@preCheckECDetailMasterEdit');
+
+
+        Route::resource('expense_claim_categories_masters', 'ExpenseClaimCategoriesMasterAPIController');
+
 
         Route::resource('logistic_details', 'LogisticDetailsAPIController');
         Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
@@ -1900,6 +1919,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
         Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
+        Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
@@ -2484,6 +2504,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
     Route::get('test', 'TenantAPIController@test');
+
+    Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
 });
 
 
@@ -2584,3 +2606,5 @@ Route::get('runCronJob/{cron}', function ($cron) {
 
 
 Route::resource('document_sub_products', 'DocumentSubProductAPIController');
+
+

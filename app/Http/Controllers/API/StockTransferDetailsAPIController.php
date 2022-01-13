@@ -144,7 +144,8 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-        $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+        $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -342,6 +343,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['unitCostRpt'] = $item->wacValueReporting;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['trackingType'] = isset($item->item_master->trackingType) ? $item->item_master->trackingType : null;
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
@@ -629,7 +631,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input = $request->all();
         $stockTransferAutoID = $input['stockTransferAutoID'];
 
-        $items = StockTransferDetails::select(DB::raw('stockTransferDetailsID,"" as totalCost,unitCostRpt,unitOfMeasure,itemCodeSystem,itemPrimaryCode,itemDescription,qty, currentStockQty,warehouseStockQty'))
+        $items = StockTransferDetails::select(DB::raw('stockTransferDetailsID,"" as totalCost,unitCostRpt,unitOfMeasure,itemCodeSystem,itemPrimaryCode,itemDescription,qty, currentStockQty,warehouseStockQty, trackingType'))
             ->where('stockTransferAutoID', $stockTransferAutoID)
             ->with(['unit_by' => function ($query) {
             },'item_by'])

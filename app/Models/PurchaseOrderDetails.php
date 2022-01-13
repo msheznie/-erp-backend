@@ -396,4 +396,8 @@ class PurchaseOrderDetails extends Model
     {
         return $this->hasMany('App\Models\AppointmentDetails',  'po_detail_id', 'purchaseOrderDetailsID');
     }
+
+    public function productmentOrder() {
+        return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
+    }
 }

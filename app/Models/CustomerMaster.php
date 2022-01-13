@@ -203,6 +203,10 @@ class CustomerMaster extends Model
         
     ];
 
+    public function company() {
+        return $this->belongsTo('App\Models\Company','primaryCompanySystemID','companySystemID');
+    }
+
     public function country(){
         return $this->belongsTo('App\Models\CountryMaster','customerCountry','countryID');
     }
