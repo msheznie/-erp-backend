@@ -810,7 +810,7 @@ class ItemMasterAPIController extends AppBaseController
         unset($input['specification']);
         unset($input['remove_items']);
 
-        $input = array_except($input,['finance_sub_category']);
+        $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
 
 
 
