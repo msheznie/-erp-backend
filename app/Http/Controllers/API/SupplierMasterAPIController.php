@@ -554,7 +554,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
-        $input = $this->convertArrayToValue($request->all());
+        $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
         
 
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
