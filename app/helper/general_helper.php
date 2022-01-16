@@ -140,10 +140,7 @@ class Helper
             }])
             ->where("masterCompanySystemIDReorting", $selectedCompanyId)
             ->get();
-
-
-        $companiesByGroup = $companiesByGroup->get();
-
+        
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
