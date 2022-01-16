@@ -131,9 +131,19 @@ class Helper
         return $redirectUrl;
     }
 
-    public static function getGroupCompany($selectedCompanyId)
+    public static function getGroupCompany($selectedCompanyId, $excludeSameCompany = false)
     {
-        $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
+        $companiesByGroup = Models\Company::with(['child' => function($q) use($selectedCompanyId,$excludeSameCompany){
+                    if($excludeSameCompany){
+                        $q->where("companySystemID",'!=', $selectedCompanyId);
+                    }
+            }])
+            ->where("masterCompanySystemIDReorting", $selectedCompanyId)
+            ->get();
+
+
+        $companiesByGroup = $companiesByGroup->get();
+
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
