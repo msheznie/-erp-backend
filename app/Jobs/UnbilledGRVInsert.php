@@ -100,7 +100,13 @@ class UnbilledGRVInsert implements ShouldQueue
 
                     if ($output) {
                         $unbillRes = UnbilledGrvGroupBy::insert($output->toArray());
+                        Log::info('Inside if unbuild grv');
+                        Log::info($unbillRes);
+                        Log::info($output->toArray());
 
+                        $lastUnbilledGrvGroupBy = UnbilledGrvGroupBy::orderBy('unbilledgrvAutoID', 'DESC')->first();
+                        Log::info('Last unbuild grv');
+                        Log::info($lastUnbilledGrvGroupBy->toArray());
                         $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,NOW() as grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,ROUND(SUM(reqAmountTransCur_amount + erp_purchaseorderadvpayment.VATAmount),7) as totTransactionAmount,ROUND(SUM(reqAmountInPOLocalCur + erp_purchaseorderadvpayment.VATAmountLocal),7) as totLocalAmount, ROUND(SUM(reqAmountInPORptCur + erp_purchaseorderadvpayment.VATAmountRpt),7) as totRptAmount,'POG' as grvType,NOW() as timeStamp, ROUND(SUM(erp_purchaseorderadvpayment.VATAmount),7) as totalVATAmount, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountLocal),7) as totalVATAmountLocal, ROUND(SUM(erp_purchaseorderadvpayment.VATAmountRpt),7) as totalVATAmountRpt, 1 as logisticYN")
                                                     ->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')
                                                     ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')
@@ -111,7 +117,7 @@ class UnbilledGRVInsert implements ShouldQueue
                             $unbillRes1 = UnbilledGrvGroupBy::insert($output->toArray());
                         }
                         DB::commit();
-                        Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));
+                        Log::info('Successfully updated to unbilled grv table : ' . date('H:i:s'));
                     }else{
                         DB::rollback();
                         Log::info('No records found in unbilled grv table' . date('H:i:s'));
