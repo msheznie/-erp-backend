@@ -142,7 +142,7 @@ foreach($grvItems as $grvItem){
                         <td>{{ number_format($grvItem->netAmount,$company->reportingcurrency->DecimalPlaces) }}</td>
 
                     @endif
-                    <td>{{ $grvItem->grvNarration }}</td>
+                    <td>{{ $grvItem->grv_master->grvNarration }}</td>
                     @php
                     $totWaste += $grvItem->wasteQty;
                     $totQty += $grvItem->noQty;
