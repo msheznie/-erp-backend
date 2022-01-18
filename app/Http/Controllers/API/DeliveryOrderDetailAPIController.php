@@ -19,6 +19,8 @@ use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\StockTransfer;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\Taxdetail;
 use App\Repositories\DeliveryOrderDetailRepository;
 use Illuminate\Http\Request;
@@ -200,7 +202,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                // return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -706,6 +708,34 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             // }
 
             $deliveryOrderDetail->delete();
+
+
+             if ($deliveryOrderDetail->trackingType == 2) {
+                $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
+                                                             ->where('documentDetailID', $id)
+                                                             ->where('sold', 1)
+                                                             ->first();
+
+                if ($validateSubProductSold) {
+                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                }
+
+                $subProduct = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
+                                                 ->where('documentDetailID', $id);
+
+                $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+                $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+                if (count($productInIDs) > 0) {
+                    $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                              ->update(['soldFlag' => 0]);
+
+                    $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                              ->update(['sold' => 0, 'soldQty' => 0]);
+
+                    $subProduct->delete();
+                }
+            }
 
             // update maser table amount field
             $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
