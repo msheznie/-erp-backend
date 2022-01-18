@@ -86,6 +86,15 @@ class GenerateMaterialRequestItem implements ShouldQueue
                     $prDetails->delete();
                 }
             }
+
+            $PrDetails = PurchaseRequestDetails::where('purchaseRequestID',$purchaseRequestID)->get();
+            if(count($PrDetails) == 0 ){
+                $PrInput['purchaseRequestId'] = $purchaseRequestID;
+                $PrInput['isTrusted'] = true;
+                $PrInput['reopenComments'] = "Reopened From Auto MR";
+                $add = app()->make(PurcahseRequestDetail::class);
+                $purchaseRequestReopen = $add->purchaseRequestReopen($PrInput);
+            }
             
             $isJobData = ['is_job_run'=>0];
             $isJobUpdate = MaterielRequest::where('RequestID', $MaterialRequestID)->update($isJobData);

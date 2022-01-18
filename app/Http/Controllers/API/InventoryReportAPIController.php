@@ -254,7 +254,7 @@ class InventoryReportAPIController extends AppBaseController
 
     }
 
-    private function scrapInventoryReport($from, $toDate,$category,$items,$currency)
+    private function scrapInventoryReport($from, $toDate,$category,$items, $suppliers,$currency,$companySystemID)
     {
 
         $fromDate = new Carbon($from);
@@ -265,6 +265,9 @@ class InventoryReportAPIController extends AppBaseController
 
         $items = (array)$items;
         $items = collect($items)->pluck('itemPrimaryCode');
+
+        $suppliers = (array)$suppliers;
+        $suppliers = collect($suppliers)->pluck('primarySupplierCode');
 
 
         if($currency == 1)
@@ -278,11 +281,14 @@ class InventoryReportAPIController extends AppBaseController
             $cur_id = 'erp_itemledger.wacRptCurrencyID';
         }
 
-        return GRVDetails::with(['grv_master'])->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+        return GRVDetails::with(['grv_master'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+                $q->whereIn('supplierPrimaryCode', $suppliers);
+                $q->where('companySystemID', $companySystemID);
+        })->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
 
     }
 
-    private function scrapInventoryReportSupplierWise($from, $toDate,$category,$items,$currency)
+    private function scrapInventoryReportSupplierWise($from, $toDate,$category,$items,$suppliers,$currency,$companySystemID)
     {
 
         $fromDate = new Carbon($from);
@@ -294,6 +300,8 @@ class InventoryReportAPIController extends AppBaseController
         $items = (array)$items;
         $items = collect($items)->pluck('itemPrimaryCode');
 
+        $suppliers = (array)$suppliers;
+        $suppliers = collect($suppliers)->pluck('primarySupplierCode');
 
         if($currency == 1)
         {
@@ -306,7 +314,10 @@ class InventoryReportAPIController extends AppBaseController
             $cur_id = 'erp_itemledger.wacRptCurrencyID';
         }
 
-        return GRVDetails::with(['grv_master','unit'])->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
+        return GRVDetails::with(['grv_master','unit'])->whereHas('grv_master', function($q) use($suppliers,$companySystemID) {
+            $q->where('companySystemID', $companySystemID);
+            $q->whereIn('supplierPrimaryCode', $suppliers);
+        })->whereIn('itemPrimaryCode',$items)->where('createdDateTime', '>=', $fromDate)->where('createdDateTime', '<=', $toDate)->get();
 
     }
 
@@ -320,7 +331,7 @@ class InventoryReportAPIController extends AppBaseController
                 
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
-                $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
+                $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$request['Suppliers'],$currency_id,$request->companySystemID);
 
                 $array = array();
                 if (!empty($filter_val)) {
@@ -338,11 +349,13 @@ class InventoryReportAPIController extends AppBaseController
                 );
                 return $this->sendResponse($output, 'data retrieved retrieved successfully');
 
-                 break;   case 'INVSI':
+                 break;
+
+                 case 'INVSI':
 
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
-                $filter_val = $this->scrapInventoryReport($request->fromDate, $request->toDate,$request['category'],$request['Items'],$currency_id);
+                $filter_val = $this->scrapInventoryReport($request->fromDate, $request->toDate,$request['category'],$request['Items'],$request['Suppliers'],$currency_id,$request->companySystemID);
 
                 $array = array();
                 if (!empty($filter_val)) {
@@ -1093,15 +1106,22 @@ FROM
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
                 $items = $request['Items'];
+                $suppliers = $request['Suppliers'];
+                $companySystemID = $request->companySystemID;
 
                 $items = (array)$items;
                 $items = collect($items)->pluck('itemPrimaryCode');
+
+                $suppliers = (array)$suppliers;
+                $suppliers = collect($suppliers)->pluck('primarySupplierCode');
+
                 $fromDate = $request->fromDate;
                 $toDate = $request->toDate;
 
                 $templateName = "export_report.scrap_inventory_supplier_wise_report";
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
-                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate];
+                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
@@ -1118,15 +1138,22 @@ FROM
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
                  $items = $request['Items'];
+                $suppliers = $request['Suppliers'];
+                $companySystemID = $request->companySystemID;
 
                 $items = (array)$items;
                 $items = collect($items)->pluck('itemPrimaryCode');
+
+                $suppliers = (array)$suppliers;
+                $suppliers = collect($suppliers)->pluck('primarySupplierCode');
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+
                 $fromDate = $request->fromDate;
                 $toDate = $request->toDate;
 
                 $templateName = "export_report.scrap_inventory_report";
 
-                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate];
+                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
