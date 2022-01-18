@@ -1645,4 +1645,34 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
     }
+
+    public function getSearchSupplierByCompanySRM(Request $request)
+    {
+        $isExist = SupplierRegistrationLink::select('supplier_master_id')->whereNotNull('supplier_master_id')->get()->pluck('supplier_master_id');    
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($companyId);
+        } else {
+            $companies = [$companyId];
+        }
+
+        $suppliers = SupplierAssigned::whereIn('companySystemID', $companies)
+            ->select(['supplierCodeSytem', 'supplierName', 'primarySupplierCode'])
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                        ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                       
+                });
+            })
+            ->whereNotIn('supplierCodeSytem', $isExist)
+            ->take(20)
+            ->get();
+
+
+        return $this->sendResponse($suppliers->toArray(),'Data retrieved successfully');
+    }
 }

@@ -2566,7 +2566,8 @@ Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController')
 Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
 
 Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
-
+Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
+Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
 /*
  * Start SRM related routes
  */
