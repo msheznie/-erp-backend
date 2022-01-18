@@ -192,6 +192,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Please select a currency', 500);
         }
         $companyFinanceYearID = $input['companyFinanceYearID'];
+
+        if (!isset($input['companyFinanceYearID']) || is_null($input['companyFinanceYearID'])) {
+            return $this->sendError('Financial year is not selected', 500);
+        }
+
+        if (!isset($input['companyFinancePeriodID']) || is_null($input['companyFinancePeriodID'])) {
+            return $this->sendError('Financial period is not selected', 500);
+        }
+
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
 
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $companyFinanceYearID)->first();
