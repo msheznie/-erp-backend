@@ -122,24 +122,24 @@ foreach($grvItems as $grvItem){
                     <td>{{ $grvItem->wasteQty }}</td>
                     <td>{{ $grvItem->noQty }}</td>
                     @if($currency_id == 1)
-                        <td>{{ number_format($grvItem->unitCost,$company->localcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($grvItem->unitCost / $grvItem->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
 
                     @endif
 
                     @if($currency_id == 2)
-                        <td>{{ number_format($grvItem->unitCost,$company->reportingcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($grvItem->unitCost / $grvItem->companyReportingER,$company->reportingcurrency->DecimalPlaces) }}</td>
 
                     @endif
 
                     @if($currency_id == 1)
 
-                        <td>{{ number_format($grvItem->netAmount,$company->localcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($grvItem->netAmount / $grvItem->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
 
                     @endif
 
                     @if($currency_id == 2)
 
-                        <td>{{ number_format($grvItem->netAmount,$company->reportingcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($grvItem->netAmount / $grvItem->companyReportingER,$company->reportingcurrency->DecimalPlaces) }}</td>
 
                     @endif
                     <td>{{ $grvItem->comment }}</td>
