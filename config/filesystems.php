@@ -69,6 +69,17 @@ return [
             'url' => env('AWS_URL'),
         ],
 
+        's3SRM' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID_SRM'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY_SRM'),
+            'region' => env('AWS_DEFAULT_REGION_SRM'),
+            'bucket' => env('AWS_BUCKET_SRM'),
+            'url' => env('AWS_URL_SRM'),
+        ],
+
+        
+
         'ftp' => [
             'driver'   => 'ftp',
             'host'     => 'gears.gulfenergy-int.com',
