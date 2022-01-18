@@ -352,6 +352,8 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])
                     ->whereIN('companySystemID', $companyID)
                     ->get();
+
+              
                 $outputArr2 = [];
                 if ($companyCurrency) {
                     foreach ($companyCurrency as $val) {
@@ -361,7 +363,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $currency = \Helper::companyCurrency($request->companySystemID);
                 $companyCurrency = $outputArr2;
-
+           
                 $total = array();
                 $total['AssetCostLocal'] = array_sum(collect($output)->pluck('AssetCostLocal')->toArray());
                 $total['AssetCostRPT'] = array_sum(collect($output)->pluck('AssetCostRPT')->toArray());
@@ -377,7 +379,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
-                    'decimalPlaceLocal' => $currency->reportingcurrency->DecimalPlaces,
+                    'decimalPlaceLocal' => $currency->localcurrency->DecimalPlaces,
                     'decimalPlaceRpt' => $currency->reportingcurrency->DecimalPlaces,
                     'currencyLocal' => $currency->localcurrency->CurrencyCode,
                     'currencyRpt' => $currency->reportingcurrency->CurrencyCode,
