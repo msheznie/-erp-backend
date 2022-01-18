@@ -112,7 +112,7 @@ foreach($grvItems as $grvItem){
                     <td>{{ $dates[0] }}</td>
                     <td>{{ $grvItem->grv_master->grvPrimaryCode }}</td>
                     <td>{{ $grvItem->grv_master->grvDoRefNo }}</td>
-                    <td>{{ $grvItem->grv_master->grvDOPersonVehicleNo }}</td>
+                    <td>{{ $grvItem->grv_master->grvDOpersonVehicleNo }}</td>
                     <td>{{ $grvItem->itemPrimaryCode }}</td>
                     <td>{{ $grvItem->itemDescription }}</td>
                     <td>{{ $grvItem->unit->UnitShortCode }}</td>
