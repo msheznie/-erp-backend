@@ -77,7 +77,7 @@
             <td>{{ $dates[0] }}</td>
             <td>{{ $grvItem->grv_master->grvPrimaryCode }}</td>
             <td>{{ $grvItem->grv_master->grvDoRefNo }}</td>
-            <td>{{ $grvItem->grv_master->grvDOPersonVehicleNo }}</td>
+            <td>{{ $grvItem->grv_master->grvDOpersonVehicleNo }}</td>
             <td>{{ $grvItem->itemPrimaryCode }}</td>
             <td>{{ $grvItem->grv_master->supplierName }}</td>
             <td>{{ $grvItem->unit->UnitShortCode }}</td>
@@ -107,7 +107,7 @@
 
             @endif
 
-            <td>{{ $grvItem->grvNarration }}</td>
+            <td>{{ $grvItem->comment }}</td>
                 @php
                 $totWaste += $grvItem->wasteQty;
                 $totQty += $grvItem->noQty;
