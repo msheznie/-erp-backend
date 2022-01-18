@@ -107,7 +107,7 @@
 
             @endif
 
-            <td>{{ $grvItem->grv_master->grvNarration }}</td>
+            <td>{{ $grvItem->comment }}</td>
                 @php
                 $totWaste += $grvItem->wasteQty;
                 $totQty += $grvItem->noQty;
