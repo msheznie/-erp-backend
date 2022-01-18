@@ -96,6 +96,7 @@ class POService
         return ProcumentOrder::with(['detail.appointmentDetails' => function ($query) {
             $query->whereHas('appointment', function ($q){
                 $q->where('refferedBackYN', '!=', -1);
+                $q->where('confirmed_yn', 1);
             });
         }, 'detail.unit', 'detail' => function ($query) {
             $query->where('goodsRecievedYN', '!=', 2);

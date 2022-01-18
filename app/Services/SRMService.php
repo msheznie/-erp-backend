@@ -319,6 +319,7 @@ class SRMService
                 $query->with(['unit','appointmentDetails' => function($q){
                     $q->whereHas('appointment', function ($q){
                         $q->where('refferedBackYN', '!=', -1);
+                        $q->where('confirmed_yn', 1);
                     })->groupBy('po_detail_id')
                         ->select('id', 'appointment_id','qty','po_detail_id')
                         ->selectRaw('sum(qty) as qty');
