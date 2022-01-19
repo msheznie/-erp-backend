@@ -865,6 +865,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                         $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
                         $GRVDetail_arr['noQty'] = $new['noQty'];
+                        $GRVDetail_arr['wasteQty'] = 0;
 
                         $itemMaster = ItemMaster::find($new['itemCode']);
 
@@ -1713,6 +1714,7 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                         $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
                         $GRVDetail_arr['noQty'] = $new['noQty'];
+                        $GRVDetail_arr['wasteQty'] = 0;
                         $GRVDetail_arr['prvRecievedQty'] = $new['receivedQty'];
                         $GRVDetail_arr['poQty'] = $new['prnQty'];
                         $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
