@@ -7,6 +7,8 @@ use App\Http\Requests\API\UpdateSalesReturnDetailAPIRequest;
 use App\Models\SalesReturnDetail;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\SalesReturn;
@@ -554,6 +556,33 @@ class SalesReturnDetailAPIController extends AppBaseController
 
         if (!$salesReturn) {
             return $this->sendError('Sales Return not found');
+        }
+
+        if ($salesReturnDetail->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $salesReturn->documentSystemID)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $salesReturn->documentSystemID)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['soldFlag' => 0]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
         }
 
         $salesReturnDetail->delete();

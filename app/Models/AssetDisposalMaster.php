@@ -295,4 +295,8 @@ class AssetDisposalMaster extends Model
         return $this->belongsTo('App\Models\CustomerMaster','customerID','customerCodeSystem');
     }
 
+    public function customerInvoice(){
+        return $this->belongsTo('App\Models\CustomerInvoiceDirect','customerInvoiceNo','disposalDocumentCode');
+    }
+
 }

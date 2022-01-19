@@ -1729,7 +1729,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['invoiceNumber'] = $masterData->supplierInvoiceNo;
                             $data['invoiceDate'] = $masterData->supplierInvoiceDate;
 
-                            if ($masterData->documentType == 0) { // check if it is supplier invoice
+                            if ($masterData->documentType == 0 || $masterData->documentType == 2) { // check if it is supplier invoice
                                 $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
                                 $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
                                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
@@ -1755,7 +1755,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
-                            if ($masterData->documentType == 0) {
+                            if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                                 $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
                                 $data['glCode'] = $masterData->UnbilledGRVAccount;
                                 $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));
@@ -1827,7 +1827,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $totalVATAmountLocal = $vatDetails['totalVATLocal'];
                             $totalVATAmountRpt = $vatDetails['totalVATRpt'];
 
-                            if ($masterData->documentType == 0 && $masterData->detail && count($masterData->detail) > 0 && ($totalVATAmount > 0 || $vatDetails['exemptVAT'] > 0)) {
+                            if (($masterData->documentType == 0 || $masterData->documentType == 2) && $masterData->detail && count($masterData->detail) > 0 && ($totalVATAmount > 0 || $vatDetails['exemptVAT'] > 0)) {
 
                                 if ($totalVATAmount > 0) {
                                     // Input VAT control
@@ -1976,7 +1976,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                 //if rcm activated tax entries
                                 if($masterData->rcmActivated == 1){
-                                    if ($masterData->documentType == 0) {
+                                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                                         // input vat transfer entry
                                         $taxInputVATTransfer = TaxService::getInputVATTransferGLAccount($masterModel["companySystemID"]);
                                         if (!empty($taxConfigData)) {
@@ -3553,8 +3553,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['serviceLineCode'] = $val->serviceLineCode;
                                         $data['chartOfAccountSystemID'] = $masterData->disposal_type->chartOfAccountID;
                                         $data['glCode'] = $masterData->disposal_type->glCode;
-                                        $data['glAccountType'] = $masterData->disposal_type->chartofaccount->catogaryBLorPL;
-                                        $data['glAccountTypeID'] = $masterData->disposal_type->chartofaccount->catogaryBLorPLID;
+                                        $data['glAccountType'] = $masterData->disposal_type->chartofaccount ? $masterData->disposal_type->chartofaccount->catogaryBLorPL : null;
+                                        $data['glAccountTypeID'] = $masterData->disposal_type->chartofaccount ? $masterData->disposal_type->chartofaccount->catogaryBLorPLID : null;
                                         $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = 0;
                                         $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;

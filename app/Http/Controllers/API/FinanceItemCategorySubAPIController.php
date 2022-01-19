@@ -377,10 +377,9 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $financeGLcodeRevenue = ChartOfAccount::find(isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] : null);
 
         
-            $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
-            $input['financeGLcodePL'] = isset($financeGLcodePL->AccountCode) ? $financeGLcodePL->AccountCode : null;
-            $input['financeGLcodeRevenue'] = isset($financeGLcodeRevenue->AccountCode) ? $financeGLcodeRevenue->AccountCode : null;
-        
+        $input['financeGLcodebBS'] = isset($financeGLcodebBS->AccountCode) ? $financeGLcodebBS->AccountCode : null;
+        $input['financeGLcodePL'] = isset($financeGLcodePL->AccountCode) ? $financeGLcodePL->AccountCode : null;
+        $input['financeGLcodeRevenue'] = isset($financeGLcodeRevenue->AccountCode) ? $financeGLcodeRevenue->AccountCode : null;
     
 
         $employee = Helper::getEmployeeInfo();
@@ -393,7 +392,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             'financeGLcodebBSSystemID' => isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null,
             'financeGLcodePLSystemID' => isset($input['financeGLcodePLSystemID']) ? $input['financeGLcodePLSystemID'] :null ,
             'financeGLcodeRevenueSystemID' => isset($input['financeGLcodeRevenueSystemID']) ? $input['financeGLcodeRevenueSystemID'] :null,
-            'includePLForGRVYN' => isset($input['includePLForGRVYN']) ? $input['includePLForGRVYN'] :null,
+            'includePLForGRVYN' => (isset($input['includePLForGRVYN']) && $input['includePLForGRVYN']) ? -1 : 0,
             'trackingType' => isset($input['trackingType']) ? $input['trackingType'] :null,
             'financeGLcodebBS' => $input['financeGLcodebBS'],
             'financeGLcodePL' => $input['financeGLcodePL'],
@@ -403,11 +402,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         ];
 
         if (isset($input['itemCategorySubID'])){
-            $itemCategorySubUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+            $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
         return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
-            $itemCategorySubCreate = FinanceItemcategorySub::create($masterData);
+            $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
         return $this->sendResponse($itemCategorySubCreate, 'Finance Item Category Sub Created successfully');
         }
         
@@ -421,7 +420,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $itemCategorySubAssignedExpiryUpdate = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['expiryYN' => $input['expiryYN']]);
 
-        $itemCategorySubExpiryUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+        $itemCategorySubExpiryUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['expiryYN' => $input['expiryYN']]);
         
         return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');
@@ -431,7 +430,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function financeItemCategorySubsAttributesUpdate(Request $request){
         $input = $request->all();
-        $itemCategorySubExpiryUpdate = FinanceItemcategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
+        $itemCategorySubExpiryUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                                 ->update(['attributesYN' => $input['attributesYN']]);
         
         return $this->sendResponse($itemCategorySubExpiryUpdate, 'Finance Item Category Sub updated successfully');

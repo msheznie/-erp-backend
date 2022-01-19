@@ -528,7 +528,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookingAmountTrans = 0;
         $bookingAmountLocal = 0;
         $bookingAmountRpt = 0;
-        if ($input['documentType'] == 0) {
+        if ($input['documentType'] == 0 || $input['documentType'] == 2) {
             $input['rcmActivated'] = 0;
             $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                 ->sum('totTransactionAmount');
@@ -661,7 +661,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            if ($input['documentType'] == 0) {
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
 
                 $checkGRVItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->count();
@@ -714,7 +714,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
-            if ($input['documentType'] == 0) {
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['grvmaster'])
                     ->get();
@@ -737,7 +737,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             //checking Supplier Invoice amount is greater than GRV Amount validations
-            if ($input['documentType'] == 0) {
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['grvmaster'])
                     ->get();
@@ -876,7 +876,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             unset($input['confirmedByName']);
             unset($input['confirmedDate']);
 
-            if ($input['documentType'] == 0) {
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->sum('totTransactionAmount');
                 $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
@@ -923,7 +923,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            if($input['documentType'] == 0){
+            if($input['documentType'] == 0 || $input['documentType'] == 2){
                 $vatTotal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->sum('VATAmount');
                 if($vatTotal > 0){
@@ -975,7 +975,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            if ($input['documentType'] == 0) {
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
 
@@ -1131,6 +1131,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $directGRV = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
+                                    ->where('companySystemID', $companyId)
+                                    ->first();
+
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1138,6 +1142,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'years' => $years,
             'tax' => $taxMaster,
             'assetAllocatePolicy' => ($assetAllocatePolicy && $assetAllocatePolicy->isYesNO == 1) ? true : false,
+            'directGRVPolicy' => ($directGRV && $directGRV->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,

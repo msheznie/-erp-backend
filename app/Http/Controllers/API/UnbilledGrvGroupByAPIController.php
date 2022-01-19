@@ -301,21 +301,32 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 
         $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
 
-        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) use ($bookInvSuppMaster){
                                                     $query->where('approved', -1);
-                                                    $query->where('grvCancelledYN', 0);
-                                                })->whereHas('pomaster', function ($query) {
-                                                    $query->where('approved', -1);
-                                                    $query->where('poCancelledYN', 0);
-                                                })->with(['pomaster', 'grvmaster'])
+                                                    $query->where('grvCancelledYN', 0)
+                                                          ->when($bookInvSuppMaster->documentType == 2, function($query) {
+                                                            $query->where('grvTypeID', 1);
+                                                          });
+                                                })->when($bookInvSuppMaster->documentType == 0, function($query) {
+                                                            $query->whereHas('pomaster', function ($query) {
+                                                                $query->where('approved', -1);
+                                                                $query->where('poCancelledYN', 0);
+                                                            });
+                                                    })->with(['pomaster', 'grvmaster'])
                                                     ->where('companySystemID', $companyID)
                                                     ->where('fullyBooked', '<>', 2)
                                                     ->where('supplierID', $bookInvSuppMaster->supplierID)
                                                     ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
                                                     ->whereDate('grvDate', '<=', $bookingDate)
                                                     ->whereNull('purhaseReturnAutoID')
-                                                    ->groupBy('purchaseOrderID')
-                                                    ->orderBy('purchaseOrderID', 'DESC')
+                                                    ->when($bookInvSuppMaster->documentType == 0, function($query) {
+                                                        $query->groupBy('purchaseOrderID')
+                                                              ->orderBy('purchaseOrderID', 'DESC');
+                                                    })
+                                                    ->when($bookInvSuppMaster->documentType == 2, function($query) {
+                                                        $query->groupBy('grvAutoID')
+                                                              ->orderBy('grvAutoID', 'DESC');
+                                                    })
                                                     ->get();
 
         return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Masters retrieved successfully');
@@ -326,7 +337,8 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyId'];
-        $purchaseOrderID = $input['poID'];
+        $purchaseOrderID = isset($input['poID']) ? $input['poID'] : 0;
+        $grvAutoID = isset($input['grvAutoID']) ? $input['grvAutoID'] : 0;
 
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
 
@@ -334,6 +346,13 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
+        }
+
+        $unbilledFilter = "";
+        if ($purchaseOrderID > 0) {
+            $unbilledFilter = 'AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID ;
+        } else if ($grvAutoID > 0) {
+            $unbilledFilter = 'AND unbilledMaster.grvAutoID = ' . $grvAutoID ;
         }
 
         $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
@@ -378,7 +397,7 @@ AND unbilledMaster.purhaseReturnAutoID IS NULL
 AND unbilledMaster.supplierID = ' . $bookInvSuppMaster->supplierID . '
 AND unbilledMaster.supplierTransactionCurrencyID = ' . $bookInvSuppMaster->supplierTransactionCurrencyID . '
 AND DATE_FORMAT(unbilledMaster.grvDate,"%Y-%m-%d") <= "' . $bookingDate . '"
-AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID . '
+' . $unbilledFilter . '
 HAVING ROUND(
 			unbilledMaster.totTransactionAmount,
 			currency.DecimalPlaces
@@ -422,7 +441,9 @@ HAVING ROUND(
                                                              ->on('returnedLogistic.poAdvPaymentID', '=', 'erp_purchaseorderadvpayment.poAdvPaymentID');
                                                    })
                                                     ->where('erp_purchaseorderadvpayment.grvAutoID', $value->grvAutoID)
-                                                    ->where('poID', $value->purchaseOrderID)
+                                                    ->when($purchaseOrderID > 0, function($query) use($value){
+                                                        $query->where('poID', $value->purchaseOrderID);
+                                                    })
                                                     ->where('erp_purchaseorderadvpayment.supplierID',$value->supplierID)
                                                     ->groupBy('erp_purchaseorderadvpayment.poAdvPaymentID');
 
@@ -441,7 +462,9 @@ HAVING ROUND(
 
 
 
-                $grvDetails = GRVDetails::where('purchaseOrderMastertID', $value->purchaseOrderID)
+                $grvDetails = GRVDetails::when($purchaseOrderID > 0, function($query) use($value){
+                                            $query->where('purchaseOrderMastertID', $value->purchaseOrderID);
+                                        })
                                        ->where('grvAutoID', $value->grvAutoID)
                                        ->leftJoin(\DB::raw("({$pulledQry->toSql()}) as pulledQry"), function($join) use ($pulledQry){
                                             $join->mergeBindings($pulledQry)
@@ -486,6 +509,9 @@ HAVING ROUND(
 
                 $value->balanceAmount = collect($grv_details)->sum('balanceAmount');
                 $value->balanceAmountCheck = collect($grv_details)->sum('balanceAmount');
+
+                $grv_details = collect($grv_details)->where('balanceAmount', '>', 0)->all();
+
 
                 $value->grv_details = $grv_details;
             }

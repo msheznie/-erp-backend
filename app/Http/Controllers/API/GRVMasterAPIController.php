@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\helper\ItemTracking;
+use App\helper\ReversalDocument;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
@@ -1502,8 +1503,6 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             }
         }
 
-
-
         $GoodReceiptVoucherDetailArray = $fetchGoodReceiptDetails->toArray();
 
         $storeGoodReceiptVoucherDetailHistory = GrvDetailsRefferedback::insert($GoodReceiptVoucherDetailArray);
@@ -1646,6 +1645,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     {
         $input = $request->all();
         $employee = Helper::getEmployeeInfo();
+        $emails = array();
 
         // precheck
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
@@ -1654,11 +1654,17 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError($errorMsg, 500);
         }
 
-        $isExistBSI = PurchaseReturnDetails::where('grvAutoID',$input['grvAutoID'])->exists();
+        $isExistBSI = PurchaseReturnDetails::where('grvAutoID', $input['grvAutoID'])->exists();
+        $masterData = $this->gRVMasterRepository->findWithoutFail($input['grvAutoID']);
 
         if ($isExistBSI) {
             return $this->sendError("You cannot reverse the GRV. The GRV is already added to Purchase Return", 500);
         }
+
+
+
+        ReversalDocument::sendEmail($input);
+
 
         DB::beginTransaction();
         try {
@@ -1684,6 +1690,49 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $taxLedger = TaxLedgerDetail::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentMasterAutoID' => $input['grvAutoID']])->delete();
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');
+
+            $grvAutoID = $input['grvAutoID'];
+
+            $grvMasterData = GRVMaster::find($grvAutoID);
+            if (empty($grvMasterData)) {
+                return $this->sendError('Good receipt voucher not found');
+            }
+
+            $grvMasterDataArray = $grvMasterData->toArray();
+
+
+            $storeGoodReceiptHistory = GrvMasterRefferedback::insert($grvMasterDataArray);
+
+            $fetchGoodReceiptDetails = GRVDetails::where('grvAutoID', $grvAutoID)
+                ->get();
+
+            if (!empty($fetchGoodReceiptDetails)) {
+                foreach ($fetchGoodReceiptDetails as $bookDetail) {
+                    $bookDetail['timesReferred'] = $grvMasterData->timesReferred;
+                }
+            }
+
+
+
+            $GoodReceiptVoucherDetailArray = $fetchGoodReceiptDetails->toArray();
+
+            $storeGoodReceiptVoucherDetailHistory = GrvDetailsRefferedback::insert($GoodReceiptVoucherDetailArray);
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $grvAutoID)
+                ->where('companySystemID', $grvMasterData->companySystemID)
+                ->where('documentSystemID', $grvMasterData->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $grvMasterData->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
             // cancelation email
             // CancelDocument::sendEmail($input);
