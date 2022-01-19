@@ -370,11 +370,13 @@ class CustomerMasterCategoryAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $customerMasterCategory = CustomerMasterCategory::whereHas('category_assigned', function ($query) use ($childCompanies) {
-                        $query->where('isAssigned', 1)
-                              ->whereIn('companySystemID', $childCompanies);
-            })
-            ->whereIn('companySystemID', $childCompanies);
+        $customerMasterCategory = CustomerMasterCategory::where(function($query) use ($childCompanies)  {
+                                                            $query->whereHas('category_assigned', function ($query) use ($childCompanies) {
+                                                                                $query->where('isAssigned', 1)
+                                                                                      ->whereIn('companySystemID', $childCompanies);
+                                                                    })
+                                                                    ->orWhereIn('companySystemID', $childCompanies);
+                                                        });
 
         $search = $request->input('search.value');
         if ($search) {
