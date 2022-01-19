@@ -475,6 +475,28 @@ class CustomerMasterAPIController extends AppBaseController
             return $this->sendError('Country field is required',500);
         }
 
+        if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
+            if (!isset($input['companyLinkedToSystemID'])) {
+                return $this->sendError('Linked company is required',500);
+            }
+
+            $checkCustomerForInterCompany = CustomerMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
+                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+                                           ->when(array_key_exists('customerCodeSystem', $input), function($query) use ($input) {
+                                                $query->where('customerCodeSystem', '!=', $input['customerCodeSystem']);
+                                           })
+                                           ->first();
+
+            if ($checkCustomerForInterCompany) {
+                return $this->sendError('Intercompany customer has been already created for this company',500);
+            }
+
+
+            $linkedCompany = Company::find($input['companyLinkedToSystemID']);
+
+            $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
+        }
+
 
         if (array_key_exists('customerCodeSystem', $input)) {
 
@@ -558,7 +580,6 @@ class CustomerMasterAPIController extends AppBaseController
             $input['createdUserID'] = $empId;
             $input['isCustomerActive'] = 1;
        
-    
             $customerMasters = $this->customerMasterRepository->create($input);
         }
 
@@ -2788,5 +2809,29 @@ class CustomerMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
 
+    }
+
+
+    public function getInterCompaniesForCustomerSupplier(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        if (isset($input['primaryCompanySystemID'])) {
+            $allCompanies = Company::where('isGroup', 0)
+                ->where('isActive', 1)
+                ->where('companySystemID', '!=', $input['primaryCompanySystemID'])
+                ->get();
+        } else {
+            $allCompanies = [];
+        }
+
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $input['primaryCompanySystemID'])
+                    ->where('companyPolicyCategoryID', 66)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+
+        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], 'Record retrieved successfully');
     }
 }

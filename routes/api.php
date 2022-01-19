@@ -299,6 +299,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         /** Customer master Created by Fayas  */
         Route::resource('customer_masters', 'CustomerMasterAPIController');
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
+        Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
         Route::get('getChartOfAccountsByCompanyForCustomer', 'CustomerMasterAPIController@getChartOfAccountsByCompanyForCustomer');
