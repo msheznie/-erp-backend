@@ -2269,7 +2269,7 @@ class Helper
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
                                     $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved </p>';
-                                    $dataEmail['alertMessage'] = $docApproved->documentID . " Registration Approved";
+                                    $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -2282,7 +2282,7 @@ class Helper
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
                                     $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved </p>';
-                                    $dataEmail['alertMessage'] = $docApproved->documentID . " Appoinment Approved";
+                                    $dataEmail['alertMessage'] = "Appoinment Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
@@ -2954,6 +2954,8 @@ class Helper
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
 
 
+                   
+
                             // get previously approved person for send Emil
                             if ($input["rollLevelOrder"] > 1) {
 
@@ -2987,7 +2989,44 @@ class Helper
                                 );
                             }
 
-                            $sendEmail = email::sendEmail($emails);
+                            if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106)
+                            {
+                                $suppiler_info = SupplierRegistrationLink::where('id', '=', $currentApproved->documentSystemCode)->first();
+                            
+                             
+                                if (isset($suppiler_info) && isset($currentApproved->reference_email) && !empty($currentApproved->reference_email)) {
+
+                                    if($input["documentSystemID"] == 107 )
+                                    {
+                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName . "<br> " . $input["rejectedComments"]." </p>";
+                                        $msg = " Registration Rejected";
+                                    }
+                                    else if($input["documentSystemID"] == 106)
+                                    {
+                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName . "<br> " . $input["rejectedComments"]." </p>";
+                                        $msg = " Delivery appointment Rejected";
+                                    }
+
+                                    $dataEmail['empEmail'] = $currentApproved->reference_email;
+                                    $dataEmail['companySystemID'] = $currentApproved->companySystemID;
+                                    $temp = $sub;
+                                    $dataEmail['alertMessage'] = $msg;
+                                    $dataEmail['emailAlertMessage'] = $temp;
+
+                             
+                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                }
+                                else
+                                {
+                                    return ['success' => false, 'message' => "Unable to send the email"]; 
+                                }
+                            }
+                            else
+                            {
+                                $sendEmail = email::sendEmail($emails);
+                            }
+
+                            
                             if (!$sendEmail["success"]) {
                                 return ['success' => false, 'message' => $sendEmail["message"]];
                             }
