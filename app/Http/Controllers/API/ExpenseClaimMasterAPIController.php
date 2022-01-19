@@ -341,28 +341,20 @@ class ExpenseClaimMasterAPIController extends AppBaseController
                             HAVING
                                 ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) ) UNION ALL
                             SELECT
-                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
-                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
-                                hrms_monthlyadditionsmaster.documentID,
-                                hrms_monthlyadditionsmaster.CompanyID,
-                                hrms_monthlyadditionsmaster.dateMA,
-                                hrms_monthlyadditionsmaster.description,
-                                hrms_monthlyadditionsmaster.modifieduser,
+                                srp_erp_payrollmaster.documentCode,
+                                srp_erp_payrollmaster.documentID,
+                                srp_erp_payrollmaster.payrollYear,
+                                srp_erp_payrollmaster.payrollMonth,
+                                srp_erp_payrollmaster.narration,
                                 employees.empName,
-                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
+                                srp_erp_payrollmaster.confirmedByEmpID,
+                                NULL AS PayMasterAutoId,
+                                NULL AS expenseClaimMasterAutoID 
                             FROM
-                                ( hrms_monthlyadditionsmaster INNER JOIN hrms_monthlyadditiondetail ON hrms_monthlyadditionsmaster.monthlyAdditionsMasterID = hrms_monthlyadditiondetail.monthlyAdditionsMasterID )
-                                LEFT JOIN employees ON hrms_monthlyadditionsmaster.modifieduser = employees.empID 
+                                ( srp_erp_payrolldetail INNER JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID )
+                                LEFT JOIN employees ON srp_erp_payrollmaster.confirmedByEmpID = employees.empID
                             WHERE
-                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID = ' . $id . '
-                            GROUP BY
-                                hrms_monthlyadditionsmaster.monthlyAdditionsMasterID,
-                                hrms_monthlyadditionsmaster.monthlyAdditionsCode,
-                                hrms_monthlyadditionsmaster.documentSystemID,
-                                hrms_monthlyadditionsmaster.companySystemID,
-                                hrms_monthlyadditiondetail.expenseClaimMasterAutoID 
-                            HAVING
-                                ( ( ( hrms_monthlyadditiondetail.expenseClaimMasterAutoID ) <> 0 ) );
+                                `srp_erp_payrolldetail`.fromTB="EC" and detailTBID= ' . $id . '
                             ;');
 
 
