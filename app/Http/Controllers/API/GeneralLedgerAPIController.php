@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
 use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
 use App\Jobs\GeneralLedgerInsert;
+use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankLedger;
@@ -821,14 +822,52 @@ class GeneralLedgerAPIController extends AppBaseController
                 ->where('companySystemID', $input['companySystemID'])
                 ->count();
 
-            if($count > 0){
-                return $this->sendError('GL entries are already passed for this document',500);
+
+            $unbilledCount = 0;
+            if ($input['documentSystemID'] == 3) {
+                $unbilledCount = UnbilledGrvGroupBy::where('grvAutoID', $input['documentSystemCode'])
+                                        ->where('companySystemID', $input['companySystemID'])
+                                        ->count();
+
+                if ($count > 0 && $unbilledCount > 0) {
+                    return $this->sendError('GL entries and unbilled ledger entries are already passed for this document',500);
+                }
+
+            } else {
+                if($count > 0){
+                    return $this->sendError('GL entries are already passed for this document',500);
+                }
             }
-            $masterData = ['documentSystemID' => $input['documentSystemID'],
-                           'autoID' => $input['documentSystemCode'],
-                           'companySystemID' => $input['companySystemID'],
-                           'employeeSystemID' => $empInfo->employeeSystemID];
-            GeneralLedgerInsert::dispatch($masterData);
+
+
+            if ($count == 0) {
+                $masterData = ['documentSystemID' => $input['documentSystemID'],
+                               'autoID' => $input['documentSystemCode'],
+                               'companySystemID' => $input['companySystemID'],
+                               'employeeSystemID' => $empInfo->employeeSystemID];
+                GeneralLedgerInsert::dispatch($masterData);
+            }
+
+
+            if ($input['documentSystemID'] == 3 && $unbilledCount == 0) {
+                $grvData = GRVMaster::find($input['documentSystemCode']);
+
+                $masterData = ['documentSystemID' => $input['documentSystemID'],
+                               'autoID' => $input['documentSystemCode'],
+                               'supplierID' => ($grvData) ? $grvData->supplierID : 0,
+                               'companySystemID' => $input['companySystemID'],
+                               'employeeSystemID' => $empInfo->employeeSystemID];
+                UnbilledGRVInsert::dispatch($masterData);
+
+                DB::commit();
+                if ($count == 0) {
+                    return $this->sendResponse([],'GL and unbilled ledger entries posted successfully');
+                } else {
+                    return $this->sendResponse([],'Unbilled ledger entries posted successfully');
+                }
+            }
+
+
             DB::commit();
             return $this->sendResponse([],'GL posted successfully');
         }catch (\Exception $e){

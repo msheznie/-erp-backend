@@ -19,6 +19,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\AssetFinanceCategory;
 use App\Models\Company;
+use App\Models\AssetDisposalMaster;
 use App\Models\ItemAssigned;
 use App\Models\CompanyFinancePeriod;
 use App\Models\ExpenseAssetAllocation;
@@ -351,6 +352,8 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])
                     ->whereIN('companySystemID', $companyID)
                     ->get();
+
+              
                 $outputArr2 = [];
                 if ($companyCurrency) {
                     foreach ($companyCurrency as $val) {
@@ -360,7 +363,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $currency = \Helper::companyCurrency($request->companySystemID);
                 $companyCurrency = $outputArr2;
-
+           
                 $total = array();
                 $total['AssetCostLocal'] = array_sum(collect($output)->pluck('AssetCostLocal')->toArray());
                 $total['AssetCostRPT'] = array_sum(collect($output)->pluck('AssetCostRPT')->toArray());
@@ -368,11 +371,15 @@ class AssetManagementReportAPIController extends AppBaseController
                 $total['AccumulatedDepreciationRPT'] = array_sum(collect($output)->pluck('AccumulatedDepreciationRPT')->toArray());
                 $total['NetBookVALUELocal'] = array_sum(collect($output)->pluck('NetBookVALUELocal')->toArray());
                 $total['NetBookVALUERPT'] = array_sum(collect($output)->pluck('NetBookVALUERPT')->toArray());
+                $total['SellingPriceLocal'] = array_sum(collect($output)->pluck('SellingPriceLocal')->toArray());
+                $total['SellingPriceRpt'] = array_sum(collect($output)->pluck('SellingPriceRpt')->toArray());
+                $total['ProfitLocal'] = array_sum(collect($output)->pluck('ProfitLocal')->toArray());
+                $total['ProfitRpt'] = array_sum(collect($output)->pluck('ProfitRpt')->toArray());
                 return array('reportData' => $outputArr,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
-                    'decimalPlaceLocal' => $currency->reportingcurrency->DecimalPlaces,
+                    'decimalPlaceLocal' => $currency->localcurrency->DecimalPlaces,
                     'decimalPlaceRpt' => $currency->reportingcurrency->DecimalPlaces,
                     'currencyLocal' => $currency->localcurrency->CurrencyCode,
                     'currencyRpt' => $currency->reportingcurrency->CurrencyCode,
@@ -1249,6 +1256,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x]['Net Book Value (Local)'] = round($val->NetBookVALUELocal, $val->localCurrencyDeci);
                     $data[$x]['Net Book Value (Reporting)'] = round($val->NetBookVALUERPT, $val->reportCurrencyDeci);
 
+
+                    $data[$x]['Selling Price (Local)'] = round($val->SellingPriceLocal, $val->localCurrencyDeci);
+                    $data[$x]['Selling Price (Reporting)'] = round($val->SellingPriceRpt, $val->reportCurrencyDeci);
+
+                    $data[$x]['Profit/Loss (Local)'] = round($val->ProfitLocal, $val->localCurrencyDeci);
+                    $data[$x]['Profit/Loss (Reporting)'] = round($val->ProfitRpt, $val->reportCurrencyDeci);
+
+
                     $x++;
                 }
                  \Excel::create('asset_disposal', function ($excel) use ($data) {
@@ -1611,6 +1626,7 @@ FROM
         $qry = 'SELECT
                     erp_fa_asset_disposalmaster.companyID,
                     companymaster.CompanyName,
+                    customermaster.CustomerName,
                     erp_fa_asset_disposalmaster.disposalDocumentDate AS disposalDate,
                     erp_fa_asset_disposalmaster.disposalDocumentCode,
                     erp_fa_asset_disposalmaster.disposalType,
@@ -1619,6 +1635,10 @@ FROM
                     erp_fa_asset_disposaldetail.faCode AS AssetCODE,
                     erp_fa_asset_disposaldetail.faUnitSerialNo AS AssetSerialNumber,
                     erp_fa_asset_disposaldetail.assetDescription AS AssetDescription,
+                    (erp_fa_asset_disposaldetail.sellingPriceLocal) AS SellingPriceLocal,
+                    (erp_fa_asset_disposaldetail.sellingPriceRpt) AS SellingPriceRpt,
+                    (erp_fa_asset_disposaldetail.sellingPriceLocal - erp_fa_asset_disposaldetail.netBookValueLocal) AS ProfitLocal,
+                    (erp_fa_asset_disposaldetail.SellingPriceRpt - erp_fa_asset_disposaldetail.NetBookVALUERPT) AS ProfitRpt,
                     erp_fa_asset_disposaldetail.COSTUNIT AS AssetCostLocal,
                     erp_fa_asset_disposaldetail.COSTUNIT - erp_fa_asset_disposaldetail.netBookValueLocal AS AccumulatedDepreciationLocal,
                     erp_fa_asset_disposaldetail.netBookValueLocal AS NetBookVALUELocal,
@@ -1635,6 +1655,7 @@ FROM
                     INNER JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                     INNER JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                     INNER JOIN companymaster ON erp_fa_asset_disposalmaster.companySystemID = companymaster.companySystemID
+                    LEFT JOIN customermaster ON erp_fa_asset_disposalmaster.customerID = customermaster.customerCodeSystem
                     LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
                 LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE

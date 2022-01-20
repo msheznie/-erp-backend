@@ -5,8 +5,13 @@ namespace App\Repositories;
 use App\Models\ItemSerial;
 use App\Models\GRVDetails;
 use App\Models\ItemIssueDetails;
+use App\Models\StockTransferDetails;
 use App\Models\ItemReturnDetails;
 use App\Models\DocumentSubProduct;
+use App\Models\PurchaseReturnDetails;
+use App\Models\DeliveryOrderDetail;
+use App\Models\SalesReturnDetail;
+use App\Models\CustomerInvoiceItemDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -71,6 +76,31 @@ class ItemSerialRepository extends BaseRepository
             case 12:
                 $issueDedtail = ItemReturnDetails::find($documentDetailID);
                 $subProduct['documentSystemCode'] = ($issueDedtail) ? $issueDedtail->itemReturnAutoID : null;
+
+                break; 
+            case 24:
+                $returnDedtail = PurchaseReturnDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->purhaseReturnAutoID : null;
+
+                break;
+            case 13:
+                $returnDedtail = StockTransferDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($returnDedtail) ? $returnDedtail->stockTransferAutoID : null;
+
+                break;
+            case 71:
+                $deliveryOrderDetail = DeliveryOrderDetail::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($deliveryOrderDetail) ? $deliveryOrderDetail->deliveryOrderID : null;
+
+                break;
+            case 20:
+                $deliveryOrderDetail = CustomerInvoiceItemDetails::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($deliveryOrderDetail) ? $deliveryOrderDetail->custInvoiceDirectAutoID : null;
+
+                break;
+            case 87:
+                $salesReturnDetail = SalesReturnDetail::find($documentDetailID);
+                $subProduct['documentSystemCode'] = ($salesReturnDetail) ? $salesReturnDetail->salesReturnID : null;
 
                 break;
             default:

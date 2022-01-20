@@ -26,6 +26,12 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
+use App\Traits\AuditTrial;
 use Response;
 
 class PurcahseRequestDetail
@@ -863,6 +869,103 @@ class PurcahseRequestDetail
         return ['status' => true , 'message' => 'Validation Success'];
 
 
+    }
+
+    public function purchaseRequestReopen($input){
+        $purchaseRequestId = $input['purchaseRequestId'];
+
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
+        $emails = array();
+        if (empty($purchaseRequest)) {
+            return ['status' => false, 'message' => 'Purchase Request not found'];
+        }
+
+        if ($purchaseRequest->RollLevForApp_curr > 1) {
+            return ['status' => false, 'message' => 'You cannot reopen this Request it is already partially approved'];
+        }
+
+        if ($purchaseRequest->approved == -1) {
+            return ['status' => false, 'message' => 'You cannot reopen this Request it is already fully approved'];
+        }
+
+        if ($purchaseRequest->PRConfirmedYN == 0) {
+            return ['status' => false, 'message' => 'You cannot reopen this Request, it is not confirmed'];
+        }
+
+        // updating fields
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBySystemID = null;
+        $purchaseRequest->PRConfirmedBy = null;
+        $purchaseRequest->PRConfirmedByEmpName = null;
+        $purchaseRequest->PRConfirmedDate = null;
+        $purchaseRequest->RollLevForApp_curr = 1;
+        $purchaseRequest->save();
+
+        $employee = Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseRequest->companySystemID)
+                    ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID,$purchaseRequest->purchaseRequestID,$input['reopenComments'],'Reopened');
     }
 
 

@@ -300,6 +300,7 @@ class CustomerMasterAPIController extends AppBaseController
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccounts' => $chartOfAccounts,
             'country' => $country,
+            'company' => (isset($customer)) ? $customer->company : "",
             'contactTypes' => $contactTypes,
             'isCustomerCatalogPolicyOn'=>$hasPolicy
         );
@@ -346,7 +347,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                                 }
 
                                                                 $query->whereIn('companySystemID', $childCompanies);
-                                                            });
+                                                            })
+                                                            ->where('isAssigned', 1);
                                                     })
                                                     ->get();
 
@@ -397,9 +399,12 @@ class CustomerMasterAPIController extends AppBaseController
      */
     public function store(CreateCustomerMasterAPIRequest $request)
     {
-       
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
+        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
+            return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
        
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);
@@ -593,8 +598,8 @@ class CustomerMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
-        $input = $request->all();
 
+        $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */

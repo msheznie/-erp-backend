@@ -182,10 +182,10 @@
                         <tr>
                             <td width="100px"><span class="font-weight-bold">Bank : </span>
                                 @if($request->secondaryLogoCompanySystemID)
-                                     @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
+                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
                                         {{$secondaryBankAccount->contract->secondary_bank_account->bankName}}
-                                      @endif
-                                    @else
+                                    @endif
+                                @else
                                     {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}
                                 @endif
                             </td>
@@ -241,49 +241,49 @@
                                 </td>
                                 <td width="50%" style="vertical-align: top;">
                                     <span class="font-weight-bold">Approved By :</span><br>
-                                     @foreach ($request->approved_by as $det)
+                                    @foreach ($request->approved_by as $det)
+                                        @if($det->employee)
+                                            {{$det->employee->empFullName }}
+                                            <br>
                                             @if($det->employee)
-                                                {{$det->employee->empFullName }}
-                                                <br>
-                                                @if($det->employee)
-                                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                                @endif
+                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
                                             @endif
-                                            <br>
-                                            <br>
+                                        @endif
+                                        <br>
+                                        <br>
                                     @endforeach
                                 </td>
                             </tr>
                         </table>
                     </div>
-                @endif
+            @endif
 
-             <!--    <table style="width:100%;">
+            <!--    <table style="width:100%;">
 
                     <tr>
                         @if($request->footerDate)
-                            <td style="width:33%;font-size: 10px;">
-                                <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
+                <td style="width:33%;font-size: 10px;">
+                    <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
                             </td>
                         @endif
 
-                        @if($request->linePageNo)
-                            <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
-                                <span style="text-align: right;font-weight: bold;">Page <span
-                                            class="pagenum"></span> <span class="pagecount"></span></span><br>
+            @if($request->linePageNo)
+                <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
+                    <span style="text-align: right;font-weight: bold;">Page <span
+                                class="pagenum"></span> <span class="pagecount"></span></span><br>
 
-                            </td>
-                        @endif
+                </td>
+@endif
                     </tr>
                     @if($request->linefooterAddress)
-                        <tr>
-                            <td colspan="2"
-                                style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}} Tel
+                <tr>
+                    <td colspan="2"
+                        style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}} Tel
                                 : {{$request->company->CompanyTelephone}} , Fax : {{$request->company->CompanyFax}} ,
                                 E-mail : {{$request->company->CompanyEmail}}  </td>
                         </tr>
                     @endif
-                </table> -->
+                    </table> -->
         </div>
 </div>
 {{--<div id="watermark">
@@ -332,15 +332,15 @@
         <table style="width: 100%">
             <tr>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                        <b>{{$request->CompanyName}}</b><br>
-                        {{$request->CompanyAddress}}<br>
-                        <b> Tel: </b> {{$request->CompanyTelephone}}<br>
-                        <b> Fax: </b> {{$request->CompanyFax}}<br>
-                        <b>VAT NO: </b>{{$request->vatRegistratonNumber}}
+                    <b>{{$request->CompanyName}}</b><br>
+                    {{$request->CompanyAddress}}<br>
+                    <b> Tel: </b> {{$request->CompanyTelephone}}<br>
+                    <b> Fax: </b> {{$request->CompanyFax}}<br>
+                    <b>VAT NO: </b>{{$request->vatRegistratonNumber}}
                 </td>
 
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                     <table style="width: 100%">
+                    <table style="width: 100%">
                         <tr>
                             <td><b>Invoice No </b></td>
                             <td>: {{$request->bookingInvCode}}</td>
@@ -349,17 +349,17 @@
                             <td><b>Invoice Date </b></td>
                             <td>: @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                                  @endif 
+                                @endif
                             </td>
                         </tr>
                         <tr>
                             <td><b>Name Of Customer </b></td>
                             <td>:@if($request->line_customerShortCode)
-                                                    {{$request->customer->CutomerCode}} - 
-                                               @endif
-                                                {{$request->customer->ReportTitle}}</td>
+                                    {{$request->customer->CutomerCode}} -
+                                @endif
+                                {{$request->customer->ReportTitle}}</td>
                         </tr>
-                        
+
                     </table>
                 </td>
             <tr>
@@ -519,48 +519,48 @@
             </table>
         @endif
 
-         @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
-                <table class="table table-bordered" style="width: 100%;">
-                    <thead>
-                    <tr class="theme-tr-head">
-                        <th style="width:3%"></th>
-                        <th style="width:60%;text-align: center">Description</th>
-                        <!-- <th style="width:10%;text-align: center">UOM</th> -->
-                        <th style="width:10%;text-align: center">Quantity</th>
-                        <th style="width:10%;text-align: center">Unit Price</th>
-                        <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                        <th style="width:10%;text-align: right">Taxable Rate</th>
-                        <th style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                        <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {{$decimal = 2}}
-                    {{$x=1}}
-                    {{$directTraSubTotal=0}}
-                    {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-                    @if(!empty($request->issue_item_details))
-                        @foreach ($request->issue_item_details as $item)
-                             @if ($item->sellingTotal != 0)
-                                {{$directTraSubTotal +=$item->sellingTotal}}
-                                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                                    <td>{{$x}}</td>
-                                    <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
-                                    <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
-                                    <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
-                                    <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                    <td  class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
-                                    <td  class="text-right">{{$item->VATPercentage}}</td>
-                                    <td  class="text-right">{{number_format(($item->VATAmount * $item->qtyIssued),$numberFormatting)}}</td>
-                                    <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
-                                </tr>
-                                {{ $x++ }}
-                             @endif
-                        @endforeach
-                    @endif
-                    </tbody>
+        @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th style="width:3%"></th>
+                    <th style="width:60%;text-align: center">Description</th>
+                    <!-- <th style="width:10%;text-align: center">UOM</th> -->
+                    <th style="width:10%;text-align: center">Quantity</th>
+                    <th style="width:10%;text-align: center">Unit Price</th>
+                    <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:10%;text-align: right">Taxable Rate</th>
+                    <th style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{$decimal = 2}}
+                {{$x=1}}
+                {{$directTraSubTotal=0}}
+                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+                @if(!empty($request->issue_item_details))
+                    @foreach ($request->issue_item_details as $item)
+                        @if ($item->sellingTotal != 0)
+                            {{$directTraSubTotal +=$item->sellingTotal}}
+                            <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                                <td>{{$x}}</td>
+                                <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                            <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
+                                <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
+                                <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                <td  class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
+                                <td  class="text-right">{{$item->VATPercentage}}</td>
+                                <td  class="text-right">{{number_format(($item->VATAmount * $item->qtyIssued),$numberFormatting)}}</td>
+                                <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                        @endif
+                    @endforeach
+                @endif
+                </tbody>
 
-                </table>
+            </table>
         @endif
     </div>
     <div class="row">
@@ -568,59 +568,50 @@
             <tbody>
             <tr>
                 <td style="border:none !important;">
-                        &nbsp;
+                    &nbsp;
                 </td>
-                @if ($request->isVATEligible)
-                    <td class="text-right" style="border:none !important;width: 85%">
+                <td class="text-right" style="border:none !important;width: 85%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Subtotal (Excluding VAT)
                         </span>
-                    </td>
-                @else
-                    <td class="text-right" style="border:none !important;width: 85%">
-                        <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total
-                        </span>
-                    </td>
-                @endif
-                 <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
-                    </td>
+                </td>
+
+                <td class="text-right"
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                            class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                </td>
             </tr>
 
-            @if ($request->isVATEligible)
-                {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
-                {{$directTraSubTotal+= $totalVATAmount}}
-                <tr>
-                    <td style="border:none !important;">
-                        &nbsp;
-                    </td>
-                    <td class="text-right" style="border:none !important;width: 85%">
+            {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+            {{$directTraSubTotal+= $totalVATAmount}}
+            <tr>
+                <td style="border:none !important;">
+                    &nbsp;
+                </td>
+                <td class="text-right" style="border:none !important;width: 85%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
                         </span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
-                    </td>
-                </tr>
+                </td>
+                <td class="text-right"
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
+                </td>
+            </tr>
 
-                <tr>
-                    <td style="border:none !important;">
-                        &nbsp;
-                    </td>
-                    <td class="text-right" style="border:none !important;width: 85%">
+            <tr>
+                <td style="border:none !important;">
+                    &nbsp;
+                </td>
+                <td class="text-right" style="border:none !important;width: 85%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total Amount Payable
                         </span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
-                                class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
-                    </td>
-                </tr>
-            @endif
+                </td>
+                <td class="text-right"
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                            class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

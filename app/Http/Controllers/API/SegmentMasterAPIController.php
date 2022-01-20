@@ -452,7 +452,7 @@ class SegmentMasterAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId,true);
 
             $companyData = Company::find($selectedCompanyId);
             $segmenntData = [];

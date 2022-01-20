@@ -19,6 +19,8 @@ use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\PurchaseReturn;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\Company;
@@ -133,7 +135,8 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-        $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
+        $item = ItemAssigned::with(['item_master'])
+            ->where('idItemAssigned', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -160,6 +163,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['itemUnitOfMeasure'] = $item->itemUnitOfMeasure;
 
         $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
+        $input['trackingType'] = isset($item->item_master->trackingType) ? $item->item_master->trackingType : null;
         $input['convertionMeasureVal'] = 1;
 
         $input['qtyIssued'] = 0;
@@ -780,6 +784,34 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             }
 
         }
+
+        if ($customerInvoiceItemDetails->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $customerInvoice->documentSystemiD)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $customerInvoice->documentSystemiD)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['soldFlag' => 0]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
+        }
+
 
         $customerInvoiceItemDetails->delete();
 
