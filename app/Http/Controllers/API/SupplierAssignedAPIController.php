@@ -87,7 +87,9 @@ class SupplierAssignedAPIController extends AppBaseController
         foreach($companies as $companie)
         {
                 if( array_key_exists ('supplierAssignedID' , $input )){
-                    $input['companySystemID'] = $companies[0];
+                    if(isset($companies)) {
+                        $input['companySystemID'] = $companies[0];
+                    }
                 }
                 else
                 {
