@@ -319,14 +319,14 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         }
 
         $detail = \DB::select('SELECT
-                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.BPVNarration,
                                 erp_paysupplierinvoicemaster.BPVcode,
                                 erp_paysupplierinvoicemaster.documentID,
-                                erp_paysupplierinvoicemaster.companyID,
                                 erp_paysupplierinvoicemaster.BPVdate,
-                                erp_paysupplierinvoicemaster.BPVNarration,
+                                erp_paysupplierinvoicemaster.companyID,
                                 erp_paysupplierinvoicemaster.createdUserID,
                                 employees.empName,
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
                                 erp_directpaymentdetails.expenseClaimMasterAutoID 
                             FROM
                                 ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
@@ -341,13 +341,13 @@ class ExpenseClaimMasterAPIController extends AppBaseController
                             HAVING
                                 ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) ) UNION ALL
                             SELECT
-                                srp_erp_payrollmaster.documentCode,
-                                srp_erp_payrollmaster.documentID,
-                                srp_erp_payrollmaster.payrollYear,
-                                srp_erp_payrollmaster.payrollMonth,
-                                srp_erp_payrollmaster.narration,
-                                employees.empName,
+                                srp_erp_payrollmaster.narration AS BPVNarration,
+                                srp_erp_payrollmaster.documentCode AS BPVcode,
+                                srp_erp_payrollmaster.documentID AS documentID,
+                                CONCAT(srp_erp_payrollmaster.payrollYear, "/", srp_erp_payrollmaster.payrollMonth, "/","1") AS BPVdate,
+                                srp_erp_payrollmaster.companyID,
                                 srp_erp_payrollmaster.confirmedByEmpID,
+                                employees.empName,
                                 NULL AS PayMasterAutoId,
                                 NULL AS expenseClaimMasterAutoID 
                             FROM
