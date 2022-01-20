@@ -39,12 +39,14 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
+use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\Contract;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CurrencyMaster;
 use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerAssigned;
+use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use App\Models\CustomerMasterCategory;
 use App\Models\FinanceItemCategoryMaster;
@@ -65,7 +67,19 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $reportID = $request->reportID;
         switch ($reportID) {
-            case 'qso':
+            case 'SAR':
+                $validator = \Validator::make($request->all(), [
+                    'toDate' => 'required',
+                    'fromDate' => 'required',
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                break;
+
+                case 'qso':
                 $validator = \Validator::make($request->all(), [
                     'toDate' => 'required',
                     'fromDate' => 'required',
@@ -206,6 +220,120 @@ class SalesMarketingReportAPIController extends AppBaseController
                         })
                         ->make(true);
 
+                break;
+            case 'SARD':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+                $companySystemID = $request->companySystemID;
+
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
+                        function($query) use ($customers,$warehouses) {
+                            $query->with(['financeSubCategory']);
+                        }
+                        ,'uom_default','master'=>
+                        function($query) use ($customers,$warehouses){
+                            $query->with(['segment','customer','warehouse'=>
+                                function($query) use ($customers,$warehouses){
+                                    $query->with(['location']);
+                                }
+                            ])
+                            ->whereHas('customer', function ($q) use ($customers){
+                                $q->whereIn('customerCodeSystem', $customers);
+                            })
+                            ->whereHas('warehouse', function ($q) use ($warehouses){
+                                $q->whereIn('wareHouseSystemCode', $warehouses);
+                            });
+                        }
+                    ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                        $q->where('approved', "-1");
+                        $q->where('canceledYN', "0");
+                        $q->where('createdDateAndTime', '>=', $fromDate);
+                        $q->where('createdDateAndTime', '<=', $toDate);
+                        $q->where('companySystemID',$companySystemID);
+                    }
+                    )->get();
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $output = array(
+                    'items' => $invoiceDetails,
+                    'company' => $company,
+                );
+
+                return $this->sendResponse($output, 'Items retrieved successfully');
+                break;
+            case 'SARDS':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $warehouse_descriptions = $request['Warehouse'];
+                $warehouse_descriptions = (array)$warehouse_descriptions;
+                $warehouse_descriptions = collect($warehouse_descriptions)->pluck('wareHouseDescription');
+
+                $companySystemID = $request->companySystemID;
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
+                    function($query) use ($customers,$warehouses) {
+                        $query->with(['financeSubCategory']);
+                    }
+                    ,'uom_default','master'=>
+                        function($query) use ($customers,$warehouses){
+                            $query->with(['segment','customer','warehouse'=>
+                                function($query) use ($customers,$warehouses){
+                                    $query->with(['location']);
+                                }
+                            ])
+                                ->whereHas('customer', function ($q) use ($customers){
+                                    $q->whereIn('customerCodeSystem', $customers);
+                                })
+                                ->whereHas('warehouse', function ($q) use ($warehouses){
+                                    $q->whereIn('wareHouseSystemCode', $warehouses);
+                                });
+                        }
+                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                    $q->where('approved', "-1");
+                    $q->where('canceledYN', "0");
+                    $q->where('createdDateAndTime', '>=', $fromDate);
+                    $q->where('createdDateAndTime', '<=', $toDate);
+                    $q->where('companySystemID',$companySystemID);
+                }
+                )->selectRaw('*, sum(qtyIssued) as totalQty')
+
+                    ->groupBy('itemPrimaryCode')->get();
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $output = array(
+                    'items' => $invoiceDetails,
+                    'company' => $company,
+                    'warehouses' => $warehouse_descriptions,
+                    'warehouse_codes' => $warehouses
+                );
+
+                return $this->sendResponse($output, 'Items retrieved successfully');
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -413,6 +541,13 @@ class SalesMarketingReportAPIController extends AppBaseController
 
     }
 
+    public function generateSoldQty(Request $request){
+//        $itemPrimaryCode = $request->itemPrimaryCode;
+//        $totQtyIssued= CustomerInvoiceItemDetails::where('itemPrimaryCode', $itemPrimaryCode)->sum('qtyIssued');
+        return $this->sendResponse("10", 'Qty Sent');
+
+    }
+
     public function exportReport(Request $request)
     {
 
@@ -500,6 +635,67 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $lastrow = $excel->getActiveSheet()->getHighestRow();
                     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                 })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+
+            case 'SARD':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $companySystemID = $request->companySystemID;
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
+                        function($query) use ($customers,$warehouses) {
+                            $query->with(['financeSubCategory']);
+                        }
+                        ,'uom_default','master'=>
+                        function($query) use ($customers,$warehouses){
+                            $query->with(['segment','customer','warehouse'=>
+                                function($query) use ($customers,$warehouses){
+                                    $query->with(['location']);
+                                }
+                            ])
+                                ->whereHas('customer', function ($q) use ($customers){
+                                    $q->whereIn('customerCodeSystem', $customers);
+                                })
+                                ->whereHas('warehouse', function ($q) use ($warehouses){
+                                    $q->whereIn('wareHouseSystemCode', $warehouses);
+                                });
+                        }
+                    ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                        $q->where('approved', "-1");
+                        $q->where('canceledYN', "0");
+                        $q->where('createdDateAndTime', '>=', $fromDate);
+                        $q->where('createdDateAndTime', '<=', $toDate);
+                        $q->where('companySystemID',$companySystemID);
+                    }
+                    )->groupBy('itemPrimaryCode')->get();
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $templateName = "export_report.sales_analysis_detail_report";
+
+                $reportData = ['invoiceDetails' => $invoiceDetails, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
 
                 return $this->sendResponse(array(), 'successfully export');
 
@@ -895,6 +1091,49 @@ class SalesMarketingReportAPIController extends AppBaseController
             'customerCategories' => $customerCategories,
             'financeCategoryMasters' => $financeCategoryMasters,
             'wareHouses' => $wareHouses
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getSalesAnalysisFilterData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+
+        $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
+            ->groupBy('customerCodeSystem')
+            ->orderBy('CustomerName', 'ASC')
+            ->WhereNotNull('customerCodeSystem');
+
+
+        $customerMaster = $customerMaster->get();
+
+        $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
+        $document = DocumentMaster::where('departmentSystemID', 10)->get();
+        $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
+
+
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->whereIn('erp_itemledger.companySystemID', $companiesByGroup)
+            ->where('itemmaster.financeCategoryMaster', 1)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            //->take(50)
+            ->get();
+
+
+        $output = array(
+            'warehouse' => $warehouse,
+            'document' => $document,
+            'segment' => $segment,
+            'item' => $item,
+            'customer' => $customerMaster
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

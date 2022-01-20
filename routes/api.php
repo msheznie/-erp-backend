@@ -2109,9 +2109,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories');
 
         Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
+        Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
         Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+        Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
         Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
         Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport');
