@@ -433,25 +433,49 @@ class ItemSerialAPIController extends AppBaseController
         $input = $request->all();
 
         $itemSerials = ItemSerial::where('itemSystemCode', $input['itemSystemCode'])
-                                 ->where('wareHouseSystemID',$input['warehouse'])
+                                 ->when($input['documentSystemID'] != 13, function($query) use ($input){
+                                    $query->where('wareHouseSystemID',$input['warehouse']);
+                                 })
+                                 ->when($input['documentSystemID'] == 13, function($query) use ($input){
+                                    $query->where(function($query) use ($input) {
+                                        $query->where('wareHouseSystemID',$input['warehouse'])
+                                          ->orWhere('wareHouseSystemID',$input['wareHouseCodeTo']);    
+                                      });                                
+                                 })
                                  ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
+                                                $query->where('soldFlag', 1)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
                                                 $query->where('soldFlag', 0)
                                                       ->whereDoesntHave('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       });
                                             })->orWhere(function($query) use ($input) {
-                                                $query->where('soldFlag', 1)
+                                                $query->when($input['documentSystemID'] == 13, function($query) use ($input){
+                                                    $query->where('soldFlag', 0)
                                                       ->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
-                                                      });
+                                                      }); 
+                                                });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->when(in_array($input['documentSystemID'], [71, 20]), function($query) use ($input){
+                                                    $query->where('soldFlag', 0)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      }); 
+                                                });
                                             });
                                   })
                                   ->with(['document_product' => function($query) use ($input) {
                                         $query->where('documentSystemID', $input['documentSystemID'])
-                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                              ->where('documentDetailID', $input['documentDetailID']);
                                   }, 'warehouse', 'bin_location'])
                                   ->whereHas('document_in_product', function($query) use ($input) { 
                                         $query->where(function($query) use ($input) {
@@ -461,9 +485,16 @@ class ItemSerialAPIController extends AppBaseController
                                                     $query->where('approved', -1);
                                                 })->orWhereHas('material_return', function($query) use ($input) {
                                                     $query->where('approved', -1);
+                                                })->orWhereHas('purchase_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('sales_return', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
                                                 });
-                                        })
-                                        ->where('sold', 0);
+                                        });
                                     })
                                   ->get();
 
@@ -498,9 +529,13 @@ class ItemSerialAPIController extends AppBaseController
                                   ->whereHas('document_in_product', function($query) use ($input){
                                         $query->where(function($query) {
                                             $query->whereHas('material_issue', function($query) {
-                                                $query->where('approved', -1);
-                                            })
-                                            ->where('documentSystemID', 8);
+                                                    $query->where('approved', -1);
+                                                })
+                                                ->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
+                                                });
                                         })
                                         ->where('documentSystemCode', $input['rootDocumentID']);
                                   })
@@ -534,8 +569,12 @@ class ItemSerialAPIController extends AppBaseController
                     return $this->sendError("Out quantity cannot be greater than issue quantity");
                 }
 
+                if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
+                    $cehckSerial->wareHouseSystemID = $input['wareHouseCodeTo'];
+                } else {
+                    $cehckSerial->soldFlag = 1;
+                }
 
-                $cehckSerial->soldFlag = 1;
                 $cehckSerial->save();
 
                 $checkInData = DocumentSubProduct::where('productSerialID', $input['id'])
@@ -548,8 +587,10 @@ class ItemSerialAPIController extends AppBaseController
 
                 $this->itemSerialRepository->mapSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $checkInData->id);
 
+                
                 $checkInData->sold = 1;
                 $checkInData->soldQty = 1;
+
                 $checkInData->save();
             } else {
                 $checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
@@ -565,8 +606,13 @@ class ItemSerialAPIController extends AppBaseController
                         $soldProduct->save();
                     }
 
-                    $cehckSerial->soldFlag = 0;
+                    if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
+                        $cehckSerial->wareHouseSystemID = isset($input['wareHouseCodeFrom']) ? $input['wareHouseCodeFrom'] : null;
+                    } else {
+                        $cehckSerial->soldFlag = 0;
+                    }
                     $cehckSerial->save();
+
 
                     DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
                                                              ->where('documentDetailID', $input['documentDetailID'])

@@ -474,6 +474,10 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
 
+        if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
+            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -550,8 +554,12 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
+        $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
+        
 
-        $input = $request->all();
+        if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
+            return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
@@ -795,7 +803,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by'])->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy', 'blocked_by','company'])->findWithoutFail($id);
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');
@@ -1636,5 +1644,35 @@ class SupplierMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
+    }
+
+    public function getSearchSupplierByCompanySRM(Request $request)
+    {
+        $isExist = SupplierRegistrationLink::select('supplier_master_id')->whereNotNull('supplier_master_id')->get()->pluck('supplier_master_id');    
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($companyId);
+        } else {
+            $companies = [$companyId];
+        }
+
+        $suppliers = SupplierAssigned::whereIn('companySystemID', $companies)
+            ->select(['supplierCodeSytem', 'supplierName', 'primarySupplierCode'])
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                        ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                       
+                });
+            })
+            ->whereNotIn('supplierCodeSytem', $isExist)
+            ->take(20)
+            ->get();
+
+
+        return $this->sendResponse($suppliers->toArray(),'Data retrieved successfully');
     }
 }

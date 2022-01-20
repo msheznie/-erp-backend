@@ -38,6 +38,7 @@ class GRVDetailsRepository extends BaseRepository
         'includePLForGRVYN',
         'supplierPartNumber',
         'unitOfMeasure',
+        'wasteQty',
         'noQty',
         'prvRecievedQty',
         'poQty',

@@ -225,6 +225,6 @@ class ExpenseClaimDetails extends Model
 
     public function master()
     {
-        return $this->belongsTo('App\Models\ExpenseClaim', 'expenseClaimMasterAutoID', 'expenseClaimMasterAutoID');
+        return $this->belongsTo('App\Models\ExpenseClaimMaster', 'expenseClaimMasterAutoID', 'expenseClaimMasterAutoID');
     }
 }

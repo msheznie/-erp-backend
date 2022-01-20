@@ -307,6 +307,10 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             unset($input['grv_detail_master']);
         }
 
+        if (isset($input['item_by'])) {
+            unset($input['item_by']);
+        }
+
         DB::beginTransaction();
         try {
             $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->update($input, $id);
@@ -405,7 +409,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Return  not found');
         }
 
-        $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['id'])->with(['unit', 'grv_master', 'grv_detail_master'])->get();
+        $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['id'])->with(['unit', 'grv_master', 'grv_detail_master', 'item_by'])->get();
 
         return $this->sendResponse($purchaseReturnDetails, 'Purchase Return Details retrieved successfully');
     }
@@ -659,6 +663,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['grvAutoID'] = $new['grvAutoID'];
                 $item['grvDetailsID'] = $new['grvDetailsID'];
                 $item['itemCode'] = $new['itemCode'];
+                $item['trackingType'] = $new['trackingType'];
                 $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
                 $item['itemDescription'] = $new['itemDescription'];
                 $item['supplierPartNumber'] = $new['supplierPartNumber'];
