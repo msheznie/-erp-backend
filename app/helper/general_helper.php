@@ -2268,7 +2268,7 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved </p>';
+                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -2281,7 +2281,7 @@ class Helper
                                 if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved </p>';
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Appoinment Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -2998,13 +2998,13 @@ class Helper
 
                                     if($input["documentSystemID"] == 107 )
                                     {
-                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName . "<br> " . $input["rejectedComments"]." </p>";
+                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
                                         $msg = " Registration Rejected";
                                     }
                                     else if($input["documentSystemID"] == 106)
                                     {
-                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName . "<br> " . $input["rejectedComments"]." </p>";
-                                        $msg = " Delivery appointment Rejected";
+                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
+                                        $msg = " Delivery Appointment Rejected";
                                     }
 
                                     $dataEmail['empEmail'] = $currentApproved->reference_email;
