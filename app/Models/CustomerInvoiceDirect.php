@@ -731,6 +731,11 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
     }
 
+    public function item_ledger()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
     public function local_currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');

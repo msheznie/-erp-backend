@@ -71,6 +71,8 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $validator = \Validator::make($request->all(), [
                     'toDate' => 'required',
                     'fromDate' => 'required',
+                    'customer' => 'required',
+                    'warehouse' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -296,41 +298,128 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
-                    function($query) use ($customers,$warehouses) {
-                        $query->with(['financeSubCategory']);
-                    }
-                    ,'uom_default','master'=>
-                        function($query) use ($customers,$warehouses){
-                            $query->with(['segment','customer','warehouse'=>
-                                function($query) use ($customers,$warehouses){
-                                    $query->with(['location']);
-                                }
-                            ])
-                                ->whereHas('customer', function ($q) use ($customers){
-                                    $q->whereIn('customerCodeSystem', $customers);
-                                })
-                                ->whereHas('warehouse', function ($q) use ($warehouses){
-                                    $q->whereIn('wareHouseSystemCode', $warehouses);
-                                });
-                        }
-                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
-                    $q->where('approved', "-1");
-                    $q->where('canceledYN', "0");
-                    $q->where('createdDateAndTime', '>=', $fromDate);
-                    $q->where('createdDateAndTime', '<=', $toDate);
-                    $q->where('companySystemID',$companySystemID);
-                }
-                )->selectRaw('*, sum(qtyIssued) as totalQty')
 
-                    ->groupBy('itemPrimaryCode')->get();
+                $warehouseArray = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalwarehouse = DB::table('erp_custinvoicedirect')
+                        ->selectRaw('*, sum(qtyIssued) as totalQty')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('wareHouseSystemCode', $warehouse)->groupBy('itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                    array_push($warehouseArray,$totalwarehouse);
+
+                }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
-                    'items' => $invoiceDetails,
                     'company' => $company,
                     'warehouses' => $warehouse_descriptions,
-                    'warehouse_codes' => $warehouses
+                    'warehouseCodes' => $warehouses,
+                    'totalwarehouseArray'=>$warehouseArray
+                );
+
+
+                return $this->sendResponse($output, 'Items retrieved successfully');
+                break;
+
+            case 'SARDVS':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $warehouse_descriptions = $request['Warehouse'];
+                $warehouse_descriptions = (array)$warehouse_descriptions;
+                $warehouse_descriptions = collect($warehouse_descriptions)->pluck('wareHouseDescription');
+
+                $companySystemID = $request->companySystemID;
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+
+                $warehouseArray = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalwarehouse = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->selectRaw('*, sum(erp_customerinvoiceitemdetails.qtyIssued) as totalQty')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                    array_push($warehouseArray,$totalwarehouse);
+
+                }
+
+                $warehouseArraySum = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalSumOpening = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
+                        ->where('erp_itemledger.timestamp', '<=', $fromDate)
+                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+
+                    $totalSumCurrent = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
+                        ->where('erp_itemledger.timestamp', '<=', $toDate)
+                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                            $totalQty = array([$totalSumOpening,$totalSumCurrent]);
+                    array_push($warehouseArraySum,$totalQty);
+
+                }
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $output = array(
+                    'company' => $company,
+                    'warehouses' => $warehouse_descriptions,
+                    'warehouseCodes' => $warehouses,
+                    'totalwarehouseArray'=>$warehouseArray,
+                    'warehouseArraySum'=>$warehouseArraySum
                 );
 
                 return $this->sendResponse($output, 'Items retrieved successfully');
@@ -690,6 +779,162 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $templateName = "export_report.sales_analysis_detail_report";
 
                 $reportData = ['invoiceDetails' => $invoiceDetails, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
+
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+            case 'SARDS':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $warehouse_descriptions = $request['Warehouse'];
+                $warehouse_descriptions = (array)$warehouse_descriptions;
+                $warehouse_descriptions = collect($warehouse_descriptions)->pluck('wareHouseDescription');
+
+                $companySystemID = $request->companySystemID;
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+
+                $warehouseArray = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalwarehouse = DB::table('erp_custinvoicedirect')
+                        ->selectRaw('*, sum(qtyIssued) as totalQty')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('wareHouseSystemCode', $warehouse)->groupBy('itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                    array_push($warehouseArray,$totalwarehouse);
+
+                }
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+
+                $templateName = "export_report.sales_analysis_detail_summary_report";
+
+                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
+
+                return $this->sendResponse(array(), 'successfully export');
+
+                break;
+            case 'SARDVS':
+                $customers = $request['Customer'];
+                $customers = (array)$customers;
+                $customers = collect($customers)->pluck('customerCodeSystem');
+
+                $warehouses = $request['Warehouse'];
+                $warehouses = (array)$warehouses;
+                $warehouses = collect($warehouses)->pluck('wareHouseSystemCode');
+
+                $warehouse_descriptions = $request['Warehouse'];
+                $warehouse_descriptions = (array)$warehouse_descriptions;
+                $warehouse_descriptions = collect($warehouse_descriptions)->pluck('wareHouseDescription');
+
+                $companySystemID = $request->companySystemID;
+
+                $from = $request->fromDate;
+                $toDate = $request->toDate;
+                $fromDate = new Carbon($from);
+                $fromDate = $fromDate->format('Y-m-d');
+
+                $toDate = new Carbon($toDate);
+                $toDate = $toDate->format('Y-m-d');
+
+
+                $warehouseArray = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalwarehouse = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->selectRaw('*, sum(erp_customerinvoiceitemdetails.qtyIssued) as totalQty')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                    array_push($warehouseArray,$totalwarehouse);
+
+                }
+
+                $warehouseArraySum = array();
+                foreach ($warehouses as $warehouse) {
+                    $totalSumOpening = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
+                        ->where('erp_itemledger.timestamp', '<=', $fromDate)
+                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+
+                    $totalSumCurrent = DB::table('erp_custinvoicedirect')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->where('erp_custinvoicedirect.companySystemID',$companySystemID)
+                        ->where('approved', "-1")->where('canceledYN', "0")->where('createdDateAndTime', '>=', $fromDate)->where('createdDateAndTime', '<=', $toDate)
+                        ->where('erp_custinvoicedirect.wareHouseSystemCode', $warehouse)->groupBy('erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_custinvoicedirect.serviceLineSystemID')
+                        ->join('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
+                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->join('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerinvoiceitemdetails.localCurrencyID')
+                        ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
+                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
+                        ->where('erp_itemledger.timestamp', '<=', $toDate)
+                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
+                        ->whereIn('customerID', $customers)
+                        ->get();
+                    $totalQty = array([$totalSumOpening,$totalSumCurrent]);
+                    array_push($warehouseArraySum,$totalQty);
+
+                }
+
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+
+                $templateName = "export_report.sales_analysis_detail_vs_soh_report";
+
+                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'warehouseArraySum' => $warehouseArraySum, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
                 \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
