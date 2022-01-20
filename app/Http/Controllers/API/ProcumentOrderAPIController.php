@@ -565,13 +565,14 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($supplierCurrency) {
             $procumentOrderUpdate->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $procumentOrderUpdate->supplierTransactionER = 1;
+            
+            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
+
+            if ($currencyConversionDefaultMaster) {
+                $procumentOrderUpdate->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
+            }
         }
 
-        $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
-
-        if ($currencyConversionDefaultMaster) {
-            $procumentOrderUpdate->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
-        }
 
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -1601,7 +1602,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             $sup = SupplierMaster::find($purchaseOrder->supplierID);
-            if ($sup->primaryCompanySystemID) {
+            if ($sup) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
                     ->where('companyPolicyCategoryID', 38)
                     ->where('isYesNO', 1)
