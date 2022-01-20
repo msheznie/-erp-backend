@@ -2991,19 +2991,17 @@ class Helper
 
                             if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106)
                             {
-                                $suppiler_info = SupplierRegistrationLink::where('id', '=', $currentApproved->documentSystemCode)->first();
-                            
-                             
-                                if (isset($suppiler_info) && isset($currentApproved->reference_email) && !empty($currentApproved->reference_email)) {
+
+                                if (isset($currentApproved->reference_email) && !empty($currentApproved->reference_email)) {
 
                                     if($input["documentSystemID"] == 107 )
                                     {
-                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
+                                        $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
                                         $msg = " Registration Rejected";
                                     }
                                     else if($input["documentSystemID"] == 106)
                                     {
-                                        $sub = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
+                                        $sub = "<p>Dear Supplier" . ',</p><p>Please be informed that your delivery appointment has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
                                         $msg = " Delivery Appointment Rejected";
                                     }
 
