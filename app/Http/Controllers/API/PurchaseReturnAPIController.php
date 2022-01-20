@@ -59,6 +59,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\TaxService;
+use App\helper\ItemTracking;
 
 /**
  * Class PurchaseReturnController
@@ -476,6 +477,12 @@ class PurchaseReturnAPIController extends AppBaseController
             } else {
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($purchaseReturn->documentSystemID, $purchaseReturn->purhaseReturnAutoID);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
             }
 
             unset($inputParam);

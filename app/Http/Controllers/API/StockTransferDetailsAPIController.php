@@ -24,6 +24,8 @@ use App\Models\PurchaseReturn;
 use App\Models\SegmentMaster;
 use App\Models\StockTransferDetails;
 use App\Models\StockTransfer;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\Company;
 use App\Models\WarehouseMaster;
 use App\Repositories\StockTransferDetailsRepository;
@@ -144,7 +146,8 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-        $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+        $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -342,6 +345,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['unitCostRpt'] = $item->wacValueReporting;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['trackingType'] = isset($item->item_master->trackingType) ? $item->item_master->trackingType : null;
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
@@ -619,6 +623,39 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Transfer Details not found');
         }
 
+        $stockTransfer = StockTransfer::find($stockTransferDetails->stockTransferAutoID);
+
+        if (!$stockTransfer) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        if ($stockTransferDetails->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $stockTransfer->documentSystemID)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $stockTransfer->documentSystemID)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['wareHouseSystemID' => $stockTransfer->locationFrom]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
+        }
+
         $stockTransferDetails->delete();
 
         return $this->sendResponse($id, 'Stock Transfer Details deleted successfully');
@@ -629,7 +666,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input = $request->all();
         $stockTransferAutoID = $input['stockTransferAutoID'];
 
-        $items = StockTransferDetails::select(DB::raw('stockTransferDetailsID,"" as totalCost,unitCostRpt,unitOfMeasure,itemCodeSystem,itemPrimaryCode,itemDescription,qty, currentStockQty,warehouseStockQty'))
+        $items = StockTransferDetails::select(DB::raw('stockTransferDetailsID,"" as totalCost,unitCostRpt,unitOfMeasure,itemCodeSystem,itemPrimaryCode,itemDescription,qty, currentStockQty,warehouseStockQty, trackingType'))
             ->where('stockTransferAutoID', $stockTransferAutoID)
             ->with(['unit_by' => function ($query) {
             },'item_by'])

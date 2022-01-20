@@ -537,7 +537,8 @@ class ItemMasterAPIController extends AppBaseController
             'units' => $units,
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
-            'vatSubCategory' => $vatSubCategory
+            'vatSubCategory' => $vatSubCategory,
+            'masterCompany' => $masterCompany
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -809,7 +810,7 @@ class ItemMasterAPIController extends AppBaseController
         unset($input['specification']);
         unset($input['remove_items']);
 
-        $input = array_except($input,['finance_sub_category']);
+        $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
 
 
 
@@ -1073,7 +1074,7 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['specification','finalApprovedBy','financeSubCategory'=> function($q){
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['company','specification','finalApprovedBy','financeSubCategory'=> function($q){
             $q->with(['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
         }])->first();
 

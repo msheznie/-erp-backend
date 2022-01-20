@@ -19,6 +19,8 @@ use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\StockTransfer;
+use App\Models\DocumentSubProduct;
+use App\Models\ItemSerial;
 use App\Models\Taxdetail;
 use App\Repositories\DeliveryOrderDetailRepository;
 use Illuminate\Http\Request;
@@ -290,6 +292,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['unitOfMeasureIssued'] = $item->unit;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['trackingType'] = $item->trackingType;
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
@@ -705,6 +708,34 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             // }
 
             $deliveryOrderDetail->delete();
+
+
+             if ($deliveryOrderDetail->trackingType == 2) {
+                $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
+                                                             ->where('documentDetailID', $id)
+                                                             ->where('sold', 1)
+                                                             ->first();
+
+                if ($validateSubProductSold) {
+                    return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                }
+
+                $subProduct = DocumentSubProduct::where('documentSystemID', $deliveryOrder->documentSystemID)
+                                                 ->where('documentDetailID', $id);
+
+                $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+                $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+                if (count($productInIDs) > 0) {
+                    $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                              ->update(['soldFlag' => 0]);
+
+                    $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                              ->update(['sold' => 0, 'soldQty' => 0]);
+
+                    $subProduct->delete();
+                }
+            }
 
             // update maser table amount field
             $this->deliveryOrderDetailRepository->updateMasterTableTransactionAmount($deliveryOrderDetail->deliveryOrderID);
@@ -1150,6 +1181,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             $DODetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
                             $DODetail_arr['itemFinanceCategorySubID'] = $item->financeCategorySub;
+                            $DODetail_arr['trackingType'] = $item->trackingType;
 
                             $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $new['companySystemID'])
                                 ->where('mainItemCategoryID', $DODetail_arr['itemFinanceCategoryID'])

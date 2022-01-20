@@ -155,7 +155,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['supplierInvoiceNo'] = $masterData->supplierInvoiceNo;
                             $data['supplierInvoiceDate'] = $masterData->supplierInvoiceDate;
 
-                            if ($masterData->documentType == 0) { // check if it is supplier invoice
+                            if ($masterData->documentType == 0 || $masterData->documentType == 2) { // check if it is supplier invoice
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                                 $data['supplierTransER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
                                 $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));

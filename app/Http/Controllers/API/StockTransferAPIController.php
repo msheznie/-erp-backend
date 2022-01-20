@@ -53,6 +53,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
+use App\helper\ItemTracking;
 
 /**
  * Class StockTransferController
@@ -569,6 +570,12 @@ class StockTransferAPIController extends AppBaseController
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($stockTransfer->documentSystemID, $stockTransfer->stockTransferAutoID);
+
+            if (!$trackingValidation['status']) {
+                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
             }
 
             $inputParam = $input;

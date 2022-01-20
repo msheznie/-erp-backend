@@ -192,6 +192,10 @@ class ItemMaster extends Model
         //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
 
+    public function company() {
+        return $this->belongsTo('App\Models\Company','primaryCompanySystemID','companySystemID');
+    }
+
     public function itemAssigned(){
         return $this->belongsTo('App\Models\ItemAssigned','itemCodeSystem','itemCodeSystem');
     }
