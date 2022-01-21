@@ -58,34 +58,34 @@
                                     @php $j = $loop->index @endphp
 
                                 @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
-                                @if($i != $j)  <td></td> @endif
+                                @if($i != $j)  <td>0</td> @endif
 
 
 
 
                                 @if($i == $j)      <td>{{ number_format($item2->sellingCostAfterMarginRpt * $item2->totalQty,$company->reportingcurrency->DecimalPlaces) }}</td> @endif
-                                @if($i != $j)    <td></td> @endif
+                                @if($i != $j)    <td>0</td> @endif
 
 
                                 @foreach($warehouseArraySum as $item3)
                                     @php $x = $loop->index @endphp
 
-                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][0][0]->totalOpening) ?  $item3[0][0][0]->totalOpening: null}}</td>@endif
+                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][0][0]->totalOpening) ?  $item3[0][0][0]->totalOpening: 0}}</td>@endif
                                 @endforeach
-                                @if($i != $j)    <td></td> @endif
+                                @if($i != $j)    <td>0</td> @endif
 
 
                                     @foreach($warehouseArraySum as $item3)
                                         @php $x = $loop->index @endphp
-                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][1][0]->totalCurrent) ?  $item3[0][1][0]->totalCurrent: null }}</td>@endif
+                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][1][0]->totalCurrent) ?  $item3[0][1][0]->totalCurrent: 0 }}</td>@endif
                                     @endforeach
-                                @if($i != $j)    <td></td> @endif
+                                @if($i != $j)    <td>0</td> @endif
 
                                 @foreach($warehouseArraySum as $item3)
                                     @php $x = $loop->index @endphp
-                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][0][0]->totalOpening) ?  $item3[0][0][0]->totalOpening: null + isset($item3[0][1][0]->totalCurrent) ?  $item3[0][1][0]->totalCurrent: null}}</td> @endif
+                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][0][0]->totalOpening) ?  $item3[0][0][0]->totalOpening: null + isset($item3[0][1][0]->totalCurrent) ?  $item3[0][1][0]->totalCurrent: 0}}</td> @endif
                                 @endforeach
-                                @if($i != $j)    <td></td> @endif
+                                @if($i != $j)    <td>0</td> @endif
 
 
                             @endforeach
