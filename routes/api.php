@@ -416,6 +416,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
 
+        Route::resource('sme-attachment', 'AttachmentSMEAPIController');
+        Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
+
+
         Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
@@ -2608,5 +2612,6 @@ Route::get('runCronJob/{cron}', function ($cron) {
 
 
 Route::resource('document_sub_products', 'DocumentSubProductAPIController');
+
 
 

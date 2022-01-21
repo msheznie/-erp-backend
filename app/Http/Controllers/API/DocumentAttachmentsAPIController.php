@@ -57,7 +57,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
      * @return Response
      */
     public function index(Request $request)
-    {
+    {   
+        return $request;
         $this->documentAttachmentsRepository->pushCriteria(new RequestCriteria($request));
         $this->documentAttachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $this->documentAttachmentsRepository->pushCriteria(new FilterDocumentAttachmentsCriteria($request));
