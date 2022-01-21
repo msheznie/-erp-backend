@@ -54,17 +54,17 @@
                                     @php $j = $loop->index @endphp
 
                               @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
-                            @if($i != $j)  <td></td> @endif
+                            @if($i != $j)  <td>0</td> @endif
 
 
                             @if($i == $j)    <td>{{ $item2->CurrencyCode }}</td> @endif
-                            @if($i != $j)    <td></td> @endif
+                            @if($i != $j)    <td>0</td> @endif
 
                             @if($i == $j)      <td>{{ number_format($item2->sellingCostAfterMarginRpt * $item2->totalQty,$company->reportingcurrency->DecimalPlaces) }}</td> @endif
-                            @if($i != $j)    <td></td> @endif
+                            @if($i != $j)    <td>0</td> @endif
 
                             @if($i == $j)    <td>0</td> @endif
-                            @if($i != $j)    <td></td> @endif
+                            @if($i != $j)    <td>0</td> @endif
                                 @endforeach
                         </tr>
                     @endforeach
