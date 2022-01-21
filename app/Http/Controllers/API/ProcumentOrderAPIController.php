@@ -464,6 +464,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
+
         $isAmendAccess = $input['isAmendAccess'];
 
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
@@ -589,9 +590,17 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('poId', $input['purchaseOrderID'])
             ->first();
 
+
+
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
         $poVATMasterSumRounded = round($poMasterVATSum['masterTotalVATSum'], $supplierCurrencyDecimalPlace);
+
+        $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
+
+        if($advancedPayment != $poMasterSumRounded) {
+             return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+        }
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
@@ -1948,7 +1957,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvmaster.grvCancelledYN,erp_grvdetails.itemPrimaryCode,
-erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost, erp_grvmaster.refferedBackYN FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }

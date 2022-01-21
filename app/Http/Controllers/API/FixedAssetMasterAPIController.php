@@ -1013,6 +1013,10 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::all();
 
+        foreach($assetFinanceCategory as $asf) {
+            $asf->financeCatDescription = htmlspecialchars_decode($asf->financeCatDescription);
+        }
+        
         $checkUnqieStatusOfAssetCodeFormula = AssetFinanceCategory::whereNotNull('formula')
                                                                   ->get()
                                                                   ->pluck('formula')

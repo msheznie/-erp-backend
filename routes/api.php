@@ -416,6 +416,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
 
+        Route::resource('sme-attachment', 'AttachmentSMEAPIController');
+        Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
+
+
         Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
@@ -1543,6 +1547,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
         Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory');
         Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory');
+        Route::get('getGRVDetailsReversalHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsReversalHistory');
         Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
         Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
         Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
@@ -2109,9 +2114,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories');
 
         Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
+        Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
         Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+        Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
         Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
         Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport');
@@ -2608,5 +2615,6 @@ Route::get('runCronJob/{cron}', function ($cron) {
 
 
 Route::resource('document_sub_products', 'DocumentSubProductAPIController');
+
 
 
