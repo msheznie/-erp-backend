@@ -299,6 +299,34 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = $toDate->format('Y-m-d');
 
 
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
+                    function($query) use ($customers,$warehouses) {
+                        $query->with(['financeSubCategory']);
+                    }
+                    ,'uom_default','master'=>
+                        function($query) use ($customers,$warehouses){
+                            $query->with(['segment','customer','warehouse'=>
+                                function($query) use ($customers,$warehouses){
+                                    $query->with(['location']);
+                                }
+                            ])
+                                ->whereHas('customer', function ($q) use ($customers){
+                                    $q->whereIn('customerCodeSystem', $customers);
+                                })
+                                ->whereHas('warehouse', function ($q) use ($warehouses){
+                                    $q->whereIn('wareHouseSystemCode', $warehouses);
+                                });
+                        }
+                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                    $q->where('approved', "-1");
+                    $q->where('canceledYN', "0");
+                    $q->where('createdDateAndTime', '>=', $fromDate);
+                    $q->where('createdDateAndTime', '<=', $toDate);
+                    $q->where('companySystemID',$companySystemID);
+                }
+                )->get();
+
+
                 $warehouseArray = array();
                 foreach ($warehouses as $warehouse) {
                     $totalwarehouse = DB::table('erp_custinvoicedirect')
@@ -320,6 +348,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
+                    'items' => $invoiceDetails,
                     'company' => $company,
                     'warehouses' => $warehouse_descriptions,
                     'warehouseCodes' => $warehouses,
@@ -352,6 +381,33 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
+
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['currency','item_by'=>
+                    function($query) use ($customers,$warehouses) {
+                        $query->with(['financeSubCategory']);
+                    }
+                    ,'uom_default','master'=>
+                        function($query) use ($customers,$warehouses){
+                            $query->with(['segment','customer','warehouse'=>
+                                function($query) use ($customers,$warehouses){
+                                    $query->with(['location']);
+                                }
+                            ])
+                                ->whereHas('customer', function ($q) use ($customers){
+                                    $q->whereIn('customerCodeSystem', $customers);
+                                })
+                                ->whereHas('warehouse', function ($q) use ($warehouses){
+                                    $q->whereIn('wareHouseSystemCode', $warehouses);
+                                });
+                        }
+                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                    $q->where('approved', "-1");
+                    $q->where('canceledYN', "0");
+                    $q->where('createdDateAndTime', '>=', $fromDate);
+                    $q->where('createdDateAndTime', '<=', $toDate);
+                    $q->where('companySystemID',$companySystemID);
+                }
+                )->get();
 
 
                 $warehouseArray = array();
@@ -415,6 +471,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
+                    'items' => $invoiceDetails,
                     'company' => $company,
                     'warehouses' => $warehouse_descriptions,
                     'warehouseCodes' => $warehouses,
