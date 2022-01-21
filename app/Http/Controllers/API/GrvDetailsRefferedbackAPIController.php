@@ -303,4 +303,20 @@ class GrvDetailsRefferedbackAPIController extends AppBaseController
 
         return $this->sendResponse($items->toArray(), 'Grv Details Refferedback retrieved successfully');
     }
+
+    public function getGRVDetailsReversalHistory(Request $request)
+    {
+        $input = $request->all();
+        $grvAutoID = $input['grvAutoID'];
+        $timesReferred = $input['timesReferred'];
+        $grvRefferedBackID = $input['grvRefferedBackID'];
+
+        $items = GrvDetailsRefferedback::where('grvAutoID', $grvAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->where('grvRefferedBackID', $grvRefferedBackID)
+            ->with(['unit','po_master'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Grv Details Refferedback retrieved successfully');
+    }
 }
