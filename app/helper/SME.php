@@ -1,12 +1,25 @@
 <?php
 namespace App\helper;
-
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Support\Facades\DB;
 
 
 class SME
 {
+    public static function s3_file_url($key, $min=null): string
+    {
+        if(empty($key)){
+            return '';
+        }
+
+        //return Storage::disk('s3')->url($key);
+        
+        $min = ($min != null)? $min: 60;
+        $min = Carbon::now()->addMinutes($min);
+        return Storage::disk('s3')->temporaryUrl($key, $min);        
+    }
    
     public static function policy($companyID, $code, $docCode){
         $policy = DB::select("SELECT polMas.companypolicymasterID, companyPolicyDescription,
@@ -29,5 +42,22 @@ class SME
     {
         $leaveBalanceBasedOn = SME::policy($companyID, 'LC', 'All');
         return empty($leaveBalanceBasedOn)? 1 : $leaveBalanceBasedOn;
+    }
+
+    public static function user_info($column=null, $more_columns = []){
+        $more_columns_str = '';
+
+        if($more_columns){
+            $more_columns_str = ', ' . implode(', ', $more_columns);
+        }
+
+        $empID = Helper::getEmployeeID();
+        $data = DB::table('srp_employeesdetails')
+                ->selectRaw('EIdNo AS empID, ECode AS empCode, Ename2 AS empName, UserName AS userName,
+                    Erp_companyID AS companyID, segmentID, payCurrencyID, payCurrency, SchMasterId, 
+                    branchID' . $more_columns_str)
+                ->where('EIdNo', $empID)->first();
+
+        return ($column != null)? $data->$column: $data;
     }
 }
