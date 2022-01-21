@@ -388,6 +388,10 @@ class CustomerInvoiceItemDetails extends Model
         return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
     }
 
+    public function currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','sellingCurrencyID','currencyID');
+    }
+
     public function delivery_order(){
         return $this->belongsTo('App\Models\DeliveryOrder','deliveryOrderID','deliveryOrderID');
     }
