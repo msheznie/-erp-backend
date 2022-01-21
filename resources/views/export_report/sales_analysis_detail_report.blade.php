@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-md-6">
         <p><b>Report Type :<span class="p-l-10"></span> Sales Detail </b></p>
-        <p><b>From Date :<span class="p-l-10"></span>{{ $fromDate }} </b></p>
-        <p><b>To Date :<span class="p-l-10"></span>{{ $toDate }} </b></p>
+        <p><b>From Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }} </b></p>
+        <p><b>To Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </b></p>
     </div>
 </div>
 <div class="row">
@@ -37,10 +37,10 @@
                     <tr>
                     <td>{{ $invoiceDetail->master->warehouse->wareHouseCode }}</td>
                     <td>{{ $invoiceDetail->master->warehouse->location->locationName }}</td>
-                    <td>{{ $invoiceDetail->master->segment->serviceLineDes }}</td>
+                    <td>{{ $invoiceDetail->master->segment->ServiceLineDes }}</td>
                     <td>{{ $invoiceDetail->master->documentID }}</td>
                     <td>{{ $invoiceDetail->master->bookingInvCode }}</td>
-                    <td>{{ $invoiceDetail->master->createdDateAndTime }}</td>
+                    <td>{{ \Carbon\Carbon::parse($invoiceDetail->master->createdDateAndTime)->format("d/m/Y") }}</td>
                     <td>{{ $invoiceDetail->comments }}</td>
                     <td>{{ $invoiceDetail->itemPrimaryCode }}</td>
                     <td>{{ $invoiceDetail->itemDescription }}</td>

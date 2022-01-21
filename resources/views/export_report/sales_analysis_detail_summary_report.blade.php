@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-md-6">
         <p><b>Report Type :<span class="p-l-10"></span> Sales Detail Summary </b></p>
-        <p><b>From Date :<span class="p-l-10"></span>{{ $fromDate }} </b></p>
-        <p><b>To Date :<span class="p-l-10"></span>{{ $toDate }} </b></p>
+        <p><b>From Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }} </b></p>
+        <p><b>To Date :<span class="p-l-10"></span>{{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </b></p>
     </div>
 </div>
 <div class="row">
