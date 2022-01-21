@@ -464,6 +464,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
+
         $isAmendAccess = $input['isAmendAccess'];
 
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
@@ -589,9 +590,17 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('poId', $input['purchaseOrderID'])
             ->first();
 
+
+
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
         $poVATMasterSumRounded = round($poMasterVATSum['masterTotalVATSum'], $supplierCurrencyDecimalPlace);
+
+        $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
+
+        if($advancedPayment != $poMasterSumRounded) {
+             return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+        }
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
