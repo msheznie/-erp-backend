@@ -27,12 +27,13 @@
                     <th>UOM</th>
                     <th>Barcode</th>
                     <th>Sub Category</th>
-                        @foreach($warehouses as $item)
+                        @foreach($invoiceDetails as $item)
 
 
                         <td>Total Sold Qty</td>
-                        <td>Currency</td>
-                        <td>Total Sales Amount</td>
+                    @php $currency = isset($item[0]->CurrencyCode) ?  $item[0]->CurrencyCode: null @endphp
+                       @if($currency != null) <td>Total Sales Amount ({{ isset($item[0]->CurrencyCode) ?  $item[0]->CurrencyCode: 0 }})</td> @endif
+                       @if($currency == null) <td>Total Sales Amount</td> @endif
                         <td>Opening Stock</td>
                         <td>Current Period SOH</td>
                         <td>Total SOH</td>
@@ -60,12 +61,6 @@
 
                                 @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
                                 @if($i != $j)  <td>0</td> @endif
-
-                                @if($i == $j)    <td>{{ $item2->CurrencyCode }}</td> @endif
-                                @if($i != $j)    <td>-</td> @endif
-
-
-
 
                                 @if($i == $j)
                                     @if($currencyID == 1)
