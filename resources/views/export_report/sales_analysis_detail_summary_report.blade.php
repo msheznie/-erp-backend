@@ -58,7 +58,7 @@
 
 
                             @if($i == $j)    <td>{{ $item2->CurrencyCode }}</td> @endif
-                            @if($i != $j)    <td>0</td> @endif
+                            @if($i != $j)    <td>-</td> @endif
 
                             @if($i == $j)
                                 @if($currencyID == 1)
