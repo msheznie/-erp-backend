@@ -60,7 +60,13 @@
                             @if($i == $j)    <td>{{ $item2->CurrencyCode }}</td> @endif
                             @if($i != $j)    <td>0</td> @endif
 
-                            @if($i == $j)      <td>{{ number_format($item2->sellingCostAfterMarginRpt * $item2->totalQty,$company->reportingcurrency->DecimalPlaces) }}</td> @endif
+                            @if($i == $j)
+                                @if($currencyID == 1)
+                                    <td>{{ number_format($item2->sellingTotal / $item2->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
+                                @endif
+                                @if($currencyID == 2)
+                                    <td>{{ number_format($item2->sellingTotal / $item2->reportingCurrencyER,$company->reportingcurrency->DecimalPlaces) }}</td>
+                                @endif                            @endif
                             @if($i != $j)    <td>0</td> @endif
 
                             @if($i == $j)    <td>0</td> @endif
