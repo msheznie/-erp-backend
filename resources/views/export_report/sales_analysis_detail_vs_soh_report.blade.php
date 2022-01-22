@@ -31,7 +31,8 @@
 
 
                         <td>Total Sold Qty</td>
-                        <td>Total Sales Amount (OMR)</td>
+                        <td>Currency</td>
+                        <td>Total Sales Amount</td>
                         <td>Opening Stock</td>
                         <td>Current Period SOH</td>
                         <td>Total SOH</td>
@@ -59,6 +60,9 @@
 
                                 @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
                                 @if($i != $j)  <td>0</td> @endif
+
+                                @if($i == $j)    <td>{{ $item2->CurrencyCode }}</td> @endif
+                                @if($i != $j)    <td>-</td> @endif
 
 
 

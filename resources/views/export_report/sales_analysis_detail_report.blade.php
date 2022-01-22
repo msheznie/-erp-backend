@@ -58,10 +58,10 @@
                         @endif
 
                         @if($currencyID == 1)
-                        <td>{{ number_format($invoiceDetail->sellingCost / $invoiceDetail->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($invoiceDetail->sellingCostAfterMarginLocal,$company->localcurrency->DecimalPlaces) }}</td>
                         @endif
                         @if($currencyID == 2)
-                        <td>{{ number_format($invoiceDetail->sellingCost / $invoiceDetail->reportingCurrencyER,$company->reportingcurrency->DecimalPlaces) }}</td>
+                        <td>{{ number_format($invoiceDetail->sellingCostAfterMarginRpt,$company->reportingcurrency->DecimalPlaces) }}</td>
                         @endif
 
                         @if($currencyID == 1)
