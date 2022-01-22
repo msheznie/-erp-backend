@@ -21,6 +21,7 @@ use App\Models\SupplierCategorySub;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -313,14 +314,14 @@ class SRMService
 
         $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
 
-        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
+        $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails' =>function($query){
                 $query->with(['unit','appointmentDetails' => function($q){
                     $q->whereHas('appointment', function ($q){
                         $q->where('refferedBackYN', '!=', -1);
-                        $q->where('confirmed_yn', 1);
+                        /*$q->where('confirmed_yn', 1);*/
                     })->groupBy('po_detail_id')
                         ->select('id', 'appointment_id','qty','po_detail_id')
                         ->selectRaw('sum(qty) as qty');
@@ -681,7 +682,7 @@ class SRMService
             'data'      => $kycFormDetails
         ];
     }
-    public function getERPFormData(Request $request){ 
+    public function getERPFormData(Request $request){
         $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
         $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
         $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get();
@@ -699,5 +700,77 @@ class SRMService
             'message'   => 'ERP Form Data Retrieved',
             'data'      => $formData
         ];
+    }
+
+    public function checkAppointmentPastDate(Request $request)
+    {
+        $slotDetailID = $request->input('extra.slotDetailID');
+
+        $detail = SlotDetails::where('id',$slotDetailID)->first();
+
+        if(!empty($detail)){
+            $endDate = Carbon::parse($detail['end_date'])->format('Y-m-d H:i:s');
+            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+            $result['currentDate']=$currentDate;
+            $result['endDate']=$endDate;
+            if($endDate > $currentDate){
+                $result['canCreate']=1;
+                return [
+                    'success'   => true,
+                    'message'   => 'Appointment Can Be Created',
+                    'data'      => $result
+                ];
+            }else{
+                $result['canCreate']=0;
+                return [
+                    'success'   => true,
+                    'message'   => 'Appointments can not be created for past dates',
+                    'data'      => $result
+                ];
+            }
+        }else{
+            return [
+                'success'   => false,
+                'message'   => 'Slot Detail Not Available',
+                'data'      => $detail
+            ];
+        }
+    }
+
+    public function getAppointmentDetails(Request $request)
+    {
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $detail = AppointmentDetails::where('appointment_id',$appointmentID)
+            ->with(['getPoMaster', 'getPoDetails' =>function($query){
+            $query->with(['unit','appointmentDetails' => function($q){
+                $q->whereHas('appointment', function ($q){
+                    $q->where('refferedBackYN', '!=', -1);
+                    /*$q->where('confirmed_yn', 1);*/
+                })->groupBy('po_detail_id')
+                    ->select('id', 'appointment_id','qty','po_detail_id')
+                    ->selectRaw('IFNULL(sum(qty),0) as qty');
+            }]);
+        }])->get();
+        $result['detail']=$detail;
+        $result['purchaseOrderCode']='';
+        if(count($detail) > 0){
+            $result['exist']=1;
+            if(!empty($detail[0]['getPoMaster'])){
+                $result['purchaseOrderCode']=$detail[0]['getPoMaster']['purchaseOrderCode'];
+            }
+            return [
+                'success'   => true,
+                'message'   => 'Appointment Details Available',
+                'data'      => $result
+            ];
+        }else{
+            $result['exist']=0;
+            return [
+                'success'   => false,
+                'message'   => 'Appointment Details Not Available',
+                'data'      => $result
+            ];
+        }
     }
 }
