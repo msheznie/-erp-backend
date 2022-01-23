@@ -1047,6 +1047,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
                         ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
                         ->where('erp_itemledger.timestamp', '<=', $fromDate)
+                        ->groupBy('erp_itemledger.itemPrimaryCode')
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
                         ->whereIn('customerID', $customers)
                         ->get();
@@ -1064,6 +1065,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->leftjoin('erp_itemledger', 'erp_itemledger.itemPrimaryCode', '=', 'erp_customerinvoiceitemdetails.itemPrimaryCode')
                         ->where('erp_itemledger.wareHouseSystemCode', $warehouse) ->where('erp_itemledger.companySystemID',$companySystemID)
                         ->where('erp_itemledger.timestamp', '<=', $toDate)
+                        ->groupBy('erp_itemledger.itemPrimaryCode')
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
                         ->whereIn('customerID', $customers)
                         ->get();
