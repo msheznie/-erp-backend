@@ -81,13 +81,16 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['masterIsMarkupPercentage']);
         unset( $input['isEEOSSPolicy']);
 
-        $input = array_except($input, ['final_approved_by']);
+        $input = array_except($input, ['final_approved_by','company']);
+
         $input = $this->convertArrayToValue($input);
 
         foreach($companies as $companie)
         {
                 if( array_key_exists ('supplierAssignedID' , $input )){
-                    $input['companySystemID'] = $companies[0];
+                    if(isset($companies)) {
+                        $input['companySystemID'] = $companies[0];
+                    }
                 }
                 else
                 {

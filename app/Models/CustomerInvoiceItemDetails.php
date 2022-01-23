@@ -252,6 +252,7 @@ class CustomerInvoiceItemDetails extends Model
         'unitOfMeasureIssued',
         'convertionMeasureVal',
         'qtyIssued',
+        'trackingType',
         'qtyIssuedDefaultMeasure',
         'currentStockQty',
         'currentWareHouseStockQty',
@@ -325,6 +326,7 @@ class CustomerInvoiceItemDetails extends Model
         'comments' => 'string',
         'itemFinanceCategoryID' => 'integer',
         'itemFinanceCategorySubID' => 'integer',
+        'trackingType' => 'integer',
         'financeGLcodebBSSystemID' => 'integer',
         'financeGLcodebBS' => 'string',
         'financeGLcodePLSystemID' => 'integer',
@@ -384,6 +386,18 @@ class CustomerInvoiceItemDetails extends Model
 
     public function item_by(){
         return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
+    }
+
+    public function currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','sellingCurrencyID','currencyID');
+    }
+
+    public function local_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','localCurrencyID','currencyID');
+    }
+
+    public function reporting_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','reportingCurrencyID','currencyID');
     }
 
     public function delivery_order(){

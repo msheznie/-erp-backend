@@ -329,7 +329,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                         GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty]);
 
                     } else {
-                        $qtyRange = range(1, $grvDetails->noQty-$grvDetails->assetAllocatedQty);
+
+                        $ceil_qty = ceil($grvDetails->noQty);
+
+                        $qtyRange = range(1, $ceil_qty-$grvDetails->assetAllocatedQty);
+
+                  
                         $assetAllocatedQty = $grvDetails->assetAllocatedQty;
                         if ($qtyRange) {
                             foreach ($qtyRange as $key => $qty) {
@@ -412,8 +417,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $assetAllocatedQty++;
                             }
                         }
+
+                        $allocate_qty = $assetAllocatedQty;
+                        if($ceil_qty > $assetAllocatedQty)
+                        {
+                            $allocate_qty = $ceil_qty;
+                        }
+       
+
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$allocate_qty]);
                     }
-                    GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$assetAllocatedQty]);
+                   
                     DB::commit();
                 }
             }
@@ -999,6 +1013,16 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $assetFinanceCategory = AssetFinanceCategory::all();
 
+        foreach($assetFinanceCategory as $asf) {
+            $asf->financeCatDescription = htmlspecialchars_decode($asf->financeCatDescription);
+        }
+        
+        $checkUnqieStatusOfAssetCodeFormula = AssetFinanceCategory::whereNotNull('formula')
+                                                                  ->get()
+                                                                  ->pluck('formula')
+                                                                  ->toArray();
+
+
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
 
         $insuranceType = InsurancePolicyType::all();
@@ -1024,6 +1048,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
+            'auditCategoryEditable' => (count(array_unique($checkUnqieStatusOfAssetCodeFormula)) == 1) ? true : false,
             'insuranceType' => $insuranceType
         );
 

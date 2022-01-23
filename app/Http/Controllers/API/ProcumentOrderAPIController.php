@@ -147,6 +147,8 @@ use App\Models\ERPAssetTransfer;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AddMultipleItems;
 use App\helper\CancelDocument;
+use App\Jobs\GeneralLedgerInsert;
+use App\Models\GeneralLedger;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -462,6 +464,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
+
         $isAmendAccess = $input['isAmendAccess'];
 
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
@@ -563,13 +566,14 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($supplierCurrency) {
             $procumentOrderUpdate->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $procumentOrderUpdate->supplierTransactionER = 1;
+            
+            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
+
+            if ($currencyConversionDefaultMaster) {
+                $procumentOrderUpdate->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
+            }
         }
 
-        $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
-
-        if ($currencyConversionDefaultMaster) {
-            $procumentOrderUpdate->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
-        }
 
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -586,9 +590,17 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('poId', $input['purchaseOrderID'])
             ->first();
 
+
+
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
         $poVATMasterSumRounded = round($poMasterVATSum['masterTotalVATSum'], $supplierCurrencyDecimalPlace);
+
+        $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
+
+        if($advancedPayment != $poMasterSumRounded) {
+             return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+        }
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
@@ -1599,7 +1611,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($purchaseOrderID) {
             $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
             $sup = SupplierMaster::find($purchaseOrder->supplierID);
-            if ($sup->primaryCompanySystemID) {
+            if ($sup) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $sup->primaryCompanySystemID)
                     ->where('companyPolicyCategoryID', 38)
                     ->where('isYesNO', 1)
@@ -1945,7 +1957,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvmaster.grvCancelledYN,erp_grvdetails.itemPrimaryCode,
-erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost, erp_grvmaster.refferedBackYN FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
@@ -8533,6 +8545,163 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             DB::commit();
             return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function updateExemptVATPos(Request $request)
+    {
+        $input = $request->all();
+
+        $exemptVATPO = PurchaseOrderDetails::with(['order'])
+                                            ->whereHas('vat_sub_category', function($query) {
+                                                $query->where('subCatgeoryType', 3);
+                                            })
+                                            ->whereHas('order')
+                                            ->get();
+
+        DB::beginTransaction();
+        try {
+            $grvIds = [];
+            foreach ($exemptVATPO as $key => $value) {
+                if (TaxService::checkPOVATEligible($value->order->supplierVATEligible, $value->order->vatRegisteredYN)) {
+
+                    $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($value->order->supplierTransactionCurrencyID);
+                    //getting total sum of PO detail Amount
+                    $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+                                                    ->where('purchaseOrderMasterID', $value->order->purchaseOrderID)
+                                                    ->first();
+
+                    $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+
+
+
+                    $calculateItemDiscount = 0;
+                    if ($value->order->poDiscountAmount > 0 && $poMasterSumRounded > 0 && $value->noQty) {
+                        $calculateItemDiscount = ((($value->netAmount - (($value->netAmount / $poMasterSumRounded) * $value->order->poDiscountAmount))) / $value->noQty);
+                    } else {
+                        $calculateItemDiscount = $value->unitCost - $value->discountAmount;
+                    }
+
+                    if (!$value->order->vatRegisteredYN) {
+                        $calculateItemDiscount = $calculateItemDiscount + $value->VATAmount;
+                    } else {
+                        $checkVATCategory = TaxVatCategories::with(['type'])->find($value->vatSubCategoryID);
+                        if ($checkVATCategory) {
+                            if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $value->exempt_vat_portion > 0 && $value->VATAmount > 0) {
+                               $exemptVAT = $value->VATAmount * ($value->exempt_vat_portion / 100);
+
+                               $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                            } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                                $calculateItemDiscount = $calculateItemDiscount + $value->VATAmount;
+                            }
+                        }
+                    }
+
+                    // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
+                    $vatLineAmount = $value->VATAmount; //($calculateItemTax - $calculateItemDiscount);
+
+                    $currencyConversion = \Helper::currencyConversion($value->companySystemID, $value->order->supplierTransactionCurrencyID, $value->order->supplierTransactionCurrencyID, $calculateItemDiscount);
+
+                    $currencyConversionForLineAmount = \Helper::currencyConversion($value->companySystemID, $value->order->supplierTransactionCurrencyID, $value->order->supplierTransactionCurrencyID, $vatLineAmount);
+
+                    $currencyConversionLineDefault = \Helper::currencyConversion($value->order->companySystemID, $value->order->supplierTransactionCurrencyID, $value->order->supplierDefaultCurrencyID, $calculateItemDiscount);
+
+
+                    $poUpdateData = [
+                            'GRVcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                            'GRVcostPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                            'GRVcostPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
+                            'GRVcostPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
+                            'purchaseRetcostPerUniSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                            'purchaseRetcostPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                            'purchaseRetcostPerUnitTranCur' => \Helper::roundValue($calculateItemDiscount),
+                            'purchaseRetcostPerUnitRptCur' => \Helper::roundValue($currencyConversion['reportingAmount'])
+                        ];
+
+
+                    PurchaseOrderDetails::where('purchaseOrderDetailsID', $value->purchaseOrderDetailsID)
+                        ->update($poUpdateData);
+
+ 
+                    $grvDetail = GRVDetails::where('purchaseOrderDetailsID', $value->purchaseOrderDetailsID)
+                                          ->first();
+
+                    if ($grvDetail) {
+                        if ($grvDetail->landingCost_TransCur >= $grvDetail->GRVcostPerUnitSupTransCur) {
+                            
+                            $oldLandingTrans = $grvDetail->landingCost_TransCur - $grvDetail->GRVcostPerUnitSupTransCur;
+                            $oldLandingLocal = $grvDetail->landingCost_LocalCur - $grvDetail->GRVcostPerUnitLocalCur;
+                            $oldLandingRpt = $grvDetail->landingCost_RptCur - $grvDetail->GRVcostPerUnitComRptCur;
+
+                            $totalNetcost = $poUpdateData['GRVcostPerUnitSupTransCur'] * $grvDetail->noQty;
+
+                            $grvDetail->unitCost = $poUpdateData['GRVcostPerUnitSupTransCur'];
+
+                            $grvDetail->GRVcostPerUnitLocalCur = $poUpdateData['GRVcostPerUnitLocalCur'];
+                            $grvDetail->GRVcostPerUnitSupDefaultCur = $poUpdateData['GRVcostPerUnitSupDefaultCur'];
+                            $grvDetail->GRVcostPerUnitSupTransCur = $poUpdateData['GRVcostPerUnitSupTransCur'];
+                            $grvDetail->GRVcostPerUnitComRptCur = $poUpdateData['GRVcostPerUnitComRptCur'];
+
+                            $grvDetail->netAmount = $totalNetcost;
+
+                            $grvDetail->landingCost_TransCur = \Helper::roundValue($oldLandingTrans) + $poUpdateData['GRVcostPerUnitSupTransCur'];
+                            $grvDetail->landingCost_LocalCur = \Helper::roundValue($oldLandingLocal) + $poUpdateData['GRVcostPerUnitLocalCur'];
+                            $grvDetail->landingCost_RptCur = \Helper::roundValue($oldLandingRpt) + $poUpdateData['GRVcostPerUnitComRptCur'];
+
+                            $grvDetail->save();
+
+                            $grvIds[] = $grvDetail->grvAutoID;
+
+                        }
+                    }
+
+                }
+            }
+
+            $uniqueGrvIds = array_unique($grvIds);
+
+            foreach ($uniqueGrvIds as $key => $value) {
+
+                $grvData = GRVMaster::find($value);
+
+                if ($grvData) {
+                    $generalLedger = GeneralLedger::where('documentSystemID', 3)
+                                                  ->where('documentSystemCode', $value)
+                                                  ->first();
+
+                    if ($generalLedger) {
+                        $updateData = [
+                            'documentDate' => $generalLedger->documentDate,
+                            'createdDateTime' => $generalLedger->createdDateTime,
+                            'timestamp' => $generalLedger->timestamp,
+                            'createdUserSystemID' => $generalLedger->createdUserSystemID
+                        ];
+
+                        $deleteGL = GeneralLedger::where('documentSystemID', 3)
+                                                  ->where('documentSystemCode', $value)
+                                                  ->delete();
+
+                        $masterData = [
+                            'documentSystemID' => $grvData->documentSystemID,
+                            'autoID' => $value,
+                            'companySystemID' => $grvData->companySystemID,
+                            'employeeSystemID' => $updateData['createdUserSystemID']
+                        ];
+                    
+                        GeneralLedgerInsert::dispatch($masterData);
+
+                        $generalLedger = GeneralLedger::where('documentSystemID', 3)
+                                                  ->where('documentSystemCode', $value)
+                                                  ->update($updateData);
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Exempt VAT Gl uploaded Successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

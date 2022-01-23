@@ -3553,8 +3553,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['serviceLineCode'] = $val->serviceLineCode;
                                         $data['chartOfAccountSystemID'] = $masterData->disposal_type->chartOfAccountID;
                                         $data['glCode'] = $masterData->disposal_type->glCode;
-                                        $data['glAccountType'] = $masterData->disposal_type->chartofaccount->catogaryBLorPL;
-                                        $data['glAccountTypeID'] = $masterData->disposal_type->chartofaccount->catogaryBLorPLID;
+                                        $data['glAccountType'] = $masterData->disposal_type->chartofaccount ? $masterData->disposal_type->chartofaccount->catogaryBLorPL : null;
+                                        $data['glAccountTypeID'] = $masterData->disposal_type->chartofaccount ? $masterData->disposal_type->chartofaccount->catogaryBLorPLID : null;
                                         $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = 0;
                                         $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;

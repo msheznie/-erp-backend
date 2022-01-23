@@ -40,7 +40,7 @@ use App\helper\Helper;
 use App\helper\TaxService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use App\helper\ItemTracking;
 
 /**
  * Class SalesReturnController
@@ -290,7 +290,7 @@ class SalesReturnAPIController extends AppBaseController
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'detail' => function($query){
-            $query->with(['delivery_order','uom_default', 'delivery_order_detail', 'sales_invoice']);
+            $query->with(['delivery_order','uom_default', 'delivery_order_detail', 'sales_invoice', 'item_by']);
         },'segment','warehouse'])->findWithoutFail($id);
 
         if (empty($salesReturn)) {
@@ -461,6 +461,13 @@ class SalesReturnAPIController extends AppBaseController
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
+                }
+
+
+                $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($salesReturn->documentSystemID, $id);
+
+                if (!$trackingValidation['status']) {
+                    return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
                 }
 
                 // check customer master unbilled gl account configured
@@ -908,6 +915,7 @@ class SalesReturnAPIController extends AppBaseController
 
                             $invDetail_arr['salesReturnID'] = $salesReturnID;
                             $invDetail_arr['deliveryOrderID'] = $new['deliveryOrderID'];
+                            $invDetail_arr['trackingType'] = $new['trackingType'];
                             $invDetail_arr['deliveryOrderDetailID'] = $new['deliveryOrderDetailID'];
                             $invDetail_arr['itemCodeSystem'] = $new['itemCodeSystem'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
@@ -1342,6 +1350,7 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['customerItemDetailID'] = $new['customerItemDetailID'];
                             $invDetail_arr['itemCodeSystem'] = $new['itemCodeSystem'];
                             $invDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                            $invDetail_arr['trackingType'] = $new['trackingType'];
                             $invDetail_arr['itemDescription'] = $new['itemDescription'];
                             $invDetail_arr['vatMasterCategoryID'] = $new['vatMasterCategoryID'];
                             $invDetail_arr['vatSubCategoryID'] = $new['vatSubCategoryID'];
