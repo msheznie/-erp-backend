@@ -64,6 +64,17 @@ class ExpenseClaimMasterRepository extends BaseRepository
         return ExpenseClaimMaster::class;
     }
 
+    public function getAudit($id)
+    {
+        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'company.localcurrency', 'details' => function ($q) {
+            $q->with(['segment','chart_of_account','currency','local_currency','category']);
+        }, 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])->where('documentID', 'EC');
+        },'audit_trial.modified_by'])->findWithoutFail($id);
+    }
+
     public function expenseClaimMasterListQuery($request, $input, $search = '') {
         // return$input['documentId'];
 
@@ -108,8 +119,8 @@ class ExpenseClaimMasterRepository extends BaseRepository
         return $expenseClaims;
     }
 
-    public function getAudit($id)
-    {
-        return $this->findWithoutFail($id);
-    }
+    // public function getAudit($id)
+    // {
+    //     return $this->findWithoutFail($id);
+    // }
 }

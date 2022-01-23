@@ -1056,6 +1056,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('expense_claim_masters', 'ExpenseClaimMasterAPIController');
         Route::post('getExpenseClaimMasterByCompany', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterByCompany');
+        Route::get('getExpenseClaimMasterAudit', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterAudit');
         Route::get('getExpenseClaimMasterPaymentStatusHistory', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterPaymentStatusHistory');
 
         Route::resource('expense_claim_details_masters', 'ExpenseClaimDetailsMasterAPIController');
@@ -2458,6 +2459,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
     Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
     Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
+    Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
     Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
     Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');

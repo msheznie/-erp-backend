@@ -279,6 +279,68 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         return $this->sendSuccess('Expense Claim Master deleted successfully');
     }
 
+    public function getExpenseClaimMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
+
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim retrieved successfully');
+    }
+
+    public function printExpenseClaimMaster(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
+        $expenseClaim->localDecimal = 3;
+        $expenseClaim->localDecimal = 'OMR';
+        $expenseClaim->total = 0;
+
+
+        $grandTotal = collect($expenseClaim->details)->pluck('companyLocalAmount')->toArray();
+        $expenseClaim->total = array_sum($grandTotal);
+
+        foreach ($expenseClaim->details as $item) {
+            $item->currencyDecimal = 2;
+            $item->localDecimal = 3;
+
+            if ($item->currency) {
+                $item->currencyDecimal = $item->currency->DecimalPlaces;
+            }
+            if ($item->local_currency) {
+                $item->localDecimal = $item->local_currency->DecimalPlaces;
+            }
+        }
+
+        if ($expenseClaim->company) {
+            if ($expenseClaim->company->localcurrency) {
+                $expenseClaim->localDecimal = $expenseClaim->company->localcurrency->DecimalPlaces;
+                $expenseClaim->localCurrencyCode = $expenseClaim->company->localcurrency->CurrencyCode;
+            }
+        }
+
+        $array = array('entity' => $expenseClaim);
+        $time = strtotime("now");
+        $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
+        $html = view('print.expense_claim', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
     public function getExpenseClaimMasterByCompany(Request $request)
     {
 
