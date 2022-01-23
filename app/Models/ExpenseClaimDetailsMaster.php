@@ -362,10 +362,10 @@ class ExpenseClaimDetailsMaster extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'segmentID', 'serviceLineSystemID');
     }
 
-    // public function chart_of_account()
-    // {
-    //     return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
-    // }
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
 
     public function currency()
     {
