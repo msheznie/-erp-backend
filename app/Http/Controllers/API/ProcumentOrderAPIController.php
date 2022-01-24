@@ -1079,7 +1079,6 @@ class ProcumentOrderAPIController extends AppBaseController
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
-            
             $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
@@ -1087,8 +1086,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] == 0 || $payment['comPercentage'] == "")  ? ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])) : $payment['comPercentage'];
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
                     $payAdCompAmount = $payment['comAmount'];
+
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
                         return $this->sendError('Payment terms is not matching with the PO total');
