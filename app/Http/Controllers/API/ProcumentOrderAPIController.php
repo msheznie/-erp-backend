@@ -464,7 +464,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input = $request->all();
 
-
+       
         $isAmendAccess = $input['isAmendAccess'];
 
         $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location']);
@@ -598,9 +598,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
 
-        // if($advancedPayment != $poMasterSumRounded) {
-        //      return $this->sendError('Total of Payment terms amount is not equal to PO amount');
-        // }
+
+
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
@@ -609,6 +608,8 @@ class ProcumentOrderAPIController extends AppBaseController
         
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
         $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+
+
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
             return $this->sendError('Discount Amount should be less than order amount.', 500);
@@ -658,6 +659,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
+        if(isset($input['isConfirm']) && $input['isConfirm']) {
+            if($advancedPayment != $procumentOrderUpdate->poTotalSupplierDefaultCurrency) {
+                return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+            }
+        }
+
+        
         if ($procumentOrder->supplierID != $input['supplierID']) {
             $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
             if ($supplier) {
@@ -1069,6 +1077,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
+            
             $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
@@ -1076,7 +1085,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
+                    $paymentPercentageAmount = ($payment['comPercentage'] == 0 || $payment['comPercentage'] == "")  ? ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])) : $payment['comPercentage'];
                     $payAdCompAmount = $payment['comAmount'];
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
