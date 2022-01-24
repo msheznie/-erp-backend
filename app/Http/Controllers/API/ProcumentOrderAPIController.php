@@ -1083,7 +1083,6 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
 
-
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
