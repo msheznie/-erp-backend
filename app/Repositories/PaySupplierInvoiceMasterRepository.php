@@ -412,8 +412,9 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $decimalPlcaes = isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2;
             $currencyCode = isset($procumentOrder->transactioncurrency->CurrencyCode) ? $procumentOrder->transactioncurrency->CurrencyCode : "USD";
 
-
-            if (floatval($totalPayment) > floatval($poTotalAmount)) {
+            $roundedPoTotal = round($poTotalAmount, $decimalPlcaes);
+            $roundedTotalPayment = round($totalPayment, $decimalPlcaes);
+            if (floatval($roundedTotalPayment) > floatval($roundedPoTotal)) {
                 $message = "Purchase Order ".$procumentOrder->purchaseOrderCode." will be overpaid. Purchase Order Amount : ".$currencyCode." ".number_format($poTotalAmount, $decimalPlcaes).", Supplier Payment : ".$currencyCode." ".number_format($totalSupplierPayment, $decimalPlcaes).", Advance Payment : ".$currencyCode." ".number_format($totalAdavancePayment, $decimalPlcaes);
                 return ['status' => false, 'message' => $message];
             }

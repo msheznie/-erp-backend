@@ -347,7 +347,8 @@ class CustomerMasterAPIController extends AppBaseController
                                                                 }
 
                                                                 $query->whereIn('companySystemID', $childCompanies);
-                                                            });
+                                                            })
+                                                            ->where('isAssigned', 1);
                                                     })
                                                     ->get();
 

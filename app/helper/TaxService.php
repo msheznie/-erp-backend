@@ -1132,17 +1132,19 @@ class TaxService
                 ->where('grvAutoID', $grvAutoID)
                 ->first();
 
-        foreach ($purchaseReturnDetails as $key => $value) {
-            $resultData['logisticTransAmount'] += (isset($value->grv_detail_master->logisticsCharges_TransCur) ? ($value->grv_detail_master->logisticsCharges_TransCur * $value->noQty) : 0);
-            $resultData['logisticLocalAmount'] += (isset($value->grv_detail_master->logisticsCharges_LocalCur) ? ($value->grv_detail_master->logisticsCharges_LocalCur * $value->noQty) : 0);
-            $resultData['logisticRptAmount'] += (isset($value->grv_detail_master->logisticsChargest_RptCur) ? ($value->grv_detail_master->logisticsChargest_RptCur * $value->noQty) : 0);
+        if (isset($grvTotalLogisticAmount['transactionTotalSum']) && $grvTotalLogisticAmount['transactionTotalSum'] > 0) {
+            foreach ($purchaseReturnDetails as $key => $value) {
+                $resultData['logisticTransAmount'] += (isset($value->grv_detail_master->logisticsCharges_TransCur) ? ($value->grv_detail_master->logisticsCharges_TransCur * $value->noQty) : 0);
+                $resultData['logisticLocalAmount'] += (isset($value->grv_detail_master->logisticsCharges_LocalCur) ? ($value->grv_detail_master->logisticsCharges_LocalCur * $value->noQty) : 0);
+                $resultData['logisticRptAmount'] += (isset($value->grv_detail_master->logisticsChargest_RptCur) ? ($value->grv_detail_master->logisticsChargest_RptCur * $value->noQty) : 0);
 
 
-            $resultData['logisticTransVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_TransCur) / $grvTotalLogisticAmount['transactionTotalSum']) * $grvTotalLogisticAmount['VATAmountTotal']) * $value->noQty);
-            $resultData['logisticLocalVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_LocalCur) / $grvTotalLogisticAmount['localTotalSum']) * $grvTotalLogisticAmount['VATAmountLocalTotal']) * $value->noQty);
-            $resultData['logisticRptVATAmount'] += (((floatval($value->grv_detail_master->logisticsChargest_RptCur) / $grvTotalLogisticAmount['reportingTotalSum']) * $grvTotalLogisticAmount['VATAmountRptTotal']) * $value->noQty);
-
+                $resultData['logisticTransVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_TransCur) / $grvTotalLogisticAmount['transactionTotalSum']) * $grvTotalLogisticAmount['VATAmountTotal']) * $value->noQty);
+                $resultData['logisticLocalVATAmount'] += (((floatval($value->grv_detail_master->logisticsCharges_LocalCur) / $grvTotalLogisticAmount['localTotalSum']) * $grvTotalLogisticAmount['VATAmountLocalTotal']) * $value->noQty);
+                $resultData['logisticRptVATAmount'] += (((floatval($value->grv_detail_master->logisticsChargest_RptCur) / $grvTotalLogisticAmount['reportingTotalSum']) * $grvTotalLogisticAmount['VATAmountRptTotal']) * $value->noQty);
+            }
         }
+
 
         return $resultData;
     }

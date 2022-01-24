@@ -3004,7 +3004,7 @@ WHERE
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
+        )->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID, $fromPms) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
                 ->where('erp_custinvoicedirect.companySystemID', $companyID)
                 ->where('erp_custinvoicedirect.approved', -1)

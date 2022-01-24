@@ -312,5 +312,67 @@ class ExpenseClaimMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserID', 'employeeSystemID');
     }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserID', 'employeeSystemID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\ExpenseClaimDetailsMaster','expenseClaimMasterAutoID','expenseClaimMasterAutoID');
+    }
+    public function expense_claim_type()
+    {
+        return $this->hasOne('App\Models\ExpenseClaimType','expenseClaimTypeID','pettyCashYN');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','expenseClaimMasterAutoID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companyID','companySystemID');
+    }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_expenseclaimmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_expenseclaimdetails','erp_expenseclaimdetails.expenseClaimMasterAutoID','erp_expenseclaimmaster.expenseClaimMasterAutoID');
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'cu', $column = 'currencyID' , $columnAs = 'currencyCode', $decimalPlaceAs = 'amount')
+    {
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','erp_expenseclaimdetails.'.$column)
+                ->addSelect($as.".DecimalPlaces as ".$decimalPlaceAs."DecimalPlaces",$as.".currencyCode as ".$columnAs);
+    }
+
+    public function scopeDepartmentJoin($q,$as = 'department', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_expenseclaimdetails.'.$column);
+    }
+
+    public function scopeCategoryJoin($q,$as = 'category', $column = 'expenseClaimCategoriesAutoID' , $columnAs = 'claimcategoriesDescription')
+    {
+        return $q->leftJoin('erp_expenseclaimcategories as '.$as,$as.'.expenseClaimCategoriesAutoID','erp_expenseclaimdetails.'.$column);
+    }
+
+    public function scopeChartOfAccountJoin($q,$as = 'chartOfAccount', $column = 'chartOfAccountSystemID' , $columnAs = 'AccountCode')
+    {
+        return $q->leftJoin('chartofaccounts as '.$as,$as.'.chartOfAccountSystemID','erp_expenseclaimdetails.'.$column);
+    }
+
+    public function audit_trial()
+    {
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'expenseClaimMasterAutoID')->where('documentSystemID',6);
+    }
+
     
 }

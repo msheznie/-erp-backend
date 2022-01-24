@@ -868,24 +868,8 @@ GROUP BY
                                 revenueCustomerDetail.CompanyName,
                                 customermaster.CutomerCode,
                                 customermaster.CustomerName,
-                                revenueCustomerDetail.documentCode,
-                                revenueCustomerDetail.documentSystemCode,
-                                revenueCustomerDetail.documentSystemID,
-                                revenueCustomerDetail.serviceLineCode,
-                                revenueCustomerDetail.ContractNumber,
-                                revenueCustomerDetail.contractDescription,
-                                revenueCustomerDetail.CONTRACT_PO,
-                                revenueCustomerDetail.ContEndDate,
-                                revenueCustomerDetail.glCode,
-                                revenueCustomerDetail.AccountDescription,
-                                revenueCustomerDetail.documentDate,
                                 documentLocalCurrency,
-                                documentLocalDecimalPlaces,
                                 documentRptCurrency,
-                                documentRptDecimalPlaces,
-                                month(revenueCustomerDetail.documentDate) as PostingMonth,
-                                year(revenueCustomerDetail.documentDate) as PostingYear,
-                                revenueCustomerDetail.documentNarration,
                                 round(revenueCustomerDetail.MyLocalAmount,0) localAmount,
                                 round(SUM(revenueCustomerDetail.MyRptAmount),0) RptAmount
                             FROM
@@ -939,31 +923,16 @@ GROUP BY
                             FROM
                                 erp_generalledger
                                 INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                AND chartofaccounts.controlAccountsSystemID = 1
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                                 LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
                                 AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-                                INNER JOIN (
-                            SELECT
-                                erp_templatesdetails.templatesDetailsAutoID,
-                                erp_templatesdetails.templatesMasterAutoID,
-                                erp_templatesdetails.templateDetailDescription,
-                                erp_templatesdetails.controlAccountID,
-                                erp_templatesdetails.controlAccountSubID,
-                                erp_templatesglcode.chartOfAccountSystemID,
-                                erp_templatesglcode.glCode 
-                            FROM
-                                erp_templatesdetails
-                                INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
-                            WHERE
-                                erp_templatesdetails.templatesMasterAutoID = 15 AND erp_templatesdetails.controlAccountID = "PLI"
-                                ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $childCompanies) . ')
-                            
                                 AND YEAR(erp_generalledger.documentDate) = '.$currentYear.'
                                 ) AS revenueCustomerDetail
-                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
+                                INNER JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
 																Group By mySupplierCode
 																LIMIT 10');
 

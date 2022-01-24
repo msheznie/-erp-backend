@@ -272,7 +272,7 @@
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td>{{$loop->iteration}}</td>
                     <td>
-                        {{$item->glCode .' - '. $item->glCodeDescription}}
+                        {{$item->category->glCode .' - '. $item->category->glCodeDescription}}
                     </td>
                     <td>{{$item->description}}</td>
                     <td>
@@ -281,10 +281,10 @@
                         @endif
                     </td>
                     <td class="text-right">
-                        {{ number_format($item->amount,$item->currencyDecimal)}}
+                        {{ number_format($item->transactionAmount,$item->currencyDecimal)}}
                     </td>
                     <td class="text-right">
-                        {{number_format($item->localAmount,$item->localDecimal)}}
+                        {{number_format($item->companyLocalAmount,$item->localDecimal)}}
 
                     </td>
                 </tr>
@@ -311,7 +311,7 @@
                             </td>
                             <td>
                                 @if($entity->confirmed_by)
-                                    {{$entity->confirmed_by->empName}}
+                                    {{$entity->confirmed_by->empFullName}}
                                 @endif
                             </td>
                         </tr>

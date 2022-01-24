@@ -439,7 +439,14 @@ class ItemSerialAPIController extends AppBaseController
                                  ->when($input['documentSystemID'] == 13, function($query) use ($input){
                                     $query->where(function($query) use ($input) {
                                         $query->where('wareHouseSystemID',$input['warehouse'])
-                                          ->orWhere('wareHouseSystemID',$input['wareHouseCodeTo']);    
+                                          ->orWhere(function($query) use ($input) {
+                                            $query->where('wareHouseSystemID',$input['wareHouseCodeTo'])
+                                                  ->where('soldFlag', 0)
+                                                  ->whereHas('document_product', function($query) use ($input) {
+                                                        $query->where('documentSystemID', $input['documentSystemID'])
+                                                              ->where('documentDetailID', $input['documentDetailID']);
+                                                  });
+                                          });    
                                       });                                
                                  })
                                  ->where(function($query) use ($input){
