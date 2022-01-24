@@ -659,7 +659,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            if($advancedPayment != $procumentOrderUpdate->poTotalSupplierDefaultCurrency) {
+            if($advancedPayment != $newlyUpdatedPoTotalAmount) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
