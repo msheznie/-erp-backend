@@ -662,6 +662,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if($advancedPayment != $newlyUpdatedPoTotalAmount) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
+            unset($input['isConfirm']);
         }
 
         
