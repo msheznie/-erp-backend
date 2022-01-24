@@ -597,9 +597,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
 
-        if($advancedPayment != $poMasterSumRounded) {
-             return $this->sendError('Total of Payment terms amount is not equal to PO amount');
-        }
+        // if($advancedPayment != $poMasterSumRounded) {
+        //      return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+        // }
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
