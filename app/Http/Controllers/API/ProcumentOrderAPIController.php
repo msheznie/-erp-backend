@@ -474,7 +474,35 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['VATAmountPreview']);
         }
 
+        // po total vat
+        $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
+            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+            ->first();
 
+
+        $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
+               //getting addon Total for PO
+        $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
+            ->where('poId', $input['purchaseOrderID'])
+            ->first();
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+            ->first();
+        $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
+        $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
+        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+
+        if(isset($input['isConfirm']) && $input['isConfirm']) {
+            if($advancedPayment != $newlyUpdatedPoTotalAmount) {
+                return $this->sendError('Total of Payment terms amount is not equal to PO amount');
+            }
+        }
+        if(isset($input['isConfirm'])) {
+            unset($input['isConfirm']);
+        }
+        
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
 
         if (isset($input['expectedDeliveryDate']) && $input['expectedDeliveryDate']) {
@@ -489,7 +517,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
         }
 
-        $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
+      
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -575,40 +603,19 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
-
-        // po total vat
-        $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
-
-        //getting addon Total for PO
-        $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
-            ->where('poId', $input['purchaseOrderID'])
-            ->first();
-
-
-
+ 
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
         $poVATMasterSumRounded = round($poMasterVATSum['masterTotalVATSum'], $supplierCurrencyDecimalPlace);
-
-        $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
-
-
 
 
         if ($procumentOrder->rcmActivated) {
             $poVATMasterSumRounded = 0;
         }
-
         
-        $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
-
+        if(isset($input['isConfirm'])) {
+            unset($input['isConfirm']);
+        } 
 
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
@@ -659,12 +666,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = \Helper::roundValue($currencyConversionMaster['documentAmount']);
 
-        if(isset($input['isConfirm']) && $input['isConfirm']) {
-            if($advancedPayment != $newlyUpdatedPoTotalAmount) {
-                return $this->sendError('Total of Payment terms amount is not equal to PO amount');
-            }
-            unset($input['isConfirm']);
-        }
 
         
         if ($procumentOrder->supplierID != $input['supplierID']) {
