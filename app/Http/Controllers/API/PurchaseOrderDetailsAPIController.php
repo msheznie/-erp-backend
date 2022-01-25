@@ -1360,7 +1360,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             foreach ($updateDetailDiscount as $itemDiscont) {
 
-                if ($itemDiscont['noQty'] != 0 && $itemDiscont['netAmount'] > 0) {
+                if ($itemDiscont['noQty'] != 0 && $input['netTotal'] != 0) {
                     $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['discount'] / $input['netTotal']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
 
                     $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
