@@ -41,6 +41,7 @@
                     @php $i = $loop->index @endphp
 
                 @foreach($item1 as $item2)
+                    @php $k = $loop->index @endphp
 
                     <tr>
                             <td>{{$item2->ServiceLineDes}}</td>
@@ -51,9 +52,13 @@
                             <td>{{$item2->categoryDescription}}</td>
 
                                 @foreach($warehouseCodes as $item3)
-                                    @php $j = $loop->index @endphp
+                                    @php
+                                        $j = $loop->index;
+                                         $tot  = isset($totalReturn[$j][$k][0]->totalReturned) ? $totalReturn[$j][$k][0]->totalReturned: 0;
 
-                              @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
+                                    @endphp
+
+                            @if($i == $j)  <td>{{$item2->totalQty - $tot}}</td> @endif
                             @if($i != $j)  <td>0</td> @endif
 
 
@@ -62,11 +67,12 @@
 
                             @if($i == $j)
                                 @if($currencyID == 1)
-                                    <td>{{ number_format($item2->sellingTotal / $item2->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
+                                    <td>{{ number_format(($item2->totalQty - $tot) * $item2->sellingCostAfterMarginLocal,$company->localcurrency->DecimalPlaces) }}</td>
                                 @endif
                                 @if($currencyID == 2)
-                                    <td>{{ number_format($item2->sellingTotal / $item2->reportingCurrencyER,$company->reportingcurrency->DecimalPlaces) }}</td>
-                                @endif                            @endif
+                                    <td>{{ number_format(($item2->totalQty - $tot) * $item2->sellingCostAfterMarginRpt,$company->reportingcurrency->DecimalPlaces) }}</td>
+                                @endif
+                            @endif
                             @if($i != $j)    <td>0</td> @endif
 
                             @if($i == $j)    <td>0</td> @endif
