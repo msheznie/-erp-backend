@@ -2116,6 +2116,10 @@ class Helper
                                     if ($sourceModel->isFrom != 5) {
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                     }
+                                } else if ($input['documentSystemID'] == 17) {
+                                    if ($sourceModel->jvType != 9) {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                    }
                                 } else {
                                     $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 }
