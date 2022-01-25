@@ -183,7 +183,7 @@ class SRMService
             DB::commit();
             return [
                 'success'   => true,
-                'message'   => 'Appointment save successfully',
+                'message'   => 'Appointment saved successfully',
                 'data'      => $data
             ];
         } catch (\Exception $exception) {
