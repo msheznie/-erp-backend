@@ -495,7 +495,9 @@ class ProcumentOrderAPIController extends AppBaseController
         $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
 
         if(isset($input['isConfirm']) && $input['isConfirm']) {
-            if($advancedPayment != $newlyUpdatedPoTotalAmount) {
+            $epsilon = 0.00001;
+
+            if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
@@ -1082,7 +1084,6 @@ class ProcumentOrderAPIController extends AppBaseController
             $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
-
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
