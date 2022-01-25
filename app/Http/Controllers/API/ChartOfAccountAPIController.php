@@ -250,10 +250,14 @@ class ChartOfAccountAPIController extends AppBaseController
                         }
 
                         $updateData = [
-                            'AccountDescription' => $input['AccountDescription']
+                            'AccountDescription' => $input['AccountDescription'],
+                            'isBank' => $input['isBank'],
+                        ];
+                        $updateDataNotAssigned = [
+                            'isActive' => $input['isActive']
                         ];
 
-
+                        ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateDataNotAssigned);
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
                         if ($updateChartOfAccount) {
@@ -282,10 +286,17 @@ class ChartOfAccountAPIController extends AppBaseController
                     $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 10);
                     if ($policyCAc) {
                         $updateData = [
-                            'controllAccountYN' => $input['controllAccountYN']
+                            'controllAccountYN' => $input['controllAccountYN'],
+                            'isBank' => $input['isBank'],
+                        ];
+
+                        $updateDataNotAssigned = [
+                            'isActive' => $input['isActive']
                         ];
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                        ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateDataNotAssigned);
                         DB::commit();
 
                      
@@ -307,7 +318,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     
                     if ($policyCAc || $policy) {
-                        return $this->sendResponse([], 'Chart Of Account updated successfully');
+                        return $this->sendResponse([], 'Chart Of Account updated successfully done');
                     }
 
                     return $this->sendError('You cannot edit, This document already confirmed and approved.', 500);
