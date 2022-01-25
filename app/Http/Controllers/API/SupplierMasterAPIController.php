@@ -511,6 +511,28 @@ class SupplierMasterAPIController extends AppBaseController
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
 
+        if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
+            if (!isset($input['companyLinkedToSystemID'])) {
+                return $this->sendError('Linked company is required',500);
+            }
+
+            $checkCustomerForInterCompany = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
+                                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+                                                           ->when(array_key_exists('supplierCodeSystem', $input), function($query) use ($input) {
+                                                                $query->where('supplierCodeSystem', '!=', $input['supplierCodeSystem']);
+                                                           })
+                                                           ->first();
+
+            if ($checkCustomerForInterCompany) {
+                return $this->sendError('Intercompany supplier has been already created for this company',500);
+            }
+
+
+            $linkedCompany = Company::find($input['companyLinkedToSystemID']);
+
+            $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
+        }
+
 
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
@@ -587,6 +609,28 @@ class SupplierMasterAPIController extends AppBaseController
 
         if (array_key_exists('supplierCountryID', $input)) {
             $input['countryID'] = $input['supplierCountryID'];
+        }
+
+        if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
+            if (!isset($input['companyLinkedToSystemID'])) {
+                return $this->sendError('Linked company is required',500);
+            }
+
+            $checkCustomerForInterCompany = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
+                                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+                                                           ->when(array_key_exists('supplierCodeSystem', $input), function($query) use ($input) {
+                                                                $query->where('supplierCodeSystem', '!=', $input['supplierCodeSystem']);
+                                                           })
+                                                           ->first();
+
+            if ($checkCustomerForInterCompany) {
+                return $this->sendError('Intercompany supplier has been already created for this company',500);
+            }
+
+
+            $linkedCompany = Company::find($input['companyLinkedToSystemID']);
+
+            $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
         }
 
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID', $input['liabilityAccountSysemID'])->first();
