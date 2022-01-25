@@ -335,7 +335,7 @@ class PoPaymentTermsAPIController extends AppBaseController
                     $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
                 }else {
                     $calculatePer = $advance['comAmount'];
-                    $roundedCalculatePer = $advance['comPercentage'];
+                    $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
                 }
 
 
