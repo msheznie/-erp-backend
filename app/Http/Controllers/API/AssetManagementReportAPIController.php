@@ -214,6 +214,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     $output = $this->getAssetRegisterDetail($request);
                     $outputArr = [];
 
+                 
+
                     $COSTUNIT = 0;
                     $costUnitRpt = 0;
                     $depAmountLocal = 0;
@@ -231,8 +233,21 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
+    
+                    $sort = 'asc';         
+                    return \DataTables::of($output)
+                    ->addIndexColumn()
+                    ->with('localnbv', $localnbv)
+                    ->with('rptnbv', $rptnbv)
+                    ->with('COSTUNIT', $COSTUNIT)
+                    ->with('costUnitRpt', $costUnitRpt)
+                    ->with('depAmountLocal', $depAmountLocal)
+                    ->with('depAmountRpt', $depAmountRpt)
+                    ->addIndexColumn()
+                    // ->with('orderCondition', $sort)
+                    ->make(true);
 
-                    return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+                   // return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
@@ -795,7 +810,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         $lastrow = $excel->getActiveSheet()->getHighestRow();
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
-
+                    
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
