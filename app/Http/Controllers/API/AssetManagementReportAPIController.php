@@ -36,6 +36,8 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\helper\CreateExcel;
 
 class AssetManagementReportAPIController extends AppBaseController
 {
@@ -800,16 +802,19 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                        $excel->sheet('asset register', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true, false);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
+                    $fileName = 'asset_register_detail';
+                    $basePath = CreateExcel::process($data,$type,$fileName);
 
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+                    
+                   
                     
                 }
 
@@ -1192,7 +1197,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 }
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                return $this->sendResponse($basePath, trans('custom.success_export'));
                 break;
             case 'AMAA': //Asset Additions
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
