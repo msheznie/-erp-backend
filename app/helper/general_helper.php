@@ -2272,7 +2272,7 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
