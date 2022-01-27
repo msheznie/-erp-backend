@@ -496,7 +496,8 @@ class CustomerReceivePayment extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
-        'bankAccountBalance'
+        'bankAccountBalance',
+        'payment_type_id'
     ];
 
     /**
@@ -592,6 +593,7 @@ class CustomerReceivePayment extends Model
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
         'bankAccountBalance' => 'double',
+        'payment_type_id' => 'integer'
     ];
 
     /**
@@ -622,6 +624,11 @@ class CustomerReceivePayment extends Model
     public function bank()
     {
         return $this->belongsTo('App\Models\BankAccount', 'bankAccount', 'bankAccountAutoID');
+    }
+
+    public function payment_type()
+    {
+        return $this->belongsTo('App\Models\PaymentType', 'payment_type_id', 'id');
     }
 
     public function company()
