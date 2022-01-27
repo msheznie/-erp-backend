@@ -67,6 +67,7 @@ use App\Repositories\CustomerReceivePaymentRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\PaymentType;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -174,6 +175,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
         $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+        
+        $input['payment_type_id'] = $input['paymentType'];
+        unset($input['paymentType']);
 
         if (($input['documentType'] == 13 || $input['documentType'] == 15 ) && $input['customerID'] == '') {
             return $this->sendError("Customer is required", 500);
@@ -301,7 +305,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input = array_except($input, 'customerID');
             /* Direct Invoice*/
         }
-
+        
         if (($input['custPaymentReceiveDate'] >= $companyfinanceperiod->dateFrom) && ($input['custPaymentReceiveDate'] <= $companyfinanceperiod->dateTo)) {
             $customerReceivePayments = $this->customerReceivePaymentRepository->create($input);
             return $this->sendResponse($customerReceivePayments->toArray(), 'Receipt voucher created successfully');
@@ -429,6 +433,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
+
+        $input['payment_type_id'] = $input['paymentType'];
 
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
@@ -1404,6 +1410,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
+                $output['paymentType'] = PaymentType::all();
 
                 break;
 
@@ -1422,7 +1429,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
                                                array('value' => 14, 'label' => 'Direct Receipt'));
-
+                $output['paymentType'] = PaymentType::all();
+                
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
@@ -1482,6 +1490,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')
                         ->get();
                 }
+                $output['paymentType'] = PaymentType::all();
+
                 break;
             case 'amendEdit':
                 $id = $input['id'];
@@ -1545,7 +1555,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     public function recieptVoucherDataTable(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1559,6 +1569,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
+            ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
             ->leftJoin('erp_bankledger', function ($join) {
                 $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
                 $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
@@ -1604,6 +1615,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master->where('erp_bankledger.trsClearedYN', '=', $input['trsClearedYN']);
             }
         }
+        if (array_key_exists('paymentType', $input)) {
+            if ($input['paymentType'] && !is_null($input['paymentType'])) {
+                $master->where('payment_type.id', '=', $input['paymentType']);
+            }
+        }
 
         $master = $master->select([
             'custPaymentReceiveCode',
@@ -1627,7 +1643,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'customermaster.CustomerName',
             'receivedAmount as receivedAmount',
             'bankAmount as bankAmount',
-            'erp_bankledger.trsClearedYN as trsClearedYN'
+            'erp_bankledger.trsClearedYN as trsClearedYN',
+            'payment_type.description as paymentType'
         ]);
 
         if ($search) {
@@ -1639,6 +1656,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
                     ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%")
+                    ->orWhere('payment_type.description', 'LIKE', "%{$search}%")
                     ->orWhere('erp_customerreceivepayment.receivedAmount', 'LIKE', "%{$search_without_comma}%")
                     ->orWhere('erp_customerreceivepayment.bankAmount', 'LIKE', "%{$search_without_comma}%");
             });
@@ -1661,7 +1679,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
@@ -1789,7 +1807,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment not found');
         }
 
-        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
+        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {

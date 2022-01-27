@@ -2621,3 +2621,6 @@ Route::resource('document_sub_products', 'DocumentSubProductAPIController');
 
 
 
+
+
+Route::resource('payment_types', 'PaymentTypeAPIController');
