@@ -1090,7 +1090,6 @@ class ProcumentOrderAPIController extends AppBaseController
                     $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
                     $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
 
-
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
                         return $this->sendError('Payment term calculation is mismatched');
