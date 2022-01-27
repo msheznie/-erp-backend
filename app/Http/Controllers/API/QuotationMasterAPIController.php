@@ -1098,6 +1098,8 @@ class QuotationMasterAPIController extends AppBaseController
             $query->whereIn('documentSystemID', [67,68]);
         }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
+        $quotationCode = $output->quotationCode;
+
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
 
@@ -1147,13 +1149,13 @@ class QuotationMasterAPIController extends AppBaseController
     
                         $dataEmail['companySystemID'] = $input['companySystemID'];
     
-                        $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer sales quotation report has been sent from ' . $company->CompanyName . $footer;
+                        $temp = "Dear " . $customerMaster->CustomerName .',<p> Quotation ' .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
     
                         $pdfName = realpath("uploads/emailAttachment/customer_quotation_" . $nowTime.$customerCodeSystem . ".pdf");
     
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = "Customer sales quotation report from " . $company->CompanyName;
+                        $dataEmail['alertMessage'] = "Quotation " .$quotationCode. " from " . $company->CompanyName;
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
