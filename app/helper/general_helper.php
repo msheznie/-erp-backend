@@ -1759,6 +1759,7 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 104: // vat return filling
                 $docInforArr["tableName"] = 'vat_return_filling_master';
                 $docInforArr["modelName"] = 'VatReturnFillingMaster';
