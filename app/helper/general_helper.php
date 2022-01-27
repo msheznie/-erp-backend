@@ -71,6 +71,7 @@ use App\helper\BudgetConsumptionService;
 use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
 use App\Jobs\BudgetAdditionAdjustment;
+use App\helper\SendEmailForDocument;
 use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
@@ -1370,6 +1371,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 2:
+ 
             case 5:
             case 52:
                 $docInforArr["tableName"] = 'erp_purchaseordermaster';
@@ -1957,6 +1959,8 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
+
+
                             // create monthly deduction
                             if (
                                 $input["documentSystemID"] == 4 &&
@@ -2418,7 +2422,14 @@ class Helper
                                 $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
+
+                        if ($input['documentSystemID'] == 2) {
+                            SendEmailForDocument::approvedDocument($input);
+                        }
+                        
                         $sendEmail = \Email::sendEmail($emails);
+
+
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }

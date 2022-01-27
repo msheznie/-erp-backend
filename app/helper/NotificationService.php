@@ -289,4 +289,29 @@ class NotificationService
         return $filter_date->format('Y-m-d');
     }
 
+    public static function getCompanyScenarioConfigurationForCompany($scenarioID,$companyID)
+    {
+        $companyScenarioConfiguration = NotificationCompanyScenario::where('isActive', '=', 1)
+            ->where('scenarioID', '=', $scenarioID)
+            ->where('companyID',$companyID)
+            ->has('company')
+            ->with(['notification_Scenario' => function ($query) {
+                $query->where('isActive', '=', 1);
+            },
+            'notification_day_setup' => function ($query) {
+                $query->selectRaw('id,companyScenarionID,beforeAfter,days');
+                $query->where('isActive', '=', 1);
+            },
+            'company'])
+            ->whereHas('notification_Scenario', function ($query) {
+                $query->where('isActive', '=', 1);
+            })
+            ->whereHas('notification_day_setup', function ($query) {
+                $query->where('isActive', '=', 1);
+            })
+            ->first();
+
+        return $companyScenarioConfiguration;
+    }
+
 }
