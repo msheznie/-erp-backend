@@ -36,8 +36,6 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use App\helper\CreateExcel;
 
 class AssetManagementReportAPIController extends AppBaseController
 {
@@ -216,8 +214,6 @@ class AssetManagementReportAPIController extends AppBaseController
                     $output = $this->getAssetRegisterDetail($request);
                     $outputArr = [];
 
-                 
-
                     $COSTUNIT = 0;
                     $costUnitRpt = 0;
                     $depAmountLocal = 0;
@@ -235,21 +231,8 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-    
-                    $sort = 'asc';         
-                    return \DataTables::of($output)
-                    ->addIndexColumn()
-                    ->with('localnbv', $localnbv)
-                    ->with('rptnbv', $rptnbv)
-                    ->with('COSTUNIT', $COSTUNIT)
-                    ->with('costUnitRpt', $costUnitRpt)
-                    ->with('depAmountLocal', $depAmountLocal)
-                    ->with('depAmountRpt', $depAmountRpt)
-                    ->addIndexColumn()
-                    // ->with('orderCondition', $sort)
-                    ->make(true);
 
-                   // return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+                    return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
@@ -802,20 +785,17 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
                     }
 
-                    $fileName = 'asset_register_detail';
-                    $basePath = CreateExcel::process($data,$type,$fileName);
+                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                        $excel->sheet('asset register', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true, false);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
 
-                    if($basePath == '')
-                    {
-                         return $this->sendError('Unable to export excel');
-                    }
-                    else
-                    {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
-                    
-                   
-                    
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
@@ -1197,7 +1177,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 }
 
-                return $this->sendResponse($basePath, trans('custom.success_export'));
+                return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'AMAA': //Asset Additions
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
