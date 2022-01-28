@@ -24,6 +24,7 @@ use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetMaster;
 use App\Models\BudgetTransferForm;
+use App\Models\ConsoleJVMaster;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
@@ -463,6 +464,13 @@ class email
                     if (!empty($supplierLink)) {
                         $data['docApprovedYN'] = $supplierLink->approved_yn;
                         $data['docCode'] = $supplierLink->id;
+                    }
+                    break;
+                 case 69:
+                    $journalVoucher = ConsoleJVMaster::where('consoleJvMasterAutoId', $data['docSystemCode'])->first();
+                    if (!empty($journalVoucher)) {
+                        $data['docApprovedYN'] = $journalVoucher->approved;
+                        $data['docCode'] = $journalVoucher->consoleJVcode;
                     }
                     break;
                 default:

@@ -1716,6 +1716,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
         Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
         Route::post('deleteAllConsoleJVDet', 'ConsoleJVDetailAPIController@deleteAllConsoleJVDet');
+        Route::post('getConsoleJvApproval', 'ConsoleJVMasterAPIController@getConsoleJvApproval');
+        Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser');
+        Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV');
+        Route::post('rejectConsoleJV', 'ConsoleJVMasterAPIController@rejectConsoleJV');
 
         Route::resource('customer_contact_details', 'CustomerContactDetailsAPIController');
         Route::get('contactDetailsByCustomer', 'CustomerContactDetailsAPIController@contactDetailsByCustomer');
