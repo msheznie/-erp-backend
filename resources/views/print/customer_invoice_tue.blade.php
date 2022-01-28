@@ -165,23 +165,23 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    @if($request->logoExists)
+                    <!-- @if($request->logoExists)
                         <img src="{{$request->companyLogo}}"
                              width="180px" height="60px">
-                    @endif
+                    @endif -->
                 </td>
 
 
-                <td width="50%" style="text-align: center;white-space: nowrap">
+                <td width="40%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
 
                         <h3>
                             <b>TAX INVOICE</b>
+                            <br>
+                            <b> فاتورة ضريبية</b>
                         </h3>
 
-                        <h3>
-                           <b> فاتورة ضريبية</b>
-                        </h3>
+                      
                     </div>
 
                 </td>
