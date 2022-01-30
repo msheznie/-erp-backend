@@ -31,6 +31,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePurchaseRequestAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestAPIRequest;
 use App\Models\Company;
@@ -1654,7 +1655,6 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function approvePurchaseRequest(Request $request)
     {
-
         $approve = \Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);

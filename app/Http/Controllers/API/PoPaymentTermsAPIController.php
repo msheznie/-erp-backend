@@ -322,12 +322,22 @@ class PoPaymentTermsAPIController extends AppBaseController
             $vatAmount = 0;
         }
 
+
         if (!empty($poAdvancePaymentType)) {
             foreach ($poAdvancePaymentType as $advance) {
 
                 //calculation advance amount
-                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount + $vatAmount));
-                $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+                if($advance['comPercentage'] == 0  || $advance['comPercentage'] == "") {
+                    $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount + $vatAmount));
+                    $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+                }else if ($advance['comAmount'] == 0  || $advance['comAmount'] == "") {
+                    $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount + $vatAmount));
+                    $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+                }else {
+                    $calculatePer = $advance['comAmount'];
+                    $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+                }
+
 
                 //update payment terms table
                 $paymentTermUpdate = PoPaymentTerms::find($advance['paymentTermID']);

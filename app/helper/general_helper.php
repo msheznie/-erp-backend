@@ -71,6 +71,7 @@ use App\helper\BudgetConsumptionService;
 use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
 use App\Jobs\BudgetAdditionAdjustment;
+use App\helper\SendEmailForDocument;
 use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
@@ -737,6 +738,17 @@ class Helper
                     $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 69:
+                    $docInforArr["documentCodeColumnName"] = 'consoleJVcode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_consolejvmaster';
+                    $docInforArr["modelName"] = 'ConsoleJVMaster';
+                    $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1370,6 +1382,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 2:
+ 
             case 5:
             case 52:
                 $docInforArr["tableName"] = 'erp_purchaseordermaster';
@@ -1757,6 +1770,7 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 104: // vat return filling
                 $docInforArr["tableName"] = 'vat_return_filling_master';
                 $docInforArr["modelName"] = 'VatReturnFillingMaster';
@@ -1840,6 +1854,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+             case 69: // Console Journal Voucher
+                $docInforArr["tableName"] = 'erp_consolejvmaster';
+                $docInforArr["modelName"] = 'ConsoleJVMaster';
+                $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -1956,6 +1982,8 @@ class Helper
 
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
+
 
                             // create monthly deduction
                             if (
@@ -2116,6 +2144,10 @@ class Helper
                                     if ($sourceModel->isFrom != 5) {
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                     }
+                                } else if ($input['documentSystemID'] == 17) {
+                                    if ($sourceModel->jvType != 9) {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                    }
                                 } else {
                                     $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 }
@@ -2268,7 +2300,7 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -2414,7 +2446,14 @@ class Helper
                                 $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
+
+                        if ($input['documentSystemID'] == 2) {
+                            SendEmailForDocument::approvedDocument($input);
+                        }
+                        
                         $sendEmail = \Email::sendEmail($emails);
+
+
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
@@ -2901,6 +2940,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                 case 69: // Console Journal Voucher
+                    $docInforArr["tableName"] = 'erp_consolejvmaster';
+                    $docInforArr["modelName"] = 'ConsoleJVMaster';
+                    $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2924,7 +2969,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107, 69])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }

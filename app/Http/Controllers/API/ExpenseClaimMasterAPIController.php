@@ -279,6 +279,68 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         return $this->sendSuccess('Expense Claim Master deleted successfully');
     }
 
+    public function getExpenseClaimMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
+
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim retrieved successfully');
+    }
+
+    public function printExpenseClaimMaster(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimMasterRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companyID, $expenseClaim->documentID);
+        $expenseClaim->localDecimal = 3;
+        $expenseClaim->localDecimal = 'OMR';
+        $expenseClaim->total = 0;
+
+
+        $grandTotal = collect($expenseClaim->details)->pluck('companyLocalAmount')->toArray();
+        $expenseClaim->total = array_sum($grandTotal);
+
+        foreach ($expenseClaim->details as $item) {
+            $item->currencyDecimal = 2;
+            $item->localDecimal = 3;
+
+            if ($item->currency) {
+                $item->currencyDecimal = $item->currency->DecimalPlaces;
+            }
+            if ($item->local_currency) {
+                $item->localDecimal = $item->local_currency->DecimalPlaces;
+            }
+        }
+
+        if ($expenseClaim->company) {
+            if ($expenseClaim->company->localcurrency) {
+                $expenseClaim->localDecimal = $expenseClaim->company->localcurrency->DecimalPlaces;
+                $expenseClaim->localCurrencyCode = $expenseClaim->company->localcurrency->CurrencyCode;
+            }
+        }
+
+        $array = array('entity' => $expenseClaim);
+        $time = strtotime("now");
+        $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
+        $html = view('print.expense_claim', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
     public function getExpenseClaimMasterByCompany(Request $request)
     {
 
@@ -319,14 +381,14 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         }
 
         $detail = \DB::select('SELECT
-                                erp_paysupplierinvoicemaster.PayMasterAutoId,
+                                erp_paysupplierinvoicemaster.BPVNarration,
                                 erp_paysupplierinvoicemaster.BPVcode,
                                 erp_paysupplierinvoicemaster.documentID,
-                                erp_paysupplierinvoicemaster.companyID,
                                 erp_paysupplierinvoicemaster.BPVdate,
-                                erp_paysupplierinvoicemaster.BPVNarration,
+                                erp_paysupplierinvoicemaster.companyID,
                                 erp_paysupplierinvoicemaster.createdUserID,
                                 employees.empName,
+                                erp_paysupplierinvoicemaster.PayMasterAutoId,
                                 erp_directpaymentdetails.expenseClaimMasterAutoID 
                             FROM
                                 ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
@@ -341,13 +403,13 @@ class ExpenseClaimMasterAPIController extends AppBaseController
                             HAVING
                                 ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) ) UNION ALL
                             SELECT
-                                srp_erp_payrollmaster.documentCode,
-                                srp_erp_payrollmaster.documentID,
-                                srp_erp_payrollmaster.payrollYear,
-                                srp_erp_payrollmaster.payrollMonth,
-                                srp_erp_payrollmaster.narration,
-                                employees.empName,
+                                srp_erp_payrollmaster.narration AS BPVNarration,
+                                srp_erp_payrollmaster.documentCode AS BPVcode,
+                                srp_erp_payrollmaster.documentID AS documentID,
+                                CONCAT(srp_erp_payrollmaster.payrollYear, "/", srp_erp_payrollmaster.payrollMonth, "/","1") AS BPVdate,
+                                srp_erp_payrollmaster.companyID,
                                 srp_erp_payrollmaster.confirmedByEmpID,
+                                employees.empName,
                                 NULL AS PayMasterAutoId,
                                 NULL AS expenseClaimMasterAutoID 
                             FROM
