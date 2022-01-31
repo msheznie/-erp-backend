@@ -16,6 +16,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
+use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierRegistrationLink;
@@ -708,6 +709,12 @@ class SRMService
 
         $detail = SlotDetails::where('id',$slotDetailID)->first();
 
+        $appointments = $this->getAppointmentDeliveries($request);
+        $appointment = 0;
+        if(count($appointments['data']['data'])>0){
+            $appointment = 1;
+        }
+
         if(!empty($detail)){
             $endDate = Carbon::parse($detail['end_date'])->format('Y-m-d H:i:s');
             $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
@@ -715,6 +722,7 @@ class SRMService
             $result['endDate']=$endDate;
             if($endDate > $currentDate){
                 $result['canCreate']=1;
+                $result['appointments']=$appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointment Can Be Created',
@@ -722,6 +730,7 @@ class SRMService
                 ];
             }else{
                 $result['canCreate']=0;
+                $result['appointments']=$appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointments can not be created for past dates',
@@ -751,7 +760,10 @@ class SRMService
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
             }]);
-        }])->get();
+        }])->get()
+            ->transform(function ($data){
+                return $this->appointmentDetailFormat($data);
+            });
         $result['detail']=$detail;
         $result['purchaseOrderCode']='';
         if(count($detail) > 0){
@@ -772,5 +784,71 @@ class SRMService
                 'data'      => $result
             ];
         }
+    }
+
+    public function getPurchaseOrderDetails(Request $request)
+    {
+        $purchaseOrderID = $request->input('extra.purchaseOrderID');
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)
+            ->with(['order','unit','appointmentDetails' => function($q){
+                $q->whereHas('appointment', function ($q){
+                    $q->where('refferedBackYN', '!=', -1);
+                })->groupBy('po_detail_id')
+                    ->select('id', 'appointment_id','qty','po_detail_id')
+                    ->selectRaw('IFNULL(sum(qty),0) as qty');
+            }])->get()
+            ->transform(function ($data){
+                return $this->poDetailFormat($data);
+            });
+
+        $result['poDetail']=$po;
+        return [
+            'success'   => true,
+            'message'   => 'Po Details Retrieved',
+            'data'      => $result
+        ];
+    }
+
+    public function poDetailFormat($data){
+        if(count($data['appointmentDetails'])>0){
+            $sumQty = $data['appointmentDetails'][0]['qty'];
+        }else{
+            $sumQty = 0;
+        }
+        return [
+            'purchaseOrderCode' => $data['order']['purchaseOrderCode'],
+            'purchaseOrderDetailsID' => $data['purchaseOrderDetailsID'],
+            'itemPrimaryCode' => $data['itemPrimaryCode'],
+            'itemDescription' => $data['itemDescription'],
+            'UnitShortCode' => $data['unit']['UnitShortCode'],
+            'noQty' => $data['noQty'],
+            'receivedQty' => $data['receivedQty'],
+            'sumQty' => $sumQty,
+            'qty' => 0,
+
+        ];
+    }
+
+    public function appointmentDetailFormat($data){
+        if(count($data['getPoDetails']['appointmentDetails'])>0){
+            $sumQty = $data['getPoDetails']['appointmentDetails'][0]['qty'];
+        }else{
+            $sumQty = 0;
+        }
+        return [
+            'purchaseOrderCode' => $data['getPoMaster']['purchaseOrderCode'],
+            'purchaseOrderDetailsID' => $data['getPoDetails']['purchaseOrderDetailsID'],
+            'itemPrimaryCode' => $data['getPoDetails']['itemPrimaryCode'],
+            'itemDescription' => $data['getPoDetails']['itemDescription'],
+            'UnitShortCode' => $data['getPoDetails']['unit']['UnitShortCode'],
+            'noQty' => $data['getPoDetails']['noQty'],
+            'receivedQty' => $data['getPoDetails']['receivedQty'],
+            'sumQty' => $sumQty,
+            'qty' => $data['qty'],
+
+
+        ];
     }
 }
