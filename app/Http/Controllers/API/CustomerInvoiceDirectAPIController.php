@@ -1976,6 +1976,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
 
         $id = $request->get('id');
+        $type = $request->get('type');
+        
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
@@ -2417,20 +2419,32 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
-        $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
+        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
         if ($printTemplate['printTemplateID'] == 2) {
-
-            $html = view('print.customer_invoice_tue', $array);
-            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
-
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tue', $array);
+                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.customer_invoice_tue', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+        
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
             $html = view('print.customer_invoice', $array);
             $pdf = \App::make('dompdf.wrapper');
