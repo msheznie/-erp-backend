@@ -70,6 +70,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\PaymentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -181,6 +182,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $conditions = [
                 'invoiceType' => 'required',
+                'paymentMode' => 'required',
                 'supplierTransCurrencyID' => 'required',
                 'BPVNarration' => 'required',
                 'BPVbank' => 'required',
@@ -343,6 +345,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $input['payment_mode'] = $input['paymentMode'];
+            unset($input['paymentMode']);
 
             $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
 
@@ -707,6 +712,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     'BPVdate' => 'required|date',
                     'BPVchequeDate' => 'required|date',
                     'invoiceType' => 'required|numeric|min:1',
+                    'paymentMode' => 'required',
                     'BPVbank' => 'required|numeric|min:1',
                     'BPVAccount' => 'required|numeric|min:1',
                     'supplierTransCurrencyID' => 'required|numeric|min:1',
@@ -1302,8 +1308,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     
                 }
             }
-      
-           
+            
+            $input['payment_mode'] = $input['paymentMode'];
+            unset($input['paymentMode']);
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
             Log::info('Cheque No:' . $input['BPVchequeNo']);
@@ -1478,7 +1485,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['supplier', 'bankaccount', 'transactioncurrency',
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
@@ -1618,6 +1625,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     ->where('isYesNO', 1)
                                     ->first();
 
+            $paymentMode = PaymentType::all();
+
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -1638,6 +1647,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'companyCurrency' => $companyCurrency,
                 'isPolicyOn' => $policyOn,
                 'deduction_type_drop' => $monthly_declarations_drop,
+                'paymentMode' => $paymentMode,
             );
         }
 
@@ -2212,7 +2222,7 @@ HAVING
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['supplier', 'bankaccount', 'transactioncurrency',
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
