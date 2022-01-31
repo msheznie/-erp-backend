@@ -1,7 +1,8 @@
+
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style type="text/css">
-    <!--
+    
     @page {
         margin: 20px 30px 220px !important;
     }
@@ -165,10 +166,14 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    <!-- @if($request->logoExists)
-                        <img src="{{$request->companyLogo}}"
-                             width="180px" height="60px">
-                    @endif -->
+                    @if($request->logoExists)
+                          @if($type == 1)
+                            <img src="{{$request->companyLogo}}"
+                                width="180px" height="60px">
+                          @else
+                            image not found
+                          @endif
+                    @endif
                 </td>
 
 
