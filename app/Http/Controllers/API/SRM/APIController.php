@@ -12,6 +12,7 @@ use App\Services\SRMService;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Throwable;
 
 // available apis name define here
@@ -123,58 +124,38 @@ class APIController extends Controller
             ]);
 
             if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
-                foreach ($response->data as $data1) {
-                    foreach ($data1 as $data2) {
-                        foreach ($data2 as $data3) {
-                            $arrdata = [];
-                            if ($data3->form_field_id == 1) { //Category 
-                                $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode')->where('supCategoryMasterID', $data3->form_data_id)->first();
-                                $arrdata = [
-                                    'created_at' => $data3->created_at,
-                                    'id' => $data3->id,
-                                    'status' => $data3->status,
-                                    'text' => $category->categoryDescription,
-                                    'updated_at' => null,
-                                    'value' => $category->categoryCode
-                                ];
-                                $data3->data[0] = $arrdata;
-                            } else if ($data3->form_field_id == 2) { // Sub Category
-                                $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode')->where('supCategorySubID', $data3->form_data_id)->first();
-                                $arrdata = [
-                                    'created_at' => $data3->created_at,
-                                    'id' => $data3->id,
-                                    'status' =>  $data3->status,
-                                    'text' =>   $subCategory->categoryDescription,
-                                    'updated_at' => null,
-                                    'value' => $subCategory->subCategoryCode
-                                ];
-                                $data3->data[0] = $arrdata;
-                            } else if ($data3->form_field_id == 28) { // Preferred Functional Currency
-                                $currency = CurrencyMaster::select('CurrencyCode','CurrencyName')->where('currencyID', $data3->form_data_id)->first();
-                                $arrdata = [
-                                    'created_at' => $data3->created_at,
-                                    'id' => $data3->id,
-                                    'status' =>  $data3->status,
-                                    'text' =>  $currency->CurrencyName.' ('.$currency->CurrencyCode.')',
-                                    'updated_at' => null,
-                                    'value' => $currency->CurrencyCode
-                                ];
-                                $data3->data[0] = $arrdata;
-                            } else if ($data3->form_field_id == 46) { // Country
-                                $countryMaster = CountryMaster::select('countryName', 'countryCode')->where('countryID', $data3->form_data_id)->first();
-                                $arrdata = [
-                                    'created_at' => $data3->created_at,
-                                    'id' => $data3->id,
-                                    'status' =>  $data3->status,
-                                    'text' =>  $countryMaster->countryName,
-                                    'updated_at' => null,
-                                    'value' => $countryMaster->countryCode
-                                ];
-                                $data3->data[0] = $arrdata;
+                if($response->data ){ 
+                    foreach ($response->data  as $key1 => $data1) {
+                        foreach ($data1->groups as $val2) {
+                            foreach ($val2->controls as $val3) {
+                                foreach ($val3->field->values as $key1 => $val4) {
+                                    if ($val3->form_field_id == 1) { //Category 
+                                        $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode')->where('supCategoryMasterID', $val4->value)->first();
+                                        $val4->value = $category['categoryDescription'];
+                                    } else if ($val3->form_field_id == 2) { // Sub Category 
+                                        $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode')->where('supCategorySubID', $val4->value)->first();
+                                        $val4->value = $subCategory['categoryDescription'];
+                                    } else if ($val3->form_field_id == 28) { // Preferred Functional Currency
+                                        $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $val4->value)->first();
+                                        $val4->value = $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')';
+                                    } else if ($val3->form_field_id == 46) { // Country
+                                        $countryMaster = CountryMaster::select('countryName', 'countryCode')->where('countryID', $val4->value)->first();
+                                        $val4->value = $countryMaster['countryName'];
+                                    } else if ($val4->form_data_id > 0) {
+                                        //$value = array_search('26', array_column($val3->field->options, 'id')); 
+                                        $search = $val4->form_data_id;
+                                        $data = array_filter($val3->field->options, function ($v) use ($search) {
+                                            return $v->id == $search;
+                                        }, ARRAY_FILTER_USE_BOTH);
+                                        $value = array_values($data);
+                                        $val4->value = $value[0]->option->text;
+                                    }
+                                }
                             }
                         }
                     }
                 }
+               
             }
 
             return response()->json($response);
