@@ -1062,6 +1062,65 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Supplier Invoice Master deleted successfully');
     }
 
+    public function updateLocalER($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
+
+        $masterINVID = BookInvSuppMaster::findOrFail($id);
+        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->DIAmount / $value);
+            $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function updateReportingER($id,Request $request){
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $masterINVID = BookInvSuppMaster::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->DIAmount / $value);
+            $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
     public function getInvoiceMasterRecord(Request $request)
     {
         $input = $request->all();
