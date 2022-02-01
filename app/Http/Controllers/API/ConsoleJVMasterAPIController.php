@@ -19,6 +19,8 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\ConsoleJVDetail;
 use App\Models\ConsoleJVMaster;
+use App\Models\DocumentApproved;
+use App\Models\EmployeesDepartment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\CompanyDocumentAttachment;
@@ -35,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\AuditTrial;
 
 /**
  * Class ConsoleJVMasterController
@@ -753,5 +756,109 @@ class ConsoleJVMasterAPIController extends AppBaseController
         }
 
     }
+
+    public function consoleJVReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $consoleJvAutoID = $input['consoleJvAutoID'];
+
+        $jvMasterData = ConsoleJVMaster::find($consoleJvAutoID);
+        $emails = array();
+        if (empty($jvMasterData)) {
+            return $this->sendError('Console JV not found');
+        }
+
+        if ($jvMasterData->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this console journal voucher it is already partially approved');
+        }
+
+        if ($jvMasterData->approved == -1) {
+            return $this->sendError('You cannot reopen this console journal voucher it is already fully approved');
+        }
+
+        if ($jvMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this console journal voucher, it is not confirmed');
+        }
+
+        // updating fields
+
+        $jvMasterData->confirmedYN = 0;
+        $jvMasterData->confirmedByEmpSystemID = null;
+        $jvMasterData->confirmedByEmpID = null;
+        $jvMasterData->confirmedByName = null;
+        $jvMasterData->confirmedDate = null;
+        $jvMasterData->RollLevForApp_curr = 1;
+        $jvMasterData->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $jvMasterData->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemCode', $jvMasterData->consoleJvMasterAutoId)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $jvMasterData->companySystemID)
+                    ->where('documentSystemID', $jvMasterData->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $consoleJvAutoID)
+            ->where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$consoleJvAutoID,$input['reopenComments'],'Reopened');
+
+        return $this->sendResponse($jvMasterData->toArray(), 'Console JV reopened successfully');
+    }
+
 
 }

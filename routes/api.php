@@ -1712,6 +1712,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
         Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
         Route::post('getAllConsoleJV', 'ConsoleJVMasterAPIController@getAllConsoleJV');
+        Route::post('consoleJVReopen', 'ConsoleJVMasterAPIController@consoleJVReopen');
         Route::get('getConsoleJVGL', 'ConsoleJVMasterAPIController@getConsoleJVGL');
         Route::get('getConsoleJVMasterFormData', 'ConsoleJVMasterAPIController@getConsoleJVMasterFormData');
         Route::get('getConsoleJVDetailByMaster', 'ConsoleJVDetailAPIController@getConsoleJVDetailByMaster');
@@ -2445,6 +2446,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSerialNumbersForReturn', 'ItemSerialAPIController@getSerialNumbersForReturn');
         Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
         Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
+
+        Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
+
+        Route::resource('document_sub_products', 'DocumentSubProductAPIController');
+
+
+        Route::resource('payment_types', 'PaymentTypeAPIController');
+        Route::resource('elimination_ledgers', 'EliminationLedgerAPIController');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2622,10 +2632,3 @@ Route::get('runCronJob/{cron}', function ($cron) {
 });
 
 
-Route::resource('document_sub_products', 'DocumentSubProductAPIController');
-
-
-
-
-
-Route::resource('payment_types', 'PaymentTypeAPIController');
