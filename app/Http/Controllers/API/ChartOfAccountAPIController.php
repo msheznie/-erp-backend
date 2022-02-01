@@ -281,7 +281,6 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     }
 
-
                     //check policy 10
                     $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 10);
                     if ($policyCAc) {

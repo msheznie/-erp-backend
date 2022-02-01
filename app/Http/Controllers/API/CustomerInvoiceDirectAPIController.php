@@ -32,6 +32,7 @@ use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -42,6 +43,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
+use App\Models\CustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
@@ -51,6 +53,7 @@ use App\Models\CustomerInvoiceItemDetailsRefferedback;
 use App\Models\CustomerInvoiceStatusType;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -1161,6 +1164,63 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect->delete();
 
         return $this->sendResponse($id, 'Customer Invoice Direct deleted successfully');
+    }
+
+    public function customerInvoiceLocalUpdate($id,Request $request) {
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+        $masterINVID = CustomerInvoice::findOrFail($id);
+        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->invoiceAmount / $value);
+            $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function customerInvoiceReportingUpdate($id,Request $request) {
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+        $masterINVID = CustomerInvoice::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->invoiceAmount / $value);
+            $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
     }
 
     public function customerInvoiceDetails(request $request)

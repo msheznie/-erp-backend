@@ -133,7 +133,8 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'payment_mode'
     ];
 
     /**
@@ -205,7 +206,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -271,6 +272,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('chequeSentToTreasury', $input)) {
             if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
                 $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
+            }
+        }
+
+        if (array_key_exists('payment_mode', $input)) {
+            if (!is_null($input['payment_mode'])) {
+                $paymentVoucher->where('payment_mode', $input['payment_mode']);
             }
         }
 

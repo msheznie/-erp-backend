@@ -1385,6 +1385,65 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($id, 'Customer Receive Payment deleted successfully');
     }
 
+    public function recieptVoucherLocalUpdate($id, Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
+
+        $masterINVID = CustomerReceivePayment::findOrFail($id);
+        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->DRAmount / $value);
+            $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function recieptVoucherReportingUpdate($id, Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
+
+        $masterINVID = CustomerReceivePayment::findOrFail($id);
+        $masterInvoiceArray = array('comRptCurrencyER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->DRAmount / $value);
+            $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
     public function getRecieptVoucherFormData(Request $request)
     {
         $input = $request->all();
