@@ -1,0 +1,73 @@
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+
+use App\Models\EliminationLedger;
+use Faker\Generator as Faker;
+
+$factory->define(EliminationLedger::class, function (Faker $faker) {
+
+    return [
+        'companySystemID' => $faker->randomDigitNotNull,
+        'companyID' => $faker->word,
+        'serviceLineSystemID' => $faker->randomDigitNotNull,
+        'serviceLineCode' => $faker->word,
+        'masterCompanyID' => $faker->word,
+        'documentSystemID' => $faker->randomDigitNotNull,
+        'documentID' => $faker->word,
+        'documentSystemCode' => $faker->randomDigitNotNull,
+        'documentCode' => $faker->word,
+        'documentDate' => $faker->date('Y-m-d H:i:s'),
+        'documentYear' => $faker->randomDigitNotNull,
+        'documentMonth' => $faker->randomDigitNotNull,
+        'chequeNumber' => $faker->randomDigitNotNull,
+        'invoiceNumber' => $faker->word,
+        'invoiceDate' => $faker->date('Y-m-d H:i:s'),
+        'chartOfAccountSystemID' => $faker->randomDigitNotNull,
+        'glCode' => $faker->word,
+        'glAccountType' => $faker->word,
+        'glAccountTypeID' => $faker->randomDigitNotNull,
+        'holdingShareholder' => $faker->word,
+        'holdingPercentage' => $faker->randomDigitNotNull,
+        'nonHoldingPercentage' => $faker->randomDigitNotNull,
+        'documentConfirmedDate' => $faker->date('Y-m-d H:i:s'),
+        'documentConfirmedByEmpSystemID' => $faker->randomDigitNotNull,
+        'documentConfirmedBy' => $faker->word,
+        'documentFinalApprovedDate' => $faker->date('Y-m-d H:i:s'),
+        'documentFinalApprovedByEmpSystemID' => $faker->randomDigitNotNull,
+        'documentFinalApprovedBy' => $faker->word,
+        'documentNarration' => $faker->text,
+        'contractUID' => $faker->randomDigitNotNull,
+        'clientContractID' => $faker->word,
+        'supplierCodeSystem' => $faker->randomDigitNotNull,
+        'venderName' => $faker->word,
+        'documentTransCurrencyID' => $faker->randomDigitNotNull,
+        'documentTransCurrencyER' => $faker->randomDigitNotNull,
+        'documentTransAmount' => $faker->randomDigitNotNull,
+        'documentLocalCurrencyID' => $faker->randomDigitNotNull,
+        'documentLocalCurrencyER' => $faker->randomDigitNotNull,
+        'documentLocalAmount' => $faker->randomDigitNotNull,
+        'documentRptCurrencyID' => $faker->randomDigitNotNull,
+        'documentRptCurrencyER' => $faker->randomDigitNotNull,
+        'documentRptAmount' => $faker->randomDigitNotNull,
+        'empID' => $faker->word,
+        'employeePaymentYN' => $faker->randomDigitNotNull,
+        'isRelatedPartyYN' => $faker->randomDigitNotNull,
+        'hideForTax' => $faker->randomDigitNotNull,
+        'documentType' => $faker->randomDigitNotNull,
+        'advancePaymentTypeID' => $faker->randomDigitNotNull,
+        'matchDocumentMasterAutoID' => $faker->randomDigitNotNull,
+        'isPdcChequeYN' => $faker->randomDigitNotNull,
+        'isAddon' => $faker->randomDigitNotNull,
+        'isAllocationJV' => $faker->randomDigitNotNull,
+        'contraYN' => $faker->randomDigitNotNull,
+        'contracDocCode' => $faker->word,
+        'createdDateTime' => $faker->date('Y-m-d H:i:s'),
+        'createdUserID' => $faker->word,
+        'createdUserSystemID' => $faker->randomDigitNotNull,
+        'createdUserPC' => $faker->word,
+        'timestamp' => $faker->date('Y-m-d H:i:s'),
+        'created_at' => $faker->date('Y-m-d H:i:s'),
+        'updated_at' => $faker->date('Y-m-d H:i:s')
+    ];
+});
