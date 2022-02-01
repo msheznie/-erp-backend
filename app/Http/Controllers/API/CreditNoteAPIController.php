@@ -20,6 +20,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CreditNoteDetails;
@@ -672,6 +673,69 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote->delete();
 
         return $this->sendResponse($id, 'Credit Note deleted successfully');
+    }
+
+    public function creditNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->creditAmount / $value);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function creditNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->creditAmount / $value);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
     }
 
     public function getCreditNoteMasterRecord(Request $request)

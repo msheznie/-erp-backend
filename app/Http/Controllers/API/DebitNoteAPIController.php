@@ -29,6 +29,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DebitNoteDetailsRefferedback;
@@ -755,6 +756,66 @@ class DebitNoteAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Debit Note deleted successfully');
     }
+
+    public function debitNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+            $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+            $masterINVID = DebitNote::findOrFail($id);
+            $masterInvoiceArray = array('localCurrencyER'=>$value);
+            $masterINVID->update($masterInvoiceArray);
+
+            foreach($details as $item){
+                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->debitAmount / $value);
+                $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+                $updatedLocalER->update($directInvoiceDetailsArray);
+            }
+
+            return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
+    }
+
+    public function debitNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+        $masterINVID = DebitNote::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->debitAmount / $value);
+            $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
 
 
     public function getDebitNoteMasterRecord(Request $request)
