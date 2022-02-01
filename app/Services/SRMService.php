@@ -174,10 +174,10 @@ class SRMService
             if (!empty($data) && !$amend) {
                 foreach ($data as $val) {
                     $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                    $data_details['po_master_id'] = $val['purchaseOrderID'];
+                    $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
+                    $data_details['item_id'] = $val['item_id'];
+                    $data_details['qty'] = $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -751,11 +751,13 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoDetails' =>function($query){
-            $query->with(['unit','appointmentDetails' => function($q){
-                $q->whereHas('appointment', function ($q){
+            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
+                $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
-                    /*$q->where('confirmed_yn', 1);*/
+                    if(isset($appointmentID)){
+                        $q->where('id','!=', $appointmentID);
+                    }
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
@@ -792,9 +794,12 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)
-            ->with(['order','unit','appointmentDetails' => function($q){
-                $q->whereHas('appointment', function ($q){
+            ->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
+                $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
+                    if(isset($appointmentID)){
+                        $q->where('id','!=', $appointmentID);
+                    }
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
@@ -819,7 +824,8 @@ class SRMService
         }
         return [
             'purchaseOrderCode' => $data['order']['purchaseOrderCode'],
-            'purchaseOrderDetailsID' => $data['purchaseOrderDetailsID'],
+            'purchaseOrderID' => $data['order']['purchaseOrderID'],
+            'purchaseOrderDetailID' => $data['purchaseOrderDetailsID'],
             'itemPrimaryCode' => $data['itemPrimaryCode'],
             'itemDescription' => $data['itemDescription'],
             'UnitShortCode' => $data['unit']['UnitShortCode'],
@@ -827,6 +833,7 @@ class SRMService
             'receivedQty' => $data['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => 0,
+            'item_id' => $data['itemCode'],
 
         ];
     }
@@ -839,7 +846,8 @@ class SRMService
         }
         return [
             'purchaseOrderCode' => $data['getPoMaster']['purchaseOrderCode'],
-            'purchaseOrderDetailsID' => $data['getPoDetails']['purchaseOrderDetailsID'],
+            'purchaseOrderID' => $data['getPoMaster']['purchaseOrderID'],
+            'purchaseOrderDetailID' => $data['getPoDetails']['purchaseOrderDetailsID'],
             'itemPrimaryCode' => $data['getPoDetails']['itemPrimaryCode'],
             'itemDescription' => $data['getPoDetails']['itemDescription'],
             'UnitShortCode' => $data['getPoDetails']['unit']['UnitShortCode'],
@@ -847,6 +855,7 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'item_id' => $data['item_id'],
 
 
         ];
