@@ -35,6 +35,9 @@ define('GET_INVOICES', 'GET_INVOICES');
 define('GET_INVOICE_DETAILS', 'GET_INVOICE_DETAILS');
 define('SUPPLIER_REGISTRATION_APPROVAL_AMMEND', 'SUPPLIER_REGISTRATION_APPROVAL_AMMEND');
 define('GET_ERP_FORM_DATA', 'GET_ERP_FORM_DATA');
+define('CHECK_APPOINTMENT_PAST', 'CHECK_APPOINTMENT_PAST');
+define('GET_APPOINTMENT_DETAILS', 'GET_APPOINTMENT_DETAILS');
+define('GET_PO_DETAILS', 'GET_PO_DETAILS');
 
 class APIController extends Controller
 {
@@ -93,6 +96,12 @@ class APIController extends Controller
                 return $this->SRMService->supplierRegistrationApprovalAmmend($request);
             case GET_ERP_FORM_DATA:
                 return $this->SRMService->getERPFormData($request);
+            case CHECK_APPOINTMENT_PAST:
+                return $this->SRMService->checkAppointmentPastDate($request);
+            case GET_APPOINTMENT_DETAILS:
+                return $this->SRMService->getAppointmentDetails($request);
+            case GET_PO_DETAILS:
+                return $this->SRMService->getPurchaseOrderDetails($request);
             default:
                 return [
                     'success'   => false,
