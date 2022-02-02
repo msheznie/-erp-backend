@@ -425,7 +425,9 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
-
+        if($input['custUnbilledAccountSystemID'] == 0){
+            return $this->sendError('Unbilled Receivable Account field is required.');
+        }
    
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -461,11 +463,14 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $commonValidorMessages = [
-            'customerCountry.required' => 'Country field is required.'
+            'customerCountry.required' => 'Country field is required.',
+            'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.'
         ];
 
         $commonValidator = \Validator::make($input, [
             'customerCountry' => 'required',
+            'custUnbilledAccountSystemID' => 'required'
+
         ], $commonValidorMessages);
 
         if ($commonValidator->fails()) {
@@ -620,7 +625,6 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
 
-        $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
