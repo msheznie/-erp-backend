@@ -339,10 +339,10 @@ class CreateStockReceive implements ShouldQueue
                                 $glCost['glSystemID'] = $costValue->financeGLcodePLSystemID;
                                 $glCost['glCodeDes'] = ChartOfAccount::getAccountDescription($costValue->financeGLcodePLSystemID);
                                 $glCost['accountType'] = 'PL';
-                                $glCost['invoiceAmount'] = $costValue->rptAmount;
-                                $glCost['unitCost'] = $costValue->rptAmount;
-                                $glCost['localAmount'] = $costValue->localAmount;
-                                $glCost['comRptAmount'] = $costValue->rptAmount;
+                                $glCost['invoiceAmount'] = abs($costValue->rptAmount) * -1;
+                                $glCost['unitCost'] = abs($costValue->rptAmount) * -1;
+                                $glCost['localAmount'] = abs($costValue->localAmount) * -1;
+                                $glCost['comRptAmount'] = abs($costValue->rptAmount) * -1;
 
                                 $customerInvoiceDetailCost = $customerInvoiceDetailRep->create($glCost);
                                 Log::info($customerInvoiceDetailCost);
@@ -460,6 +460,9 @@ class CreateStockReceive implements ShouldQueue
                             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
                                 ->where('departmentSystemID', 10)
                                 ->where('isActive', -1)
+                                ->whereHas('finance_year_by', function($query) {
+                                    $query->where('isCurrent', -1);
+                                })
                                 //->where('dateFrom', '<', $stMaster->tranferDate)
                                 //->where('dateTo', '>', $stMaster->tranferDate)
                                 ->where('isCurrent', -1)

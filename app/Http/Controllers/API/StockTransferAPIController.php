@@ -245,8 +245,11 @@ class StockTransferAPIController extends AppBaseController
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
                 ->where('departmentSystemID', 10)
                 ->where('isActive', -1)
-                ->where('dateFrom', '<', $documentDate)
-                ->where('dateTo', '>', $documentDate)
+                ->whereHas('finance_year_by', function($query) {
+                    $query->where('isCurrent', -1);
+                })
+                // ->where('dateFrom', '<', $documentDate)
+                // ->where('dateTo', '>', $documentDate)
                 ->where('isCurrent', -1)
                 ->count();
 
