@@ -215,5 +215,8 @@ class CompanyFinancePeriod extends Model
         
     ];
 
-    
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
 }
