@@ -486,6 +486,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
+            $input['companySystemID'] = $companySystemID;
+
 
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
