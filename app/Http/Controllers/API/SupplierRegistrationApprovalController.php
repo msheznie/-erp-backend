@@ -256,6 +256,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         
 
         $data['vatEligible'] =  $supplierFormValues['vatEligible'];
+        $data['createdFrom'] =  6;
         $data['vatNumber'] =  $supplierFormValues['vatNumber'];
         $data['vatPercentage'] =  $supplierFormValues['vatPercentage'];
         $data['createdPcID'] = gethostname();
