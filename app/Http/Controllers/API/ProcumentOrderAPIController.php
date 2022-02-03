@@ -4811,8 +4811,8 @@ ORDER BY
         $supplierMaster = SupplierMaster::find($procumentOrderUpdate->supplierID);
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+            "monitoring this inbox.</font>";
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
