@@ -393,9 +393,17 @@ class CreditNoteAPIController extends AppBaseController
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
-            if ($companyCurrencyConversion) {
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                if ($companyCurrencyConversion) {
+                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
             }
         }
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {

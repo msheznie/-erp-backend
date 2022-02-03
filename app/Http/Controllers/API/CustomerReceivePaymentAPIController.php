@@ -259,8 +259,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
-            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
         }
 
         $input['custTransactionCurrencyER'] = 1;
@@ -491,8 +492,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         if ($company) {
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
-            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false || $input['documentType'] != 14) {
+                $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
 
@@ -1429,7 +1438,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
 
         $masterINVID = CustomerReceivePayment::findOrFail($id);
-        $masterInvoiceArray = array('comRptCurrencyER'=>$value);
+        $masterInvoiceArray = array('companyRptCurrencyER'=>$value);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

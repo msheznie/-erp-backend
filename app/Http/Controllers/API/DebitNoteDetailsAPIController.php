@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateDebitNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteDetailsAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\SegmentMaster;
@@ -200,9 +201,24 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $input['debitAmountCurrency'] = $debitNote->supplierTransactionCurrencyID;
         $input['debitAmountCurrencyER'] = 1;
         $input['localCurrency'] = $debitNote->localCurrencyID;
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         $input['comRptCurrency'] = $debitNote->companyReportingCurrencyID;
-        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+
+        if($policy == true){
+            $input['localCurrencyER' ]    = $debitNote->localCurrencyER;
+            $input['comRptCurrencyER']    = $debitNote->companyReportingER;
+        }
+
+        if($policy == false) {
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        }
 
         if ($debitNote->FYBiggin) {
             $finYearExp = explode('-', $debitNote->FYBiggin);
@@ -366,11 +382,26 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $input['debitAmount'] = isset($input['debitAmount']) ?  \Helper::stringToFloat($input['debitAmount']) : 0;
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
 
-        $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-        $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
+
+        if($policy == true){
+            $input['localAmount' ]        = \Helper::roundValue($input['debitAmount'] / $debitNote->localCurrencyER);
+            $input['comRptAmount']        = \Helper::roundValue($input['debitAmount'] / $debitNote->companyReportingER);
+            $input['localCurrencyER' ]    = $debitNote->localCurrencyER;
+            $input['comRptCurrencyER']    = $debitNote->companyReportingER;
+        }
+
+        if($policy == false) {
+            $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+            $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        }
         //vat amount currency conversion
 
         $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
