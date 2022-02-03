@@ -686,9 +686,8 @@ class SRMService
     public function getERPFormData(Request $request){
         $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
         $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
-        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get();
-        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','subCategoryCode','categoryDescription')->get();
-        
+        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get(); 
+        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','supMasterCategoryID','subCategoryCode','categoryDescription')->get();
         $formData =  array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,

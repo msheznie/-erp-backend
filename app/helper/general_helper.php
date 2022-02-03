@@ -22,6 +22,7 @@ use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateGRVSupplierInvoice;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
+use App\Jobs\EliminationLedgerInsert;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\PushNotification;
@@ -2158,6 +2159,15 @@ class Helper
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
                                 }
+                            }
+
+                            if ($input["documentSystemID"] == 69) {
+                                $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                if ($outputEL) {
+                                    return ['success' => false, 'message' => 'Elimination Ledger entries are already passed for this document'];
+                                }
+
+                                $jobGL = EliminationLedgerInsert::dispatch($masterData);
                             }
 
                             if ($input["documentSystemID"] == 24) {

@@ -1080,7 +1080,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->DIAmount / $value);
+            $localAmount = \Helper::roundValue($item->DIAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
             $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1109,7 +1110,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->DIAmount / $value);
+            $reportingAmount = \Helper::roundValue($item->DIAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
