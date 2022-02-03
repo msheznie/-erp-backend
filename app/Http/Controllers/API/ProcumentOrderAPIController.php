@@ -1087,7 +1087,11 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                    if($payment['comAmount']) {
+                        $paymentPercentageAmount = $payment['comAmount'];
+                    }else {
+                      $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                    }
                     $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
 
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
