@@ -220,21 +220,16 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
 
         if ($stockAdjustment->stockAdjustmentType == 2) {
             $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
-            $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-            $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-            $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+        } else {
+            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        }
+
+        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
                 $item->wacValueReportingCurrencyID,
                 $item->wacValueReportingCurrencyID,
                 $itemCurrentCostAndQty['wacValueReporting']);
-        } else {
-            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-            $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
-            $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
-            $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
-                $item->wacValueReportingCurrencyID,
-                $item->wacValueReportingCurrencyID,
-                $itemCurrentCostAndQty['wacValueReportingWarehouse']);
-        }
 
 
 
