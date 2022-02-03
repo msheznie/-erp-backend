@@ -601,10 +601,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                 /*exchange added*/
                 $_post['custTransactionCurrencyER'] = 1;
-                //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+                $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+                if($policy == false || $input['documentType'] != 11) {
+                    //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')
@@ -630,8 +638,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
             /*exchange added*/
-            $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false || $input['documentType'] != 11) {
+                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
 
