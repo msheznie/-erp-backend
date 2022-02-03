@@ -1328,6 +1328,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
         Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
 
+        Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates');
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
         Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
