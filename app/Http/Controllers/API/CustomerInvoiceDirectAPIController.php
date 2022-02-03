@@ -1182,7 +1182,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->invoiceAmount / $value);
+            $localAmount = \Helper::roundValue($item->invoiceAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1211,7 +1212,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->invoiceAmount / $value);
+            $reportingAmount = \Helper::roundValue($item->invoiceAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }

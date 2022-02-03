@@ -1403,7 +1403,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->DRAmount / $value);
+            $localAmount = \Helper::roundValue($item->DRAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1432,7 +1433,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->DRAmount / $value);
+            $reportingAmount = \Helper::roundValue($item->DRAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }

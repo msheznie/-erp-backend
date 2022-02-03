@@ -693,7 +693,8 @@ class CreditNoteAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->creditAmount / $value);
+            $localAmount = \Helper::roundValue($item->creditAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -724,7 +725,8 @@ class CreditNoteAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->creditAmount / $value);
+            $reportingAmount = \Helper::roundValue($item->creditAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }

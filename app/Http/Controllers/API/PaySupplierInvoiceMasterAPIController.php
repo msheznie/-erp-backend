@@ -487,6 +487,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
             $input['companySystemID'] = $companySystemID;
+
+
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
@@ -1352,7 +1354,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$item->DPAmount / $value);
+            $localAmount = \Helper::roundValue($item->DPAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
             $updatedLocalER = DirectPaymentDetails::findOrFail($item->directPaymentDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1381,7 +1384,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$item->DPAmount / $value);
+            $reportingAmount = \Helper::roundValue($item->DPAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = DirectPaymentDetails::findOrFail($item->directPaymentDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
