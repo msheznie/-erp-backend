@@ -310,7 +310,7 @@ class SRMService
                     ->orWhere('approved_yn', -1);
             })
             ->where('refferedBackYN', 0)
-            ->where('created_by', $supplierID)
+            /*->where('created_by', $supplierID)*/
             ->get();
 
         $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
