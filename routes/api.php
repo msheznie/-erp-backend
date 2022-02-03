@@ -1014,7 +1014,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate');
         Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate');
-        Route::put('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
+        Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
         Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
         Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
         Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
