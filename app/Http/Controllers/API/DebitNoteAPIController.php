@@ -783,7 +783,7 @@ class DebitNoteAPIController extends AppBaseController
             $masterINVID->update($masterInvoiceArray);
 
             foreach($details as $item){
-                $localAmount = \Helper::roundValue($item->debitAmount / $value);
+                $localAmount = $item->debitAmount / $value;
                 $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
                 $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
                 $updatedLocalER->update($directInvoiceDetailsArray);
@@ -814,7 +814,7 @@ class DebitNoteAPIController extends AppBaseController
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $reportingAmount = \Helper::roundValue($item->debitAmount / $value);
+            $reportingAmount = $item->debitAmount / $value;
             $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
             $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
