@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNoteDetails;
 use App\helper\TaxService;
 use App\Models\CreditNote;
@@ -446,6 +447,20 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $currency = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $totalAmount);
         $input["comRptAmount"] = $currency['reportingAmount'];
         $input["localAmount"] = $currency['localAmount'];
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+
+        if($policy == true){
+            $input['localAmount']        = \Helper::roundValue($input['creditAmount'] / $master->localCurrencyER);
+            $input['comRptAmount']        = \Helper::roundValue($input['creditAmount'] / $master->companyReportingER);
+            $input['localCurrencyER' ]    = $master->localCurrencyER;
+            $input['comRptCurrencyER']    = $master->companyReportingER;
+        }
 
         // vat amount
         $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;

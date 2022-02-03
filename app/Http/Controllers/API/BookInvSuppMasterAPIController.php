@@ -586,10 +586,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+    if($policy == false || $input['documentType'] != 1) {
         if ($companyCurrencyConversion) {
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
+    }
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -851,6 +859,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
                 $updateItem->save();
 
                 if ($updateItem->DIAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
@@ -997,6 +1006,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+//        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+//            ->where('companyPolicyCategoryID', 67)
+//            ->where('isYesNO', 1)
+//            ->first();
+//        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+//
+//        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+//            $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
+//            $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
+//        }
+//        if($BookInvSuppMaster->documentType != 1 || $policy == false){
+//            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+//            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+//        }
+
 
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 

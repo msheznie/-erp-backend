@@ -562,8 +562,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                 $companyCurrencyConversion = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
                 if ($companyCurrencyConversion) {
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                        ->where('companyPolicyCategoryID', 67)
+                        ->where('isYesNO', 1)
+                        ->first();
+                    $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+                    if($policy == false || $input['invoiceType'] != 3) {
+                        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                        $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    }
                 }
             }
 
@@ -1378,7 +1386,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $details = DirectPaymentDetails::where('directPaymentAutoID',$id)->get();
 
         $masterINVID = PaySupplierInvoiceMaster::findOrFail($id);
-        $masterInvoiceArray = array('comRptCurrencyER'=>$value);
+        $masterInvoiceArray = array('companyRptCurrencyER'=>$value);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

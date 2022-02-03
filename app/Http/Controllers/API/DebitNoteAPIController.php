@@ -465,8 +465,16 @@ class DebitNoteAPIController extends AppBaseController
 
         if (isset($input['supplierTransactionCurrencyID'])) {
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
