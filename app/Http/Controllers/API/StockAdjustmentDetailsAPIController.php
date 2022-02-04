@@ -217,16 +217,23 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
-        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
-        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
-        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReportingWarehouse'];
+        if ($stockAdjustment->stockAdjustmentType == 2) {
+            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        } else {
+            $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        }
 
-
+        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
         $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
             $item->wacValueReportingCurrencyID,
             $item->wacValueReportingCurrencyID,
-            $itemCurrentCostAndQty['wacValueReportingWarehouse']);
+            $itemCurrentCostAndQty['wacValueReporting']);
+
+
+
+
 
         $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
         $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
@@ -408,16 +415,18 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
 
         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        $currenStockQty = ($stockAdjustment->stockAdjustmentType == 2) ? $itemCurrentCostAndQty['currentStockQty'] : $itemCurrentCostAndQty['currentWareHouseStockQty'];
+
+        $input['currenctStockQty'] = $currenStockQty;
 
         if ($stockAdjustmentDetails->noQty != $input['noQty']) {
             $balanceQty = $input['currenctStockQty'] + $input['noQty'];
 
             if ($balanceQty < 0) {
-                  if ($itemCurrentCostAndQty['currentWareHouseStockQty'] != $stockAdjustmentDetails->currenctStockQty) {
+                  if ($currenStockQty != $stockAdjustmentDetails->currenctStockQty) {
                         $stockAdjustmentDetailsRes = $this->stockAdjustmentDetailsRepository->update(['currenctStockQty' => $input['currenctStockQty']], $id);
 
-                        return $this->sendError('Current stock quantity has been updated from '.$stockAdjustmentDetails->currenctStockQty.' to '.$itemCurrentCostAndQty['currentWareHouseStockQty'].'. Adjusted quantity cannot be less than current stock quantity');
+                        return $this->sendError('Current stock quantity has been updated from '.$stockAdjustmentDetails->currenctStockQty.' to '.$currenStockQty.'. Adjusted quantity cannot be less than current stock quantity');
                   } else {
                         return $this->sendError('Adjusted quantity cannot be less than current stock quantity');
                   }
