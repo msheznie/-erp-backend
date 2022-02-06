@@ -265,6 +265,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getMasterChartOfAccountData', 'ChartOfAccountAPIController@getMasterChartOfAccountData');
         Route::post('getInterCompanies', 'ChartOfAccountAPIController@getInterCompanies');
         Route::resource('chart_of_account', 'ChartOfAccountAPIController');
+        Route::get('isBank/{id}', 'ChartOfAccountAPIController@isBank');
         Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
         Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
         Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
