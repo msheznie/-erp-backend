@@ -697,12 +697,12 @@ class CreditNoteAPIController extends AppBaseController
         $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
 
         $masterINVID = CreditNote::findOrFail($id);
-        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterINVID->VATAmount/$value, 'netAmountLocal'=>$masterINVID->netAmount/$value);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $localAmount = \Helper::roundValue($item->creditAmount / $value);
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -729,12 +729,12 @@ class CreditNoteAPIController extends AppBaseController
         $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
 
         $masterINVID = CreditNote::findOrFail($id);
-        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value,'netAmountRpt'=>$masterINVID->netAmount/$value);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $reportingAmount = \Helper::roundValue($item->creditAmount / $value);
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$item->VATAmount / $value, 'netAmountRpt'=>$item->netAmount / $value);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
