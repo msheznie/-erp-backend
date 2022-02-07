@@ -29,6 +29,7 @@ use App\Jobs\PushNotification;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
+use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
 use App\Models\FixedAssetMaster;

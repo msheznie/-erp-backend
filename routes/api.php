@@ -2648,3 +2648,6 @@ Route::get('runCronJob/{cron}', function ($cron) {
 });
 
 
+
+
+Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
