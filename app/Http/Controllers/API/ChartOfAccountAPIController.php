@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\AllocationMaster;
 use App\helper\ReopenDocument;
+use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccountsRefferedBack;
@@ -264,7 +265,7 @@ class ChartOfAccountAPIController extends AppBaseController
                             $updateChartOfAccount->AccountDescription =  $input['AccountDescription'];
                             $updateChartOfAccount->save();
                             DB::commit();
-                            
+
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
                             $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
@@ -298,7 +299,7 @@ class ChartOfAccountAPIController extends AppBaseController
                         ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateDataNotAssigned);
                         DB::commit();
 
-                     
+
                         if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
@@ -315,7 +316,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     }
 
-                    
+
                     if ($policyCAc || $policy) {
                         return $this->sendResponse([], 'Chart Of Account updated successfully done');
                     }
@@ -418,6 +419,14 @@ class ChartOfAccountAPIController extends AppBaseController
 
     }
 
+    public function isBank($id){
+
+        $isBank = BankAccount::where('chartOfAccountSystemID', $id)->get();
+
+        $isGeneralLedger = GeneralLedger::where('chartOfAccountSystemID', $id)->get();
+
+        return $this->sendResponse([$isBank,$isGeneralLedger], 'Data retrieved successfully');
+    }
 
     /**
      * Display all assigned itemAssigned for specific Item Master.
