@@ -2478,7 +2478,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
-
+        
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
             $customerInvoice->profomaDetailData = $proformaBreifData;
@@ -2520,59 +2520,153 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('print.customer_invoice_tue', $array)->with('no_asset', true);
                     });
+                    
                 })->download('csv');
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
-            $html = view('print.customer_invoice', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+          
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.customer_invoice', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+
         } else if ($printTemplate['printTemplateID'] == 5) {
-            $html = view('print.customer_invoice_tax', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tax', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.customer_invoice_tax', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
         } else if ($printTemplate['printTemplateID'] == 6) {
-            $html = view('print.invoice_template.customer_invoice_hlb', $array);
-            $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
 
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_hlb', $array);
+                $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+
         } else if ($printTemplate['printTemplateID'] == 3) {
-            $html = view('print.customer_invoice_with_po_detail', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_with_po_detail', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.customer_invoice_with_po_detail', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+   
         } else if ($printTemplate['printTemplateID'] == 7) {
-            $html = view('print.invoice_template.customer_invoice_gulf_vat', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_gulf_vat', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+
         } else if ($printTemplate['printTemplateID'] == 8) {
-            $html = view('print.invoice_template.customer_invoice_gulf_vat_usd', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_gulf_vat_usd', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
         } else if ($printTemplate['printTemplateID'] == 4) {
-            $html = view('print.customer_invoice_tue_product_service', $array);
-            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
 
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tue_product_service', $array);
+                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('print.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
         }
     }
 
