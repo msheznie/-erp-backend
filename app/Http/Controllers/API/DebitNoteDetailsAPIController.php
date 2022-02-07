@@ -428,8 +428,18 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $debitNote['debitAmountTrans'] = $amount;
         $debitNote['debitAmountLocal'] = $companyCurrencyConversionMaster['localAmount'];
         $debitNote['debitAmountRpt']   = $companyCurrencyConversionMaster['reportingAmount'];
-        $debitNote['localCurrencyER']  = $companyCurrencyConversionMaster['trasToLocER'];
-        $debitNote['companyReportingER'] = $companyCurrencyConversionMaster['trasToRptER'];
+
+        if($policy == true) {
+
+            $debitNote['localCurrencyER'] = $debitNote->localCurrencyER;
+            $debitNote['companyReportingER'] = $debitNote->companyReportingER;
+
+        } if($policy == false) {
+
+            $debitNote['localCurrencyER'] = $companyCurrencyConversionMaster['trasToLocER'];
+            $debitNote['companyReportingER'] = $companyCurrencyConversionMaster['trasToRptER'];
+
+        }
 
 
         $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)

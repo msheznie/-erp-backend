@@ -607,7 +607,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->first();
                 $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                if($policy == false || $input['documentType'] != 11) {
+                if($policy == false || $input['isPerforma'] != 0) {
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -644,7 +644,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false || $input['documentType'] != 11) {
+            if($policy == false || $input['isPerforma'] != 0) {
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
             }
