@@ -19,6 +19,7 @@ use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
 use App\Models\StockTransferDetails;
+use App\Models\InterCompanyStockTransfer;
 use App\Repositories\AccountsReceivableLedgerRepository;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
@@ -510,10 +511,11 @@ class CreateStockReceive implements ShouldQueue
 
                             $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
                             $revenuePercentageForInterCompanyInventoryTransfer = ($toCompany) ? $toCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
+                            $stockReceiveAutoID = $stockReceive->stockReceiveAutoID;
                             foreach ($stDetails as $new) {
 
                                 $item = array();
-                                $item['stockReceiveAutoID'] = $stockReceive->stockReceiveAutoID;
+                                $item['stockReceiveAutoID'] = $stockReceiveAutoID;
                                 $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
                                 $item['stockTransferAutoID'] = $stMaster->stockTransferAutoID;
                                 $item['stockTransferCode'] = $stMaster->stockTransferCode;
@@ -550,6 +552,19 @@ class CreateStockReceive implements ShouldQueue
 
                             $stMaster->fullyReceived = -1;
                             $stMaster->save();
+
+
+                            $InterCompanyStockTransfer = InterCompanyStockTransfer::where('stockTransferID', $stMaster->stockTransferAutoID)->delete();
+
+                            $interCompanySTData = [
+                                'stockTransferID' => $stMaster->stockTransferAutoID,
+                                'customerInvoiceID' => $customerInvoice->custInvoiceDirectAutoID,
+                                'stockReceiveID' => $stockReceiveAutoID,
+                            ];
+
+                            $resST = InterCompanyStockTransfer::create($interCompanySTData);
+
+
                             Log::info('Successfully created  stock_receive' . date('H:i:s'));
                         }
                     }
