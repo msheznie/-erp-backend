@@ -2544,6 +2544,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
+    Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
