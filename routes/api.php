@@ -2615,6 +2615,8 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
 
 Route::resource('document_sub_products', 'DocumentSubProductAPIController');
 
