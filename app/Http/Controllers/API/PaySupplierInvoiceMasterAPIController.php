@@ -1358,7 +1358,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $details = DirectPaymentDetails::where('directPaymentAutoID',$id)->get();
 
         $masterINVID = PaySupplierInvoiceMaster::findOrFail($id);
-        $masterInvoiceArray = array('localCurrencyER'=>$value);
+        $AmountLocal = \Helper::roundValue($masterINVID->payAmountSuppTrans/$value);
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'payAmountCompLocal'=>$AmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
@@ -1388,7 +1390,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $details = DirectPaymentDetails::where('directPaymentAutoID',$id)->get();
 
         $masterINVID = PaySupplierInvoiceMaster::findOrFail($id);
-        $masterInvoiceArray = array('companyRptCurrencyER'=>$value);
+            $AmountRpt = \Helper::roundValue($masterINVID->payAmountSuppTrans/$value);
+
+            $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'payAmountCompRpt'=>$AmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

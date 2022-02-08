@@ -1194,8 +1194,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
+            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
             $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
-        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal);
+        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
@@ -1226,8 +1228,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
+            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
             $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
-        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
