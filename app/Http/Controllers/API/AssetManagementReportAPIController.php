@@ -633,11 +633,11 @@ class AssetManagementReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
                     $outputArr = [];
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->financeCatDescription][] = (array)$val;
-                        }
-                    }
+                    // if ($output) {
+                    //     foreach ($output as $val) {
+                    //         $outputArr[$val->financeCatDescription][] = (array)$val;
+                    //     }
+                    // }
                     $x = 2;
                     $data = [];
                     if (!empty($output)) {
