@@ -120,6 +120,12 @@ class NotificationService
                         $subject = 'Inventory stock reaches a re-order level';
                         break;
 
+                    case 14:
+                        $contract = new ShiftPeriodEndtNotificationService($companyID, $notDaySetup);
+                        $contract->ended_shift();
+                        $details = [];
+                        break;
+
                     default:
                         Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
 
