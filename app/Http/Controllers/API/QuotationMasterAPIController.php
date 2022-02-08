@@ -1088,7 +1088,7 @@ class QuotationMasterAPIController extends AppBaseController
         $sentToCustomer = $input['sent_to_customer'];
         $customerCodeSystem = $input['customer']['customerCodeSystem'];
 
-        $updateSentToCustomer = QuotationMaster::where('quotationMasterID', $id)->update(['sent_to_customer'=>$sentToCustomer]);
+        // $updateSentToCustomer = QuotationMaster::where('quotationMasterID', $id)->update(['sent_to_customer'=>$sentToCustomer]);
 
         $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
 
