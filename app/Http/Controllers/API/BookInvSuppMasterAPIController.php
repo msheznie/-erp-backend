@@ -1103,13 +1103,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $masterINVID = BookInvSuppMaster::findOrFail($id);
             $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
             $masterNetAmountLocal = \Helper::roundValue($masterINVID->netAmount / $value);
-        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'netAmountLocal'=>$masterNetAmountLocal);
+            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'netAmountLocal'=>$masterNetAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $localAmount = \Helper::roundValue($item->DIAmount / $value);
             $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
             $netAmountLocal = \Helper::roundValue($item->netAmount / $value);
+
             $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal);
             $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -1135,7 +1139,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $masterINVID = BookInvSuppMaster::findOrFail($id);
             $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
             $masterNetAmountRpt = \Helper::roundValue($masterINVID->netAmount / $value);
-        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'netAmountRpt'=>$masterNetAmountRpt);
+            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'netAmountRpt'=>$masterNetAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();

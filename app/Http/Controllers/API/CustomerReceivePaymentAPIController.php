@@ -1410,8 +1410,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterINVID = CustomerReceivePayment::findOrFail($id);
             $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
             $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
+            $localAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
 
-            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal, 'localAmount'=>$receivedAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
@@ -1445,8 +1446,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterINVID = CustomerReceivePayment::findOrFail($id);
         $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
         $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
+        $rptAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
 
-            $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'VATAmountRpt'=>$VATAmountRpt, 'netAmountRpt'=>$netAmountRpt);
+
+            $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'VATAmountRpt'=>$VATAmountRpt, 'netAmountRpt'=>$netAmountRpt, 'companyRptAmount'=>$rptAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

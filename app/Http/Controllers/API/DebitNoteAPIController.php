@@ -784,7 +784,7 @@ class DebitNoteAPIController extends AppBaseController
 
             foreach($details as $item){
                 $localAmount = $item->debitAmount / $value;
-                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount, 'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value);
+                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount, 'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value, 'debitAmountLocal' =>$masterINVID->debitAmountTrans/$value);
                 $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
                 $updatedLocalER->update($directInvoiceDetailsArray);
             }
@@ -810,7 +810,8 @@ class DebitNoteAPIController extends AppBaseController
         $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
 
         $masterINVID = DebitNote::findOrFail($id);
-        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value, 'debitAmountRpt'=>$masterINVID->debitAmountTrans/$value);
+
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

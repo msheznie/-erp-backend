@@ -699,8 +699,9 @@ class CreditNoteAPIController extends AppBaseController
         $masterINVID = CreditNote::findOrFail($id);
             $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
             $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
+            $creditAmountLocal = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
 
-            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal,  'creditAmountLocal' =>$creditAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
@@ -736,8 +737,9 @@ class CreditNoteAPIController extends AppBaseController
         $masterINVID = CreditNote::findOrFail($id);
         $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
         $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
+        $creditAmountRpt = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
 
-            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$VATAmountRpt,'netAmountRpt'=>$netAmountRpt);
+            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$VATAmountRpt,'netAmountRpt'=>$netAmountRpt, 'creditAmountRpt'=>$creditAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
