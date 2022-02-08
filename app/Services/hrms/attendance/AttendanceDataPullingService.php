@@ -1,46 +1,75 @@
 <?php
 namespace App\Services\hrms\attendance;
 
-use Carbon\Carbon;
 use Collator;
 use Exception;
+use Carbon\Carbon;
+use App\helper\CommonJobService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceDataPullingService{
     private $companyId;
     private $pullingDate;
-    private $tempData;
     private $uniqueKey;
     private $isClockInPulling;
-    
+
+    private $tempData;
+    private $attData;
+    private $allEmpArr = [];
+    private $multipleOccurrence = [];
+    private $data = [];
 
 
     public function __construct($companyId, $pullingDate, $isClockInPulling)
     {
+        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
+
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
         $this->isClockInPulling = $isClockInPulling;
 
-        $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;
+        $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;        
     }
 
     function execute(){
         if(!$this->is_all_data_pulled()){  return false; }
-                   
-        if(!$this->step1()){  return false; }
+              
+        DB::beginTransaction();
+
+        try{
+
+            if(!$this->step1()){  return false; }
         
-        if(!$this->isClockInPulling){
-            if(!$this->step2()){  return false; }
+            if(!$this->isClockInPulling){
+                if(!$this->step2()){  return false; }
+            }
+            
+            if(!$this->step3()){  return false; }
+
+            $this->step4();
+
+            $this->step5();
+
+            DB::commit();
+
+            Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
+            return true;     
+                
+        }
+        catch(Exception $ex){
+        
+            DB::rollBack();
+
+            $msg = "Exception \n";
+            $msg .= "message : ".$ex->getMessage()."\n";;
+            $msg .= "file : ".$ex->getFile()."\n";;
+            $msg .= "line no : ".$ex->getLine()."\n";;
+
+            Log::error($msg);
+            return false;
         }
         
-        if(!$this->step3()){  return false; }
-
-        $data = $this->step4($attData);
-        $this->step5($data);
-
-        Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
-        return true;        
     }
 
     function is_all_data_pulled(){
@@ -55,18 +84,18 @@ class AttendanceDataPullingService{
             Log::error('No records found for pulling'.$this->log_suffix(__LINE__));
             return false;
         }  
-        return false;
+        return true;
     }
 
     function step1(){
         $q = "SELECT t.autoID, l.empID, t.device_id, t.empMachineID, l.floorID, t.attDate, t.attTime, t.uploadType
         FROM srp_erp_pay_empattendancetemptable AS t
-        LEFT JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
+        JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
         WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->pullingDate}' AND t.isUpdated = 0  
         AND NOT EXISTS (
             SELECT * FROM srp_erp_pay_empattendancereview AS r
             WHERE r.companyID = {$this->companyId} AND r.attendanceDate = t.attDate AND r.empID = l.empID 
-        )
+        )        
         ORDER BY l.empID, t.attTime ASC";
 
         $this->tempData = DB::select($q);
@@ -84,20 +113,22 @@ class AttendanceDataPullingService{
     function insert_to_temp_tb(){ 
         $temp = collect($this->tempData);
         unset($this->tempData);
-        $temp = $temp->groupBy('empID');
+        $temp = $temp->groupBy('empID')->toArray(); 
         
         $data = []; $autoIdArr = [];
         foreach ($temp as $empId=> $row) {
+            $firstRow = get_object_vars($row[0]); //convert object to array
+            
             $thisData = [];
-            $autoIdArr[] = $row[0]['autoID'];
+            $autoIdArr[] = $firstRow['autoID'];
 
             $thisData['emp_id'] = $empId;            
-            $thisData['att_date'] = $row[0]['attDate'];
-            $thisData['location_in'] = $row[0]['floorID'];
-            $thisData['clock_in'] = $row[0]['attTime'];
-            $thisData['device_id_in'] = $row[0]['device_id'];
-            $thisData['machine_id_in'] = $row[0]['empMachineID'];
-            $thisData['upload_type'] = $row[0]['uploadType'];
+            $thisData['att_date'] = $firstRow['attDate'];
+            $thisData['location_in'] = $firstRow['floorID'];
+            $thisData['clock_in'] = $firstRow['attTime'];
+            $thisData['device_id_in'] = $firstRow['device_id'];
+            $thisData['machine_id_in'] = $firstRow['empMachineID'];
+            $thisData['upload_type'] = $firstRow['uploadType'];
             $thisData['uniqueID'] = $this->uniqueKey;
 
             $clockOut = $location_out = $clockOutDevice = $clockOutMachine = $uploadType = null;
@@ -105,13 +136,14 @@ class AttendanceDataPullingService{
             $occurrences = count($row);
             if( $occurrences > 1 ){
                 $lastIndex = $occurrences - 1;
+                $lastRow = get_object_vars($row[$lastIndex]); //convert object to array
 
-                $autoIdArr[] = $row[$lastIndex]['autoID'];
-                $clockOut = $row[$lastIndex]['attTime'];
-                $location_out = $row[$lastIndex]['floorID'];
-                $clockOutDevice = $row[$lastIndex]['device_id'];
-                $clockOutMachine = $row[$lastIndex]['empMachineID'];
-                $uploadType = $row[$lastIndex]['uploadType'];
+                $autoIdArr[] = $lastRow['autoID'];
+                $clockOut = $lastRow['attTime'];
+                $location_out = $lastRow['floorID'];
+                $clockOutDevice = $lastRow['device_id'];
+                $clockOutMachine = $lastRow['empMachineID'];
+                $uploadType = $lastRow['uploadType'];
 
                 if($occurrences > 2){
                     $this->multipleOccurrence[] = $empId;
@@ -193,12 +225,91 @@ class AttendanceDataPullingService{
         ) AS lm ON lm.empID = t.emp_id AND t.att_date BETWEEN lm.startDate AND lm.endDate 
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
-            AND fulldate BETWEEN '{$this->fromDate}' AND '{$this->toDate}'
+            AND fulldate = '{$this->pullingDate}'
         ) AS calenders ON fulldate = t.att_date
         WHERE t.company_id = {$this->companyId} AND uniqueID = '{$this->uniqueKey}'";
         //echo '<pre>'; print_r($q); echo '</pre><br/><br/>'; 
-        DB::select($q);
+        $this->attData = DB::select($q);
+
+        if(empty($this->attData)){
+            Log::error('No records found for pulling step-3'.$this->log_suffix(__LINE__));
+            return false;
+        }
+    
+        Log::info(' step-3 passed '.$this->log_suffix(__LINE__));
+        return true;
     }
+
+    function step4(){
+        $companyCode = '';
+
+        foreach ($this->attData as $row) {
+            $row = get_object_vars($row);
+            $attDate = $row['att_date'];
+            $empId = $row['emp_id'];
+            $this->allEmpArr[] = $empId;
+            
+
+            $obj = new AttendanceComputationService($row, $this->companyId);
+            $obj->execute();
+
+ 
+            $this->data[] = [ 
+                'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
+                'attendanceDate'=> $attDate, 'floorID'=> $row['location_in'], 'clockoutFloorID'=> $row['location_out'], 
+                'gracePeriod'=> $obj->gracePeriod, 'onDuty'=> $row['onDutyTime'], 'offDuty'=> $row['offDutyTime'],                
+
+                'checkIn'=> $obj->clockIn, 'checkOut'=> $obj->clockOut, 'presentTypeID'=> $obj->presentAbsentType,
+
+                'normalTime'=> ($row['isHalfDay'] == 1)? 0.5: 1,
+                'lateHours'=> $obj->lateHours, 'lateFee'=> $obj->lateFee, 'earlyHours'=> $obj->earlyHours,   
+                'OTHours'=> $obj->overTimeHours, 'realTime'=> $obj->realTime, 
+                
+                
+                'isNormalDay'=> $obj->normalDayData['true_false'], 'NDaysOT'=> $obj->normalDayData['hours'], 
+                'normalDay'=> $obj->normalDayData['realTime'], 
+                
+                'isWeekEndDay'=> $obj->weekendData['true_false'], 'weekendOTHours'=> $obj->weekendData['hours'], 
+                'weekend'=> $obj->weekendData['realTime'], 
+                
+                'isHoliday'=> $obj->holidayData['true_false'], 'holidayOTHours'=> $obj->holidayData['hours'], 
+                'holiday'=> $obj->holidayData['realTime'],                 
+                
+                'mustCheck'=> $row['isCheckInMust'],                
+                'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
+                'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
+                'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
+            ];                    
+        }
+
+        Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
+
+        unset($this->attData);
+        
+    }
+    
+    function step5(){
+
+        DB::table('attendance_temporary_tbl')->where('uniqueID', $this->uniqueKey)->delete();
+        DB::table('srp_erp_pay_empattendancedaterangetemp')->where('uniqueID', $this->uniqueKey)->delete();
+ 
+
+        if (empty($this->data)) {            
+            Log::error('No records found for pulling step-5'.$this->log_suffix(__LINE__));
+            return false;     
+        } 
+
+        DB::table('srp_erp_pay_empattendancereview')->insert($this->data); 
+
+        /* $emp_array = array_unique($this->allEmpArr);
+        $this->ci->Employee_model->update_ot_settlement_type($this->fromDate, $this->toDate, $emp_array); */
+
+        return true;
+    }
+
+    function moreThan2RecordsExists($empId){
+        return ( array_key_exists($empId, $this->multipleOccurrence) )? 1 : 0;        
+    } 
 
     function log_suffix($line_no) : string
     {
