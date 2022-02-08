@@ -1101,12 +1101,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
 
         $masterINVID = BookInvSuppMaster::findOrFail($id);
-        $masterInvoiceArray = array('localCurrencyER'=>$value);
+            $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterNetAmountLocal = \Helper::roundValue($masterINVID->netAmount / $value);
+        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'netAmountLocal'=>$masterNetAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $localAmount = \Helper::roundValue($item->DIAmount / $value);
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+            $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $netAmountLocal = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal);
             $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1129,14 +1133,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
 
         $masterINVID = BookInvSuppMaster::findOrFail($id);
-        $masterInvoiceArray = array('companyReportingER'=>$value);
+            $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterNetAmountRpt = \Helper::roundValue($masterINVID->netAmount / $value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'netAmountRpt'=>$masterNetAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
 
         foreach($details as $item){
             $reportingAmount = \Helper::roundValue($item->DIAmount / $value);
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
             $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
