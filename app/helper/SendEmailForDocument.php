@@ -48,19 +48,17 @@ class SendEmailForDocument
 
     public static function sendEmailToEmployeeCategory($purchaseOrder) {
         $employee = Employee::find($purchaseOrder->approvedByUserSystemID);
-        $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->purchaseOrderCode ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
-
+        $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->poTotalLocalCurrency ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
         $temp['employeeSystemID'] = $employee->employeeSystemID;
 		$temp['documentSystemCode'] = $purchaseOrder->documentSystemID;
 		$temp['documentCode'] = $purchaseOrder->purchaseOrderCode;
         $dataEmail['docSystemID'] = $purchaseOrder->documentSystemID;
         $dataEmail['empSystemID'] = $employee->employeeSystemID;
-        $dataEmail['empEmail'] = "that.saravanan94@gmail.com";
+        $dataEmail['empEmail'] = $employee->empEmail;
         $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
         $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
 
         $dataEmail['emailAlertMessage'] = $body;
-
         $sendEmail = \Email::sendEmailErp($dataEmail);
     }
 }
