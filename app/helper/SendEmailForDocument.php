@@ -21,15 +21,17 @@ class SendEmailForDocument
                 // check final level approval
                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) {
                     $procument_order_master = ProcumentOrder::find($input['purchaseOrderID']);
-
                     if(isset($procument_order_master->companySystemID) && $procument_order_master->logisticsAvailable == -1) {
                         $notificationScenario = NotificationService::getCompanyScenarioConfigurationForCompany(13,$procument_order_master->companySystemID);
                         if($notificationScenario->isActive) {
-                            $notification_users = NotificationUser::where('companyScenarionID',$procument_order_master->companySystemID)->get();
-                            
+                            $notification_users = NotificationUser::where('companyScenarionID',$notificationScenario->id)->get();
                             foreach($notification_users as $notification_user) {
                                 switch($notification_user->applicableCategoryID) {
-                                    case 1 : self::sendEmailToEmployeeCategory($procument_order_master);
+                                    case 1 :
+                                          // check notification user id is equal to approved user id
+                                          if($notification_user->empID == $procument_order_master->approvedByUserSystemID) {
+                                            self::sendEmailToEmployeeCategory($procument_order_master,$notification_user);
+                                          } 
                                     break;
                                 }
                             }
@@ -46,19 +48,20 @@ class SendEmailForDocument
         
     }
 
-    public static function sendEmailToEmployeeCategory($purchaseOrder) {
-        $employee = Employee::find($purchaseOrder->approvedByUserSystemID);
-        $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->poTotalLocalCurrency ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
-        $temp['employeeSystemID'] = $employee->employeeSystemID;
-		$temp['documentSystemCode'] = $purchaseOrder->documentSystemID;
-		$temp['documentCode'] = $purchaseOrder->purchaseOrderCode;
-        $dataEmail['docSystemID'] = $purchaseOrder->documentSystemID;
-        $dataEmail['empSystemID'] = $employee->employeeSystemID;
-        $dataEmail['empEmail'] = $employee->empEmail;
-        $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
-        $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
+    public static function sendEmailToEmployeeCategory($purchaseOrder,$notification_user) {
+        
+            $employee = Employee::find($purchaseOrder->approvedByUserSystemID);
+            $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->poTotalLocalCurrency ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
+            $temp['employeeSystemID'] = $employee->employeeSystemID;
+            $temp['documentSystemCode'] = $purchaseOrder->documentSystemID;
+            $temp['documentCode'] = $purchaseOrder->purchaseOrderCode;
+            $dataEmail['docSystemID'] = $purchaseOrder->documentSystemID;
+            $dataEmail['empSystemID'] = $employee->employeeSystemID;
+            $dataEmail['empEmail'] = $employee->empEmail;
+            $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
+            $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
+            $dataEmail['emailAlertMessage'] = $body;
 
-        $dataEmail['emailAlertMessage'] = $body;
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = \Email::sendEmailErp($dataEmail);
     }
 }
