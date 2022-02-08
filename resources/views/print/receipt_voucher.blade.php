@@ -287,7 +287,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Payment Type </span>
+                            <span class="font-weight-bold">Payment Mode </span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>

@@ -1408,12 +1408,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
 
         $masterINVID = CustomerReceivePayment::findOrFail($id);
-        $masterInvoiceArray = array('localCurrencyER'=>$value);
+            $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
+            $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
+            $localAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal, 'localAmount'=>$receivedAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $localAmount = \Helper::roundValue($item->DRAmount / $value);
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+            $itemVATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountLocal = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$itemVATAmountLocal, 'netAmountLocal'=>$itemNetAmountLocal);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1438,12 +1444,19 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
 
         $masterINVID = CustomerReceivePayment::findOrFail($id);
-        $masterInvoiceArray = array('companyRptCurrencyER'=>$value);
+        $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
+        $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
+        $rptAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
+
+
+            $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'VATAmountRpt'=>$VATAmountRpt, 'netAmountRpt'=>$netAmountRpt, 'companyRptAmount'=>$rptAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $reportingAmount = \Helper::roundValue($item->DRAmount / $value);
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }

@@ -1194,12 +1194,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
-        $masterInvoiceArray = array('localCurrencyER'=>$value);
+            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
+        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $localAmount = \Helper::roundValue($item->invoiceAmount / $value);
-            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+            $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
@@ -1224,12 +1228,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
-        $masterInvoiceArray = array('companyReportingER'=>$value);
+            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $reportingAmount = \Helper::roundValue($item->invoiceAmount / $value);
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$itemVATAmountRpt);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }

@@ -779,12 +779,12 @@ class DebitNoteAPIController extends AppBaseController
             $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
 
             $masterINVID = DebitNote::findOrFail($id);
-            $masterInvoiceArray = array('localCurrencyER'=>$value);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterINVID->VATAmount/$value, 'netAmountLocal'=>$masterINVID->netAmount/$value);
             $masterINVID->update($masterInvoiceArray);
 
             foreach($details as $item){
                 $localAmount = $item->debitAmount / $value;
-                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount, 'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value, 'debitAmountLocal' =>$masterINVID->debitAmountTrans/$value);
                 $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
                 $updatedLocalER->update($directInvoiceDetailsArray);
             }
@@ -810,12 +810,13 @@ class DebitNoteAPIController extends AppBaseController
         $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
 
         $masterINVID = DebitNote::findOrFail($id);
-        $masterInvoiceArray = array('companyReportingER'=>$value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value, 'debitAmountRpt'=>$masterINVID->debitAmountTrans/$value);
+
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
             $reportingAmount = $item->debitAmount / $value;
-            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$item->VATAmount / $value, 'netAmountRpt'=>$item->netAmount / $value);
             $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
         }
