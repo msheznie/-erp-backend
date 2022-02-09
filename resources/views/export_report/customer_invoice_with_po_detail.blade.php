@@ -22,7 +22,7 @@
 <br>
 <div class="row">
 
-<tr>
+    <tr>
     <td colspan="10">Customer Details</td>
     <td colspan="8"> Invoice  Details</td>
     </tr>
@@ -63,39 +63,39 @@
                                 <td colspan="2"><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
                             
         @endif
-</tr>
+    </tr>
 
 
-<tr>
-    <td colspan="10">   
-        {{$request->customer->customerAddress1}}</td>
-        <td colspan="2"></td>
-   
-</tr>
+    <tr>
+        <td colspan="10">   
+            {{$request->customer->customerAddress1}}</td>
+            <td colspan="2"></td>
+    
+    </tr>
 
-<tr>
-    <td colspan="10">   
-    @if($request->lineSecondAddress)
-        <span>{{$request->customer->customerAddress2}}
+    <tr>
+        <td colspan="10">   
+        @if($request->lineSecondAddress)
+            <span>{{$request->customer->customerAddress2}}
 
-        </span>
-        @else
-        <span>{{$request->customer->customerCity}}</span>
-        @endif
-    </td>
-
-
-    @if($request->line_dueDate)
-                    <td colspan="2" width="120px"><span class="font-weight-bold">Due Date -</span></td>
-                    <td colspan="2"><span>
-                            @if(!empty($request->invoiceDueDate))
-                                {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
-                            @endif
-                </span></td>
+            </span>
+            @else
+            <span>{{$request->customer->customerCity}}</span>
             @endif
-</tr>
+        </td>
 
-<tr>
+
+        @if($request->line_dueDate)
+                        <td colspan="2" width="120px"><span class="font-weight-bold">Due Date -</span></td>
+                        <td colspan="2"><span>
+                                @if(!empty($request->invoiceDueDate))
+                                    {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
+                                @endif
+                    </span></td>
+                @endif
+    </tr>
+
+    <tr>
     <td colspan="10">   
     @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif</td>
     @if ($request->line_contractNo)
@@ -220,7 +220,7 @@
                 <thead>
                 <tr class="">
                     <th colspan="1" style="width:1%"></th>
-                    <th colspan="2" style="text-align: center">Client Reference</th>
+                    <th colspan="3" style="text-align: center">Client Reference</th>
                     <th colspan="3" style="text-align: center">PO Detail ID</th>
                     <th colspan="3" style="text-align: center">Item Description</th>
                     <th colspan="2" style="text-align: right">Quantity</th>
@@ -237,7 +237,7 @@
                     {{$directTraSubTotal +=$item->amount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td colspan="1">{{$x}}</td>
-                        <td colspan="2">{{$item->client_referance}}</td>
+                        <td colspan="3">{{$item->client_referance}}</td>
                         <td colspan="3">{{$item->po_detail_id}}</td>
                         <td colspan="3">{{$item->item_description}}</td>
                         <td colspan="2" style="text-align: right">{{number_format($item->qty,2)}}</td>
@@ -257,7 +257,7 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td colspan="14" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td colspan="12" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
                             style="border-bottom: none !important;font-size: 11.5px">Total:</span>
@@ -275,7 +275,7 @@
             @if ($request->tax)
                 {{$directTraSubTotal+=$request->tax->amount}}
                 <tr>
-                    <td colspan="14" style="border:none !important;">
+                    <td colspan="12" style="border:none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -289,7 +289,7 @@
                 </tr>
 
                 <tr>
-                    <td colspan="14" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    <td colspan="12" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span

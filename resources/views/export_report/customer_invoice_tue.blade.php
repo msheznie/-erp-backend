@@ -93,14 +93,14 @@
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
-                    <th style="width:6%;">Item<br>رقم المنتج</th>
-                    <th style="width:25%; text-align: center">Description<br>الوصف</th>
-                    <th style="width:6%;text-align: center">QTY<br>الكمية</th>
-                    <th style="width:10%;text-align: center">Days(OP)<br>الايام عمل</th>
-                    <th style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
-                    <th style="width:10%;text-align: center">Days(STB)<br>الايام الانتظار</th>
-                    <th style="width:10%;text-align: center">Price(STB)<br>سعر الانتظار</th>
-                    <th style="width:13%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                    <th colspan="1" style="width:6%;">Item<br>رقم المنتج</th>
+                    <th colspan="4" style="width:25%; text-align: center">Description<br>الوصف</th>
+                    <th colspan="2" style="width:6%;text-align: center">QTY<br>الكمية</th>
+                    <th colspan="2" style="width:10%;text-align: center">Days(OP)<br>الايام عمل</th>
+                    <th colspan="2" style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
+                    <th colspan="2" style="width:10%;text-align: center">Days(STB)<br>الايام الانتظار</th>
+                    <th colspan="2" style="width:10%;text-align: center">Price(STB)<br>سعر الانتظار</th>
+                    <th colspan="2" style="width:13%;text-align: center">Total Amount<br>القيمة الكلية</th>
                 </tr>
                 </thead>
 
@@ -114,14 +114,14 @@
                     @if ($item->total != 0)
                         {{$directTraSubTotal +=$item->total}}
                         <tr style="border: 1px solid !important;">
-                            <td>{{$x}}</td>
-                            <td style="word-wrap:break-word;">{{$item->description}}</td>
-                            <td style="text-align: right;">{{$item->Qty}}</td>
-                            <td style="text-align: right;">{{$item->Days_OP}}</td>
-                            <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
-                            <td style="text-align: right;">{{$item->Days_STB}}</td>
-                            <td style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
-                            <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
+                            <td colspan="1">{{$x}}</td>
+                            <td colspan="4" style="word-wrap:break-word;">{{$item->description}}</td>
+                            <td colspan="2"  style="text-align: right;">{{$item->Qty}}</td>
+                            <td colspan="2" style="text-align: right;">{{$item->Days_OP}}</td>
+                            <td colspan="2" style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
+                            <td colspan="2" style="text-align: right;">{{$item->Days_STB}}</td>
+                            <td colspan="2" style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
+                            <td colspan="2" class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
                         </tr>
                         {{ $x++ }}
                     @endif
@@ -131,8 +131,8 @@
                 <tbody>
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                        <td colspan="12" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
+                        <td colspan="2" style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
                     @endif</td>
@@ -142,14 +142,14 @@
                     {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                        <td colspan="12" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                        <td colspan="2" style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
+                        <td colspan="12" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
+                        <td colspan="2" style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
                 </tbody>
@@ -244,12 +244,12 @@
                 <table class="table">
                     <thead>
                     <tr style="background-color: #6798da;">
-                        <th style="width:5%;"></th>
-                        <th style="width:40%;">Item<br>رقم المنتج</th>
-                        <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
-                        <th style="width:15%;text-align: center">QTY<br>الكمية</th>
-                        <th style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
-                        <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                        <th colspan="1" style="width:5%;"></th>
+                        <th colspan="4" style="width:40%;">Item<br>رقم المنتج</th>
+                        <th colspan="2" style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
+                        <th colspan="2" style="width:15%;text-align: center">QTY<br>الكمية</th>
+                        <th colspan="2" style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
+                        <th colspan="2" style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
                     </tr>
                     </thead>
 
@@ -266,12 +266,12 @@
                                 {{$directTraSubTotal +=$item->sellingTotal}}
 
                                 <tr style="border: 1px solid !important;">
-                                    <td>{{$x}}</td>
-                                    <td style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
-                                    <td style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
-                                    <td style="text-align: right;">{{$item->qtyIssued}}</td>
-                                    <td style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                    <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
+                                    <td colspan="1">{{$x}}</td>
+                                    <td colspan="4" style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                    <td colspan="2" style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                    <td colspan="2" style="text-align: right;">{{$item->qtyIssued}}</td>
+                                    <td colspan="2" style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                    <td colspan="2" class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                                 </tr>
                                 {{ $x++ }}
                             @endif
@@ -281,7 +281,7 @@
                     </tbody>
                     <tbody>
                     <tr>
-                        <td></td>
+                        <td colspan="7"></td>
                         <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">@if ($request->invoicedetails)
@@ -292,14 +292,14 @@
                         {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                         {{$directTraSubTotal+=$totalVATAmount}}
                         <tr>
-                            <td></td>
+                        <td colspan="7"></td>
                             <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                             <td class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                         </tr>
 
                         <tr>
-                            <td></td>
+                        <td colspan="7"></td>
                             <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                             <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>

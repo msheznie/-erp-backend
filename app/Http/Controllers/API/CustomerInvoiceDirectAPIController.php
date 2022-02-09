@@ -2551,7 +2551,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
 
-            
+     
 
         if ($printTemplate['printTemplateID'] == 2) {
             if($type == 1)
