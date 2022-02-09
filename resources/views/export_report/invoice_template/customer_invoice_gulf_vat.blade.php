@@ -37,7 +37,7 @@
 
 
 
-<tr>
+    <tr>
     <td colspan="10">Customer Details</td>
     <td colspan="8"> Invoice  Details</td>
     </tr>
@@ -87,11 +87,11 @@
                                         {{$request->PONumber}}
                                     @endif
     </td>
-</tr>
+   </tr>
 
 
 
-<tr>
+    <tr>
     <td colspan="10">   
     @if ($request->is_pdo_vendor) 
     Vendor Code :{{$request->vendorCode}}   @endif
@@ -145,7 +145,7 @@
     <td colspan="2">
     @if($request->wanNO)
     {{$request->wanNO}}
-@endif
+    @endif
     </td>
 
    </tr>
@@ -376,7 +376,7 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td colspan="14" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                    <td colspan="18" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                     <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
@@ -389,7 +389,7 @@
 
 
                 <tr>
-                    <td colspan="14" style="border:none !important;">
+                    <td colspan="18" style="border:none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -403,7 +403,7 @@
                 </tr>
 
                 <tr>
-                    <td colspan="14" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    <td colspan="18" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -427,7 +427,7 @@
                 <table style="width:100%;" class="table table-bordered">
                     <tbody>
                     <tr>
-                        <td colspan="14" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                        <td colspan="18" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                         <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                                     class="font-weight-bold"
                                     style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) </span>
@@ -439,7 +439,7 @@
                     </tr>
 
                     <tr>
-                        <td colspan="14" style="border:none !important;">
+                        <td colspan="18" style="border:none !important;">
                             &nbsp;
                         </td>
                         <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -453,7 +453,7 @@
                     </tr>
 
                     <tr>
-                        <td colspan="14" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        <td colspan="18" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                             &nbsp;
                         </td>
                         <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -533,7 +533,7 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td colspan="14" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
                     <td colspan="2" class="text-right" style="width: 15%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
@@ -546,7 +546,7 @@
 
 
                 <tr>
-                    <td colspan="14" style="border:none !important;">
+                    <td colspan="15" style="border:none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -560,7 +560,7 @@
                 </tr>
 
                 <tr>
-                    <td colspan="14" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    <td colspan="15" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -584,7 +584,7 @@
                 <table style="width:100%;" class="table table-bordered">
                     <tbody>
                     <tr>
-                        <td colspan="14" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                        <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
                         <td colspan="2" class="text-right" style="width: 15%;border-bottom: none !important"><span
                                     class="font-weight-bold"
                                     style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}) </span>
@@ -596,7 +596,7 @@
                     </tr>
 
                     <tr>
-                        <td colspan="14" style="border:none !important;">
+                        <td colspan="15" style="border:none !important;">
                             &nbsp;
                         </td>
                         <td colspan="2" class="text-right" style="border:none !important;"><span
@@ -610,7 +610,7 @@
                     </tr>
 
                     <tr>
-                        <td colspan="14" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        <td colspan="15" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                             &nbsp;
                         </td>
                         <td colspan="2" class="text-right" style="border:none !important;"><span

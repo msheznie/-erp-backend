@@ -383,6 +383,7 @@
                     <th style="width:60%;text-align: center">GL Code Description</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
+                    <th style="width:10%;text-align: center">VAT Per Unit</th>    
                     <th style="width:10%;text-align: right">Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
@@ -399,6 +400,7 @@
                         <td>{{$item->glCodeDes}}</td>
                         <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format($item->VATAmountLocal,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
@@ -412,13 +414,13 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
-                    <th style="width:3%"></th>
-                    <th style="width:60%;text-align: center">Description</th>
+                    <th style="width:2%"></th>
+                    <th style="width:15%;text-align: center">Description</th>
                     <!-- <th style="width:10%;text-align: center">UOM</th> -->
-                    <th style="width:10%;text-align: center">Quantity</th>
+                    <th style="width:5%;text-align: center">Quantity</th>
                     <th style="width:10%;text-align: center">Unit Price</th>
                     <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="width:10%;text-align: right">Taxable Rate</th>
+                    <th style="width:5%;text-align: right">Taxable Rate</th>
                     <th style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                     <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
@@ -457,9 +459,9 @@
             <tbody>
             <tr>
                 <td style="border:none !important;">
-                    &nbsp;
+                    &nbsp;&nbsp;&nbsp;
                 </td>
-                <td class="text-right" style="border:none !important;width: 85%">
+                <td class="text-right" style="border:none !important;width: 100%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Subtotal (Excluding VAT)
                         </span>

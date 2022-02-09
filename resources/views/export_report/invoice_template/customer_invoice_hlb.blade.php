@@ -36,7 +36,7 @@
             <table class="table" style="width: 100%">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th colspan="4">Description</th>
+                        <th colspan="10">Description</th>
                         <th colspan="2" style="width:20%;text-align: center">Amount<br>({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                     </tr>
                 </thead>
@@ -54,7 +54,7 @@
                             {{$directTraSubTotal +=$item->sellingTotal}}
 
                             <tr style="border-bottom: none !important;">
-                                <td colspan="4" style="word-wrap:break-word;border-bottom: none !important;">{{$item->itemDescription}}</td>
+                                <td colspan="10" style="word-wrap:break-word;border-bottom: none !important;">{{$item->itemDescription}}</td>
                                 <td colspan="2" class="text-right" style="border-left: 1px solid !important">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
@@ -65,7 +65,7 @@
                 </tbody>
                 <tbody class="foot-amount">
                     <tr>
-                        <td colspan="2" style="text-align: left; border-right: none !important;"><b>Total</b></td>
+                        <td colspan="10" style="text-align: left; border-right: none !important;"><b>Total</b></td>
                         <td colspan="2" class="text-right" style="border-left: 1px solid !important">@if ($request->invoicedetails)
                                 {{number_format($directTraSubTotal, $numberFormatting)}}
                             @endif</td>
@@ -74,13 +74,13 @@
                         {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                         {{$directTraSubTotal+=$totalVATAmount}}
                         <tr>
-                            <td colspan="4" style="text-align: left; border-right: none !important;"><b>VAT @ {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% </b></td>
-                            <td colspan="4" class="text-right" style="border-left: 1px solid !important">{{number_format($totalVATAmount, $numberFormatting)}}</td>
+                            <td colspan="10" style="text-align: left; border-right: none !important;"><b>VAT @ {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% </b></td>
+                            <td colspan="2" class="text-right" style="border-left: 1px solid !important">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                         </tr>
 
                         <tr>
-                            <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Payable: ({{$request->amountInWordsEnglish}})</b></td>
-                            <td colspan="4" class="text-right" style="border-left: 1px solid !important">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                            <td colspan="10" style="text-align: left; border-right: none !important;"><b>Total Payable: ({{$request->amountInWordsEnglish}})</b></td>
+                            <td colspan="2" class="text-right" style="border-left: 1px solid !important">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                         </tr>
                     @endif
                 </tbody>
