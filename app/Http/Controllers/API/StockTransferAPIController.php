@@ -230,13 +230,13 @@ class StockTransferAPIController extends AppBaseController
 
         if ($input['interCompanyTransferYN']) {
 
-            $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
+            $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->where('approvedYN',1)->count();
             if ($checkCustomer == 0) {
                 $cusError = array('type' => 'cus_not');
                 return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500, $cusError);
             }
 
-            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
+            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->where('approvedYN',1)->count();
             if ($checkSupplier == 0) {
                 $supError = array('type' => 'sup_not');
                 return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500, $supError);
