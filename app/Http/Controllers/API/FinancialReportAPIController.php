@@ -540,6 +540,9 @@ class FinancialReportAPIController extends AppBaseController
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getGeneralLedger($request);
 
+                // return $this->sendResponse($output, 'Record ');
+                // die();
+
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
 

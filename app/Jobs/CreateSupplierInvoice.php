@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\CreateConsoleJV;
 use App\Models\BookInvSuppMaster;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -10,6 +11,7 @@ use App\Models\StockReceive;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\StockReceiveDetails;
 use App\Models\SupplierMaster;
+use App\Models\InterCompanyStockTransfer;
 use App\Repositories\AccountsPayableLedgerRepository;
 use App\Repositories\BookInvSuppDetRepository;
 use App\Repositories\BookInvSuppMasterRepository;
@@ -300,7 +302,24 @@ class CreateSupplierInvoice implements ShouldQueue
 
                         Log::info($accountsPayableLedger);
                         // AP update end
+
+                        $checkStockReceive = InterCompanyStockTransfer::where('stockReceiveID', $sr->stockReceiveAutoID)->first();
+
+                        if ($checkStockReceive) {
+                            $checkStockReceive->supplierInvoiceID = $bookInvSuppMaster->bookingSuppMasInvAutoID;
+                            $checkStockReceive->save();
+                        }
+
+                        if ($checkStockReceive) {
+                            $consoleJVData = [
+                                'data' => $checkStockReceive,
+                                'type' => "STOCK_TRANSFER"
+                            ];
+
+                            CreateConsoleJV::dispatch($consoleJVData);
+                        }
                     }
+
 
                     Log::info('Successfully end  supplier_invoice' . date('H:i:s'));
                 }

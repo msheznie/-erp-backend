@@ -302,7 +302,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, UpdateJvDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by']);
+        $input = array_except($input, ['segment', 'currency_by', 'console_company']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -418,7 +418,7 @@ class JvDetailAPIController extends AppBaseController
         $id = $input['jvMasterAutoId'];
 
         $items = JvDetail::where('jvMasterAutoId', $id)
-            ->with(['segment', 'currency_by'])
+            ->with(['segment', 'currency_by', 'console_company'])
             ->orderBy('jvDetailAutoID', 'ASC')
             ->get();
 

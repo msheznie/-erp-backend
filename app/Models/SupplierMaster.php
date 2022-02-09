@@ -108,6 +108,7 @@ class SupplierMaster extends Model
         'creditLimit',
         'creditPeriod',
         'supCategoryMasterID',
+        'interCompanyYN',
         'supCategorySubID',
         'registrationNumber',
         'registrationExprity',
@@ -159,7 +160,8 @@ class SupplierMaster extends Model
         'blockedBy',
         'blockedDate',
         'blockedReason',
-        'jsrsExpiry'
+        'jsrsExpiry',
+        'createdFrom'
     ];
 
     /**
@@ -202,6 +204,7 @@ class SupplierMaster extends Model
         'isSupplierForiegn' => 'integer',
         'supplierConfirmedYN' => 'integer',
         'supplierConfirmedEmpID' => 'string',
+        'interCompanyYN' => 'integer',
         'supplierConfirmedEmpSystemID' => 'integer',
         'supplierConfirmedEmpName' => 'string',
         'RollLevForApp_curr' => 'integer',
@@ -238,7 +241,8 @@ class SupplierMaster extends Model
         'blockedBy' => 'integer',
         'blockedDate' => 'datetime',
         'blockedReason' => 'string',
-        'jsrsExpiry' => 'string'
+        'jsrsExpiry' => 'string',
+        'createdFrom' => 'integer'
     ];
 
     /**

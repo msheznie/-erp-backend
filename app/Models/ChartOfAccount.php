@@ -213,4 +213,12 @@ class ChartOfAccount extends Model
 
         return ($checkAccountCode) ? $checkAccountCode->AccountCode : "";
     }
+
+    public static function getAccountDescription($chartOfAccountSystemID)
+    {
+        $checkAccountCode = ChartOfAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->first();
+
+
+        return ($checkAccountCode) ? $checkAccountCode->AccountDescription : "";
+    }
 }

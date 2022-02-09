@@ -24,6 +24,7 @@ use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetMaster;
 use App\Models\BudgetTransferForm;
+use App\Models\ConsoleJVMaster;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
@@ -92,8 +93,6 @@ class email
         $empInfoSkip = array(106, 107);
         $count = 0;
         Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
-
-
 
         foreach ($array as $data) {
 
@@ -465,6 +464,13 @@ class email
                         $data['docCode'] = $supplierLink->id;
                     }
                     break;
+                 case 69:
+                    $journalVoucher = ConsoleJVMaster::where('consoleJvMasterAutoId', $data['docSystemCode'])->first();
+                    if (!empty($journalVoucher)) {
+                        $data['docApprovedYN'] = $journalVoucher->approved;
+                        $data['docCode'] = $journalVoucher->consoleJVcode;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -506,11 +512,11 @@ class email
 
     public static function sendEmailErp($data)
     {
+        Log::info('Send Email Erp funtion start');
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
             ->where('isYesNO', 1)
             ->exists();
-
         if ($hasPolicy) {
             Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';

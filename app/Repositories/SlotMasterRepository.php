@@ -125,9 +125,11 @@ class SlotMasterRepository extends AppBaseController
             $diff = $frmDateOnly->diffInDays($toDateOnly);
 
             for ($x = 0; $x <= $diff; $x++) {
+                $frmDateOnly=Carbon::parse($fromDate);
                 $wareHouse=$input['wareHouse'];
                 $addedDays = $frmDateOnly->addDays($x);
                 $dateFrm = $addedDays->format('Y-m-d');
+
 
                 $fTim = new Carbon($fromTime);
                 $fTimF = $fTim->addSeconds(1)->format('H-i-s');
@@ -167,7 +169,6 @@ class SlotMasterRepository extends AppBaseController
                     return ['status' => false, 'message' => 'The slot is available for selected date range'];
                 }
             }
-
 
             $insertResp = $slotMaster->create($data);
             if ($insertResp) {

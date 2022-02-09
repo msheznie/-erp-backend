@@ -16,6 +16,7 @@ use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
+use App\Models\DeliveryOrder;
 use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FixedAssetDepreciationMaster;
@@ -28,6 +29,7 @@ use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
+use App\Models\SalesReturn;
 use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
@@ -389,7 +391,7 @@ class GeneralLedgerAPIController extends AppBaseController
         }
         $years = Year::orderBy('year','DESC')->get();
         $companies = Company::whereIn("companySystemID", $subCompanies)->get();
-        $documents = DocumentMaster::whereIn('documentSystemID',[3,4,7,8,10,11,12,13,15,17,19,20,21,22,23,24,41,61])->get();
+        $documents = DocumentMaster::whereIn('documentSystemID',[3,4,7,8,10,11,12,13,15,17,19,20,21,22,23,24,41,61,71,87])->get();
 
         $output = [
             'years'=>$years,
@@ -785,7 +787,50 @@ class GeneralLedgerAPIController extends AppBaseController
                         ->where('documentSystemID',$documentSystemID)
                         ->update(['postedDate' => $documentDate]);
 
+                case 71:
+                    /*
+                     * INRC
+                     * erp_itemledger
+                     * erp_generalledger
+                     * ???? master table - erp_delivery_order - postedDate
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    DeliveryOrder::where('deliveryOrderID',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+
+                    case 87:
+                    /*
+                     * INRC
+                     * erp_itemledger
+                     * erp_generalledger
+                     * ???? master table - salesreturn - postedDate
+                     * */
+
+                    ErpItemLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentSystemCode',$documentSystemCode)
+                        ->update(['transactionDate' => $documentDate]);
+
+                    SalesReturn::where('id',$documentSystemCode)
+                        ->where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->update(['postedDate' => $documentDate]);
+
+
+
             }
+
+
+
+
 
             DB::commit();
             return $this->sendResponse([],'Posting date changed successfully');

@@ -185,6 +185,8 @@ class JvDetail extends Model
 
     protected $primaryKey = 'jvDetailAutoID';
 
+    protected $appends = ['line_segments'];
+
     public $fillable = [
         'jvMasterAutoId',
         'documentSystemID',
@@ -213,6 +215,7 @@ class JvDetail extends Model
         'selectedForConsole',
         'createdDateTime',
         'createdUserSystemID',
+        'companySystemIDForConsole',
         'createdUserID',
         'createdPcID',
         'timeStamp',
@@ -252,6 +255,7 @@ class JvDetail extends Model
         'companyIDForConsole' => 'string',
         'selectedForConsole' => 'integer',
         'createdUserSystemID' => 'integer',
+        'companySystemIDForConsole' => 'integer',
         'isServiceLineExist' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string'
@@ -291,5 +295,23 @@ class JvDetail extends Model
         return $this->belongsTo('App\Models\JvMaster', 'jvMasterAutoId', 'jvMasterAutoId');
     }
 
+    public function console_company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemIDForConsole', 'companySystemID');
+    }
+
+    public function getLineSegmentsAttribute()
+    {
+        $jvMaster = JvMaster::find($this->jvMasterAutoId);
+        $segments = [];
+        if ($jvMaster && $jvMaster->jvType == 9) {
+            $segments = SegmentMaster::selectRaw('serviceLineSystemID as value, ServiceLineDes as label')
+                                    ->where("companySystemID", $this->companySystemIDForConsole)
+                                    ->where('isActive', 1)
+                                    ->get();
+        }
+
+        return $segments;
+    }
     
 }

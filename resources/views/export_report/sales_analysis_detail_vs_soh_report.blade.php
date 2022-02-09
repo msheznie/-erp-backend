@@ -56,46 +56,43 @@
                             <td>{{$item2->barcode}}</td>
                             <td>{{$item2->categoryDescription}}</td>
 
-                                @foreach($warehouseCodes as $item4)
-                                    @php $j = $loop->index @endphp
+                                @foreach($warehouseArraySum as $item3)
+                                    @php $j = $loop->index;
+                                         $tot  = isset($totalReturn[$j][$k][0]->totalReturned) ? $totalReturn[$j][$k][0]->totalReturned: 0;
 
-                                @if($i == $j)  <td>{{$item2->totalQty}}</td> @endif
+
+                                    @endphp
+                                @if($i == $j)  <td>{{$item2->totalQty - $tot}}</td> @endif
                                 @if($i != $j)  <td>0</td> @endif
 
                                 @if($i == $j)
                                     @if($currencyID == 1)
-                                        <td>{{ number_format($item2->sellingTotal / $item2->localCurrencyER,$company->localcurrency->DecimalPlaces) }}</td>
+                                        <td>{{ number_format(($item2->totalQty - $tot) * $item2->sellingCostAfterMarginLocal,$company->localcurrency->DecimalPlaces) }}</td>
                                     @endif
                                     @if($currencyID == 2)
-                                        <td>{{ number_format($item2->sellingTotal / $item2->reportingCurrencyER,$company->reportingcurrency->DecimalPlaces) }}</td>
+                                        <td>{{ number_format(($item2->totalQty - $tot) * $item2->sellingCostAfterMarginRpt,$company->reportingcurrency->DecimalPlaces) }}</td>
                                     @endif
                                 @endif
                                 @if($i != $j)    <td>0</td> @endif
 
 
-                                @foreach($warehouseArraySum as $item3)
-                                    @php $x = $loop->index @endphp
 
-                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0}}</td>@endif
-                                @endforeach
-                                @if($i != $j)    <td>0</td> @endif
+                                    @if($i == $j)<td>{{ isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0}}</td>@endif
+                                @if($i != $j)    <td>{{ isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0}}</td> @endif
 
 
-                                    @foreach($warehouseArraySum as $item3)
-                                        @php $x = $loop->index @endphp
-                                    @if($i == $j && $x == $j)<td>{{ isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0 }}</td>@endif
-                                    @endforeach
-                                @if($i != $j)    <td>0</td> @endif
-
-                                @foreach($warehouseArraySum as $item3)
                                     @php
-                                        $x = $loop->index;
+
                                         $totalOpening = isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0;
                                         $totalCurrent = isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0;
                                     @endphp
-                                    @if($i == $j && $x == $j)<td>{{ $totalOpening + $totalCurrent }}</td> @endif
-                                @endforeach
-                                @if($i != $j)    <td>0</td> @endif
+                                    @if($i == $j)<td>{{$totalCurrent -  $totalOpening  }}</td> @endif
+                                @if($i != $j)    <td>{{$totalCurrent -  $totalOpening  }}</td> @endif
+
+
+
+                                    @if($i == $j)<td>{{ isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0 }}</td>@endif
+                                @if($i != $j)    <td>{{ isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0 }}</td> @endif
 
 
                             @endforeach

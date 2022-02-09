@@ -197,6 +197,13 @@ class ConsoleJVMaster extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
+        'approved',
+        'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'refferedBackYN',
+        'timesReferred',
+        'RollLevForApp_curr',
         'createdDateTime',
         'timestamp'
     ];
@@ -232,6 +239,12 @@ class ConsoleJVMaster extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
+        'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'modifiedPc' => 'string'
     ];
 
@@ -276,5 +289,9 @@ class ConsoleJVMaster extends Model
         return $this->hasMany('App\Models\ConsoleJVDetail', 'consoleJvMasterAutoId', 'consoleJvMasterAutoId');
     }
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
     
 }

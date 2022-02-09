@@ -20,6 +20,7 @@ use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\SegmentMaster;
 use App\Repositories\DirectInvoiceDetailsRepository;
@@ -171,9 +172,22 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['DIAmountCurrency'] = $BookInvSuppMaster->supplierTransactionCurrencyID;
         $input['DIAmountCurrencyER'] = 1;
         $input['localCurrency' ] =   $BookInvSuppMaster->localCurrencyID;
-        $input['localCurrencyER' ] = $companyCurrencyConversion['trasToLocER'];
         $input['comRptCurrency'] =   $BookInvSuppMaster->companyReportingCurrencyID;
-        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+            $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
+            $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
+        }
+        if($BookInvSuppMaster->documentType != 1 || $policy == false){
+            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+        }
 
         if ($BookInvSuppMaster->FYBiggin) {
             $finYearExp = explode('-', $BookInvSuppMaster->FYBiggin);
@@ -344,24 +358,52 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['DIAmount'] = isset($input['DIAmount']) ?  \Helper::stringToFloat($input['DIAmount']) : 0;
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
 
-        $input['localAmount' ]        = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-        $input['comRptAmount']        = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
-        $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
-        $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+
+        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+            $input['localAmount' ]        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->localCurrencyER);
+            $input['comRptAmount']        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->companyReportingER);
+            $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
+            $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
+        }
+
+        if($BookInvSuppMaster->documentType != 1 || $policy == false){
+            $input['localAmount' ]        = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+            $input['comRptAmount']        = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+        }
+
 
         $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
         $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
 
+
+
+        if($policy == true) {
+            $input['VATAmountLocal'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->localCurrencyER);
+            $input['VATAmountRpt'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->companyReportingER);
+        }  if($policy == false) {
         $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+    }
         $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
 
         $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
         $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
 
+        if($policy == true) {
+            $input['netAmountLocal'] = \Helper::roundValue( $input['netAmount']/ $BookInvSuppMaster->localCurrencyER);
+            $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $BookInvSuppMaster->companyReportingER);
+        } if($policy == false) {
         $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
         $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
-
+    }
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->update($input, $id);
 

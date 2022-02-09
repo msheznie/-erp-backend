@@ -32,6 +32,7 @@ use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -42,6 +43,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
+use App\Models\CustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirectDetRefferedback;
@@ -51,6 +53,7 @@ use App\Models\CustomerInvoiceItemDetailsRefferedback;
 use App\Models\CustomerInvoiceStatusType;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -80,7 +83,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
-
+use Exception;
+use PHPExcel_Worksheet_Drawing;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -598,10 +602,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                 /*exchange added*/
                 $_post['custTransactionCurrencyER'] = 1;
-                //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+                $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+                if($policy == false || $input['isPerforma'] != 0) {
+                    //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')
@@ -627,8 +639,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
             /*exchange added*/
-            $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false || $input['isPerforma'] != 0) {
+                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
 
@@ -1161,6 +1181,73 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceDirect->delete();
 
         return $this->sendResponse($id, 'Customer Invoice Direct deleted successfully');
+    }
+
+    public function customerInvoiceLocalUpdate($id,Request $request) {
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+        $masterINVID = CustomerInvoice::findOrFail($id);
+            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
+        $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $localAmount = \Helper::roundValue($item->invoiceAmount / $value);
+            $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal);
+            $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function customerInvoiceReportingUpdate($id,Request $request) {
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+        $masterINVID = CustomerInvoice::findOrFail($id);
+            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = \Helper::roundValue($item->invoiceAmount / $value);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$itemVATAmountRpt);
+            $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
     }
 
     public function customerInvoiceDetails(request $request)
@@ -1970,12 +2057,53 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+        
     }
 
+
+    
+    private function storeImage($imageData, $picName, $picBasePath,$disk)
+    {
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $type = strtolower($type[1]); 
+
+            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                throw new Exception('invalid image type');
+            }
+
+            $imageData = base64_decode($imageData);
+
+            if ($imageData === false) {
+                throw new Exception('image decode failed');
+            }
+
+            $picNameExtension = "{$picName}.{$type}";
+            $picFullPath = $picBasePath . $picNameExtension;
+            Storage::disk($disk)->put($picFullPath, $imageData);
+        } else if (preg_match('/^https/', $imageData)) {
+            $imageData = basename($imageData);
+            $picFullPath = $picBasePath;
+        } else {
+            throw new Exception('did not match data URI with image data');
+        }
+
+        return $picFullPath;
+    }
+
+
+    public static function quickRandom($length = 6)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
+    }
     public function printCustomerInvoice(Request $request)
     {
 
         $id = $request->get('id');
+        $type = $request->get('type');
+        
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
 
@@ -2382,6 +2510,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWordsEnglish = (isset($customerInvoice->currency->CurrencyName) ? $customerInvoice->currency->CurrencyName : '') ." ".$amountInWordsEnglish.' Only';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
+
+        
         $contractID = 0;
         if ($master->isPerforma == 1) {
             $contractID = isset($detail->contractID) ? $detail->contractID : 0;
@@ -2398,7 +2528,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
+      
 
+    
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
             $customerInvoice->profomaDetailData = $proformaBreifData;
@@ -2417,70 +2549,181 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
-        $array = array('request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
+        
+        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
+
+            
+
         if ($printTemplate['printTemplateID'] == 2) {
-
-            $html = view('print.customer_invoice_tue', $array);
-            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
-
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tue', $array);
+                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_tue', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('csv');
+            }
+        
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
-            $html = view('print.customer_invoice', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+          
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+
         } else if ($printTemplate['printTemplateID'] == 5) {
-            $html = view('print.customer_invoice_tax', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+            
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tax', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
         } else if ($printTemplate['printTemplateID'] == 6) {
-            $html = view('print.invoice_template.customer_invoice_hlb', $array);
-            $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
 
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_hlb', $array);
+                $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+
         } else if ($printTemplate['printTemplateID'] == 3) {
-            $html = view('print.customer_invoice_with_po_detail', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_with_po_detail', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_with_po_detail', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+   
         } else if ($printTemplate['printTemplateID'] == 7) {
-            $html = view('print.invoice_template.customer_invoice_gulf_vat', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_gulf_vat', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+
         } else if ($printTemplate['printTemplateID'] == 8) {
-            $html = view('print.invoice_template.customer_invoice_gulf_vat_usd', $array);
-            $pdf = \App::make('dompdf.wrapper');
-            $pdf->loadHTML($html);
+            if($type == 1)
+            {
+                $html = view('print.invoice_template.customer_invoice_gulf_vat_usd', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
 
-            return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
         } else if ($printTemplate['printTemplateID'] == 4) {
-            $html = view('print.customer_invoice_tue_product_service', $array);
-            $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-            $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-            $mpdf->AddPage('P');
-            $mpdf->setAutoBottomMargin = 'stretch';
-            $mpdf->SetHTMLFooter($htmlFooter);
 
-            $mpdf->WriteHTML($html);
-            return $mpdf->Output($fileName, 'I');
+            if($type == 1)
+            {
+                $html = view('print.customer_invoice_tue_product_service', $array);
+                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
         }
     }
 

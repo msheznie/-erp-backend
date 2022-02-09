@@ -1087,7 +1087,11 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                    if($payment['comAmount']) {
+                        $paymentPercentageAmount = $payment['comAmount'];
+                    }else {
+                      $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                    }
                     $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
 
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
@@ -4811,8 +4815,8 @@ ORDER BY
         $supplierMaster = SupplierMaster::find($procumentOrderUpdate->supplierID);
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+            "monitoring this inbox.</font>";
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {

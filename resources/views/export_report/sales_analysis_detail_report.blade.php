@@ -33,7 +33,7 @@
                 </thead>
                 <tbody>
                 @foreach($invoiceDetails as $invoiceDetail)
-                    @if($invoiceDetail->master != null)
+                    @if($invoiceDetail->master != null && $invoiceDetail->item_by != null)
                     <tr>
                     <td>{{ $invoiceDetail->master->warehouse->wareHouseCode }}</td>
                     <td>{{ $invoiceDetail->master->warehouse->location->locationName }}</td>
