@@ -83,7 +83,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
-
+use Exception;
+use PHPExcel_Worksheet_Drawing;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -2056,8 +2057,47 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+        
     }
 
+
+    
+    private function storeImage($imageData, $picName, $picBasePath,$disk)
+    {
+        if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+            $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            $type = strtolower($type[1]); 
+
+            if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                throw new Exception('invalid image type');
+            }
+
+            $imageData = base64_decode($imageData);
+
+            if ($imageData === false) {
+                throw new Exception('image decode failed');
+            }
+
+            $picNameExtension = "{$picName}.{$type}";
+            $picFullPath = $picBasePath . $picNameExtension;
+            Storage::disk($disk)->put($picFullPath, $imageData);
+        } else if (preg_match('/^https/', $imageData)) {
+            $imageData = basename($imageData);
+            $picFullPath = $picBasePath;
+        } else {
+            throw new Exception('did not match data URI with image data');
+        }
+
+        return $picFullPath;
+    }
+
+
+    public static function quickRandom($length = 6)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
+    }
     public function printCustomerInvoice(Request $request)
     {
 
@@ -2470,6 +2510,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWordsEnglish = (isset($customerInvoice->currency->CurrencyName) ? $customerInvoice->currency->CurrencyName : '') ." ".$amountInWordsEnglish.' Only';
         $printTemplate = ErpDocumentTemplate::with('printTemplate')->where('companyID', $companySystemID)->where('documentID', 20);
+
+        
         $contractID = 0;
         if ($master->isPerforma == 1) {
             $contractID = isset($detail->contractID) ? $detail->contractID : 0;
@@ -2486,7 +2528,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
-        
+      
+
+    
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
             $customerInvoice->profomaDetailData = $proformaBreifData;
@@ -2505,10 +2549,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
+
+            
+
         if ($printTemplate['printTemplateID'] == 2) {
             if($type == 1)
             {
@@ -2526,7 +2574,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.customer_invoice_tue', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.customer_invoice_tue', $array)->with('no_asset', true);
                     });
                     
                 })->download('csv');
@@ -2546,14 +2594,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.customer_invoice', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.customer_invoice', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
 
 
         } else if ($printTemplate['printTemplateID'] == 5) {
-
+            
             if($type == 1)
             {
                 $html = view('print.customer_invoice_tax', $array);
@@ -2566,7 +2614,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.customer_invoice_tax', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
@@ -2589,7 +2637,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
@@ -2609,12 +2657,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.customer_invoice_with_po_detail', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.customer_invoice_with_po_detail', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
    
         } else if ($printTemplate['printTemplateID'] == 7) {
+
 
             if($type == 1)
             {
@@ -2628,7 +2677,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
@@ -2647,7 +2696,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
@@ -2670,7 +2719,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('print.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
