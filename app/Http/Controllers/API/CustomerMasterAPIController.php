@@ -501,6 +501,9 @@ class CustomerMasterAPIController extends AppBaseController
             $linkedCompany = Company::find($input['companyLinkedToSystemID']);
 
             $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
+        } else {
+            $input['companyLinkedTo'] = null;
+            $input['companyLinkedToSystemID'] = null;
         }
 
 
