@@ -1039,7 +1039,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $q->where('createdDateAndTime', '<=', $toDate);
                         $q->where('companySystemID',$companySystemID);
                     }
-                    )->groupBy('itemPrimaryCode')->get();
+                    )->get();
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $templateName = "export_report.sales_analysis_detail_report";
