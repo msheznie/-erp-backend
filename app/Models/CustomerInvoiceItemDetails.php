@@ -420,5 +420,9 @@ class CustomerInvoiceItemDetails extends Model
         return $this->belongsTo('App\Models\QuotationDetails','quotationDetailsID','quotationDetailsID');
     }
 
+    public function sales_return_details(){
+        return $this->belongsTo('App\Models\SalesReturnDetail','customerItemDetailID','customerItemDetailID');
+    }
+
     
 }
