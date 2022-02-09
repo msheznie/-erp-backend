@@ -308,7 +308,7 @@ class AttendanceDataPullingService{
     }
 
     function moreThan2RecordsExists($empId){
-        return ( array_key_exists($empId, $this->multipleOccurrence) )? 1 : 0;        
+        return ( in_array($empId, $this->multipleOccurrence) )? 1 : 0;        
     } 
 
     function log_suffix($line_no) : string
