@@ -403,6 +403,15 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Selected location is not active. Please select an active location');
         }
 
+        $financeYear = CompanyFinanceYear::where("companyFinanceYearID", $input['companyFinanceYearID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isCurrent', -1)
+            ->first();
+
+        if (empty($financeYear)) {
+            return $this->sendError('Selected finance year is not current. Please select current year');
+        }
+
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
                 return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
