@@ -236,10 +236,6 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError(trans('custom.this_document_already_confirmed'), 500);
         }
 
-        if ($bankAccount->approvedYN == 1) {
-            return $this->sendError(trans('custom.this_document_already_approved'), 500);
-        }
-
         $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)
             ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
             ->where('companySystemID', $input['companySystemID'])
