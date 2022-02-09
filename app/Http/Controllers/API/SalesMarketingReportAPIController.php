@@ -253,7 +253,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $companySystemID = $request->companySystemID;
                 $currencyID = $request->currency;
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
+                    $query->with(['master']);
+                },'reporting_currency','item_by'=>
                         function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                             $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                                 $q->whereIn('itemCategorySubID', $subCategories);
@@ -335,7 +337,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = $toDate->format('Y-m-d');
 
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details','item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                         $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                             $q->whereIn('itemCategorySubID', $subCategories);
@@ -1001,7 +1003,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
+                    $query->with(['master']);
+                },'item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                         $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                             $q->whereIn('itemCategorySubID', $subCategories);
