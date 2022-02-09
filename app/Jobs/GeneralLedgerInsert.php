@@ -624,7 +624,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 10: // RS - Stock Receive
                         $masterData = StockReceive::find($masterModel["autoID"]);
                         //get balansheet account
-                        $bs = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                        $bs = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
                         //get pnl account
                         $pl = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->first();
                         if ($masterData) {
@@ -663,18 +663,20 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
 
                             if ($bs) {
-                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
-                                $data['glCode'] = $bs->financeGLcodebBS;
-                                $data['glAccountType'] = 'BS';
-                                $data['glAccountTypeID'] = 1;
-                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount);
-                                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
-                                $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount);
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+                                foreach ($bs as $keyBs => $valueBs) {
+                                    $data['chartOfAccountSystemID'] = $valueBs->financeGLcodebBSSystemID;
+                                    $data['glCode'] = $valueBs->financeGLcodebBS;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountTypeID'] = 1;
+                                    $data['documentLocalCurrencyID'] = $valueBs->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 1;
+                                    $data['documentLocalAmount'] = ABS($valueBs->localAmount);
+                                    $data['documentRptCurrencyID'] = $valueBs->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = 1;
+                                    $data['documentRptAmount'] = ABS($valueBs->rptAmount);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
                             }
 
                             if ($pl) {
