@@ -9,6 +9,7 @@ use App\Models\NotificationUser;
 use App\Models\ApprovalLevel;
 use App\Models\Employee;
 use App\helper\NotificationService;
+use Illuminate\Support\Facades\Log;
 
 class SendEmailForDocument
 {
@@ -30,6 +31,7 @@ class SendEmailForDocument
                                     case 1 :
                                           // check notification user id is equal to approved user id
                                           if($notification_user->empID == $procument_order_master->approvedByUserSystemID) {
+                                            Log::info('Notified user id is equal to approved user id log'.$notification_user->empID.'approved user'. $procument_order_master->approvedByUserSystemID);
                                             self::sendEmailToEmployeeCategory($procument_order_master,$notification_user);
                                           } 
                                     break;
@@ -51,17 +53,23 @@ class SendEmailForDocument
     public static function sendEmailToEmployeeCategory($purchaseOrder,$notification_user) {
         
             $employee = Employee::find($purchaseOrder->approvedByUserSystemID);
-            $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->poTotalLocalCurrency ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
-            $temp['employeeSystemID'] = $employee->employeeSystemID;
-            $temp['documentSystemCode'] = $purchaseOrder->documentSystemID;
-            $temp['documentCode'] = $purchaseOrder->purchaseOrderCode;
-            $dataEmail['docSystemID'] = $purchaseOrder->documentSystemID;
-            $dataEmail['empSystemID'] = $employee->employeeSystemID;
-            $dataEmail['empEmail'] = $employee->empEmail;
-            $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
-            $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
-            $dataEmail['emailAlertMessage'] = $body;
+            if($employee) {
+                $body = $purchaseOrder->purchaseOrderCode . " is marked as logistics available. Details as follows. <br> PO Code : " . $purchaseOrder->purchaseOrderCode ."<br> Total Amount : " . $purchaseOrder->poTotalLocalCurrency ."<br> Supplier Name : ".$purchaseOrder->supplierName."<br> Supplier Address : ".$purchaseOrder->supplierAddress."<br> Thanks,";
+                $temp['employeeSystemID'] = $employee->employeeSystemID;
+                $temp['documentSystemCode'] = $purchaseOrder->documentSystemID;
+                $dataEmail['docSystemCode'] = $purchaseOrder->documentSystemID;
+                $temp['documentCode'] = $purchaseOrder->purchaseOrderCode;
+                $dataEmail['docSystemID'] = $purchaseOrder->documentSystemID;
+                $dataEmail['empSystemID'] = $employee->employeeSystemID;
+                $dataEmail['empEmail'] = $employee->empEmail;
+                $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
+                $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
+                $dataEmail['emailAlertMessage'] = $body;
+                Log::info('Email stared to send to PO',$dataEmail);
+                $sendEmail = \Email::sendEmailErp($dataEmail);
+                Log::info('Email end here');
+            }
 
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            Log::info('sendEmailToEmployeeCategory function called - end');
     }
 }
