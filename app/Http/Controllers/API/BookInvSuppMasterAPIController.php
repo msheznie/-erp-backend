@@ -1194,8 +1194,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $taxMaster = DB::select('SELECT * FROM erp_taxmaster WHERE taxType = 2 AND companySystemID = ' . $companyId . '');
 
-        $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateTime) as year"))
-            ->whereNotNull('createdDateTime')
+        $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateAndTime) as year"))
+            ->whereNotNull('createdDateAndTime')
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
