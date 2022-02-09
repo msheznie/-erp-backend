@@ -2459,6 +2459,7 @@ class Helper
                         }
 
                         if ($input['documentSystemID'] == 2) {
+                             Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
                         
