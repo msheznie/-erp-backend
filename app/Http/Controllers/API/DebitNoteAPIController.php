@@ -577,11 +577,17 @@ class DebitNoteAPIController extends AppBaseController
                 }
 
                 $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                $companyId = $request->companyId;
 
-                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
 
                 $updateItem->save();
 
@@ -607,11 +613,13 @@ class DebitNoteAPIController extends AppBaseController
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
-            $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['debitAmountRpt']   = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
+                $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
+                $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            }
 
             $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $id)
                 ->sum('VATAmount');
