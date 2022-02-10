@@ -2529,7 +2529,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $printTemplate = $printTemplate->toArray();
         }
       
-
+        
     
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);

@@ -257,7 +257,7 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td colspan="12" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td colspan="12" style="border-bottom: none !important;border-left: none !important;width: 60%;">.</td>
                 <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
                             style="border-bottom: none !important;font-size: 11.5px">Total:</span>
@@ -276,7 +276,7 @@
                 {{$directTraSubTotal+=$request->tax->amount}}
                 <tr>
                     <td colspan="12" style="border:none !important;">
-                        &nbsp;
+                        .
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
                                 class="font-weight-bold"
@@ -290,7 +290,7 @@
 
                 <tr>
                     <td colspan="12" style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;
+                        .
                     </td>
                     <td colspan="2" class="text-right" style="border:none !important;"><span
                                 class="font-weight-bold"

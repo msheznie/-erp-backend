@@ -366,7 +366,7 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td colspan="10" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td colspan="10" style="border-bottom: none !important;border-left: none !important;width: 60%;">.</td>
                 <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
                             style="border-bottom: none !important;font-size: 11.5px">Total:</span>
