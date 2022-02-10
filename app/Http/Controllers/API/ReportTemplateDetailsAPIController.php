@@ -391,6 +391,18 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 return $this->sendError('Report Template Details not found');
             }
 
+            $checkIsAddedToGroupTotal = ReportTemplateLinks::where('subCategory', $id)
+                                                           ->where('templateMasterID', $reportTemplateDetails->companyReportTemplateID)
+                                                           ->whereHas('template_category', function($query) {
+                                                                $query->where('itemType', 3);
+                                                           })
+                                                           ->count();
+
+            if ($checkIsAddedToGroupTotal > 0) {
+                return $this->sendError('Category cannot be deleted as it is added for total calculation');
+            }
+
+
             $columnLink = ReportTemplateColumnLink::whereRaw("formulaRowID LIKE '$id,%' OR formulaRowID LIKE '%,$id,%' OR formulaRowID LIKE '%,$id' OR formulaRowID = '$id'")->first();
 
             if ($columnLink) {
