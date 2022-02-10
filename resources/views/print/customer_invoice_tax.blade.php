@@ -258,7 +258,8 @@
     <br>
 
     <div class="row">
-
+    {{$directTraSubTotal=0}}
+    {{$numberFormatting=0}}
         @if($request->linePdoinvoiceDetails)
 
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">

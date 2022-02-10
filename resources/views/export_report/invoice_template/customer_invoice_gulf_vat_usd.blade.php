@@ -516,7 +516,7 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">.</td>
                     <td colspan="2" class="text-right" style="width: 15%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
@@ -673,7 +673,7 @@
             <table style="width:100%;" class="table table-bordered">
                 <tbody>
                 <tr>
-                    <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">&nbsp;</td>
+                    <td colspan="15" style="border-bottom: none !important;border-left: none !important;width: 70%;">.</td>
                     <td colspan="2" class="text-right" style="width: 15%;border-bottom: none !important"><span
                                 class="font-weight-bold"
                                 style="border-bottom: none !important;font-size: 11.5px">Sub Total  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) </span>
