@@ -253,7 +253,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $companySystemID = $request->companySystemID;
                 $currencyID = $request->currency;
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
+                    $query->with(['master']);
+                },'reporting_currency','item_by'=>
                         function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                             $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                                 $q->whereIn('itemCategorySubID', $subCategories);
@@ -335,7 +337,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = $toDate->format('Y-m-d');
 
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details','item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                         $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                             $q->whereIn('itemCategorySubID', $subCategories);
@@ -433,43 +435,19 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
                     array_push($warehouseReturnSum,$itemsSum);
                 }
 
-                $warehouseArrayItems = array();
 
-                foreach ($warehouseArray as $item1) {
-                    foreach ($item1 as $item2) {
-                        array_push($warehouseArrayItems, $item2->itemPrimaryCode);
-                    }
-                }
-
-                $warehouseReturnSum = array();
-                foreach ($warehouses as $warehouse) {
-                    $itemsSum = array();
-                    foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
-                            ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
-                            ->groupBy('salesreturndetails.itemPrimaryCode')
-                            ->where('salesreturndetails.itemPrimaryCode', $item)
-                            ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
-                            ->get();
-                        array_push($itemsSum,$totalReturn);
-                    }
-                    array_push($warehouseReturnSum,$itemsSum);
-                }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
@@ -576,6 +554,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->whereIn('erp_custinvoicedirect.customerID', $customers)
                             ->whereIn('financeitemcategorysub.itemCategorySubID', $subCategories)
                             ->whereIn('financeitemcategorymaster.itemCategoryID', $mainCategories)
+                            ->orderBy('erp_customerinvoiceitemdetails.itemPrimaryCode', 'ASC')
                             ->get();
 
                     }
@@ -595,6 +574,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->whereIn('erp_custinvoicedirect.customerID', $customers)
                             ->whereIn('financeitemcategorysub.itemCategorySubID', $subCategories)
                             ->whereIn('financeitemcategorymaster.itemCategoryID', $mainCategories)
+                            ->orderBy('erp_customerinvoiceitemdetails.itemPrimaryCode', 'ASC')
                             ->get();
                     }
                     array_push($warehouseArray,$totalwarehouse);
@@ -614,13 +594,13 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
-                            ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->orderBy('salesreturndetails.itemPrimaryCode', 'ASC')
+                            ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
@@ -637,6 +617,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->where('erp_itemledger.transactionDate', '<', $fromDate)
                         ->where('itemmaster.financeCategoryMaster', 1)
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
+                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
                         ->get();
 
                     $totalSumCurrent = DB::table('erp_itemledger')
@@ -647,6 +628,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->where('erp_itemledger.transactionDate', '<=', $toDate)
                         ->where('itemmaster.financeCategoryMaster', 1)
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
+                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
                         ->get();
                             $totalQty = array([$totalSumOpening,$totalSumCurrent]);
                     array_push($warehouseArraySum,$totalQty);
@@ -1001,7 +983,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
-                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','item_by'=>
+                $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
+                    $query->with(['master']);
+                },'item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                         $query->with(['financeMainCategory','financeSubCategory'])->whereHas('financeSubCategory', function ($q) use ($subCategories){
                             $q->whereIn('itemCategorySubID', $subCategories);
@@ -1030,7 +1014,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $q->where('createdDateAndTime', '<=', $toDate);
                         $q->where('companySystemID',$companySystemID);
                     }
-                    )->groupBy('itemPrimaryCode')->get();
+                    )->get();
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $templateName = "export_report.sales_analysis_detail_report";
@@ -1136,13 +1120,12 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
@@ -1218,6 +1201,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->whereIn('erp_custinvoicedirect.customerID', $customers)
                             ->whereIn('financeitemcategorysub.itemCategorySubID', $subCategories)
                             ->whereIn('financeitemcategorymaster.itemCategoryID', $mainCategories)
+                            ->orderBy('erp_customerinvoiceitemdetails.itemPrimaryCode', 'ASC')
                             ->get();
                     }
                     if($currencyID == 2) {
@@ -1236,6 +1220,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->whereIn('erp_custinvoicedirect.customerID', $customers)
                             ->whereIn('financeitemcategorysub.itemCategorySubID', $subCategories)
                             ->whereIn('financeitemcategorymaster.itemCategoryID', $mainCategories)
+                            ->orderBy('erp_customerinvoiceitemdetails.itemPrimaryCode', 'ASC')
                             ->get();
                     }
                     array_push($warehouseArray,$totalwarehouse);
@@ -1254,13 +1239,14 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->orderBy('salesreturndetails.itemPrimaryCode', 'ASC')
+
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
@@ -1279,6 +1265,8 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->where('erp_itemledger.transactionDate', '<', $fromDate)
                         ->where('itemmaster.financeCategoryMaster', 1)
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
+                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+
                         ->get();
 
                     $totalSumCurrent = DB::table('erp_itemledger')
@@ -1289,6 +1277,8 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->where('erp_itemledger.transactionDate', '<=', $toDate)
                         ->where('itemmaster.financeCategoryMaster', 1)
                         ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
+                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+
                         ->get();
                     $totalQty = array([$totalSumOpening,$totalSumCurrent]);
                     array_push($warehouseArraySum,$totalQty);

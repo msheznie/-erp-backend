@@ -64,41 +64,41 @@
                                 <td colspan="2"><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
                             
         @endif
-</tr>
+    </tr>
 
 
-<tr>
-    <td colspan="10">   
-        {{$request->customer->customerAddress1}}</td>
-        @if($request->line_seNo)
-                                <td colspan="2"><span class="font-weight-bold">SE No -</span></td>
-                                <td colspan="2"><span>{{$request->wanNO}}</span></td>
-          @endif
-</tr>
-
-<tr>
-    <td colspan="10">   
-    @if($request->lineSecondAddress)
-        <span>{{$request->customer->customerAddress2}}
-
-        </span>
-        @else
-        <span>{{$request->customer->customerCity}}</span>
-        @endif
-    </td>
-
-
-    @if($request->line_dueDate)
-                    <td colspan="2" width="120px"><span class="font-weight-bold">Due Date -</span></td>
-                    <td colspan="2"><span>
-                            @if(!empty($request->invoiceDueDate))
-                                {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
-                            @endif
-                </span></td>
+    <tr>
+        <td colspan="10">   
+            {{$request->customer->customerAddress1}}</td>
+            @if($request->line_seNo)
+                                    <td colspan="2"><span class="font-weight-bold">SE No -</span></td>
+                                    <td colspan="2"><span>{{$request->wanNO}}</span></td>
             @endif
-</tr>
+    </tr>
 
-<tr>
+    <tr>
+        <td colspan="10">   
+        @if($request->lineSecondAddress)
+            <span>{{$request->customer->customerAddress2}}
+
+            </span>
+            @else
+            <span>{{$request->customer->customerCity}}</span>
+            @endif
+        </td>
+
+
+        @if($request->line_dueDate)
+                        <td colspan="2" width="120px"><span class="font-weight-bold">Due Date -</span></td>
+                        <td colspan="2"><span>
+                                @if(!empty($request->invoiceDueDate))
+                                    {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
+                                @endif
+                    </span></td>
+                @endif
+    </tr>
+
+    <tr>
     <td colspan="10">   
     @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif</td>
     @if ($request->line_contractNo)
@@ -366,7 +366,7 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td colspan="10" style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td colspan="10" style="border-bottom: none !important;border-left: none !important;width: 60%;">.</td>
                 <td colspan="2" class="text-right" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
                             style="border-bottom: none !important;font-size: 11.5px">Total:</span>
