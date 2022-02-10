@@ -68,6 +68,7 @@ use App\Models\CustomerContactDetails;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 use Carbon\Carbon;
 use Response;
@@ -1088,7 +1089,11 @@ class QuotationMasterAPIController extends AppBaseController
         $sentToCustomer = $input['sent_to_customer'];
         $customerCodeSystem = $input['customer']['customerCodeSystem'];
 
-        // $updateSentToCustomer = QuotationMaster::where('quotationMasterID', $id)->update(['sent_to_customer'=>$sentToCustomer]);
+        $path = public_path().'/uploads/emailAttachment';
+
+        if (!file_exists($path)) {
+            File::makeDirectory($path, 0777, true, true);
+        }
 
         $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
 
@@ -1096,8 +1101,6 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
-        if ($quotationMasterData->sent_to_customer == 1) {
-            
             $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
                 $query->with('employee');
                 $query->whereIn('documentSystemID', [67,68]);
@@ -1146,9 +1149,9 @@ class QuotationMasterAPIController extends AppBaseController
                 "<br>This is an auto generated email. Please do not reply to this email because we are not" .
                 "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
-                if ($fetchCusEmail) {
+                if (count($fetchCusEmail) > 0) {
                     foreach ($fetchCusEmail as $row) {
-                        if (!empty($row->contactPersonEmail)) {
+                        if ($row->contactPersonEmail) {
                             $emailSentTo = 1;
                             $dataEmail['empEmail'] = $row->contactPersonEmail;
         
@@ -1176,7 +1179,7 @@ class QuotationMasterAPIController extends AppBaseController
                     return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
                 }
 
-            }
+            
 
     }
 
