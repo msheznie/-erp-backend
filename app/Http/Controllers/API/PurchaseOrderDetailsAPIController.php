@@ -280,6 +280,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
         $itemCode = $input['itemCode'];
+        $poType = $input['poTypeID'];
 
         $companySystemID = $input['companySystemID'];
 
@@ -291,13 +292,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
-        if($item->financeCategoryMaster == 1){
-             if (!empty($itemExist)) {
-              return $this->sendError('Added item already exist');
+       if($poType == 2) {
+           if ($item->financeCategoryMaster == 1) {
+               if (!empty($itemExist)) {
+                   return $this->sendError('Added item already exist');
+               }
+           }
+       }
+
+        if($poType != 2) {
+            if (!empty($itemExist)) {
+                return $this->sendError('Added item already exist');
             }
         }
 
-        if (empty($item)) {
+
+            if (empty($item)) {
             return $this->sendError('Item not found');
         }
 
