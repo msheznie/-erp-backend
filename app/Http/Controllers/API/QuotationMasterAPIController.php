@@ -1086,6 +1086,16 @@ class QuotationMasterAPIController extends AppBaseController
     public function updateSentCustomerDetail(Request $request){
         $input = $request->quomaster;
         $id = $input['quotationMasterID'];
+        $documentTypeTitle = $input['documentTypeTitle'];
+
+        if($documentTypeTitle == 'sales_order'){
+            $documentTypeTitle = 'Sales Order';
+        }
+
+        if($documentTypeTitle == 'quotation'){
+            $documentTypeTitle = 'Quotation';
+        }
+
         $customerCodeSystem = $input['customer']['customerCodeSystem'];
 
         $path = public_path().'/uploads/emailAttachment';
@@ -1132,7 +1142,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $pdf = \App::make('dompdf.wrapper');
         $nowTime = time();
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_quotation_' . $nowTime.$customerCodeSystem . '.pdf');
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_' .$documentTypeTitle . $nowTime.$customerCodeSystem . '.pdf');
 
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
@@ -1156,13 +1166,13 @@ class QuotationMasterAPIController extends AppBaseController
     
                         $dataEmail['companySystemID'] = $input['companySystemID'];
     
-                        $temp = "Dear " . $customerMaster->CustomerName .',<p> Quotation ' .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
+                        $temp = "Dear " . $customerMaster->CustomerName .',<p> ' .$documentTypeTitle. ' '  .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
     
-                        $pdfName = realpath("uploads/emailAttachment/customer_quotation_" . $nowTime.$customerCodeSystem . ".pdf");
+                        $pdfName = realpath("uploads/emailAttachment/customer_" .$documentTypeTitle . $nowTime.$customerCodeSystem . ".pdf");
     
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = "Quotation " .$quotationCode. " from " . $company->CompanyName;
+                        $dataEmail['alertMessage'] = $documentTypeTitle. " " .$quotationCode. " from " . $company->CompanyName;
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
