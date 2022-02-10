@@ -40,10 +40,9 @@ class AttendanceDataPullingService{
         try{
 
             if($this->isClockOutPulling){
-                $resp = $this->deleteEntries();
+                $this->deleteEntries();
             }
-            return $resp;
-
+            
             if(!$this->is_all_data_pulled()){ return false; }
 
             if(!$this->step1()){ return false; }
