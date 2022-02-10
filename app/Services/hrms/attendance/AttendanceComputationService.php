@@ -191,13 +191,17 @@ class AttendanceComputationService{
         }
 
         $clockIn_dt_temp = ($this->clockIn >= $this->onDutyTime)
-            ? $this->clockIn_dt
-            : $this->onDuty_dt;
+            ? $this->clockIn_dt->format('H:i:s')
+            : $this->onDuty_dt->format('H:i:s');
+
+        $clockIn_dt_temp2 = $clockIn_dt_temp;
+        $clockIn_dt_temp = new DateTime($clockIn_dt_temp);
+        $clockIn_dt_temp2 = new DateTime($clockIn_dt_temp2);
 
         $clockOut_dt_ot = $this->clockOut_dt;
 
         $this->earlyHourComputation($clockIn_dt_temp, $this->clockOut_dt);
-        $this->overTimeComputation($clockIn_dt_temp, $clockOut_dt_ot);
+        $this->overTimeComputation($clockIn_dt_temp2, $clockOut_dt_ot);
     }
 
     public function basedOnFlexibleHoursComputation(){
@@ -296,6 +300,7 @@ class AttendanceComputationService{
     }
     
     public function lateFeeComputation(){
+        //TODO: 
         /**** Calculation for late Fee ****/
         return false;
         /* if(empty($this->lateHours)){
