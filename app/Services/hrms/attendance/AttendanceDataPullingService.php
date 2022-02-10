@@ -7,12 +7,13 @@ use Carbon\Carbon;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\hrms\attendance\AttendanceComputationService;
 
 class AttendanceDataPullingService{
     private $companyId;
     private $pullingDate;
     private $uniqueKey;
-    private $isClockInPulling;
+    private $isClockOutPulling;
 
     private $tempData;
     private $attData;
@@ -21,31 +22,37 @@ class AttendanceDataPullingService{
     private $data = [];
 
 
-    public function __construct($companyId, $pullingDate, $isClockInPulling)
+    public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
-        $this->isClockInPulling = $isClockInPulling;
+        $this->isClockOutPulling = $isClockOutPulling;
 
         $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;        
     }
 
     function execute(){
-        if(!$this->is_all_data_pulled()){  return false; }
-              
+        
         DB::beginTransaction();
 
         try{
 
-            if(!$this->step1()){  return false; }
+            if($this->isClockOutPulling){
+                $resp = $this->deleteEntries();
+            }
+            return $resp;
+
+            if(!$this->is_all_data_pulled()){ return false; }
+
+            if(!$this->step1()){ return false; }
         
-            if(!$this->isClockInPulling){
-                if(!$this->step2()){  return false; }
+            if($this->isClockOutPulling){
+                if(!$this->step2()){ return false; }
             }
             
-            if(!$this->step3()){  return false; }
+            if(!$this->step3()){ return false; }
 
             $this->step4();
 
@@ -88,10 +95,12 @@ class AttendanceDataPullingService{
     }
 
     function step1(){
+        $isUpdateWhere = (!$this->isClockOutPulling)? ' AND t.isUpdated = 0 ': '';
+        
         $q = "SELECT t.autoID, l.empID, t.device_id, t.empMachineID, l.floorID, t.attDate, t.attTime, t.uploadType
         FROM srp_erp_pay_empattendancetemptable AS t
         JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
-        WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->pullingDate}' AND t.isUpdated = 0  
+        WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->pullingDate}' {$isUpdateWhere}
         AND NOT EXISTS (
             SELECT * FROM srp_erp_pay_empattendancereview AS r
             WHERE r.companyID = {$this->companyId} AND r.attendanceDate = t.attDate AND r.empID = l.empID 
@@ -301,18 +310,60 @@ class AttendanceDataPullingService{
 
         DB::table('srp_erp_pay_empattendancereview')->insert($this->data); 
 
-        /* $emp_array = array_unique($this->allEmpArr);
-        $this->ci->Employee_model->update_ot_settlement_type($this->fromDate, $this->toDate, $emp_array); */
+        $this->update_ot_settlement_type();
 
         return true;
+    }
+
+    private function update_ot_settlement_type(){
+        $emp_array = array_unique($this->allEmpArr);
+        $lieuBasedEmp = $this->get_ot_settlement_type_of_lieuLeave($emp_array);
+
+        if(empty($lieuBasedEmp)){
+            return true;
+        }
+    
+        DB::table('srp_erp_pay_empattendancereview')
+            ->whereIn('empID', $lieuBasedEmp)
+            ->whereDate('attendanceDate', $this->pullingDate)
+            ->update(['settlementType'=> 2]);
+    
+        return true;
+    }
+
+    function get_ot_settlement_type_of_lieuLeave($emp_array){
+        $data = DB::table('srp_employeesdetails AS e')
+            ->join('srp_erp_employeegrade AS g', 'g.gradeID', '=', 'e.gradeID')
+            ->where('g.isLieuLeave', 1)
+            ->whereIn('e.EIdNo', $emp_array)
+            ->get();
+    
+        if(empty($data)){
+            return [];
+        }
+
+        $data = get_object_vars($data);
+    
+        return array_column($data, 'EIdNo');
+    }
+
+    private function deleteEntries(){
+        
+        $noOfRows = DB::table('srp_erp_pay_empattendancereview')
+            ->where('companyID', $this->companyId)
+            ->where('attendanceDate', $this->pullingDate)
+            ->where('confirmedYN', 0)
+            ->delete(); 
+
+        $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} (date : {$this->pullingDate})";
+        Log::info($msg.$this->log_suffix(__LINE__));                     
     }
 
     function moreThan2RecordsExists($empId){
         return ( in_array($empId, $this->multipleOccurrence) )? 1 : 0;        
     } 
 
-    function log_suffix($line_no) : string
-    {
+    function log_suffix($line_no) : string{
         return " | companyId: $this->companyId \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
     }
 }
