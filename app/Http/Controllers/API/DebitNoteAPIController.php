@@ -583,12 +583,13 @@ class DebitNoteAPIController extends AppBaseController
                     ->where('companyPolicyCategoryID', 67)
                     ->where('isYesNO', 1)
                     ->first();
+                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
                     $input['localAmount'] = $companyCurrencyConversion['localAmount'];
                     $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-
+                }
                 $updateItem->save();
 
                 if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
