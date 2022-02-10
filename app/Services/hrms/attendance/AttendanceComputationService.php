@@ -299,24 +299,23 @@ class AttendanceComputationService{
         }
     }
     
+    // Calculation for late Fee
     public function lateFeeComputation(){
-        //TODO: 
-        /**** Calculation for late Fee ****/
-        return false;
-        /* if(empty($this->lateHours)){
+        
+        if(empty($this->lateHours)){
             return false;
         }
 
         $empId = $this->data['emp_id'];
         $attendanceDate = $this->data['att_date'];
 
-        $this->ci->load->helper('actions/attendance/late_fee_computation_helper');
-        $obj = new late_fee_computation_helper($this->lateHours, $empId, $attendanceDate);
+        
+        $obj = new LateFeeComputationService($empId, $attendanceDate, $this->companyId);
         $amountForPerMinute = $obj->compute();
 
         $this->lateFee = ($amountForPerMinute > 0)
             ? $this->lateHours * $amountForPerMinute
-            : 0; */
+            : 0;
     }
 
     function log_suffix($line_no) : string

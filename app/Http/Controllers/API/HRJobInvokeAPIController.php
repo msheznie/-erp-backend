@@ -31,6 +31,7 @@ class HRJobInvokeAPIController extends AppBaseController
 
     function test(){
         $db_name = 'asaas_gears_erp';
+        $tenantId = 9; 
         $companyId = 1; 
         $pullingDate = '2022-01-17'; 
         $isClockOutPulling = true;
@@ -39,7 +40,12 @@ class HRJobInvokeAPIController extends AppBaseController
 
         $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
         $resp = $obj->execute();
-        echo '<pre>'; print_r($resp); echo '</pre>'; 
+        
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
+        ];
+
+        return $this->sendResponse($data, 'clock out pulling job added to queue');
         //dd($resp);
     }
 }
