@@ -435,43 +435,19 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
                     array_push($warehouseReturnSum,$itemsSum);
                 }
 
-                $warehouseArrayItems = array();
 
-                foreach ($warehouseArray as $item1) {
-                    foreach ($item1 as $item2) {
-                        array_push($warehouseArrayItems, $item2->itemPrimaryCode);
-                    }
-                }
-
-                $warehouseReturnSum = array();
-                foreach ($warehouses as $warehouse) {
-                    $itemsSum = array();
-                    foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
-                            ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
-                            ->groupBy('salesreturndetails.itemPrimaryCode')
-                            ->where('salesreturndetails.itemPrimaryCode', $item)
-                            ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
-                            ->get();
-                        array_push($itemsSum,$totalReturn);
-                    }
-                    array_push($warehouseReturnSum,$itemsSum);
-                }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
                 $output = array(
@@ -618,14 +594,13 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
-                            ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->orderBy('salesreturndetails.itemPrimaryCode', 'ASC')
+                            ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
@@ -1145,13 +1120,12 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->get();
                         array_push($itemsSum,$totalReturn);
                     }
@@ -1265,13 +1239,12 @@ class SalesMarketingReportAPIController extends AppBaseController
                 foreach ($warehouses as $warehouse) {
                     $itemsSum = array();
                     foreach ($warehouseArrayItems as $item) {
-                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
+                        $totalReturn = DB::table('salesreturndetails')->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.customerItemDetailID', '=', 'salesreturndetails.customerItemDetailID')
                             ->where('salesreturn.wareHouseSystemCode', $warehouse)->where('salesreturn.companySystemID', $companySystemID)
                             ->groupBy('salesreturndetails.itemPrimaryCode')
                             ->where('salesreturndetails.itemPrimaryCode', $item)
                             ->where('salesreturn.approvedYN', "-1")
-                            ->where('salesReturnDate', '>=', $fromDate)->where('salesReturnDate', '<=', $toDate)
-                            ->selectRaw('itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
+                            ->selectRaw('salesreturndetails.itemPrimaryCode,sum(salesreturndetails.qtyReturned) as totalReturned')
                             ->orderBy('salesreturndetails.itemPrimaryCode', 'ASC')
 
                             ->get();
