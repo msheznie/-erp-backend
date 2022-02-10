@@ -384,11 +384,17 @@
                             {{$masterdata->contactPersonNumber}}
                         </td>
                     </tr>
+
                     <tr>
-                        <td colspan="3" valign="bottom" class="text-right">
-                            <span class="font-weight-bold"> Currency:</span>
+                        <td width="50px">
+                            <span class="font-weight-bold">Currency</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
                             @if($masterdata->transactionCurrency)
-                                {{$masterdata->transactionCurrency}}
+                            {{$masterdata->transactionCurrency}}
                             @endif
                         </td>
                     </tr>
