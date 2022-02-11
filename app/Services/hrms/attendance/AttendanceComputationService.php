@@ -15,7 +15,7 @@ class AttendanceComputationService{
     public $gracePeriod;
     public $isFlexibleHour;
     public $flexibleHourFrom;
-    public $flexibleHourTo; 
+    public $flexibleHourTo;
 
 
     //computed values
@@ -41,7 +41,7 @@ class AttendanceComputationService{
     public $clockIn_dt;
     public $clockOut_dt;
     public $onDuty_dt;
-    public $dayType = 0; //[1=> normalDay, 2=> holiday, 3 => weekend]    
+    public $dayType = 0; //[1=> normalDay, 2=> holiday, 3 => weekend]  
     
     public function __construct($data, $companyId){
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
@@ -78,8 +78,7 @@ class AttendanceComputationService{
             
             return false;
         }
-
-                
+       
         $this->clockOut_dt = new DateTime($this->clockOut);
         $this->onDuty_dt = new DateTime($this->onDutyTime);
 
@@ -132,11 +131,11 @@ class AttendanceComputationService{
             return;
         }
 
-        if (!empty($this->clockIn) && empty($this->clockOut)) {            
+        
+        if (!empty($this->clockIn) && empty($this->clockOut)) {
             $this->lateHoursComputation();
             return false;            
         } 
-        
 
         $this->isClockInOutSet = true;
 
@@ -161,13 +160,12 @@ class AttendanceComputationService{
 
     public function FlxCalculateActualWorkingHours(){        
 
-        if (!empty($this->clockIn) && empty($this->clockOut)) {              
+        if (!empty($this->clockIn) && empty($this->clockOut)) {
             $this->flxLateHourComputation();
             return false;            
         } 
 
         $this->isClockInOutSet = true;
-        
 
         $t1 = ( $this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut) ) 
             ? new DateTime($this->offDutyTime)
@@ -188,7 +186,7 @@ class AttendanceComputationService{
         }
     }
 
-    public function generalComputation(){               
+    public function generalComputation(){        
 
         $this->lateHoursComputation();        
 
@@ -213,7 +211,7 @@ class AttendanceComputationService{
         $status = $this->flxValidations();
         if(!$status){
             return false;
-        }        
+        }
         
         $flexibleHrFrom_dt = new DateTime($this->flexibleHourFrom);
         $flexibleHrTo_dt = new DateTime($this->flexibleHourTo);
@@ -269,6 +267,7 @@ class AttendanceComputationService{
 
     // late hour computation based on flexible hour
     public function flxLateHourComputation(){ 
+
         if(!$this->isShiftHoursSet){
             return false;
         }
@@ -292,14 +291,14 @@ class AttendanceComputationService{
     }
 
     // early hour computation  [ same function for flexible hour and general ]
-    public function earlyHourComputation($clockIn_dt, $clockOut_dt){                
+    public function earlyHourComputation($clockIn_dt, $clockOut_dt){           
         if($this->dayType != 1) {
             return; //if holiday or normal day no need to compute the earl out hours
         }
 
         if(!$this->isShiftHoursSet){
             return false;
-        }         
+        }
 
         $clockIn_dt->modify("+{$this->shiftHours} minutes");
 
@@ -312,22 +311,18 @@ class AttendanceComputationService{
     }
 
     // OT computation  [ same function for flexible hour and general ]
-    public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot){
+    public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot){         
         if($this->dayType != 1) {
             return; //if holiday or normal day no need to compute the earl out hours
         }
-
-        if(!$this->isShiftHoursSet){
-            return false;
-        }
-
+        
         if ($this->clockOut <= $this->offDutyTime) {
             return true;
-        }
+        }        
 
         $currentDate = date('Y-m-d'); 
-        
-        $workingHours_obj = $clockIn_dt_ot->diff($clockOut_dt_ot);
+                 
+        $workingHours_obj = $clockIn_dt_ot->diff($clockOut_dt_ot);        
         $totW = new DateTime($workingHours_obj->format("{$currentDate} %h:%i:%s"));
         $actW = new DateTime($this->shiftHours_obj->format("{$currentDate} %h:%i:%s"));
 
@@ -337,7 +332,7 @@ class AttendanceComputationService{
             $minutes = ($overTime_obj->format('%i') != 0) ? $overTime_obj->format('%i') : 0;
             $this->overTimeHours = $hours * 60 + $minutes;
         } 
-    }    
+    }
 
     // flexible hour validation
     public function flxValidations(){ 
@@ -363,6 +358,7 @@ class AttendanceComputationService{
             Log::error($msg.$this->log_suffix(__LINE__));
             return false;
         }
+        return true;
     }
     
     // Calculation for late Fee
@@ -401,8 +397,8 @@ class AttendanceComputationService{
         } 
     }
 
-    function otherComputation(){ 
-        
+    function otherComputation(){  
+
         if($this->dayType == 3) { 
             $this->overTimeHours = $this->totalWorkingHours;
             $this->weekendData = [
