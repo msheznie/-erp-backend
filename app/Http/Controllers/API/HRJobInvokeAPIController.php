@@ -29,11 +29,11 @@ class HRJobInvokeAPIController extends AppBaseController
         return $this->sendResponse($data, 'clock in pulling job added to queue');
     }
 
-    function test(){
+    function test(Request $request){
         $db_name = 'asaas_gears_erp';
-        $tenantId = 9; 
-        $companyId = 1; 
-        $pullingDate = '2022-01-17'; 
+        $tenantId = $request->input('tenantId'); 
+        $companyId = $request->input('companyId'); 
+        $pullingDate = $request->input('attendanceDate');
         $isClockOutPulling = true;
 
         CommonJobService::db_switch( $db_name );
