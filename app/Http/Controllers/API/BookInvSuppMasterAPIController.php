@@ -855,10 +855,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                 $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->DIAmount);
 
-                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
 
                 $updateItem->save();
 
