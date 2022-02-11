@@ -577,12 +577,15 @@ class DebitNoteAPIController extends AppBaseController
                 }
 
                 $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
-                $companyId = $request->companyId;
+
+                $companyId = $input['companySystemID'];
 
                 $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
                     ->where('companyPolicyCategoryID', 67)
                     ->where('isYesNO', 1)
                     ->first();
+
+
                 if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
                     $input['localAmount'] = $companyCurrencyConversion['localAmount'];
@@ -590,6 +593,7 @@ class DebitNoteAPIController extends AppBaseController
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                 }
+
                 $updateItem->save();
 
                 if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
@@ -613,6 +617,8 @@ class DebitNoteAPIController extends AppBaseController
             $input['debitAmountTrans'] = $amount;
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+
+
 
             if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
@@ -678,12 +684,33 @@ class DebitNoteAPIController extends AppBaseController
                 }
 
                  $taxDetail['amount'] = $vatAmount;
-                 $taxDetail['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
-                 $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                 $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
-                 $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
+
+                $companyId = $input['companySystemID'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+
+                $taxDetail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
+                $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
+
+                if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+                    $taxDetail['localCurrencyER'] = $debitNote->localCurrencyER;
+                    $taxDetail['rptCurrencyER'] = $debitNote->companyReportingER;
+                    $taxDetail['localAmount'] = $debitNote->VATAmountLocal;
+                    $taxDetail['rptAmount'] = $debitNote->VATAmountRpt;
+                }
+
+
+
+
+
                  $taxDetail['currency'] =  $input['supplierTransactionCurrencyID'];
                  $taxDetail['currencyER'] =  1;
+
 
                  $taxDetail['localCurrencyID'] =  $debitNote->localCurrencyID;
                  $taxDetail['rptCurrencyID'] =  $debitNote->companyReportingCurrencyID;
@@ -719,7 +746,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($debitNote->toArray(), 'Debit note updated successfully');
+        return $this->sendResponse($policy, 'Debit note updated successfully');
     }
 
     /**
