@@ -191,13 +191,17 @@ class AttendanceComputationService{
         }
 
         $clockIn_dt_temp = ($this->clockIn >= $this->onDutyTime)
-            ? $this->clockIn_dt
-            : $this->onDuty_dt;
+            ? $this->clockIn_dt->format('H:i:s')
+            : $this->onDuty_dt->format('H:i:s');
+
+        $clockIn_dt_temp2 = $clockIn_dt_temp;
+        $clockIn_dt_temp = new DateTime($clockIn_dt_temp);
+        $clockIn_dt_temp2 = new DateTime($clockIn_dt_temp2);
 
         $clockOut_dt_ot = $this->clockOut_dt;
 
         $this->earlyHourComputation($clockIn_dt_temp, $this->clockOut_dt);
-        $this->overTimeComputation($clockIn_dt_temp, $clockOut_dt_ot);
+        $this->overTimeComputation($clockIn_dt_temp2, $clockOut_dt_ot);
     }
 
     public function basedOnFlexibleHoursComputation(){
@@ -295,23 +299,23 @@ class AttendanceComputationService{
         }
     }
     
+    // Calculation for late Fee
     public function lateFeeComputation(){
-        /**** Calculation for late Fee ****/
-        return false;
-        /* if(empty($this->lateHours)){
+        
+        if(empty($this->lateHours)){
             return false;
         }
 
         $empId = $this->data['emp_id'];
         $attendanceDate = $this->data['att_date'];
 
-        $this->ci->load->helper('actions/attendance/late_fee_computation_helper');
-        $obj = new late_fee_computation_helper($this->lateHours, $empId, $attendanceDate);
+        
+        $obj = new LateFeeComputationService($empId, $attendanceDate, $this->companyId);
         $amountForPerMinute = $obj->compute();
 
         $this->lateFee = ($amountForPerMinute > 0)
             ? $this->lateHours * $amountForPerMinute
-            : 0; */
+            : 0;
     }
 
     function log_suffix($line_no) : string
