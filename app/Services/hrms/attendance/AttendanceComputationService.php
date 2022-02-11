@@ -34,6 +34,7 @@ class AttendanceComputationService{
 
 
     //supporting values
+    public $isFlexibleHourBaseComputation = false;
     public $isShiftHoursSet = false;
     public $isClockInOutSet = false;
     public $shiftHours_obj;
@@ -60,6 +61,7 @@ class AttendanceComputationService{
 
     public function execute(){
         $this->configDayType();
+        $this->confIsFlexibleHourBaseComputation();
         
         if($this->dayType == 1){
             $this->calculateActualWorkingHours();
@@ -77,11 +79,11 @@ class AttendanceComputationService{
             return false;
         }
 
-        $this->clockIn_dt = new DateTime($this->clockIn);
+                
         $this->clockOut_dt = new DateTime($this->clockOut);
         $this->onDuty_dt = new DateTime($this->onDutyTime);
 
-        if($this->isFlexibleHour == 1 && $this->flexibleHourFrom != null ){ 
+        if($this->isFlexibleHourBaseComputation){
             // flexible Hour Attendance 
             $this->basedOnFlexibleHoursComputation();            
         }
@@ -95,43 +97,7 @@ class AttendanceComputationService{
         if($this->dayType == 1){
             $this->lateFeeComputation();
         }
-    }
-
-    function otherComputation(){ 
-        
-        if($this->dayType == 3) { 
-            $this->overTimeHours = $this->totalWorkingHours;
-            $this->weekendData = [
-                'true_false'=> 1, 'hours'=> $this->totalWorkingHours, 'realTime'=> $this->realTime
-            ];
-        }
-
-        if($this->dayType == 2) { 
-            $this->overTimeHours = $this->totalWorkingHours;
-            $this->holidayData = [                
-                'true_false'=> 1, 'hours'=> $this->totalWorkingHours, 'realTime'=> $this->realTime
-            ];
-        }
-
-        if($this->dayType == 1) {         
-            $this->normalDayData = [
-                'true_false'=> 1, 'hours'=> $this->overTimeHours, 'realTime'=> $this->realTime
-            ];
-        }
-        
-
-        if ($this->data['leaveHalfDay'] == 1) {
-            $this->presentAbsentType = 7;
-        }
-        
-        if ($this->clockIn == '00:00:00' || empty($this->clockIn)) {
-            $this->clockIn = null;
-        }
-
-        if ($this->clockOut == '00:00:00' || empty($this->clockOut)) {
-            $this->clockOut = null;
-        }
-    }
+    }    
 
     public function calculateActualWorkingHours(){
         if(empty($this->onDutyTime) || empty($this->offDutyTime)){            
@@ -157,13 +123,20 @@ class AttendanceComputationService{
                 : 5; //on leave
             
             return false;            
-        } 
+        }
 
-        if (!empty($this->clockIn) && empty($this->clockOut)) {
-            $this->presentAbsentType = 1;        
+        $this->presentAbsentType = 1;
+
+        if($this->isFlexibleHourBaseComputation){
+            $this->FlxCalculateActualWorkingHours();
+            return;
+        }
+
+        if (!empty($this->clockIn) && empty($this->clockOut)) {            
             $this->lateHoursComputation();
             return false;            
         } 
+        
 
         $this->isClockInOutSet = true;
 
@@ -184,17 +157,47 @@ class AttendanceComputationService{
             $realtime = $this->shiftHours / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
         }
-    }   
+    }
 
-    public function generalComputation(){
+    public function FlxCalculateActualWorkingHours(){        
+
+        if (!empty($this->clockIn) && empty($this->clockOut)) {              
+            $this->flxLateHourComputation();
+            return false;            
+        } 
+
+        $this->isClockInOutSet = true;
         
-        $this->presentAbsentType = 1; //presented on time
+
+        $t1 = ( $this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut) ) 
+            ? new DateTime($this->offDutyTime)
+            : new DateTime($this->clockOut);
+
+        $t2 = ( $this->isShiftHoursSet && ($this->onDutyTime >= $this->clockIn) ) 
+            ? new DateTime($this->onDutyTime)
+            : new DateTime($this->clockIn);
+         
+        $totWorkingHours_obj = $t1->diff($t2);
+        $hours = $totWorkingHours_obj->format('%h');
+        $minutes = $totWorkingHours_obj->format('%i');
+        $this->totalWorkingHours = ($hours * 60) + $minutes;
+
+        if ($this->totalWorkingHours && $this->shiftHours) {
+            $realtime = $this->shiftHours / $this->totalWorkingHours;
+            $this->realTime = round($realtime, 1);
+        }
+    }
+
+    public function generalComputation(){               
 
         $this->lateHoursComputation();        
 
+        $clockIn_dt = new DateTime($this->clockIn);
+        $onDuty_dt = new DateTime($this->onDutyTime);
+
         $clockIn_dt_temp = ($this->clockIn >= $this->onDutyTime)
-            ? $this->clockIn_dt->format('H:i:s')
-            : $this->onDuty_dt->format('H:i:s');
+            ? $clockIn_dt->format('H:i:s')
+            : $onDuty_dt->format('H:i:s');
 
         $clockIn_dt_temp2 = $clockIn_dt_temp;
         $clockIn_dt_temp = new DateTime($clockIn_dt_temp);
@@ -210,8 +213,7 @@ class AttendanceComputationService{
         $status = $this->flxValidations();
         if(!$status){
             return false;
-        }
-                        
+        }        
         
         $flexibleHrFrom_dt = new DateTime($this->flexibleHourFrom);
         $flexibleHrTo_dt = new DateTime($this->flexibleHourTo);
@@ -220,15 +222,18 @@ class AttendanceComputationService{
             $this->gracePeriod = 0;
         }
 
-        if($this->clockIn_dt->format('H:i:s') < $flexibleHrFrom_dt->format('H:i:s')){
-            $this->clockIn_dt = $flexibleHrFrom_dt;
+        $clockIn_dt = new DateTime( $this->clockIn ); 
+        $clockIn_dt2 = new DateTime( $this->clockIn ); 
+        
+        if($clockIn_dt->format('H:i:s') < $flexibleHrFrom_dt->format('H:i:s')){
+            $clockIn_dt = $flexibleHrFrom_dt;
             $this->clockIn = $this->flexibleHourFrom;
         }
 
-        $this->presentAbsentType = 1; //presented on time 
-        $this->flxLateHourComputation($this->clockIn_dt, $flexibleHrTo_dt);
-        $this->earlyHourComputation($this->clockIn_dt, $this->clockOut_dt);
-        $this->overTimeComputation($this->clockIn_dt, $this->clockOut_dt);
+        
+        $this->flxLateHourComputation();
+        $this->earlyHourComputation($clockIn_dt, $this->clockOut_dt);
+        $this->overTimeComputation($clockIn_dt2, $this->clockOut_dt);
     }
 
     private function getOnDutyTempTime(){
@@ -241,6 +246,10 @@ class AttendanceComputationService{
     function lateHoursComputation(){ //late hour computation
 
         if(!$this->isShiftHoursSet){
+            return false;
+        }
+
+        if($this->dayType != 1){
             return false;
         }
 
@@ -259,11 +268,23 @@ class AttendanceComputationService{
     }
 
     // late hour computation based on flexible hour
-    public function flxLateHourComputation($clockIn_dt, $flexibleHrTo_dt){ 
-        if ($clockIn_dt->format('H:i:s') > $flexibleHrTo_dt->format('H:i:s')) {
+    public function flxLateHourComputation(){ 
+        if(!$this->isShiftHoursSet){
+            return false;
+        }
+
+        if($this->dayType != 1){
+            return false;
+        }
+
+        $clockIn_dt = new DateTime($this->clockIn);
+        $flxHrTo_dt = new DateTime($this->flexibleHourTo);
+        
+
+        if ($clockIn_dt->format('H:i:s') > $flxHrTo_dt->format('H:i:s')) {
             $this->presentAbsentType = 2; //presented but late
 
-            $interval = $clockIn_dt->diff($flexibleHrTo_dt);
+            $interval = $clockIn_dt->diff($flxHrTo_dt);
             $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
             $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
             $this->lateHours = $hours * 60 + $minutes;
@@ -275,6 +296,10 @@ class AttendanceComputationService{
         if($this->dayType != 1) {
             return; //if holiday or normal day no need to compute the earl out hours
         }
+
+        if(!$this->isShiftHoursSet){
+            return false;
+        }         
 
         $clockIn_dt->modify("+{$this->shiftHours} minutes");
 
@@ -290,6 +315,10 @@ class AttendanceComputationService{
     public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot){
         if($this->dayType != 1) {
             return; //if holiday or normal day no need to compute the earl out hours
+        }
+
+        if(!$this->isShiftHoursSet){
+            return false;
         }
 
         if ($this->clockOut <= $this->offDutyTime) {
@@ -318,7 +347,7 @@ class AttendanceComputationService{
             return false;
         }
         
-        $onDuty_dt = new DateTime($this->onDuty);                    
+        $onDuty_dt = new DateTime($this->onDutyTime);                    
         $flexibleHrFrom_dt = new DateTime($this->flexibleHourFrom);
         $flexibleHrTo_dt = new DateTime($this->flexibleHourTo);
 
@@ -363,6 +392,48 @@ class AttendanceComputationService{
             $this->dayType = 3; //weekend
         }else{
             $this->dayType = 1; //normal day
+        }
+    }
+
+    function confIsFlexibleHourBaseComputation(){
+        if($this->isFlexibleHour == 1 && $this->flexibleHourFrom != null ){ 
+           $this->isFlexibleHourBaseComputation = true;           
+        } 
+    }
+
+    function otherComputation(){ 
+        
+        if($this->dayType == 3) { 
+            $this->overTimeHours = $this->totalWorkingHours;
+            $this->weekendData = [
+                'true_false'=> 1, 'hours'=> $this->totalWorkingHours, 'realTime'=> $this->realTime
+            ];
+        }
+
+        if($this->dayType == 2) { 
+            $this->overTimeHours = $this->totalWorkingHours;
+            $this->holidayData = [                
+                'true_false'=> 1, 'hours'=> $this->totalWorkingHours, 'realTime'=> $this->realTime
+            ];
+        }
+
+        if($this->dayType == 1) {         
+            $this->normalDayData = [
+                'true_false'=> 1, 'hours'=> $this->overTimeHours, 'realTime'=> $this->realTime
+            ];
+        }
+        
+
+        if ($this->data['leaveHalfDay'] == 1) {
+            $this->presentAbsentType = 7;
+        }
+        
+        if ($this->clockIn == '00:00:00' || empty($this->clockIn)) {
+            $this->clockIn = null;
+        }
+
+        if ($this->clockOut == '00:00:00' || empty($this->clockOut)) {
+            $this->clockOut = null;
         }
     }
 
