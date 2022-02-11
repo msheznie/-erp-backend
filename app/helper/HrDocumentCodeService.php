@@ -15,11 +15,12 @@ class HrDocumentCodeService
             ->where('documentID', $documentID)->where('companyID', $company_id)->first();
 
         if (empty($data)) {
-            $user_data = self::user_info();
+            $userId = 11; //this service mostly used by Job, where we do not have a user who perform the Job 
+            $userName = 'Admin';
 
             $data_arr = [
                 'documentID' => $documentID, 'prefix' => $documentID, 'companyID' => $company_id, 'companyCode' => $company_code,
-                'createdUserID' => $user_data->empID, 'createdUserName' => $user_data->empName,
+                'createdUserID' => $userId, 'createdUserName' => $userName,
                 'createdPCID' => gethostname(), 'createdDateTime' => Carbon::now(),
                 'startSerialNo' => 1, 'formatLength' => 6,
                 'format_1' => 'prefix', 'format_2' => NULL, 'format_3' => NULL, 'format_4' => NULL, 'format_5' => NULL,
