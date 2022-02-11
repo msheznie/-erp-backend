@@ -29,6 +29,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DebitNoteDetailsRefferedback;
@@ -464,8 +465,16 @@ class DebitNoteAPIController extends AppBaseController
 
         if (isset($input['supplierTransactionCurrencyID'])) {
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -568,12 +577,19 @@ class DebitNoteAPIController extends AppBaseController
                 }
 
                 $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                $companyId = $request->companyId;
 
-                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
                 $updateItem->save();
 
                 if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
@@ -598,11 +614,13 @@ class DebitNoteAPIController extends AppBaseController
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
-            $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['debitAmountRpt']   = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
 
+                $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
+                $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            }
 
             $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $id)
                 ->sum('VATAmount');
@@ -755,6 +773,69 @@ class DebitNoteAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Debit Note deleted successfully');
     }
+
+    public function debitNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+            $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+            $masterINVID = DebitNote::findOrFail($id);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterINVID->VATAmount/$value, 'netAmountLocal'=>$masterINVID->netAmount/$value);
+            $masterINVID->update($masterInvoiceArray);
+
+            foreach($details as $item){
+                $localAmount = $item->debitAmount / $value;
+                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount, 'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value, 'debitAmountLocal' =>$masterINVID->debitAmountTrans/$value);
+                $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+                $updatedLocalER->update($directInvoiceDetailsArray);
+            }
+
+            return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
+    }
+
+    public function debitNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+        $masterINVID = DebitNote::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value, 'debitAmountRpt'=>$masterINVID->debitAmountTrans/$value);
+
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = $item->debitAmount / $value;
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$item->VATAmount / $value, 'netAmountRpt'=>$item->netAmount / $value);
+            $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
 
 
     public function getDebitNoteMasterRecord(Request $request)

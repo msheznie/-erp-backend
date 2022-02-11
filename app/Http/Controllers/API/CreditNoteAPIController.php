@@ -20,6 +20,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CreditNoteDetails;
@@ -392,9 +393,17 @@ class CreditNoteAPIController extends AppBaseController
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
-            if ($companyCurrencyConversion) {
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                if ($companyCurrencyConversion) {
+                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
             }
         }
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
@@ -672,6 +681,83 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote->delete();
 
         return $this->sendResponse($id, 'Credit Note deleted successfully');
+    }
+
+    public function creditNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+            $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
+            $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
+            $creditAmountLocal = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal,  'creditAmountLocal' =>$creditAmountLocal);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $localAmount = \Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountLocal= \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountLocal= \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$itemVATAmountLocal, 'netAmountLocal'=>$itemNetAmountLocal);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function creditNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+        $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
+        $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
+        $creditAmountRpt = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+
+            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$VATAmountRpt,'netAmountRpt'=>$netAmountRpt, 'creditAmountRpt'=>$creditAmountRpt);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = \Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
     }
 
     public function getCreditNoteMasterRecord(Request $request)

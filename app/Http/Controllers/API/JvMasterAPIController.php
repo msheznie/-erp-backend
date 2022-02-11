@@ -677,12 +677,22 @@ class JvMasterAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
+        $isGroupCompany = \Helper::checkIsCompanyGroup($companyId);
+
+        $allSubCompanies = [];
+        if ($isGroupCompany) {
+            $subCompanies = \Helper::getSubCompaniesByGroupCompany($companyId);
+            $allSubCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
+        }
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'isGroupCompany' => $isGroupCompany,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
+            'allSubCompanies' => $allSubCompanies,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments
         );

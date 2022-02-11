@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerInvoiceDirectDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectDetailAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\helper\TaxService;
@@ -572,10 +573,19 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         }
 
         $currencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $input['VATAmount']);
-
-        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+        if($policy == true) {
+            $input['VATAmountLocal'] = \Helper::roundValue($input["VATAmount"] / $master->localCurrencyER);
+            $input['VATAmountRpt'] = \Helper::roundValue($input["VATAmount"] / $master->companyReportingER);
+        }
+        if($policy == false) {
+            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        }
         if (isset($input['by'])) {
             unset($input['by']);
         }

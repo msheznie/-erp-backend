@@ -425,7 +425,9 @@ class CustomerMasterAPIController extends AppBaseController
             }
         }
 
-
+        if($input['custUnbilledAccountSystemID'] == 0){
+            return $this->sendError('Unbilled Receivable Account field is required.');
+        }
    
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -461,11 +463,14 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $commonValidorMessages = [
-            'customerCountry.required' => 'Country field is required.'
+            'customerCountry.required' => 'Country field is required.',
+            'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.'
         ];
 
         $commonValidator = \Validator::make($input, [
             'customerCountry' => 'required',
+            'custUnbilledAccountSystemID' => 'required'
+
         ], $commonValidorMessages);
 
         if ($commonValidator->fails()) {
@@ -474,6 +479,31 @@ class CustomerMasterAPIController extends AppBaseController
 
         if($input['customerCountry']==0 || $input['customerCountry']==''){
             return $this->sendError('Country field is required',500);
+        }
+
+        if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
+            if (!isset($input['companyLinkedToSystemID'])) {
+                return $this->sendError('Linked company is required',500);
+            }
+
+            $checkCustomerForInterCompany = CustomerMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
+                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+                                           ->when(array_key_exists('customerCodeSystem', $input), function($query) use ($input) {
+                                                $query->where('customerCodeSystem', '!=', $input['customerCodeSystem']);
+                                           })
+                                           ->first();
+
+            if ($checkCustomerForInterCompany) {
+                return $this->sendError('Intercompany customer has been already created for this company',500);
+            }
+
+
+            $linkedCompany = Company::find($input['companyLinkedToSystemID']);
+
+            $input['companyLinkedTo'] = ($linkedCompany) ? $linkedCompany->CompanyID : null; 
+        } else {
+            $input['companyLinkedTo'] = null;
+            $input['companyLinkedToSystemID'] = null;
         }
 
 
@@ -559,7 +589,6 @@ class CustomerMasterAPIController extends AppBaseController
             $input['createdUserID'] = $empId;
             $input['isCustomerActive'] = 1;
        
-    
             $customerMasters = $this->customerMasterRepository->create($input);
         }
 
@@ -599,7 +628,6 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
 
-        $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
@@ -2789,5 +2817,29 @@ class CustomerMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
 
+    }
+
+
+    public function getInterCompaniesForCustomerSupplier(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        if (isset($input['primaryCompanySystemID'])) {
+            $allCompanies = Company::where('isGroup', 0)
+                ->where('isActive', 1)
+                ->where('companySystemID', '!=', $input['primaryCompanySystemID'])
+                ->get();
+        } else {
+            $allCompanies = [];
+        }
+
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $input['primaryCompanySystemID'])
+                    ->where('companyPolicyCategoryID', 66)
+                    ->where('isYesNO',1)
+                    ->exists();
+
+
+        return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], 'Record retrieved successfully');
     }
 }

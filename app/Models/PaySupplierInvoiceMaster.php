@@ -639,7 +639,8 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'bankAccountBalance'
+        'bankAccountBalance',
+        'payment_mode'
     ];
 
     /**
@@ -753,6 +754,7 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'bankAccountBalance' => 'float',
+        'payment_mode' => 'integer'
     ];
 
     /**
@@ -767,6 +769,11 @@ class PaySupplierInvoiceMaster extends Model
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function paymentmode()
+    {
+        return $this->belongsTo('App\Models\PaymentType', 'payment_mode', 'id');
     }
 
     public function supplier()

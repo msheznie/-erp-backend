@@ -282,6 +282,19 @@
                             </span>
                         </td>
                     </tr>
+                    <tr>
+                        <td width="100px">
+                            <span class="font-weight-bold">Payment Mode</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if ($masterdata->paymentmode)
+                                <span>{{$masterdata->paymentmode->description}}</span>
+                            @endif
+                        </td>
+                    </tr>
                 </table>
             </td>
         </tr>

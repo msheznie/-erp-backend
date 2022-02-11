@@ -13,11 +13,13 @@ use App\Models\DocumentApproved;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\DocumentMaster;
 use App\Models\GeneralLedger;
+use App\Models\ChartOfAccount;
 use App\Models\SegmentMaster;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
 use App\Models\StockTransferDetails;
+use App\Models\InterCompanyStockTransfer;
 use App\Repositories\AccountsReceivableLedgerRepository;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
@@ -220,15 +222,16 @@ class CreateStockReceive implements ShouldQueue
 
                         $glBS = $cusInvoiceDetails;
                         $glPL = $cusInvoiceDetails;
+                        $glCost = $cusInvoiceDetails;
 
                         $glPL['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 10);
                         $glPL['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 10);
                         $glPL['glCodeDes'] = SystemGlCodeScenarioDetail::getGlDescriptionByScenario($fromCompany->companySystemID, null, 10);
                         $glPL['accountType'] = 'PL';
-                        $glPL['invoiceAmount'] = $revenueTotalRpt;
-                        $glPL['unitCost'] = $revenueTotalRpt;
-                        $glPL['localAmount'] = $revenueTotalLocal;
-                        $glPL['comRptAmount'] = $revenueTotalRpt;
+                        $glPL['invoiceAmount'] = $revenueTotalRpt + $totalRpt;
+                        $glPL['unitCost'] = $revenueTotalRpt + $totalRpt;
+                        $glPL['localAmount'] = $revenueTotalLocal + $totalLocal;
+                        $glPL['comRptAmount'] = $revenueTotalRpt + $totalRpt;
 
                         $glBS['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($fromCompany->companySystemID, null, 1);
                         $glBS['glSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($fromCompany->companySystemID, null, 1);
@@ -245,6 +248,15 @@ class CreateStockReceive implements ShouldQueue
                         Log::info($customerInvoice);
                         Log::info($customerInvoiceDetailPL);
                         Log::info($customerInvoiceDetailBS);
+
+                        $costGoodData = StockTransferDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeitemcategorysubassigned.financeGLcodePLSystemID,financeitemcategorysubassigned.financeGLcodePL,localCurrencyID,reportingCurrencyID")->WHERE('stockTransferAutoID', $stMaster->stockTransferAutoID)
+                                                            ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'erp_stocktransferdetails.itemFinanceCategorySubID')
+                                                            ->where('financeitemcategorysubassigned.companySystemID', $stMaster->companySystemID)
+                                                            ->whereNotNull('financeitemcategorysubassigned.financeGLcodePLSystemID')
+                                                            ->where('financeitemcategorysubassigned.financeGLcodePLSystemID', '>', 0)
+                                                            ->groupBy('financeitemcategorysubassigned.financeGLcodePLSystemID')
+                                                            ->get();
+
 
                         // GL start entry
 
@@ -287,6 +299,7 @@ class CreateStockReceive implements ShouldQueue
                             $glAR = $data;
                             $glBS = $data;
                             $glPL = $data;
+                            $glCostData = $data;
 
                             if ($customerInvoiceDetailBS) {
                                 $glBS['chartOfAccountSystemID'] = $customerInvoiceDetailBS->glSystemID;
@@ -322,6 +335,36 @@ class CreateStockReceive implements ShouldQueue
                                 array_push($finalData, $glPL);
                             }
 
+                            foreach ($costGoodData as $keyCost => $costValue) {
+                                $glCost['glCode'] = $costValue->financeGLcodePL;
+                                $glCost['glSystemID'] = $costValue->financeGLcodePLSystemID;
+                                $glCost['glCodeDes'] = ChartOfAccount::getAccountDescription($costValue->financeGLcodePLSystemID);
+                                $glCost['accountType'] = 'PL';
+                                $glCost['invoiceAmount'] = abs($costValue->rptAmount) * -1;
+                                $glCost['unitCost'] = abs($costValue->rptAmount) * -1;
+                                $glCost['localAmount'] = abs($costValue->localAmount) * -1;
+                                $glCost['comRptAmount'] = abs($costValue->rptAmount) * -1;
+
+                                $customerInvoiceDetailCost = $customerInvoiceDetailRep->create($glCost);
+                                Log::info($customerInvoiceDetailCost);
+
+
+                                $glCostData['chartOfAccountSystemID'] = $costValue->financeGLcodePLSystemID;
+                                $glCostData['glCode'] = $costValue->financeGLcodePL;
+                                $glCostData['glAccountType'] = 'PL';
+                                $glCostData['glAccountTypeID'] = 2;
+                                $glCostData['documentLocalCurrencyID'] = $customerInvoiceDetailCost->localCurrency;
+                                $glCostData['documentLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                                $glCostData['documentLocalAmount'] = ABS($customerInvoiceDetailCost->localAmount);
+                                $glCostData['documentRptCurrencyID'] = $customerInvoiceDetailCost->comRptCurrency;
+                                $glCostData['documentRptCurrencyER'] = 1;
+                                $glCostData['documentRptAmount'] = ABS($customerInvoiceDetailCost->comRptAmount);
+                                $glCostData['documentTransCurrencyID'] = $customerInvoiceDetailCost->invoiceAmountCurrency;
+                                $glCostData['documentTransCurrencyER'] = 1;
+                                $glCostData['documentTransAmount'] = ABS($customerInvoiceDetailCost->invoiceAmount);
+                                array_push($finalData, $glCostData);
+                            }
+
                             if ($customerInvoice) {
                                 $glAR['chartOfAccountSystemID'] = $customer->custGLAccountSystemID;
                                 $glAR['glCode'] = $customer->custGLaccount;
@@ -338,6 +381,7 @@ class CreateStockReceive implements ShouldQueue
                                 $glAR['documentTransAmount'] = ABS($customerInvoice->bookingAmountTrans);
                                 array_push($finalData, $glAR);
                             }
+
                             $generalLedgerInsert = GeneralLedger::insert($finalData);
                         }
                         // GL end
@@ -417,6 +461,9 @@ class CreateStockReceive implements ShouldQueue
                             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
                                 ->where('departmentSystemID', 10)
                                 ->where('isActive', -1)
+                                ->whereHas('finance_year_by', function($query) {
+                                    $query->where('isCurrent', -1);
+                                })
                                 //->where('dateFrom', '<', $stMaster->tranferDate)
                                 //->where('dateTo', '>', $stMaster->tranferDate)
                                 ->where('isCurrent', -1)
@@ -464,10 +511,11 @@ class CreateStockReceive implements ShouldQueue
 
                             $toCompany = Company::where('companySystemID', $stMaster->companyToSystemID)->first();
                             $revenuePercentageForInterCompanyInventoryTransfer = ($toCompany) ? $toCompany->revenuePercentageForInterCompanyInventoryTransfer : 3;
+                            $stockReceiveAutoID = $stockReceive->stockReceiveAutoID;
                             foreach ($stDetails as $new) {
 
                                 $item = array();
-                                $item['stockReceiveAutoID'] = $stockReceive->stockReceiveAutoID;
+                                $item['stockReceiveAutoID'] = $stockReceiveAutoID;
                                 $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
                                 $item['stockTransferAutoID'] = $stMaster->stockTransferAutoID;
                                 $item['stockTransferCode'] = $stMaster->stockTransferCode;
@@ -504,6 +552,19 @@ class CreateStockReceive implements ShouldQueue
 
                             $stMaster->fullyReceived = -1;
                             $stMaster->save();
+
+
+                            $InterCompanyStockTransfer = InterCompanyStockTransfer::where('stockTransferID', $stMaster->stockTransferAutoID)->delete();
+
+                            $interCompanySTData = [
+                                'stockTransferID' => $stMaster->stockTransferAutoID,
+                                'customerInvoiceID' => $customerInvoice->custInvoiceDirectAutoID,
+                                'stockReceiveID' => $stockReceiveAutoID,
+                            ];
+
+                            $resST = InterCompanyStockTransfer::create($interCompanySTData);
+
+
                             Log::info('Successfully created  stock_receive' . date('H:i:s'));
                         }
                     }

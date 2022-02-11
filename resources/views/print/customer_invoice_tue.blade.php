@@ -1,7 +1,8 @@
+
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style type="text/css">
-    <!--
+    
     @page {
         margin: 20px 30px 220px !important;
     }
@@ -166,22 +167,26 @@
             <tr>
                 <td width="30%">
                     @if($request->logoExists)
-                        <img src="{{$request->companyLogo}}"
-                             width="180px" height="60px">
+                          @if($type == 1)
+                            <img src="{{$request->companyLogo}}"
+                                width="180px" height="60px">
+                          @else
+                            image not found
+                          @endif
                     @endif
                 </td>
 
 
-                <td width="50%" style="text-align: center;white-space: nowrap">
+                <td width="40%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
 
                         <h3>
                             <b>TAX INVOICE</b>
+                            <br>
+                            <b> فاتورة ضريبية</b>
                         </h3>
 
-                        <h3>
-                           <b> فاتورة ضريبية</b>
-                        </h3>
+                      
                     </div>
 
                 </td>

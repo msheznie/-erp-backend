@@ -70,6 +70,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\PaymentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -181,6 +182,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $conditions = [
                 'invoiceType' => 'required',
+                'paymentMode' => 'required',
                 'supplierTransCurrencyID' => 'required',
                 'BPVNarration' => 'required',
                 'BPVbank' => 'required',
@@ -344,6 +346,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
+            $input['payment_mode'] = $input['paymentMode'];
+            unset($input['paymentMode']);
+
             $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
 
             DB::commit();
@@ -481,6 +486,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
+            $input['companySystemID'] = $companySystemID;
+
 
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
@@ -557,8 +564,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                 $companyCurrencyConversion = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
                 if ($companyCurrencyConversion) {
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                        ->where('companyPolicyCategoryID', 67)
+                        ->where('isYesNO', 1)
+                        ->first();
+                    $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+                    if($policy == false || $input['invoiceType'] != 3) {
+                        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                        $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    }
                 }
             }
 
@@ -707,6 +722,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     'BPVdate' => 'required|date',
                     'BPVchequeDate' => 'required|date',
                     'invoiceType' => 'required|numeric|min:1',
+                    'paymentMode' => 'required',
                     'BPVbank' => 'required|numeric|min:1',
                     'BPVAccount' => 'required|numeric|min:1',
                     'supplierTransCurrencyID' => 'required|numeric|min:1',
@@ -1302,8 +1318,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     
                 }
             }
-      
-           
+            
+            $input['payment_mode'] = $input['paymentMode'];
+            unset($input['paymentMode']);
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
             Log::info('Cheque No:' . $input['BPVchequeNo']);
@@ -1325,6 +1342,75 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+    public function paymentVoucherLocalUpdate($id,Request $request){
+
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = DirectPaymentDetails::where('directPaymentAutoID',$id)->get();
+
+        $masterINVID = PaySupplierInvoiceMaster::findOrFail($id);
+        $AmountLocal = \Helper::roundValue($masterINVID->payAmountSuppTrans/$value);
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'payAmountCompLocal'=>$AmountLocal);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $localAmount = \Helper::roundValue($item->DPAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount);
+            $updatedLocalER = DirectPaymentDetails::findOrFail($item->directPaymentDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function paymentVoucherReportingUpdate($id,Request $request){
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = DirectPaymentDetails::where('directPaymentAutoID',$id)->get();
+
+        $masterINVID = PaySupplierInvoiceMaster::findOrFail($id);
+            $AmountRpt = \Helper::roundValue($masterINVID->payAmountSuppTrans/$value);
+
+            $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'payAmountCompRpt'=>$AmountRpt);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = \Helper::roundValue($item->DPAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount);
+            $updatedLocalER = DirectPaymentDetails::findOrFail($item->directPaymentDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
 
     public function generatePdcForPv(Request $request)
     {
@@ -1478,7 +1564,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['supplier', 'bankaccount', 'transactioncurrency',
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
@@ -1618,6 +1704,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     ->where('isYesNO', 1)
                                     ->first();
 
+            $paymentMode = PaymentType::all();
+
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -1638,6 +1726,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'companyCurrency' => $companyCurrency,
                 'isPolicyOn' => $policyOn,
                 'deduction_type_drop' => $monthly_declarations_drop,
+                'paymentMode' => $paymentMode,
             );
         }
 
@@ -2212,7 +2301,7 @@ HAVING
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['supplier', 'bankaccount', 'transactioncurrency',
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {

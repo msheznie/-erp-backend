@@ -481,7 +481,8 @@ class QuotationMaster extends Model
         'VATAmountLocal',
         'VATAmountRpt',
         'deliveryTerms',
-        'panaltyTerms'
+        'panaltyTerms',
+        'sent_to_customer'
     ];
 
     /**
@@ -577,7 +578,8 @@ class QuotationMaster extends Model
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
         'deliveryTerms'  => 'string',
-        'panaltyTerms'  => 'string'
+        'panaltyTerms'  => 'string',
+        'sent_to_customer' => 'integer'
     ];
 
     /**

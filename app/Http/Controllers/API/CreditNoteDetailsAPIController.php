@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNoteDetails;
 use App\helper\TaxService;
 use App\Models\CreditNote;
@@ -447,17 +448,44 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input["comRptAmount"] = $currency['reportingAmount'];
         $input["localAmount"] = $currency['localAmount'];
 
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+
+        if($policy == true){
+            $input['localAmount']        = \Helper::roundValue($input['creditAmount'] / $master->localCurrencyER);
+            $input['comRptAmount']        = \Helper::roundValue($input['creditAmount'] / $master->companyReportingER);
+            $input['localCurrencyER' ]    = $master->localCurrencyER;
+            $input['comRptCurrencyER']    = $master->companyReportingER;
+        }
+
         // vat amount
         $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;
         $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
-        $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
-        $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+        if($policy == true) {
+            $input["VATAmountRpt"] = \Helper::roundValue($vatAmount/$master->companyReportingER);
+            $input["VATAmountLocal"] = \Helper::roundValue($vatAmount/$master->localCurrencyER);
+        } if($policy == false) {
+            $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
+            $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+        }
         $input["VATAmount"] = \Helper::roundValue($vatAmount);
         // net amount
         $netAmount = isset($input['netAmount'])?$input['netAmount']:0;
         $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
+
+
+        if($policy == true) {
+            $input["netAmountRpt"] = \Helper::roundValue($netAmount/$master->companyReportingER);
+            $input["netAmountLocal"] = \Helper::roundValue($netAmount/$master->localCurrencyER);
+        }
+        if($policy == false) {
         $input["netAmountRpt"] = $currencyNet['reportingAmount'];
         $input["netAmountLocal"] = $currencyNet['localAmount'];
+        }
 
         if (isset($input['vatMasterCategoryAutoID'])) {
             unset($input['vatMasterCategoryAutoID']);

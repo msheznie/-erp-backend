@@ -586,10 +586,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
+        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+    if($policy == false || $input['documentType'] != 1) {
         if ($companyCurrencyConversion) {
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
+    }
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -851,6 +859,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
                 $updateItem->save();
 
                 if ($updateItem->DIAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
@@ -998,6 +1007,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+//        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+//            ->where('companyPolicyCategoryID', 67)
+//            ->where('isYesNO', 1)
+//            ->first();
+//        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+//
+//        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+//            $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
+//            $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
+//        }
+//        if($BookInvSuppMaster->documentType != 1 || $policy == false){
+//            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+//            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+//        }
+
+
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($id);
@@ -1062,6 +1087,81 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Supplier Invoice Master deleted successfully');
     }
 
+    public function updateLocalER($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
+
+        $masterINVID = BookInvSuppMaster::findOrFail($id);
+            $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterNetAmountLocal = \Helper::roundValue($masterINVID->netAmount / $value);
+            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'netAmountLocal'=>$masterNetAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $localAmount = \Helper::roundValue($item->DIAmount / $value);
+            $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $netAmountLocal = \Helper::roundValue($item->netAmount / $value);
+
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal);
+            $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function updateReportingER($id,Request $request){
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $masterINVID = BookInvSuppMaster::findOrFail($id);
+            $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterNetAmountRpt = \Helper::roundValue($masterINVID->netAmount / $value);
+            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+
+            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'netAmountRpt'=>$masterNetAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
+        $masterINVID->update($masterInvoiceArray);
+
+        $details = DirectInvoiceDetails::where('directInvoiceAutoID',$id)->get();
+
+        foreach($details as $item){
+            $reportingAmount = \Helper::roundValue($item->DIAmount / $value);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
+            $updatedLocalER = DirectInvoiceDetails::findOrFail($item->directInvoiceDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
     public function getInvoiceMasterRecord(Request $request)
     {
         $input = $request->all();
@@ -1094,8 +1194,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $taxMaster = DB::select('SELECT * FROM erp_taxmaster WHERE taxType = 2 AND companySystemID = ' . $companyId . '');
 
-        $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateTime) as year"))
-            ->whereNotNull('createdDateTime')
+        $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateAndTime) as year"))
+            ->whereNotNull('createdDateAndTime')
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();

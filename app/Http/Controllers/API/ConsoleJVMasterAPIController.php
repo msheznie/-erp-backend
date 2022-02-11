@@ -19,8 +19,11 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\ConsoleJVDetail;
 use App\Models\ConsoleJVMaster;
+use App\Models\DocumentApproved;
+use App\Models\EmployeesDepartment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\JvMaster;
 use App\Models\Months;
 use App\Models\SegmentMaster;
@@ -34,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Traits\AuditTrial;
 
 /**
  * Class ConsoleJVMasterController
@@ -404,11 +408,28 @@ class ConsoleJVMasterAPIController extends AppBaseController
                 }
             }
 
-            $input['confirmedYN'] = 1;
-            $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
-            $input['confirmedByEmpID'] = \Helper::getEmployeeID();
-            $input['confirmedByName'] = \Helper::getEmployeeName();
-            $input['confirmedDate'] = NOW();
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $jvDetail->debitAmount
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
         }
 
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -542,7 +563,10 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
-        $company = Company::where('masterCompanySystemIDReorting',$companyId)->get();
+
+        $company = Company::where('masterCompanySystemIDReorting',$companyId)
+                          ->where('isGroup', 0)
+                          ->get();
 
         $segment = SegmentMaster::where('isActive',1)->get();
 
@@ -557,5 +581,284 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
+
+     public function getConsoleJvApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 17)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_consolejvmaster.consoleJvMasterAutoId',
+            'erp_consolejvmaster.consoleJVcode',
+            'erp_consolejvmaster.documentSystemID',
+            'erp_consolejvmaster.consoleJVdate',
+            'erp_consolejvmaster.consoleJVNarration',
+            'erp_consolejvmaster.createdDateTime',
+            'erp_consolejvmaster.confirmedDate',
+            'erp_consolejvmaster.jvType',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 69)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('erp_consolejvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'consoleJvMasterAutoId')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_consolejvmaster.companySystemID', $companyID)
+                ->where('erp_consolejvmaster.approved', 0)
+                ->where('erp_consolejvmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'erp_consolejvmaster.currencyID', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 69)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('consoleJVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('consoleJVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $grvMasters = [];
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getApprovedConsoleJvForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_consolejvmaster.consoleJvMasterAutoId',
+            'erp_consolejvmaster.consoleJVcode',
+            'erp_consolejvmaster.documentSystemID',
+            'erp_consolejvmaster.consoleJVdate',
+            'erp_consolejvmaster.consoleJVNarration',
+            'erp_consolejvmaster.createdDateTime',
+            'erp_consolejvmaster.confirmedDate',
+            'erp_consolejvmaster.jvType',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_consolejvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'consoleJvMasterAutoId')
+                ->where('erp_consolejvmaster.companySystemID', $companyID)
+                ->where('erp_consolejvmaster.approved', -1)
+                ->where('erp_consolejvmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'erp_consolejvmaster.currencyID', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.documentSystemID', 69)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('consoleJVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('consoleJVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function approveConsoleJV(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectConsoleJV(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
+    }
+
+    public function consoleJVReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $consoleJvAutoID = $input['consoleJvAutoID'];
+
+        $jvMasterData = ConsoleJVMaster::find($consoleJvAutoID);
+        $emails = array();
+        if (empty($jvMasterData)) {
+            return $this->sendError('Console JV not found');
+        }
+
+        if ($jvMasterData->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this console journal voucher it is already partially approved');
+        }
+
+        if ($jvMasterData->approved == -1) {
+            return $this->sendError('You cannot reopen this console journal voucher it is already fully approved');
+        }
+
+        if ($jvMasterData->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this console journal voucher, it is not confirmed');
+        }
+
+        // updating fields
+
+        $jvMasterData->confirmedYN = 0;
+        $jvMasterData->confirmedByEmpSystemID = null;
+        $jvMasterData->confirmedByEmpID = null;
+        $jvMasterData->confirmedByName = null;
+        $jvMasterData->confirmedDate = null;
+        $jvMasterData->RollLevForApp_curr = 1;
+        $jvMasterData->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $jvMasterData->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $jvMasterData->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemCode', $jvMasterData->consoleJvMasterAutoId)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $jvMasterData->companySystemID)
+                    ->where('documentSystemID', $jvMasterData->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $consoleJvAutoID)
+            ->where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($jvMasterData->documentSystemID,$consoleJvAutoID,$input['reopenComments'],'Reopened');
+
+        return $this->sendResponse($jvMasterData->toArray(), 'Console JV reopened successfully');
+    }
+
 
 }
