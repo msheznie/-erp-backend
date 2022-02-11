@@ -17,8 +17,10 @@ class HRJobInvokeAPIController extends AppBaseController
         $tenantId = $request->input('tenantId'); 
         $companyId = $request->input('companyId'); 
         $pullingDate = $request->input('attendanceDate');
+        $isClockOutPulling = false;
         
-        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, 1);
+        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
+            //->delay(now()->addSeconds(10));
 
         $data = [
             'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
@@ -29,13 +31,21 @@ class HRJobInvokeAPIController extends AppBaseController
 
     function test(){
         $db_name = 'asaas_gears_erp';
+        $tenantId = 9; 
         $companyId = 1; 
         $pullingDate = '2022-01-17'; 
-        $isClockInPulling = true;
+        $isClockOutPulling = true;
 
         CommonJobService::db_switch( $db_name );
 
-        $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockInPulling);
-        $obj->execute();
+        $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
+        $resp = $obj->execute();
+        
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
+        ];
+
+        return $this->sendResponse($data, 'clock out pulling job added to queue');
+        //dd($resp);
     }
 }
