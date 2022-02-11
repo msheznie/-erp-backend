@@ -20,22 +20,27 @@ class SendEmailForDocument
                 // procument order document
                 $approvalLevel = ApprovalLevel::find($input["approvalLevelID"]);
                 // check final level approval
-                if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) {
+                if ($approvalLevel && ($approvalLevel->noOfLevels == $input["rollLevelOrder"])) {
                     $procument_order_master = ProcumentOrder::find($input['purchaseOrderID']);
-                    if(isset($procument_order_master->companySystemID) && $procument_order_master->logisticsAvailable == -1) {
+                    if($procument_order_master && isset($procument_order_master->companySystemID) && $procument_order_master->logisticsAvailable == -1) {
                         $notificationScenario = NotificationService::getCompanyScenarioConfigurationForCompany(13,$procument_order_master->companySystemID);
-                        if($notificationScenario->isActive) {
+                        if($notificationScenario && $notificationScenario->isActive) {
                             $notification_users = NotificationUser::where('companyScenarionID',$notificationScenario->id)->get();
-                            foreach($notification_users as $notification_user) {
-                                switch($notification_user->applicableCategoryID) {
-                                    case 1 :
-                                          // check notification user id is equal to approved user id
-                                            Log::info('Notified user id is equal to approved user id log'.$notification_user->empID.'approved user'. $procument_order_master->approvedByUserSystemID);
-                                            self::sendEmailToEmployeeCategory($procument_order_master,$notification_user);
-                                    break;
+                            if($notification_users) {
+                                foreach($notification_users as $notification_user) {
+                                    switch($notification_user->applicableCategoryID) {
+                                        case 1 :
+                                            // check notification user id is equal to approved user id
+                                                Log::info('Notified user id is equal to approved user id log'.$notification_user->empID.'approved user'. $procument_order_master->approvedByUserSystemID);
+                                                self::sendEmailToEmployeeCategory($procument_order_master,$notification_user);
+                                        break;
+                                    }
                                 }
+                                return ['success' => true, 'message' => 'Email Send'];
+                            }else {
+                                return ['success' => false, 'message' => 'Notification Users not found'];
                             }
-                            return ['success' => true, 'message' => 'Email Send'];
+             
                         }else {
                             return ['success' => false, 'message' => 'Notification Scenario is not active'];
                         }
