@@ -1591,7 +1591,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1600,6 +1600,43 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        
+        if(empty($input['BPVAccount'])){
+            unset($input['BPVAccount']);
+        }
+        if(empty($input['BPVbank'])){
+            unset($input['BPVbank']);
+        }
+        if(empty($input['approved'])){
+            unset($input['approved']);
+        }
+        if(empty($input['cancelYN'])){
+            unset($input['cancelYN']);
+        }
+        if(empty($input['chequePaymentYN'])){
+            unset($input['chequePaymentYN']);
+        }
+        if(empty($input['chequeSentToTreasury'])){
+            unset($input['chequeSentToTreasury']);
+        }
+        if(empty($input['confirmedYN'])){
+            unset($input['confirmedYN']);
+        }
+        if(empty($input['invoiceType'])){
+            unset($input['invoiceType']);
+        }
+        if(empty($input['month'])){
+            unset($input['month']);
+        }
+        if(empty($input['supplierID'])){
+            unset($input['supplierID']);
+        }
+        if(empty($input['year'])){
+            unset($input['year']);
+        }
+        if(empty($input['payment_mode'])){
+            unset($input['payment_mode']);
+        }
 
         $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search);
 
