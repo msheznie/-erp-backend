@@ -75,24 +75,19 @@
                                 @endif
                                 @if($i != $j)    <td>0</td> @endif
 
-
-
-                                    @if($i == $j)<td>{{ isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0}}</td>@endif
-                                @if($i != $j)    <td>{{ isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0}}</td> @endif
+                                <td>{{ isset($item3[$k][0][0][0]->totalOpening) ?  $item3[$k][0][0][0]->totalOpening: 0}}</td>
 
 
                                     @php
 
-                                        $totalOpening = isset($item3[0][0][$k]->totalOpening) ?  $item3[0][0][$k]->totalOpening: 0;
-                                        $totalCurrent = isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0;
+                                        $totalOpening = isset($item3[$k][0][0][0]->totalOpening) ?  $item3[$k][0][0][0]->totalOpening: 0;
+                                        $totalCurrent = isset($item3[$k][0][1][0]->totalCurrent) ?  $item3[$k][0][1][0]->totalCurrent: 0;
                                     @endphp
-                                    @if($i == $j)<td>{{$totalCurrent -  $totalOpening  }}</td> @endif
-                                @if($i != $j)    <td>{{$totalCurrent -  $totalOpening  }}</td> @endif
+                                   <td>{{$totalCurrent -  $totalOpening  }}</td>
 
 
 
-                                    @if($i == $j)<td>{{ isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0 }}</td>@endif
-                                @if($i != $j)    <td>{{ isset($item3[0][1][$k]->totalCurrent) ?  $item3[0][1][$k]->totalCurrent: 0 }}</td> @endif
+                                    <td>{{ isset($item3[$k][0][1][0]->totalCurrent) ?  $item3[$k][0][1][0]->totalCurrent: 0 }}</td>
 
 
                             @endforeach

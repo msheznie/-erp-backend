@@ -609,30 +609,33 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $warehouseArraySum = array();
                 foreach ($warehouses as $warehouse) {
-                    $totalSumOpening = DB::table('erp_itemledger')
-                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
-                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID',$companySystemID)
-                        ->groupBy('erp_itemledger.itemPrimaryCode')
-                        ->whereIn('erp_itemledger.itemPrimaryCode', $warehouseArrayItems)
-                        ->where('erp_itemledger.transactionDate', '<', $fromDate)
-                        ->where('itemmaster.financeCategoryMaster', 1)
-                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
-                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
-                        ->get();
+                    $itemArraySum = array();
+                    foreach ($warehouseArrayItems as $item) {
+                        $totalSumOpening = DB::table('erp_itemledger')
+                            ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID', $companySystemID)
+                            ->groupBy('erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.itemPrimaryCode', $item)
+                            ->where('erp_itemledger.transactionDate', '<', $fromDate)
+                            ->where('itemmaster.financeCategoryMaster', 1)
+                            ->selectRaw('erp_itemledger.itemPrimaryCode,sum(erp_itemledger.inOutQty) as totalOpening')
+                            ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+                            ->get();
 
-                    $totalSumCurrent = DB::table('erp_itemledger')
-                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
-                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID',$companySystemID)
-                        ->groupBy('erp_itemledger.itemPrimaryCode')
-                        ->whereIn('erp_itemledger.itemPrimaryCode', $warehouseArrayItems)
-                        ->where('erp_itemledger.transactionDate', '<=', $toDate)
-                        ->where('itemmaster.financeCategoryMaster', 1)
-                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
-                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
-                        ->get();
-                            $totalQty = array([$totalSumOpening,$totalSumCurrent]);
-                    array_push($warehouseArraySum,$totalQty);
-
+                        $totalSumCurrent = DB::table('erp_itemledger')
+                            ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID', $companySystemID)
+                            ->groupBy('erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.itemPrimaryCode', $item)
+                            ->where('erp_itemledger.transactionDate', '<=', $toDate)
+                            ->where('itemmaster.financeCategoryMaster', 1)
+                            ->selectRaw('erp_itemledger.itemPrimaryCode,sum(erp_itemledger.inOutQty) as totalCurrent')
+                            ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+                            ->get();
+                        $totalQty = array([$totalSumOpening, $totalSumCurrent]);
+                        array_push($itemArraySum, $totalQty);
+                    }
+                    array_push($warehouseArraySum, $itemArraySum);
                 }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
@@ -1257,32 +1260,33 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $warehouseArraySum = array();
                 foreach ($warehouses as $warehouse) {
-                    $totalSumOpening = DB::table('erp_itemledger')
-                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
-                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID',$companySystemID)
-                        ->groupBy('erp_itemledger.itemPrimaryCode')
-                        ->whereIn('erp_itemledger.itemPrimaryCode', $warehouseArrayItems)
-                        ->where('erp_itemledger.transactionDate', '<', $fromDate)
-                        ->where('itemmaster.financeCategoryMaster', 1)
-                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalOpening')
-                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+                    $itemArraySum = array();
+                    foreach ($warehouseArrayItems as $item) {
+                        $totalSumOpening = DB::table('erp_itemledger')
+                            ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID', $companySystemID)
+                            ->groupBy('erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.itemPrimaryCode', $item)
+                            ->where('erp_itemledger.transactionDate', '<', $fromDate)
+                            ->where('itemmaster.financeCategoryMaster', 1)
+                            ->selectRaw('erp_itemledger.itemPrimaryCode,sum(erp_itemledger.inOutQty) as totalOpening')
+                            ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+                            ->get();
 
-                        ->get();
-
-                    $totalSumCurrent = DB::table('erp_itemledger')
-                        ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
-                        ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID',$companySystemID)
-                        ->groupBy('erp_itemledger.itemPrimaryCode')
-                        ->whereIn('erp_itemledger.itemPrimaryCode', $warehouseArrayItems)
-                        ->where('erp_itemledger.transactionDate', '<=', $toDate)
-                        ->where('itemmaster.financeCategoryMaster', 1)
-                        ->selectRaw('sum(erp_itemledger.inOutQty) as totalCurrent')
-                        ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
-
-                        ->get();
-                    $totalQty = array([$totalSumOpening,$totalSumCurrent]);
-                    array_push($warehouseArraySum,$totalQty);
-
+                        $totalSumCurrent = DB::table('erp_itemledger')
+                            ->join('itemmaster', 'itemmaster.primaryCode', '=', 'erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.wareHouseSystemCode', $warehouse)->where('erp_itemledger.companySystemID', $companySystemID)
+                            ->groupBy('erp_itemledger.itemPrimaryCode')
+                            ->where('erp_itemledger.itemPrimaryCode', $item)
+                            ->where('erp_itemledger.transactionDate', '<=', $toDate)
+                            ->where('itemmaster.financeCategoryMaster', 1)
+                            ->selectRaw('erp_itemledger.itemPrimaryCode,sum(erp_itemledger.inOutQty) as totalCurrent')
+                            ->orderBy('erp_itemledger.itemPrimaryCode', 'ASC')
+                            ->get();
+                        $totalQty = array([$totalSumOpening, $totalSumCurrent]);
+                        array_push($itemArraySum, $totalQty);
+                    }
+                    array_push($warehouseArraySum, $itemArraySum);
                 }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
