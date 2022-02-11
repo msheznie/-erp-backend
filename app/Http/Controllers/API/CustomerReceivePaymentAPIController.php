@@ -1412,7 +1412,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
             $localAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
 
-            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal, 'localAmount'=>$receivedAmount);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal, 'localAmount'=>$localAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){

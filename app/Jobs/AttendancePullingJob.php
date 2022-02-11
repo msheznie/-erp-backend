@@ -24,14 +24,14 @@ class AttendancePullingJob implements ShouldQueue
     public $tenantId;
     public $companyId;
     public $pullingDate;
-    public $isClockInPulling;
+    public $isClockOutPulling;
 
-    public function __construct($tenantId, $companyId, $pullingDate, $isClockInPulling)
+    public function __construct($tenantId, $companyId, $pullingDate, $isClockOutPulling)
     {
         $this->tenantId = $tenantId;
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
-        $this->isClockInPulling = $isClockInPulling;
+        $this->isClockOutPulling = $isClockOutPulling;
     }
 
     /**
@@ -45,13 +45,15 @@ class AttendancePullingJob implements ShouldQueue
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $db_name = CommonJobService::get_tenant_db($this->tenantId);
+        
         if(empty($db_name)){
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-        }else{
+        }
+        else{
 
             CommonJobService::db_switch( $db_name );
             
-            $obj = new AttendanceDataPullingService($this->companyId, $this->pullingDate, $this->isClockInPulling);
+            $obj = new AttendanceDataPullingService($this->companyId, $this->pullingDate, $this->isClockOutPulling);
             $obj->execute();
         }
     }
