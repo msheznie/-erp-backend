@@ -4,8 +4,9 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use App\helper\CommonJobService;
-use App\Http\Controllers\AppBaseController;
 use App\Jobs\AttendancePullingJob;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\AppBaseController;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 
 class HRJobInvokeAPIController extends AppBaseController
@@ -30,13 +31,22 @@ class HRJobInvokeAPIController extends AppBaseController
     }
 
     function test(Request $request){
-        $db_name = 'asaas_gears_erp';
+        
         $tenantId = $request->input('tenantId'); 
         $companyId = $request->input('companyId'); 
         $pullingDate = $request->input('attendanceDate');
         $isClockOutPulling = true;
 
-        CommonJobService::db_switch( $db_name );
+        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
+
+        $dbName = CommonJobService::get_tenant_db($tenantId);
+        
+        if(empty($dbName)){
+            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            return $this->sendError('db details not found.');
+        }
+
+        CommonJobService::db_switch( $dbName );
 
         $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
         $resp = $obj->execute();
