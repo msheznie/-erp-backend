@@ -435,7 +435,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
 
-        $input['payment_type_id'] = $input['paymentType'];
+        $input['payment_type_id'] = isset($input['paymentType'][0]) ?  $input['paymentType'][0]: $input['paymentType'];
 
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
