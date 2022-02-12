@@ -45,10 +45,10 @@ class AttendanceDataPullingService{
             
             if(!$this->is_all_data_pulled()){ return false; }
 
-            if(!$this->step1()){ return false; }
+            $this->step1();
         
             if($this->isClockOutPulling){
-                if(!$this->step2()){ return false; }
+                $this->step2();
             }
             
             if(!$this->step3()){ return false; }
@@ -186,8 +186,9 @@ class AttendanceDataPullingService{
             WHERE att.company_id = {$this->companyId} AND att.att_date = '{$this->pullingDate}' AND att.emp_id = e.EIdNo
         )";
 
-        $this->tempData = DB::select($q);
-
+        
+        $temp = DB::select($q);
+         
         if(empty($temp)){
             return true;
         } 
@@ -196,14 +197,14 @@ class AttendanceDataPullingService{
         foreach ($temp as $row) {
             $thisData = [];
 
-            $thisData['emp_id'] = $row['EIdNo'];          
+            $thisData['emp_id'] = $row->EIdNo;          
             $thisData['att_date'] = $this->pullingDate; 
             $thisData['company_id'] = $this->companyId;
             $thisData['uniqueID'] = $this->uniqueKey;
 
             $data[] = $thisData;
         }
-
+        
         unset($temp);
         DB::table('attendance_temporary_tbl')->insert($data);
     }
@@ -218,8 +219,11 @@ class AttendanceDataPullingService{
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
             FROM srp_employeesdetails WHERE Erp_companyID = {$this->companyId}
-        ) AS e ON e.EIdNo = t.emp_id 
-        LEFT JOIN srp_erp_pay_shiftemployees AS she ON she.empID = t.emp_id AND she.companyID = {$this->companyId}
+        ) AS e ON e.EIdNo = t.emp_id        
+        LEFT JOIN (
+        	SELECT * FROM srp_erp_pay_shiftemployees
+        	WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate )
+        ) AS she ON she.empID = e.EIdNo
         LEFT JOIN (
             SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
             sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo 
@@ -236,15 +240,14 @@ class AttendanceDataPullingService{
             AND fulldate = '{$this->pullingDate}'
         ) AS calenders ON fulldate = t.att_date
         WHERE t.company_id = {$this->companyId} AND uniqueID = '{$this->uniqueKey}'";
-        //echo '<pre>'; print_r($q); echo '</pre><br/><br/>'; 
+        
         $this->attData = DB::select($q);
 
         if(empty($this->attData)){
             Log::error('No records found for pulling step-3'.$this->log_suffix(__LINE__));
             return false;
         }
-    
-        Log::info(' step-3 passed '.$this->log_suffix(__LINE__));
+            
         return true;
     }
 
@@ -267,7 +270,7 @@ class AttendanceDataPullingService{
                 'attendanceDate'=> $attDate, 'floorID'=> $row['location_in'], 'clockoutFloorID'=> $row['location_out'], 
                 'gracePeriod'=> $obj->gracePeriod, 'onDuty'=> $row['onDutyTime'], 'offDuty'=> $row['offDutyTime'],                
 
-                'checkIn'=> $obj->clockIn, 'checkOut'=> $obj->clockOut, 'presentTypeID'=> $obj->presentAbsentType,
+                'checkIn'=> $row['clock_in'], 'checkOut'=> $row['clock_out'], 'presentTypeID'=> $obj->presentAbsentType,
 
                 'normalTime'=> ($row['isHalfDay'] == 1)? 0.5: 1,
                 'lateHours'=> $obj->lateHours, 'lateFee'=> $obj->lateFee, 'earlyHours'=> $obj->earlyHours,   
@@ -287,7 +290,9 @@ class AttendanceDataPullingService{
                 'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
                 'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
                 'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
-            ];                    
+            ];  
+            
+            $obj = null;
         }
 
         Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
