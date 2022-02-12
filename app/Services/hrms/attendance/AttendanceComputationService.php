@@ -267,12 +267,11 @@ class AttendanceComputationService{
 
     // late hour computation based on flexible hour
     public function flxLateHourComputation(){ 
-
-        if(!$this->isShiftHoursSet){
+        if($this->dayType != 1){
             return false;
         }
 
-        if($this->dayType != 1){
+        if(!$this->isShiftHoursSet){
             return false;
         }
 
@@ -314,6 +313,10 @@ class AttendanceComputationService{
     public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot){         
         if($this->dayType != 1) {
             return; //if holiday or normal day no need to compute the earl out hours
+        }
+
+        if(!$this->isShiftHoursSet) {
+            return; //if shift hours not defined
         }
         
         if ($this->clockOut <= $this->offDutyTime) {
