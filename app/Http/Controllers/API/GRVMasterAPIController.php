@@ -627,6 +627,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->get();
 
             if ($fetchAllGrvDetails) {
+                $accountValidationArray = [];
                 foreach ($fetchAllGrvDetails as $row) {
                     $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
 
@@ -660,6 +661,51 @@ class GRVMasterAPIController extends AppBaseController
                             return $this->sendError('BS account is not assigned to the company', 500);
                         }
                     }
+
+
+                    if (is_null($row->itemFinanceCategoryID)) {
+                        $accountValidationArray[] = "Finance category of " . $row->itemPrimaryCode . " not found";
+                    } else {
+                        switch ($row->itemFinanceCategoryID) {
+                            case 1:
+                                if (is_null($row->financeGLcodebBSSystemID) || is_null($row->financeGLcodePLSystemID) || $row->financeGLcodebBSSystemID == 0 || $row->financeGLcodePLSystemID == 0) {
+
+                                    $accountValidationArray[1][] = $row->itemPrimaryCode;
+                                }
+                                break;
+                            case 2:
+                            case 3:
+                            case 4:
+                                if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && (is_null($row->financeGLcodePLSystemID) || $row->financeGLcodePLSystemID == 0)) {
+                                    $accountValidationArray[1][] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item " . $row->itemPrimaryCode;
+                                }
+
+                                if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && !is_null($row->financeGLcodePLSystemID) && $row->financeGLcodePLSystemID != 0 && $row->includePLForGRVYN != -1) {
+                                    $accountValidationArray[2][] = $row->itemPrimaryCode;
+                                }
+                                break;
+
+                            default:
+                                # code...
+                                break;
+                        }
+                    }
+
+                }
+                
+
+                if (!empty($accountValidationArray)) {
+                    $accountValidationErrrArray = [];
+                    if (isset($accountValidationArray[1])) {
+                        $itemsA = implode(", ", $accountValidationArray[1]);
+                        $accountValidationErrrArray[] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item(s) " . $itemsA;
+                    }
+
+                    if (isset($accountValidationArray[2])) {
+                        $itemsB = implode(", ", $accountValidationArray[2]);
+                        $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                    }
+                    return $this->sendError($accountValidationErrrArray, 420);
                 }
             }
 
