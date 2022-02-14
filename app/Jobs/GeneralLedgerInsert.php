@@ -3776,13 +3776,13 @@ class GeneralLedgerInsert implements ShouldQueue
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
+                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodebBSSystemID')
                             ->get();
 
                         //all acoount
-                        $COSGAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
+                        $COSGAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodePLSystemID')
                             ->get();
@@ -3871,13 +3871,14 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($allAc) {
                                 foreach ($allAc as $val) {
+                                    $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($currencyConversionInv['documentAmount']));
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
@@ -3891,13 +3892,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                              if ($COSGAc) {
                                 foreach ($COSGAc as $val) {
+                                    $currencyConversionCog = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
+
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
                                     $data['glAccountTypeID'] = 2;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($val->transAmount))) * -1;
+                                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($currencyConversionCog['documentAmount']))) * -1;
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = (\Helper::roundValue(ABS($val->localAmount))) * -1;
