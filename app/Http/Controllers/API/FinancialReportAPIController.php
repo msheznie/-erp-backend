@@ -2899,7 +2899,7 @@ class FinancialReportAPIController extends AppBaseController
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                        ( erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
