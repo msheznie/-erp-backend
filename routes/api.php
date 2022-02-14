@@ -939,6 +939,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
         Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+        Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency');
+
         Route::resource('performa_details', 'PerformaDetailsAPIController');
 
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
