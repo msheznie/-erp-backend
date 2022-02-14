@@ -6,10 +6,11 @@ use App\Models\HREmpContractHistory;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
+use App\Models\SrpErpPayShiftEmployees;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class ShiftPeriodEndtNotificationService
+class ShiftPeriodEndNotificationService
 {
     private $company;
     private $comScenarioID;
@@ -34,33 +35,15 @@ class ShiftPeriodEndtNotificationService
     public function ended_shift(){
         $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
 
-        $data = HREmpContractHistory::selectRaw('empID, contactTypeID, contractEndDate, contractRefNo')
-            ->where('companyID', $this->company)
-            ->whereDate('contractEndDate', $this->expiry_date)
-            ->where('isCurrent', 1);
-
-        $data = $data->whereHas('contract_type', function ($q){
-            $q->where('typeID', 2)
-                ->where('Erp_CompanyID', $this->company);
-        });
-
-        $data = $data->with(['contract_type'=> function ($q){
-            $q->selectRaw('EmpContractTypeID, Description')
-                ->where('typeID', 2)
-                ->where('Erp_CompanyID', $this->company);
-        }]);
-
-        $data = $data->whereHas('employee', function($q){
-            $q->where('isDischarged', 0);
-        });
+        $data = SrpErpPayShiftEmployees::where('companyID', $this->company);
         $data = $data->with(['employee'=> function($q){
-            $q->selectRaw('EIdNo,ECode,Ename2,EEmail')
-                ->where('isDischarged', 0);
+            $q->where('isDischarged', 0);
         }]);
-
+        $data = $data->with('shift_master');
         $data = $data->get();
 
         if(count($data) == 0){
+            return'no shift period';
             $log = "Employee shift period does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ ." \tline no :".__LINE__;
 

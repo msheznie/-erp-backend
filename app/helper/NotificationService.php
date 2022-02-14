@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\NotificationCompanyScenario;
 use App\Models\NotificationScenarios;
 use App\Models\NotificationUserDayCheck;
+// use App\helper\ShiftPeriodEndtNotificationService;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -33,7 +34,8 @@ class NotificationService
         return [
             6, //HR document expiry
             7, //HR - Employee contract expiry
-            8 //HR - Employee end of probation
+            8, //HR - Employee end of probation
+            14 //HR - Employee end of shift period
         ];
     }
 
@@ -121,8 +123,8 @@ class NotificationService
                         break;
 
                     case 14:
-                        $contract = new ShiftPeriodEndtNotificationService($companyID, $notDaySetup);
-                        $contract->ended_shift();
+                        $shift = new ShiftPeriodEndNotificationService($companyID, $notDaySetup);
+                        return$shift->ended_shift();
                         $details = [];
                         break;
 

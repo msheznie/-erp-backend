@@ -2648,3 +2648,8 @@ Route::get('runCronJob/{cron}', function ($cron) {
 });
 
 
+
+
+Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
+
+Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
