@@ -9,8 +9,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\StockTransfer;
 use App\Models\StockTransferDetails;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\InterCompanyStockTransfer;
 use App\Models\Company;
+use App\Models\DirectPaymentDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ConsoleJVMaster;
@@ -49,9 +52,11 @@ class CreateConsoleJV implements ShouldQueue
         try {
             switch ($this->consoleJVData['type']) {
                 case "STOCK_TRANSFER":
-                    $this->createConsoleJV($this->consoleJVData['data']);
+                    $this->createConsoleJVForStockTransfer($this->consoleJVData['data']);
                     break;
-                
+                case "FUND_TRANSFER":
+                    $this->createConsoleJVForFundTransfer($this->consoleJVData['data']);
+                    break;
                 default:
                     // code...
                     break;
@@ -72,7 +77,7 @@ class CreateConsoleJV implements ShouldQueue
     }
 
 
-    public function createConsoleJV($data)
+    public function createConsoleJVForStockTransfer($data)
     {
         $stMaster = StockTransfer::where('stockTransferAutoID', $data->stockTransferID)->first();
         $stDetails = StockTransferDetails::where("stockTransferAutoID", $data->stockTransferID)->get();
@@ -223,5 +228,133 @@ class CreateConsoleJV implements ShouldQueue
         }
 
         Log::info('Successfully end  console jv' . date('H:i:s'));
+    }
+
+
+    public function createConsoleJVForFundTransfer($receiptVoucherData)
+    {
+
+        $paymentVoucher = PaySupplierInvoiceMaster::find($receiptVoucherData->intercompanyPaymentID);
+
+        if ($paymentVoucher) {
+            $comment = "Inter Company fund Transfer from " . $paymentVoucher->companyID . " to " . $receiptVoucherData->companyID . " " . $paymentVoucher->BPVcode;
+            $fromCompany = Company::where('companySystemID', $paymentVoucher->companySystemID)->first();
+
+            $groupCompany = Company::find($fromCompany->masterCompanySystemIDReorting);
+
+            $consoleJVMasterData = [
+                'companySystemID' => $fromCompany->masterCompanySystemIDReorting,
+                'companyID' => ($groupCompany) ? $groupCompany->CompanyID : null,
+                'documentSystemID' => 69,
+                'consoleJVdate' => Carbon::now(),
+                'consoleJVNarration' => $comment,
+                'jvType' => 1,
+                'currencyID' => $paymentVoucher->supplierTransCurrencyID,
+                'currencyER' => 1
+            ];
+
+            $documentMaster = DocumentMaster::find($consoleJVMasterData['documentSystemID']);
+            if ($documentMaster) {
+                $consoleJVMasterData['documentID'] = $documentMaster->documentID;
+            }
+
+            $lastSerial = ConsoleJVMaster::orderBy('serialNo', 'desc')->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            if ($documentMaster) {
+                $documentCode = ($groupCompany->CompanyID . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $consoleJVMasterData['consoleJVcode'] = $documentCode;
+            }
+            $consoleJVMasterData['serialNo'] = $lastSerialNumber;
+
+            $companyCurrency = \Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
+            if ($companyCurrency) {
+                $consoleJVMasterData['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                $consoleJVMasterData['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                $companyCurrencyConversion = \Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
+                if ($companyCurrencyConversion) {
+                    $consoleJVMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $consoleJVMasterData['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
+            }
+
+            $consoleJVMasterData['createdUserID'] = \Helper::getEmployeeID();
+            $consoleJVMasterData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $consoleJVMasterData['createdPcID'] = gethostname();
+
+            $jvMaster = ConsoleJVMaster::create($consoleJVMasterData);
+
+
+            $finalJvDetailData = [];
+            $consoleJVDetailData = [
+                'consoleJvMasterAutoId' => $jvMaster->consoleJvMasterAutoId,
+                'currencyID' => $jvMaster->currencyID,
+                'currencyER' => $jvMaster->currencyER,
+                'debitAmount' => 0,
+                'creditAmount' => 0,
+                'localDebitAmount' => 0,
+                'rptDebitAmount' => 0,
+                'localCreditAmount' => 0,
+                'rptCreditAmount' => 0,
+                'createdUserSystemID' => \Helper::getEmployeeSystemID(),
+                'createdUserID' => \Helper::getEmployeeID(),
+                'createdPcID' => gethostname()
+            ];
+
+
+            $paymentVoucherDetail = DirectPaymentDetails::where('directPaymentAutoID', $paymentVoucher->PayMasterAutoId)->first();
+
+            if ($paymentVoucherDetail) {
+                $consoleJVDetailData['companySystemID'] = $paymentVoucher->companySystemID;
+                $consoleJVDetailData['companyID'] = $paymentVoucher->companyID;
+                $consoleJVDetailData['serviceLineSystemID'] = $paymentVoucherDetail->serviceLineSystemID;
+                $consoleJVDetailData['serviceLineCode'] = $paymentVoucherDetail->serviceLineCode;
+                $consoleJVDetailData['glAccountSystemID'] = $paymentVoucherDetail->chartOfAccountSystemID;
+                $consoleJVDetailData['glAccount'] = $paymentVoucherDetail->glCode;
+                $consoleJVDetailData['glAccountDescription'] = $paymentVoucherDetail->glCodeDes;
+
+                $consoleJVDetailData['debitAmount'] = $paymentVoucherDetail->DPAmount;
+                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
+                $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+
+                array_push($finalJvDetailData, $consoleJVDetailData);
+            }
+
+             $receiptVocherDetail = DirectReceiptDetail::where('directReceiptAutoID', $receiptVoucherData->custReceivePaymentAutoID)->first();
+
+            if ($receiptVocherDetail) {
+                $consoleJVDetailData['companySystemID'] = $receiptVoucherData->companySystemID;
+                $consoleJVDetailData['companyID'] = $receiptVoucherData->companyID;
+                $consoleJVDetailData['serviceLineSystemID'] = $receiptVocherDetail->serviceLineSystemID;
+                $consoleJVDetailData['serviceLineCode'] = $receiptVocherDetail->serviceLineCode;
+                $consoleJVDetailData['glAccountSystemID'] = $receiptVocherDetail->chartOfAccountSystemID;
+                $consoleJVDetailData['glAccount'] = $receiptVocherDetail->glCode;
+                $consoleJVDetailData['glAccountDescription'] = $receiptVocherDetail->glCodeDes;
+
+                $consoleJVDetailData['debitAmount'] = 0;
+                $consoleJVDetailData["localDebitAmount"] = 0;
+                $consoleJVDetailData["rptDebitAmount"] = 0;
+                $consoleJVDetailData['creditAmount'] = $receiptVocherDetail->DRAmount;
+                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
+                $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+
+                array_push($finalJvDetailData, $consoleJVDetailData);
+            }
+
+            if (count($finalJvDetailData) > 0) {
+                foreach ($finalJvDetailData as $cData) {
+                    ConsoleJVDetail::create($cData);
+                }   
+            }
+
+            Log::info('Successfully end  console jv' . date('H:i:s'));
+        }
+
     }
 }
