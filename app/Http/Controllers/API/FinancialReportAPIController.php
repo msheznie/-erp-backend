@@ -2899,7 +2899,7 @@ class FinancialReportAPIController extends AppBaseController
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                        ( erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
@@ -4866,6 +4866,7 @@ GROUP BY
         $unmatchedData = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
             ->where('companySystemID', $input['companySystemID'])
             ->whereDate('documentDate', '<=', $toDate)
+            ->whereHas('charofaccount')
             ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
             ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
             ->get();
