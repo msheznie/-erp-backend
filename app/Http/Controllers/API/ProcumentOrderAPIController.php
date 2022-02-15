@@ -149,6 +149,7 @@ use App\Jobs\AddMultipleItems;
 use App\helper\CancelDocument;
 use App\Jobs\GeneralLedgerInsert;
 use App\Models\GeneralLedger;
+use App\helper\CreateExcel;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -5433,17 +5434,43 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $data = array();
         }
 
-        \Excel::create('po_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        // \Excel::create('po_master', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), 'successfully export');
+
+        $doc_name = 'purchase_order';
+        $doc_name_path = 'purchase_order/';
+        if($input['documentId'] == 52)
+        {
+            $doc_name = 'purchase_direct_order';
+            $doc_name_path = 'purchase_direct_order/';
+        }   
+        else if($input['documentId'] == 5)
+        {
+            $doc_name = 'purchase_work_order';
+            $doc_name_path = 'purchase_work_order/';
+        }    
+      
+        
+        $path = 'procurement/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
 
@@ -5796,17 +5823,31 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-        \Excel::create('po_to_payment', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        
+        $doc_name = 'po_to_payment';
+        $doc_name_path = 'po_to_payment/';
+        $path = 'procurement/report/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
 
-        return $this->sendResponse(array(), 'successfully export');
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+        // \Excel::create('po_to_payment', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
+
+        // return $this->sendResponse(array(), 'successfully export');
     }
 
     public function reportPoToPaymentFilterOptions(Request $request)
