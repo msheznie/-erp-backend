@@ -1342,6 +1342,923 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($input, 'Receipt Voucher updated successfully');
     }
 
+
+    public function updateCurrency($id, UpdateCustomerReceivePaymentAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
+
+        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
+
+        $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
+
+
+        if (empty($customerReceivePayment)) {
+            return $this->sendError('Receipt Voucher not found');
+        }
+
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
+
+        $input['payment_type_id'] = isset($input['paymentType'][0]) ?  $input['paymentType'][0]: $input['paymentType'];
+
+        $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
+
+        $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
+
+        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+            $input['custChequeNo'] = null;
+        }
+
+        $customValidation = CustomValidation::validation($customerReceivePayment->documentSystemID, $customerReceivePayment, 2, $input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 4;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        $documentDate = $input['custPaymentReceiveDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the financial period!', 500);
+        }
+
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'custPaymentReceiveDate' => 'required',
+            'custTransactionCurrencyID' => 'required|numeric|min:1',
+            'narration' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+        if ($company) {
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyRptCurrencyID'] = $company->reportingCurrency;
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
+
+        if ($input['documentType'] == 13 || $input['documentType'] == 15) {
+            /*customer reciept*/
+            $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
+
+            if ($input['customerID'] != $customerReceivePayment->customerID) {
+
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                }
+
+                /*if customer change*/
+                $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                if (empty($customer)) {
+                    return $this->sendError('Customer not found.', 500);
+                }
+                $input['customerGLCode'] = $customer->custGLaccount;
+                $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
+                $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+                if ($currency) {
+                    $input['custTransactionCurrencyID'] = $currency->currencyID;
+                    $myCurr = $currency->currencyID;
+
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['custTransactionCurrencyER'] = 1;
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['bankID'] = null;
+                    $input['bankAccount'] = null;
+                    $input['bankCurrencyER'] = 0;
+                    $bank = BankAssign::select('bankmasterAutoID')
+                        ->where('companySystemID', $customerReceivePayment->companySystemID)
+                        ->where('isDefault', -1)
+                        ->first();
+                    if ($bank) {
+                        $input['bankID'] = $bank->bankmasterAutoID;
+                        $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                            ->where('isDefault', 1)
+                            ->where('isAccountActive', 1)
+                            ->where('approvedYN', 1)
+                            ->where('accountCurrencyID', $myCurr)
+                            ->first();
+                        if ($bankAccount) {
+                            $input['bankAccount'] = $bankAccount->bankAccountAutoID;
+                            $input['bankCurrency'] = $myCurr;
+                            $input['bankCurrencyER'] = 1;
+                        }
+                    }
+                }
+            }
+
+
+            if ($input['bankAccount'] != $customerReceivePayment->bankAccount) {
+
+                $bankAccount = BankAccount::find($input['bankAccount']);
+                if ($bankAccount) {
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMaster) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    }
+                }
+            }
+
+            if ($input['custTransactionCurrencyID'] != $customerReceivePayment->custTransactionCurrencyID) {
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                } else {
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['custTransactionCurrencyER'] = 1;
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['bankID'] = null;
+                    $input['bankAccount'] = null;
+                    $input['bankCurrency'] = null;
+                    $input['bankCurrencyER'] = 0;
+
+
+                    $bank = BankAssign::select('bankmasterAutoID')
+                        ->where('companySystemID', $customerReceivePayment->companySystemID)
+                        ->where('isDefault', -1)
+                        ->first();
+
+                    if ($bank) {
+                        $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                            ->where('isDefault', 1)
+                            ->where('accountCurrencyID', $myCurr)
+                            ->first();
+
+                        $input['bankID'] = $bank->bankmasterAutoID;
+
+                        if ($bankAccount) {
+                            $input['bankAccount'] = $bankAccount->bankAccountAutoID;
+
+                            $input['bankCurrency'] = $myCurr;
+                            $input['bankCurrencyER'] = 1;
+                        }
+                    }
+                }
+            }
+
+            if ($input['bankID'] != $customerReceivePayment->bankID) {
+                $bankAccount = BankAccount::where('companySystemID', $customerReceivePayment->companySystemID)
+                    ->where('bankmasterAutoID', $input['bankID'])
+                    ->where('isDefault', 1)
+                    ->where('isAccountActive', 1)
+                    ->where('approvedYN', 1)
+                    ->where('accountCurrencyID', $input['custTransactionCurrencyID'])
+                    ->first();
+
+                $input['bankAccount'] = null;
+                $input['bankCurrencyER'] = 0;
+                $input['bankCurrency'] = null;
+                if ($bankAccount) {
+                    $input['bankAccount'] = $bankAccount->bankAccountAutoID;
+                    $input['bankCurrencyER'] = 1;
+                    $input['bankCurrency'] = $input['custTransactionCurrencyID'];
+                }
+            }
+
+
+        }
+
+        if ($input['documentType'] == 14 || $input['documentType'] == 15) {
+            /*direct receipt*/
+            $detail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+            if ($input['bankID'] != $customerReceivePayment->bankID) {
+                $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)
+                    ->where('bankmasterAutoID', $input['bankID'])
+                    ->where('isAccountActive', 1)
+                    ->where('approvedYN', 1)
+                    ->where('isDefault', 1)
+                    ->first();
+
+                $input['custTransactionCurrencyER'] = 0;
+                $input['companyRptCurrencyID'] = 0;
+                $input['companyRptCurrencyER'] = 0;
+                $input['localCurrencyID'] = 0;
+                $input['localCurrencyER'] = 0;
+
+                if ($bankAccount) {
+                    $input['bankAccount'] = $bankAccount->bankAccountAutoID;
+                    $input['bankCurrencyER'] = 1;
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyER'] = 1;
+
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
+            }
+
+            if ($input['bankAccount'] != $customerReceivePayment->bankAccount) {
+
+                $bankAccount = BankAccount::find($input['bankAccount']);
+                if ($bankAccount) {
+                    $input['bankCurrencyER'] = 1;
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyER'] = 1;
+
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
+            }
+        }
+
+        // calculating header total
+        $checkPreDirectSumTrans = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('DRAmount');
+
+        $checkPreDirectSumLocal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('localAmount');
+
+        $checkPreDirectSumReport = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('comRptAmount');
+
+        $masterHeaderSumTrans = 0;
+        $masterHeaderSumLocal = 0;
+        $masterHeaderSumReport = 0;
+        if ($input['documentType'] == 13) {
+
+            $customerReceiveAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountTrans');
+
+            $customerReceiveAmountLocal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountLocal');
+
+            $customerReceiveAmountReport = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountRpt');
+
+            $masterHeaderSumTrans = $checkPreDirectSumTrans + $customerReceiveAmountTrans;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
+
+            $masterHeaderSumTrans = abs($masterHeaderSumTrans);
+            $masterHeaderSumLocal = abs($masterHeaderSumLocal);
+            $masterHeaderSumReport = abs($masterHeaderSumReport);
+
+            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+
+        }
+        else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
+
+            $masterHeaderSumTrans = $checkPreDirectSumTrans;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport;
+
+            if($input['documentType'] == 15){
+
+                $detailsTotal = AdvanceReceiptDetails::select(
+                    DB::raw("IFNULL(SUM(paymentAmount),0) as netAmount"),
+                    DB::raw("IFNULL(SUM(localAmount),0) as netAmountLocal"),
+                    DB::raw("IFNULL(SUM(comRptAmount),0) as netAmountRpt"))
+                    ->where('custReceivePaymentAutoID', $id)
+                    ->first();
+
+                if(!empty($detailsTotal)){
+                    $masterHeaderSumTrans  = $masterHeaderSumTrans + $detailsTotal->netAmount;
+                    $masterHeaderSumLocal  = $masterHeaderSumLocal + $detailsTotal->netAmountLocal;
+                    $masterHeaderSumReport = $masterHeaderSumReport + $detailsTotal->netAmountRpt;
+                }
+
+            }
+
+            $masterHeaderSumTrans = abs($masterHeaderSumTrans);
+            $masterHeaderSumLocal = abs($masterHeaderSumLocal);
+            $masterHeaderSumReport = abs($masterHeaderSumReport);
+
+            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+        }
+
+        // calculating bank amount
+
+        if ($input['bankCurrency'] == $input['localCurrencyID']) {
+            $input['bankAmount'] = $input['localAmount'];
+            $input['bankCurrencyER'] = $input['localCurrencyER'];
+        } else if ($input['bankCurrency'] == $input['companyRptCurrencyID']) {
+            $input['bankAmount'] = $input['companyRptAmount'];
+            $input['bankCurrencyER'] = $input['companyRptCurrencyER'];
+        } else {
+            $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
+
+            if ($bankCurrencyConversion) {
+                $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
+                $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
+            }
+        }
+
+        $itemExistArray = array();
+        $error_count = 0;
+
+        if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'custPaymentReceiveDate' => 'required',
+                'bankID' => 'required|numeric|min:1',
+                'bankCurrency' => 'required|numeric|min:1',
+                'bankAccount' => 'required|numeric|min:1',
+                'custTransactionCurrencyID' => 'required|numeric|min:1',
+                'narration' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            if ($input['documentType'] == 13) {
+
+                $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->count();
+                if ($customerReceivePaymentDetailCount == 0) {
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
+            }
+            else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
+                $checkDirectItemsCount = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->count();
+
+                if($input['documentType'] == 14 && $checkDirectItemsCount == 0){
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
+
+                $checkAdvReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->count();
+
+                if ($checkAdvReceiptDetails == 0 && $checkDirectItemsCount == 0) {
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
+            }
+            // checking minus value
+            if ($input['documentType'] == 13) {
+
+                $checkDirectMinusTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->sum('DRAmount');
+
+                $checkReciveDetailMinusTotal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->sum('receiveAmountTrans');
+
+                $netMinustot = $checkReciveDetailMinusTotal + $checkDirectMinusTotal;
+
+                if ($netMinustot < 0) {
+                    return $this->sendError('Net amount cannot be minus total', 500);
+                }
+            }
+
+            if ($input['documentType'] == 13) {
+
+                $detailAllRecords = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->get();
+
+                if ($detailAllRecords) {
+                    foreach ($detailAllRecords as $row) {
+                        if ($row['addedDocumentSystemID'] == 20) {
+                            $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                ->where('receiveAmountTrans', '<=', 0)
+                                ->where(function ($q) {
+                                    $q->where('receiveAmountTrans', '<=', 0)
+                                        ->orWhereNull('receiveAmountLocal', '<=', 0)
+                                        ->orWhereNull('receiveAmountRpt', '<=', 0)
+                                        ->orWhereNull('receiveAmountTrans')
+                                        ->orWhereNull('receiveAmountLocal')
+                                        ->orWhereNull('receiveAmountRpt');
+                                })
+                                ->count();
+
+                            if ($checkAmount > 0) {
+                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                            }
+                        } elseif ($row['addedDocumentSystemID'] == 19) {
+                            $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                ->where(function ($q) {
+                                    $q->where('receiveAmountTrans', '=', 0)
+                                        ->orWhereNull('receiveAmountLocal', '=', 0)
+                                        ->orWhereNull('receiveAmountRpt', '=', 0)
+                                        ->orWhereNull('receiveAmountTrans')
+                                        ->orWhereNull('receiveAmountLocal')
+                                        ->orWhereNull('receiveAmountRpt');
+                                })
+                                ->count();
+
+                            if ($checkAmount > 0) {
+                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                            }
+                        }
+                    }
+                }
+
+                $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DRAmount', '=', 0)
+                            ->orWhereNull('localAmount', '=', 0)
+                            ->orWhereNull('comRptAmount', '=', 0)
+                            ->orWhereNull('DRAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            if ($input['documentType'] == 14 ||  $input['documentType'] == 15) {
+                $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DRAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('DRAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($input['documentType'] == 14 && $checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+
+                $checkAdvReceiptDetailsAmount = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)
+                    ->where(function ($q) {
+                        $q->where('paymentAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('paymentAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+
+                if ($checkAdvReceiptDetailsAmount > 0 || $checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
+
+            if ($input['documentType'] == 14 || $input['documentType'] == 15) {
+                $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+                $finalError = array('amount_zero' => array(),
+                    'amount_neg' => array(),
+                    'required_serviceLine' => array(),
+                    'active_serviceLine' => array(),
+                    'contract_check' => array()
+                );
+
+                foreach ($directReceiptDetail as $item) {
+
+                    $updateItem = DirectReceiptDetail::find($item['directReceiptDetailsID']);
+
+                    if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+                    } else {
+                        array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+
+                    $updateItem->save();
+
+                    if ($updateItem->DRAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                        array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                    }
+                }
+
+                if ($policyConfirmedUserToApprove->isYesNO == 0) {
+
+                    foreach ($directReceiptDetail as $item) {
+
+                        $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')
+                            ->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)
+                            ->first();
+
+                        if ($chartOfAccount->controlAccountsSystemID == 1) {
+                            if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
+                                array_push($finalError['contract_check'], $item->glCode);
+                                $error_count++;
+                            }
+                        }
+                    }
+                }
+
+                $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                if ($error_count > 0) {
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                }
+            }
+
+            if ($input['documentType'] == 13) {
+                $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+                $finalError = array('amount_zero' => array(),
+                    'amount_neg' => array(),
+                    'required_serviceLine' => array(),
+                    'active_serviceLine' => array()
+                );
+
+                foreach ($directReceiptDetail as $item) {
+
+                    $updateItem = DirectReceiptDetail::find($item['directReceiptDetailsID']);
+
+                    if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+                    } else {
+                        array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+
+                    $updateItem->save();
+
+                }
+
+                $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                if ($error_count > 0) {
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                }
+            }
+            // updating accounts receivable ledger table
+            if ($input['documentType'] == 13) {
+
+                $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->where('addedDocumentSystemID', 20)
+                    ->get();
+
+                foreach ($customerReceivePaymentDetailRec as $item) {
+
+                    $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $item['arAutoID'])
+                        ->sum('receiveAmountTrans');
+
+                    $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
+                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round(($customerInvoiceMaster['bookingAmountTrans'] + $customerInvoiceMaster['VATAmount']), $documentCurrencyDecimalPlace)) {
+
+                        $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                        $itemExistArray[] = [$itemDrt];
+
+                    }
+                }
+            }
+
+
+            if (!empty($itemExistArray)) {
+                return $this->sendError($itemExistArray, 422);
+            }
+
+            // updating accounts receivable ledger table
+            if ($input['documentType'] == 13) {
+
+                $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->where('addedDocumentSystemID', '<>', '')
+                    ->get();
+
+                foreach ($customerReceivePaymentDetailRec as $row) {
+
+                    $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $row['arAutoID'])
+                        ->sum('receiveAmountTrans');
+
+                    $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+                        ->where('companySystemID', $row["companySystemID"])
+                        ->where('PayMasterAutoId', $row["bookingInvCodeSystem"])
+                        ->where('documentSystemID', $row["addedDocumentSystemID"])
+                        ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+                    if (!$matchedAmount) {
+                        $matchedAmount['SumOfmatchedAmount'] = 0;
+                    }
+
+                    $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
+
+                    $arLedgerUpdate = AccountsReceivableLedger::find($row['arAutoID']);
+
+                    if ($row['addedDocumentSystemID'] == 20) {
+                        if ($totReceiveAmount == 0) {
+                            $arLedgerUpdate->fullyInvoiced = 0;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        } else if ($row->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $row->bookingAmountTrans) {
+                            $arLedgerUpdate->fullyInvoiced = 2;
+                            $arLedgerUpdate->selectedToPaymentInv = -1;
+                        } else if (($row->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
+                            $arLedgerUpdate->fullyInvoiced = 1;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        }
+                    } else if ($row['addedDocumentSystemID'] == 19) {
+                        if ($totReceiveAmount == 0) {
+                            $arLedgerUpdate->fullyInvoiced = 0;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        } else if ($row->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount < $row->bookingAmountTrans) {
+                            $arLedgerUpdate->fullyInvoiced = 2;
+                            $arLedgerUpdate->selectedToPaymentInv = -1;
+                        } else if (($row->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
+                            $arLedgerUpdate->fullyInvoiced = 1;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        }
+                    }
+                    $arLedgerUpdate->save();
+                }
+
+            }
+
+            if($input['documentType'] == 14 || $input['documentType'] == 15){
+                $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"),
+                    DB::raw("IFNULL(SUM(localAmount),0) as localAmount"),
+                    DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"),
+                    DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"),
+                    DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"),
+                    DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"),
+                    DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"),
+                    DB::raw("IFNULL(SUM(netAmount),0) as netAmount"),
+                    DB::raw("IFNULL(SUM(netAmountLocal),0) as netAmountLocal"),
+                    DB::raw("IFNULL(SUM(netAmountRpt),0) as netAmountRpt"))
+                    ->where('directReceiptAutoID', $id)
+                    ->first();
+
+                if(!empty($details)) {
+                    $input['VATAmount'] = $details->VATAmount;
+                    $input['VATAmountLocal'] = $details->VATAmountLocal;
+                    $input['VATAmountRpt'] = $details->VATAmountRpt;
+                    $input['netAmount'] = $details->netAmount;
+                    $input['netAmountLocal'] = $details->netAmountLocal;
+                    $input['netAmountRpt'] = $details->netAmountRpt;
+                }
+
+                if($input['documentType'] == 15){
+                    $details = AdvanceReceiptDetails::select(DB::raw("IFNULL(SUM(VATAmount),0) as VATAmount"),
+                        DB::raw("IFNULL(SUM(VATAmountLocal),0) as VATAmountLocal"),
+                        DB::raw("IFNULL(SUM(VATAmountRpt),0) as VATAmountRpt"),
+                        DB::raw("IFNULL(SUM(paymentAmount),0) as netAmount"),
+                        DB::raw("IFNULL(SUM(localAmount),0) as netAmountLocal"),
+                        DB::raw("IFNULL(SUM(comRptAmount),0) as netAmountRpt"))
+                        ->where('custReceivePaymentAutoID', $id)
+                        ->first();
+
+                    if(!empty($details)) {
+                        $input['VATAmount'] = $details->VATAmount;
+                        $input['VATAmountLocal'] = $details->VATAmountLocal;
+                        $input['VATAmountRpt'] = $details->VATAmountRpt;
+                        $input['netAmount'] = $details->netAmount;
+                        $input['netAmountLocal'] = $details->netAmountLocal;
+                        $input['netAmountRpt'] = $details->netAmountRpt;
+                    }
+                }
+            }
+
+            Taxdetail::where('documentSystemCode', $id)
+                ->where('documentSystemID', $input["documentSystemID"])
+                ->delete();
+
+            // if VAT Applicable
+            if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
+
+                if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                }
+
+                if($input['documentType'] == 15 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                    return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                }
+
+                $taxDetail['companyID'] = $input['companyID'];
+                $taxDetail['companySystemID'] = $input['companySystemID'];
+                $taxDetail['documentID'] = $input['documentID'];
+                $taxDetail['documentSystemID'] = $input['documentSystemID'];
+                $taxDetail['documentSystemCode'] = $id;
+                $taxDetail['documentCode'] = $customerReceivePayment->custPaymentReceiveCode;
+                $taxDetail['taxShortCode'] = '';
+                $taxDetail['taxDescription'] = '';
+                $taxDetail['taxPercent'] = $input['VATPercentage'];
+
+
+                if($input['documentType'] == 15){
+                    $taxDetail['payeeSystemCode'] = $input['customerID'];
+                    $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+
+                    if(!empty($customer)) {
+                        $taxDetail['payeeCode'] = $customer->CutomerCode;
+                        $taxDetail['payeeName'] = $customer->CustomerName;
+                    }else{
+                        return $this->sendError('Customer not found', 500);
+                    }
+                }else {
+                    $taxDetail['payeeSystemCode'] = 0;
+                    $taxDetail['payeeCode'] = '';
+                    $taxDetail['payeeName'] = '';
+                }
+
+
+
+                $taxDetail['amount'] = $input['VATAmount'];
+                $taxDetail['localCurrencyER']  = $input['localCurrencyER'];
+                $taxDetail['rptCurrencyER'] = $input['companyRptCurrencyER'];
+                $taxDetail['localAmount'] = $input['VATAmountLocal'];
+                $taxDetail['rptAmount'] = $input['VATAmountRpt'];
+                $taxDetail['currency'] =  $input['custTransactionCurrencyID'];
+                $taxDetail['currencyER'] =  1;
+
+                $taxDetail['localCurrencyID'] =  $customerReceivePayment->localCurrencyID;
+                $taxDetail['rptCurrencyID'] =  $customerReceivePayment->companyRptCurrencyID;
+                $taxDetail['payeeDefaultCurrencyID'] =  $input['custTransactionCurrencyID'];
+                $taxDetail['payeeDefaultCurrencyER'] =  1;
+                $taxDetail['payeeDefaultAmount'] =  $input['VATAmount'];
+
+                Taxdetail::create($taxDetail);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+
+            if ($input['pdcChequeYN']) {
+                $pdcLogValidation = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $id)
+                    ->whereNull('chequeDate')
+                    ->first();
+
+                if ($pdcLogValidation) {
+                    return $this->sendError('PDC Cheque date cannot be empty', 500);
+                }
+
+                $pdcLogValidationChequeNo = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $id)
+                    ->whereNull('chequeNo')
+                    ->first();
+
+                if ($pdcLogValidationChequeNo) {
+                    return $this->sendError('PDC Cheque no cannot be empty', 500);
+                }
+
+
+                $totalAmountForPDC = 0;
+                if ($input['documentType'] == 13) {
+                    $detailAllRecordsSum = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                        ->sum('receiveAmountTrans');
+                    $bankTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+
+                    $totalAmountForPDC = $detailAllRecordsSum + $bankTotal;
+                } else if ($input['documentType'] == 14) {
+                    $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+                } else if ($input['documentType'] == 15) {
+                    $totalAmountForPDC = DirectReceiptDetail::where('directReceiptAutoID', $id)->sum('netAmount');
+                }
+
+                $pdcLog = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
+                    ->where('documentmasterAutoID', $id)
+                    ->get();
+
+                if (count($pdcLog) == 0) {
+                    return $this->sendError('PDC Cheques not created, Please create atleast one cheque', 500);
+                }
+
+                $pdcLogAmount = PdcLog::where('documentSystemID', $customerReceivePayment->documentSystemID)
+                    ->where('documentmasterAutoID', $id)
+                    ->sum('amount');
+
+                $checkingAmount = round($totalAmountForPDC, 3) - round($pdcLogAmount, 3);
+
+                if ($checkingAmount > 0.001 || $checkingAmount < 0) {
+                    return $this->sendError('PDC Cheque amount should equal to PV total amount', 500);
+                }
+
+                $checkPlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 6);
+
+                if (is_null($checkPlAccount)) {
+                    return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
+                }
+            }
+
+
+            $params = array('autoID' => $id,
+                'company' => $customerReceivePayment->companySystemID,
+                'document' => $customerReceivePayment->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $input['receivedAmount']
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+            $input['custChequeDate'] = null;
+            $input['custChequeNo'] = null;
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+
+
+        if(isset($input['bankAccount']))
+        {
+            if(!empty($input['bankAccount']) )
+            {
+                $bank_currency = $input['bankCurrency'];
+                $document_currency = $input['custTransactionCurrencyID'];
+
+                $cur_det['companySystemID'] = $input['companySystemID'];
+                $cur_det['bankmasterAutoID'] = $input['bankID'];
+                $cur_det['bankAccountAutoID'] = $input['bankAccount'];
+                $cur_det_info =  (object)$cur_det;
+
+                $bankBalance = app('App\Http\Controllers\API\BankAccountAPIController')->getBankAccountBalanceSummery($cur_det_info);
+
+                $amount = $bankBalance['netBankBalance'];
+                $currencies = CurrencyMaster::where('currencyID','=',$document_currency)->select('DecimalPlaces')->first();
+
+                $rounded_amount =  number_format($amount,$currencies->DecimalPlaces,'.', '');
+
+
+                $input['bankAccountBalance'] = $rounded_amount;
+
+            }
+        }
+        $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
+
+        return $this->sendResponse($input, 'Receipt Voucher updated successfully');
+    }
+
     /**
      * @param int $id
      * @return Response

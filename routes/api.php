@@ -868,6 +868,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
         Route::put('book_inv_supp_local_update/{id}', 'BookInvSuppMasterAPIController@updateLocalER');
         Route::put('book_inv_supp_reporting_update/{id}', 'BookInvSuppMasterAPIController@updateReportingER');
+        Route::put('supplierInvoiceUpdateCurrency/{id}', 'BookInvSuppMasterAPIController@updateCurrency');
 
 
         // Payment Voucher
@@ -879,6 +880,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pv-md-deduction-type', 'DirectPaymentDetailsAPIController@updat_monthly_deduction');
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
+        Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -937,6 +939,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
         Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+        Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency');
+
         Route::resource('performa_details', 'PerformaDetailsAPIController');
 
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
@@ -954,6 +958,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
         Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
         Route::resource('debit_notes', 'DebitNoteAPIController');
+        Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency');
         Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
         Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
         Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
@@ -1187,6 +1192,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
         Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
         Route::resource('credit_notes', 'CreditNoteAPIController');
+        Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency');
         Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
 
         // Receipt Voucher
@@ -1196,6 +1202,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
         Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
         Route::post('generatePdcForReceiptVoucher', 'CustomerReceivePaymentAPIController@generatePdcForReceiptVoucher');
+        Route::put('customerReceivePaymentsUpdateCurrency/{id}','CustomerReceivePaymentAPIController@UpdateCurrency');
 
 
         Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
