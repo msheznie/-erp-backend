@@ -753,7 +753,8 @@ class AssetManagementReportAPIController extends AppBaseController
      
               
                     $fileName = 'asset_register_detail';
-                    $basePath = CreateExcel::process($data,$type,$fileName);
+                    $path = 'asset_register/report/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
                     if($basePath == '')
                     {

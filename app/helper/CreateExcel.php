@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class CreateExcel
 {
 
-    public static function process($data,$type,$fileName)
+    public static function process($data,$type,$fileName,$path_dir)
     {
 
         $excel_content =  $file_content = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName) {
@@ -26,7 +26,7 @@ class CreateExcel
         $disk = 's3';
 
         $full_name = $fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
-        $path = 'asset_register/report/excel/'.$full_name;
+        $path = $path_dir.$full_name;
         $result = Storage::disk($disk)->put($path, $excel_content);
         $basePath = '';
         if($result)
