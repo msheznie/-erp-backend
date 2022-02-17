@@ -2160,6 +2160,19 @@ class Helper
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
                                 }
+
+                                if ($input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    if ($sourceData->intercompanyPaymentID > 0) {
+                                        $receiptData = [
+                                            'data' => $sourceData,
+                                            'type' => "FUND_TRANSFER"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($receiptData);
+                                    }
+                                }
+
                             }
 
                             if ($input["documentSystemID"] == 69) {

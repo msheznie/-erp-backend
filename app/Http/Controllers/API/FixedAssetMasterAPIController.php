@@ -722,14 +722,17 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError('Fixed Asset Master not found');
         }
 
-
-        if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
-            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        if(isset($input['salvage_value_rpt']))
+        {
+            if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
+                return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+            }
+    
+            if(doubleval($input['salvage_value_rpt']) < 0) {
+                return $this->sendError("Salvage value cannot be less than Zero", 500);
+            }
         }
 
-        if(doubleval($input['salvage_value_rpt']) < 0) {
-            return $this->sendError("Salvage value cannot be less than Zero", 500);
-        }
 
         // check already approved
         if($fixedAssetMaster->approved == -1){
