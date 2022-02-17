@@ -32,6 +32,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('leave_accrual_schedule')->daily()->withoutOverlapping();
         $schedule->command('financialPeriodActivation')->daily()->withoutOverlapping();
 
+        $schedule->command('pull-attendance')
+        ->dailyAt('00:30')
+        ->timezone('Asia/Muscat')
+        ->withoutOverlapping();
+
     }
 
     /**
