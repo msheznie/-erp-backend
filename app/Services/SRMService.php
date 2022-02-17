@@ -20,6 +20,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierRegistrationLink;
+use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
 use Carbon\Carbon;
@@ -904,6 +905,128 @@ class SRMService
             'item_id' => $data['item_id'],
 
 
+        ];
+    }
+
+    public function getAllAppointmentList(Request $request): array
+    {
+        $input  = $request->all();
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $warehouseId = $request->input('extra.warehouseId');
+        $appointDate = $request->input('extra.appointDate');
+        $search = $request->input('search.value');
+
+        $query =  Appointment::where('supplier_id', $supplierID)
+            ->with(['created_by', 'slot_detail' => function($query){
+                $query->withCount(['appointment' => function($q){
+                    $q->where('confirmed_yn', 1)
+                        ->Where(function ($query) {
+                            $query->where('approved_yn', 0)
+                                ->orWhere('approved_yn', -1);
+                        })
+                        ->where('refferedBackYN', 0);
+                }]);
+            },'slot_detail.slot_master.ware_house', 'slot_detail.slot_master']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->orWhere('primary_code', 'LIKE', "%{$search}%");
+                $query->orWhere('created_at', 'LIKE', "%{$search}%");
+                $query->orWhere('status', 'LIKE', "%{$search}%");
+                $query->orWhere('created_by', 'LIKE', "%{$search}%");
+                $query->orWhereHas('slot_detail.slot_master.ware_house', function ($query1) use ($search) {
+                    $query1->where('wareHouseDescription', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('slot_detail.slot_master', function ($query1) use ($search) {
+                    $query1->whereDate('from_date', "%{$search}%");
+                });
+            });
+        }
+
+        if(isset($warehouseId) && $warehouseId !== 0) {
+            $query = $query->whereHas('slot_detail.slot_master.ware_house', function ($query) use ($warehouseId) {
+                $query->where('wareHouseSystemCode', $warehouseId);
+            });
+        }
+
+        if(!(is_null($appointDate)) && isset($appointDate)) {
+            $query = $query->whereHas('slot_detail.slot_master', function ($query) use($appointDate){
+                $query->whereDate('from_date', $appointDate);
+            });
+        }
+
+        //$query = $query->orderBy('slot_detail.slot_master.from_date', 'desc');
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        // $query->orderBy('id', $input['order'][0]['dir']);
+                        $query->whereHas('slot_detail.slot_master', function ($query1){
+                            $query1->orderBy('from_date', 'DESC');
+                        });
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+
+        return [
+            'success'   => true,
+            'message'   => 'Appointment list successfully get',
+            'data'      => $data
+        ];
+    }
+
+    public function getWarehouse(Request $request)
+    {
+        try{
+            $warehouse = WarehouseMaster::where('isActive', 1)->get();
+            $message = 'Warehouse list load successfully';
+        } catch (\Exception $e){
+            $message = $e;
+        }
+
+        return [
+            'success'   => true,
+            'message'   => $message,
+            'data'      => $warehouse
+        ];
+    }
+
+    public function getRemainingSlotCount(Request $request)
+    {
+        $remainingAppointments = 0;
+        try{
+            $slotDetailID = $request->input('extra.slotDetailID');
+            $slotMasterID = $request->input('extra.slotMasterID');
+
+            $appointmentCount = Appointment::select('id')
+                ->where('slot_detail_id', $slotDetailID)
+                ->where('confirmed_yn', 1)
+                ->Where(function ($query) {
+                    $query->where('approved_yn', 0)
+                        ->orWhere('approved_yn', -1);
+                })
+                ->where('refferedBackYN', 0)
+                ->count();
+
+            $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
+            $message = "Success";
+
+            $remainingAppointments = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - $appointmentCount));
+        } catch (\Exception $e){
+            $message = $e;
+        }
+
+        return [
+            'success'   => true,
+            'message'   => $message,
+            'data'      => $remainingAppointments
         ];
     }
 }
