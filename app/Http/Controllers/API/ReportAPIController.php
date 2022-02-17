@@ -20,7 +20,7 @@ use App\Models\ProcumentOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\helper\CreateExcel;
 class ReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -961,19 +961,36 @@ WHERE
                         );
                     }
 
-                     \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+                    //  \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download($type);
 
-                    return $this->sendResponse(array(), 'Successfully export');
+                    // return $this->sendResponse(array(), 'Successfully export');
+
+
+                    $doc_name = 'po_analysis';
+                    $path = 'procurement/report/po_analysis/excel/';
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
+
                 }
                 else if ($request->reportType == 2) { //PO Wise Analysis Report
                     $output = DB::table('erp_purchaseordermaster')
@@ -1136,7 +1153,7 @@ WHERE
 
                     $output = $output->orderBy('erp_purchaseordermaster.approvedDate', 'ASC')
                                      ->get();
-
+                    $data = array();
                     foreach ($output as $val) {
                         $data[] = array(
                             'CompanyID' => $val->companyID,
@@ -1171,18 +1188,35 @@ WHERE
                         );
                     }
 
-                     \Excel::create('po_wise_analysis', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    
+                    //  \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    // return $this->sendResponse(array(), 'successfully export');
+
+
+                    $doc_name = 'po_wise_analysis';
+                    $path = 'procurement/report/po_wise_analysis/excel/';
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
                 }
                 else if ($request->reportType == 3) {
                     $output = DB::table('erp_purchaseordermaster')
@@ -1246,7 +1280,7 @@ WHERE
 
                     $output = $output->orderBy('CompanyName', 'ASC')
                                      ->get();
-
+                   $data = array();
                     foreach ($output as $val) {
                         $data[] = array(
                             'CompanyID' => $val->CompanyID,
@@ -1262,18 +1296,34 @@ WHERE
                         );
                     }
 
-                     \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    //  \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    // return $this->sendResponse(array(), 'successfully export');
+
+
+                    $doc_name = 'po_wise_analysis_company';
+                    $path = 'procurement/report/po_wise_analysis_company/excel/';
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
                 } else if ($request->reportType == 4) {
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('
@@ -1346,7 +1396,7 @@ WHERE
 
                     $output = $output->orderBy('supplierPrimaryCode', 'ASC')
                                      ->get();
-
+                    $data = array();
                     foreach ($output as $val) {
                         $data[] = array(
                             'SupplierID' => $val->supplierID,
@@ -1363,18 +1413,37 @@ WHERE
                         );
                     }
 
-                     \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    //  \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    // return $this->sendResponse(array(), 'successfully export');
+
+
+                    
+                    $doc_name = 'po_wise_analysis_supplier';
+                    $path = 'procurement/report/po_wise_analysis_supplier/excel/';
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
+
+
                 }
                 break;
             case 'POI': //Order Inquiry
@@ -1390,6 +1459,7 @@ WHERE
                     ->orderBy('purchaseOrderID', $sort)
                     ->get();
 
+                $data = array();
                 foreach ($output as $val) {
                     $data[] = array(
                         'Company' => $val->companyID,
@@ -1414,18 +1484,36 @@ WHERE
                     );
                 }
 
-                 \Excel::create('order_inquiry', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                //  \Excel::create('order_inquiry', function ($excel) use ($data) {
+                //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                //         $sheet->fromArray($data, null, 'A1', true);
+                //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                //         $sheet->setAutoSize(true);
+                //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                //     });
+                //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                // })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), 'successfully export');
+
+
+
+                          
+                $doc_name = 'order_inquiry';
+                $path = 'procurement/report/order_inquiry/excel/';
+                $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             default:
                 return $this->sendError('No report ID found');
