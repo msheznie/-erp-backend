@@ -2,11 +2,12 @@
 
 namespace App\helper;
 
-use App\Models\Company;
 use App\Models\Tenant;
+use App\Models\Company;
+use App\Models\CompanyJobs;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Config;
 
 class CommonJobService
 {
@@ -56,6 +57,17 @@ class CommonJobService
             ['policy'=> 1, 'dailyBasis'=> true, 'description'=> 'Annual daily basis accrual'],
             ['policy'=> 3, 'dailyBasis'=> false, 'description'=> 'Monthly accrual'],
         ];
+    }
+
+    public static function get_active_companies($signature){
+        $companies = CompanyJobs::getActiveCompanies($signature);
+
+        if($companies->count() == 0){
+            return [];
+        }
+
+        $companies = $companies->toArray();
+        return array_column($companies, 'company_id');
     }
 
     public static function job_check(){
