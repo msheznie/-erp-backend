@@ -888,17 +888,20 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
                     }
-               \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = 'payment_suppliers_by_year';
+                $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             case 'APSS':
                 $type = $request->type;
@@ -1049,17 +1052,21 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = 'supplier_balance_summary';
+                $path = 'accounts-payable/report/supplier_balance_summary/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             case 'APSA':// Supplier Aging
                 $reportTypeID = $request->reportTypeID;
@@ -1389,16 +1396,23 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
+ 
+                $fileName = 'unbilled_grv_' . $name;
+                $path = $name.'/'; 
+                $path = 'accounts-payable/report/unbilled_grv_/'.$path.'excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
+
                 break;
             case 'APITP':
                 $type = $request->type;
