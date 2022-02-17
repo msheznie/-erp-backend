@@ -2661,3 +2661,6 @@ Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
 
 Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
+
+
+Route::resource('inter_company_asset_disposals', 'InterCompanyAssetDisposalAPIController');
