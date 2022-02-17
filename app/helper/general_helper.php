@@ -32,6 +32,7 @@ use App\Jobs\WarehouseItemUpdate;
 use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
 use App\Models\Company;
@@ -2159,6 +2160,15 @@ class Helper
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
+
+                                    if ($sourceData->interCompanyTransferYN == -1) {
+                                        $consoleJVData = [
+                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'type' => "INTER_ASSET_DISPOSAL"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($consoleJVData);
+                                    }
                                 }
 
                                 if ($input["documentSystemID"] == 21) {
