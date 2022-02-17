@@ -44,7 +44,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-
+use App\helper\CreateExcel;
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -930,15 +930,21 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                     \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                      
+                $fileName = 'supplier-statement';
+                $path = 'accounts-payable/report/supplier-statement/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 } else if ($reportTypeID == 'SBSR') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
@@ -967,15 +973,21 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                    \Excel::create('supplier_balance_statement', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+  
+                    $fileName = 'supplier_balance_statement';
+                    $path = 'accounts-payable/report/supplier_balance_statement/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+    
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
+
                 }
 
                 return $this->sendResponse(array(), trans('custom.success_export'));
@@ -1003,17 +1015,21 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+  
+                $fileName = 'payment_suppliers_by_year';
+                $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             case 'APSBS':
                 $type = $request->type;
@@ -1154,16 +1170,21 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-                 \Excel::create('supplier_aging', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
+
+                $fileName = 'supplier_aging';
+                $path = 'accounts-payable/report/supplier_aging/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             case 'TS':// Top Suppliers
                 $reportTypeID = $request->reportTypeID;
