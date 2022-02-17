@@ -38,6 +38,9 @@ define('GET_ERP_FORM_DATA', 'GET_ERP_FORM_DATA');
 define('CHECK_APPOINTMENT_PAST', 'CHECK_APPOINTMENT_PAST');
 define('GET_APPOINTMENT_DETAILS', 'GET_APPOINTMENT_DETAILS');
 define('GET_PO_DETAILS', 'GET_PO_DETAILS');
+define('GET_ALL_APPOINTMENT_DELIVERIES', 'GET_ALL_APPOINTMENT_DELIVERIES');
+define('GET_WAREHOUSE', 'GET_WAREHOUSE');
+define('GET_REMAINING_SLOT_COUNT', 'GET_REMAINING_SLOT_COUNT');
 
 class APIController extends Controller
 {
@@ -102,6 +105,12 @@ class APIController extends Controller
                 return $this->SRMService->getAppointmentDetails($request);
             case GET_PO_DETAILS:
                 return $this->SRMService->getPurchaseOrderDetails($request);
+            case GET_ALL_APPOINTMENT_DELIVERIES:
+                return $this->SRMService->getAllAppointmentList($request);
+            case GET_WAREHOUSE:
+                return $this->SRMService->getWarehouse($request);
+            case GET_REMAINING_SLOT_COUNT:
+                return $this->SRMService->getRemainingSlotCount($request);
             default:
                 return [
                     'success'   => false,
