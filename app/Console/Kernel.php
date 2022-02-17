@@ -33,8 +33,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('financialPeriodActivation')->daily()->withoutOverlapping();
 
         $schedule->command('pull-attendance')
-        ->dailyAt('00:30')
         ->timezone('Asia/Muscat')
+        ->dailyAt('00:30')
         ->withoutOverlapping();
 
     }

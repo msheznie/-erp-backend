@@ -14,15 +14,16 @@ class AttendanceDayEndPullingInitiate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $dispatch_db;
+    public $dispatchDb;
     public $signature;
+    public $attDate;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $signature)
+    public function __construct($dispatchDb, $signature, $attDate)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -30,8 +31,10 @@ class AttendanceDayEndPullingInitiate implements ShouldQueue
             self::onConnection('database');
         }
 
-        $this->dispatch_db = $dispatch_db;
+        $this->dispatchDb = $dispatchDb;
         $this->signature = $signature;
+        $this->attDate = $attDate;
+
     }
 
     /**
@@ -41,12 +44,32 @@ class AttendanceDayEndPullingInitiate implements ShouldQueue
      */
     public function handle()
     {
-        CommonJobService::db_switch( $this->dispatch_db );
-        
-
+                
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockOut') );
 
-        CommonJobService::get_active_companies($this->signature);
-         
+        CommonJobService::db_switch( $this->dispatchDb );
+        $companies = CommonJobService::get_active_companies($this->signature);
+        
+        if(empty($companies)){
+            $msg = "There is not a single company found for process the {$this->signature}";
+            $msg .= " in {$this->dispatchDb} DB";
+            Log::error("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+            return;
+        }
+
+        $seconds = 0;
+        
+        foreach ($companies as $companyId) {    
+             
+            $seconds += 30;
+
+            $msg = "Company id  {$companyId} added to the queue in {$this->dispatchDb} DB ( {$this->attDate} )";
+            Log::info("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+            AttendanceDayEndPulling::dispatch($this->dispatchDb, $companyId, $this->attDate)
+                ->delay(now()->addSeconds($seconds));
+        }
+
     }
 }

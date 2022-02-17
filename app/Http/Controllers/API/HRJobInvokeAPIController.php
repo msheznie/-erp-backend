@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use Carbon\Carbon;
+use App\Models\CompanyJobs;
 use Illuminate\Http\Request;
 use App\helper\CommonJobService;
 use App\Jobs\AttendancePullingJob;
@@ -28,6 +30,14 @@ class HRJobInvokeAPIController extends AppBaseController
         ];
 
         return $this->sendResponse($data, 'clock in pulling job added to queue');
+    }
+
+    function test2(Request $request){
+        //$n = CommonJobService::get_active_companies('pull-attendance');
+        $n = Carbon::now()->subDays(1);
+        echo '<pre>'; print_r($n); echo '</pre>'; 
+        $n = Carbon::now()->timezone('Asia/Muscat')->subDays(1);
+        echo '<pre>'; print_r($n); echo '</pre>';
     }
 
     function test(Request $request){

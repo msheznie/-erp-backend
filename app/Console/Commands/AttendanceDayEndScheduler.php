@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\AttendanceDayEndPullingInitiate;
+use Carbon\Carbon;
 
 class AttendanceDayEndScheduler extends Command
 {
@@ -42,19 +43,24 @@ class AttendanceDayEndScheduler extends Command
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockOut') );
         
+        $attDate = Carbon::now()->timezone('Asia/Muscat')->subDays(1)->format('Y-m-d');
+
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            $msg = "Tenant details not found ( {$attDate} ).";
+            Log::error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            return;
         }
-
+        
 
         foreach ($tenants as $tenant){
-            $tenant_database = $tenant->database;
+            $dispatchDb = $tenant->database;
 
-            $msg = "{$tenant_database} DB added to queue for attendance day end pulling initiate.";
+            $msg = "{$dispatchDb} DB added to the queue for attendance day end pulling initiate";
+            $msg .= " ( {$attDate} ).";
             Log::info("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
-            AttendanceDayEndPullingInitiate::dispatch($tenant_database, $this->signature);
+            AttendanceDayEndPullingInitiate::dispatch($dispatchDb, $this->signature, $attDate);
         }
     }
 }
