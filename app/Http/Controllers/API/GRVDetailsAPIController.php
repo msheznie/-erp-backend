@@ -1040,7 +1040,9 @@ class GRVDetailsAPIController extends AppBaseController
 
         $grvAutoID = $input['grvAutoID'];
 
-      
+        $grvTypeID = $input['grvTypeID'];
+
+        $companySystemID = $input['companySystemID'];
 
         $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
         if (empty($grvMaster)) {
@@ -1103,17 +1105,30 @@ class GRVDetailsAPIController extends AppBaseController
             
             $user = \Helper::getEmployeeInfo();
 
+            $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
+                ->where('companySystemID', $companySystemID)
+                ->first();
             //checking if item is inventory item cannot be added more than one
             $grvDetailExistSameItem = GRVDetails::select(DB::raw('itemCode'))
                 ->where('grvAutoID', $grvAutoID)
-                ->where('itemCode', $input["itemCode"])
+                ->where('itemCode', $itemAssign->itemCodeSystem)
                 ->first();
-            
-            if ($grvDetailExistSameItem) {
-                return $this->sendError('Selected item is already added from the same grv.', 422);
+
+
+                   if($grvTypeID == 1) {
+                       if ($item->financeCategoryMaster == 1) {
+                           if ($grvDetailExistSameItem) {
+                               return $this->sendError('Selected item is already added from the same grv.', 422);
+                           }
+                       }
+                   }
+              if($grvTypeID != 1) {
+                if ($grvDetailExistSameItem) {
+                    return $this->sendError('Selected item is already added from the same grv.', 422);
+                }
             }
 
-            $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
+                $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
             $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
     
