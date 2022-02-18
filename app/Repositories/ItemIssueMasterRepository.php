@@ -100,7 +100,7 @@ class ItemIssueMasterRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function itemIssueListQuery($request, $input, $search = '') {
+    public function itemIssueListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -129,13 +129,13 @@ class ItemIssueMasterRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemIssueMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $itemIssueMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('wareHouseFrom', $input)) {
             if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
-                $itemIssueMaster->where('wareHouseFrom', $input['wareHouseFrom']);
+                $itemIssueMaster->whereIn('wareHouseFrom', $grvLocation);
             }
         }
 

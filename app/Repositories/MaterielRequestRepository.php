@@ -88,7 +88,7 @@ class MaterielRequestRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function materialrequestsListQuery($request, $input, $search = '') {
+    public function materialrequestsListQuery($request, $input, $search = '', $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -118,7 +118,7 @@ class MaterielRequestRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $materielRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $materielRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 

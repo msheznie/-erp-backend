@@ -625,8 +625,15 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        $grvLocation = $request['wareHouseLocation'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
 
-        $itemReturnMaster = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $itemReturnMaster = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search,$grvLocation, $serviceLineSystemID);
 
         return \DataTables::eloquent($itemReturnMaster)
             ->addColumn('Actions', 'Actions', "Actions")
