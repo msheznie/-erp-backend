@@ -1930,33 +1930,12 @@ class SalesReturnAPIController extends AppBaseController
 
     public function approveSalesReturn(Request $request)
     {
-//        $approve = Helper::approveDocument($request);
-//        if (!$approve["success"]) {
-            $srDetails = SalesReturnDetail::where('salesReturnID', $request->id)->get();
-
-
-            foreach ($srDetails as $value) {
-                $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
-
-             $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
-
-            $returnQty = $deliveryOrderData->returnQty;
-            $requestedQty = $deliveryOrderData->requestedQty;
-            $doQty = $requestedQty - $returnQty;
-
-            $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
-
-                $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
-                    ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
-
-            }
-
-//
-//            return $this->sendError($approve["message"]);
-//        } else {
-//            return $this->sendResponse(array(), $approve["message"]);
-//        }
+        $approve = Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
 
     }
 
