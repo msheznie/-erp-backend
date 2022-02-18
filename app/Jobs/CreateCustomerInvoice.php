@@ -10,6 +10,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\CustomerMaster;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\SegmentMaster;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
@@ -183,6 +184,13 @@ class CreateCustomerInvoice implements ShouldQueue
                     $customerInvoiceData['createdDateAndTime'] = NOW();
                     Log::info($customerInvoiceData);
                     $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
+
+                    $interComAssetDisposal = [
+                        'assetDisposalID' => $dpMaster->assetdisposalMasterAutoID,
+                        'customerInvoiceID' => $customerInvoice->custInvoiceDirectAutoID
+                    ];
+
+                    InterCompanyAssetDisposal::create($interComAssetDisposal);
 
                     $disposalDetail = AssetDisposalDetail::selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt, SUM(COSTUNIT) as COSTUNIT, SUM(depAmountLocal) as depAmountLocal, SUM(costUnitRpt) as costUnitRpt, SUM(depAmountRpt) as depAmountRpt, serviceLineSystemID, ServiceLineCode, 
             SUM(if(ROUND(netBookValueLocal,2) = 0,COSTUNIT + COSTUNIT * (revenuePercentage/100),netBookValueLocal + (netBookValueLocal * (revenuePercentage/100)))) as localAmountDetail, 

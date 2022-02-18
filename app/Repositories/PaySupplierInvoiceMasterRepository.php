@@ -195,7 +195,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
-    public function paySupplierInvoiceListQuery($request, $input, $search = '') {
+    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID) {
 
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -246,7 +246,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $paymentVoucher->where('BPVsupplierID', $input['supplierID']);
+                $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
             }
         }
 

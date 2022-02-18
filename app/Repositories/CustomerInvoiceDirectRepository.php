@@ -308,7 +308,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->empName;
                 $data[$x]['Currency'] = $val->CurrencyCode;
-                $data[$x]['Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
+                $data[$x]['Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
                 $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

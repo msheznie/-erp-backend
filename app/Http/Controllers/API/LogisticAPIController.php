@@ -36,7 +36,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class LogisticController
  * @package App\Http\Controllers\API
@@ -677,17 +677,24 @@ class LogisticAPIController extends AppBaseController
             }
         }
 
-         \Excel::create('logistic_by_company', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+
+                    
+        $fileName = 'logistic_by_company';
+        $path = 'logistic/logistic_by_company/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
+
     }
 
     public function getAllLogisticByCompanyQry($request)
