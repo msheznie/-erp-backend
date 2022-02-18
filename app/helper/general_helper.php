@@ -32,6 +32,7 @@ use App\Jobs\WarehouseItemUpdate;
 use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\DeliveryOrderDetail;
 use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
@@ -48,7 +49,10 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
 use App\Models\ReportTemplateDetails;
+use App\Models\SalesReturnDetail;
 use App\Models\SupplierMaster;
 use App\Models\User;
 use App\Models\SupplierRegistrationLink;
@@ -2053,6 +2057,8 @@ class Helper
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
+                            $masterDataDEO = ['documentSystemID' => $docApproved->documentSystemID, 'id' => $docApproved->id, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
+
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
                                 $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
@@ -2203,6 +2209,14 @@ class Helper
                                 $updateReturnQtyInPo = self::updateReturnQtyInPoDetails($masterData);
                                 if (!$updateReturnQtyInPo["success"]) {
                                     return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 87) {
+
+                                $updateReturnQtyInPo = self::updateReturnQtyInDeliveryOrderDetails($input["documentSystemCode"]);
+                                if (!$updateReturnQtyInPo["success"]) {
+                                    return ['success' => false, 'message' => "Success"];
                                 }
                             }
 
@@ -2546,6 +2560,35 @@ class Helper
                 ->update($updateData);
         }
 
+        return ['success' => true];
+    }
+
+    public static function updateReturnQtyInDeliveryOrderDetails($id)
+    {
+        $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
+
+        foreach ($srDetails as $value) {
+            $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
+
+            $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+
+            $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
+            $requestedQty = isset($deliveryOrderData->requestedQty) ?  $deliveryOrderData->requestedQty: 0;
+            $doQty = $requestedQty - $returnQty;
+            $deliveryOrderData->update(['qtyIssued' => $doQty]);
+            if($doQty == 0) {
+                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
+                    ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
+            }
+            if($doQty > 0) {
+                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
+                    ->update(['fullyOrdered' => 1, 'doQuantity' => $returnQty]);
+            }
+
+            $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+
+        }
         return ['success' => true];
     }
 
