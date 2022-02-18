@@ -74,7 +74,7 @@ class StockTransferRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function stockTransferListQuery($request, $input, $search = '') {
+    public function stockTransferListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
 
         $stockTransferMaster = StockTransfer::where('companySystemID', $input['companyId']);
         $stockTransferMaster->where('documentSystemID', $input['documentId']);
@@ -84,7 +84,7 @@ class StockTransferRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockTransferMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $stockTransferMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -108,7 +108,7 @@ class StockTransferRepository extends BaseRepository
 
         if (array_key_exists('locationFrom', $input)) {
             if ($input['locationFrom'] && !is_null($input['locationFrom'])) {
-                $stockTransferMaster->where('locationFrom', '=', $input['locationFrom']);
+                $stockTransferMaster->whereIn('locationFrom', $grvLocation);
             }
         }
 

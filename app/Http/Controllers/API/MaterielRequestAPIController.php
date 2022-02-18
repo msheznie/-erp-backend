@@ -127,9 +127,11 @@ class MaterielRequestAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
         $search = $request->input('search.value');
-        $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
+        $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search, $serviceLineSystemID);
         return \DataTables::eloquent($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
