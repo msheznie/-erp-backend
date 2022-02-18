@@ -791,7 +791,15 @@ class StockTransferAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $stockTransferMaster = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
+        $grvLocation = $request['locationFrom'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $stockTransferMaster = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
 
         $policy = 0;
 

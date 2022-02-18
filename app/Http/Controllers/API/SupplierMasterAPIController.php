@@ -68,7 +68,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
-
+use App\helper\CreateExcel;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -217,18 +217,23 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['VAT Percentage'] = $val->vatPercentage;
         }
 
-         \Excel::create('supplier_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
 
-        return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
+        $fileName = 'supplier_master';
+        $path = 'procurement/master/supplier/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
+
     }
 
     public function printSuppliers(Request $request)

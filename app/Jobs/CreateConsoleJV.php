@@ -8,10 +8,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Models\StockTransfer;
+use App\Models\AssetDisposalMaster;
+use App\Models\AssetDisposalDetail;
 use App\Models\StockTransferDetails;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\InterCompanyStockTransfer;
 use App\Models\Company;
+use App\Models\GRVMaster;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectReceiptDetail;
 use App\Models\DocumentMaster;
@@ -56,6 +60,9 @@ class CreateConsoleJV implements ShouldQueue
                     break;
                 case "FUND_TRANSFER":
                     $this->createConsoleJVForFundTransfer($this->consoleJVData['data']);
+                    break;
+                case "INTER_ASSET_DISPOSAL":
+                    $this->createConsoleJVForAssetDisposal($this->consoleJVData['data']);
                     break;
                 default:
                     // code...
@@ -356,5 +363,174 @@ class CreateConsoleJV implements ShouldQueue
             Log::info('Successfully end  console jv' . date('H:i:s'));
         }
 
+    }
+
+
+    public function createConsoleJVForAssetDisposal($interComapnyData)
+    {
+        $assetDisposalMaster = AssetDisposalMaster::with(['disposal_type' => function ($query) {
+                            $query->with('chartofaccount');
+                        }])->find($interComapnyData->assetDisposalID);
+
+        if ($assetDisposalMaster) {
+            $comment = "Inter Company Asset disposal from " . $assetDisposalMaster->companyID . " to " . $assetDisposalMaster->toCompanyID . " " . $assetDisposalMaster->disposalDocumentCode;
+            $fromCompany = Company::where('companySystemID', $assetDisposalMaster->companySystemID)->first();
+
+            $groupCompany = Company::find($fromCompany->masterCompanySystemIDReorting);
+
+            $consoleJVMasterData = [
+                'companySystemID' => $fromCompany->masterCompanySystemIDReorting,
+                'companyID' => ($groupCompany) ? $groupCompany->CompanyID : null,
+                'documentSystemID' => 69,
+                'consoleJVdate' => Carbon::now(),
+                'consoleJVNarration' => $comment,
+                'jvType' => 1,
+                'currencyID' => $fromCompany->reportingCurrency,
+                'currencyER' => 1
+            ];
+
+            $documentMaster = DocumentMaster::find($consoleJVMasterData['documentSystemID']);
+            if ($documentMaster) {
+                $consoleJVMasterData['documentID'] = $documentMaster->documentID;
+            }
+
+            $lastSerial = ConsoleJVMaster::orderBy('serialNo', 'desc')->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            if ($documentMaster) {
+                $documentCode = ($groupCompany->CompanyID . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $consoleJVMasterData['consoleJVcode'] = $documentCode;
+            }
+            $consoleJVMasterData['serialNo'] = $lastSerialNumber;
+
+            $companyCurrency = \Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
+            if ($companyCurrency) {
+                $consoleJVMasterData['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                $consoleJVMasterData['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                $companyCurrencyConversion = \Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
+                if ($companyCurrencyConversion) {
+                    $consoleJVMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $consoleJVMasterData['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
+            }
+
+            $consoleJVMasterData['createdUserID'] = \Helper::getEmployeeID();
+            $consoleJVMasterData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $consoleJVMasterData['createdPcID'] = gethostname();
+
+            $jvMaster = ConsoleJVMaster::create($consoleJVMasterData);
+
+
+            $finalJvDetailData = [];
+            $consoleJVDetailData = [
+                'consoleJvMasterAutoId' => $jvMaster->consoleJvMasterAutoId,
+                'currencyID' => $jvMaster->currencyID,
+                'currencyER' => $jvMaster->currencyER,
+                'debitAmount' => 0,
+                'creditAmount' => 0,
+                'localDebitAmount' => 0,
+                'rptDebitAmount' => 0,
+                'localCreditAmount' => 0,
+                'rptCreditAmount' => 0,
+                'createdUserSystemID' => \Helper::getEmployeeSystemID(),
+                'createdUserID' => \Helper::getEmployeeID(),
+                'createdPcID' => gethostname()
+            ];
+
+
+            $disposal = AssetDisposalDetail::with('disposal_account')
+                                           ->selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt,DISPOGLCODESystemID,DISPOGLCODE,serviceLineSystemID,serviceLineCode')
+                                           ->OfMaster($interComapnyData->assetDisposalID)
+                                           ->groupBy('DISPOGLCODESystemID', 'serviceLineSystemID')
+                                           ->get();
+
+             if ($disposal) {
+                foreach ($disposal as $val) {
+                    $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->companySystemID;
+                    $consoleJVDetailData['companyID'] = $assetDisposalMaster->companyID;
+                    $consoleJVDetailData['serviceLineSystemID'] = $val->serviceLineSystemID;
+                    $consoleJVDetailData['serviceLineCode'] = $val->serviceLineCode;
+                    $consoleJVDetailData['glAccountSystemID'] = $assetDisposalMaster->disposal_type->chartOfAccountID;
+                    $consoleJVDetailData['glAccount'] = $assetDisposalMaster->disposal_type->glCode;
+                    $consoleJVDetailData['glAccountDescription'] = ChartOfAccount::getAccountDescription($assetDisposalMaster->disposal_type->chartOfAccountID);
+
+                    $consoleJVDetailData['debitAmount'] = ABS($val->netBookValueRpt);
+                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                    $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
+                    $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+
+                    array_push($finalJvDetailData, $consoleJVDetailData);
+                }
+            }
+
+
+
+            $grvMaster = GRVMaster::find($interComapnyData->grvID);
+
+            $cost = AssetDisposalDetail::with(['cost_account'])->selectRaw('SUM(COSTUNIT) as COSTUNIT, SUM(sellingPriceRpt) as sellingPriceRpt,SUM(netBookValueRpt) as netBookValueRpt, COSTGLCODESystemID,serviceLineSystemID,COSTGLCODE,serviceLineCode')
+                                       ->OfMaster($interComapnyData->assetDisposalID)
+                                       ->groupBy('COSTGLCODESystemID', 'serviceLineSystemID')->get();
+
+
+            if ($cost && $grvMaster) {
+                foreach ($cost as $val) {
+                    $consoleJVDetailData['companySystemID'] = $grvMaster->companySystemID;
+                    $consoleJVDetailData['companyID'] = $grvMaster->companyID;
+                    $consoleJVDetailData['serviceLineSystemID'] = $val->serviceLineSystemID;
+                    $consoleJVDetailData['serviceLineCode'] = $val->serviceLineCode;
+                    $consoleJVDetailData['glAccountSystemID'] = $val->COSTGLCODESystemID;
+                    $consoleJVDetailData['glAccount'] = $val->COSTGLCODE;
+                    $consoleJVDetailData['glAccountDescription'] = ChartOfAccount::getAccountDescription($val->COSTGLCODESystemID);
+
+                    $consoleJVDetailData['debitAmount'] = ABS(ABS($val->sellingPriceRpt) - ABS($val->netBookValueRpt));
+                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                    $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
+                    $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+
+                    array_push($finalJvDetailData, $consoleJVDetailData);
+                }
+            }                  
+
+
+            $cusDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt")
+                                                 ->WHERE('custInvoiceDirectID', $interComapnyData->customerInvoiceID)
+                                                 ->groupBy('glCode', 'serviceLineCode', 'comments')->get();
+
+
+            if ($cusDetail) {
+                foreach ($cusDetail as $valCustInvoice) {
+                    $consoleJVDetailData['companySystemID'] = $assetDisposalMaster->companySystemID;
+                    $consoleJVDetailData['companyID'] = $assetDisposalMaster->companyID;
+                    $consoleJVDetailData['serviceLineSystemID'] = $valCustInvoice->serviceLineSystemID;
+                    $consoleJVDetailData['serviceLineCode'] = $valCustInvoice->serviceLineCode;
+                    $consoleJVDetailData['glAccountSystemID'] = $valCustInvoice->glSystemID;
+                    $consoleJVDetailData['glAccount'] = ChartOfAccount::getAccountCode($valCustInvoice->glSystemID);
+                    $consoleJVDetailData['glAccountDescription'] = ChartOfAccount::getAccountDescription($valCustInvoice->glSystemID);
+
+                    $consoleJVDetailData['debitAmount'] = 0;
+                    $consoleJVDetailData["localDebitAmount"] = 0;
+                    $consoleJVDetailData["rptDebitAmount"] = 0;
+                    $consoleJVDetailData['creditAmount'] = $valCustInvoice->comRptAmount;
+                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                    $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
+                    $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
+
+                    array_push($finalJvDetailData, $consoleJVDetailData);
+                }
+            }
+
+             if (count($finalJvDetailData) > 0) {
+                foreach ($finalJvDetailData as $cData) {
+                    ConsoleJVDetail::create($cData);
+                }   
+            }
+
+            Log::info('Successfully end  console jv' . date('H:i:s'));
+
+        }
     }
 }

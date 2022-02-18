@@ -822,7 +822,16 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
-        
+
+        $grvLocation = $request['grvLocation'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+//        return $this->sendResponse($customers, 'Good Receipt Voucher deleted successfully');
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -831,7 +840,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input,$search);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();
