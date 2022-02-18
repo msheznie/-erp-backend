@@ -56,6 +56,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
 
 
+        Route::group(['middleware' => 'max_memory_limit'], function () {
+            Route::group(['middleware' => 'max_execution_limit'], function () {
+                Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
+                Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
+                Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
+            });
+        });
+
+
         Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
         Route::resource('supplier/masters', 'SupplierMasterAPIController');
         Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack');
@@ -468,9 +477,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
         Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
-        Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
         Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
-        Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
         Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
         Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
         Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
@@ -1190,7 +1197,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
         Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
         Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
-        Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
         Route::resource('credit_notes', 'CreditNoteAPIController');
         Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency');
         Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');

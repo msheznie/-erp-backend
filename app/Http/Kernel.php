@@ -64,6 +64,8 @@ class Kernel extends HttpKernel
         //'cors' => \App\Http\Middleware\Cors::class
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
         'tenantById' => \App\Http\Middleware\TenantByKey::class,
-        'locale' => \App\Http\Middleware\DetectLocale::class
+        'locale' => \App\Http\Middleware\DetectLocale::class,
+        'max_memory_limit' => \App\Http\Middleware\MaxMemoryLimit::class,
+        'max_execution_limit' => \App\Http\Middleware\MaxExecutionLimit::class,
     ];
 }
