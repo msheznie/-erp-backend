@@ -1212,8 +1212,13 @@ class DebitNoteAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
-        $debitNotes = $this->debitNotesByCompany($input, $search);
+        $debitNotes = $this->debitNotesByCompany($input, $search, $supplierID);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -2042,7 +2047,7 @@ UNION ALL
     }
 
 
-    private function debitNotesByCompany($request, $search)
+    private function debitNotesByCompany($request, $search, $supplierID)
     {
         $input = $request;
         $selectedCompanyId = $input['companyId'];
@@ -2060,7 +2065,7 @@ UNION ALL
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $debitNotes = $debitNotes->where('supplierID', $input['supplierID']);
+                $debitNotes = $debitNotes->whereIn('supplierID', $supplierID);
             }
         }
 
