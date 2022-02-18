@@ -1875,9 +1875,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
         
-        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

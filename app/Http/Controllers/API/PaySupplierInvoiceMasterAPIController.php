@@ -2471,6 +2471,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
         
         if(empty($input['BPVAccount'])){
@@ -2510,7 +2514,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['payment_mode']);
         }
 
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
