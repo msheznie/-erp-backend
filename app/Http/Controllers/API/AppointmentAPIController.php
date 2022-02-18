@@ -337,6 +337,64 @@ class AppointmentAPIController extends AppBaseController
 
         return $data;
     }
+    public function getAppointmentListSummaryView(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $documentSystemID = 106;
+        $empID = \Helper::getEmployeeSystemID();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $appointmentDetail = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
+            $q->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                ->where('erp_documentapproved.companySystemID', $companyId);;
+
+            $q->with(['employeeDepartments' => function ($q2) use ($companyId, $documentSystemID, $empID) {
+                $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            }]);
+            $q->with(['employeeRole' => function ($q3) use ($companyId, $documentSystemID, $empID) {
+                $q3->where('appointment.company_id', $companyId)
+                    ->where('appointment.approved_yn', 0)
+                    ->where('appointment.confirmed_yn', 1);
+            }]);
+        }, 'created_by', 'detail'])
+            ->where('confirmed_yn', 1);
+            //->get();
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            /*$suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
+            });*/
+        }
+
+        return \DataTables::of($appointmentDetail)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
     public function approveCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
