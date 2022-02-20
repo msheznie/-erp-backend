@@ -5588,6 +5588,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $from = "";
         $to = "";
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         if (array_key_exists('fromDate', $input) && $input['fromDate']) {
             $from = ((new Carbon($input['fromDate']))->format('Y-m-d'));
         }
@@ -5623,8 +5627,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->when($from && $to, function ($q) use ($from, $to) {
                 return $q->whereBetween('approvedDate', [$from, $to]);
             })
-            ->when(request('supplierID', false), function ($q) use ($input) {
-                return $q->where('supplierID', $input['supplierID']);
+            ->when(request('supplierID', false), function ($q) use ($input,$supplierID) {
+                return $q->whereIn('supplierID', $supplierID);
             })
             ->when(request('financeCategory', false), function ($q) use ($input) {
                 return $q->where('financeCategory', $input['financeCategory']);
