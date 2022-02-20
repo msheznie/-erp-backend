@@ -1304,6 +1304,14 @@ class ProcumentOrderAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $procumentOrders = ProcumentOrder::where('documentSystemID', $input['documentId']);
         if ($input['poType_N'] != 1) {
             $procumentOrders->where('poType_N', $input['poType_N']);
@@ -1326,7 +1334,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $procumentOrders->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -1380,7 +1388,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $procumentOrders->where('supplierID', $input['supplierID']);
+                $procumentOrders->whereIn('supplierID', $supplierID);
             }
         }
 
