@@ -365,26 +365,32 @@ class AppointmentAPIController extends AppBaseController
                     ->where('appointment.approved_yn', 0)
                     ->where('appointment.confirmed_yn', 1);
             }]);
-        }, 'created_by', 'detail'])
+        }, 'created_by', 'detail', 'slot_detail.slot_master.ware_house'])
             ->where('confirmed_yn', 1);
-            //->get();
 
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            /*$suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
-            });*/
+            $appointmentDetail = $appointmentDetail->where(function ($query) use ($search) {
+                $query->where('primary_code', 'LIKE', "%{$search}%");
+                $query->orWhereHas('slot_detail.slot_master.ware_house', function ($query1) use ($search) {
+                    $query1->where('wareHouseDescription', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('slot_detail.slot_master', function ($query1) use ($search) {
+                    $query1->whereDate('from_date', "%{$search}%");
+                });
+            });
         }
 
         return \DataTables::of($appointmentDetail)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                        $query->orderBy('id', $input['order'][0]['dir']);
                     }
                 }
             })

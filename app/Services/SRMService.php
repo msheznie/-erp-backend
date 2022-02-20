@@ -745,7 +745,7 @@ class SRMService
         }
     }
 
-    public function getAppointmentDetails(Request $request)
+    public function  getAppointmentDetails(Request $request)
     {
         $appointmentID = $request->input('extra.appointmentID');
 
