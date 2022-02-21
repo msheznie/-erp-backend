@@ -1698,6 +1698,44 @@ class SupplierMasterAPIController extends AppBaseController
         }
     }
 
+    public function srmRegistrationLinkHistoryView(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+        
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($suppliersDetail)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
     public function getSearchSupplierByCompanySRM(Request $request)
     {
         $isExist = SupplierRegistrationLink::select('supplier_master_id')->whereNotNull('supplier_master_id')->get()->pluck('supplier_master_id');    
