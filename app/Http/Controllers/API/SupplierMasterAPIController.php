@@ -1710,23 +1710,32 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
-        
+        $registrationLinkDetails = SupplierRegistrationLink::with(['supplier', 'created_by'])
+            ->where('company_id',  $companyID);
+
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
+            $registrationLinkDetails = $registrationLinkDetails->where(function ($query) use ($search) {
+                $query->where('registration_number', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
+                    ->orWhere('name', 'LIKE', "%{$search}%");
+
+                $query->orWhereHas('supplier', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
             });
         }
 
-        return \DataTables::of($suppliersDetail)
+        return \DataTables::of($registrationLinkDetails)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                        $query->orderBy('id', $input['order'][0]['dir']);
                     }
                 }
             })
