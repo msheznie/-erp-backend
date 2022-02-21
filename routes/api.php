@@ -10,6 +10,7 @@
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
 
 Route::group(['middleware' => ['tenant','locale']], function () {
