@@ -233,11 +233,21 @@ class TransactionsExportExcel extends AppBaseController
             case '15':
                 if($input['docName'] == "receipt_voucher-matching") {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
-                    $dataQry = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
+                    
+                    $customerID = $request['customerID'];
+                    $customerID = (array)$customerID;
+                    $customerID = collect($customerID)->pluck('id');
+
+                    $dataQry = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search, $customerID);
                     $data = $this->matchDocumentMasterRepository->setReceiptVoucherMatchingExportExcelData($dataQry);
                 } else {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
-                    $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
+                    
+                    $supplierID = $request['supplierID'];
+                    $supplierID = (array)$supplierID;
+                    $supplierID = collect($supplierID)->pluck('id');
+
+                    $dataQry = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search, $supplierID);
                     $data = $this->matchDocumentMasterRepository->setExportExcelData($dataQry);
                 }
                 break;
@@ -249,14 +259,24 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '19':
-                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
-                $dataQry = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'customerID'));
+
+                $customerID = $request['customerID'];
+                $customerID = (array)$customerID;
+                $customerID = collect($customerID)->pluck('id');
+
+                $dataQry = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search, $customerID);
                 $data = $this->creditNoteRepository->setExportExcelData($dataQry);
                 break;
 
             case '20':
                 $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
-                $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
+                
+                $customerID = $request['customerID'];
+                $customerID = (array)$customerID;
+                $customerID = collect($customerID)->pluck('id');
+
+                $dataQry = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
                 $data = $this->customerInvoiceDirectRepository->setExportExcelData($dataQry);
                 break;
 
