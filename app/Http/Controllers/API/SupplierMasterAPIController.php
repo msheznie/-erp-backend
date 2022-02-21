@@ -68,7 +68,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
-
+use App\helper\CreateExcel;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -217,18 +217,23 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x]['VAT Percentage'] = $val->vatPercentage;
         }
 
-         \Excel::create('supplier_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
 
-        return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
+        $fileName = 'supplier_master';
+        $path = 'procurement/master/supplier/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
+
     }
 
     public function printSuppliers(Request $request)
@@ -1691,6 +1696,53 @@ class SupplierMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
+    }
+
+    public function srmRegistrationLinkHistoryView(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+        $registrationLinkDetails = SupplierRegistrationLink::with(['supplier', 'created_by'])
+            ->where('company_id',  $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $registrationLinkDetails = $registrationLinkDetails->where(function ($query) use ($search) {
+                $query->where('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('name', 'LIKE', "%{$search}%");
+
+                $query->orWhereHas('supplier', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::of($registrationLinkDetails)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 
     public function getSearchSupplierByCompanySRM(Request $request)

@@ -38,6 +38,7 @@ use App\Repositories\PaymentBankTransferRepository;
 use App\Repositories\FixedAssetMasterRepository;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use App\Repositories\PdcLogRepository;
+use App\helper\CreateExcel;
 class TransactionsExportExcel extends AppBaseController
 {
     private $gRVMasterRepository;
@@ -422,16 +423,21 @@ class TransactionsExportExcel extends AppBaseController
                 return $this->sendResponse(array(), 'export failed');
         }
 
-        \Excel::create('po_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        $doc_name = $input['docName'].'/';
+        $path = 'procurement/'.$doc_name.'excel/';
+        $basePath = CreateExcel::process($data,$type,$input['docName'],$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+        
+
+
     }
 }

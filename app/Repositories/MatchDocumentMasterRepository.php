@@ -88,7 +88,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return MatchDocumentMaster::class;
     }
 
-    public function matchDocumentListQuery($request, $input, $search = '') {
+    public function matchDocumentListQuery($request, $input, $search = '', $supplierID) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [4, 15]);
@@ -117,7 +117,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $invMaster->where('BPVsupplierID', $input['supplierID']);
+                $invMaster->whereIn('BPVsupplierID', $supplierID);
             }
         }
 

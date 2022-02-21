@@ -83,7 +83,7 @@ use App\Repositories\SegmentAllocatedItemRepository;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\GenerateMaterialRequestItem;
 use App\Models\MaterielRequestDetails;
-
+use App\helper\CreateExcel;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -905,17 +905,31 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-         \Excel::create('pr_to_grv', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        //  \Excel::create('pr_to_grv', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), 'successfully export');
+
+        $doc_name = 'pr_to_grv';
+        $doc_name_path = 'pr_to_grv/';
+        $path = 'procurement/report/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
     /**
@@ -1037,8 +1051,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-
-        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2153,6 +2169,11 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year','financeCategory'));
 
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2190,7 +2211,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -2378,17 +2399,33 @@ class PurchaseRequestAPIController extends AppBaseController
             );
         }
 
-         \Excel::create('open_requests', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-        return $this->sendResponse(array(), 'successfully export');
+        //  \Excel::create('open_requests', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
+        // return $this->sendResponse(array(), 'successfully export');
+
+
+        $doc_name = 'open_requests';
+        $path = 'procurement/open_requests/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
 
     }
 

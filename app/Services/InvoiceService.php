@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\BookInvSuppMaster;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceService
 {
@@ -21,8 +22,9 @@ class InvoiceService
         $input = $request->all();
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
+        $search = $request->input('search.value');
 
-        return BookInvSuppMaster::select(
+        $query = BookInvSuppMaster::select(
             ['bookingSuppMasInvAutoID',
                 'bookingInvCode',
                 'documentSystemID',
@@ -44,7 +46,6 @@ class InvoiceService
                 'confirmedYN',
                 'documentType',
                 'approved',
-                'supplierInvoiceNo',
                 'supplierInvoiceDate'
             ])
             ->with(['created_by' => function ($q) {
@@ -78,8 +79,30 @@ class InvoiceService
             ->where('approved', -1)
             ->where('cancelYN', 0)
             ->where('documentType', 0)
-            ->orderBy('bookingSuppMasInvAutoID', 'desc')
-            ->paginate($per_page, ['*'], 'page', $page);
+            ->orderBy('bookingSuppMasInvAutoID', 'desc');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->orWhere('supplierInvoiceNo', 'LIKE', "%{$search}%");
+                $query->orWhere('comments', 'LIKE', "%{$search}%");
+                $query->orWhere('approvedDate', 'LIKE', "%{$search}%");
+                $query->orWhere('bookingInvCode', 'LIKE', "%{$search}%");
+                $query->orWhere('bookingDate', 'LIKE', "%{$search}%");
+                $query->orWhere('createdDateAndTime', 'LIKE', "%{$search}%");
+                $query->orWhere('bookingAmountTrans', 'LIKE', "%{$search}%");
+            });
+        }
+        return DataTables::eloquent($query)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bookingInvCode', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
     }
 
     public function getInvoiceDetailsById($id, $supplierID)

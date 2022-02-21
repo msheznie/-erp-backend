@@ -1663,9 +1663,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $invMaster = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search);
+        $invMaster = $this->matchDocumentMasterRepository->matchDocumentListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

@@ -46,6 +46,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
         Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
         Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink');
+        Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView');
 
         Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
         Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
@@ -54,6 +55,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
         Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
+
+
+        Route::group(['middleware' => 'max_memory_limit'], function () {
+            Route::group(['middleware' => 'max_execution_limit'], function () {
+                Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
+                Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
+                Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
+            });
+        });
 
 
         Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
@@ -468,9 +478,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
         Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
-        Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
         Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
-        Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
         Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
         Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
         Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
@@ -939,6 +947,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
         Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+        Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency');
+
         Route::resource('performa_details', 'PerformaDetailsAPIController');
 
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
@@ -1188,7 +1198,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
         Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
         Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
-        Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
         Route::resource('credit_notes', 'CreditNoteAPIController');
         Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency');
         Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
@@ -2549,6 +2558,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
+    Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
+    Route::post('getAppointmentListSummaryView', 'AppointmentAPIController@getAppointmentListSummaryView');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');

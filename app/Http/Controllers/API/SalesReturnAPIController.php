@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSalesReturnAPIRequest;
 use App\Http\Requests\API\UpdateSalesReturnAPIRequest;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
 use App\Models\SalesReturn;
 use App\Models\ItemMaster;
 use App\Models\Company;

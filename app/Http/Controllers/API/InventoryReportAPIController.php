@@ -26,7 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
-
+use App\helper\CreateExcel;
 class InventoryReportAPIController extends AppBaseController
 {
     public function validateReport(Request $request)
@@ -1199,18 +1199,21 @@ FROM
 
 
 
-                 \Excel::create('inventory_summary_report', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($request->type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                $fileName = 'inventory_summary_report';
+                $path = 'inventory/report/inventory_summary_report/excel/';
+                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
 
                 break;
 
@@ -1329,18 +1332,31 @@ FROM
                         }
                     }
 
-                     \Excel::create('stock_transaction', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    //  \Excel::create('stock_transaction', function ($excel) use ($data) {
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+
+                    $fileName = 'stock_transaction';
+                    $path = 'inventory/report/stock_transaction/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+    
 
                 }
                 else if ($reportTypeID == 'SA') { //Stock Aging Report
@@ -1486,18 +1502,31 @@ FROM
                         }
                     }
 
-                     \Excel::create('stock_aging', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download('csv');
+                    //  \Excel::create('stock_aging', function ($excel) use ($data) {
+                    //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                    //         $sheet->fromArray($data, null, 'A1', true);
+                    //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                    //         $sheet->setAutoSize(true);
+                    //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    //     });
+                    //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    // })->download('csv');
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    // return $this->sendResponse(array(), 'successfully export');
+
+                    $fileName = 'stock_aging';
+                    $path = 'inventory/report/stock_aging/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+            
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
                 }
             case 'INVSD':
                 $data = [];
@@ -1546,18 +1575,35 @@ FROM
                         }
                     }
                 }
-                 \Excel::create('stock_Detail', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download('csv');
+                //  \Excel::create('stock_Detail', function ($excel) use ($data) {
+                //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                //         $sheet->fromArray($data, null, 'A1', true);
+                //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                //         $sheet->setAutoSize(true);
+                //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                //     });
+                //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                // })->download('csv');
 
-                return $this->sendResponse(array(), 'successfully export');
+                // return $this->sendResponse(array(), 'successfully export');
+
+
+                
+                $fileName = 'stock_detail';
+                $path = 'inventory/report/stock_Detail/excel/';
+                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+                
                 break;
             case 'INVMMA':
                 $reportTypeID = $request->reportTypeID;
@@ -1578,17 +1624,33 @@ FROM
                         $x ++;
                     }
                 }
-                 \Excel::create('stock_Detail', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download('csv');
-                return $this->sendResponse(array(), 'successfully export');
+                //  \Excel::create('stock_Detail', function ($excel) use ($data) {
+                //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+                //         $sheet->fromArray($data, null, 'A1', true);
+                //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                //         $sheet->setAutoSize(true);
+                //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                //     });
+                //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+                //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                // })->download('csv');
+                // return $this->sendResponse(array(), 'successfully export');
+
+
+                
+                $fileName = 'min_max_analysis';
+                $path = 'inventory/report/min_max_analysis/excel/';
+                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             Case 'INVIM':
 
