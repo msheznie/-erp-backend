@@ -153,20 +153,29 @@ class TransactionsExportExcel extends AppBaseController
 
             case '1':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
 
                 break;
 
             case '50':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search,$serviceLineSystemID);
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
 
             case '51':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
-                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search,$serviceLineSystemID);
                 $data = $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
 
