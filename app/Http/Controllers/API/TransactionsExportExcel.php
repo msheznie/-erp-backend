@@ -171,7 +171,14 @@ class TransactionsExportExcel extends AppBaseController
 
             case '3':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
-                $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search);
+                $grvLocation = $request['grvLocation'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
                 break;
 
@@ -189,25 +196,48 @@ class TransactionsExportExcel extends AppBaseController
 
             case '7':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
-                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search);
+                $grvLocation = $request['location'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
                 $data = $this->stockAdjustmentRepository->setExportExcelData($dataQry);
                 break;
 
             case '8':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
-                $dataQry = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search);
+
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+                $grvLocation = $request['wareHouseFrom'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+
+                $dataQry = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
                 $data = $this->itemIssueMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '9':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
-                $dataQry = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search,  $serviceLineSystemID);
                 $data = $this->materielRequestRepository->setExportExcelData($dataQry);
                 break;
 
             case '10':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
-                $dataQry = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search, $serviceLineSystemID);
                 $data = $this->stockReceiveRepository->setExportExcelData($dataQry);
                 break;
 
@@ -219,13 +249,27 @@ class TransactionsExportExcel extends AppBaseController
 
             case '12':
                 $input =  $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseLocation', 'month', 'year'));
-                $dataQry = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+                $grvLocation = $request['wareHouseLocation'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+                $dataQry = $this->itemReturnMasterRepository->itemReturnListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
                 $data = $this->itemReturnMasterRepository->setExportExcelData($dataQry);
                 break;
 
             case '13':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'confirmedYN', 'approved', 'month', 'year', 'interCompanyTransferYN'));
-                $dataQry = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search);
+                $grvLocation = $request['locationFrom'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $dataQry = $this->stockTransferRepository->stockTransferListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
                 $data = $this->stockTransferRepository->setExportExcelData($dataQry);
                 break;
 
@@ -280,7 +324,13 @@ class TransactionsExportExcel extends AppBaseController
             case '24':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID',
                 'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
-                $dataQry = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+                $grvLocation = $request['purchaseReturnLocation'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+                $dataQry = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search, $serviceLineSystemID, $grvLocation);
                 $data = $this->purchaseReturnRepository->setExportExcelData($dataQry);
                 break;
 
@@ -353,7 +403,15 @@ class TransactionsExportExcel extends AppBaseController
                 break;
             case '97':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
-                $dataQry = $this->stockCountRepository->stockCountListQuery($request, $input, $search);
+
+                $grvLocation = $request['location'];
+                $grvLocation = (array)$grvLocation;
+                $grvLocation = collect($grvLocation)->pluck('id');
+                $serviceLineSystemID = $request['serviceLineSystemID'];
+                $serviceLineSystemID = (array)$serviceLineSystemID;
+                $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+                $dataQry = $this->stockCountRepository->stockCountListQuery($request, $input, $search, $grvLocation,$serviceLineSystemID);
                 $data = $this->stockCountRepository->setExportExcelData($dataQry);
                 break;
             case '58':
