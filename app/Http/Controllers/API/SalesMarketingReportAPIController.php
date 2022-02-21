@@ -59,7 +59,7 @@ use Carbon\Carbon;
 use function foo\func;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\helper\CreateExcel;
 class SalesMarketingReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -892,7 +892,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $decimalPlace = collect($output)->pluck('dp')->toArray();
                 $decimalPlace = array_unique($decimalPlace);
-
+                $data = array();
                 if ($output) {
                     foreach ($output as $val) {
                         // doc status
@@ -944,17 +944,18 @@ class SalesMarketingReportAPIController extends AppBaseController
                 }
 
 
-                \Excel::create('quotation_so_report', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'quotation_so_report';
+                $path = 'sales/report/quotation_so_report/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
 
@@ -1354,17 +1355,18 @@ class SalesMarketingReportAPIController extends AppBaseController
                     }
                 }
 
-                \Excel::create('sales_detail_report_', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'sales_detail_report_';
+                $path = 'sales/report/sales_detail_report_/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             default:
@@ -2313,17 +2315,22 @@ class SalesMarketingReportAPIController extends AppBaseController
             }
         }
 
-        \Excel::create('so_to_receipt', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+
+
+        $fileName = 'so_to_receipt';
+        $path = 'sales/report/so_to_receipt/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
     }
 
 }
