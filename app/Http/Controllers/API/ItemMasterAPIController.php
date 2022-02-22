@@ -1364,11 +1364,12 @@ class ItemMasterAPIController extends AppBaseController
     {
         $wareHouseSystemCode = $request->wareHouseSystemCode;
         $itemSystemCode = $request->itemSystemCode;
+        $companySystemID = $request->companySystemID;
         $sumWarehouse = null;
         if($wareHouseSystemCode != null) {
-            $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $itemSystemCode)->sum('inOutQty');
+            $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
         }
-        $sumGlobal= ErpItemLedger::where('itemSystemCode', $itemSystemCode)->sum('inOutQty');
+        $sumGlobal= ErpItemLedger::where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
 
         $sum=array("sumWarehouse"=>$sumWarehouse,"sumGlobal"=>$sumGlobal);
 
