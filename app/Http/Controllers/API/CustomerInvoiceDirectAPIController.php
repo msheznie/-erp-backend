@@ -2042,9 +2042,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+        
         $search = $request->input('search.value');
 
-        $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
+        $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
