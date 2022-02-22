@@ -1338,4 +1338,21 @@ WHERE
         }
 
     }
+
+
+    public function validateDeliveryOrder(Request $request) {
+         $input = $request->all();
+         $qntyCanIssue = 0;
+         $deliveryOrder = DeliveryOrderDetail::with([
+                'master'=> function($query){
+                    $query->where('confirmedYN',0);
+                    $query->where('approvedYN',0);
+                }])->where('itemCodeSystem',$input['itemAutoID'])->where('documentSystemID',$input['documentSystemID'])->orderBy('deliveryOrderDetailID','DESC')->first();
+         $qntyCanIssue = ($deliveryOrder->requestedQty - $deliveryOrder->qtyIssued);
+         if($qntyCanIssue != 0) {
+            return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], 'Details retrieved successfully');
+         }else {
+            return $this->sendResponse(["qnty"=>0,"data"=>false], 'Details retrieved successfully');
+         }
+    }
 }

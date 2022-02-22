@@ -139,6 +139,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Delivery order not found',500);
         }
 
+
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
             ->whereHas('detail', function ($query) use ($input) {
                 $query->where('itemCodeSystem', $input['itemCodeSystem']);
@@ -171,7 +172,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 })
                 ->where('approvedYN', 0)
                 ->first();
-
             if (!empty($checkWhether)) {
                 return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
