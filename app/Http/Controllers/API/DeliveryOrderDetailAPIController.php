@@ -899,7 +899,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         $deliveryOrder = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
-
         //check PO segment is correct with PR pull segment
 
         /*foreach ($input['detailTable'] as $itemExist) {
@@ -1263,13 +1262,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $quoMasterfullyOrdered = QuotationDetails::where('quotationMasterID', $new['quotationMasterID'])
                     ->whereIn('fullyOrdered', [1, 0])
                     ->get()->toArray();
-
                 if (empty($quoMasterfullyOrdered)) {
-                    $updateQuotation = QuotationMaster::find($new['quotationMasterID'])
-                        ->update([
-                            'selectedForDeliveryOrder' => -1,
-                            'closedYN' => -1,
-                        ]);
+                      $updateQuotation = QuotationMaster::find($new['quotationMasterID']);
+                      $updateQuotation->selectedForDeliveryOrder = -1 ;
+                      $updateQuotation->closedYN = -1 ;
+                      $updateQuotation->save();
+                   
                 } else {
                     $updateQuotation = QuotationMaster::find($new['quotationMasterID'])
                         ->update([
