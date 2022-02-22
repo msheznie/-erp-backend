@@ -194,7 +194,12 @@ class TransactionsExportExcel extends AppBaseController
 
             case '4':
                 $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury'));
-                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search);
+                
+                $supplierID = $request['supplierID'];
+                $supplierID = (array)$supplierID;
+                $supplierID = collect($supplierID)->pluck('id');
+
+                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID);
                 $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
                 break;
 
@@ -253,7 +258,12 @@ class TransactionsExportExcel extends AppBaseController
 
             case '11':
                 $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
-                $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
+                
+                $supplierID = $request['supplierID'];
+                $supplierID = (array)$supplierID;
+                $supplierID = collect($supplierID)->pluck('id');
+
+                $dataQry = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
                 $data = $this->bookInvSuppMasterRepository->setExportExcelData($dataQry);
                 break;
 
