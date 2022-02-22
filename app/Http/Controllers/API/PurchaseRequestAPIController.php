@@ -1599,7 +1599,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
             if (!$itemNotound) {
                 $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-                $input['estimatedCost'] = $currencyConversion['documentAmount'];
+                $input['estimatedCost'];
+                $input['altUnitValue'] = $input['quantityRequested'];
+                $input['altUnit'];
+                $input['totalCost'] = $input['altUnitValue'] * $input['estimatedCost'];
                 $input['companySystemID'] = $item->companySystemID;
                 $input['companyID'] = $item->companyID;
                 $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
@@ -1614,7 +1617,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->first();
 
                 if (empty($financeItemCategorySubAssigned)) {
-                    $errors[$i]["financeNotAssigned"] = $input['itemCode'];
+                    $errors[$i] = $input['itemCode']." - Finance category not assigned for the selected item";
                     continue;
                 }
 
@@ -1626,7 +1629,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         })
                         ->first();
                     if ($alreadyAdded) {
-                        $errors[$i]["AlreadyAdded"] = $input['itemCode'];
+                        $errors[$i] = $input['itemCode']." - Selected item is already added. Please check again";
 
                         continue;
                     }
@@ -1638,7 +1641,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 if ($item->financeCategoryMaster == 3) {
                     $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
                     if (!$assetCategory) {
-                        $errors[$i]["AssetCategoryNotAssigned"] = $input['itemCode'];
+                        $errors[$i] = $input['itemCode']." - Asset category not assigned for the selected item";
                         continue;
                     }
                     $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
@@ -1659,7 +1662,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                     if ($policy == 0) {
                         if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                            $errors[$i]["categoryNotFound"] = $input['itemCode'];
+                            $errors[$i] = $input['itemCode']." - Category is not found";
                             continue;
                         }
 
@@ -1670,7 +1673,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                         if ($pRDetailExistSameItem) {
                             if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                $errors[$i]["differentCategoryItem"] = $input['itemCode'];
+                                $errors[$i] = $input['itemCode']." - You cannot add different category item";
                                 continue;
                             }
                         }
@@ -1730,7 +1733,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
             } else {
                 $input['purchaseRequestID'] = $purchaseRequests['purchaseRequestID'];
-                $input['estimatedCost'] = 0;
+                $input['estimatedCost'];
+                $input['altUnitValue'] = $input['quantityRequested'];
+                $input['altUnit'];
+                $input['totalCost'] = $input['altUnitValue'] * $input['estimatedCost'];
                 $input['companySystemID'] = $companySystemID;
                 $input['companyID'] = $purchaseRequest->companyID;
                 $input['unitOfMeasure'] = null;

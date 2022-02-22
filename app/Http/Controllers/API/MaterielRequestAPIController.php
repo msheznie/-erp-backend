@@ -982,8 +982,7 @@ class MaterielRequestAPIController extends AppBaseController
 
                 if (empty($item)) {
                     if (!$allowItemToTypePolicy) {
-//                        return $this->sendResponse(1, 'Item not found');
-                        $errors[$i]["itemNotFound"] = $input['itemCode'];
+                        $errors[$i] = $input['itemCode']." - Item not found";
                         continue;
                     } else {
                         $itemNotound = true;
@@ -1021,8 +1020,7 @@ class MaterielRequestAPIController extends AppBaseController
                         ->first();
 
                     if (empty($financeItemCategorySubAssigned)) {
-//                        return $this->sendResponse('Finance Category not found');
-                        $errors[$i]["financeNotFound"] = $input['itemCode'];
+                        $errors[$i] = $input['itemCode']." - Finance Category not found";
 
                         continue;
 
@@ -1037,7 +1035,7 @@ class MaterielRequestAPIController extends AppBaseController
                             ->first();
 
                         if ($alreadyAdded) {
-                            $errors[$i]["AlreadyAdded"] = $input['itemCode'];
+                            $errors[$i]= $input['itemCode']." - Selected item is already added. Please check again";
 
                             continue;
                         }
@@ -1090,8 +1088,7 @@ class MaterielRequestAPIController extends AppBaseController
                     $input['quantityInHand'] = $quantityInHand;
 
                     if ($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']) {
-//                        return $this->sendResponse("No stock Qty. Please check again.", 500);
-                        $errors[$i]["noStock"] = $input['itemCode'];
+                        $errors[$i]= $input['itemCode']." - No stock Qty. Please check again";
 
                         continue;
 
