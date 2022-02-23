@@ -165,4 +165,9 @@ class Appointment extends Model
     {
         return $this->hasOne('App\Models\SlotDetails', 'id', 'slot_detail_id');
     }
+
+    public function supplier()
+    {
+        return $this->hasOne('App\Models\SupplierMaster', 'supplierCodeSystem', 'supplier_id');
+    }
 }

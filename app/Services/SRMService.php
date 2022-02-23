@@ -75,21 +75,65 @@ class SRMService
     }
     public function getPoList(Request $request): array
     {
+        $input = $request->all();
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
-        $data = ProcumentOrder::where('approved', -1)
+        $search = $request->input('search.value');
+        /*return [
+        'success' => true,
+        'message' => 'Purchase order list successfully get',
+        'data' => $input
+        ];*/
+
+        /*$data = ProcumentOrder::where('approved', -1)
+        ->where('supplierID', $supplierID)
+        ->where('poType_N', '!=', 5)
+        ->with(['currency', 'created_by', 'segment', 'supplier'])
+        ->orderBy('createdDateTime', 'desc')
+        ->paginate($per_page, ['*'], 'page', $page);*/
+
+        $query = ProcumentOrder::where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
             ->with(['currency', 'created_by', 'segment', 'supplier'])
-            ->orderBy('createdDateTime', 'desc')
-            ->paginate($per_page, ['*'], 'page', $page);
+            ->orderBy('createdDateTime', 'desc');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                $query->orWhere('referenceNumber', 'LIKE', "%{$search}%");
+                $query->orWhere('supplierName', 'LIKE', "%{$search}%");
+                $query->orWhere('poTotalSupplierTransactionCurrency', 'LIKE', "%{$search}%");
+                $query->orWhereHas('segment', function ($query1) use ($search) {
+                    $query1->where('ServiceLineDes', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('supplier', function ($query1) use ($search) {
+                    $query1->where('primarySupplierCode', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+
         return [
-            'success'   => true,
-            'message'   => 'Purchase order list successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Purchase order list successfully get',
+            'data' => $data
         ];
     }
+
     public function getPoPrintData(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
@@ -761,7 +805,7 @@ class SRMService
         }
     }
 
-    public function getAppointmentDetails(Request $request)
+    public function  getAppointmentDetails(Request $request)
     {
         $appointmentID = $request->input('extra.appointmentID');
 
