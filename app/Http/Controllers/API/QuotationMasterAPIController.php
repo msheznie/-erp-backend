@@ -1786,7 +1786,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if(!$is_return)
         {
-            $delivery_order = DeliveryOrderDetail::where('quotationMasterID','=',$id);
+            $delivery_order = DeliveryOrderDetail::where('quotationMasterID','=',$id)->count();
             if ($delivery_order > 0) {
                 return $this->sendError($order_type.' added to delivery order');
             }
