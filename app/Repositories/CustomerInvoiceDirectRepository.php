@@ -202,7 +202,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $customerInvoiceDirect;
     }
 
-    public function customerInvoiceListQuery($request, $input, $search = '') {
+    public function customerInvoiceListQuery($request, $input, $search = '', $customerID) {
 
         $invMaster = DB::table('erp_custinvoicedirect')
             ->leftjoin('currencymaster', 'custTransactionCurrencyID', '=', 'currencyID')
@@ -243,7 +243,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if (($input['customerID'] != '')) {
-                $invMaster->where('erp_custinvoicedirect.customerID', $input['customerID']);
+                $invMaster->whereIn('erp_custinvoicedirect.customerID', $customerID);
             }
         }
 

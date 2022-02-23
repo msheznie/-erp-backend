@@ -180,10 +180,11 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
 
-        $customer = CustomerMaster::find($input['customerID']);
+        $customer = CustomerMaster::where('customerCodeSystem',$input['customerID'])->first();
         if(empty($customer)){
             return $this->sendError('Selected customer not found on db',500);
         }
+
 
         if(!$customer->custGLAccountSystemID){
             return $this->sendError('GL account is not configured for this customer',500);
@@ -299,6 +300,7 @@ class DeliveryOrderAPIController extends AppBaseController
      */
     public function show($id)
     {
+       
         /** @var DeliveryOrder $deliveryOrder */
         $deliveryOrder = $this->deliveryOrderRepository->with(['tax','customer','transaction_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -307,7 +309,6 @@ class DeliveryOrderAPIController extends AppBaseController
         }, 'detail' => function($query){
             $query->with(['quotation','uom_default', 'item_by']);
         },'segment','warehouse'])->findWithoutFail($id);
-
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }
@@ -1336,5 +1337,22 @@ WHERE
             return $this->sendResponse(false, 'Details retrieved successfully');
         }
 
+    }
+
+
+    public function validateDeliveryOrder(Request $request) {
+         $input = $request->all();
+         $qntyCanIssue = 0;
+         $deliveryOrder = DeliveryOrderDetail::with([
+                'master'=> function($query){
+                    $query->where('confirmedYN',0);
+                    $query->where('approvedYN',0);
+                }])->where('itemCodeSystem',$input['itemAutoID'])->where('documentSystemID',$input['documentSystemID'])->orderBy('deliveryOrderDetailID','DESC')->first();
+         $qntyCanIssue = ($deliveryOrder->requestedQty - $deliveryOrder->qtyIssued);
+         if($qntyCanIssue != 0) {
+            return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], 'Details retrieved successfully');
+         }else {
+            return $this->sendResponse(["qnty"=>0,"data"=>false], 'Details retrieved successfully');
+         }
     }
 }

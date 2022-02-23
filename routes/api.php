@@ -46,6 +46,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
         Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
         Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink');
+        Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView');
 
         Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
         Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
@@ -147,8 +148,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
+        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
-        
+
+
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
         Route::resource('units', 'UnitAPIController');
@@ -1962,6 +1965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+        Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
@@ -2557,6 +2561,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('clanderSlotMasterData', 'SlotMasterAPIController@clanderSlotMasterData');
     Route::post('removeCalanderSlot', 'SlotMasterAPIController@removeCalanderSlot');
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
+    Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
+    Route::post('getAppointmentListSummaryView', 'AppointmentAPIController@getAppointmentListSummaryView');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
