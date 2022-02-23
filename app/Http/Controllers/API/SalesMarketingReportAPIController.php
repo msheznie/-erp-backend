@@ -1769,6 +1769,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
         $details = QuotationMaster::whereIn('companySystemID',$companyID)
+            ->where('cancelledYN',0)
             ->whereIn('customerSystemCode',$customerSystemID)
                 ->whereDate('createdDateTime', '>=', $fromDate)
                 ->whereDate('createdDateTime', '<=', $toDate)
@@ -2118,6 +2119,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         }
 
         $purchaseOrder = QuotationMaster::where('companySystemID', $input['companyId'])
+            ->where('cancelledYN',0)
             ->where('documentSystemID', 68)
             ->where('confirmedYN', 1)
             ->where('isDeleted', 0)

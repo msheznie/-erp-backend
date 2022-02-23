@@ -827,6 +827,8 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('isInDOorCI', '!=',2)
             ->where('isInSO', '!=',1)
             ->where('closedYN',0)
+            ->where('cancelledYN',0)
+            ->where('manuallyClosed',0)
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
