@@ -1965,6 +1965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+        Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
