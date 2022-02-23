@@ -41,6 +41,8 @@ define('GET_PO_DETAILS', 'GET_PO_DETAILS');
 define('GET_ALL_APPOINTMENT_DELIVERIES', 'GET_ALL_APPOINTMENT_DELIVERIES');
 define('GET_WAREHOUSE', 'GET_WAREHOUSE');
 define('GET_REMAINING_SLOT_COUNT', 'GET_REMAINING_SLOT_COUNT');
+define('CANCEL_APPOINTMENTS', 'CANCEL_APPOINTMENTS');
+define('GET_APPROVED_DETAILS', 'GET_APPROVED_DETAILS');
 
 class APIController extends Controller
 {
@@ -111,6 +113,10 @@ class APIController extends Controller
                 return $this->SRMService->getWarehouse($request);
             case GET_REMAINING_SLOT_COUNT:
                 return $this->SRMService->getRemainingSlotCount($request);
+            case CANCEL_APPOINTMENTS:
+                return $this->SRMService->cancelAppointments($request);
+            case GET_APPROVED_DETAILS:
+                return $this->SRMService->getSrmApprovedDetails($request);
             default:
                 return [
                     'success'   => false,
