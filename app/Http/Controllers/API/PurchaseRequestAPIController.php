@@ -2596,7 +2596,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'selectedForPO'));
-
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2635,7 +2637,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 

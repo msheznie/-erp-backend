@@ -148,8 +148,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
+        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
-        
+
+
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
         Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
         Route::resource('units', 'UnitAPIController');
@@ -1965,6 +1967,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+        Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');

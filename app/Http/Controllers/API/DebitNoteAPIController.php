@@ -1968,8 +1968,13 @@ UNION ALL
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+        
         $search = $request->input('search.value');
-        $output = $this->debitNotesByCompany($input, $search)->orderBy('debitNoteAutoID', $sort)->get();
+        $output = $this->debitNotesByCompany($input, $search, $supplierID)->orderBy('debitNoteAutoID', $sort)->get();
         $data = array();
         $type = $request->type;
         if (!empty($output)) {
