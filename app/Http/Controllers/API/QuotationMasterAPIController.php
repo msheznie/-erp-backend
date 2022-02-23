@@ -1739,6 +1739,158 @@ class QuotationMasterAPIController extends AppBaseController
         }
     }
 
+    public function cancelQuatation(Request $request)
+    {
+      
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+        $comment = $input['cancelComments'];
 
+        $doc_id = $input['documentSystemID'];
+
+
+        $order_type = '';
+        $is_return = false;
+
+        $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+
+        if($doc_id == 67)
+        {
+            $order_type = 'Quotation';
+        }
+        else
+        {
+            $order_type = 'Sales Order';
+            $is_return = $quotationMaster->is_return;
+        }
+
+        
+        if ($quotationMaster->manuallyClosed == 1) {
+            return $this->sendError('This '.$order_type.' already manually closed');
+        }
+
+        if ($quotationMaster->cancelledYN == -1) {
+            return $this->sendError('This '.$order_type.' already cancelled');
+        }
+      
+        if($doc_id == 67)
+        {
+           
+            $sales_order = QuotationDetails::where('soQuotationMasterID','=',$id)->count();
+            if ($sales_order > 0) {
+                return $this->sendError('Quotation  added to sales order');
+            }
+        }   
+
+
+        if(!$is_return)
+        {
+            $delivery_order = DeliveryOrderDetail::where('quotationMasterID','=',$id)->count();
+            if ($delivery_order > 0) {
+                return $this->sendError($order_type.' added to delivery order');
+            }
+    
+            $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
+            if ($invoice > 0) {
+                return $this->sendError($order_type.' added to ivoice order');
+            }
+        }
+
+ 
+        
+        $employee = \Helper::getEmployeeInfo();
+
+        $quotationMaster->cancelledYN =-1;
+        $quotationMaster->cancelledByEmpID = $employee->empID;
+        $quotationMaster->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $quotationMaster->cancelledByEmpName = $employee->empName;
+        $quotationMaster->cancelledComments = $comment;
+        $quotationMaster->cancelledDate =  now();
+        $quotationMaster->save();
+
+        return $this->sendResponse($quotationMaster, 'quoatation successfully canceled');
+
+    }
+
+
+    public function closeQuatation(Request $request)
+    {
+       
+     
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+        $comment = $input['closeComments'];
+
+        $doc_id = $input['documentSystemID'];
+
+
+        $orderStatus = $input['orderStatus'];
+        $invoiceStatus = $input['invoiceStatus'];
+        $deliveryStatus = $input['deliveryStatus'];
+
+
+        $order_type = '';
+        if($doc_id == 67)
+        {
+            $order_type = 'Quotation';
+        }   
+        else
+        {
+            $order_type = 'Sales Order';
+        }
+
+        $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+        if ($quotationMaster->cancelledYN == -1) {
+            return $this->sendError('This '.$order_type.' already cancelled');
+        }
+
+        if ($quotationMaster->manuallyClosed == 1) {
+            return $this->sendError('This '.$order_type.' already manually closed');
+        }
+
+
+
+
+        $is_partially_added = false;
+
+        if($orderStatus == 1)
+        {
+            $is_partially_added = true;
+        }
+
+        if($invoiceStatus == 1)
+        {
+            $is_partially_added = true;
+        }
+
+        if($deliveryStatus == 1)
+        {
+            $is_partially_added = true;
+            
+        }
+
+
+        if(!$is_partially_added)
+        {
+            return $this->sendError($is_partially_added.'cannot be closed, not partially added to any orders');
+        }   
+        
+  
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $quotationMaster->manuallyClosed =1;
+        $quotationMaster->manuallyClosedByEmpID = $employee->empID;
+        $quotationMaster->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $quotationMaster->manuallyClosedByEmpName = $employee->empName;
+        $quotationMaster->manuallyClosedComment = $comment;
+        $quotationMaster->manuallyClosedDate =  now();
+        $quotationMaster->save();
+
+        return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
+
+    }
     
 }
