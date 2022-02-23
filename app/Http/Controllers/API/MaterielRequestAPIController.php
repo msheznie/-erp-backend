@@ -1114,7 +1114,7 @@ class MaterielRequestAPIController extends AppBaseController
 
                 $input['ClosedYN'] = 0;
                 $input['selectedForIssue'] = 0;
-                $input['comments'] = null;
+                $input['comments'];
                 $input['convertionMeasureVal'] = 1;
 
                 $input['allowCreatePR'] = 0;
