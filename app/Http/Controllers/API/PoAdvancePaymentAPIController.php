@@ -45,7 +45,7 @@ use Carbon\Carbon;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\helper\Helper;
-
+use App\helper\CreateExcel;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -864,15 +864,18 @@ ORDER BY
                 $data = array();
             }
 
-             \Excel::create('advance_payment_request', function ($excel) use ($data) {
-                $excel->sheet('sheet name', function ($sheet) use ($data) {
-                    $sheet->fromArray($data, null, 'A1', true);
-                    $sheet->setAutoSize(true);
-                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                });
-                $lastrow = $excel->getActiveSheet()->getHighestRow();
-                $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download($type);
+            $fileName = 'advance_payment_request';
+            $path = 'accounts-payable/report/advance_payment_request/excel/';
+            $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+            if($basePath == '')
+            {
+                 return $this->sendError('Unable to export excel');
+            }
+            else
+            {
+                 return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
     }
 
     public function advancePaymentTermCancel(Request $request)

@@ -1070,6 +1070,599 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      )
      * )
      */
+    public function updateCurrency($id, UpdateBookInvSuppMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        /** @var BookInvSuppMaster $bookInvSuppMaster */
+        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+            $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
+        }
+
+        $customValidation = CustomValidation::validation(11,$bookInvSuppMaster,2,$input);
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"],500, array('type' => 'already_confirmed'));
+        }
+
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
+
+        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
+            ->where('supplierID', $input['supplierID'])
+            ->where('bookingSuppMasInvAutoID', '<>', $id)
+            ->first();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
+        }
+
+        if(isset($input['custInvoiceDirectAutoID'])){
+            $alreadyUsed = BookInvSuppMaster::where('custInvoiceDirectAutoID', $input['custInvoiceDirectAutoID'])
+                ->where('bookingSuppMasInvAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyUsed) {
+                return $this->sendError("Entered customer invoice number was already used in ($alreadyUsed->bookingInvCode). Please check again", 500);
+            }
+        }
+
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetail) {
+            $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
+            $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            }
+        }
+
+        if (isset($input['bookingDate']) && $input['bookingDate']) {
+            $input['bookingDate'] = new Carbon($input['bookingDate']);
+        }
+
+        if (isset($input['supplierInvoiceDate']) && $input['supplierInvoiceDate']) {
+            $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
+        }
+
+        // calculating header total
+        $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('DIAmount');
+
+        $directAmountLocal = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('localAmount');
+
+        $directAmountReport = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('comRptAmount');
+
+        $detailTaxSumTrans = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('amount');
+
+        $detailTaxSumLocal = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('localAmount');
+
+        $detailTaxSumReport = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('rptAmount');
+
+        $bookingAmountTrans = 0;
+        $bookingAmountLocal = 0;
+        $bookingAmountRpt = 0;
+        if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+            $input['rcmActivated'] = 0;
+            $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totTransactionAmount');
+            $grvAmountLocal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totLocalAmount');
+            $grvAmountReport = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totRptAmount');
+
+            $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
+            $bookingAmountLocal = $grvAmountLocal + $directAmountLocal + $detailTaxSumLocal;
+            $bookingAmountRpt = $grvAmountReport + $directAmountReport + $detailTaxSumReport;
+
+            $input['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
+            $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+            $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+
+        } else {
+
+            $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
+            $bookingAmountLocal = $directAmountLocal + $detailTaxSumLocal;
+            $bookingAmountRpt = $directAmountReport + $detailTaxSumReport;
+
+            $input['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
+            $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+            $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+        }
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 1;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
+
+        $documentDate = $input['bookingDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the selected financial period !', 500);
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+
+            if ($companyCurrencyConversion) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
+
+
+        if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'bookingDate' => 'required',
+                'supplierInvoiceDate' => 'required',
+                'supplierInvoiceNo' => 'required',
+                'supplierID' => 'required|numeric|min:1',
+                'supplierTransactionCurrencyID' => 'required|numeric|min:1',
+                'comments' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            /*
+            * GWL-713
+             * documentType == 0  -   invoice type - PO
+            *  check policy 11 - Allow multiple GRV in One Invoice
+            * if policy 11 is 1 allow to add multiple different PO's
+            * if policy 11 is 0 do not allow multiple different PO's
+             */
+            if($input['documentType'] == 0){
+
+                $policy = CompanyPolicyMaster::where('companyPolicyCategoryID', 11)
+                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                    ->first();
+
+                if(empty($policy) || (!empty($policy) && !$policy->isYesNO)) {
+
+                    $details = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)->get();
+                    if(count($details)){
+
+                        $poIdArray = $details->pluck('purchaseOrderID')->toArray();
+                        if (count(array_unique($poIdArray)) > 1) {
+                            return $this->sendError('Multiple PO\'s cannot be added. Different PO found on saved details.');
+                        }
+                    }
+
+                }
+            }
+
+            $checkItems = 0;
+            if ($input['documentType'] == 1) {
+                $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                    ->count();
+                if ($checkItems == 0) {
+                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                }
+            }
+
+            if ($checkItems > 0) {
+                $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DIAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('DIAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+
+                $checkGRVItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->count();
+                if ($checkGRVItems == 0) {
+                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                }
+
+                $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('supplierInvoAmount', '<=', 0)
+                            ->orWhereNull('totLocalAmount', '<=', 0)
+                            ->orWhereNull('totRptAmount', '<=', 0)
+                            ->orWhereNull('totTransactionAmount')
+                            ->orWhereNull('totLocalAmount')
+                            ->orWhereNull('totRptAmount');
+                    })
+                    ->whereHas('unbilled_grv', function($query){
+                        $query->whereNull('purhaseReturnAutoID');
+                    })
+                    ->count();
+                if ($checkGRVQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+
+                //updating unbilled grv table all flags
+                $getBookglDetailUnbilled = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->get();
+                if ($getBookglDetailUnbilled) {
+                    foreach ($getBookglDetailUnbilled as $row) {
+
+                        $unbilledSumData = UnbilledGrvGroupBy::find($row['unbilledgrvAutoID']);
+
+                        if (is_null($unbilledSumData->purhaseReturnAutoID)) {
+                            $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
+                                ->sum('totTransactionAmount');
+
+                            if ((round($unbilledSumData->totTransactionAmount, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+
+                                $unbilledSumData->selectedForBooking = -1;
+                                $unbilledSumData->fullyBooked = 2;
+                            } else {
+                                $unbilledSumData->selectedForBooking = 0;
+                                $unbilledSumData->fullyBooked = 1;
+                            }
+                            $unbilledSumData->save();
+                        }
+                    }
+                }
+
+            }
+
+            //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['grvmaster'])
+                    ->get();
+                if ($checktotalExceed) {
+                    foreach ($checktotalExceed as $exc) {
+
+                        $unbilledGRTotal = UnbilledGrvGroupBy::where('grvAutoID', $exc->grvAutoID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($unbilledGRTotal, $documentCurrencyDecimalPlace)) {
+                            return $this->sendError('Supplier Invoice amount is greater than Unbilled GRV amount. Total Invoice amount is '. round($checkPreTotal, $documentCurrencyDecimalPlace) .'and Total Unbilled GRV amount is '. round($unbilledGRTotal, $documentCurrencyDecimalPlace) , 500);
+                        }
+                    }
+                }
+            }
+
+            //checking Supplier Invoice amount is greater than GRV Amount validations
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['grvmaster'])
+                    ->get();
+                if ($checktotalExceed) {
+                    $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                    $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                        ->where('companySystemID', $input['companySystemID'])
+                        ->first();
+                    $valEligible = false;
+                    $rcmActivate = TaxService::isSupplierInvoiceRcmActivated($id);
+                    if (($company->vatRegisteredYN == 1  || $supplierAssignedDetail->vatEligible == 1) && !$rcmActivate) {
+                        $valEligible = true;
+                    }
+                    foreach ($checktotalExceed as $exc) {
+                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total, SUM(VATAmount*noQty) as transVATAmount'))
+                            ->where('grvAutoID', $exc->grvAutoID)
+                            ->first();
+
+                        $logisticVATTotal = PoAdvancePayment::where('grvAutoID', $exc->grvAutoID)
+                            ->sum('VATAmount');
+
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+                            ->sum('totTransactionAmount');
+                        if (!$valEligible) {
+                            $grvDetailTotal = $grvDetailSum['total'];
+                        } else {
+                            $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'] + $logisticVATTotal;
+                        }
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
+                        }
+                    }
+                }
+            }
+
+            if ($input['documentType'] == 0) {
+                //updating PO Master invoicedBooked flag
+                $getPoRecords = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->groupBy('purchaseOrderID')
+                    ->get();
+
+                if ($getPoRecords) {
+                    foreach ($getPoRecords as $row) {
+
+                        $poMasterTableTotal = ProcumentOrder::find($row['purchaseOrderID']);
+
+                        $getTotal = BookInvSuppDet::where('purchaseOrderID', $row['purchaseOrderID'])
+                            ->sum('totTransactionAmount');
+
+                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
+                            $poMasterTableTotal->invoicedBooked = 2;
+                        } else if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)) {
+                            $poMasterTableTotal->invoicedBooked = 2;
+                        } else if ($getTotal != 0) {
+                            $poMasterTableTotal->invoicedBooked = 1;
+                        } else if ($getTotal == 0) {
+                            $poMasterTableTotal->invoicedBooked = 0;
+                        }
+                        $poMasterTableTotal->save();
+                    }
+                }
+            }
+
+            $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
+
+            $finalError = array('amount_zero' => array(),
+                'amount_neg' => array(),
+                'required_serviceLine' => array(),
+                'active_serviceLine' => array(),
+                'cannot_add_revenue' => array()
+            );
+            $error_count = 0;
+
+            //Supplier Direct Invoice
+            if ($input['documentType'] == 1) {
+
+                foreach ($directInvoiceDetails as $item) {
+
+                    $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
+
+                    if ($chartOfAccount->controlAccountsSystemID == 1) {
+                        array_push($finalError['cannot_add_revenue'], $item->glCode);
+                        $error_count++;
+                    }
+                }
+            }
+
+            foreach ($directInvoiceDetails as $item) {
+                $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
+
+                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActive)) {
+                        $updateItem->serviceLineSystemID = null;
+                        $updateItem->serviceLineCode = null;
+                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                    $error_count++;
+                }
+
+                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->DIAmount);
+
+                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
+
+                $updateItem->save();
+
+                if ($updateItem->DIAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                    array_push($finalError['amount_zero'], $updateItem->serviceLineCode);
+                    $error_count++;
+                }
+                if ($updateItem->DIAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
+                    array_push($finalError['amount_neg'], $updateItem->serviceLineCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+                $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('totTransactionAmount');
+                $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
+            } else {
+                $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
+            }
+
+            if ($input['bookingAmountTrans'] != \Helper::roundValue($bookingAmountTrans)) {
+                return $this->sendError('Cannot confirm. Supplier Invoice Master and Detail shows a difference in total.',500);
+            }
+
+            //check tax configuration if tax added
+            if($detailTaxSumTrans > 0 ){
+                if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                }
+
+                $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                }
+
+                //if rcm activated
+                if($input['documentType'] == 1 && isset($input['rcmActivated']) && $input['rcmActivated']){
+                    if(empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
+                        // return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }else if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+
+                    }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                        // return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                    }
+
+                    $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                    }
+                }
+            }
+
+            if($input['documentType'] == 0 || $input['documentType'] == 2){
+                $vatTotal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('VATAmount');
+                if($vatTotal > 0){
+                    if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                    }else if( empty(TaxService::getInputVATTransferGLAccount($input["companySystemID"]))){
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                    }
+
+                    $inputVATGL = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                    }
+
+                    $inputVATGL = TaxService::getInputVATTransferGLAccount($input["companySystemID"]);
+
+                    $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $input["companySystemID"]);
+
+                    if (!$checkAssignedStatus) {
+                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                    }
+
+                    if (TaxService::isSupplierInvoiceRcmActivated($id)) {
+                        if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        }else  if(empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getOutputVATTransferGLAccount($input["companySystemID"]);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->outputVatTransferGLAccountAutoID, $input["companySystemID"]);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
+                        }
+                    }
+                }
+            }
+
+            if ($input['documentType'] == 0 || $input['documentType'] == 2) {
+                $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
+            }
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $input['bookingAmountTrans']
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+//        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+//            ->where('companyPolicyCategoryID', 67)
+//            ->where('isYesNO', 1)
+//            ->first();
+//        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+//
+//        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+//            $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
+//            $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
+//        }
+//        if($BookInvSuppMaster->documentType != 1 || $policy == false){
+//            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+//            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+//        }
+
+
+        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
+
+        SupplierInvoice::updateMaster($id);
+
+        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
+    }
+
+
     public function destroy($id)
     {
         /** @var BookInvSuppMaster $bookInvSuppMaster */
@@ -1282,9 +1875,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
         
-        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

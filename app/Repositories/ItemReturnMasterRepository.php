@@ -81,7 +81,7 @@ class ItemReturnMasterRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function itemReturnListQuery($request, $input, $search = '') {
+    public function itemReturnListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -110,13 +110,13 @@ class ItemReturnMasterRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemReturnMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $itemReturnMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('wareHouseLocation', $input)) {
             if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
-                $itemReturnMaster->where('wareHouseLocation', $input['wareHouseLocation']);
+                $itemReturnMaster->whereIn('wareHouseLocation', $grvLocation);
             }
         }
 

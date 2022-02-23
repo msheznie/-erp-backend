@@ -661,7 +661,15 @@ class StockCountAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $stockAdjustments = $this->stockCountRepository->stockCountListQuery($request, $input, $search);
+        $grvLocation = $request['location'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $stockAdjustments = $this->stockCountRepository->stockCountListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
 
         return \DataTables::eloquent($stockAdjustments)
             ->addColumn('Actions', 'Actions', "Actions")

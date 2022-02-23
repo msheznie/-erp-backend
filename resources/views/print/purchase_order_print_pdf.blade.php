@@ -697,7 +697,7 @@
                 </span>
                 </td>
             </tr>
-            @if ($podata->supplierVATEligible)
+            {{-- @if ($podata->supplierVATEligible) --}}
                 <tr>
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;</td>
@@ -710,7 +710,7 @@
                                 class="font-weight-bold">@if($podata->rcmActivated){{number_format(0, $numberFormatting)}} @else {{number_format($podata->VATAmount, $numberFormatting)}}@endif</span>
                     </td>
                 </tr>
-            @endif
+            {{-- @endif --}}
             <tr>
                 <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                     &nbsp;</td>

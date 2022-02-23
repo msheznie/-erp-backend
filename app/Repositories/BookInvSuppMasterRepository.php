@@ -86,7 +86,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         return BookInvSuppMaster::class;
     }
 
-    public function bookInvSuppListQuery($request, $input, $search = '') {
+    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID) {
 
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
@@ -131,7 +131,7 @@ class BookInvSuppMasterRepository extends BaseRepository
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $invMaster->where('supplierID', $input['supplierID']);
+                $invMaster->whereIn('supplierID', $supplierID);
             }
         }
 

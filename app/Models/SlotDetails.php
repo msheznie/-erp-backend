@@ -116,4 +116,9 @@ class SlotDetails extends Model
     {
         return $this->hasOne('App\Models\SlotMaster', 'id', 'slot_master_id');
     }
+
+    public function appointment()
+    {
+        return $this->hasmany('App\Models\Appointment', 'slot_detail_id', 'id');
+    }
 }

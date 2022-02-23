@@ -1098,6 +1098,676 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
     }
 
+
+    public function updateCurrency($id, UpdateCustomerInvoiceDirectAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var CustomerInvoiceDirect $customerInvoiceDirect */
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        }
+
+        $isPerforma = $customerInvoiceDirect->isPerforma;
+
+        if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
+            $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+        } else {
+            $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+        }
+
+
+
+
+        if ($isPerforma == 1) {
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
+        } else {
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID'));
+            if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3|| $input['isPerforma'] == 4|| $input['isPerforma'] == 5)) {
+                $wareHouse = isset($input['wareHouseSystemCode']) ? $input['wareHouseSystemCode'] : 0;
+
+                if (!$wareHouse) {
+                    return $this->sendError('Please select a warehouse', 500);
+                }
+                $_post['wareHouseSystemCode'] = $input['wareHouseSystemCode'];
+
+
+                $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
+                if (!$serviceLine) {
+                    return $this->sendError('Please select a Segment', 500);
+                }
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                $_post['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $_post['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
+            }
+
+
+            $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            $_post['bankID'] = $input['bankID'];
+            $_post['bankAccountID'] = $input['bankAccountID'];
+
+            if ($_post['custTransactionCurrencyID'] != $customerInvoiceDirect->custTransactionCurrencyID) {
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You cannot change the currency.', 500);
+                } else {
+                    $myCurr = $_post['custTransactionCurrencyID'];
+                    //$companyCurrency = \Helper::companyCurrency($customerInvoiceDirect->companySystemID);
+                    //$companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $_post['custTransactionCurrencyER'] = 1;
+                    /* $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                     $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                     $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];*/
+                    $_post['bankAccountID'] = NULL;
+
+                }
+            }
+
+            /*if ($_post['bankID'] != $customerInvoiceDirect->bankID) {
+                $_post['bankAccountID'] = NULL;
+            }*/
+
+        }
+
+        if ($customerInvoiceDirect->customerCodeSystem != $input['customerID']) {
+            $customerGLCodeUpdate = CustomerAssigned::where('customerCodeSystem', $input['customerID'])
+                                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                                    ->first();
+            if ($customerGLCodeUpdate) {
+                $input['customerVATEligible'] = $customerGLCodeUpdate->vatEligible;
+            }
+        }
+
+        $_post['customerVATEligible'] = $input['customerVATEligible'];
+
+        $input['departmentSystemID'] = 4;
+        /*financial Year check*/
+        if ($isPerforma == 0) {
+            $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYearCheck["success"]) {
+                return $this->sendError($companyFinanceYearCheck["message"], 500);
+            }
+        }
+
+        if ($isPerforma == 0) {
+            /*financial Period check*/
+            $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+            if (!$companyFinancePeriodCheck["success"]) {
+                return $this->sendError($companyFinancePeriodCheck["message"], 500);
+            }
+        }
+        $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
+        $FYPeriodDateTo = $companyfinanceperiod->dateTo;
+        $_post['companyFinancePeriodID'] = $input['companyFinancePeriodID'];
+
+        $_post['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
+        $_post['FYEnd'] = $CompanyFinanceYear->endingDate;
+        $_post['FYPeriodDateFrom'] = $FYPeriodDateFrom;
+        $_post['FYPeriodDateTo'] = $FYPeriodDateTo;
+        $_post['companyFinancePeriodID'] = $input['companyFinancePeriodID'];
+        $_post['companyFinanceYearID'] = $input['companyFinanceYearID'];
+        $_post['wanNO'] = $input['wanNO'];
+        $_post['secondaryLogoCompanySystemID'] = isset($input['secondaryLogoCompanySystemID']) ? $input['secondaryLogoCompanySystemID'] : null;
+        $_post['servicePeriod'] = $input['servicePeriod'];
+        $_post['comments'] = $input['comments'];
+        $_post['customerID'] = $input['customerID'];
+        $_post['rigNo'] = $input['rigNo'];
+        $_post['PONumber'] = $input['PONumber'];
+        $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
+
+        if (isset($input['customerGRVAutoID']) && $input['customerGRVAutoID']) {
+            $checkGrv = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', '!=', $id)
+                ->where('customerGRVAutoID', $input['customerGRVAutoID'])
+                ->first();
+
+            if (!empty($checkGrv)) {
+                return $this->sendError('Selected GRV is already assigned to ' . $checkGrv->bookingInvCode, 500, array('type' => 'grvAssigned'));
+            }
+        } else {
+            $input['customerGRVAutoID'] = null;
+        }
+
+
+        if (isset($input['secondaryLogoCompanySystemID']) && $input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
+            if ($input['secondaryLogoCompID'] != '') {
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $_post['secondaryLogoCompID'] = $company->CompanyID;
+                $_post['secondaryLogo'] = $company->logo_url;
+            } else {
+                $_post['secondaryLogoCompID'] = NULL;
+                $_post['secondaryLogo'] = NULL;
+            }
+
+        } else {
+            $_post['secondaryLogoCompID'] = NULL;
+            $_post['secondaryLogo'] = NULL;
+        }
+
+        if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
+            $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
+        } else {
+            $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
+        }
+
+        if ($_post['customerInvoiceNo'] != '') {
+            /*checking customer invoice no already exist*/
+            $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $_post['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID', '<>', $id)->first();
+            if ($verifyCompanyInvoiceNo) {
+                return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
+            }
+        }
+
+
+        if ($input['customerID'] != $customerInvoiceDirect->customerID) {
+            if (count($detail) > 0) {
+                return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
+            }
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+            if ($customer->creditDays == 0 || $customer->creditDays == '') {
+                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500, array('type' => 'customer_credit_days'));
+            }
+
+            /*if customer change*/
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+            $_post['customerGLCode'] = $customer->custGLaccount;
+            $_post['customerGLSystemID'] = $customer->custGLAccountSystemID;
+            $currency = CustomerCurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+            if ($currency) {
+                $_post['custTransactionCurrencyID'] = $currency->currencyID;
+                $myCurr = $currency->currencyID;
+
+                //$companyCurrency = \Helper::companyCurrency($currency->currencyID);
+                $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                /*exchange added*/
+                $_post['custTransactionCurrencyER'] = 1;
+
+                    //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+                $_post['bankID'] = null;
+                $_post['bankAccountID'] = null;
+                $bank = BankAssign::select('bankmasterAutoID')
+                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                    ->where('isDefault', -1)
+                    ->first();
+
+                if ($bank) {
+                    $_post['bankID'] = $bank->bankmasterAutoID;
+                    $bankAccount = BankAccount::where('companySystemID', $customerInvoiceDirect->companySystemID)
+                        ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                        ->where('isDefault', 1)
+                        ->where('accountCurrencyID', $currency->currencyID)
+                        ->first();
+
+                    if ($bankAccount) {
+                        $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                    }
+                }
+            }
+            /**/
+
+        } else {
+            $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+
+                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+        }
+
+
+        if(isset($input['serviceStartDate']) && $input['serviceStartDate'] != ''){
+            $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+
+        if(isset($input['serviceEndDate']) && $input['serviceEndDate'] != ''){
+            $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+
+        if (isset($input['serviceStartDate']) && isset($input['serviceEndDate']) && $input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
+            if (($_post['serviceStartDate'] > $_post['serviceEndDate'])) {
+                return $this->sendError('Service start date cannot be greater than service end date.', 500);
+            }
+        }
+
+        $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($_post['bookingDate'] > $curentDate) {
+            return $this->sendError('Document date cannot be greater than current date', 500);
+        }
+
+        if ($input['invoiceDueDate'] != '') {
+            $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            $_post['invoiceDueDate'] = null;
+        }
+
+        /*validaation*/
+        $_post['customerInvoiceDate'] = $customerInvoiceDirect->customerInvoiceDate;
+        if ($input['customerInvoiceDate'] != '') {
+            $_post['customerInvoiceDate'] = Carbon::parse($input['customerInvoiceDate'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            $_post['customerInvoiceDate'] = null;
+        }
+
+
+        if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
+
+        } else {
+            $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+            $_post['bookingDate'] = $curentDate;
+            // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+
+        }
+
+        if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {
+            $detailAmount = CustomerInvoiceItemDetails::select(DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $id)->first();
+        } else {
+            $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
+        }
+
+
+        $_post['bookingAmountTrans'] = \Helper::roundValue($detailAmount->bookingAmountTrans);
+        $_post['bookingAmountLocal'] = \Helper::roundValue($detailAmount->bookingAmountLocal);
+        $_post['bookingAmountRpt'] = \Helper::roundValue($detailAmount->bookingAmountRpt);
+
+        if ($input['confirmedYN'] == 1) {
+            if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
+
+                } else {
+                    return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
+                }
+
+                /**/
+                if ($isPerforma != 1) {
+
+
+                    $messages = [
+
+                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                        'bankID.required' => 'Bank is required.',
+                        'bankAccountID.required' => 'Bank account is required.',
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.',
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.',
+                        'bookingDate.required' => 'Document date is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'custTransactionCurrencyID' => 'required|numeric|min:1',
+                        'bankID' => 'required|numeric|min:1',
+                        'bankAccountID' => 'required|numeric|min:1',
+
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        // 'PONumber' => 'required',
+                        // 'servicePeriod' => 'required',
+                        // 'serviceStartDate' => 'required',
+                        // 'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
+                    ], $messages);
+
+
+                } else {
+
+                    $messages = [
+                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                        'bankID.required' => 'Bank is required.',
+                        'bankAccountID.required' => 'Bank account is required.',
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.',
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.',
+                        'bookingDate.required' => 'Document date is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        'PONumber' => 'required',
+                        'servicePeriod' => 'required',
+                        'serviceStartDate' => 'required',
+                        'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
+                    ], $messages);
+
+                }
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                /**/
+                /*                if ($isPerforma != 1) {
+
+                                    $messages = [
+
+                                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                                        'bankID.required' => 'Bank is required.',
+                                        'bankAccountID.required' => 'Bank account is required.'
+
+                                    ];
+                                    $validator = \Validator::make($_post, [
+                                        'custTransactionCurrencyID' => 'required|numeric|min:1',
+                                        'bankID' => 'required|numeric|min:1',
+                                        'bankAccountID' => 'required|numeric|min:1'
+                                    ], $messages);
+
+                                    if ($validator->fails()) {
+                                        return $this->sendError($validator->messages(), 422);
+                                    }
+
+
+                                }*/
+
+
+                if (count($detail) == 0) {
+                    return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
+                } else {
+
+                    if ($isPerforma == 2 || $isPerforma == 3|| $isPerforma == 4|| $isPerforma == 5) {   // item sales invoice || From Delivery Note|| From Sales Order|| From Quotation
+
+                        $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($customerInvoiceDirect->documentSystemiD, $id);
+
+                        if (!$trackingValidation['status']) {
+                            return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
+                        }
+
+                        $checkQuantity = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                            ->where(function ($q) {
+                                $q->where('qtyIssued', '<=', 0)
+                                    ->orWhereNull('qtyIssued');
+                            })
+                            ->count();
+                        if ($checkQuantity > 0) {
+                            return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                        }
+
+                        $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+
+                        $financeCategories = $details->pluck('itemFinanceCategoryID')->toArray();
+
+                        if (count(array_unique($financeCategories)) > 1) {
+                            return $this->sendError('Multiple finance category cannot be added. Different finance category found on saved details.',500);
+                        }
+
+                        foreach ($details as $item) {
+
+//                            If the revenue account or cost account or BS account is null do not allow to confirm
+
+                            if ((!($item->financeGLcodebBSSystemID > 0)) && $item->itemFinanceCategoryID != 2) {
+                                return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                            } elseif (!($item->financeGLcodePLSystemID > 0)) {
+                                return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                            } elseif (!($item->financeGLcodeRevenueSystemID > 0)) {
+                                return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
+                            }
+
+                            $updateItem = CustomerInvoiceItemDetails::find($item['customerItemDetailID']);
+                            $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
+                                'itemCodeSystem' => $updateItem->itemCodeSystem,
+                                'wareHouseId' => $customerInvoiceDirect->wareHouseSystemCode);
+                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                            $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                            $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                            $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                            $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                            $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                            $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
+                            $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
+
+                            if ($isPerforma == 2 && $updateItem->itemFinanceCategoryID == 1) {
+                                $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $customerInvoiceDirect->companyReportingCurrencyID, $customerInvoiceDirect->custTransactionCurrencyID, $updateItem->issueCostRpt);
+                                $updateItem->sellingCost = $companyCurrencyConversion['documentAmount'];
+                            }
+
+                            /*margin calculation*/
+                            if ($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null) {
+                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
+                            } else {
+                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
+                            }
+
+                            if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);
+                                if (!empty($currencyConversion)) {
+                                    $updateItem->sellingCostAfterMarginLocal = $currencyConversion['documentAmount'];
+                                }
+                            } else {
+                                $updateItem->sellingCostAfterMarginLocal = $updateItem->sellingCostAfterMargin;
+                            }
+
+                            if ($updateItem->sellingCurrencyID != $updateItem->reportingCurrencyID) {
+                                $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->reportingCurrencyID, $updateItem->sellingCostAfterMargin);
+                                if (!empty($currencyConversion)) {
+                                    $updateItem->sellingCostAfterMarginRpt = $currencyConversion['documentAmount'];
+                                }
+                            } else {
+                                $updateItem->sellingCostAfterMarginRpt = $updateItem->sellingCostAfterMargin;
+                            }
+
+                            $updateItem->sellingTotal = $updateItem->sellingCostAfterMargin * $updateItem->qtyIssuedDefaultMeasure;
+
+                            /*round to 7 decimal*/
+
+                            $updateItem->issueCostLocal = Helper::roundValue($updateItem->issueCostLocal);
+                            $updateItem->issueCostRpt = Helper::roundValue($updateItem->issueCostRpt);
+                            $updateItem->issueCostLocalTotal = Helper::roundValue($updateItem->issueCostLocalTotal);
+                            $updateItem->issueCostRptTotal = Helper::roundValue($updateItem->issueCostRptTotal);
+                            $updateItem->sellingCost = Helper::roundValue($updateItem->sellingCost);
+                            $updateItem->sellingCostAfterMargin = Helper::roundValue($updateItem->sellingCostAfterMargin);
+                            $updateItem->sellingCostAfterMarginLocal = Helper::roundValue($updateItem->sellingCostAfterMarginLocal);
+                            $updateItem->sellingCostAfterMarginRpt = Helper::roundValue($updateItem->sellingCostAfterMarginRpt);
+                            $updateItem->sellingTotal = Helper::roundValue($updateItem->sellingTotal);
+
+                            $updateItem->save();
+
+                            if ($isPerforma == 2 || $isPerforma == 4 || $isPerforma == 5) {// only item sales invoice. we won't get from delivery note type.
+
+                                if($updateItem->itemFinanceCategoryID == 1){
+                                    if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                                        return $this->sendError('Item must not have zero cost', 500);
+                                    }
+                                    if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                                        return $this->sendError('Item must not have negative cost', 500);
+                                    }
+                                    if ($updateItem->currentWareHouseStockQty <= 0) {
+                                        return $this->sendError('Warehouse stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->currentStockQty <= 0) {
+                                        return $this->sendError('Stock Qty is 0 for ' . $updateItem->itemDescription, 500);
+                                    }
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                                        return $this->sendError('Insufficient Stock Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+
+                                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                                        return $this->sendError('Insufficient Warehouse Qty for ' . $updateItem->itemDescription, 500);
+                                    }
+                                }else{
+                                    if ($updateItem->sellingCostAfterMargin == 0) {
+                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                    }
+                                }
+
+
+                            }
+                        }
+
+                        // VAT configuration validation
+                        $taxSum = Taxdetail::where('documentSystemCode', $id)
+                            ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                            ->where('documentSystemID', $customerInvoiceDirect->documentSystemiD)
+                            ->sum('amount');
+
+                        if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                        }
+
+                        if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($input["companySystemID"]))){
+                            return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not configured.', 500);
+                        }
+
+                        $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
+                            ->sum('issueCostRptTotal');
+
+                        $params = array('autoID' => $id,
+                            'company' => $customerInvoiceDirect->companySystemID,
+                            'document' => $customerInvoiceDirect->documentSystemiD,
+                            'segment' => '',
+                            'category' => '',
+                            'amount' => $amount
+                        );
+
+                        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+                        $confirm = Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
+                            return $this->sendError($confirm["message"], 500);
+                        } else {
+                            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                        }
+
+
+                    } else {
+                        $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+                    IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
+                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
+                        where('custInvoiceDirectID', $id)
+                            ->where(function ($query) {
+
+                                $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
+                                    ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
+                                    ->orwhereRaw('unitOfMeasure IS NULL OR unitOfMeasure =""')
+                                    ->orwhereRaw('invoiceQty IS NULL OR invoiceQty =""')
+                                    ->orwhereRaw('contractID IS NULL OR contractID =""')
+                                    ->orwhereRaw('invoiceAmount IS NULL OR invoiceAmount =""')
+                                    ->orwhereRaw('unitCost IS NULL OR unitCost =""');
+                            });
+
+                        if (!empty($detailValidation->get()->toArray())) {
+
+                                /*
+                                 * check policy 15
+                                 *  Allow to confirm the Customer invoice with contract number
+                                 *  This policy should work only for Revenue GL
+                                 * */
+
+                            $policyRGLCID = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
+                                ->where('companySystemID', $input['companySystemID'])
+                                ->where('isYesNO', 1)
+                                ->exists();
+
+                            foreach ($detailValidation->get()->toArray() as $item) {
+
+                                $validators = \Validator::make($item, [
+                                    'serviceLineSystemID' => 'required|numeric|min:1',
+                                    'serviceLineCode' => 'required|min:1',
+                                    'unitOfMeasure' => 'required|numeric|min:1',
+                                    'invoiceQty' => 'required|numeric|min:1',
+                                    'invoiceAmount' => 'required|numeric|min:1',
+                                    'unitCost' => 'required|numeric|min:1',
+                                ], [
+
+                                    'serviceLineSystemID.required' => 'Segment is required.',
+                                    'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
+                                    'unitOfMeasure.required' => 'UOM is required.',
+                                    'invoiceQty.required' => 'Qty is required.',
+                                    'invoiceAmount.required' => 'Amount is required.',
+                                    'unitCost.required' => 'Unit cost is required.'
+
+                                ]);
+
+                                if ($validators->fails()) {
+                                    return $this->sendError($validators->messages(), 422);
+                                }
+
+                                if(!$policyRGLCID){
+
+                                    $glSystemID = isset($item['glSystemID'])?$item['glSystemID']:0;
+                                    $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')
+                                        ->where('chartOfAccountSystemID', $glSystemID)
+                                        ->where('controlAccountsSystemID',1)// Revenue
+                                        ->exists();
+
+                                    if($chartOfAccount){
+                                        $contractValidator = \Validator::make($item, [
+                                            'contractID' => 'required|numeric|min:1'
+                                        ], [
+                                            'contractID.required' => 'Contract no. is required.'
+                                        ]);
+                                        if ($contractValidator->fails()) {
+                                            return $this->sendError($contractValidator->messages(), 422);
+                                        }
+                                    }
+
+                                }
+
+                            }
+
+                        }
+                        $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+                        $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
+
+                        if (count($groupby) != 0) {
+
+                            if (count($groupby) > 1 || count($groupbycontract) > 1) {
+                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
+                            } else {
+
+                                // VAT configuration validation
+                                $taxSum = Taxdetail::where('documentSystemCode', $id)
+                                    ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+                                    ->where('documentSystemID', $customerInvoiceDirect->documentSystemiD)
+                                    ->sum('amount');
+
+                                if($taxSum  > 0 && empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))){
+                                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                                }
+
+                                $params = array('autoID' => $id,
+                                    'company' => $customerInvoiceDirect->companySystemID,
+                                    'document' => $customerInvoiceDirect->documentSystemiD,
+                                    'segment' => '',
+                                    'category' => '',
+                                    'amount' => ''
+                                );
+                                $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+                                $confirm = \Helper::confirmDocument($params);
+                                if (!$confirm["success"]) {
+
+                                    return $this->sendError($confirm["message"], 500);
+                                } else {
+                                    return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
+                                }
+                            }
+                        } else {
+                            return $this->sendError('No invoice details found.', 500);
+                        }
+
+                    }
+                }
+
+            }
+        }
+        else {
+            $this->customerInvoiceDirectRepository->update($_post, $id);
+            return $this->sendResponse($_post, 'Invoice Updated Successfully');
+        }
+    }
+
     public function updateCustomerInvoiceGRV(Request $request)
     {
         $input = $request->all();
@@ -1372,16 +2042,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+        
         $search = $request->input('search.value');
 
-        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
-
-        if($inovicePolicy) {
-            $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
-        }else {
-            $invMaster = [];
-        }
-
+        $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
