@@ -403,6 +403,15 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Selected location is not active. Please select an active location');
         }
 
+        $financeYear = CompanyFinanceYear::where("companyFinanceYearID", $input['companyFinanceYearID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isCurrent', -1)
+            ->first();
+
+        if (empty($financeYear)) {
+            return $this->sendError('Selected finance year is not current. Please select current year');
+        }
+
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
                 return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
@@ -618,6 +627,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->get();
 
             if ($fetchAllGrvDetails) {
+                $accountValidationArray = [];
                 foreach ($fetchAllGrvDetails as $row) {
                     $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
 
@@ -651,6 +661,51 @@ class GRVMasterAPIController extends AppBaseController
                             return $this->sendError('BS account is not assigned to the company', 500);
                         }
                     }
+
+
+                    if (is_null($row->itemFinanceCategoryID)) {
+                        $accountValidationArray[] = "Finance category of " . $row->itemPrimaryCode . " not found";
+                    } else {
+                        switch ($row->itemFinanceCategoryID) {
+                            case 1:
+                                if (is_null($row->financeGLcodebBSSystemID) || is_null($row->financeGLcodePLSystemID) || $row->financeGLcodebBSSystemID == 0 || $row->financeGLcodePLSystemID == 0) {
+
+                                    $accountValidationArray[1][] = $row->itemPrimaryCode;
+                                }
+                                break;
+                            case 2:
+                            case 3:
+                            case 4:
+                                if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && (is_null($row->financeGLcodePLSystemID) || $row->financeGLcodePLSystemID == 0)) {
+                                    $accountValidationArray[1][] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item " . $row->itemPrimaryCode;
+                                }
+
+                                if ((is_null($row->financeGLcodebBSSystemID) || $row->financeGLcodebBSSystemID == 0) && !is_null($row->financeGLcodePLSystemID) && $row->financeGLcodePLSystemID != 0 && $row->includePLForGRVYN != -1) {
+                                    $accountValidationArray[2][] = $row->itemPrimaryCode;
+                                }
+                                break;
+
+                            default:
+                                # code...
+                                break;
+                        }
+                    }
+
+                }
+                
+
+                if (!empty($accountValidationArray)) {
+                    $accountValidationErrrArray = [];
+                    if (isset($accountValidationArray[1])) {
+                        $itemsA = implode(", ", $accountValidationArray[1]);
+                        $accountValidationErrrArray[] = "Finance category accounts are not updated correctly. Please check the finance category configurations for the item(s) " . $itemsA;
+                    }
+
+                    if (isset($accountValidationArray[2])) {
+                        $itemsB = implode(", ", $accountValidationArray[2]);
+                        $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                    }
+                    return $this->sendError($accountValidationErrrArray, 420);
                 }
             }
 
@@ -767,7 +822,16 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
-        
+
+        $grvLocation = $request['grvLocation'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+//        return $this->sendResponse($customers, 'Good Receipt Voucher deleted successfully');
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -776,7 +840,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input,$search);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();

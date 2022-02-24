@@ -108,7 +108,7 @@ class PurchaseRequestRepository extends BaseRepository
         return PurchaseRequest::class;
     }
 
-    public function purchaseRequestListQuery($request, $input, $search = '') {
+    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID) {
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
 
@@ -135,7 +135,7 @@ class PurchaseRequestRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 

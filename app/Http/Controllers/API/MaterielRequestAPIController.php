@@ -24,6 +24,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ItemAssigned;
@@ -50,6 +51,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use Response;
+use Auth;
 
 /**
  * Class MaterielRequestController
@@ -103,7 +105,6 @@ class MaterielRequestAPIController extends AppBaseController
         $this->materielRequestRepository->pushCriteria(new RequestCriteria($request));
         $this->materielRequestRepository->pushCriteria(new LimitOffsetCriteria($request));
         $materielRequests = $this->materielRequestRepository->all();
-
         return $this->sendResponse($materielRequests->toArray(), 'Materiel Requests retrieved successfully');
     }
 
@@ -127,9 +128,11 @@ class MaterielRequestAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
         $search = $request->input('search.value');
-        $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search);
+        $materielRequests = $this->materielRequestRepository->materialrequestsListQuery($request, $input, $search, $serviceLineSystemID);
         return \DataTables::eloquent($materielRequests)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -167,6 +170,8 @@ class MaterielRequestAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
+        $mangerID = Employee::find($empID)->empID;
+
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_request.*',
@@ -201,6 +206,7 @@ class MaterielRequestAPIController extends AppBaseController
             ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [9])
+            ->where('employees.empManagerAttached', $mangerID)
             ->where('erp_documentapproved.companySystemID', $companyId);
 
         $search = $request->input('search.value');
@@ -261,7 +267,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
-
+        $mangerID = Employee::find($empID)->empID;
         $search = $request->input('search.value');
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
@@ -288,6 +294,7 @@ class MaterielRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [9])
             ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('employees.empManagerAttached', $mangerID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');

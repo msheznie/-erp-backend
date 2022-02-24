@@ -7,23 +7,30 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\EmployeesDepartment;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
+use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
+use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 
 class SRMService
@@ -68,21 +75,65 @@ class SRMService
     }
     public function getPoList(Request $request): array
     {
+        $input = $request->all();
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $per_page = $request->input('extra.per_page');
         $page = $request->input('extra.page');
-        $data = ProcumentOrder::where('approved', -1)
+        $search = $request->input('search.value');
+        /*return [
+        'success' => true,
+        'message' => 'Purchase order list successfully get',
+        'data' => $input
+        ];*/
+
+        /*$data = ProcumentOrder::where('approved', -1)
+        ->where('supplierID', $supplierID)
+        ->where('poType_N', '!=', 5)
+        ->with(['currency', 'created_by', 'segment', 'supplier'])
+        ->orderBy('createdDateTime', 'desc')
+        ->paginate($per_page, ['*'], 'page', $page);*/
+
+        $query = ProcumentOrder::where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
             ->with(['currency', 'created_by', 'segment', 'supplier'])
-            ->orderBy('createdDateTime', 'desc')
-            ->paginate($per_page, ['*'], 'page', $page);
+            ->orderBy('createdDateTime', 'desc');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                $query->orWhere('referenceNumber', 'LIKE', "%{$search}%");
+                $query->orWhere('supplierName', 'LIKE', "%{$search}%");
+                $query->orWhere('poTotalSupplierTransactionCurrency', 'LIKE', "%{$search}%");
+                $query->orWhereHas('segment', function ($query1) use ($search) {
+                    $query1->where('ServiceLineDes', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('supplier', function ($query1) use ($search) {
+                    $query1->where('primarySupplierCode', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+
         return [
-            'success'   => true,
-            'message'   => 'Purchase order list successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Purchase order list successfully get',
+            'data' => $data
         ];
     }
+
     public function getPoPrintData(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
@@ -172,10 +223,10 @@ class SRMService
             if (!empty($data) && !$amend) {
                 foreach ($data as $val) {
                     $data_details['appointment_id'] = (isset($appointment)) ? $appointment->id : $appointmentID;
-                    $data_details['po_master_id'] = ($appointmentID > 0) ? $val['po_master_id'] : $val['purchaseOrderID'];
-                    $data_details['po_detail_id'] = ($appointmentID > 0) ? $val['po_detail_id'] : $val['purchaseOrderDetailID'];
-                    $data_details['item_id'] = ($appointmentID > 0) ? $val['item_id'] : $val['item_id'];
-                    $data_details['qty'] = ($appointmentID > 0) ? $val['qty'] : $val['qty'];
+                    $data_details['po_master_id'] = $val['purchaseOrderID'];
+                    $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
+                    $data_details['item_id'] = $val['item_id'];
+                    $data_details['qty'] = $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -303,24 +354,25 @@ class SRMService
         $appointment = Appointment::select('id')
             ->where('slot_detail_id', $slotDetailID)
             ->where('confirmed_yn', 1)
+            ->where('cancelYN', 0)
             ->Where(function ($query) {
                 $query->where('approved_yn', 0)
                     ->orWhere('approved_yn', -1);
             })
             ->where('refferedBackYN', 0)
-            ->where('created_by', $supplierID)
+            /*->where('created_by', $supplierID)*/
             ->get();
 
         $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
 
-        $arr['remaining_appointments'] = ($slotMaster->limit_deliveries == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
+        $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
             $query->with(['getPoMaster', 'getPoDetails' =>function($query){
                 $query->with(['unit','appointmentDetails' => function($q){
                     $q->whereHas('appointment', function ($q){
                         $q->where('refferedBackYN', '!=', -1);
-                        $q->where('confirmed_yn', 1);
+                        /*$q->where('confirmed_yn', 1);*/
                     })->groupBy('po_detail_id')
                         ->select('id', 'appointment_id','qty','po_detail_id')
                         ->selectRaw('sum(qty) as qty');
@@ -681,12 +733,11 @@ class SRMService
             'data'      => $kycFormDetails
         ];
     }
-    public function getERPFormData(Request $request){ 
+    public function getERPFormData(Request $request){
         $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
         $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
-        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get();
-        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','subCategoryCode','categoryDescription')->get();
-        
+        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get(); 
+        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','supMasterCategoryID','subCategoryCode','categoryDescription')->get();
         $formData =  array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
@@ -699,5 +750,385 @@ class SRMService
             'message'   => 'ERP Form Data Retrieved',
             'data'      => $formData
         ];
+    }
+
+    public function checkAppointmentPastDate(Request $request)
+    {
+        $slotDetailID = $request->input('extra.slotDetailID');
+
+        $detail = SlotDetails::where('id',$slotDetailID)->first();
+
+        $appointments = $this->getAppointmentDeliveries($request);
+        $appointment = 0;
+        if(count($appointments['data']['data'])>0){
+            $appointment = 1;
+        }
+
+        if(!empty($detail)){//start_date
+            $endDate = Carbon::parse($detail['end_date'])->format('Y-m-d H:i:s');
+            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+            $result['currentDate']=$currentDate;
+            $result['endDate']=$endDate;
+
+            $start_date = Carbon::parse($detail['start_date'])->format('Y-m-d');
+            $current = Carbon::parse(now())->format('Y-m-d');
+            $canCancel = 0;
+            if($start_date>$current){
+                $canCancel = 1;
+            }
+
+            if($endDate > $currentDate){
+                $result['canCreate']=1;
+                $result['canCancel']=$canCancel;
+                $result['appointments']=$appointment;
+                return [
+                    'success'   => true,
+                    'message'   => 'Appointment Can Be Created',
+                    'data'      => $result
+                ];
+            }else{
+                $result['canCreate']=0;
+                $result['canCancel']=$canCancel;
+                $result['appointments']=$appointment;
+                return [
+                    'success'   => true,
+                    'message'   => 'Appointments can not be created for past dates',
+                    'data'      => $result
+                ];
+            }
+        }else{
+            return [
+                'success'   => false,
+                'message'   => 'Slot Detail Not Available',
+                'data'      => $detail
+            ];
+        }
+    }
+
+    public function  getAppointmentDetails(Request $request)
+    {
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $detail = AppointmentDetails::where('appointment_id',$appointmentID)
+            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
+                $q->whereHas('appointment', function ($q) use($appointmentID){
+                    $q->where('refferedBackYN', '!=', -1);
+                    $q->where('cancelYN', 0);
+                    if(isset($appointmentID)){
+                        $q->where('id','!=', $appointmentID);
+                    }
+                })->groupBy('po_detail_id')
+                    ->select('id', 'appointment_id','qty','po_detail_id')
+                    ->selectRaw('IFNULL(sum(qty),0) as qty');
+            }]);
+        }])->get()
+            ->transform(function ($data){
+                return $this->appointmentDetailFormat($data);
+            });
+        $result['detail']=$detail;
+        $result['purchaseOrderCode']='';
+        if(count($detail) > 0){
+            $result['exist']=1;
+            if(!empty($detail[0]['getPoMaster'])){
+                $result['purchaseOrderCode']=$detail[0]['getPoMaster']['purchaseOrderCode'];
+            }
+            return [
+                'success'   => true,
+                'message'   => 'Appointment Details Available',
+                'data'      => $result
+            ];
+        }else{
+            $result['exist']=0;
+            return [
+                'success'   => false,
+                'message'   => 'Appointment Details Not Available',
+                'data'      => $result
+            ];
+        }
+    }
+
+    public function getPurchaseOrderDetails(Request $request)
+    {
+        $purchaseOrderID = $request->input('extra.purchaseOrderID');
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)
+            ->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
+                $q->whereHas('appointment', function ($q) use($appointmentID){
+                    $q->where('refferedBackYN', '!=', -1);
+                    $q->where('cancelYN', 0);
+                    if(isset($appointmentID)){
+                        $q->where('id','!=', $appointmentID);
+                    }
+                })->groupBy('po_detail_id')
+                    ->select('id', 'appointment_id','qty','po_detail_id')
+                    ->selectRaw('IFNULL(sum(qty),0) as qty');
+            }])->get()
+            ->transform(function ($data){
+                return $this->poDetailFormat($data);
+            });
+
+        $result['poDetail']=$po;
+        return [
+            'success'   => true,
+            'message'   => 'Po Details Retrieved',
+            'data'      => $result
+        ];
+    }
+
+    public function poDetailFormat($data){
+        if(count($data['appointmentDetails'])>0){
+            $sumQty = $data['appointmentDetails'][0]['qty'];
+        }else{
+            $sumQty = 0;
+        }
+        return [
+            'purchaseOrderCode' => $data['order']['purchaseOrderCode'],
+            'purchaseOrderID' => $data['order']['purchaseOrderID'],
+            'purchaseOrderDetailID' => $data['purchaseOrderDetailsID'],
+            'itemPrimaryCode' => $data['itemPrimaryCode'],
+            'itemDescription' => $data['itemDescription'],
+            'UnitShortCode' => $data['unit']['UnitShortCode'],
+            'noQty' => $data['noQty'],
+            'receivedQty' => $data['receivedQty'],
+            'sumQty' => $sumQty,
+            'qty' => 0,
+            'item_id' => $data['itemCode'],
+
+        ];
+    }
+
+    public function appointmentDetailFormat($data){
+        if(count($data['getPoDetails']['appointmentDetails'])>0){
+            $sumQty = $data['getPoDetails']['appointmentDetails'][0]['qty'];
+        }else{
+            $sumQty = 0;
+        }
+        return [
+            'purchaseOrderCode' => $data['getPoMaster']['purchaseOrderCode'],
+            'purchaseOrderID' => $data['getPoMaster']['purchaseOrderID'],
+            'purchaseOrderDetailID' => $data['getPoDetails']['purchaseOrderDetailsID'],
+            'itemPrimaryCode' => $data['getPoDetails']['itemPrimaryCode'],
+            'itemDescription' => $data['getPoDetails']['itemDescription'],
+            'UnitShortCode' => $data['getPoDetails']['unit']['UnitShortCode'],
+            'noQty' => $data['getPoDetails']['noQty'],
+            'receivedQty' => $data['getPoDetails']['receivedQty'],
+            'sumQty' => $sumQty,
+            'qty' => $data['qty'],
+            'item_id' => $data['item_id'],
+
+
+        ];
+    }
+
+    public function getAllAppointmentList(Request $request): array
+    {
+        $input  = $request->all();
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $warehouseId = $request->input('extra.warehouseId');
+        $appointDate = $request->input('extra.appointDate');
+        $search = $request->input('search.value');
+
+        $query =  Appointment::where('supplier_id', $supplierID)
+            ->with(['created_by', 'slot_detail' => function($query){
+                $query->withCount(['appointment' => function($q){
+                    $q->where('confirmed_yn', 1)
+                        ->Where(function ($query) {
+                            $query->where('approved_yn', 0)
+                                ->orWhere('approved_yn', -1);
+                        })
+                        ->where('refferedBackYN', 0);
+                }]);
+            },'slot_detail.slot_master.ware_house', 'slot_detail.slot_master']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->orWhere('primary_code', 'LIKE', "%{$search}%");
+                $query->orWhere('created_at', 'LIKE', "%{$search}%");
+                $query->orWhere('status', 'LIKE', "%{$search}%");
+                $query->orWhere('created_by', 'LIKE', "%{$search}%");
+                $query->orWhereHas('slot_detail.slot_master.ware_house', function ($query1) use ($search) {
+                    $query1->where('wareHouseDescription', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('slot_detail.slot_master', function ($query1) use ($search) {
+                    $query1->whereDate('from_date', "%{$search}%");
+                });
+            });
+        }
+
+        if(isset($warehouseId) && $warehouseId !== 0) {
+            $query = $query->whereHas('slot_detail.slot_master.ware_house', function ($query) use ($warehouseId) {
+                $query->where('wareHouseSystemCode', $warehouseId);
+            });
+        }
+
+        if(!(is_null($appointDate)) && isset($appointDate)) {
+            $query = $query->whereHas('slot_detail.slot_master', function ($query) use($appointDate){
+                $query->whereDate('from_date', $appointDate);
+            });
+        }
+
+        //$query = $query->orderBy('slot_detail.slot_master.from_date', 'desc');
+        $data = DataTables::eloquent($query)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        // $query->orderBy('id', $input['order'][0]['dir']);
+                        $query->whereHas('slot_detail.slot_master', function ($query1){
+                            $query1->orderBy('from_date', 'DESC');
+                        });
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+
+        return [
+            'success'   => true,
+            'message'   => 'Appointment list successfully get',
+            'data'      => $data
+        ];
+    }
+
+    public function getWarehouse(Request $request)
+    {
+        try{
+            $warehouse = WarehouseMaster::where('isActive', 1)->get();
+            $message = 'Warehouse list load successfully';
+        } catch (\Exception $e){
+            $message = $e;
+        }
+
+        return [
+            'success'   => true,
+            'message'   => $message,
+            'data'      => $warehouse
+        ];
+    }
+
+    public function getRemainingSlotCount(Request $request)
+    {
+        $remainingAppointments = 0;
+        try{
+            $slotDetailID = $request->input('extra.slotDetailID');
+            $slotMasterID = $request->input('extra.slotMasterID');
+
+            $appointmentCount = Appointment::select('id')
+                ->where('slot_detail_id', $slotDetailID)
+                ->where('confirmed_yn', 1)
+                ->where('cancelYN', 0)
+                ->Where(function ($query) {
+                    $query->where('approved_yn', 0)
+                        ->orWhere('approved_yn', -1);
+                })
+                ->where('refferedBackYN', 0)
+                ->count();
+
+            $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
+            $message = "Success";
+
+            $remainingAppointments = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - $appointmentCount));
+        } catch (\Exception $e){
+            $message = $e;
+        }
+
+        return [
+            'success'   => true,
+            'message'   => $message,
+            'data'      => $remainingAppointments
+        ];
+    }
+
+    public function cancelAppointments(Request $request)
+    {
+        try{
+            $id = $request->input('extra.appointmentID');
+            $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+
+            $supplier = SupplierMaster::where('supplierCodeSystem', $supplierID)->first();
+
+            $canceledReason = $request->input('extra.canceledReason');
+            $Data['cancelYN'] = 1;
+            $Data['canceledDate'] = Helper::currentDateTime();
+            $Data['canceledByEmpId'] = $supplierID;
+            $Data['canceledReason'] = $canceledReason;
+            $Data['canceledByName'] = $supplier['supplierName'];
+            $result = Appointment::where('id', $id)->update($Data);
+
+            $message ='Successfully Updated';
+            $success = true;
+        } catch (\Exception $e){
+            $success = false;
+            $message = $e;
+            $result = 0;
+        }
+
+        return [
+            'success'   => $success,
+            'message'   => $message,
+            'data'      => $result
+        ];
+    }
+
+    public function getSrmApprovedDetails(Request $request)
+    {
+        $documentSystemID = $request->input('extra.documentSystemID');
+        $documentSystemCode = $request->input('extra.documentSystemCode');
+        $companySystemID = $request->input('extra.companySystemID');
+
+        $approveDetails = DocumentApproved::where('documentSystemID', $documentSystemID)
+            ->where('documentSystemCode', $documentSystemCode)
+            ->where('companySystemID', $companySystemID)
+            ->with(['approved_by'])
+            ->get();
+
+        foreach ($approveDetails as $value) {
+
+            if ($value['approvedYN'] == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return [
+                        'success'   => false,
+                        'message'   => 'Policy not found',
+                        'data'      => $companyDocument
+                    ];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->where('isActive', 1)
+                    ->where('removedYN', 0);
+                //->get();
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
+                }
+
+                $approvalList = $approvalList->with(['employee'])
+                    ->whereHas('employee', function($q) {
+                        $q->where('discharegedYN',0);
+                    })
+                    ->groupBy('employeeSystemID')
+                    ->get();
+                $value['approval_list'] = $approvalList;
+            }
+        }
+
+        return [
+            'success'   => true,
+            'message'   => 'Record retrieved successfully',
+            'data'      => $approveDetails
+        ];
+
     }
 }

@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectReceiptDetailAPIRequest;
 use App\Http\Requests\API\UpdateDirectReceiptDetailAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DirectReceiptDetail;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
@@ -524,13 +525,24 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $currency = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $totalAmount);
             $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
             $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
-
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
             if($master->isVATApplicable){
 
                 //vat amount
                 $currencyVAT = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['VATAmount']);
-                $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
-                $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+
+
+                if($policy == true) {
+                    $input['VATAmountLocal'] = $input['VATAmount'] / $master->localCurrencyER;
+                    $input['VATAmountRpt'] = $input['VATAmount'] / $master->companyRptCurrencyER;
+                }  if($policy == false) {
+                    $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
+                    $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+                }
             }else{
                 $input['VATAmount'] = 0;
                 $input['VATAmountRpt'] = 0;
@@ -539,8 +551,15 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
             //net amount
             $currencyNet = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $input['netAmount']);
-            $input["netAmountRpt"] = \Helper::roundValue($currencyNet['reportingAmount']);
-            $input["netAmountLocal"] = \Helper::roundValue($currencyNet['localAmount']);
+
+            if($policy == true) {
+                $input["netAmountRpt"] = \Helper::roundValue($input['netAmount']/$master->companyRptCurrencyER);
+                $input["netAmountLocal"] = \Helper::roundValue($input['netAmount']/$master->localCurrencyER);
+            }
+            if($policy == false) {
+                $input["netAmountRpt"] = \Helper::roundValue($currencyNet['reportingAmount']);
+                $input["netAmountLocal"] = \Helper::roundValue($currencyNet['localAmount']);
+            }
 
         }
 

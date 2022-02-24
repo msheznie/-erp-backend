@@ -72,7 +72,7 @@ class StockAdjustmentRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function stockAdjustmentListQuery($request, $input, $search = '') {
+    public function stockAdjustmentListQuery($request, $input, $search = '',$grvLocation, $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -101,13 +101,13 @@ class StockAdjustmentRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockAdjustments->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $stockAdjustments->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('location', $input)) {
             if ($input['location'] && !is_null($input['location'])) {
-                $stockAdjustments->where('location', $input['location']);
+                $stockAdjustments->whereIn('location', $grvLocation);
             }
         }
 

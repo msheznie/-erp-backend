@@ -29,6 +29,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DebitNoteDetailsRefferedback;
@@ -58,7 +59,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -464,8 +465,16 @@ class DebitNoteAPIController extends AppBaseController
 
         if (isset($input['supplierTransactionCurrencyID'])) {
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -569,10 +578,21 @@ class DebitNoteAPIController extends AppBaseController
 
                 $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
 
-                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $companyId = $input['companySystemID'];
+
+                $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+
+
+                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
 
                 $updateItem->save();
 
@@ -598,9 +618,352 @@ class DebitNoteAPIController extends AppBaseController
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
+
+
+            if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+
+                $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
+                $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            }
+
+            $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $id)
+                ->sum('VATAmount');
+            //vat amount currency conversion
+
+            $input['VATAmount'] = $vatAmount;
+            $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatAmount);
+
+            $input['VATAmountLocal'] = $VATCurrencyConversion['localAmount'];
+            $input['VATAmountRpt'] = $VATCurrencyConversion['reportingAmount'];
+
+            $totalNetAmount = DebitNoteDetails::where('debitNoteAutoID',$id)
+                ->sum('netAmount');
+            // total amount currency conversion
+
+            $input['netAmount'] = $totalNetAmount;
+            $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totalNetAmount);
+
+            $input['netAmountLocal'] = $totalCurrencyConversion['localAmount'];
+            $input['netAmountRpt']   = $totalCurrencyConversion['reportingAmount'];
+
+            Taxdetail::where('documentSystemCode', $id)
+                ->where('documentSystemID', $input["documentSystemID"])
+                ->delete();
+
+            // if VAT Applicable
+            if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && $vatAmount > 0){
+
+                if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))) {
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                }
+
+                $outputChartOfAc = TaxService::getInputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->inputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                }
+
+                $taxDetail['companyID'] = $input['companyID'];
+                $taxDetail['companySystemID'] = $input['companySystemID'];
+                $taxDetail['documentID'] = $input['documentID'];
+                $taxDetail['documentSystemID'] = $input['documentSystemID'];
+                $taxDetail['documentSystemCode'] = $id;
+                $taxDetail['documentCode'] = $debitNote->debitNoteCode;
+                $taxDetail['taxShortCode'] = '';
+                $taxDetail['taxDescription'] = '';
+                $taxDetail['taxPercent'] = $input['VATPercentage'];
+                $taxDetail['payeeSystemCode'] = $input['supplierID'];
+
+                if(!empty($supplierAssignedDetail)) {
+                    $taxDetail['payeeCode'] = $supplierAssignedDetail->primarySupplierCode;
+                    $taxDetail['payeeName'] = $supplierAssignedDetail->supplierName;
+                }
+
+                 $taxDetail['amount'] = $vatAmount;
+
+                $companyId = $input['companySystemID'];
+                $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+
+                $taxDetail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
+                $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
+
+                if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+                    $taxDetail['localCurrencyER'] = $debitNote->localCurrencyER;
+                    $taxDetail['rptCurrencyER'] = $debitNote->companyReportingER;
+                    $taxDetail['localAmount'] = $debitNote->VATAmountLocal;
+                    $taxDetail['rptAmount'] = $debitNote->VATAmountRpt;
+                }
+
+
+
+
+
+                 $taxDetail['currency'] =  $input['supplierTransactionCurrencyID'];
+                 $taxDetail['currencyER'] =  1;
+
+
+                 $taxDetail['localCurrencyID'] =  $debitNote->localCurrencyID;
+                 $taxDetail['rptCurrencyID'] =  $debitNote->companyReportingCurrencyID;
+                 $taxDetail['payeeDefaultCurrencyID'] =  $input['supplierTransactionCurrencyID'];
+                 $taxDetail['payeeDefaultCurrencyER'] =  1;
+                 $taxDetail['payeeDefaultAmount'] =  $vatAmount;
+
+                 Taxdetail::create($taxDetail);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $debitNote->companySystemID,
+                'document' => $debitNote->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $amount
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+        //var_dump($input);
+        //exit();
+
+        $debitNote = $this->debitNoteRepository->update($input, $id);
+
+        return $this->sendResponse($policy, 'Debit note updated successfully');
+    }
+
+    public function updateCurrency($id, UpdateDebitNoteAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+
+        $input = $this->convertArrayToValue($input);
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
+
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        if ($debitNote->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
+
+        if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
+
+            $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
+
+            if($detailsCount > 0){
+                return $this->sendError('You cannot change the currency.If you want to change Please delete all details and change it.', 500);
+            }
+        }
+
+
+        if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
+            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('supplierID', $input['supplierID'])
+                ->where('debitNoteAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
+            }
+        }
+
+
+        if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
+            return $this->sendError("LC Doc Code is required", 500);
+        }
+
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
+            'UnbilledGRVAccount','supplierName','primarySupplierCode')
+            ->where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetail) {
+            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+        }
+
+        if (isset($input['debitNoteDate'])) {
+            if ($input['debitNoteDate']) {
+                $input['debitNoteDate'] = new Carbon($input['debitNoteDate']);
+            }
+        }
+
+        if (isset($input['supplierTransactionCurrencyID'])) {
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+        }
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 1;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
+
+        $documentDate = $input['debitNoteDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            // return $this->sendError('Document date is not within the selected financial period !', 500);
+        }
+
+        if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'debitNoteDate' => 'required',
+                'supplierID' => 'required|numeric|min:1',
+                'supplierTransactionCurrencyID' => 'required|numeric|min:1',
+                'comments' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['debitNoteDate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
+                ->count();
+
+            if ($checkItems == 0) {
+                return $this->sendError('Every debit note should have at least one item', 500);
+            }
+
+            $checkQuantity = DebitNoteDetails::where('debitNoteAutoID', $id)
+                ->where(function ($q) {
+                    $q->where('debitAmount', '<=', 0)
+                        ->orWhereNull('localAmount', '<=', 0)
+                        ->orWhereNull('comRptAmount', '<=', 0)
+                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('localAmount')
+                        ->orWhereNull('comRptAmount');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            }
+
+            $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->get();
+
+            $finalError = array('amount_zero' => array(),
+                'amount_neg' => array(),
+                'required_serviceLine' => array(),
+                'active_serviceLine' => array(),
+            );
+            $error_count = 0;
+
+            foreach ($debitNoteDetails as $item) {
+                $updateItem = DebitNoteDetails::find($item['debitNoteDetailsID']);
+
+                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActive)) {
+                        $updateItem->serviceLineSystemID = null;
+                        $updateItem->serviceLineCode = null;
+                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                    $error_count++;
+                }
+
+                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+
+
+
+
+                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+
+                $updateItem->save();
+
+                if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->debitAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
+                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $amount = DebitNoteDetails::where('debitNoteAutoID', $id)
+                ->sum('debitAmount');
+
+            $input['debitAmountTrans'] = $amount;
+
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+
+
+
+
+
             $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['debitAmountRpt']   = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
+            $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
 
 
@@ -659,21 +1022,26 @@ class DebitNoteAPIController extends AppBaseController
                     $taxDetail['payeeName'] = $supplierAssignedDetail->supplierName;
                 }
 
-                 $taxDetail['amount'] = $vatAmount;
-                 $taxDetail['localCurrencyER']  = $companyCurrencyConversion['trasToLocER'];
-                 $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                 $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
-                 $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
-                 $taxDetail['currency'] =  $input['supplierTransactionCurrencyID'];
-                 $taxDetail['currencyER'] =  1;
+                $taxDetail['amount'] = $vatAmount;
 
-                 $taxDetail['localCurrencyID'] =  $debitNote->localCurrencyID;
-                 $taxDetail['rptCurrencyID'] =  $debitNote->companyReportingCurrencyID;
-                 $taxDetail['payeeDefaultCurrencyID'] =  $input['supplierTransactionCurrencyID'];
-                 $taxDetail['payeeDefaultCurrencyER'] =  1;
-                 $taxDetail['payeeDefaultAmount'] =  $vatAmount;
 
-                 Taxdetail::create($taxDetail);
+                $taxDetail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
+                $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
+
+
+                $taxDetail['currency'] =  $input['supplierTransactionCurrencyID'];
+                $taxDetail['currencyER'] =  1;
+
+
+                $taxDetail['localCurrencyID'] =  $debitNote->localCurrencyID;
+                $taxDetail['rptCurrencyID'] =  $debitNote->companyReportingCurrencyID;
+                $taxDetail['payeeDefaultCurrencyID'] =  $input['supplierTransactionCurrencyID'];
+                $taxDetail['payeeDefaultCurrencyER'] =  1;
+                $taxDetail['payeeDefaultAmount'] =  $vatAmount;
+
+                Taxdetail::create($taxDetail);
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -701,9 +1069,9 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($debitNote->toArray(), 'Debit note updated successfully');
-    }
+        return $this->sendResponse($debitNote, 'Debit note updated successfully');
 
+    }
     /**
      * @param int $id
      * @return Response
@@ -756,6 +1124,69 @@ class DebitNoteAPIController extends AppBaseController
         return $this->sendResponse($id, 'Debit Note deleted successfully');
     }
 
+    public function debitNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+            $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+            $masterINVID = DebitNote::findOrFail($id);
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterINVID->VATAmount/$value, 'netAmountLocal'=>$masterINVID->netAmount/$value);
+            $masterINVID->update($masterInvoiceArray);
+
+            foreach($details as $item){
+                $localAmount = $item->debitAmount / $value;
+                $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount, 'VATAmountLocal'=>$item->VATAmount / $value, 'netAmountLocal'=>$item->netAmount / $value, 'debitAmountLocal' =>$masterINVID->debitAmountTrans/$value);
+                $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+                $updatedLocalER->update($directInvoiceDetailsArray);
+            }
+
+            return $this->sendResponse([$id,$value], 'Update Local ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
+    }
+
+    public function debitNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+        $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
+
+        $masterINVID = DebitNote::findOrFail($id);
+        $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value, 'debitAmountRpt'=>$masterINVID->debitAmountTrans/$value);
+
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = $item->debitAmount / $value;
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$item->VATAmount / $value, 'netAmountRpt'=>$item->netAmount / $value);
+            $updatedLocalER = DebitNoteDetails::findOrFail($item->debitNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+
 
     public function getDebitNoteMasterRecord(Request $request)
     {
@@ -781,8 +1212,13 @@ class DebitNoteAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
-        $debitNotes = $this->debitNotesByCompany($input, $search);
+        $debitNotes = $this->debitNotesByCompany($input, $search, $supplierID);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -1532,8 +1968,13 @@ UNION ALL
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+        
         $search = $request->input('search.value');
-        $output = $this->debitNotesByCompany($input, $search)->orderBy('debitNoteAutoID', $sort)->get();
+        $output = $this->debitNotesByCompany($input, $search, $supplierID)->orderBy('debitNoteAutoID', $sort)->get();
         $data = array();
         $type = $request->type;
         if (!empty($output)) {
@@ -1595,21 +2036,23 @@ UNION ALL
             }
         }
 
-         \Excel::create('debit_note_by_company', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        $fileName = 'debit_note_by_company';
+        $path = 'accounts-payable/debit_note_by_company/excel/';
+        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
 
-    private function debitNotesByCompany($request, $search)
+    private function debitNotesByCompany($request, $search, $supplierID)
     {
         $input = $request;
         $selectedCompanyId = $input['companyId'];
@@ -1627,7 +2070,7 @@ UNION ALL
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $debitNotes = $debitNotes->where('supplierID', $input['supplierID']);
+                $debitNotes = $debitNotes->whereIn('supplierID', $supplierID);
             }
         }
 

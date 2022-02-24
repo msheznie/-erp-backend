@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSalesReturnAPIRequest;
 use App\Http\Requests\API\UpdateSalesReturnAPIRequest;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
 use App\Models\SalesReturn;
 use App\Models\ItemMaster;
 use App\Models\Company;
@@ -786,7 +788,7 @@ class SalesReturnAPIController extends AppBaseController
 
     public function storeReturnDetailFromSIDO(Request $request)
     {
-        
+      
         $input = $request->all();
 
         if ($input['type'] == 2) {
@@ -880,7 +882,11 @@ class SalesReturnAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
+            
+
             foreach ($input['detailTable'] as $new) {
+
+
 
                 $deliveryOrder = DeliveryOrder::find($new['deliveryOrderID']);
 
@@ -1047,12 +1053,29 @@ class SalesReturnAPIController extends AppBaseController
                 $this->updateDOReturnedStatus($new['deliveryOrderID']);
 
                 $resVat = $this->updateVatOfSalesReturn($salesReturnID);
+
+
+                $quotation_count = DeliveryOrderDetail::where('quotationMasterID', $new['quotationMasterID'])
+                ->count();
+
+                $quotation_returned = DeliveryOrderDetail::where('quotationMasterID', $new['quotationMasterID'])
+                ->where('fullyReturned', 2)
+                ->count();
+
+                if($quotation_count == $quotation_returned)
+                {
+                    $QuotationMaster = QuotationMaster::find($new['quotationMasterID']);
+                    $QuotationMaster->is_return = true;
+                    $QuotationMaster->update();
+                }
+                
+
                 if (!$resVat['status']) {
                    return $this->sendError($resVat['message']); 
                 } 
             }
 
-            DB::commit();
+             DB::commit();
             return $this->sendResponse([], 'Sales Return Item Details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();

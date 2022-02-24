@@ -88,7 +88,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return MatchDocumentMaster::class;
     }
 
-    public function matchDocumentListQuery($request, $input, $search = '') {
+    public function matchDocumentListQuery($request, $input, $search = '', $supplierID) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [4, 15]);
@@ -117,7 +117,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $invMaster->where('BPVsupplierID', $input['supplierID']);
+                $invMaster->whereIn('BPVsupplierID', $supplierID);
             }
         }
 
@@ -174,7 +174,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return $data;
     }
 
-    public function receiptVoucherMatchingListQuery($request, $input, $search = '') {
+    public function receiptVoucherMatchingListQuery($request, $input, $search = '', $customerID) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [19, 21]);
@@ -203,7 +203,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && !is_null($input['customerID'])) {
-                $invMaster->where('BPVsupplierID', $input['customerID']);
+                $invMaster->whereIn('BPVsupplierID', $customerID);
             }
         }
 

@@ -97,7 +97,12 @@ class Appointment extends Model
         'current_level_no',
         'timesReferred',
         'confirmed_yn',
-        'refferedBackYN'
+        'refferedBackYN',
+        'cancelYN',
+        'canceledDate',
+        'canceledByEmpId',
+        'canceledReason',
+        'canceledByName'
     ];
 
     /**
@@ -127,7 +132,13 @@ class Appointment extends Model
         'approved_by_emp_id' => 'integer',
         'current_level_no' => 'integer',
         'timesReferred' => 'integer',
-        'confirmed_yn' => 'integer'
+        'confirmed_yn' => 'integer',
+        'refferedBackYN' => 'integer',
+        'cancelYN' => 'integer',
+        'canceledDate' => 'datetime',
+        'canceledByEmpId' => 'integer',
+        'canceledReason' => 'varchar',
+        'canceledByName' => 'varchar'
     ];
 
     /**
@@ -153,5 +164,10 @@ class Appointment extends Model
     public function slot_detail()
     {
         return $this->hasOne('App\Models\SlotDetails', 'id', 'slot_detail_id');
+    }
+
+    public function supplier()
+    {
+        return $this->hasOne('App\Models\SupplierMaster', 'supplierCodeSystem', 'supplier_id');
     }
 }

@@ -8,6 +8,7 @@ use App\Models\PoAdvancePayment;
 use App\Models\PurchaseReturnLogistic;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Company;
+use App\Models\GRVMaster;
 use App\Models\SupplierAssigned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -132,17 +133,22 @@ class UnbilledGRVInsert implements ShouldQueue
                             ->groupBy('purchaseOrderMastertID')
                             ->get();
 
-                        foreach ($output as $key => $value) {
-                                $res = TaxService::processPRNVATForUnbilled($masterModel["autoID"], $masterModel["purhaseReturnAutoID"]);
+                        $grvMaster = GRVMaster::find($masterModel["autoID"]);
 
-                                $value->totTransactionAmount = $res['totalTransAmount'];
-                                $value->totRptAmount = $res['totalRptAmount'];
-                                $value->totLocalAmount = $res['totalLocalAmount'];
+                        if ($grvMaster && $grvMaster->grvTypeID != 1) {
+                            foreach ($output as $key => $value) {
+                                    $res = TaxService::processPRNVATForUnbilled($masterModel["autoID"], $masterModel["purhaseReturnAutoID"]);
 
-                                $value->totalVATAmount = $res['totalTransVATAmount'];
-                                $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
-                                $value->totalVATAmountRpt = $res['totalRptVATAmount'];
-                        }
+                                    $value->totTransactionAmount = $res['totalTransAmount'];
+                                    $value->totRptAmount = $res['totalRptAmount'];
+                                    $value->totLocalAmount = $res['totalLocalAmount'];
+
+                                    $value->totalVATAmount = $res['totalTransVATAmount'];
+                                    $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
+                                    $value->totalVATAmountRpt = $res['totalRptVATAmount'];
+                            }
+                        } 
+
 
                     } else {
                         $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_purchasereturndetails.noQty),7) as totTransactionAmount,ROUND(SUM(erp_grvdetails.GRVcostPerUnitLocalCur*erp_purchasereturndetails.noQty),7) as totLocalAmount, ROUND(SUM(erp_grvdetails.GRVcostPerUnitComRptCur*erp_purchasereturndetails.noQty),7) as totRptAmount,ROUND(SUM(erp_grvdetails.VATAmount*erp_purchasereturndetails.noQty),7) as totalVATAmount,ROUND(SUM(erp_grvdetails.VATAmountLocal*erp_purchasereturndetails.noQty),7) as totalVATAmountLocal,ROUND(SUM(erp_grvdetails.VATAmountRpt*erp_purchasereturndetails.noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp, erp_purchasereturndetails.purhaseReturnAutoID as purhaseReturnAutoID")

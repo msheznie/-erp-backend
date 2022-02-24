@@ -149,6 +149,7 @@ use App\Jobs\AddMultipleItems;
 use App\helper\CancelDocument;
 use App\Jobs\GeneralLedgerInsert;
 use App\Models\GeneralLedger;
+use App\helper\CreateExcel;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -1087,12 +1088,16 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount']));
-                    $payAdCompAmount = $payment['comAmount'];
+                    if($payment['comAmount']) {
+                        $paymentPercentageAmount = $payment['comAmount'];
+                    }else {
+                      $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
+                    }
+                    $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
 
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {
-                        return $this->sendError('Payment terms is not matching with the PO total');
+                        return $this->sendError('Payment term calculation is mismatched');
                     }
                 }
             }
@@ -1299,6 +1304,14 @@ class ProcumentOrderAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $procumentOrders = ProcumentOrder::where('documentSystemID', $input['documentId']);
         if ($input['poType_N'] != 1) {
             $procumentOrders->where('poType_N', $input['poType_N']);
@@ -1321,7 +1334,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $procumentOrders->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -1375,7 +1388,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $procumentOrders->where('supplierID', $input['supplierID']);
+                $procumentOrders->whereIn('supplierID', $supplierID);
             }
         }
 
@@ -4815,8 +4828,8 @@ ORDER BY
         $supplierMaster = SupplierMaster::find($procumentOrderUpdate->supplierID);
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
+            "monitoring this inbox.</font>";
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
@@ -5230,6 +5243,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $type = $input['type'];
         $data = [];
 
@@ -5238,7 +5259,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $output->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $output->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -5292,7 +5313,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $output->where('supplierID', $input['supplierID']);
+                $output->whereIn('supplierID', $supplierID);
             }
         }
 
@@ -5433,17 +5454,43 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $data = array();
         }
 
-        \Excel::create('po_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        // \Excel::create('po_master', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), 'successfully export');
+
+        $doc_name = 'purchase_order';
+        $doc_name_path = 'purchase_order/';
+        if($input['documentId'] == 52)
+        {
+            $doc_name = 'purchase_direct_order';
+            $doc_name_path = 'purchase_direct_order/';
+        }   
+        else if($input['documentId'] == 5)
+        {
+            $doc_name = 'purchase_work_order';
+            $doc_name_path = 'purchase_work_order/';
+        }    
+      
+        
+        $path = 'procurement/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
 
@@ -5553,6 +5600,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $from = "";
         $to = "";
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         if (array_key_exists('fromDate', $input) && $input['fromDate']) {
             $from = ((new Carbon($input['fromDate']))->format('Y-m-d'));
         }
@@ -5588,8 +5639,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->when($from && $to, function ($q) use ($from, $to) {
                 return $q->whereBetween('approvedDate', [$from, $to]);
             })
-            ->when(request('supplierID', false), function ($q) use ($input) {
-                return $q->where('supplierID', $input['supplierID']);
+            ->when(request('supplierID', false), function ($q) use ($input,$supplierID) {
+                return $q->whereIn('supplierID', $supplierID);
             })
             ->when(request('financeCategory', false), function ($q) use ($input) {
                 return $q->where('financeCategory', $input['financeCategory']);
@@ -5796,17 +5847,31 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
-        \Excel::create('po_to_payment', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        
+        $doc_name = 'po_to_payment';
+        $doc_name_path = 'po_to_payment/';
+        $path = 'procurement/report/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
 
-        return $this->sendResponse(array(), 'successfully export');
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+        // \Excel::create('po_to_payment', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
+
+        // return $this->sendResponse(array(), 'successfully export');
     }
 
     public function reportPoToPaymentFilterOptions(Request $request)

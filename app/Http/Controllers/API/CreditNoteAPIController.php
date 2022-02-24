@@ -20,6 +20,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CreditNoteDetails;
@@ -392,9 +393,17 @@ class CreditNoteAPIController extends AppBaseController
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
-            if ($companyCurrencyConversion) {
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyPolicyCategoryID', 67)
+                ->where('isYesNO', 1)
+                ->first();
+            $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+            if($policy == false) {
+                if ($companyCurrencyConversion) {
+                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
             }
         }
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
@@ -622,6 +631,283 @@ class CreditNoteAPIController extends AppBaseController
         return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
     }
 
+    public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
+
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
+
+        /** @var CreditNote $creditNote */
+        $creditNote = $this->creditNoteRepository->findWithoutFail($id);
+        if (empty($creditNote)) {
+            return $this->sendError('Credit note not found', 500);
+        }
+
+        if (isset($input['debitNoteAutoID'])) {
+            $alreadyUsed = CreditNote::where('debitNoteAutoID', $input['debitNoteAutoID'])
+                ->where('creditNoteAutoID', '<>', $id)
+                ->first();
+
+            if ($alreadyUsed) {
+                return $this->sendError("Entered debit note was already used in ($alreadyUsed->creditNoteCode). Please check again", 500);
+            }
+        }
+
+        $detail = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
+
+        $input['departmentSystemID'] = 4;
+
+        /*financial Year check*/
+        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYearCheck["success"]) {
+            return $this->sendError($companyFinanceYearCheck["message"], 500);
+        }
+        /*financial Period check*/
+        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+        if (!$companyFinancePeriodCheck["success"]) {
+            return $this->sendError($companyFinancePeriodCheck["message"], 500);
+        }
+
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+        $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+
+
+        if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+
+                if ($companyCurrencyConversion) {
+                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+                }
+        }
+        if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
+            if ($input['secondaryLogoCompanySystemID'] != '') {
+                $company = Company::where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $input['secondaryLogoCompID'] = $company->CompanyID;
+                $input['secondaryLogo'] = $company->logo_url;
+            } else {
+                $input['secondaryLogoCompID'] = NULL;
+                $input['secondaryLogo'] = NULL;
+            }
+
+        }
+
+        $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+        if ($customer) {
+            $input['customerGLCode'] = $customer->custGLaccount;
+            $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
+        }
+
+        // updating header amounts
+        $totalAmount = CreditNoteDetails::selectRaw("COALESCE(SUM(creditAmount),0) as creditAmountTrans, 
+                                                    COALESCE(SUM(localAmount),0) as creditAmountLocal, 
+                                                    COALESCE(SUM(comRptAmount),0) as creditAmountRpt,
+                                                    COALESCE(SUM(VATAmount),0) as VATAmount,
+                                                    COALESCE(SUM(VATAmountLocal),0) as VATAmountLocal, 
+                                                    COALESCE(SUM(VATAmountRpt),0) as VATAmountRpt,
+                                                    COALESCE(SUM(netAmount),0) as netAmount,
+                                                    COALESCE(SUM(netAmountLocal),0) as netAmountLocal, 
+                                                    COALESCE(SUM(netAmountRpt),0) as netAmountRpt
+                                                    ")
+            ->where('creditNoteAutoID', $id)
+            ->first();
+
+        $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
+        $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
+        $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+
+
+        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+
+
+        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+
+        $input['customerCurrencyER'] = 1;
+
+        $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($_post['creditNoteDate'] > $curentDate) {
+            return $this->sendError('Document date cannot be greater than current date', 500);
+        }
+
+        if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+            $messages = [
+                'customerCurrencyID.required' => 'Currency is required.',
+                'customerID.required' => 'Customer is required.',
+                'companyFinanceYearID.required' => 'Financial Year is required.',
+                'companyFinancePeriodID.required' => 'Financial Period is required.',
+
+            ];
+            $validator = \Validator::make($input, [
+                'customerCurrencyID' => 'required|numeric|min:1',
+                'customerID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+
+            ], $messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['creditNoteDate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
+
+            if (count($detail) == 0) {
+                return $this->sendError('You cannot confirm. Credit note should have at least one item.', 500);
+            }
+
+            $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
+                    IF ( creditAmount IS NULL OR creditAmount = '' OR creditAmount = 0, null, 1 ) AS creditAmount")->
+            where('creditNoteAutoID', $id)
+                ->where(function ($query) {
+
+                    $query->whereRaw('serviceLineSystemID IS NULL OR serviceLineSystemID =""')
+                        ->orwhereRaw('serviceLineCode IS NULL OR serviceLineCode =""')
+                        ->orwhereRaw('contractUID IS NULL OR contractUID =""')
+                        ->orwhereRaw('creditAmount IS NULL OR creditAmount =""');
+                });
+
+            $isOperationIntergrated = ModuleAssigned::where('moduleID', 3)->where('companySystemID', $creditNote->companySystemID)->exists();
+
+            if (!empty($detailValidation->get()->toArray())) {
+                foreach ($detailValidation->get()->toArray() as $item) {
+
+                    $validations = [
+                        'serviceLineSystemID' => 'required|numeric|min:1',
+                        'serviceLineCode' => 'required|min:1',
+                        'creditAmount' => 'required|numeric|min:1'
+                    ];
+
+                    if ($isOperationIntergrated) {
+                        $validations['contractUID'] = 'required|numeric|min:1';
+                    }
+
+                    $validators = \Validator::make($item, $validations, [
+
+                        'serviceLineSystemID.required' => 'Department is required.',
+                        'serviceLineCode.required' => 'Cannot confirm. Segment code is not updated.',
+                        'contractUID.required' => 'Contract no is required.',
+                        'creditAmount.required' => 'Amount should be greater than 0 for every items.',
+
+                    ]);
+                    if ($validators->fails()) {
+                        return $this->sendError($validators->messages(), 422);
+                    }
+                }
+            }
+
+            /*serviceline and contract validation*/
+            $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
+            $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
+            if (count($groupby) != 0) {
+                if (count($groupby) > 1 || count($groupbycontract) > 1) {
+                    if ($isOperationIntergrated) {
+                        return $this->sendError('You cannot continue. Multiple segment or contract exist in details.', 500);
+                    } else {
+                        return $this->sendError('You cannot continue. Multiple segment exist in details.', 500);
+                    }
+                }
+            } else {
+                return $this->sendError('Credit note details not found.', 500);
+            }
+
+            Taxdetail::where('documentSystemCode', $id)
+                ->where('documentSystemID', $input["documentSystemiD"])
+                ->delete();
+
+            // if VAT Applicable
+            if(isset($input['isVATApplicable']) && $input['isVATApplicable'] && isset($input['VATAmount']) && $input['VATAmount'] > 0){
+
+                if(empty(TaxService::getOutputVATGLAccount($input["companySystemID"]))) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+                }
+
+                $outputChartOfAc = TaxService::getOutputVATGLAccount($input["companySystemID"]);
+
+                $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($outputChartOfAc->outputVatGLAccountAutoID, $input["companySystemID"]);
+
+                if (!$checkAssignedStatus) {
+                    return $this->sendError('Cannot confirm. Output VAT GL Account not assigned to company.', 500);
+                }
+
+                $taxDetail['companyID'] = $input['companyID'];
+                $taxDetail['companySystemID'] = $input['companySystemID'];
+                $taxDetail['documentID'] = $input['documentID'];
+                $taxDetail['documentSystemID'] = $input['documentSystemiD'];
+                $taxDetail['documentSystemCode'] = $id;
+                $taxDetail['documentCode'] = $creditNote->creditNoteCode;
+                $taxDetail['taxShortCode'] = '';
+                $taxDetail['taxDescription'] = '';
+                $taxDetail['taxPercent'] = $input['VATPercentage'];
+                $taxDetail['payeeSystemCode'] = $input['customerID'];
+
+                if(!empty($customer)) {
+                    $taxDetail['payeeCode'] = $customer->CutomerCode;
+                    $taxDetail['payeeName'] = $customer->CustomerName;
+                }
+
+                $taxDetail['amount'] = $input['VATAmount'];
+                $taxDetail['localCurrencyER']  = $input['localCurrencyER'];
+                $taxDetail['rptCurrencyER'] = $input['companyReportingER'];
+                $taxDetail['localAmount'] = $input['VATAmountLocal'];
+                $taxDetail['rptAmount'] = $input['VATAmountRpt'];
+                $taxDetail['currency'] =  $input['customerCurrencyID'];
+                $taxDetail['currencyER'] =  1;
+
+                $taxDetail['localCurrencyID'] =  $creditNote->localCurrencyID;
+                $taxDetail['rptCurrencyID'] =  $creditNote->companyReportingCurrencyID;
+                $taxDetail['payeeDefaultCurrencyID'] =  $input['customerCurrencyID'];
+                $taxDetail['payeeDefaultCurrencyER'] =  1;
+                $taxDetail['payeeDefaultAmount'] =  $input['VATAmount'];
+
+                Taxdetail::create($taxDetail);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemiD"],
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $input['creditAmountTrans']
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+
+        }
+
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedPc'] = getenv('COMPUTERNAME');
+
+        $creditNote = $this->creditNoteRepository->update($input, $id);
+
+        return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
+    }
     /**
      * @param int $id
      * @return Response
@@ -672,6 +958,83 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote->delete();
 
         return $this->sendResponse($id, 'Credit Note deleted successfully');
+    }
+
+    public function creditNoteLocalUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+            $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
+            $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
+            $creditAmountLocal = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+
+            $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal,  'creditAmountLocal' =>$creditAmountLocal);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $localAmount = \Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountLocal= \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountLocal= \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$itemVATAmountLocal, 'netAmountLocal'=>$itemNetAmountLocal);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse([$id,$value], 'Update Local ER');
+
+        }
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+    }
+
+    public function creditNoteReportingUpdate($id,Request $request){
+
+        $value = $request->data;
+        $companyId = $request->companyId;
+
+        $policy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 67)
+            ->where('isYesNO', 1)
+            ->first();
+        if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+
+        $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
+
+        $masterINVID = CreditNote::findOrFail($id);
+        $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
+        $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
+        $creditAmountRpt = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+
+            $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$VATAmountRpt,'netAmountRpt'=>$netAmountRpt, 'creditAmountRpt'=>$creditAmountRpt);
+        $masterINVID->update($masterInvoiceArray);
+
+        foreach($details as $item){
+            $reportingAmount = \Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
+            $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
+            $updatedLocalER->update($directInvoiceDetailsArray);
+        }
+
+        return $this->sendResponse($id, 'Update Reporting ER');
+        }
+
+        else{
+            return $this->sendError('Policy not enabled', 400);
+        }
+
     }
 
     public function getCreditNoteMasterRecord(Request $request)
@@ -787,16 +1150,20 @@ class CreditNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'customerID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
+        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search, $customerID);
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {

@@ -545,7 +545,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 13: // ST - Stock Transfer
                         $masterData = StockTransfer::find($masterModel["autoID"]);
                         //get balansheet account
-                        $bs = StockTransferDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockTransferAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                        $bs = StockTransferDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockTransferAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
                         //get pnl account
                         $pl = StockTransferDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,localCurrencyID,reportingCurrencyID")->WHERE('stockTransferAutoID', $masterModel["autoID"])->first();
                         if ($masterData) {
@@ -584,18 +584,20 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
 
                             if ($bs) {
-                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
-                                $data['glCode'] = $bs->financeGLcodebBS;
-                                $data['glAccountType'] = 'BS';
-                                $data['glAccountTypeID'] = 1;
-                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
-                                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
-                                $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+                                foreach ($bs as $keyBs => $valueBs) {
+                                    $data['chartOfAccountSystemID'] = $valueBs->financeGLcodebBSSystemID;
+                                    $data['glCode'] = $valueBs->financeGLcodebBS;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountTypeID'] = 1;
+                                    $data['documentLocalCurrencyID'] = $valueBs->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 1;
+                                    $data['documentLocalAmount'] = ABS($valueBs->localAmount) * -1;
+                                    $data['documentRptCurrencyID'] = $valueBs->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = 1;
+                                    $data['documentRptAmount'] = ABS($valueBs->rptAmount) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
                             }
 
                             if ($pl) {
@@ -622,7 +624,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 10: // RS - Stock Receive
                         $masterData = StockReceive::find($masterModel["autoID"]);
                         //get balansheet account
-                        $bs = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+                        $bs = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
                         //get pnl account
                         $pl = StockReceiveDetails::selectRaw("SUM(qty* unitCostLocal) as localAmount, SUM(qty* unitCostRpt) as rptAmount,localCurrencyID,reportingCurrencyID")->WHERE('stockReceiveAutoID', $masterModel["autoID"])->first();
                         if ($masterData) {
@@ -661,18 +663,20 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
 
                             if ($bs) {
-                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
-                                $data['glCode'] = $bs->financeGLcodebBS;
-                                $data['glAccountType'] = 'BS';
-                                $data['glAccountTypeID'] = 1;
-                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount);
-                                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
-                                $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount);
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+                                foreach ($bs as $keyBs => $valueBs) {
+                                    $data['chartOfAccountSystemID'] = $valueBs->financeGLcodebBSSystemID;
+                                    $data['glCode'] = $valueBs->financeGLcodebBS;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['glAccountTypeID'] = 1;
+                                    $data['documentLocalCurrencyID'] = $valueBs->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 1;
+                                    $data['documentLocalAmount'] = ABS($valueBs->localAmount);
+                                    $data['documentRptCurrencyID'] = $valueBs->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = 1;
+                                    $data['documentRptAmount'] = ABS($valueBs->rptAmount);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
                             }
 
                             if ($pl) {
@@ -3772,13 +3776,13 @@ class GeneralLedgerInsert implements ShouldQueue
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
+                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodebBSSystemID')
                             ->get();
 
                         //all acoount
-                        $COSGAc = SalesReturnDetail::selectRaw("SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
+                        $COSGAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID, financeGLcodePLSystemID, financeGLcodePL")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodePLSystemID')
                             ->get();
@@ -3867,13 +3871,14 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($allAc) {
                                 foreach ($allAc as $val) {
+                                    $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
                                     $data['glAccountTypeID'] = 1;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($currencyConversionInv['documentAmount']));
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
@@ -3887,13 +3892,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                              if ($COSGAc) {
                                 foreach ($COSGAc as $val) {
+                                    $currencyConversionCog = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
+
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
                                     $data['glAccountTypeID'] = 2;
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($val->transAmount))) * -1;
+                                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($currencyConversionCog['documentAmount']))) * -1;
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = (\Helper::roundValue(ABS($val->localAmount))) * -1;

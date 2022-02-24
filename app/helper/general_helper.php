@@ -22,14 +22,18 @@ use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateGRVSupplierInvoice;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
+use App\Jobs\EliminationLedgerInsert;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\PushNotification;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
+use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\DeliveryOrderDetail;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
 use App\Models\Company;
@@ -45,7 +49,10 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
 use App\Models\ReportTemplateDetails;
+use App\Models\SalesReturnDetail;
 use App\Models\SupplierMaster;
 use App\Models\User;
 use App\Models\SupplierRegistrationLink;
@@ -71,6 +78,7 @@ use App\helper\BudgetConsumptionService;
 use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
 use App\Jobs\BudgetAdditionAdjustment;
+use App\helper\SendEmailForDocument;
 use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
@@ -737,6 +745,17 @@ class Helper
                     $docInforArr["modelName"] = 'SupplierRegistrationLink';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 69:
+                    $docInforArr["documentCodeColumnName"] = 'consoleJVcode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_consolejvmaster';
+                    $docInforArr["modelName"] = 'ConsoleJVMaster';
+                    $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1370,6 +1389,7 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 2:
+ 
             case 5:
             case 52:
                 $docInforArr["tableName"] = 'erp_purchaseordermaster';
@@ -1757,6 +1777,7 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 104: // vat return filling
                 $docInforArr["tableName"] = 'vat_return_filling_master';
                 $docInforArr["modelName"] = 'VatReturnFillingMaster';
@@ -1840,6 +1861,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+             case 69: // Console Journal Voucher
+                $docInforArr["tableName"] = 'erp_consolejvmaster';
+                $docInforArr["modelName"] = 'ConsoleJVMaster';
+                $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -1957,6 +1990,8 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
+
+
                             // create monthly deduction
                             if (
                                 $input["documentSystemID"] == 4 &&
@@ -2021,6 +2056,8 @@ class Helper
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
+
+                            $masterDataDEO = ['documentSystemID' => $docApproved->documentSystemID, 'id' => $docApproved->id, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
                                 $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
@@ -2116,6 +2153,10 @@ class Helper
                                     if ($sourceModel->isFrom != 5) {
                                         $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                     }
+                                } else if ($input['documentSystemID'] == 17) {
+                                    if ($sourceModel->jvType != 9) {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                    }
                                 } else {
                                     $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 }
@@ -2125,7 +2166,38 @@ class Helper
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
+
+                                    if ($sourceData->interCompanyTransferYN == -1) {
+                                        $consoleJVData = [
+                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'type' => "INTER_ASSET_DISPOSAL"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($consoleJVData);
+                                    }
                                 }
+
+                                if ($input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    if ($sourceData->intercompanyPaymentID > 0) {
+                                        $receiptData = [
+                                            'data' => $sourceData,
+                                            'type' => "FUND_TRANSFER"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($receiptData);
+                                    }
+                                }
+
+                            }
+
+                            if ($input["documentSystemID"] == 69) {
+                                $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                if ($outputEL) {
+                                    return ['success' => false, 'message' => 'Elimination Ledger entries are already passed for this document'];
+                                }
+
+                                $jobGL = EliminationLedgerInsert::dispatch($masterData);
                             }
 
                             if ($input["documentSystemID"] == 24) {
@@ -2137,6 +2209,14 @@ class Helper
                                 $updateReturnQtyInPo = self::updateReturnQtyInPoDetails($masterData);
                                 if (!$updateReturnQtyInPo["success"]) {
                                     return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 87) {
+
+                                $updateReturnQtyInPo = self::updateReturnQtyInDeliveryOrderDetails($input["documentSystemCode"]);
+                                if (!$updateReturnQtyInPo["success"]) {
+                                    return ['success' => false, 'message' => "Success"];
                                 }
                             }
 
@@ -2268,7 +2348,7 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = "<p>Dear " . $suppiler_info->name . ',</p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
+                                    $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -2414,7 +2494,15 @@ class Helper
                                 $pushNotificationArray['pushNotificationMessage'] = $pushNotificationMessage;
                             }
                         }
+
+                        if ($input['documentSystemID'] == 2) {
+                             Log::info('approvedDocument function called in side general helper');
+                            SendEmailForDocument::approvedDocument($input);
+                        }
+                        
                         $sendEmail = \Email::sendEmail($emails);
+
+
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
@@ -2472,6 +2560,35 @@ class Helper
                 ->update($updateData);
         }
 
+        return ['success' => true];
+    }
+
+    public static function updateReturnQtyInDeliveryOrderDetails($id)
+    {
+        $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
+
+        foreach ($srDetails as $value) {
+            $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
+
+            $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+
+            $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
+            $requestedQty = isset($deliveryOrderData->requestedQty) ?  $deliveryOrderData->requestedQty: 0;
+            $doQty = $requestedQty - $returnQty;
+            $deliveryOrderData->update(['qtyIssued' => $doQty]);
+            if($doQty == 0) {
+                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
+                    ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
+            }
+            if($doQty > 0) {
+                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
+                    ->update(['fullyOrdered' => 1, 'doQuantity' => $returnQty]);
+            }
+
+            $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+
+        }
         return ['success' => true];
     }
 
@@ -2901,6 +3018,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                 case 69: // Console Journal Voucher
+                    $docInforArr["tableName"] = 'erp_consolejvmaster';
+                    $docInforArr["modelName"] = 'ConsoleJVMaster';
+                    $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -2924,7 +3047,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107, 69])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }

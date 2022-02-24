@@ -475,14 +475,16 @@ class StockAdjustmentAPIController extends AppBaseController
 
                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-                $currenctStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $currenStockQty = ($stockAdjustment->stockAdjustmentType == 2) ? $itemCurrentCostAndQty['currentStockQty'] : $itemCurrentCostAndQty['currentWareHouseStockQty'];
+
+                $currenctStockQty = $currenStockQty;
 
                 $balanceQty = $currenctStockQty + $value->noQty;
 
                 if ($balanceQty < 0) {
-                      if ($itemCurrentCostAndQty['currentWareHouseStockQty'] != $value->currenctStockQty) {
+                      if ($currenStockQty != $value->currenctStockQty) {
 
-                            $errorMessage[] = $value->itemPrimaryCode.' - Current stock quantity has been updated from '.$value->currenctStockQty.' to '.$itemCurrentCostAndQty['currentWareHouseStockQty'].'. Adjusted quantity cannot be less than current stock quantity';
+                            $errorMessage[] = $value->itemPrimaryCode.' - Current stock quantity has been updated from '.$value->currenctStockQty.' to '.$currenStockQty.'. Adjusted quantity cannot be less than current stock quantity';
                       } else {
                             $errorMessage[] = $value->itemPrimaryCode.' - Adjusted quantity cannot be less than current stock quantity';
                       }
@@ -597,8 +599,15 @@ class StockAdjustmentAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        $grvLocation = $request['location'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
 
-        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation,$serviceLineSystemID);
 
         return \DataTables::eloquent($stockAdjustments)
             ->addColumn('Actions', 'Actions', "Actions")

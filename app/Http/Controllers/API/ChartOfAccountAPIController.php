@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\AllocationMaster;
 use App\helper\ReopenDocument;
+use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccountsRefferedBack;
@@ -45,6 +46,7 @@ use Illuminate\Validation\Rule;
 use App\helper\Helper;
 use App\helper\DocumentCodeGenerate;
 use Carbon\Carbon;
+use App\helper\CreateExcel;
 /**
  * Class ChartOfAccountController
  * @package App\Http\Controllers\API
@@ -250,17 +252,21 @@ class ChartOfAccountAPIController extends AppBaseController
                         }
 
                         $updateData = [
-                            'AccountDescription' => $input['AccountDescription']
+                            'AccountDescription' => $input['AccountDescription'],
+                            'isBank' => $input['isBank'],
+                        ];
+                        $updateDataNotAssigned = [
+                            'isActive' => $input['isActive']
                         ];
 
-
+                        ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateDataNotAssigned);
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
                         if ($updateChartOfAccount) {
                             $updateChartOfAccount->AccountDescription =  $input['AccountDescription'];
                             $updateChartOfAccount->save();
                             DB::commit();
-                            
+
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
                             $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
@@ -277,18 +283,24 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     }
 
-
                     //check policy 10
                     $policyCAc = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'], 10);
                     if ($policyCAc) {
                         $updateData = [
-                            'controllAccountYN' => $input['controllAccountYN']
+                            'controllAccountYN' => $input['controllAccountYN'],
+                            'isBank' => $input['isBank'],
+                        ];
+
+                        $updateDataNotAssigned = [
+                            'isActive' => $input['isActive']
                         ];
 
                         $updateChartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
+
+                        ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateDataNotAssigned);
                         DB::commit();
 
-                     
+
                         if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
@@ -305,9 +317,9 @@ class ChartOfAccountAPIController extends AppBaseController
 
                     }
 
-                    
+
                     if ($policyCAc || $policy) {
-                        return $this->sendResponse([], 'Chart Of Account updated successfully');
+                        return $this->sendResponse([], 'Chart Of Account updated successfully done');
                     }
 
                     return $this->sendError('You cannot edit, This document already confirmed and approved.', 500);
@@ -408,6 +420,14 @@ class ChartOfAccountAPIController extends AppBaseController
 
     }
 
+    public function isBank($id){
+
+        $isBank = BankAccount::where('chartOfAccountSystemID', $id)->get();
+
+        $isGeneralLedger = GeneralLedger::where('chartOfAccountSystemID', $id)->get();
+
+        return $this->sendResponse([$isBank,$isGeneralLedger], 'Data retrieved successfully');
+    }
 
     /**
      * Display all assigned itemAssigned for specific Item Master.
@@ -988,17 +1008,20 @@ class ChartOfAccountAPIController extends AppBaseController
             $data = array();
         }
 
-        \Excel::create('chart_of_accounts_', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', TRUE);
-                $sheet->setAutoSize(TRUE);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(TRUE);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:H' . $lastrow)->getAlignment()->setWrapText(TRUE);
-        })->download('csv');
 
-        return $this->sendResponse(array(), 'successfully export');
+
+        $fileName = 'chart_of_accounts_';
+        $path = 'system/chart_of_accounts_/excel/';
+        $basePath = CreateExcel::process($data,$request->exte_type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
     public function chartOfAccountReopen(Request $request)
