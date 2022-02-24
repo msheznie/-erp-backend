@@ -568,9 +568,13 @@ class BankReconciliationAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bankmasterAutoID'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $bankReconciliation = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search);
+        $bankReconciliation = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search, $bankmasterAutoID);
 
         return \DataTables::eloquent($bankReconciliation)
             ->addColumn('Actions', 'Actions', "Actions")
