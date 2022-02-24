@@ -1292,9 +1292,9 @@ class SupplierMasterAPIController extends AppBaseController
 
 
                     if(isset($fileData['size'])){
-                        if ($fileData['size'] > 31457280) {
+                        if ($fileData['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                             DB::rollback();
-                            return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.",500);
+                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
                         }
                     }
 
