@@ -154,7 +154,7 @@ class Appointment extends Model
     }
     public function created_by()
     {
-        return $this->hasOne('App\Models\SupplierAssigned', 'supplierCodeSytem', 'created_by');
+        return $this->hasOne('App\Models\SupplierAssigned', 'supplierAssignedID', 'created_by');
     }
     public function documentApproved()
     {
