@@ -2654,6 +2654,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
+    public function getMultipleAccountsByBank(Request $request)
+    {
+        $bankmasterAutoID = $request['bank_id'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+        $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->whereIn('bankmasterAutoID', $bankmasterAutoID)->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
+        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+    }
+
     public function checkPVDocumentActive(Request $request)
     {
         $input = $request->all();

@@ -2201,6 +2201,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('Purchase Order not found');
         }
 
+        if($purchaseOrder->grvRecieved == 2) {
+            return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+        }
+
         $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
             ->first();
 
@@ -5239,6 +5243,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $type = $input['type'];
         $data = [];
 
@@ -5247,7 +5259,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $output->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $output->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -5301,7 +5313,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $output->where('supplierID', $input['supplierID']);
+                $output->whereIn('supplierID', $supplierID);
             }
         }
 

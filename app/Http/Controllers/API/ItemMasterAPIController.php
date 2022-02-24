@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DeliveryOrder;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
+use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemMaster;
 use App\Models\Company;
@@ -1357,6 +1358,23 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function checkLedgerQty(Request $request)
+    {
+        $wareHouseSystemCode = $request->wareHouseSystemCode;
+        $itemSystemCode = $request->itemSystemCode;
+        $companySystemID = $request->companySystemID;
+        $sumWarehouse = null;
+        if($wareHouseSystemCode != null) {
+            $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
+        }
+        $sumGlobal= ErpItemLedger::where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
+
+        $sum=array("sumWarehouse"=>$sumWarehouse,"sumGlobal"=>$sumGlobal);
+
+
+        return $this->sendResponse($sum, 'Data retrieved successfully');
     }
 
     public function getSupplierByCatalogItemDetail(Request $request) {

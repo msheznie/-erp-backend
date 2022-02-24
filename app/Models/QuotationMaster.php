@@ -482,7 +482,20 @@ class QuotationMaster extends Model
         'VATAmountRpt',
         'deliveryTerms',
         'panaltyTerms',
-        'sent_to_customer'
+        'sent_to_customer',
+        'cancelledYN',
+        'cancelledByEmpID',
+        'cancelledByEmpName',
+        'cancelledComments',
+        'cancelledDate',
+        'cancelledByEmpSystemID',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment',
+        'is_return'
     ];
 
     /**
@@ -579,7 +592,8 @@ class QuotationMaster extends Model
         'VATAmountRpt' => 'float',
         'deliveryTerms'  => 'string',
         'panaltyTerms'  => 'string',
-        'sent_to_customer' => 'integer'
+        'sent_to_customer' => 'integer',
+        'is_return' => 'boolean'
     ];
 
     /**

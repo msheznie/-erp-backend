@@ -2042,9 +2042,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+        
         $search = $request->input('search.value');
 
-        $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search);
+        $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -3862,7 +3866,9 @@ WHERE
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
-        if ($isEmployeeDischarched == 'true') {
+        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
+
+        if ($isEmployeeDischarched == 'true' || !$inovicePolicy) {
             $grvMasters = [];
         }
 
@@ -3946,6 +3952,13 @@ WHERE
                     ->orWhere('CustomerName', 'LIKE', "%{$search}%");
             });
         }
+
+        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
+
+        if(!$inovicePolicy) {
+            $grvMasters = [];
+        }
+
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
