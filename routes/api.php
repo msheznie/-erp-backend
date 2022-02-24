@@ -1965,6 +1965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
         Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
+        Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
@@ -1972,6 +1973,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO');
         Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO');
+        Route::post('cancelQuatation', 'QuotationMasterAPIController@cancelQuatation');
+        Route::post('closeQuatation', 'QuotationMasterAPIController@closeQuatation');
 
         Route::post('getDeliveryOrderApprovals', 'DeliveryOrderAPIController@getDeliveryOrderApprovals');
         Route::post('getApprovedDeliveryOrderForUser', 'DeliveryOrderAPIController@getApprovedDeliveryOrderForUser');

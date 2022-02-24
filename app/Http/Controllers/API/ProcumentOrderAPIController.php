@@ -2201,6 +2201,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('Purchase Order not found');
         }
 
+        if($purchaseOrder->grvRecieved == 2) {
+            return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+        }
+
         $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
             ->first();
 

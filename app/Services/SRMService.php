@@ -29,6 +29,7 @@ use App\Services\Shared\SharedService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
@@ -931,16 +932,7 @@ class SRMService
         $search = $request->input('search.value');
 
         $query =  Appointment::where('supplier_id', $supplierID)
-            ->with(['created_by', 'slot_detail' => function($query){
-                $query->withCount(['appointment' => function($q){
-                    $q->where('confirmed_yn', 1)
-                        ->Where(function ($query) {
-                            $query->where('approved_yn', 0)
-                                ->orWhere('approved_yn', -1);
-                        })
-                        ->where('refferedBackYN', 0);
-                }]);
-            },'slot_detail.slot_master.ware_house', 'slot_detail.slot_master']);
+            ->with(['created_by', 'slot_detail','slot_detail.slot_master.ware_house']);
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -973,15 +965,14 @@ class SRMService
             });
         }
 
-        //$query = $query->orderBy('slot_detail.slot_master.from_date', 'desc');
         $data = DataTables::eloquent($query)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
                         // $query->orderBy('id', $input['order'][0]['dir']);
-                        $query->whereHas('slot_detail.slot_master', function ($query1){
-                            $query1->orderBy('from_date', 'DESC');
+                        $query->whereHas('slot_detail', function ($query1){
+                            $query1->orderBy('start_date', 'DESC');
                         });
                     }
                 }
