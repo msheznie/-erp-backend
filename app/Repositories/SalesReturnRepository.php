@@ -110,6 +110,10 @@ class SalesReturnRepository extends BaseRepository
         $salesReturn = SalesReturn::whereIn('companySystemID', $childCompanies)
         ->with(['customer','transaction_currency','created_by','segment']);
 
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $salesReturn->where('confirmedYN', $input['confirmedYN']);
@@ -136,7 +140,7 @@ class SalesReturnRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && !is_null($input['customerID'])) {
-                $salesReturn->where('customerID', $input['customerID']);
+                $salesReturn->whereIn('customerID', $customerID);
             }
         }
 

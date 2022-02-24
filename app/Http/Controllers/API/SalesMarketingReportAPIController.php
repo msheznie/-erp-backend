@@ -1988,7 +1988,12 @@ class SalesMarketingReportAPIController extends AppBaseController
     public function reportSoToReceipt(Request $request)
     {
         $input = $request->all();
-        $salesOrder = $this->getSoToReceiptQry($input);
+
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
+        $salesOrder = $this->getSoToReceiptQry($input, $customerID);
         $data = \DataTables::of($salesOrder)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -2091,7 +2096,7 @@ class SalesMarketingReportAPIController extends AppBaseController
     }
 
 
-    public function getSoToReceiptQry($request)
+    public function getSoToReceiptQry($request, $customerID)
     {
         $input = $request;
         $from = "";
@@ -2133,8 +2138,8 @@ class SalesMarketingReportAPIController extends AppBaseController
             ->when($from && $to, function ($q) use ($from, $to) {
                 return $q->whereBetween('approvedDate', [$from, $to]);
             })
-            ->when(request('customerID', false), function ($q) use ($input) {
-                return $q->where('customerSystemCode', $input['customerID']);
+            ->when(request('customerID', false), function ($q) use ($input, $customerID) {
+                return $q->whereIn('customerSystemCode', $customerID);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -2175,7 +2180,10 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getSoToReceiptQry($input))->orderBy('quotationMasterID', 'DES')->get();
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+        $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'DES')->get();
 
         foreach ($output as $row) {
             $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row);
