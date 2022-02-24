@@ -371,6 +371,10 @@ class PdcLogAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bank'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $issuedCheques = PdcLog::where('documentSystemID',4)
                                 ->whereHas('pay_supplier', function ($query) {
                                     $query->where('approved', -1);
@@ -380,8 +384,8 @@ class PdcLogAPIController extends AppBaseController
                                     $toDate = Carbon::parse(trim($input['toDate'],'"'));
                                     return $q->whereBetween('chequeDate', [$fromDate,$toDate]);
                                 })
-                                ->when(!empty($input['bank']), function ($q) use ($input) {
-                                    return $q->where('paymentBankID', $input['bank']);
+                                ->when(!empty($input['bank']), function ($q) use ($bankmasterAutoID) {
+                                    return $q->whereIn('paymentBankID', $bankmasterAutoID);
                                 })
                                 ->where('companySystemID',$companyId)
                                 ->with(['currency','bank','pay_supplier']);
@@ -412,6 +416,10 @@ class PdcLogAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bank'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $receivedCheques = PdcLog::where('documentSystemID',21)
                                 ->whereHas('customer_receive', function ($query){
                                     $query->where('approved', -1);
@@ -421,8 +429,8 @@ class PdcLogAPIController extends AppBaseController
                                     $toDate = Carbon::parse(trim($input['toDate'],'"'));
                                     return $q->whereBetween('chequeDate', [$fromDate,$toDate]);
                                 })
-                                ->when(!empty($input['bank']), function ($q) use ($input) {
-                                    return $q->where('paymentBankID', $input['bank']);
+                                ->when(!empty($request['bank']), function ($q) use ($bankmasterAutoID) {
+                                    return $q->whereIn('paymentBankID', $bankmasterAutoID);
                                 })
                                 ->where('companySystemID',$companyId)
                                 ->with(['currency','bank','customer_receive']);
