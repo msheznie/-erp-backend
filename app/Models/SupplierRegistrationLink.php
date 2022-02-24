@@ -48,6 +48,6 @@ class SupplierRegistrationLink extends Model
 
     public function created_by()
     {
-        return $this->hasOne('App\Models\SupplierAssigned', 'supplierCodeSytem', 'created_by');
+        return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
     }
 }

@@ -3866,7 +3866,9 @@ WHERE
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
-        if ($isEmployeeDischarched == 'true') {
+        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
+
+        if ($isEmployeeDischarched == 'true' || !$inovicePolicy) {
             $grvMasters = [];
         }
 
@@ -3950,6 +3952,13 @@ WHERE
                     ->orWhere('CustomerName', 'LIKE', "%{$search}%");
             });
         }
+
+        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
+
+        if(!$inovicePolicy) {
+            $grvMasters = [];
+        }
+
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
