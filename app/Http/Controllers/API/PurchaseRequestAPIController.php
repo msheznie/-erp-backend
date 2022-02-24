@@ -1423,7 +1423,6 @@ class PurchaseRequestAPIController extends AppBaseController
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
-
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
 

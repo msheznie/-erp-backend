@@ -185,8 +185,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
             if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
@@ -476,8 +476,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
@@ -796,8 +796,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
-                if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
