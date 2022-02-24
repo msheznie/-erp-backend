@@ -1052,7 +1052,7 @@ class SRMService
             $Data['canceledByName'] = $supplier['supplierName'];
             $result = Appointment::where('id', $id)->update($Data);
 
-            $message ='Delivery appointment canceled successfully';
+            $message ='Appointment canceled successfully';
             $success = true;
         } catch (\Exception $e){
             $success = false;
