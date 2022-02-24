@@ -2493,6 +2493,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('payment_types', 'PaymentTypeAPIController');
         Route::resource('elimination_ledgers', 'EliminationLedgerAPIController');
 
+        Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
+        Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
+        Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems');
+        Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2677,4 +2682,3 @@ Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
 
 
-Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
