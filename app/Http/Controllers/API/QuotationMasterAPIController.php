@@ -776,7 +776,11 @@ class QuotationMasterAPIController extends AppBaseController
         ->where('companySystemID', $companyId)
         ->first();
 
-
+        // check policy 44 is on for CI
+        $isEQOINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 44)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -789,7 +793,8 @@ class QuotationMasterAPIController extends AppBaseController
             'salespersons' => $salespersons,
             'segments' => $segments,
             'soPaymentTermsDrop' => $soPaymentTermsDrop,
-            'addNewItemPolicy' => ($addNewItem) ? $addNewItem->isYesNO : false
+            'addNewItemPolicy' => ($addNewItem) ? $addNewItem->isYesNO : false,
+            'isEQOINVPolicyOn' => ($isEQOINVPolicyOn) ? $isEQOINVPolicyOn : false
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
