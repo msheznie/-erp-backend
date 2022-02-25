@@ -896,7 +896,8 @@ class QuotationMasterAPIController extends AppBaseController
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', 0)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -969,7 +970,8 @@ class QuotationMasterAPIController extends AppBaseController
             $query->on('erp_documentapproved.documentSystemCode', '=', 'quotationMasterID')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', -1)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -1797,11 +1799,11 @@ class QuotationMasterAPIController extends AppBaseController
     
             $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
             if ($invoice > 0) {
-                return $this->sendError($order_type.' added to ivoice order');
+                return $this->sendError($order_type.' added to invoice order');
             }
         }
 
- 
+        $msg = $order_type.' successfully canceled';
         
         $employee = \Helper::getEmployeeInfo();
 
@@ -1813,7 +1815,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster->cancelledDate =  now();
         $quotationMaster->save();
 
-        return $this->sendResponse($quotationMaster, 'quoatation successfully canceled');
+        return $this->sendResponse($quotationMaster, $msg);
 
     }
 
@@ -1878,7 +1880,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if(!$is_partially_added)
         {
-            return $this->sendError($is_partially_added.'cannot be closed, not partially added to any orders');
+            return $this->sendError($order_type.' cannot be closed, not partially added to any orders');
         }   
         
   
