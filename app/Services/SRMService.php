@@ -399,7 +399,7 @@ class SRMService
                 $q1->with(['order', 'unit']);
             }]);
         }])
-            ->where('id', $appointmentID)->first();
+            ->where('id', 1)->first();
 
         return [
             'success'   => true,
@@ -931,49 +931,41 @@ class SRMService
         $appointDate = $request->input('extra.appointDate');
         $search = $request->input('search.value');
 
-        $query =  Appointment::where('supplier_id', $supplierID)
-            ->with(['created_by', 'slot_detail','slot_detail.slot_master.ware_house']);
+        $query = DB::table('appointment')
+            ->select('*', 'appointment.id as appointmentId')
+            ->join('slot_details', function($query) {
+                $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
+            })
+            ->where('appointment.supplier_id', $supplierID)
+            ->join('SupplierAssigned', 'appointment.created_by', 'SupplierAssigned.supplierAssignedID')
+            ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
+            ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->orWhere('primary_code', 'LIKE', "%{$search}%");
-                $query->orWhere('created_at', 'LIKE', "%{$search}%");
-                $query->orWhere('status', 'LIKE', "%{$search}%");
-                $query->orWhere('created_by', 'LIKE', "%{$search}%");
-                $query->orWhereHas('slot_detail.slot_master.ware_house', function ($query1) use ($search) {
-                    $query1->where('wareHouseDescription', 'LIKE', "%{$search}%");
-                });
-                $query->orWhereHas('created_by', function ($query1) use ($search) {
-                    $query1->where('supplierName', 'LIKE', "%{$search}%");
-                });
-                $query->orWhereHas('slot_detail.slot_master', function ($query1) use ($search) {
-                    $query1->whereDate('from_date', "%{$search}%");
-                });
+                $query->orWhere('appointment.created_at', 'LIKE', "%{$search}%");
+                $query->orWhere('wareHouseDescription', 'LIKE', "%{$search}%");
+                $query->orWhere('SupplierAssigned.supplierName', 'LIKE', "%{$search}%");
+               // $query->orWhereDate('slot_details.start_date', "%{$search}%");
             });
         }
 
         if(isset($warehouseId) && $warehouseId !== 0) {
-            $query = $query->whereHas('slot_detail.slot_master.ware_house', function ($query) use ($warehouseId) {
-                $query->where('wareHouseSystemCode', $warehouseId);
-            });
+            $query->where('wareHouseSystemCode', $warehouseId);
         }
 
         if(!(is_null($appointDate)) && isset($appointDate)) {
-            $query = $query->whereHas('slot_detail.slot_master', function ($query) use($appointDate){
-                $query->whereDate('from_date', $appointDate);
-            });
+           $query->whereDate('start_date', $appointDate);
         }
 
-        $data = DataTables::eloquent($query)
+        $data = DataTables::of($query)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        // $query->orderBy('id', $input['order'][0]['dir']);
-                        $query->whereHas('slot_detail', function ($query1){
-                            $query1->orderBy('start_date', 'DESC');
-                        });
+                        $query->orderBy('slot_details.start_date', $input['order'][0]['dir']);
                     }
                 }
             })
