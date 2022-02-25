@@ -1727,7 +1727,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
         $registrationLinkDetails = SupplierRegistrationLink::with(['supplier', 'created_by'])
             ->where('company_id',  $companyID);
 
@@ -1744,7 +1743,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $query1->where('supplierName', 'LIKE', "%{$search}%");
                 });
                 $query->orWhereHas('created_by', function ($query1) use ($search) {
-                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                    $query1->where('empFullName', 'LIKE', "%{$search}%");
                 });
             });
         }
