@@ -884,13 +884,22 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
-
-                if (!empty($QuoDetailExist)) {
+                
+                $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                    ->first();
+                if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
+                    $QuoDetailExistDetails->qtyIssued += (int) $inputDetails[0]['noQty'];
+                    $QuoDetailExistDetails->save();
+                }else {
+                    if (!empty($QuoDetailExist)) {
                     foreach ($QuoDetailExist as $row) {
                         $itemDrt = $row['itemPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
+                }
+                
             }
         }
 
