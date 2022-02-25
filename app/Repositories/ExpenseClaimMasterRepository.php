@@ -76,8 +76,7 @@ class ExpenseClaimMasterRepository extends BaseRepository
     }
 
     public function expenseClaimMasterListQuery($request, $input, $search = '') {
-        // return$input['documentId'];
-
+        
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -97,7 +96,7 @@ class ExpenseClaimMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == 1) && !is_null($input['approvedYN'])) {
                 $expenseClaims = $expenseClaims->where('approvedYN', $input['approvedYN']);
             }
         }
