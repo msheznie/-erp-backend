@@ -94,9 +94,9 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
             }
         }
 
-        if (array_key_exists('approvedYN', $input)) {
-            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
-                $monthlyAdditions = $monthlyAdditions->where('approvedYN', $input['approvedYN']);
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $monthlyAdditions = $monthlyAdditions->where('approvedYN', $input['approved']);
             }
         }
 
