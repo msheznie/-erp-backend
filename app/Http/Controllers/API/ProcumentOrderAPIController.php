@@ -2201,13 +2201,22 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('Purchase Order not found');
         }
 
-        if($purchaseOrder->grvRecieved == 2) {
-            return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
-        }
+        $fullyRetuned = false;
 
         $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
             ->first();
-
+       if($purchaseOrder->grvRecieved == 2) {
+           $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
+           foreach($puchaseReturnDetails as $puchaseReturnDetail) {
+              $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+           }    
+          
+           if($fullyRetuned) {
+                 return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+           }else {
+                 return $this->sendError('Cannot cancel, GRV is created for this PO');
+           }
+        }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
                 return $this->sendError('Cannot cancel, GRV is created for this PO');
