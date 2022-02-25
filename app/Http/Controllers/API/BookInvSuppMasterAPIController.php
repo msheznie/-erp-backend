@@ -2568,6 +2568,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $isVATEligible = TaxService::checkCompanyVATEligible($bookInvSuppMaster->companySystemID);
 
+
+        $directItemNetTotalLocal = 0;
+        $directItemNetTotalTrans = 0;
+
+        if ($bookInvSuppMasterRecord->documentType == 3) {
+            $grvTotTra = SupplierInvoiceDirectItem::selectRaw('SUM(netAmount + (VATAmount * noQty)) as total')->where('bookingSuppMasInvAutoID', $id)->first()->total;
+        }
+
+
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
             'docRef' => $refernaceDoc,
