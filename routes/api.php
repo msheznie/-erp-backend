@@ -2162,7 +2162,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
-        Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+        Route::post('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
         Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
         Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
