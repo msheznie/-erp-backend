@@ -362,9 +362,13 @@ class BankAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bankmasterAutoID'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $logistics = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search);
+        $logistics = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search, $bankmasterAutoID);
 
         return \DataTables::eloquent($logistics)
             ->addColumn('Actions', 'Actions', "Actions")

@@ -2201,9 +2201,22 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('Purchase Order not found');
         }
 
+        $fullyRetuned = false;
+
         $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
             ->first();
-
+       if($purchaseOrder->grvRecieved == 2) {
+           $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
+           foreach($puchaseReturnDetails as $puchaseReturnDetail) {
+              $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+           }    
+          
+           if($fullyRetuned) {
+                 return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+           }else {
+                 return $this->sendError('Cannot cancel, GRV is created for this PO');
+           }
+        }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
                 return $this->sendError('Cannot cancel, GRV is created for this PO');
@@ -5239,6 +5252,14 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $type = $input['type'];
         $data = [];
 
@@ -5247,7 +5268,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $output->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $output->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -5301,7 +5322,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $output->where('supplierID', $input['supplierID']);
+                $output->whereIn('supplierID', $supplierID);
             }
         }
 

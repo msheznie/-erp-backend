@@ -100,7 +100,9 @@ class DeliveryOrderRepository extends BaseRepository
         } else {
             $childCompanies = [$companyId];
         }
-
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
         $deliveryOrder = DeliveryOrder::whereIn('companySystemID', $childCompanies)
         ->with(['customer','transaction_currency','created_by','segment']);
 
@@ -130,7 +132,7 @@ class DeliveryOrderRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && !is_null($input['customerID'])) {
-                $deliveryOrder->where('customerID', $input['customerID']);
+                $deliveryOrder->whereIn('customerID', $customerID);
             }
         }
 

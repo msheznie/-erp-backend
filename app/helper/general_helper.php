@@ -2135,10 +2135,14 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97, 11])) {
 
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                    }
+                                } if ($input['documentSystemID'] == 11) {
+                                    if ($sourceModel->documentType == 3) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
                                 } else {
@@ -5805,5 +5809,14 @@ class Helper
             return true;
         }
         return false;
+    }
+
+    public static function bytesToHuman($bytes) {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
+        for ($i = 0; $bytes > 1024; $i++) {
+            $bytes /= 1024;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

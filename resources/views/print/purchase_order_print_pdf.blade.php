@@ -697,7 +697,7 @@
                 </span>
                 </td>
             </tr>
-            @if ($podata->supplierVATEligible)
+            @if ($podata->isVatEligible || $podata->vatRegisteredYN)
                 <tr>
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;</td>

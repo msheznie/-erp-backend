@@ -2483,21 +2483,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['BPVbank'])){
             unset($input['BPVbank']);
         }
-        if(empty($input['approved'])){
-            unset($input['approved']);
-        }
-        if(empty($input['cancelYN'])){
-            unset($input['cancelYN']);
-        }
-        if(empty($input['chequePaymentYN'])){
-            unset($input['chequePaymentYN']);
-        }
+
         if(empty($input['chequeSentToTreasury'])){
             unset($input['chequeSentToTreasury']);
         }
-        if(empty($input['confirmedYN'])){
-            unset($input['confirmedYN']);
-        }
+
         if(empty($input['invoiceType'])){
             unset($input['invoiceType']);
         }
@@ -2513,7 +2503,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
         }
-
+        
         $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($paymentVoucher)
@@ -2651,6 +2641,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     function getBankAccount(Request $request)
     {
         $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->where('bankmasterAutoID', $request["bankmasterAutoID"])->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
+        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
+    }
+
+    public function getMultipleAccountsByBank(Request $request)
+    {
+        $bankmasterAutoID = $request['bank_id'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+        $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->whereIn('bankmasterAutoID', $bankmasterAutoID)->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 

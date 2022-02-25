@@ -100,7 +100,7 @@ class CreditNoteRepository extends BaseRepository
 
     }
 
-    public function creditNoteListQuery($request, $input, $search = '') {
+    public function creditNoteListQuery($request, $input, $search = '', $customerID) {
 
         $master = DB::table('erp_creditnote')
             ->leftjoin('currencymaster', 'customerCurrencyID', '=', 'currencyID')
@@ -117,7 +117,7 @@ class CreditNoteRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if (($input['customerID'] != '')) {
-                $master->where('erp_creditnote.customerID', $input['customerID']);
+                $master->whereIn('erp_creditnote.customerID', $customerID);
             }
         }
 

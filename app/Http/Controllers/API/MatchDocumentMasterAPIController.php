@@ -1903,9 +1903,13 @@ WHERE
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $invMaster = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search);
+        $invMaster = $this->matchDocumentMasterRepository->receiptVoucherMatchingListQuery($request, $input, $search ,$customerID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

@@ -355,4 +355,8 @@ class DeliveryOrderDetail extends Model
     public function invoice_detail() {
         return $this->hasMany('App\Models\CustomerInvoiceItemDetails','deliveryOrderDetailID','deliveryOrderDetailID');
     }
+
+    public function sales_return() {
+        return $this->hasOne('App\Models\SalesReturnDetail','deliveryOrderDetailID','deliveryOrderDetailID');
+    }
 }

@@ -136,7 +136,15 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search);
+        $supplierCountryID = $request['supplierCountryID'];
+        $supplierCountryID = (array)$supplierCountryID;
+        $supplierCountryID = collect($supplierCountryID)->pluck('id');
+
+        $liabilityAccountSysemID = $request['liabilityAccountSysemID'];
+        $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
+        $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID);
 
         return \DataTables::eloquent($supplierMasters)
             ->order(function ($query) use ($input, $supplierId) {
@@ -174,7 +182,16 @@ class SupplierMasterAPIController extends AppBaseController
         if ($request['type'] == 'all') {
             $supplierId = 'supplierCodeSystem';
         }
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search)->orderBy($supplierId, $sort)->get();
+
+        $supplierCountryID = $request['supplierCountryID'];
+        $supplierCountryID = (array)$supplierCountryID;
+        $supplierCountryID = collect($supplierCountryID)->pluck('id');
+
+        $liabilityAccountSysemID = $request['liabilityAccountSysemID'];
+        $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
+        $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID)->orderBy($supplierId, $sort)->get();
         $data = array();
         $x = 0;
         foreach ($supplierMasters as $val) {
@@ -270,10 +287,11 @@ class SupplierMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
-    public function getSuppliersByFilterQry($request, $search)
+    public function getSuppliersByFilterQry($request, $search, $supplierCountryID, $liabilityAccountSysemID)
     {
 
         $input = $request;
+
         $companyId = $request['companyId'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
@@ -300,13 +318,13 @@ class SupplierMasterAPIController extends AppBaseController
 
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
-                $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+                $supplierMasters->whereIn('supplierCountryID', $supplierCountryID);
             }
         }
 
         if (array_key_exists('liabilityAccountSysemID', $input)) {
             if ($input['liabilityAccountSysemID'] && !is_null($input['liabilityAccountSysemID'])) {
-                $supplierMasters->where('liabilityAccountSysemID', '=', $input['liabilityAccountSysemID']);
+                $supplierMasters->whereIn('liabilityAccountSysemID', $liabilityAccountSysemID);
             }
         }
 
@@ -1292,9 +1310,9 @@ class SupplierMasterAPIController extends AppBaseController
 
 
                     if(isset($fileData['size'])){
-                        if ($fileData['size'] > 31457280) {
+                        if ($fileData['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                             DB::rollback();
-                            return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.",500);
+                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
                         }
                     }
 
@@ -1696,6 +1714,52 @@ class SupplierMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Supplier Registration Link Generation Failed',500);
         }
+    }
+
+    public function srmRegistrationLinkHistoryView(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $registrationLinkDetails = SupplierRegistrationLink::with(['supplier', 'created_by'])
+            ->where('company_id',  $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $registrationLinkDetails = $registrationLinkDetails->where(function ($query) use ($search) {
+                $query->where('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('name', 'LIKE', "%{$search}%");
+
+                $query->orWhereHas('supplier', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('empFullName', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::of($registrationLinkDetails)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 
     public function getSearchSupplierByCompanySRM(Request $request)

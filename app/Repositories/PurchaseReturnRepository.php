@@ -99,13 +99,13 @@ class PurchaseReturnRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseReturn->where('serviceLineSystemID', $serviceLineSystemID);
+                $purchaseReturn->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('purchaseReturnLocation', $input)) {
             if ($input['purchaseReturnLocation'] && !is_null($input['purchaseReturnLocation'])) {
-                $purchaseReturn->where('purchaseReturnLocation', $grvLocation);
+                $purchaseReturn->whereIn('purchaseReturnLocation', $grvLocation);
             }
         }
 

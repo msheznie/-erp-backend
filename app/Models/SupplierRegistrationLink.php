@@ -45,4 +45,9 @@ class SupplierRegistrationLink extends Model
     public function supplier(){
         return $this->belongsTo(SupplierMaster::class, 'supplier_master_id','supplierCodeSystem');
     }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
 }
