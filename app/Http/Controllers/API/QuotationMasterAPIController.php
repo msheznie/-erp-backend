@@ -1802,7 +1802,7 @@ class QuotationMasterAPIController extends AppBaseController
     
             $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
             if ($invoice > 0) {
-                return $this->sendError($order_type.' added to ivoice order');
+                return $this->sendError($order_type.' added to ivoice ');
             }
         }
 
