@@ -937,7 +937,7 @@ class SRMService
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
             ->where('appointment.supplier_id', $supplierID)
-            ->join('SupplierAssigned', 'appointment.created_by', 'SupplierAssigned.supplierAssignedID')
+            ->join('supplierassigned', 'appointment.created_by', 'supplierassigned.supplierAssignedID')
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
             ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode');
 
