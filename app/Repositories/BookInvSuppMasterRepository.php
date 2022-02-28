@@ -106,7 +106,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('documentType', $input)) {
-            if (($input['documentType'] == 0 || $input['documentType'] == 1|| $input['documentType'] == 2) && !is_null($input['documentType'])) {
+            if (($input['documentType'] == 0 || $input['documentType'] == 1 || $input['documentType'] == 2 || $input['documentType'] == 3) && !is_null($input['documentType'])) {
                 $invMaster->where('documentType', $input['documentType']);
             }
         }
