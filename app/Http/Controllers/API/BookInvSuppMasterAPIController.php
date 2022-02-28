@@ -2684,7 +2684,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('You cannot refer back this Supplier Invoice');
         }
 
-        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable']);
+        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable', 'isVatEligible']);
 
         BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
 
