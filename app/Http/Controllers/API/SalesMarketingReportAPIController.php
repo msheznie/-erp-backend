@@ -1350,7 +1350,15 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                         $percentage = ($value->documentSystemID == 87) ? -100 : 100;
 
-                        $profitMargin = ($profit/$salesTotal) * $percentage;
+                        if($salesTotal == 0)
+                        {
+                            $profitMargin = "0";
+                            
+                        }
+                        else
+                        {
+                            $profitMargin = ($profit/$salesTotal) * $percentage;
+                        }
 
                         $data[] = array(
                             'Customer Code' => $value->customerCode,
