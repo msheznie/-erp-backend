@@ -947,8 +947,8 @@ class SRMService
                 $query->orWhere('primary_code', 'LIKE', "%{$search}%");
                 $query->orWhere('appointment.created_at', 'LIKE', "%{$search}%");
                 $query->orWhere('wareHouseDescription', 'LIKE', "%{$search}%");
-                $query->orWhere('SupplierAssigned.supplierName', 'LIKE', "%{$search}%");
-               // $query->orWhereDate('slot_details.start_date', "%{$search}%");
+                $query->orWhere('supplierassigned.supplierName', 'LIKE', "%{$search}%");
+                $query->orWhereDate('slot_details.start_date', 'LIKE', "%{$search}%");
             });
         }
 
