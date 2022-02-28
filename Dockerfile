@@ -30,7 +30,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 COPY ./composer.json composer.json
-COPY ./composer.lock composer.lock
+#COPY ./composer.lock composer.lock
 
 #RUN composer install --prefer-dist --no-ansi --no-dev #--no-autoloader
 RUN composer install
