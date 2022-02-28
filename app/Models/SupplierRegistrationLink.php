@@ -61,9 +61,9 @@ class SupplierRegistrationLink extends Model
                 $expireDate = Carbon::parse($this->attributes['token_expiry_date_time']);
                 $today = Carbon::now();
                if($expireDate > $today){
-                   return 'Not';
+                   return 'Active';
                } else {
-                   return 'Yes';
+                   return 'Expired';
                }
             } else {
                 return 'N/A';
