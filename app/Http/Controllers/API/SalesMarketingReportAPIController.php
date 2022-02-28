@@ -1688,7 +1688,7 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
        
         $selectedCompanyId = $request['selectedCompanyId'];
-        if($request['reportID'] == "SDR")
+        if($request['reportID'] == "SDR" || $request['reportID'] == "SAR")
         {
 
                 $customerCategoryID = collect($request['customerCategoryID'])->pluck('id')->toArray();
@@ -1715,7 +1715,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             ->orderBy('CustomerName', 'ASC')
             ->WhereNotNull('customerCodeSystem');
 
-          if($request['reportID'] == "SDR")
+            if($request['reportID'] == "SDR" || $request['reportID'] == "SAR")
         {
             if (!is_null($customerCategoryID) && count($customerCategoryID) > 0) {
                  $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
