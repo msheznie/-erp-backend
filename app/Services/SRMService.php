@@ -932,7 +932,7 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = DB::table('appointment')
-            ->select('*', 'appointment.id as appointmentId')
+            ->select('*', 'appointment.id as appointmentId', 'appointment.created_at as appointmentCreatedDate')
             ->join('slot_details', function($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
@@ -947,8 +947,8 @@ class SRMService
                 $query->orWhere('primary_code', 'LIKE', "%{$search}%");
                 $query->orWhere('appointment.created_at', 'LIKE', "%{$search}%");
                 $query->orWhere('wareHouseDescription', 'LIKE', "%{$search}%");
-                $query->orWhere('SupplierAssigned.supplierName', 'LIKE', "%{$search}%");
-               // $query->orWhereDate('slot_details.start_date', "%{$search}%");
+                $query->orWhere('supplierassigned.supplierName', 'LIKE', "%{$search}%");
+                $query->orWhereDate('slot_details.start_date', 'LIKE', "%{$search}%");
             });
         }
 
