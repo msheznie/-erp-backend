@@ -158,7 +158,7 @@ class Appointment extends Model
     }
     public function documentApproved()
     {
-        return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+        return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode', 'rollLevelOrder'], ['document_system_id', 'id', 'current_level_no']);
     }
 
     public function slot_detail()
