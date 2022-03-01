@@ -2578,7 +2578,9 @@ class Helper
 
             $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
             $requestedQty = isset($deliveryOrderData->requestedQty) ?  $deliveryOrderData->requestedQty: 0;
-            $doQty = $requestedQty - $returnQty;
+            $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ?  $deliveryOrderData->qtyIssuedDefaultMeasure: 0;
+            $doQty = $qtyIssuedDefault - $returnQty;
+            $availableQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0 + $detailExistQODetail->doQuantity;
             $deliveryOrderData->update(['qtyIssued' => $doQty]);
             if($doQty == 0) {
                 $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
@@ -2586,7 +2588,7 @@ class Helper
             }
             if($doQty > 0) {
                 $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 1, 'doQuantity' => $returnQty]);
+                    ->update(['fullyOrdered' => 1, 'doQuantity' => $doQty]);
             }
 
             $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
