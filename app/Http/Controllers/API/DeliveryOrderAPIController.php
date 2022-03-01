@@ -852,7 +852,7 @@ class DeliveryOrderAPIController extends AppBaseController
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY deliveryOrderDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY quotationDetailsID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInSO != 1');
