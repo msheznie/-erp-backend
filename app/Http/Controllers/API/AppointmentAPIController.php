@@ -417,7 +417,7 @@ class AppointmentAPIController extends AppBaseController
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
-            'documentSystemID' => $input['document_system_id'],
+                'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']
