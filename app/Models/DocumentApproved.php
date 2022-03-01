@@ -215,6 +215,6 @@ class DocumentApproved extends Model
         return $this->hasOne('App\Models\EmployeesDepartment',['employeeGroupID', 'documentSystemID','companySystemID'], ['approvalGroupID', 'documentSystemID','companySystemID']);
     } 
     public function employeeRole(){ 
-        return $this->hasOne('App\Models\Appointment',['id', 'current_level_no'],['documentSystemCode', 'rollLevelOrder']);
+        return $this->hasOne('App\Models\Appointment',['id', 'RollLevForApp_curr'],['documentSystemCode', 'rollLevelOrder']);
     }
 }
