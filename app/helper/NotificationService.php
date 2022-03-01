@@ -124,7 +124,7 @@ class NotificationService
 
                     case 14:
                         $shift = new ShiftPeriodEndNotificationService($companyID, $notDaySetup);
-                        return$shift->ended_shift();
+                        $shift->ended_shift();
                         $details = [];
                         break;
 
