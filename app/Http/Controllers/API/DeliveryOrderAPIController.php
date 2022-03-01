@@ -848,11 +848,12 @@ class DeliveryOrderAPIController extends AppBaseController
 	erp_quotationmaster.serviceLineSystemID,
 	"" AS isChecked,
 	"" AS noQty,
-	IFNULL(dodetails.doTakenQty,0) as doTakenQty 
+	IFNULL(dodetails.doTakenQty,0) as doTakenQty,
+	IFNULL(dodetails.doReturnQty,0) as doReturnQty
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY quotationDetailsID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty, SUM( approvedReturnQty ) AS doReturnQty FROM erp_delivery_order_detail GROUP BY quotationDetailsID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInSO != 1');
