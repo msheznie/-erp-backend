@@ -2219,7 +2219,15 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
-                return $this->sendError('Cannot cancel, GRV is created for this PO');
+                $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
+                foreach($puchaseReturnDetails as $puchaseReturnDetail) {
+                    $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+                }
+                if($fullyRetuned) {
+                    return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+                }else {
+                    return $this->sendError('Cannot cancel, GRV is created for this PO');
+                }
             } else {
                 return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
             }
