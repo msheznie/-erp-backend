@@ -1367,14 +1367,15 @@ class SalesMarketingReportAPIController extends AppBaseController
                             'Document Date' => Helper::dateFormat($value->documentDate),
                             'Item Code' => $value->itemCode,
                             'Item Description' => $value->itemDescription,
+                            'Sub Category' => $value->categoryDescription,
                             'UOM' => $value->unitShortCode,
                             'Quantity' => $value->quantity,
                             'Total Sales Value ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round(($value->localAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces) : round(($value->rptAmount - $this->getDiscountAmountOfDeliveryOrder($value, $input, $currency)), $currency->DecimalPlaces),
                             'Total Cost ('.$currency->CurrencyCode.')' => (isset($input['currencyID']) && $input['currencyID'] == 1) ? round($value->localCost, $currency->DecimalPlaces) : round($value->rptCost, $currency->DecimalPlaces),
                             'Profit ('.$currency->CurrencyCode.')' => round($profit, $currency->DecimalPlaces),
                             'Profit Margin' => $profitMargin,
-                            'Average Cost ('.$currency->CurrencyCode.') Up to Date' => $this->getAverageCostUpToDate($value, $input, $currency),
-                            'Sub Category' => $value->categoryDescription
+                            'Average Cost ('.$currency->CurrencyCode.') Up to Date' => $this->getAverageCostUpToDate($value, $input, $currency)
+                           
                         );
                     }
                 }
