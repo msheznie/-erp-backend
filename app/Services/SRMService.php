@@ -932,7 +932,7 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = DB::table('appointment')
-            ->select('*', 'appointment.id as appointmentId', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
+            ->select('*', 'appointment.id as appointmentId','appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
             ->join('slot_details', function($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
