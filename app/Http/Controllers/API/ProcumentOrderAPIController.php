@@ -2209,8 +2209,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
            $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
            foreach($puchaseReturnDetails as $puchaseReturnDetail) {
               $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
-           }    
-          
+           }
            if($fullyRetuned) {
                  return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
            }else {
@@ -2219,9 +2218,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
-                $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
-                foreach($puchaseReturnDetails as $puchaseReturnDetail) {
-                    $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+                if($purchaseOrder->grvRecieved == 0) {
+                    $fullyRetuned = true;
                 }
                 if($fullyRetuned) {
                     return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
