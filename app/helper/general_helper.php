@@ -2579,16 +2579,8 @@ class Helper
             $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
             $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ?  $deliveryOrderData->qtyIssuedDefaultMeasure: 0;
             $doQty = $qtyIssuedDefault - $returnQty;
-            $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
 
-            if($doQty == 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
-            }
-            if($doQty > 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 1, 'doQuantity' => $doQty]);
-            }
+            $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
 
             $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
                 ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
