@@ -27,7 +27,7 @@ use App\Repositories\UserRepository;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use Mpdf\Tag\Select;
-
+use Illuminate\Support\Facades\Validator;
 /**
  * Class FinanceItemCategorySubController
  * @package App\Http\Controllers\API
@@ -369,7 +369,13 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
     public function finance_item_category_subs_update(Request $request)
     {
+
         $input = $request->all();
+
+       if(!isset($input['financeGLcodebBSSystemID'] ) && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
+             return $this->sendError('Please check Include PL For GRV YN',500);
+       }
+
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType']);
         
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);

@@ -911,7 +911,7 @@ WHERE
                 } else {
                     $updateQuotation = QuotationMaster::find($soQuotationMasterID)
                         ->update([
-                            'selectedForSalesOrder' => 0,
+                            'selectedForSalesOrder' => -1,
                             'closedYN' => 0,
                         ]);
                 }

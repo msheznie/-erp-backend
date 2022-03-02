@@ -324,8 +324,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }*/
         $input['convertionMeasureVal'] = 1;
 
-        $input['qtyIssued'] = 0;
-        $input['qtyIssuedDefaultMeasure'] = 0;
+        // $input['qtyIssued'] = 0;
+        // $input['qtyIssuedDefaultMeasure'] = 0;
 
         $data = array(
             'companySystemID' => $companySystemID,

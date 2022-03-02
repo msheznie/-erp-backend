@@ -1572,10 +1572,19 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
-
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
-        
+
+        $quotaionDetails = QuotationDetails::where('quotationMasterID',$input['salesOrderID'])->pluck('soQuotationMasterID')->values()->toArray();
+       
+        $existsSo = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->whereIn('quotationMasterID',$quotaionDetails)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1592,6 +1601,9 @@ class QuotationMasterAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
+        if($existsSo) {
+            $master->merge($existsSo);
+        }
         return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
     }
 
