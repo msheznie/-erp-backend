@@ -1361,7 +1361,7 @@ WHERE
 
     public function getCommonFormData(Request $request) {
         $input = $request->all();
-        $finacialYear =  \Helper::companyFinanceYear($input['companySystemID'],1);
+        $finacialYear =  \Helper::companyFinanceYear($input['companySystemID'],0);
         $companyFinancePeriod =  \Helper::companyFinancePeriod($input['companySystemID'],$finacialYear[0]->companyFinanceYearID,11);
 
         if($companyFinancePeriod && $finacialYear) {
