@@ -833,6 +833,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
+
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -850,10 +851,9 @@ class DeliveryOrderAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-            if($existsMaster) {
-                $master->merge($existsMaster);
-            }
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+
+
+        return $this->sendResponse($master->merge($existsMaster)->toArray(), 'Quotations retrieved successfully');
     }
 
     public function getSalesQuoatationDetailForDO(Request $request){

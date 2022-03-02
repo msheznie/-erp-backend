@@ -1601,10 +1601,8 @@ class QuotationMasterAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-        if($existsSo) {
-            $master->merge($existsSo);
-        }
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+
+        return $this->sendResponse($master->merge($existsSo)->toArray(), 'Quotations retrieved successfully');
     }
 
     public function getSalesQuoatationDetailForSO(Request $request){
