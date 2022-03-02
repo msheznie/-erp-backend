@@ -1843,7 +1843,7 @@ class Helper
                 $docInforArr["modelName"] = 'Appointment';
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["approvedColumnName"] = 'approved_yn';
-                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
                 $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
                 $docInforArr["approvedDate"] = 'approved_date';
                 $docInforArr["approveValue"] = -1;
@@ -2577,19 +2577,10 @@ class Helper
             $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
 
             $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
-            $requestedQty = isset($deliveryOrderData->requestedQty) ?  $deliveryOrderData->requestedQty: 0;
             $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ?  $deliveryOrderData->qtyIssuedDefaultMeasure: 0;
             $doQty = $qtyIssuedDefault - $returnQty;
-            $availableQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0 + $detailExistQODetail->doQuantity;
-            $deliveryOrderData->update(['qtyIssued' => $doQty]);
-            if($doQty == 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
-            }
-            if($doQty > 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 1, 'doQuantity' => $doQty]);
-            }
+
+            $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
 
             $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
                 ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);

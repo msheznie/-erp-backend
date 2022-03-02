@@ -1969,6 +1969,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
+        Route::post('getCommonFormData','DeliveryOrderAPIController@getCommonFormData');
+
+
+        
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
         Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
         Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
@@ -2116,6 +2120,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
         Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice');
         Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
+        Route::post('validateCustomerInvoiceDetails','CustomerInvoiceItemDetailsAPIController@validateCustomerInvoiceDetails');
+
+       
         Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
         Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
         Route::get('salesQuotationForSO', 'QuotationMasterAPIController@salesQuotationForSO');
