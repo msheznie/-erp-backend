@@ -600,13 +600,13 @@ class AssetCapitalizationAPIController extends AppBaseController
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $assetCapitalization->whereMonth('BPVdate', '=', $input['month']);
+                $assetCapitalization->whereMonth('documentDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $assetCapitalization->whereYear('BPVdate', '=', $input['year']);
+                $assetCapitalization->whereYear('documentDate', '=', $input['year']);
             }
         }
 

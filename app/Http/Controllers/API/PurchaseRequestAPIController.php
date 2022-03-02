@@ -34,6 +34,7 @@ use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePurchaseRequestAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestAPIRequest;
+use App\Models\AssetFinanceCategory;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
@@ -41,6 +42,8 @@ use App\Models\CurrencyMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\ErpItemLedger;
+use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\MaterielRequest;
 use App\Models\DocumentReferedHistory;
 use Illuminate\Support\Facades\Storage;
@@ -83,7 +86,8 @@ use App\Repositories\SegmentAllocatedItemRepository;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\GenerateMaterialRequestItem;
 use App\Models\MaterielRequestDetails;
-
+use App\helper\CreateExcel;
+use App\Repositories\PurchaseRequestDetailsRepository;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -95,10 +99,12 @@ class PurchaseRequestAPIController extends AppBaseController
     private $userRepository;
     private $segmentAllocatedItemRepository;
     private $materielRequestRepository;
+    private $purchaseRequestDetailsRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, MaterielRequestRepository $materielRequestRepository)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
+        $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
         $this->materielRequestRepository = $materielRequestRepository;
@@ -905,17 +911,31 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-         \Excel::create('pr_to_grv', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        //  \Excel::create('pr_to_grv', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        // return $this->sendResponse(array(), 'successfully export');
+
+        $doc_name = 'pr_to_grv';
+        $doc_name_path = 'pr_to_grv/';
+        $path = 'procurement/report/'.$doc_name_path.'excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
     /**
@@ -1037,8 +1057,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-
-        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+        $purchaseRequests = $this->purchaseRequestRepository->purchaseRequestListQuery($request, $input, $search, $serviceLineSystemID);
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1407,7 +1429,6 @@ class PurchaseRequestAPIController extends AppBaseController
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
-
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
 
@@ -1439,6 +1460,317 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
+
+    public function createPurchaseAPI(CreatePurchaseRequestAPIRequest $request)
+    {
+
+        $input = $this->convertArrayToValue($request->all());
+
+        DB::beginTransaction();
+        try {
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        $input['PRRequestedDate'] = now();
+
+        if (isset($input['budgetYearID']) && $input['budgetYearID'] > 0) {
+            $checkCompanyFinanceYear = CompanyFinanceYear::find($input['budgetYearID']);
+            if ($checkCompanyFinanceYear) {
+                $input['budgetYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+                $input['prBelongsYear'] = Carbon::parse($checkCompanyFinanceYear->bigginingDate)->format('Y');
+            }
+        }
+
+        $input['departmentID'] = 'PROC';
+
+        $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->orderBy('purchaseRequestID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
+        }
+
+        $input['serialNumber'] = $lastSerialNumber;
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+        if ($document) {
+            $input['documentID'] = $document->documentID;
+        }
+
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->first();
+
+        if ($companyDocumentAttachment) {
+            $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $allocateItemToSegment = CompanyPolicyMaster::where('companyPolicyCategoryID', 57)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($allocateItemToSegment && $allocateItemToSegment->isYesNO == 1) {
+            $input['allocateItemToSegment'] = 1;
+        }
+
+        $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+        $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
+
+        $purchaseRequests = $this->purchaseRequestRepository->create($input);
+
+        $items = $request->items;
+        $companySystemID = $input['companySystemID'];
+
+        $errors = array();
+        $insertedItems = array();
+        $i = 0;
+        foreach ($items as $itemPurchase) {
+
+            $i++;
+            $input = $itemPurchase;
+            $input = $this->convertArrayToValue($input);
+
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 53)
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+            if ($allowItemToType) {
+                if ($allowItemToType->isYesNO) {
+                    $allowItemToTypePolicy = true;
+                }
+            }
+
+
+            if ($allowItemToTypePolicy) {
+                $input['itemCode'] = isset($input['itemCode']['id']) ? $input['itemCode']['id'] : $input['itemCode'];
+            } else {
+                if (isset($input['itemCode']['id'])) {
+                    $input['itemCode'] = $input['itemCode']['id'];
+                }
+            }
+
+            $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+            if (empty($item)) {
+                if (!$allowItemToTypePolicy) {
+                    $errors[$i]["itemNotFound"] = $input['itemCode'];
+                    continue;
+                } else {
+                    $itemNotound = true;
+                }
+            }
+
+
+            $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequests['purchaseRequestID'])
+                ->first();
+
+
+            $input['budgetYear'] = $purchaseRequest->budgetYear;
+            $input['itemPrimaryCode'] = (!$itemNotound) ? $item->itemPrimaryCode : null;
+            $input['itemDescription'] = (!$itemNotound) ? $item->itemDescription : $input['itemCode'];
+            $input['partNumber'] = (!$itemNotound) ? $item->secondaryItemCode : null;
+            $input['itemFinanceCategoryID'] = (!$itemNotound) ? $item->financeCategoryMaster : null;
+            $input['itemFinanceCategorySubID'] = (!$itemNotound) ? $item->financeCategorySub : null;
+            //$input['estimatedCost'] = $item->wacValueLocal;
+
+            if (!$itemNotound) {
+                $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                $input['estimatedCost'];
+                $input['altUnitValue'] = $input['quantityRequested'];
+                $input['altUnit'];
+                $input['totalCost'] = $input['altUnitValue'] * $input['estimatedCost'];
+                $input['companySystemID'] = $item->companySystemID;
+                $input['companyID'] = $item->companyID;
+                $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+                $input['maxQty'] = $item->maximunQty;
+                $input['minQty'] = $item->minimumQty;
+                $input['purchaseRequestID'] = $purchaseRequests['purchaseRequestID'];
+
+
+                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+                    ->where('mainItemCategoryID', $item->financeCategoryMaster)
+                    ->where('itemCategorySubID', $item->financeCategorySub)
+                    ->first();
+
+                if (empty($financeItemCategorySubAssigned)) {
+                    $errors[$i] = $input['itemCode']." - Finance category not assigned for the selected item";
+                    continue;
+                }
+
+                if ($item->financeCategoryMaster == 1) {
+
+                    $alreadyAdded = PurchaseRequest::where('purchaseRequestID', $purchaseRequests['purchaseRequestID'])
+                        ->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
+                            $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                        })
+                        ->first();
+                    if ($alreadyAdded) {
+                        $errors[$i] = $input['itemCode']." - Selected item is already added. Please check again";
+
+                        continue;
+                    }
+                }
+
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+
+                if ($item->financeCategoryMaster == 3) {
+                    $assetCategory = AssetFinanceCategory::find($item->faFinanceCatID);
+                    if (!$assetCategory) {
+                        $errors[$i] = $input['itemCode']." - Asset category not assigned for the selected item";
+                        continue;
+                    }
+                    $input['financeGLcodePLSystemID'] = $assetCategory->COSTGLCODESystemID;
+                    $input['financeGLcodePL'] = $assetCategory->COSTGLCODE;
+                } else {
+                    $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                    $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                }
+
+                $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                    ->where('companySystemID', $purchaseRequest->companySystemID)
+                    ->first();
+
+                if ($allowFinanceCategory) {
+                    $policy = $allowFinanceCategory->isYesNO;
+
+                    if ($policy == 0) {
+                        if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                            $errors[$i] = $input['itemCode']." - Category is not found";
+                            continue;
+                        }
+
+                        //checking if item category is same or not
+                        $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                            ->first();
+
+                        if ($pRDetailExistSameItem) {
+                            if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                                $errors[$i] = $input['itemCode']." - You cannot add different category item";
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                $group_companies = Helper::getSimilarGroupCompanies($companySystemID);
+                $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
+                    $query->whereIn('companySystemID', $group_companies)
+                        ->where('approved', -1)
+                        ->where('poType_N', '!=', 5)// poType_N = 5 =>work order
+                        ->where('poCancelledYN', 0)
+                        ->where('manuallyClosed', 0);
+                })
+                    ->where('itemCode', $input['itemCode'])
+                    ->where('manuallyClosed', 0)
+                    ->groupBy('erp_purchaseorderdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_purchaseorderdetails.companySystemID',
+                            'erp_purchaseorderdetails.itemCode',
+                            'erp_purchaseorderdetails.itemPrimaryCode'
+                        ]
+                    )
+                    ->sum('noQty');
+
+                $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                    ->where('companySystemID', $companySystemID)
+                    ->groupBy('itemSystemCode')
+                    ->sum('inOutQty');
+
+                $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($group_companies) {
+                    $query->whereIn('companySystemID', $group_companies)
+                        ->where('grvTypeID', 2)
+                        ->where('approved', -1)
+                        ->groupBy('erp_grvmaster.companySystemID');
+                })->whereHas('po_detail', function ($query) {
+                    $query->where('manuallyClosed', 0)
+                        ->whereHas('order', function ($query) {
+                            $query->where('manuallyClosed', 0);
+                        });
+                })
+                    ->where('itemCode', $input['itemCode'])
+                    ->groupBy('erp_grvdetails.itemCode')
+                    ->select(
+                        [
+                            'erp_grvdetails.companySystemID',
+                            'erp_grvdetails.itemCode'
+                        ])
+                    ->sum('noQty');
+
+                $quantityOnOrder = $poQty - $grvQty;
+                $input['poQuantity'] = $poQty;
+                $input['quantityOnOrder'] = $quantityOnOrder;
+                $input['quantityInHand'] = $quantityInHand;
+
+
+            } else {
+                $input['purchaseRequestID'] = $purchaseRequests['purchaseRequestID'];
+                $input['estimatedCost'];
+                $input['altUnitValue'] = $input['quantityRequested'];
+                $input['altUnit'];
+                $input['totalCost'] = $input['altUnitValue'] * $input['estimatedCost'];
+                $input['companySystemID'] = $companySystemID;
+                $input['companyID'] = $purchaseRequest->companyID;
+                $input['unitOfMeasure'] = null;
+                $input['maxQty'] = 0;
+                $input['minQty'] = 0;
+                $input['poQuantity'] = 0;
+                $input['quantityOnOrder'] = 0;
+                $input['quantityInHand'] = 0;
+                $input['itemCode'] = null;
+            }
+
+            $input['itemCategoryID'] = 0;
+
+            $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
+
+            if($purchaseRequestDetails['itemCode'] != null) {
+                array_push($insertedItems, $purchaseRequestDetails['itemCode']);
+            }
+        }
+
+        $x = count($insertedItems);
+        if($x == 0){
+            return $this->sendError("No Items were added");
+        }
+        DB::commit();
+
+        return $this->sendResponse($errors, 'Purchase Request saved successfully');
+
+    }
+        catch (\Exception $exception) {
+        DB::rollBack();
+        return $this->sendError($exception->getMessage());
+        }
+    }
+
 
     /**
      * Display the specified PurchaseRequest Audit.
@@ -2153,6 +2485,11 @@ class PurchaseRequestAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year','financeCategory'));
 
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2190,7 +2527,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -2258,7 +2595,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'selectedForPO'));
-
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2297,7 +2636,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
@@ -2378,17 +2717,33 @@ class PurchaseRequestAPIController extends AppBaseController
             );
         }
 
-         \Excel::create('open_requests', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-        return $this->sendResponse(array(), 'successfully export');
+        //  \Excel::create('open_requests', function ($excel) use ($data) {
+        //     $excel->sheet('sheet name', function ($sheet) use ($data) {
+        //         $sheet->fromArray($data, null, 'A1', true);
+        //         //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+        //         $sheet->setAutoSize(true);
+        //         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+        //     });
+        //     $lastrow = $excel->getActiveSheet()->getHighestRow();
+        //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        // })->download($type);
+        // return $this->sendResponse(array(), 'successfully export');
+
+
+        $doc_name = 'open_requests';
+        $path = 'procurement/open_requests/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
 
     }
 

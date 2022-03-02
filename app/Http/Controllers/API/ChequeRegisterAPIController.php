@@ -463,13 +463,17 @@ class ChequeRegisterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, ['company_id']);
+        $input = $this->convertArrayToSelectedValue($input, array('company_id', 'bank_id'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+
+        $bankmasterAutoID = $request['bank_id'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
 
         $selectedCompanyId = $request['company_id'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -479,6 +483,8 @@ class ChequeRegisterAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        
+
         $search = $request->input('search.value');
 
         $chequeRegister = ChequeRegister::whereIn('company_id', $subCompanies)
@@ -489,7 +495,7 @@ class ChequeRegisterAPIController extends AppBaseController
 
         if (array_key_exists('bank_id', $input)) {
             if ($input['bank_id'] != null) {
-                $chequeRegister->where('bank_id', $input['bank_id']);
+                $chequeRegister->whereIn('bank_id', $bankmasterAutoID);
             }
         }
 

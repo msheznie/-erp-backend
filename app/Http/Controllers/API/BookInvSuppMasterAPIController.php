@@ -36,10 +36,12 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
+use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
@@ -62,6 +64,7 @@ use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
+use App\Models\WarehouseMaster;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
@@ -316,6 +319,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
 
         if ($supplierAssignedDetail) {
+            $input['supplierVATEligible'] = $supplierAssignedDetail->vatEligible;
             $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
             $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
             $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
@@ -545,6 +549,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
             $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
 
+        } else if ($input['documentType'] == 3) {
+            $grvAmountTransaction = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                ->sum('netAmount');
+            $grvAmountLocal = SupplierInvoiceDirectItem::selectRaw('SUM(VATAmount * noQty) as VATAmount')->where('bookingSuppMasInvAutoID', $id)
+                ->first();
+
+            $totatlDirectItemTrans = $grvAmountTransaction + (isset($grvAmountLocal->VATAmount) ? $grvAmountLocal->VATAmount : 0);
+
+            $currencyConversionDire = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totatlDirectItemTrans);
+
+          
+            $bookingAmountTrans = $totatlDirectItemTrans + $directAmountTrans + $detailTaxSumTrans;
+            $bookingAmountLocal = $currencyConversionDire['localAmount'] + $directAmountLocal + $detailTaxSumLocal;
+            $bookingAmountRpt = $currencyConversionDire['reportingAmount'] + $directAmountReport + $detailTaxSumReport;
+
+            $input['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
+            $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+            $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+
         } else {
 
             $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
@@ -592,12 +615,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-    if($policy == false || $input['documentType'] != 1) {
-        if ($companyCurrencyConversion) {
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        if($policy == false || $input['documentType'] != 1) {
+            if ($companyCurrencyConversion) {
+                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            }
         }
-    }
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -651,7 +674,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if ($checkItems == 0) {
                     return $this->sendError('Every Supplier Invoice should have at least one item', 500);
                 }
-            }
+            } 
 
             if ($checkItems > 0) {
                 $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
@@ -719,6 +742,109 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                 }
 
+            } else if ($input['documentType'] == 3) {
+
+                $checkGRVItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                    ->count();
+                if ($checkGRVItems == 0) {
+                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                }
+
+                $checkGRVQuantity = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                                                    ->where(function ($q) {
+                                                        $q->where('noQty', '<=', 0);
+                                                    })
+                                                    ->count();
+                if ($checkGRVQuantity > 0) {
+                    return $this->sendError('No of qty should be greater than 0 for every items', 500);
+                }
+
+                $dirItemDetails = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                                                            ->get();
+
+                if (TaxService::checkPOVATEligible($input['supplierVATEligible'], $input['vatRegisteredYN'])) {
+                    if (!empty($dirItemDetails)) {
+                        foreach ($dirItemDetails as $itemDiscont) {
+                            $calculateItemDiscount = 0;
+                            $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
+
+                            if (!$input['vatRegisteredYN']) {
+                                $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
+                            } else {
+                                $checkVATCategory = TaxVatCategories::with(['type'])->find($itemDiscont['vatSubCategoryID']);
+                                if ($checkVATCategory) {
+                                    if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $itemDiscont['exempt_vat_portion'] > 0 && $itemDiscont['VATAmount'] > 0) {
+                                       $exemptVAT = $itemDiscont['VATAmount'] * ($itemDiscont['exempt_vat_portion'] / 100);
+
+                                       $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                                    } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                                        $calculateItemDiscount = $calculateItemDiscount + $itemDiscont['VATAmount'];
+                                    }
+                                }
+                            }
+
+                            // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
+                            $vatLineAmount = $itemDiscont['VATAmount']; //($calculateItemTax - $calculateItemDiscount);
+
+                            $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+
+                            $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
+
+                            $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+
+
+                            SupplierInvoiceDirectItem::where('id', $itemDiscont['id'])
+                                ->update([
+                                    'costPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                                    'costPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
+                                    'costPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
+                                    'VATPercentage' => $itemDiscont['VATPercentage'],
+                                    'VATAmount' => \Helper::roundValue($vatLineAmount),
+                                    'VATAmountLocal' => \Helper::roundValue($currencyConversionForLineAmount['localAmount']),
+                                    'VATAmountRpt' => \Helper::roundValue($currencyConversionForLineAmount['reportingAmount'])
+                                ]);
+                        }
+                    }
+                } else {
+                    if (!empty($dirItemDetails)) {
+                        foreach ($dirItemDetails as $itemDiscont) {
+                            $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
+
+                            $currencyConversion = \Helper::currencyConversion(
+                                $itemDiscont['companySystemID'],
+                                $input['supplierTransactionCurrencyID'],
+                                $input['supplierTransactionCurrencyID'],
+                                $calculateItemDiscount
+                            );
+
+                            $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+
+                            $vatLineAmount = 0;
+                            $vatAmountLocal = 0;
+                            $vatAmountRpt = 0;
+                            if (isset($input['rcmActivated']) && $input['rcmActivated']) {
+                                $vatLineAmount = $itemDiscont['VATAmount'];
+                                $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
+                                $vatLineAmount =  \Helper::roundValue($vatLineAmount);
+                                $vatAmountLocal = \Helper::roundValue($currencyConversionForLineAmount['localAmount']);
+                                $vatAmountRpt = \Helper::roundValue($currencyConversionForLineAmount['reportingAmount']);
+                            }
+
+
+                            SupplierInvoiceDirectItem::where('id', $itemDiscont['id'])
+                                ->update([
+                                    'costPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
+                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                                    'costPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
+                                    'costPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
+                                    'VATAmount' => $vatLineAmount,
+                                    'VATAmountLocal' => $vatAmountLocal,
+                                    'VATAmountRpt' => $vatAmountRpt
+                                ]);
+                        }
+                    }
+                }
             }
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
@@ -891,6 +1017,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->sum('totTransactionAmount');
                 $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
+            } else if ($input['documentType'] == 3) {
+                $grvAmountTransaction = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('netAmount');
+
+                $grvAmountTransactionVAT = SupplierInvoiceDirectItem::selectRaw('SUM(VATAmount * noQty) as VATAmount')->where('bookingSuppMasInvAutoID', $id)
+                ->first();
+
+
+                $bookingAmountTrans = $grvAmountTransaction + (isset($grvAmountTransactionVAT->VATAmount) ? $grvAmountTransactionVAT->VATAmount : 0) + $directAmountTrans + $detailTaxSumTrans;
             } else {
                 $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
             }
@@ -934,9 +1069,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            if($input['documentType'] == 0 || $input['documentType'] == 2){
-                $vatTotal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->sum('VATAmount');
+            if($input['documentType'] == 0 || $input['documentType'] == 2 || $input['documentType'] == 3){
+                $vatTotal = ($input['documentType'] == 0 || $input['documentType'] == 2) ? BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount') : SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount');
                 if($vatTotal > 0){
                     if(empty(TaxService::getInputVATGLAccount($input["companySystemID"]))){
                         return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
@@ -1767,6 +1901,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->with('segment');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
+        }, 'item_details' => function ($query) {
+            $query->with('unit');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
@@ -1820,6 +1956,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
         $segments = $segments->get();
 
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
+        }
+        $wareHouseLocation = $wareHouseLocation->get();
+
         $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
 
         $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
@@ -1840,6 +1982,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'directGRVPolicy' => ($directGRV && $directGRV->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
+            'wareHouseLocation' => $wareHouseLocation,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
@@ -1875,9 +2018,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
         
-        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search);
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2369,6 +2516,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->with('segment');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
+        }, 'item_details' => function ($query) {
+            $query->with('unit');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
@@ -2418,6 +2567,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->sum('totRptAmount');
 
         $isVATEligible = TaxService::checkCompanyVATEligible($bookInvSuppMaster->companySystemID);
+
+
+        $directItemNetTotalLocal = 0;
+        $directItemNetTotalTrans = 0;
+
+        if ($bookInvSuppMasterRecord->documentType == 3) {
+            $grvTotTra = SupplierInvoiceDirectItem::selectRaw('SUM(netAmount + (VATAmount * noQty)) as total')->where('bookingSuppMasInvAutoID', $id)->first()->total;
+        }
+
 
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
@@ -2526,7 +2684,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError('You cannot refer back this Supplier Invoice');
         }
 
-        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable']);
+        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable', 'isVatEligible']);
 
         BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
 

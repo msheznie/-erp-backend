@@ -180,10 +180,11 @@ class DeliveryOrderAPIController extends AppBaseController
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
 
-        $customer = CustomerMaster::find($input['customerID']);
+        $customer = CustomerMaster::where('customerCodeSystem',$input['customerID'])->first();
         if(empty($customer)){
             return $this->sendError('Selected customer not found on db',500);
         }
+
 
         if(!$customer->custGLAccountSystemID){
             return $this->sendError('GL account is not configured for this customer',500);
@@ -299,6 +300,7 @@ class DeliveryOrderAPIController extends AppBaseController
      */
     public function show($id)
     {
+       
         /** @var DeliveryOrder $deliveryOrder */
         $deliveryOrder = $this->deliveryOrderRepository->with(['tax','customer','transaction_currency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -307,7 +309,6 @@ class DeliveryOrderAPIController extends AppBaseController
         }, 'detail' => function($query){
             $query->with(['quotation','uom_default', 'item_by']);
         },'segment','warehouse'])->findWithoutFail($id);
-
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }
@@ -826,6 +827,8 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('isInDOorCI', '!=',2)
             ->where('isInSO', '!=',1)
             ->where('closedYN',0)
+            ->where('cancelledYN',0)
+            ->where('manuallyClosed',0)
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
@@ -845,11 +848,12 @@ class DeliveryOrderAPIController extends AppBaseController
 	erp_quotationmaster.serviceLineSystemID,
 	"" AS isChecked,
 	"" AS noQty,
-	IFNULL(dodetails.doTakenQty,0) as doTakenQty 
+	IFNULL(dodetails.doTakenQty,0) as doTakenQty,
+	IFNULL(dodetails.doReturnQty,0) as doReturnQty
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty FROM erp_delivery_order_detail GROUP BY deliveryOrderDetailID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+	LEFT JOIN ( SELECT erp_delivery_order_detail.deliveryOrderDetailID,quotationDetailsID, SUM( qtyIssued ) AS doTakenQty, SUM( approvedReturnQty ) AS doReturnQty FROM erp_delivery_order_detail GROUP BY quotationDetailsID, itemCodeSystem ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInSO != 1');
@@ -1336,5 +1340,22 @@ WHERE
             return $this->sendResponse(false, 'Details retrieved successfully');
         }
 
+    }
+
+
+    public function validateDeliveryOrder(Request $request) {
+         $input = $request->all();
+         $qntyCanIssue = 0;
+         $deliveryOrder = DeliveryOrderDetail::with([
+                'master'=> function($query){
+                    $query->where('confirmedYN',0);
+                    $query->where('approvedYN',0);
+                }])->where('itemCodeSystem',$input['itemAutoID'])->where('documentSystemID',$input['documentSystemID'])->orderBy('deliveryOrderDetailID','DESC')->first();
+         $qntyCanIssue = ($deliveryOrder->requestedQty - $deliveryOrder->qtyIssued);
+         if($qntyCanIssue != 0) {
+            return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], 'Details retrieved successfully');
+         }else {
+            return $this->sendResponse(["qnty"=>0,"data"=>false], 'Details retrieved successfully');
+         }
     }
 }

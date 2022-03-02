@@ -43,7 +43,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(48);
-        $supplierRegistrationLink->created_by = Auth::id();
+        $supplierRegistrationLink->created_by = \Helper::getEmployeeSystemID();
         $supplierRegistrationLink->updated_by = '';
 
         return $supplierRegistrationLink->save();

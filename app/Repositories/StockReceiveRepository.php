@@ -83,7 +83,7 @@ class StockReceiveRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function stockReceiveListQuery($request, $input, $search = '') {
+    public function stockReceiveListQuery($request, $input, $search = '',$serviceLineSystemID) {
 
         $stockReceive = StockReceive::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])
@@ -91,7 +91,7 @@ class StockReceiveRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockReceive->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $stockReceive->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 

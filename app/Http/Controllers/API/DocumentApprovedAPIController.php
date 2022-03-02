@@ -529,6 +529,7 @@ FROM
 	AND erp_quotationmaster.quotationMasterID = erp_documentapproved.documentSystemCode 
 	AND erp_quotationmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_quotationmaster.approvedYN = -1 
+	AND erp_quotationmaster.cancelledYN = 0 
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_quotationmaster.customerSystemCode
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_quotationmaster.customerCurrencyID 
 WHERE
@@ -571,6 +572,7 @@ FROM
 	AND erp_quotationmaster.quotationMasterID = erp_documentapproved.documentSystemCode 
 	AND erp_quotationmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_quotationmaster.approvedYN = -1 
+	AND erp_quotationmaster.cancelledYN = 0
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_quotationmaster.customerSystemCode
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_quotationmaster.customerCurrencyID 
 WHERE
@@ -1054,6 +1056,7 @@ FROM
 	AND erp_quotationmaster.quotationMasterID = erp_documentapproved.documentSystemCode 
 	AND erp_quotationmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_quotationmaster.approvedYN = 0 
+	AND erp_quotationmaster.cancelledYN = 0 
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_quotationmaster.customerSystemCode
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_quotationmaster.customerCurrencyID 
 WHERE
@@ -1106,6 +1109,7 @@ FROM
 	AND erp_quotationmaster.quotationMasterID = erp_documentapproved.documentSystemCode 
 	AND erp_quotationmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_quotationmaster.approvedYN = 0 
+	AND erp_quotationmaster.cancelledYN = 0 
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_quotationmaster.customerSystemCode
 	INNER JOIN currencymaster ON currencymaster.currencyID = erp_quotationmaster.customerCurrencyID 
 WHERE

@@ -145,13 +145,19 @@ class QuotationMasterRepository extends BaseRepository
 
         if (array_key_exists('customerSystemCode', $input)) {
             if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
-                $quotationMaster->where('customerSystemCode', $input['customerSystemCode']);
+                $customerSystemCode = $request['customerSystemCode'];
+                $customerSystemCode = (array)$customerSystemCode;
+                $customerSystemCode = collect($customerSystemCode)->pluck('id');
+                $quotationMaster->whereIn('customerSystemCode', $customerSystemCode);
             }
         }
 
         if (array_key_exists('salesPersonID', $input)) {
             if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $quotationMaster->where('salesPersonID', $input['salesPersonID']);
+                $salesPersonID = $request['salesPersonID'];
+                $salesPersonID= (array)$salesPersonID;
+                $salesPersonID = collect($salesPersonID)->pluck('id');
+                $quotationMaster->whereIn('salesPersonID', $salesPersonID);
             }
         }
 

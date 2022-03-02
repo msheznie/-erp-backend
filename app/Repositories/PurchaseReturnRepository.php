@@ -91,7 +91,7 @@ class PurchaseReturnRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function purchaseReturnListQuery($request, $input, $search = '') {
+    public function purchaseReturnListQuery($request, $input, $search = '', $serviceLineSystemID, $grvLocation) {
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])
@@ -99,13 +99,13 @@ class PurchaseReturnRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseReturn->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseReturn->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('purchaseReturnLocation', $input)) {
             if ($input['purchaseReturnLocation'] && !is_null($input['purchaseReturnLocation'])) {
-                $purchaseReturn->where('purchaseReturnLocation', $input['purchaseReturnLocation']);
+                $purchaseReturn->whereIn('purchaseReturnLocation', $grvLocation);
             }
         }
 

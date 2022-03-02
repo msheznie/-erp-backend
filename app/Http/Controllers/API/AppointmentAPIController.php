@@ -308,6 +308,108 @@ class AppointmentAPIController extends AppBaseController
 
         return $data;
     }
+
+    public function getAppointmentList(Request $request)
+    {
+        $input = $request->all();
+        //$slotDetailId = $input['slotDetailId'];
+        $companyId = $input['companyId'];
+        $documentSystemID = 106;
+        $empID = \Helper::getEmployeeSystemID();
+        $data = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
+            $q->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                ->where('erp_documentapproved.companySystemID', $companyId);;
+
+            $q->with(['employeeDepartments' => function ($q2) use ($companyId, $documentSystemID, $empID) {
+                $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            }]);
+            $q->with(['employeeRole' => function ($q3) use ($companyId, $documentSystemID, $empID) {
+                $q3->where('appointment.company_id', $companyId)
+                    ->where('appointment.approved_yn', 0)
+                    ->where('appointment.confirmed_yn', 1);
+            }]);
+        }, 'created_by', 'detail'])
+            ->where('confirmed_yn', 1)
+            ->get();
+
+        return $data;
+    }
+    public function getAppointmentListSummaryView(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $documentSystemID = 106;
+        $empID = \Helper::getEmployeeSystemID();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $appointmentDetail = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
+            $q->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                ->where('erp_documentapproved.companySystemID', $companyId);
+
+            $q->with(['employeeDepartments' => function ($q2) use ($companyId, $documentSystemID, $empID) {
+                $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            }]);
+        }, 'created_by', 'detail', 'slot_detail.slot_master.ware_house', 'supplier'])
+            ->whereHas('documentApproved', function ($q) use ($companyId, $documentSystemID, $empID) {
+                $q->where('erp_documentapproved.rejectedYN', 0)->where('erp_documentapproved.approvedYN', 0)
+                    ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                    ->where('erp_documentapproved.companySystemID', $companyId);
+
+                $q->whereHas('employeeDepartments', function ($q2) use ($companyId, $documentSystemID, $empID) {
+                    $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                        ->where('employeesdepartments.companySystemID', $companyId)
+                        ->where('employeesdepartments.isActive', 1)
+                        ->where('employeesdepartments.employeeSystemID', $empID);
+                });
+            })->where('confirmed_yn', 1)
+            ->where('approved_yn', 0)
+            ->where('refferedBackYN', 0);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $appointmentDetail = $appointmentDetail->where(function ($query) use ($search) {
+                $query->where('primary_code', 'LIKE', "%{$search}%");
+                $query->orWhereHas('slot_detail.slot_master.ware_house', function ($query1) use ($search) {
+                    $query1->where('wareHouseDescription', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('created_by', function ($query1) use ($search) {
+                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('slot_detail.slot_master', function ($query1) use ($search) {
+                    $query1->whereDate('from_date', "%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::of($appointmentDetail)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
     public function approveCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
@@ -315,7 +417,7 @@ class AppointmentAPIController extends AppBaseController
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
-            'documentSystemID' => $input['document_system_id'],
+                'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']

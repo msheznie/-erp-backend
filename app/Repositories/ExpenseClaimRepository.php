@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\helper\Helper;
 use App\Models\ExpenseClaim;
+use App\Models\ExpenseClaimMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
 
@@ -106,9 +107,9 @@ class ExpenseClaimRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $expenseClaims = ExpenseClaim::whereIn('companySystemID', $subCompanies)
-            ->with('created_by')
-            ->where('documentSystemID', $input['documentId']);
+        $expenseClaims = ExpenseClaimMaster::whereIn('companyID', $subCompanies)
+        ->with('created_by');
+            
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {

@@ -77,7 +77,7 @@ class BankAccountRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankAccountListQuery($request, $input, $search = '') {
+    public function bankAccountListQuery($request, $input, $search = '', $bankmasterAutoID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -89,8 +89,8 @@ class BankAccountRepository extends BaseRepository
         }
 
         $logistics = BankAccount::whereIn('companySystemID', $subCompanies)
-            ->when(request('bankmasterAutoID',false), function ($q) use ($input) {
-                $q->where('bankmasterAutoID', $input['bankmasterAutoID']);
+            ->when(request('bankmasterAutoID',false), function ($q) use ($bankmasterAutoID) {
+                $q->whereIn('bankmasterAutoID', $bankmasterAutoID);
             })
             ->with(['currency']);
 

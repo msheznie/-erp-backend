@@ -599,8 +599,15 @@ class StockAdjustmentAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        $grvLocation = $request['location'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
 
-        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation,$serviceLineSystemID);
 
         return \DataTables::eloquent($stockAdjustments)
             ->addColumn('Actions', 'Actions', "Actions")

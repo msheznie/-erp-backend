@@ -53,7 +53,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-
+use App\helper\CreateExcel;
 class AccountsReceivableReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -987,6 +987,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
+                $data = array();
                 if ($reportTypeID == 'CAD') { //customer aging detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingDetailQRY($request);
@@ -1053,21 +1054,25 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_aging', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = 'customer_aging';
+                $path = 'accounts-receivable/report/customer_aging/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             case 'CL': //Customer Ledger
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
+                $data = array();
                 if ($reportTypeID == 'CLT1') { //customer ledger template 1
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerLedgerTemplate1QRY($request);
@@ -1121,17 +1126,20 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_ledger', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'customer_ledger';
+                $path = 'accounts-receivable/report/customer_ledger/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             case 'CBSUM': //Customer Balance Summery
                 $reportTypeID = $request->reportTypeID;
@@ -1200,24 +1208,27 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                     \Excel::create('customer_balance_summary', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-
-                    return $this->sendResponse(array(), trans('custom.success_export'));
+ 
+                    $fileName = 'customer_balance_summary';
+                    $path = 'accounts-receivable/report/customer_balance_summary/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+    
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+                    break;
                 }
                 break;
             case 'CSR': //Customer Sales Register
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getCustomerSalesRegisterQRY($request);
-
+                $data = array();
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
@@ -1249,17 +1260,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_sales_register', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'customer_sales_register';
+                $path = 'accounts-receivable/report/customer_sales_register/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 break;
 
             case 'CC': //Customer Collection
@@ -1351,17 +1363,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_collection', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'revenue_by_customer';
+                $path = 'accounts-receivable/report/customer_collection/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 break;
             case 'CR': //Customer Revenue
                 $reportTypeID = $request->reportTypeID;
@@ -1434,16 +1447,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
-
+                    $fileName = 'revenue_by_customer';
+                    $path = 'accounts-receivable/report/revenue_by_customer/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+    
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
 
                 } elseif ($reportTypeID == 'RMS') {
 
@@ -1495,21 +1510,26 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                     \Excel::create('revenue_by_customer', function ($excel) use ($data) {
-                        $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data, null, 'A1', true);
-                            $sheet->setAutoSize(true);
-                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                        });
-                        $lastrow = $excel->getActiveSheet()->getHighestRow();
-                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                    })->download($type);
+                    $fileName = 'revenue_by_customer';
+                    $path = 'accounts-receivable/report/revenue_by_customer/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+    
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+
                 }
                 break;
             case 'CNR': //Credit Note Register
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getCreditNoteRegisterQRY($request);
                 $type = $request->type;
+                $data = array();
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
@@ -1557,21 +1577,22 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_collection', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+   
+                $fileName = 'credit_note_register';
+                $path = 'accounts-receivable/report/credit_note_register/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 break;
             case 'INVTRACK': //Customer Invoice Tracker
-                $type = 'csv';
+                $type = 'xls';
                 $input = $request->all();
 
                 $validator = \Validator::make($input, [
@@ -1614,18 +1635,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $data = [];
                 }
 
-                 \Excel::create('invoice_tracker_', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'invoice_tracker_';
+                $path = 'accounts-receivable/report/invoice_tracker_/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));

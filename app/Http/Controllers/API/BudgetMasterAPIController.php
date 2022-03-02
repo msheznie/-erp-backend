@@ -490,6 +490,14 @@ class BudgetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $templateMasterID = $request['templateMasterID'];
+        $templateMasterID = (array)$templateMasterID;
+        $templateMasterID = collect($templateMasterID)->pluck('id');
+
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -517,11 +525,11 @@ class BudgetMasterAPIController extends AppBaseController
         $budgets = BudgetMaster::whereIn('companySystemID', $subCompanies)
                                 ->where('month',1)
                                 ->with(['segment_by', 'template_master', 'finance_year_by'])
-                                ->when(request('serviceLineSystemID') && !is_null($input['serviceLineSystemID']), function ($q) use ($input) {
-                                    return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                                ->when(request('serviceLineSystemID') && !is_null($input['serviceLineSystemID']), function ($q) use ($serviceLineSystemID) {
+                                    return $q->whereIn('serviceLineSystemID', $serviceLineSystemID);
                                 })
-                                ->when(request('templateMasterID') && !is_null($input['templateMasterID']), function ($q) use ($input) {
-                                    return $q->where('templateMasterID', $input['templateMasterID']);
+                                ->when(request('templateMasterID') && !is_null($input['templateMasterID']), function ($q) use ($templateMasterID) {
+                                    return $q->whereIn('templateMasterID', $templateMasterID);
                                 })
                                 ->when(request('companyFinanceYearID') && !is_null($input['companyFinanceYearID']), function ($q) use ($input) {
                                     return $q->where('companyFinanceYearID', $input['companyFinanceYearID']);
