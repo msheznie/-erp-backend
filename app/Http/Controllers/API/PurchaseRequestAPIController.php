@@ -2531,11 +2531,22 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+    
         if (array_key_exists('financeCategory', $input)) {
-            if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
-                $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
+            if(is_array($input['financeCategory']))
+            {
+              $fin_cat = $input['financeCategory'][0];
             }
-        }
+            else
+            {
+               $fin_cat = $input['financeCategory'];
+            }
+       
+           if ($fin_cat && !is_null($fin_cat)) {
+          
+               $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
+           }
+       }
 
         $purchaseRequests = $purchaseRequests->select(
             ['erp_purchaserequest.purchaseRequestID',
@@ -2641,7 +2652,17 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (array_key_exists('financeCategory', $input)) {
-            if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
+             if(is_array($input['financeCategory']))
+             {
+               $fin_cat = $input['financeCategory'][0];
+             }
+             else
+             {
+                $fin_cat = $input['financeCategory'];
+             }
+        
+            if ($fin_cat && !is_null($fin_cat)) {
+           
                 $purchaseRequests = $purchaseRequests->where('financeCategory', $input['financeCategory']);
             }
         }
@@ -2728,6 +2749,7 @@ class PurchaseRequestAPIController extends AppBaseController
         //     $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         // })->download($type);
         // return $this->sendResponse(array(), 'successfully export');
+
 
 
         $doc_name = 'open_requests';
