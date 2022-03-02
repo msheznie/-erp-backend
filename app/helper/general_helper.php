@@ -53,6 +53,8 @@ use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\ReportTemplateDetails;
 use App\Models\SalesReturnDetail;
+use App\Models\SalesReturn;
+use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
 use App\Models\User;
 use App\Models\SupplierRegistrationLink;
@@ -2570,22 +2572,29 @@ class Helper
     public static function updateReturnQtyInDeliveryOrderDetails($id)
     {
         $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
-
+        $checkSR = SalesReturn::find($id);
+        if($checkSR->returnType == 1) {
         foreach ($srDetails as $value) {
             $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
 
-            $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+            $checkDO = DeliveryOrder::find($deliveryOrderData->deliveryOrderID);
 
-            $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
-            $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ?  $deliveryOrderData->qtyIssuedDefaultMeasure: 0;
-            $doQty = $qtyIssuedDefault - $returnQty;
+            if($checkDO->orderType != 1) {
 
-            $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
+                $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
 
-            $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
-                ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+                $returnQty = isset($deliveryOrderData->returnQty) ? $deliveryOrderData->returnQty : 0;
+                $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ? $deliveryOrderData->qtyIssuedDefaultMeasure : 0;
+                $doQty = $qtyIssuedDefault - $returnQty;
+
+                $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
+
+                $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                    ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+            }
 
         }
+    }
         return ['success' => true];
     }
 
