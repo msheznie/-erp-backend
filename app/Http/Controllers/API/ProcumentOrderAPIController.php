@@ -201,9 +201,13 @@ class ProcumentOrderAPIController extends AppBaseController
       
         $input = $this->convertArrayToValue($input);
 
-       if (isset($input['preCheck']) && $input['preCheck']) {
+        if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
+            return $this->sendError('Please select a supplier', 500);
+        }
+
+        if (isset($input['preCheck']) && $input['preCheck']) {
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            if (!empty($company) && $company->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
+            if (!empty($company) && $company->vatRegisteredYN == 1 && Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
             }
         }
@@ -4030,9 +4034,15 @@ WHERE
         if (empty($supplier)) {
             return $this->sendError('Supplier not found');
         }
-        $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+
+        if (!isset($input['fromAmend'])) {
+            $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+        }
+        
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-            $purchaseOrder->rcmActivated = 0;
+            if (!isset($input['fromAmend'])) {
+                $purchaseOrder->rcmActivated = 0;
+            }
         } else if (isset($input['preCheck']) && $input['preCheck']) {
             if ($purchaseOrder->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));

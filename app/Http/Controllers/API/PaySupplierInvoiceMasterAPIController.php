@@ -324,7 +324,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN']) {
+                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
@@ -2033,7 +2033,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
 
                             } else {
-                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500);
+                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
                             }
 
                         } else {
