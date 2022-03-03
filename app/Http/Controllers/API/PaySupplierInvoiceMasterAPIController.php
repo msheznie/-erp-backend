@@ -1485,7 +1485,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN']) {
+                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
