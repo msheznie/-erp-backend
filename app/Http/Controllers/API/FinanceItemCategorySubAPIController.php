@@ -370,6 +370,11 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function finance_item_category_subs_update(Request $request)
     {
         $input = $request->all();
+
+       if($input['financeGLcodebBSSystemID'] == 0 && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
+             return $this->sendError('Please check Include PL For GRV YN',500);
+       }
+
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType']);
         
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
