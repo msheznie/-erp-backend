@@ -1845,7 +1845,7 @@ class Helper
                 $docInforArr["modelName"] = 'Appointment';
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["approvedColumnName"] = 'approved_yn';
-                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
                 $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
                 $docInforArr["approvedDate"] = 'approved_date';
                 $docInforArr["approveValue"] = -1;
