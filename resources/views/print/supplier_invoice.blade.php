@@ -566,8 +566,8 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="border-bottom-remov">
-                    <th style="background-color: rgb(215,215,215)">Item Details</th>
-                    <th colspan="10">&nbsp;</th>
+                    <th colspan="2" style="background-color: rgb(215,215,215)">Item Details</th>
+                    <th colspan="9">&nbsp;</th>
                 </tr>
                  <tr style="border-top: 1px solid black;">
                     <th style="text-align: center">#</th>
