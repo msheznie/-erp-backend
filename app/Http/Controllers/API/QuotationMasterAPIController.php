@@ -309,6 +309,12 @@ class QuotationMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
 
+        if(isset($input['quoId'])) {
+            $quoMaster = QuotationMaster::find($input['quoId']);
+            $quoMaster->isInSO = 1;
+            $quoMaster->save();
+        }
+
         $quotationMasters = $this->quotationMasterRepository->create($input);
 
         return $this->sendResponse($quotationMasters->toArray(), 'Quotation Master saved successfully');
