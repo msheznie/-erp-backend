@@ -566,8 +566,8 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="border-bottom-remov">
-                    <th style="background-color: rgb(215,215,215)">Item Details</th>
-                    <th colspan="10">&nbsp;</th>
+                    <th colspan="2" style="background-color: rgb(215,215,215)">Item Details</th>
+                    <th colspan="9">&nbsp;</th>
                 </tr>
                  <tr style="border-top: 1px solid black;">
                     <th style="text-align: center">#</th>
@@ -641,7 +641,7 @@
                             </span></td>
                         <td class="text-right"
                             style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                    class="font-weight-bold">{{number_format($masterdata->VATTotal, $transDecimal)}}</span>
+                                    class="font-weight-bold">{{number_format($VATTotal, $transDecimal)}}</span>
                         </td>
                     </tr>
                 @endif
@@ -656,7 +656,7 @@
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                     <span class="font-weight-bold">
                     @if ($masterdata->detail)
-                            {{number_format($masterdata->bookingAmountTrans, $transDecimal)}}
+                            {{number_format(($subTotal + $VATTotal), $transDecimal)}}
                         @endif
                     </span>
                     </td>

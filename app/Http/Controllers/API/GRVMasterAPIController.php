@@ -1467,7 +1467,12 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $items = ItemAssigned::where('companySystemID', $companyID)->where('isActive', 1)->where('isAssigned', -1);
+        $items = ItemAssigned::where('companySystemID', $companyID)
+                             ->where('isActive', 1)
+                             ->where('isAssigned', -1)
+                             ->when((isset($input['fixedAsset']) && $input['fixedAsset'] == 0), function($query) {
+                                $query->whereIn('financeCategoryMaster', [1,2,4]);
+                             });
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {

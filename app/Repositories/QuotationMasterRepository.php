@@ -132,13 +132,13 @@ class QuotationMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month']) && $input['month'] != [0]) {
                 $quotationMaster->whereMonth('documentDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year']) && $input['year'] != [0]) {
                 $quotationMaster->whereYear('documentDate', '=', $input['year']);
             }
         }
@@ -162,11 +162,12 @@ class QuotationMasterRepository extends BaseRepository
         }
 
 
-        if (array_key_exists('quotationType', $input)) {
-            if ($input['quotationType'] && !is_null($input['quotationType'])) {
-                $quotationMaster->where('quotationType', $input['quotationType']);
+            if (array_key_exists('quotationType', $input)) {
+                if ($input['quotationType'] && !is_null($input['quotationType']) && $input['quotationType'] != [0]) {
+                    $quotationMaster->where('quotationType', $input['quotationType']);
+                }
             }
-        }
+
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

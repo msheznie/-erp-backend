@@ -1655,7 +1655,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,SUM(VATAmount) as totalVATAmount,SUM(VATAmountLocal) as totalVATAmountLocal,SUM(VATAmountRpt) as totalVATAmountRpt,bookingSuppMasInvAutoID");
                         }, 'item_details' => function($query) {
                             $query->selectRaw("SUM(netAmount) as netAmountTotal, SUM(VATAmount*noQty) as totalVATAmount,SUM(VATAmountLocal*noQty) as totalVATAmountLocal,SUM(VATAmountRpt*noQty) as totalVATAmountRpt, bookingSuppMasInvAutoID");
-                        },'directdetail' => function ($query) {
+                        }, 'directdetail' => function ($query) {
                             $query->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID");
                         }, 'financeperiod_by'])->find($masterModel["autoID"]);
                         //get balansheet account
@@ -1701,10 +1701,10 @@ class GeneralLedgerInsert implements ShouldQueue
                             $taxTrans = $tax->transAmount;
                         }
 
-                        if (isset($masterData->directdetail[0])) {
-                            $poInvoiceDirectLocalExtCharge = $masterData->directdetail[0]->localAmount;
-                            $poInvoiceDirectRptExtCharge = $masterData->directdetail[0]->rptAmount;
-                            $poInvoiceDirectTransExtCharge = $masterData->directdetail[0]->transAmount;
+                        if (count($masterData->directdetail) > 0) {
+                            $poInvoiceDirectLocalExtCharge = (isset($masterData->directdetail[0]->localAmount)) ? $masterData->directdetail[0]->localAmount : 0;
+                            $poInvoiceDirectRptExtCharge = (isset($masterData->directdetail[0]->rptAmount)) ? $masterData->directdetail[0]->rptAmount : 0;
+                            $poInvoiceDirectTransExtCharge = (isset($masterData->directdetail[0]->transAmount)) ? $masterData->directdetail[0]->transAmount : 0;
                         }
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
@@ -1754,7 +1754,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
                                 $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
                                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
-                            }  if ($masterData->documentType == 3) { // check if it is supplier item invoice
+                            } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
                                 $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
 
                                 $data['documentTransAmount'] = \Helper::roundValue($masterData->item_details[0]->netAmountTotal + $masterData->item_details[0]->totalVATAmount + $poInvoiceDirectTransExtCharge) * -1;
@@ -1771,6 +1771,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentRptAmount'] = \Helper::roundValue($masterData->directdetail[0]->rptAmount + $taxRpt ) * -1;
                                 }
                             }
+
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
@@ -1932,6 +1933,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     }
                                 }
                             }
+
 
                             //VAT entries
                             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
@@ -4381,6 +4383,7 @@ class GeneralLedgerInsert implements ShouldQueue
                 DB::rollback();
                 Log::error($this->failed($e));
                 Log::info('Error Line No: ' . $e->getLine());
+                Log::info('Error Line No: ' . $e->getFile());
                 Log::info($e->getMessage());
                 Log::info('---- GL  End with Error-----' . date('H:i:s'));
             }
