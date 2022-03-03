@@ -439,10 +439,10 @@ class QuotationMasterAPIController extends AppBaseController
            if($quotationParent->detail()->count()) {
                 $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
                if($details_count == $quotationParent->detail()->count()) {
-                $quotationParent->isInSO = 1 ;
+                $quotationParent->isInSO = 2 ;
                 $quotationParent->orderStatus = 2 ;
                }else {
-                $quotationParent->isInSO = 0 ;
+                $quotationParent->isInSO = 1 ;
                }
                 $quotationParent->update();
            }
