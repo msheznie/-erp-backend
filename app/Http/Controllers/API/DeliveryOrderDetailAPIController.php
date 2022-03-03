@@ -128,7 +128,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
             return $this->sendError('Item not found',500);
@@ -324,8 +323,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }*/
         $input['convertionMeasureVal'] = 1;
 
-        $input['qtyIssued'] = 0;
-        $input['qtyIssuedDefaultMeasure'] = 0;
+        // $input['qtyIssued'] = 0;
+        // $input['qtyIssuedDefaultMeasure'] = 0;
 
         $data = array(
             'companySystemID' => $companySystemID,
@@ -408,6 +407,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
+
+       if($input['isInDOorCI']) {
+            $this->updateSalesQuotationDeliveryStatus($input['quotationMasterID']);
+       }
+
 
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);

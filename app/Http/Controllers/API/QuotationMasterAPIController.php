@@ -309,6 +309,12 @@ class QuotationMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
 
+        if(isset($input['quoId'])) {
+            $quoMaster = QuotationMaster::find($input['quoId']);
+            $quoMaster->isInSO = 1;
+            $quoMaster->save();
+        }
+
         $quotationMasters = $this->quotationMasterRepository->create($input);
 
         return $this->sendResponse($quotationMasters->toArray(), 'Quotation Master saved successfully');
@@ -427,6 +433,20 @@ class QuotationMasterAPIController extends AppBaseController
 
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+        if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
+            $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
+           if($quotationParent->detail()->count()) {
+                $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
+               if($details_count == $quotationParent->detail()->count()) {
+                $quotationParent->isInSO = 1 ;
+                $quotationParent->orderStatus = 2 ;
+               }else {
+                $quotationParent->isInSO = 0 ;
+               }
+                $quotationParent->update();
+           }
+        } 
 
         if (empty($quotationMaster)) {
             return $this->sendError('Sales ' . $tempName . ' not found');
@@ -1572,10 +1592,19 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
-
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
-        
+
+        $quotaionDetails = QuotationDetails::where('quotationMasterID',$input['salesOrderID'])->pluck('soQuotationMasterID')->values()->toArray();
+       
+        $existsSo = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->whereIn('quotationMasterID',$quotaionDetails)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1592,7 +1621,8 @@ class QuotationMasterAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+
+        return $this->sendResponse($master->merge($existsSo)->toArray(), 'Quotations retrieved successfully');
     }
 
     public function getSalesQuoatationDetailForSO(Request $request){
@@ -1902,6 +1932,17 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
 
+    }
+
+
+    public function checkItemExists(Request $request) {
+        $input = $request->all();
+        $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        if($master) {
+                return $this->sendResponse(true,"success");
+        }else {
+                return $this->sendResponse(false,'False');
+        }
     }
     
 }

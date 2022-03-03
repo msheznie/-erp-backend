@@ -1332,7 +1332,6 @@ WHERE
         $input = $request->all();
         $invDetail_arr = array();
         $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
-
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if (!in_array(true, $isCheckArr)) {
             return $this->sendError("No items selected to add.");
@@ -2042,8 +2041,111 @@ WHERE
     }
 
 
+    public function validateCustomerInvoiceDetails(Request $request) {
+        $row = $request['detailTable'][0];
+
+                    /*pending approval checking*/
+                    // check the item pending pending for approval in other delivery orders
+
+                    $checkWhether = DeliveryOrder::where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_delivery_order.deliveryOrderID',
+                            'erp_delivery_order.deliveryOrderCode'
+                        ])
+                        ->groupBy(
+                            'erp_delivery_order.deliveryOrderID',
+                            'erp_delivery_order.companySystemID'
+                        )
+                        ->whereHas('detail', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approvedYN', 0)
+                        ->first();
+
+                    if (!empty($checkWhether)) {
+                        return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
 
 
+                    // check the item pending pending for approval in other modules
+                    $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_itemissuemaster.itemIssueAutoID',
+                            'erp_itemissuemaster.companySystemID',
+                            'erp_itemissuemaster.wareHouseFromCode',
+                            'erp_itemissuemaster.itemIssueCode',
+                            'erp_itemissuemaster.approved'
+                        ])
+                        ->groupBy(
+                            'erp_itemissuemaster.itemIssueAutoID',
+                            'erp_itemissuemaster.companySystemID',
+                            'erp_itemissuemaster.wareHouseFromCode',
+                            'erp_itemissuemaster.itemIssueCode',
+                            'erp_itemissuemaster.approved'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
+                    /* approved=0*/
 
+                    if (!empty($checkWhetherItemIssueMaster)) {
+                        return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
+
+                    $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $row['companySystemID'])
+//            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
+                        ->select([
+                            'erp_stocktransfer.stockTransferAutoID',
+                            'erp_stocktransfer.companySystemID',
+                            'erp_stocktransfer.locationFrom',
+                            'erp_stocktransfer.stockTransferCode',
+                            'erp_stocktransfer.approved'
+                        ])
+                        ->groupBy(
+                            'erp_stocktransfer.stockTransferAutoID',
+                            'erp_stocktransfer.companySystemID',
+                            'erp_stocktransfer.locationFrom',
+                            'erp_stocktransfer.stockTransferCode',
+                            'erp_stocktransfer.approved'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCodeSystem', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
+                    /* approved=0*/
+
+                    if (!empty($checkWhetherStockTransfer)) {
+                        return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for ".$row['itemSystemCode'].". Please check again.", 500);
+                    }
+
+                    /*Check in purchase return*/
+                    $checkWhetherPR = PurchaseReturn::where('companySystemID', $row['companySystemID'])
+                        ->select([
+                            'erp_purchasereturnmaster.purhaseReturnAutoID',
+                            'erp_purchasereturnmaster.companySystemID',
+                            'erp_purchasereturnmaster.purchaseReturnLocation',
+                            'erp_purchasereturnmaster.purchaseReturnCode',
+                        ])
+                        ->groupBy(
+                            'erp_purchasereturnmaster.purhaseReturnAutoID',
+                            'erp_purchasereturnmaster.companySystemID',
+                            'erp_purchasereturnmaster.purchaseReturnLocation'
+                        )
+                        ->whereHas('details', function ($query) use ($row) {
+                            $query->where('itemCode', $row['itemAutoID']);
+                        })
+                        ->where('approved', 0)
+                        ->first();
+                    /* approved=0*/
+
+                    if (!empty($checkWhetherPR)) {
+                        return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                    }
+
+                 
+    }
 
 }
