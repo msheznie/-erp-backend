@@ -521,7 +521,7 @@ class QuotationDetailsAPIController extends AppBaseController
             if($quotationMaster->quotationType == 2 && $quotationMaster->documentSystemID == 68){
 
                 if (!empty($quotationDetails->quotationDetailsID) && !empty($quotationDetails->quotationMasterID)) {
-                    $updateQuotationMaster = QuotationMaster::find($quotationDetails->soQuotationMasterID)
+                    $updateQuotationMaster = QuotationMaster::find($quotationDetails->quotationMasterID)
                                                             ->update([
                                                                 'selectedForSalesOrder' => 0,
                                                                 'closedYN' => 0

@@ -1699,6 +1699,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeSalesOrderFromSalesQuotation', 'QuotationDetailsAPIController@storeSalesOrderFromSalesQuotation');
         Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
         Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+        Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists');
         Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
         Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
         Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');

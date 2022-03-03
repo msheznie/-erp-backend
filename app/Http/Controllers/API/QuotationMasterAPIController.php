@@ -434,6 +434,20 @@ class QuotationMasterAPIController extends AppBaseController
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
+        if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
+            $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
+           if($quotationParent->detail()->count()) {
+                $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
+               if($details_count == $quotationParent->detail()->count()) {
+                $quotationParent->isInSO = 1 ;
+                $quotationParent->orderStatus = 2 ;
+               }else {
+                $quotationParent->isInSO = 0 ;
+               }
+                $quotationParent->update();
+           }
+        } 
+
         if (empty($quotationMaster)) {
             return $this->sendError('Sales ' . $tempName . ' not found');
         }
@@ -1918,6 +1932,17 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
 
+    }
+
+
+    public function checkItemExists(Request $request) {
+        $input = $request->all();
+        $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        if($master) {
+                return $this->sendResponse(true,"success");
+        }else {
+                return $this->sendResponse(false,'False');
+        }
     }
     
 }
