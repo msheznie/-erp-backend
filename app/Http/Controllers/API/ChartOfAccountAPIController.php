@@ -345,8 +345,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
+                    $primaryCompanySystemID = isset($input['primaryCompanySystemID'][0]) ? $input['primaryCompanySystemID'][0] : $input['primaryCompanySystemID'];
+
                     if ($input['relatedPartyYN'] == 1) {
-                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])
+                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])->where('primaryCompanySystemID',$primaryCompanySystemID)
                                                                          ->where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
                                                                          ->first();
 
