@@ -148,7 +148,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
 
 
@@ -2671,6 +2670,7 @@ Route::group(['prefix' => 'external'], function (){
     Route::group(['middleware' => ['tenantById','access_token']], function (){
         Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
         Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
+        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
     });
 });
 
