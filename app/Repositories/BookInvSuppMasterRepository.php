@@ -189,7 +189,7 @@ class BookInvSuppMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x]['Invoice Code'] = $val->bookingInvCode;
                 $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
-                $data[$x]['Supplier'] = $val->supplier? $val->supplier->primarySupplierCode : '';
+                $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
                 $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
                 $data[$x]['Comments'] = $val->comments;
