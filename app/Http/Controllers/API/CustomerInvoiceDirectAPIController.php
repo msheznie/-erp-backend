@@ -32,6 +32,7 @@ use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\QuotationMaster;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
@@ -303,7 +304,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['bookingDate'] > $curentDate) {
             return $this->sendResponse('e', 'Document date cannot be greater than current date');
         }
-
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
@@ -433,6 +433,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
         } else {
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+        }
+
+        if(isset($detail[0])) {
+            $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
+            $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
+            if($qo_master->detail->count() == count($details)) {
+                $qo_master->isInDOorCI = 2;
+                $qo_master->save();
+            }else {
+                $qo_master->isInDOorCI = 4;
+                $qo_master->save();
+            }
         }
 
 
