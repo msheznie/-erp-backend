@@ -135,11 +135,21 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
+
+        if($input['isInDOorCI']) {
+            unset($input['timesReferred']);
+        $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $input['itemCode'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        }else {
         $item = ItemAssigned::with(['item_master'])
             ->where('idItemAssigned', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
+        }
         if (empty($item)) {
             return $this->sendError('Item not found');
         }
@@ -222,7 +232,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $companyCurrencyConversion = Helper::currencyConversion($companySystemID,$customerInvoiceDirect->companyReportingCurrencyID,$customerInvoiceDirect->custTransactionCurrencyID,$input['issueCostRpt']);
         $input['sellingCurrencyID'] = $customerInvoiceDirect->custTransactionCurrencyID;
         $input['sellingCurrencyER'] = $customerInvoiceDirect->custTransactionCurrencyER;
-        $input['sellingCost'] = $companyCurrencyConversion['documentAmount'];
+        $input['sellingCost'] = ($companyCurrencyConversion['documentAmount'] != 0) ? $companyCurrencyConversion['documentAmount'] : 1.0;
         if((isset($input['customerCatalogDetailID']) && $input['customerCatalogDetailID']>0)){
             $catalogDetail = CustomerCatalogDetail::find($input['customerCatalogDetailID']);
 
@@ -273,7 +283,6 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
-
         if (!empty($financeItemCategorySubAssigned)) {
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
             $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
@@ -567,6 +576,8 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $message = "Item updated successfully";
         /** @var CustomerInvoiceItemDetails $customerInvoiceItemDetails */
         $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->findWithoutFail($id);
+
+
 
         if (empty($customerInvoiceItemDetails)) {
             return $this->sendError('Customer Invoice Item Details not found');

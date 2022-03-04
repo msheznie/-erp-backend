@@ -1937,7 +1937,14 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function checkItemExists(Request $request) {
         $input = $request->all();
-        $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        if($input['doc'] == "SO") {
+            $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        }else if($input['doc'] == "DO") {
+            $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }else {
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }
+
         if($master) {
                 return $this->sendResponse(true,"success");
         }else {
