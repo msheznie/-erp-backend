@@ -2505,6 +2505,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems');
         Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
 
+        Route::post('getTenderBidFormats', 'TenderBidFormatMasterAPIController@getTenderBidFormats');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2689,3 +2691,8 @@ Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
 
 
+
+
+Route::resource('tender_bid_format_masters', 'TenderBidFormatMasterAPIController');
+
+Route::resource('tender_bid_format_details', 'TenderBidFormatDetailAPIController');
