@@ -97,7 +97,7 @@ class StockCountRepository extends BaseRepository
         return StockCount::class;
     }
 
-    public function stockCountListQuery($request, $input, $search = '') 
+    public function stockCountListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID)
     {
 
         $selectedCompanyId = $request['companyId'];
@@ -127,13 +127,13 @@ class StockCountRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $stockAdjustments->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $stockAdjustments->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('location', $input)) {
             if ($input['location'] && !is_null($input['location'])) {
-                $stockAdjustments->where('location', $input['location']);
+                $stockAdjustments->whereIn('location', $grvLocation);
             }
         }
 

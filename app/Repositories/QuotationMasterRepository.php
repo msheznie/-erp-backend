@@ -132,35 +132,42 @@ class QuotationMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month']) && $input['month'] != [0]) {
                 $quotationMaster->whereMonth('documentDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year']) && $input['year'] != [0]) {
                 $quotationMaster->whereYear('documentDate', '=', $input['year']);
             }
         }
 
         if (array_key_exists('customerSystemCode', $input)) {
             if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
-                $quotationMaster->where('customerSystemCode', $input['customerSystemCode']);
+                $customerSystemCode = $request['customerSystemCode'];
+                $customerSystemCode = (array)$customerSystemCode;
+                $customerSystemCode = collect($customerSystemCode)->pluck('id');
+                $quotationMaster->whereIn('customerSystemCode', $customerSystemCode);
             }
         }
 
         if (array_key_exists('salesPersonID', $input)) {
             if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $quotationMaster->where('salesPersonID', $input['salesPersonID']);
+                $salesPersonID = $request['salesPersonID'];
+                $salesPersonID= (array)$salesPersonID;
+                $salesPersonID = collect($salesPersonID)->pluck('id');
+                $quotationMaster->whereIn('salesPersonID', $salesPersonID);
             }
         }
 
 
-        if (array_key_exists('quotationType', $input)) {
-            if ($input['quotationType'] && !is_null($input['quotationType'])) {
-                $quotationMaster->where('quotationType', $input['quotationType']);
+            if (array_key_exists('quotationType', $input)) {
+                if ($input['quotationType'] && !is_null($input['quotationType']) && $input['quotationType'] != [0]) {
+                    $quotationMaster->where('quotationType', $input['quotationType']);
+                }
             }
-        }
+
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

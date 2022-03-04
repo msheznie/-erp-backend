@@ -1150,16 +1150,20 @@ class CreditNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'customerID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search);
+        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search, $customerID);
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {

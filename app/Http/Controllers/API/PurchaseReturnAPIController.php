@@ -736,8 +736,15 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        $grvLocation = $request['purchaseReturnLocation'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
 
-        $purchaseReturn = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $purchaseReturn = $this->purchaseReturnRepository->purchaseReturnListQuery($request, $input, $search, $serviceLineSystemID, $grvLocation);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();

@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Models\BankReconciliation;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
+use Carbon\Carbon;
+
 
 /**
  * Class BankReconciliationRepository
@@ -71,7 +73,7 @@ class BankReconciliationRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankReconciliationListQuery($request, $input, $search = '') {
+    public function bankReconciliationListQuery($request, $input, $search = '' ,$bankmasterAutoID) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -108,8 +110,8 @@ class BankReconciliationRepository extends BaseRepository
         }
 
         if (isset($input['bankmasterAutoID']) && $input['bankmasterAutoID'] > 0) {
-            $bankReconciliation = $bankReconciliation->whereHas('bank_account', function($query) use ($input) {
-                                                            $query->where('bankmasterAutoID', $input['bankmasterAutoID']);
+            $bankReconciliation = $bankReconciliation->whereHas('bank_account', function($query) use ($bankmasterAutoID) {
+                                                            $query->whereIn('bankmasterAutoID', $bankmasterAutoID);
                                                     });
         }
 

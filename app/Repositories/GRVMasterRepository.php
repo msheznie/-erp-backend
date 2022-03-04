@@ -195,7 +195,7 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '') {
+    public function grvListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
@@ -209,13 +209,13 @@ class GRVMasterRepository extends BaseRepository
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $grvMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                $grvMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
         }
 
         if (array_key_exists('grvLocation', $input)) {
             if ($input['grvLocation'] && !is_null($input['grvLocation'])) {
-                $grvMaster->where('grvLocation', $input['grvLocation']);
+                $grvMaster->whereIn('grvLocation', $grvLocation);
             }
         }
 

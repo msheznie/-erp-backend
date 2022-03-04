@@ -412,6 +412,36 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'currentWacRptCurrencyID',
                             'wacRpt' => 'wacAdjRpt');
                         break;
+                    case 11: // Supplier Invocie
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'BookInvSuppMaster';
+                        $docInforArr["childRelation"] = 'item_details';
+                        $docInforArr["autoID"] = 'bookingSuppMasInvAutoID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => '',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'documentCode' => 'bookingInvCode',
+                            'wareHouseSystemCode' => 'wareHouseSystemCode',
+                            'referenceNumber' => 'secondaryRefNo');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCode',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'unitOfMeasure',
+                            'inOutQty' => 'noQty',
+                            'wacLocalCurrencyID' => 'localCurrencyID',
+                            'wacLocal' => 'costPerUnitLocalCur',
+                            'wacRptCurrencyID' => 'companyReportingCurrencyID',
+                            'wacRpt' => 'costPerUnitComRptCur',
+                            'comments' => 'comment');
+
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;
@@ -419,7 +449,7 @@ class ItemLedgerInsert implements ShouldQueue
                 }
                 $nameSpacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"] => function($query) use ($masterModel) {
-                    if($masterModel["documentSystemID"] == 3){
+                    if($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 11){
                         $query->where('itemFinanceCategoryID',1);
                     }
                     if($masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
@@ -439,7 +469,7 @@ class ItemLedgerInsert implements ShouldQueue
 
                             foreach ($detailColumnArray as $column => $value) {
                                 if($column == 'inOutQty') {
-                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87) {
+                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
@@ -509,7 +539,7 @@ class ItemLedgerInsert implements ShouldQueue
                             }
 
                             foreach ($masterColumnArray as $column => $value) {
-                                $data[$i][$column] = $masterRec[$value];
+                                $data[$i][$column] = isset($masterRec[$value]) ? $masterRec[$value] : null;
                             }
                             $data[$i]['documentSystemCode'] = $masterModel["autoID"];
                             $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;

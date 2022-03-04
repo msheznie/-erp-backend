@@ -822,7 +822,16 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
-        
+
+        $grvLocation = $request['grvLocation'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+//        return $this->sendResponse($customers, 'Good Receipt Voucher deleted successfully');
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -831,7 +840,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input,$search);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();
@@ -1458,7 +1467,12 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $items = ItemAssigned::where('companySystemID', $companyID)->where('isActive', 1)->where('isAssigned', -1);
+        $items = ItemAssigned::where('companySystemID', $companyID)
+                             ->where('isActive', 1)
+                             ->where('isAssigned', -1)
+                             ->when((isset($input['fixedAsset']) && $input['fixedAsset'] == 0), function($query) {
+                                $query->whereIn('financeCategoryMaster', [1,2,4]);
+                             });
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {

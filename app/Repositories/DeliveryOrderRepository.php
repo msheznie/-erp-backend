@@ -100,7 +100,9 @@ class DeliveryOrderRepository extends BaseRepository
         } else {
             $childCompanies = [$companyId];
         }
-
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
         $deliveryOrder = DeliveryOrder::whereIn('companySystemID', $childCompanies)
         ->with(['customer','transaction_currency','created_by','segment']);
 
@@ -117,25 +119,25 @@ class DeliveryOrderRepository extends BaseRepository
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month']) && $input['month'] != [0]) {
                 $deliveryOrder->whereMonth('deliveryOrderDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year']) && $input['year'] != [0]) {
                 $deliveryOrder->whereYear('deliveryOrderDate', '=', $input['year']);
             }
         }
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && !is_null($input['customerID'])) {
-                $deliveryOrder->where('customerID', $input['customerID']);
+                $deliveryOrder->whereIn('customerID', $customerID);
             }
         }
 
         if (array_key_exists('orderType', $input)) {
-            if ($input['orderType'] && !is_null($input['orderType'])) {
+            if ($input['orderType'] && !is_null($input['orderType']) && $input['orderType'] != [0]) {
                 $deliveryOrder->where('orderType', $input['orderType']);
             }
         }

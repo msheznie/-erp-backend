@@ -750,8 +750,15 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
+        $grvLocation = $request['wareHouseFrom'];
+        $grvLocation = (array)$grvLocation;
+        $grvLocation = collect($grvLocation)->pluck('id');
 
-        $itemIssueMaster = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $itemIssueMaster = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
 
         return \DataTables::eloquent($itemIssueMaster)
             ->addColumn('Actions', 'Actions', "Actions")

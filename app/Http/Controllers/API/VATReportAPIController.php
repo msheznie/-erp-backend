@@ -25,7 +25,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 class VATReportAPIController extends AppBaseController
 {
 
@@ -392,17 +392,23 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
             }
 
-            \Excel::create('vat_report', function ($excel) use ($data) {
-                $excel->sheet('sheet name', function ($sheet) use ($data) {
-                    $sheet->fromArray($data, null, 'A1', true);
-                    $sheet->setAutoSize(true);
-                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                });
-                $lastrow = $excel->getActiveSheet()->getHighestRow();
-                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download('csv');
 
-            return $this->sendResponse(array(), 'successfully export');
+            
+            $fileName = 'vat_report';
+            $path = 'general-ledger/report/vat_report/excel/';
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+
+            if($basePath == '')
+            {
+                 return $this->sendError('Unable to export excel');
+            }
+            else
+            {
+                 return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
+
+
+
         }
         return $this->sendError( 'No Records Found');
     }

@@ -106,6 +106,8 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         
                         $masterData = BookInvSuppMaster::with(['detail' => function ($query) {
                             $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,bookingSuppMasInvAutoID");
+                        },'item_details' => function ($query) {
+                            $query->selectRaw("SUM(netAmount) as transAmount, SUM(VATAmount*noQty) as transVATAmount,bookingSuppMasInvAutoID");
                         }, 'directdetail' => function ($query) {
                             $query->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID");
                         },'financeperiod_by'])->find($masterModel["autoID"]);
@@ -173,6 +175,24 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                     $data['purchaseOrderID'] = $supplierInvoiceDetailLength[0]['purchaseOrderID'];
                                 }
 
+                            } else if ($masterData->documentType == 3) { // check if it is supplier invoice
+
+                                $transAmount = (isset($masterData->item_details[0]->transAmount) ? $masterData->item_details[0]->transAmount : 0) + (isset($masterData->item_details[0]->transVATAmount) ? $masterData->item_details[0]->transVATAmount : 0);
+
+                                $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $transAmount);
+
+                                $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                                $data['supplierTransER'] = \Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
+                                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
+                                $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                                $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
+                                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
+                                $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                $data['localER'] = round(($transAmount + $poInvoiceDirectTransExtCharge ) / ($directItemCurrencyConversion['localAmount'] + $poInvoiceDirectLocalExtCharge), 8);
+                                $data['localAmount'] = \Helper::roundValue(ABS($directItemCurrencyConversion['localAmount'] + $poInvoiceDirectLocalExtCharge));
+                                $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                                $data['comRptER'] = round(($transAmount + $poInvoiceDirectTransExtCharge ) / ($directItemCurrencyConversion['reportingAmount'] + $poInvoiceDirectRptExtCharge), 8);
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($directItemCurrencyConversion['reportingAmount'] + $poInvoiceDirectRptExtCharge));
                             } else {
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                                 $data['supplierTransER'] = $masterData->supplierTransactionCurrencyER;

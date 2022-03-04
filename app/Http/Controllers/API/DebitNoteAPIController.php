@@ -59,7 +59,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -1212,8 +1212,13 @@ class DebitNoteAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
         $search = $request->input('search.value');
-        $debitNotes = $this->debitNotesByCompany($input, $search);
+        $debitNotes = $this->debitNotesByCompany($input, $search, $supplierID);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -1963,8 +1968,13 @@ UNION ALL
         } else {
             $sort = 'desc';
         }
+
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+        
         $search = $request->input('search.value');
-        $output = $this->debitNotesByCompany($input, $search)->orderBy('debitNoteAutoID', $sort)->get();
+        $output = $this->debitNotesByCompany($input, $search, $supplierID)->orderBy('debitNoteAutoID', $sort)->get();
         $data = array();
         $type = $request->type;
         if (!empty($output)) {
@@ -2026,21 +2036,23 @@ UNION ALL
             }
         }
 
-         \Excel::create('debit_note_by_company', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        $fileName = 'debit_note_by_company';
+        $path = 'accounts-payable/debit_note_by_company/excel/';
+        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
 
-    private function debitNotesByCompany($request, $search)
+    private function debitNotesByCompany($request, $search, $supplierID)
     {
         $input = $request;
         $selectedCompanyId = $input['companyId'];
@@ -2058,7 +2070,7 @@ UNION ALL
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
-                $debitNotes = $debitNotes->where('supplierID', $input['supplierID']);
+                $debitNotes = $debitNotes->whereIn('supplierID', $supplierID);
             }
         }
 
