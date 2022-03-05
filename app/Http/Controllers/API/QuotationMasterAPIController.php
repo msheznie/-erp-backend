@@ -1942,8 +1942,9 @@ class QuotationMasterAPIController extends AppBaseController
         }else if($input['doc'] == "DO") {
             $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
         }else {
-            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
         }
+
 
         if($master) {
                 return $this->sendResponse(true,"success");
