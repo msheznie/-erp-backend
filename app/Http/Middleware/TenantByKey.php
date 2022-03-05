@@ -30,7 +30,6 @@ class TenantByKey
             Config::set("database.connections.mysql.database", $tenant->database);
             DB::reconnect('mysql');
         }
-
         return $next($request);
     }
 }

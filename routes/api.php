@@ -148,7 +148,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
 
 
@@ -354,7 +353,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('approval_groups', 'ApprovalGroupsAPIController');
 
         Route::resource('purchase_requests', 'PurchaseRequestAPIController');
-        Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
         Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
         Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
         Route::get('getEligibleMr', 'PurchaseRequestAPIController@getEligibleMr');
@@ -670,7 +668,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
         Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
         Route::resource('materiel_requests', 'MaterielRequestAPIController');
-        Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
         Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist');
         Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
         Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
@@ -2664,6 +2661,22 @@ Route::group(['prefix' => 'srm'], function (){
 
 /*
  * End SRM related routes
+ */
+
+/*
+ * Start external related routes
+ */
+
+Route::group(['prefix' => 'external'], function (){
+    Route::group(['middleware' => ['tenantById','access_token']], function (){
+        Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
+        Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
+        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
+    });
+});
+
+/*
+ * End external related routes
  */
 
 
