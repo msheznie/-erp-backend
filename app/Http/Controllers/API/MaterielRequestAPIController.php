@@ -896,11 +896,8 @@ class MaterielRequestAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $employee = \Helper::getEmployeeInfo();
-
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
+            $input['createdUserSystemID'] = $request->employee_id;
 
             $validator = \Validator::make($input, [
                 // 'serviceLineSystemID' => 'required|numeric|min:1',
