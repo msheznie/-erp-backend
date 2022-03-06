@@ -1297,7 +1297,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-        Route::post('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
+        Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
         Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
         Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
         Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
