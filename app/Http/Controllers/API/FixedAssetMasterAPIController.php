@@ -1911,19 +1911,19 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if (array_key_exists('mainCategory', $input)) {
             if ($input['mainCategory'] && !is_null($input['mainCategory'])) {
-                $assetCositng->whereIn('faCatID', $input['mainCategory']);
+                $assetCositng->where('faCatID', $input['mainCategory']);
             }
         }
 
         if (array_key_exists('subCategory', $input)) {
             if ($input['subCategory'] && !is_null($input['subCategory'])) {
-                $assetCositng->whereIn('faSubCatID', $input['subCategory']);
+                $assetCositng->where('faSubCatID', $input['subCategory']);
             }
         }
 
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
-                $assetCositng->whereIn('AUDITCATOGARY', $input['auditCategory']);
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
         }
 
