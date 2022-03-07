@@ -9,6 +9,7 @@ use App\Models\FixedAssetDepreciationMaster;
 use App\Observers\CapitalizationDetailObserver;
 use App\Observers\CapitalizationObserver;
 use App\Observers\DepreciationObserver;
+use App\Observers\AssetObserver;
 use App\Observers\DisposalObserver;
 use Carbon\Carbon;
 use Illuminate\Queue\Events\JobFailed;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
-
+use App\Models\FixedAssetMaster;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -32,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
             // $event->job
             // $event->exception
         });
+        FixedAssetMaster::observe(AssetObserver::class);
         AssetCapitalizationDetail::observe(CapitalizationDetailObserver::class);
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);

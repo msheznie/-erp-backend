@@ -84,6 +84,7 @@ use App\helper\SendEmailForDocument;
 use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
+use App\Jobs\CreateAccumulatedDepreciation;
 
 class Helper
 {
@@ -2372,6 +2373,11 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
+                            }
+
+                            if ($input["documentSystemID"] == 22) {
+
+                                CreateAccumulatedDepreciation::dispatch($input["faID"]);
                             }
                             //
 

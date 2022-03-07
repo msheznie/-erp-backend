@@ -57,7 +57,9 @@ use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\CompanyFinancePeriod;
+use App\Models\FixedAssetDepreciationMaster;
+use App\helper\CreateAccumulatedDepreciation;
 /**
  * Class FixedAssetMasterController
  * @package App\Http\Controllers\API
@@ -441,6 +443,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function create(CreateFixedAssetMasterAPIRequest $request)
     {
+
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
@@ -455,7 +458,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError("Salvage value cannot be less than Zero", 500);
         }
 
-        DB::beginTransaction();
+       // DB::beginTransaction();
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
@@ -583,7 +586,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-            $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+ 
+           $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
@@ -603,10 +608,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
             }
 
+ 
+
+
             DB::commit();
-            return $this->sendResponse($fixedAssetMasters->toArray(), 'Fixed Asset Master saved successfully');
+            return $this->sendResponse($fixedAssetMasters, 'Fixed Asset Master saved successfully');
         } catch (\Exception $exception) {
-            DB::rollBack();
+            //DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
     }
@@ -1063,7 +1071,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $faCatID = $request->faCatID;
         $faCatID = (array)$faCatID;
         $faCatID= collect($faCatID)->pluck('id');
-        $subCategory = FixedAssetCategorySub::ofCompany([$request->companySystemID])->byFaCatIDMultiSelect($faCatID)->get();
+        $subCategory = FixedAssetCategorySub::ofCompany([$request->companySystemID])->byFaCatIDMultiSelect([$request->faCatID])->get();
         return $this->sendResponse($subCategory, 'Record retrieved successfully');
     }
 
