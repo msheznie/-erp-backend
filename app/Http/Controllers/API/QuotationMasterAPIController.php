@@ -1937,19 +1937,31 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function checkItemExists(Request $request) {
         $input = $request->all();
+        $count = 0;
+        $quotationRequestedCount = QuotationDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+        
         if($input['doc'] == "SO") {
             $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
         }else if($input['doc'] == "DO") {
             $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
         }else {
             $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            $count = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
         }
 
+        if($count !=0 && $quotationRequestedCount != $count) {
+            $input['requestedQty'] = ($quotationRequestedCount - $count);
+            $input['qtyIssued'] = ($quotationRequestedCount - $count);
+            $input['qtyIssuedDefaultMeasure'] = ($quotationRequestedCount - $count);
+            return $this->sendResponse(['status' => false , 'data' => $input],'False');
+        }
 
         if($master) {
-                return $this->sendResponse(true,"success");
+                return $this->sendResponse(['status' => true , 'data' => $input],'success');
+
         }else {
-                return $this->sendResponse(false,'False');
+                return $this->sendResponse(['status' => false , 'data' => $input],'False');
+
         }
     }
     
