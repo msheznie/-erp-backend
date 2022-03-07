@@ -33,18 +33,26 @@ class AccessToken
                 }
                 else
                 {
-                    return "Unauthorized Access";
+                    return errorMsgs("Unauthorized Access");
                 }
 
                 if($dateTimeNow > $userToken[0]->expire_time){
-                    return "Token Expired";
+                    return errorMsgs("Token Expired");
                 }
             }
             else
             {
-              return "Unauthorized Access";
+                return errorMsgs("Unauthorized Access");
             }
         $userToken[0]->delete();
         return $next($request);
     }
+}
+
+
+function errorMsgs($messsage){
+    return response()->json([
+        'success' => false,
+        'message' => $messsage
+    ], 401);
 }
