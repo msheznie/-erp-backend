@@ -148,7 +148,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
 
 
 
@@ -913,6 +912,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
         Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
         Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
+        Route::post('getMultipleAccountsByBank', 'PaySupplierInvoiceMasterAPIController@getMultipleAccountsByBank');
         Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
         Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
         Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
@@ -1696,6 +1696,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('storeSalesOrderFromSalesQuotation', 'QuotationDetailsAPIController@storeSalesOrderFromSalesQuotation');
         Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
         Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
+        Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists');
         Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
         Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
         Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
@@ -2166,7 +2167,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
         Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
         Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
-        Route::get('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
+        Route::post('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
         Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
         Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
@@ -2497,6 +2498,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('payment_types', 'PaymentTypeAPIController');
         Route::resource('elimination_ledgers', 'EliminationLedgerAPIController');
 
+        Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
+        Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
+        Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems');
+        Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2657,6 +2663,22 @@ Route::group(['prefix' => 'srm'], function (){
  * End SRM related routes
  */
 
+/*
+ * Start external related routes
+ */
+
+Route::group(['prefix' => 'external'], function (){
+    Route::group(['middleware' => ['tenantById','access_token']], function (){
+        Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
+        Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
+        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
+    });
+});
+
+/*
+ * End external related routes
+ */
+
 
 Route::get('cache-clear', function () {
     Artisan::call('cache:clear');
@@ -2681,4 +2703,8 @@ Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
 
 
-Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
+
+
+Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
+
+Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');

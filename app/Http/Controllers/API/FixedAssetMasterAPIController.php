@@ -1117,6 +1117,8 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAllCostingByCompany(Request $request)
     {
         $input = $request->all();
+
+
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
         $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
@@ -1888,6 +1890,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function exportAssetMaster(Request $request){
         $input = $request->all();
+
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
 
         $type = $input['type'];

@@ -434,6 +434,20 @@ class QuotationMasterAPIController extends AppBaseController
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
 
+        if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
+            $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
+           if($quotationParent->detail()->count()) {
+                $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
+               if($details_count == $quotationParent->detail()->count()) {
+                $quotationParent->isInSO = 2 ;
+                $quotationParent->orderStatus = 2 ;
+               }else {
+                $quotationParent->isInSO = 1 ;
+               }
+                $quotationParent->update();
+           }
+        } 
+
         if (empty($quotationMaster)) {
             return $this->sendError('Sales ' . $tempName . ' not found');
         }
@@ -907,7 +921,8 @@ class QuotationMasterAPIController extends AppBaseController
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', 0)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -980,7 +995,8 @@ class QuotationMasterAPIController extends AppBaseController
             $query->on('erp_documentapproved.documentSystemCode', '=', 'quotationMasterID')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', -1)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -1576,10 +1592,19 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
-
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
-        
+
+        $quotaionDetails = QuotationDetails::where('quotationMasterID',$input['salesOrderID'])->pluck('soQuotationMasterID')->values()->toArray();
+       
+        $existsSo = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->whereIn('quotationMasterID',$quotaionDetails)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1596,7 +1621,8 @@ class QuotationMasterAPIController extends AppBaseController
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+
+        return $this->sendResponse($master->merge($existsSo)->toArray(), 'Quotations retrieved successfully');
     }
 
     public function getSalesQuoatationDetailForSO(Request $request){
@@ -1808,11 +1834,11 @@ class QuotationMasterAPIController extends AppBaseController
     
             $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
             if ($invoice > 0) {
-                return $this->sendError($order_type.' added to ivoice order');
+                return $this->sendError($order_type.' added to invoice ');
             }
         }
 
- 
+        $msg = $order_type.' successfully canceled';
         
         $employee = \Helper::getEmployeeInfo();
 
@@ -1824,7 +1850,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMaster->cancelledDate =  now();
         $quotationMaster->save();
 
-        return $this->sendResponse($quotationMaster, 'quoatation successfully canceled');
+        return $this->sendResponse($quotationMaster, $msg);
 
     }
 
@@ -1889,7 +1915,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         if(!$is_partially_added)
         {
-            return $this->sendError($is_partially_added.'cannot be closed, not partially added to any orders');
+            return $this->sendError($order_type.' cannot be closed, not partially added to any orders');
         }   
         
   
@@ -1906,6 +1932,25 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
 
+    }
+
+
+    public function checkItemExists(Request $request) {
+        $input = $request->all();
+        if($input['doc'] == "SO") {
+            $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        }else if($input['doc'] == "DO") {
+            $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }else {
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }
+
+
+        if($master) {
+                return $this->sendResponse(true,"success");
+        }else {
+                return $this->sendResponse(false,'False');
+        }
     }
     
 }

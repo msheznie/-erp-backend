@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class SupplierRegistrationLink extends Model
@@ -36,6 +37,8 @@ class SupplierRegistrationLink extends Model
         'refferedBackYN'
     ];
 
+    protected $appends = ['appointment_date_expired'];
+
     protected $casts = [
         'id' => 'integer',
         'supplier_master_id' => 'integer',
@@ -49,5 +52,24 @@ class SupplierRegistrationLink extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
+    public function getAppointmentDateExpiredAttribute(): string
+    {
+        if (isset($this->attributes['token_expiry_date_time'])) {
+            if ($this->attributes['token_expiry_date_time']) {
+                $expireDate = Carbon::parse($this->attributes['token_expiry_date_time']);
+                $today = Carbon::now();
+               if($expireDate > $today){
+                   return 'Active';
+               } else {
+                   return 'Expired';
+               }
+            } else {
+                return 'N/A';
+            }
+        }
+
+        return '';
     }
 }

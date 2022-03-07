@@ -201,9 +201,13 @@ class ProcumentOrderAPIController extends AppBaseController
       
         $input = $this->convertArrayToValue($input);
 
-       if (isset($input['preCheck']) && $input['preCheck']) {
+        if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
+            return $this->sendError('Please select a supplier', 500);
+        }
+
+        if (isset($input['preCheck']) && $input['preCheck']) {
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            if (!empty($company) && $company->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
+            if (!empty($company) && $company->vatRegisteredYN == 1 && !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
             }
         }
@@ -2209,8 +2213,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
            $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID',$detailExistGRV->grvAutoID)->get();
            foreach($puchaseReturnDetails as $puchaseReturnDetail) {
               $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
-           }    
-          
+           }
            if($fullyRetuned) {
                  return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
            }else {
@@ -2219,7 +2222,14 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
         if (!empty($detailExistGRV)) {
             if ($type == 1) {
-                return $this->sendError('Cannot cancel, GRV is created for this PO');
+                if($purchaseOrder->grvRecieved == 0) {
+                    $fullyRetuned = true;
+                }
+                if($fullyRetuned) {
+                    return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+                }else {
+                    return $this->sendError('Cannot cancel, GRV is created for this PO');
+                }
             } else {
                 return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
             }
@@ -4024,9 +4034,15 @@ WHERE
         if (empty($supplier)) {
             return $this->sendError('Supplier not found');
         }
-        $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+
+        if (!isset($input['fromAmend'])) {
+            $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+        }
+        
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-            $purchaseOrder->rcmActivated = 0;
+            if (!isset($input['fromAmend'])) {
+                $purchaseOrder->rcmActivated = 0;
+            }
         } else if (isset($input['preCheck']) && $input['preCheck']) {
             if ($purchaseOrder->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));

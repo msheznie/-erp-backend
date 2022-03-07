@@ -323,8 +323,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }*/
         $input['convertionMeasureVal'] = 1;
 
-        $input['qtyIssued'] = 0;
-        $input['qtyIssuedDefaultMeasure'] = 0;
+        // $input['qtyIssued'] = 0;
+        // $input['qtyIssuedDefaultMeasure'] = 0;
 
         $data = array(
             'companySystemID' => $companySystemID,
@@ -408,9 +408,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
-       if($input['isInDOorCI']) {
-            $this->updateSalesQuotationDeliveryStatus($input['quotationMasterID']);
-       }
 
 
 
@@ -640,6 +637,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['companyReportingAmount'] = Helper::roundValue($input['companyReportingAmount']);
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
+
+       
+
 
         $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
         if (!$resVat['status']) {
@@ -892,9 +892,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
-                if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
-                    $QuoDetailExistDetails->qtyIssued += (int) $inputDetails[0]['noQty'];
+                if (!empty($QuoDetailExistDetails)) {
+                    if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
+                    $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
                     $QuoDetailExistDetails->save();
+                 }
                 }else {
                     if (!empty($QuoDetailExist)) {
                     foreach ($QuoDetailExist as $row) {

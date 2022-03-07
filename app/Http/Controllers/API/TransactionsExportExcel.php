@@ -400,7 +400,12 @@ class TransactionsExportExcel extends AppBaseController
                 
             case '62':
                 $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
-                $dataQry = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search);
+
+                $bankmasterAutoID = $request['bankmasterAutoID'];
+                $bankmasterAutoID = (array)$bankmasterAutoID;
+                $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+                $dataQry = $this->bankReconciliationRepository->bankReconciliationListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->bankReconciliationRepository->setExportExcelData($dataQry);
                 break;
 
@@ -412,7 +417,12 @@ class TransactionsExportExcel extends AppBaseController
 
             case '66':
                 $input = $this->convertArrayToSelectedValue($input, array('bankmasterAutoID', 'isAccountActive'));
-                $dataQry = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search);
+
+                $bankmasterAutoID = $request['bankmasterAutoID'];
+                $bankmasterAutoID = (array)$bankmasterAutoID;
+                $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+                $dataQry = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->bankAccountRepository->setExportExcelData($dataQry);
                 break;
 
@@ -455,7 +465,11 @@ class TransactionsExportExcel extends AppBaseController
                 $data = $this->stockCountRepository->setExportExcelData($dataQry);
                 break;
             case '58':
-                $dataQry = $this->pdcLogRepository->pdcIssuedListQuery($request, $input, $search);
+                $bankmasterAutoID = $request['bank'];
+                $bankmasterAutoID = (array)$bankmasterAutoID;
+                $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+                $dataQry = $this->pdcLogRepository->pdcIssuedListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->pdcLogRepository->setExportExcelData($dataQry,$input);
                 break;
             default:

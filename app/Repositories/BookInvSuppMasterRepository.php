@@ -106,7 +106,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('documentType', $input)) {
-            if (($input['documentType'] == 0 || $input['documentType'] == 1) && !is_null($input['documentType'])) {
+            if (($input['documentType'] == 0 || $input['documentType'] == 1 || $input['documentType'] == 2 || $input['documentType'] == 3) && !is_null($input['documentType'])) {
                 $invMaster->where('documentType', $input['documentType']);
             }
         }
@@ -189,7 +189,7 @@ class BookInvSuppMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x]['Invoice Code'] = $val->bookingInvCode;
                 $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
-                $data[$x]['Supplier'] = $val->supplier? $val->supplier->primarySupplierCode : '';
+                $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
                 $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
                 $data[$x]['Comments'] = $val->comments;

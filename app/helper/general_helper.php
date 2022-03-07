@@ -53,6 +53,8 @@ use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\ReportTemplateDetails;
 use App\Models\SalesReturnDetail;
+use App\Models\SalesReturn;
+use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
 use App\Models\User;
 use App\Models\SupplierRegistrationLink;
@@ -1843,7 +1845,7 @@ class Helper
                 $docInforArr["modelName"] = 'Appointment';
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["approvedColumnName"] = 'approved_yn';
-                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
                 $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
                 $docInforArr["approvedDate"] = 'approved_date';
                 $docInforArr["approveValue"] = -1;
@@ -2135,10 +2137,14 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97, 11])) {
 
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                    }
+                                } if ($input['documentSystemID'] == 11) {
+                                    if ($sourceModel->documentType == 3) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
                                 } else {
@@ -2566,29 +2572,29 @@ class Helper
     public static function updateReturnQtyInDeliveryOrderDetails($id)
     {
         $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
-
+        $checkSR = SalesReturn::find($id);
+        if($checkSR->returnType == 1) {
         foreach ($srDetails as $value) {
             $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
 
-            $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+            $checkDO = DeliveryOrder::find($deliveryOrderData->deliveryOrderID);
 
-            $returnQty = isset($deliveryOrderData->returnQty) ?  $deliveryOrderData->returnQty: 0;
-            $requestedQty = isset($deliveryOrderData->requestedQty) ?  $deliveryOrderData->requestedQty: 0;
-            $doQty = $requestedQty - $returnQty;
-            $deliveryOrderData->update(['qtyIssued' => $doQty]);
-            if($doQty == 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 0, 'doQuantity' => $doQty]);
-            }
-            if($doQty > 0) {
-                $updateDetail = QuotationDetails::where('quotationDetailsID', $detailExistQODetail->quotationDetailsID)
-                    ->update(['fullyOrdered' => 1, 'doQuantity' => $returnQty]);
-            }
+            if($checkDO->orderType != 1) {
 
-            $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
-                ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+                $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+
+                $returnQty = isset($deliveryOrderData->returnQty) ? $deliveryOrderData->returnQty : 0;
+                $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ? $deliveryOrderData->qtyIssuedDefaultMeasure : 0;
+                $doQty = $qtyIssuedDefault - $returnQty;
+
+                $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
+
+                $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                    ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+            }
 
         }
+    }
         return ['success' => true];
     }
 

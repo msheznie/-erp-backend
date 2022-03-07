@@ -539,9 +539,13 @@ class PaymentBankTransferAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bankmasterAutoID'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $bankTransfer = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search);
+        $bankTransfer = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search, $bankmasterAutoID);
 
         return \DataTables::eloquent($bankTransfer)
             ->addColumn('Actions', 'Actions', "Actions")

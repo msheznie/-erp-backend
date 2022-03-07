@@ -136,7 +136,15 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search);
+        $supplierCountryID = $request['supplierCountryID'];
+        $supplierCountryID = (array)$supplierCountryID;
+        $supplierCountryID = collect($supplierCountryID)->pluck('id');
+
+        $liabilityAccountSysemID = $request['liabilityAccountSysemID'];
+        $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
+        $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID);
 
         return \DataTables::eloquent($supplierMasters)
             ->order(function ($query) use ($input, $supplierId) {
@@ -174,7 +182,16 @@ class SupplierMasterAPIController extends AppBaseController
         if ($request['type'] == 'all') {
             $supplierId = 'supplierCodeSystem';
         }
-        $supplierMasters = $this->getSuppliersByFilterQry($input, $search)->orderBy($supplierId, $sort)->get();
+
+        $supplierCountryID = $request['supplierCountryID'];
+        $supplierCountryID = (array)$supplierCountryID;
+        $supplierCountryID = collect($supplierCountryID)->pluck('id');
+
+        $liabilityAccountSysemID = $request['liabilityAccountSysemID'];
+        $liabilityAccountSysemID = (array)$liabilityAccountSysemID;
+        $liabilityAccountSysemID = collect($liabilityAccountSysemID)->pluck('id');
+
+        $supplierMasters = $this->getSuppliersByFilterQry($input, $search, $supplierCountryID, $liabilityAccountSysemID)->orderBy($supplierId, $sort)->get();
         $data = array();
         $x = 0;
         foreach ($supplierMasters as $val) {
@@ -270,10 +287,11 @@ class SupplierMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
-    public function getSuppliersByFilterQry($request, $search)
+    public function getSuppliersByFilterQry($request, $search, $supplierCountryID, $liabilityAccountSysemID)
     {
 
         $input = $request;
+
         $companyId = $request['companyId'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
@@ -300,13 +318,13 @@ class SupplierMasterAPIController extends AppBaseController
 
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
-                $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+                $supplierMasters->whereIn('supplierCountryID', $supplierCountryID);
             }
         }
 
         if (array_key_exists('liabilityAccountSysemID', $input)) {
             if ($input['liabilityAccountSysemID'] && !is_null($input['liabilityAccountSysemID'])) {
-                $supplierMasters->where('liabilityAccountSysemID', '=', $input['liabilityAccountSysemID']);
+                $supplierMasters->whereIn('liabilityAccountSysemID', $liabilityAccountSysemID);
             }
         }
 
@@ -1709,7 +1727,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
         $registrationLinkDetails = SupplierRegistrationLink::with(['supplier', 'created_by'])
             ->where('company_id',  $companyID);
 
@@ -1726,7 +1743,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $query1->where('supplierName', 'LIKE', "%{$search}%");
                 });
                 $query->orWhereHas('created_by', function ($query1) use ($search) {
-                    $query1->where('supplierName', 'LIKE', "%{$search}%");
+                    $query1->where('empFullName', 'LIKE', "%{$search}%");
                 });
             });
         }

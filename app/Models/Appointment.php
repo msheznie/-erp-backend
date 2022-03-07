@@ -94,7 +94,7 @@ class Appointment extends Model
         'approved_date',
         'approved_by_emp_name',
         'approved_by_emp_id',
-        'current_level_no',
+        'RollLevForApp_curr',
         'timesReferred',
         'confirmed_yn',
         'refferedBackYN',
@@ -130,7 +130,7 @@ class Appointment extends Model
         'approved_date' => 'datetime',
         'approved_by_emp_name' => 'varchar',
         'approved_by_emp_id' => 'integer',
-        'current_level_no' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'timesReferred' => 'integer',
         'confirmed_yn' => 'integer',
         'refferedBackYN' => 'integer',
@@ -154,11 +154,11 @@ class Appointment extends Model
     }
     public function created_by()
     {
-        return $this->hasOne('App\Models\SupplierAssigned', 'supplierCodeSytem', 'created_by');
+        return $this->hasOne('App\Models\SupplierMaster', 'supplierCodeSystem', 'created_by');
     }
     public function documentApproved()
     {
-        return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+        return $this->hasOne('App\Models\DocumentApproved',['documentSystemID', 'documentSystemCode', 'rollLevelOrder'], ['document_system_id', 'id', 'RollLevForApp_curr']);
     }
 
     public function slot_detail()

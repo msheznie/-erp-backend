@@ -110,6 +110,10 @@ class SalesReturnRepository extends BaseRepository
         $salesReturn = SalesReturn::whereIn('companySystemID', $childCompanies)
         ->with(['customer','transaction_currency','created_by','segment']);
 
+        $customerID= $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $salesReturn->where('confirmedYN', $input['confirmedYN']);
@@ -123,25 +127,25 @@ class SalesReturnRepository extends BaseRepository
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month']) && $input['month'] != [0]) {
                 $salesReturn->whereMonth('salesReturnDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year']) && $input['year'] != [0]) {
                 $salesReturn->whereYear('salesReturnDate', '=', $input['year']);
             }
         }
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && !is_null($input['customerID'])) {
-                $salesReturn->where('customerID', $input['customerID']);
+                $salesReturn->whereIn('customerID', $customerID);
             }
         }
 
         if (array_key_exists('returnType', $input)) {
-            if ($input['returnType'] && !is_null($input['returnType'])) {
+            if ($input['returnType'] && !is_null($input['returnType']) && $input['returnType'] != [0]) {
                 $salesReturn->where('returnType', $input['returnType']);
             }
         }

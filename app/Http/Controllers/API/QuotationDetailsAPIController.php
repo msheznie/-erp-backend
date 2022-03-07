@@ -351,15 +351,6 @@ class QuotationDetailsAPIController extends AppBaseController
             $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
                                         ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
                                         ->first();
-
-            $quotationData = QuotationDetails::find($quotationDetails->soQuotationDetailID);
-
-            $balanceQty = $quotationData->requestedQty  - ($detailSum['totalQty'] - $quotationDetails->requestedQty);
-
-            $bQty = $quotationData->requestedQty  - $detailSum['totalQty'];
-            if ($balanceQty < $input['requestedQty']) {
-                 return $this->sendError('Quotation balance qty is '.$balanceQty.', No of Qty cannot be grater than balance qty.');
-            }
         }
 
         // updating transaction amount for local and reporting
@@ -530,7 +521,7 @@ class QuotationDetailsAPIController extends AppBaseController
             if($quotationMaster->quotationType == 2 && $quotationMaster->documentSystemID == 68){
 
                 if (!empty($quotationDetails->quotationDetailsID) && !empty($quotationDetails->quotationMasterID)) {
-                    $updateQuotationMaster = QuotationMaster::find($quotationDetails->soQuotationMasterID)
+                    $updateQuotationMaster = QuotationMaster::find($quotationDetails->quotationMasterID)
                                                             ->update([
                                                                 'selectedForSalesOrder' => 0,
                                                                 'closedYN' => 0
@@ -911,7 +902,7 @@ WHERE
                 } else {
                     $updateQuotation = QuotationMaster::find($soQuotationMasterID)
                         ->update([
-                            'selectedForSalesOrder' => 0,
+                            'selectedForSalesOrder' => -1,
                             'closedYN' => 0,
                         ]);
                 }

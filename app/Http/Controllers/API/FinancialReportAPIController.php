@@ -4889,12 +4889,34 @@ GROUP BY
             ->where('companySystemID', $input['companySystemID'])
             ->whereDate('documentDate', '<=', $toDate)
             ->whereHas('charofaccount')
-            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
             ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
             ->get();
 
+        $unmatchedData1 = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
+            ->where('companySystemID', $input['companySystemID'])
+            ->whereDate('documentDate', '<=', $toDate)
+            ->whereDoesntHave('charofaccount')
+            ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->get();
+
+
+        $unmatchedData2 = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
+            ->where('companySystemID', $input['companySystemID'])
+            ->whereDate('documentDate', '<=', $toDate)
+            ->whereDoesntHave('charofaccount')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) = 0 AND round( sum( erp_generalledger.documentLocalAmount ), 3 ) = 0')
+            ->get();
+
+
+        $meregedResultOne = collect($unmatchedData)->merge(collect($unmatchedData2));
+
+        $meregedResultTwo = collect($meregedResultOne)->merge(collect($unmatchedData1));
+
         $respondData = [
-            'unMatchedData' => $unmatchedData
+            'unMatchedData' => collect($meregedResultTwo)->unique('documentCode')->values()->all()
         ];
 
         return $this->sendResponse($respondData, "Unmatched data retrived successfully.");

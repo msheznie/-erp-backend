@@ -160,6 +160,11 @@ class FixedAssetCategorySub extends Model
         return $query->where('faCatID',  $type);
     }
 
+    public function scopeByFaCatIDMultiSelect($query, $type)
+    {
+        return $query->whereIn('faCatID',  $type);
+    }
+
     /**
      * Validation rules
      *

@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\NotificationCompanyScenario;
 use App\Models\NotificationScenarios;
 use App\Models\NotificationUserDayCheck;
+// use App\helper\ShiftPeriodEndtNotificationService;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -33,7 +34,8 @@ class NotificationService
         return [
             6, //HR document expiry
             7, //HR - Employee contract expiry
-            8 //HR - Employee end of probation
+            8, //HR - Employee end of probation
+            14 //HR - Employee end of shift period
         ];
     }
 
@@ -118,6 +120,12 @@ class NotificationService
                     case 9:
                         $details = RolReachedNotification::getReOrderLevelReachedNotification($companyID, $beforeAfter);
                         $subject = 'Inventory stock reaches a re-order level';
+                        break;
+
+                    case 14:
+                        $shift = new ShiftPeriodEndNotificationService($companyID, $notDaySetup);
+                        $shift->ended_shift();
+                        $details = [];
                         break;
 
                     default:

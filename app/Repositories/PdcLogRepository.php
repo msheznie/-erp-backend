@@ -43,7 +43,8 @@ class PdcLogRepository extends BaseRepository
         return PdcLog::class;
     }
 
-    public function pdcIssuedListQuery($request, $input, $search = '') {
+    public function pdcIssuedListQuery($request, $input, $search = '', $bankmasterAutoID) {
+        
         $companyId = $request['companyId'];
 
         $isGroup = Helper::checkIsCompanyGroup($companyId);
@@ -64,8 +65,8 @@ class PdcLogRepository extends BaseRepository
                 $toDate = Carbon::parse(trim($input['toDate'],'"'));
                 return $q->whereBetween('chequeDate', [$fromDate,$toDate]);
             })
-            ->when(!empty($input['bank']), function ($q) use ($input) {
-                return $q->where('paymentBankID', $input['bank']);
+            ->when(!empty($input['bank']), function ($q) use ($bankmasterAutoID) {
+                return $q->whereIn('paymentBankID', $bankmasterAutoID);
             })
             ->where('companySystemID',$companyId)
             ->with(['currency','bank','customer_receive']);

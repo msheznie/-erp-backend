@@ -277,7 +277,7 @@ class BookInvSuppMaster extends Model
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $appends = ['rcmAvailable'];
+    protected $appends = ['rcmAvailable', 'isVatEligible'];
 
     protected $primaryKey = 'bookingSuppMasInvAutoID';
 
@@ -356,6 +356,9 @@ class BookInvSuppMaster extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
+        'serviceLineSystemID',
+        'wareHouseSystemCode',
+        'supplierVATEligible',
         'VATPercentage'
 
     ];
@@ -546,4 +549,15 @@ class BookInvSuppMaster extends Model
     {
         return TaxService::getRCMAvailability($this->isLocalSupplier,$this->vatRegisteredYN);
     }
+
+    public function getIsVatEligibleAttribute()
+    {
+        return TaxService::checkPOVATEligible($this->supplierVATEligible,$this->vatRegisteredYN);
+    }
+
+    public function item_details()
+    {
+        return $this->hasMany('App\Models\SupplierInvoiceDirectItem', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
+
 }

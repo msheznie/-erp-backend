@@ -353,20 +353,27 @@ class AppointmentAPIController extends AppBaseController
         $appointmentDetail = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
             $q->where('erp_documentapproved.rejectedYN', 0)
                 ->where('erp_documentapproved.documentSystemID', $documentSystemID)
-                ->where('erp_documentapproved.companySystemID', $companyId);;
+                ->where('erp_documentapproved.companySystemID', $companyId);
 
             $q->with(['employeeDepartments' => function ($q2) use ($companyId, $documentSystemID, $empID) {
                 $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
                     ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             }]);
-            $q->with(['employeeRole' => function ($q3) use ($companyId, $documentSystemID, $empID) {
-                $q3->where('appointment.company_id', $companyId)
-                    ->where('appointment.approved_yn', 0)
-                    ->where('appointment.confirmed_yn', 1);
-            }]);
         }, 'created_by', 'detail', 'slot_detail.slot_master.ware_house', 'supplier'])
-            ->where('confirmed_yn', 1)
+            ->whereHas('documentApproved', function ($q) use ($companyId, $documentSystemID, $empID) {
+                $q->where('erp_documentapproved.rejectedYN', 0)->where('erp_documentapproved.approvedYN', 0)
+                    ->where('erp_documentapproved.documentSystemID', $documentSystemID)
+                    ->where('erp_documentapproved.companySystemID', $companyId);
+
+                $q->whereHas('employeeDepartments', function ($q2) use ($companyId, $documentSystemID, $empID) {
+                    $q2->where('employeesdepartments.documentSystemID', $documentSystemID)
+                        ->where('employeesdepartments.companySystemID', $companyId)
+                        ->where('employeesdepartments.isActive', 1)
+                        ->where('employeesdepartments.employeeSystemID', $empID);
+                });
+            })->where('confirmed_yn', 1)
             ->where('approved_yn', 0)
             ->where('refferedBackYN', 0);
 
@@ -410,7 +417,7 @@ class AppointmentAPIController extends AppBaseController
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
-            'documentSystemID' => $input['document_system_id'],
+                'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']
