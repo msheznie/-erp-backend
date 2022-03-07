@@ -372,7 +372,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $input = $request->all();
 
-       if(!isset($input['financeGLcodebBSSystemID'] ) && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
+       if($input['financeGLcodebBSSystemID'] == 0 && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
              return $this->sendError('Please check Include PL For GRV YN',500);
        }
 
