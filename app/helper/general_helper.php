@@ -29,8 +29,11 @@ use App\Jobs\PushNotification;
 use App\Jobs\SendEmail;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\WarehouseItemUpdate;
+use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\DeliveryOrderDetail;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
 use App\Models\Company;
@@ -46,7 +49,12 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
+use App\Models\QuotationDetails;
+use App\Models\QuotationMaster;
 use App\Models\ReportTemplateDetails;
+use App\Models\SalesReturnDetail;
+use App\Models\SalesReturn;
+use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
 use App\Models\User;
 use App\Models\SupplierRegistrationLink;
@@ -1837,7 +1845,7 @@ class Helper
                 $docInforArr["modelName"] = 'Appointment';
                 $docInforArr["primarykey"] = 'id';
                 $docInforArr["approvedColumnName"] = 'approved_yn';
-                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
                 $docInforArr["approvedBySystemID"] = 'approved_by_emp_id';
                 $docInforArr["approvedDate"] = 'approved_date';
                 $docInforArr["approveValue"] = -1;
@@ -2051,6 +2059,8 @@ class Helper
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
+                            $masterDataDEO = ['documentSystemID' => $docApproved->documentSystemID, 'id' => $docApproved->id, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
+
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
                                 $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
@@ -2127,10 +2137,14 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7, 20, 71, 87, 97, 11])) {
 
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                    }
+                                } if ($input['documentSystemID'] == 11) {
+                                    if ($sourceModel->documentType == 3) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
                                 } else {
@@ -2158,7 +2172,29 @@ class Helper
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                     $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
+
+                                    if ($sourceData->interCompanyTransferYN == -1) {
+                                        $consoleJVData = [
+                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'type' => "INTER_ASSET_DISPOSAL"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($consoleJVData);
+                                    }
                                 }
+
+                                if ($input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    if ($sourceData->intercompanyPaymentID > 0) {
+                                        $receiptData = [
+                                            'data' => $sourceData,
+                                            'type' => "FUND_TRANSFER"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($receiptData);
+                                    }
+                                }
+
                             }
 
                             if ($input["documentSystemID"] == 69) {
@@ -2179,6 +2215,14 @@ class Helper
                                 $updateReturnQtyInPo = self::updateReturnQtyInPoDetails($masterData);
                                 if (!$updateReturnQtyInPo["success"]) {
                                     return ['success' => false, 'message' => $updateReturnQty["message"]];
+                                }
+                            }
+
+                            if ($input["documentSystemID"] == 87) {
+
+                                $updateReturnQtyInPo = self::updateReturnQtyInDeliveryOrderDetails($input["documentSystemCode"]);
+                                if (!$updateReturnQtyInPo["success"]) {
+                                    return ['success' => false, 'message' => "Success"];
                                 }
                             }
 
@@ -2458,6 +2502,7 @@ class Helper
                         }
 
                         if ($input['documentSystemID'] == 2) {
+                             Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
                         
@@ -2521,6 +2566,35 @@ class Helper
                 ->update($updateData);
         }
 
+        return ['success' => true];
+    }
+
+    public static function updateReturnQtyInDeliveryOrderDetails($id)
+    {
+        $srDetails = SalesReturnDetail::where('salesReturnID', $id)->get();
+        $checkSR = SalesReturn::find($id);
+        if($checkSR->returnType == 1) {
+        foreach ($srDetails as $value) {
+            $deliveryOrderData = DeliveryOrderDetail::find($value->deliveryOrderDetailID);
+
+            $checkDO = DeliveryOrder::find($deliveryOrderData->deliveryOrderID);
+
+            if($checkDO->orderType != 1) {
+
+                $detailExistQODetail = QuotationDetails::find($deliveryOrderData->quotationDetailsID);
+
+                $returnQty = isset($deliveryOrderData->returnQty) ? $deliveryOrderData->returnQty : 0;
+                $qtyIssuedDefault = isset($deliveryOrderData->qtyIssuedDefaultMeasure) ? $deliveryOrderData->qtyIssuedDefaultMeasure : 0;
+                $doQty = $qtyIssuedDefault - $returnQty;
+
+                $deliveryOrderData->update(['approvedReturnQty' => $returnQty]);
+
+                $updatePO = QuotationMaster::find($deliveryOrderData->quotationMasterID)
+                    ->update(['closedYN' => 0, 'selectedForDeliveryOrder' => 0]);
+            }
+
+        }
+    }
         return ['success' => true];
     }
 
@@ -5737,5 +5811,14 @@ class Helper
             return true;
         }
         return false;
+    }
+
+    public static function bytesToHuman($bytes) {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
+        for ($i = 0; $bytes > 1024; $i++) {
+            $bytes /= 1024;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

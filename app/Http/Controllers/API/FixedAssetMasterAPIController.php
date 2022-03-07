@@ -185,8 +185,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
             if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
@@ -476,8 +476,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if (isset($input['itemPicture'])) {
-                if ($itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
@@ -722,14 +722,17 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError('Fixed Asset Master not found');
         }
 
-
-        if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
-            return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+        if(isset($input['salvage_value_rpt']))
+        {
+            if(doubleval($input['salvage_value_rpt']) >  (doubleval($fixedAssetMaster->costUnitRpt))) {
+                return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
+            }
+    
+            if(doubleval($input['salvage_value_rpt']) < 0) {
+                return $this->sendError("Salvage value cannot be less than Zero", 500);
+            }
         }
 
-        if(doubleval($input['salvage_value_rpt']) < 0) {
-            return $this->sendError("Salvage value cannot be less than Zero", 500);
-        }
 
         // check already approved
         if($fixedAssetMaster->approved == -1){
@@ -793,8 +796,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
-                if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > 31457280) {
-                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             }
 
@@ -1114,6 +1117,8 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAllCostingByCompany(Request $request)
     {
         $input = $request->all();
+
+
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
         $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
 
@@ -1885,6 +1890,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function exportAssetMaster(Request $request){
         $input = $request->all();
+
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
 
         $type = $input['type'];

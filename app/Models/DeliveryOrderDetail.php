@@ -206,6 +206,7 @@ class DeliveryOrderDetail extends Model
         'itemCodeSystem',
         'itemPrimaryCode',
         'returnQty',
+        'approvedReturnQty',
         'itemDescription',
         'itemUnitOfMeasure',
         'unitOfMeasureIssued',
@@ -311,6 +312,7 @@ class DeliveryOrderDetail extends Model
         'fullyReturned' => 'integer',
         'invQty' => 'float',
         'returnQty' => 'float',
+        'approvedReturnQty' => 'float',
         'timestamp' => 'datetime',
         'VATPercentage' => 'float',
         'VATAmount' => 'float',
@@ -354,5 +356,9 @@ class DeliveryOrderDetail extends Model
 
     public function invoice_detail() {
         return $this->hasMany('App\Models\CustomerInvoiceItemDetails','deliveryOrderDetailID','deliveryOrderDetailID');
+    }
+
+    public function sales_return() {
+        return $this->hasOne('App\Models\SalesReturnDetail','deliveryOrderDetailID','deliveryOrderDetailID');
     }
 }

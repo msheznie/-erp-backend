@@ -227,9 +227,10 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
         $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
         $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
-                $item->wacValueReportingCurrencyID,
-                $item->wacValueReportingCurrencyID,
-                $itemCurrentCostAndQty['wacValueReporting']);
+
+            $item->wacValueReportingCurrencyID,
+            $item->wacValueReportingCurrencyID,
+            $itemCurrentCostAndQty['wacValueReporting']);
 
 
 

@@ -2,11 +2,12 @@
 
 namespace App\helper;
 
-use App\Models\Company;
 use App\Models\Tenant;
+use App\Models\Company;
+use App\Models\CompanyJobs;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Config;
 
 class CommonJobService
 {
@@ -30,11 +31,19 @@ class CommonJobService
             case 'leave-accrual':
                 return storage_path() . '/logs/leave_accrual_service.log';
 
+            case 'attendance-clockIn':
+            case 'attendance-clockOut':
+                return storage_path() . '/logs/attendance_job_service.log';
+
         }
     }
 
     public static function tenant_list(){
         return Tenant::where('is_active', 1)->groupBy('database')->get();
+    }
+
+    public static function get_tenant_db($tenantId){
+        return Tenant::where('id', $tenantId)->value('database');
     }
 
     public static function company_list(){
@@ -50,9 +59,20 @@ class CommonJobService
         ];
     }
 
+    public static function get_active_companies($signature){
+        $companies = CompanyJobs::getActiveCompanies($signature);
+
+        if($companies->count() == 0){
+            return [];
+        }
+
+        $companies = $companies->toArray();
+        return array_column($companies, 'company_id');
+    }
+
     public static function job_check(){
 
-        $log = DB::table('failed_jobs')->get(); //failed_jobs | jobs
+        $log = DB::table('jobs')->get(); //failed_jobs | jobs
         //echo '<pre>'; print_r($log); echo '</pre>'; exit;
 
         foreach ($log as $row){
@@ -66,6 +86,7 @@ class CommonJobService
             $row->command = $command;
 
             echo '<pre>'; print_r($row); echo '</pre>';
+            echo '<hr/>';
         }
     }
 }

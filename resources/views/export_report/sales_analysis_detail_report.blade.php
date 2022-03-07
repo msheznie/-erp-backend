@@ -48,7 +48,12 @@
                     <td>{{ $invoiceDetail->item_by->barcode }}</td>
                     <td>{{ $invoiceDetail->item_by->financeSubCategory->categoryDescription }}</td>
                     <td>{{ $invoiceDetail->financeGLcodeRevenue }}</td>
+                        @php $isSalesReturn = isset($invoiceDetail->sales_return_details->master->approvedYN) ? $invoiceDetail->sales_return_details->master->approvedYN: 0; @endphp
+                        @if($isSalesReturn == -1 )
+                    <td>{{ $invoiceDetail->qtyIssued - $invoiceDetail->sales_return_details->qtyReturned }}</td>
+                        @endif  @if($isSalesReturn != -1 )
                     <td>{{ $invoiceDetail->qtyIssued }}</td>
+                        @endif
 
                         @if($currencyID == 1)
                     <td>{{ $invoiceDetail->local_currency->CurrencyCode }}</td>

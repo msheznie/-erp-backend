@@ -128,7 +128,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-
         $item = ItemMaster::find($input['itemCodeSystem']);
         if(empty($item)){
             return $this->sendError('Item not found',500);
@@ -138,6 +137,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if(empty($deliveryOrderMaster)){
             return $this->sendError('Delivery order not found',500);
         }
+
 
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
             ->whereHas('detail', function ($query) use ($input) {
@@ -171,7 +171,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 })
                 ->where('approvedYN', 0)
                 ->first();
-
             if (!empty($checkWhether)) {
                 return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
@@ -324,8 +323,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }*/
         $input['convertionMeasureVal'] = 1;
 
-        $input['qtyIssued'] = 0;
-        $input['qtyIssuedDefaultMeasure'] = 0;
+        // $input['qtyIssued'] = 0;
+        // $input['qtyIssuedDefaultMeasure'] = 0;
 
         $data = array(
             'companySystemID' => $companySystemID,
@@ -408,6 +407,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
+
+
 
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
@@ -636,6 +637,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['companyReportingAmount'] = Helper::roundValue($input['companyReportingAmount']);
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
+
+       
+
 
         $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
         if (!$resVat['status']) {
@@ -884,13 +888,24 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
-
-                if (!empty($QuoDetailExist)) {
+                
+                $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                    ->first();
+                if (!empty($QuoDetailExistDetails)) {
+                    if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
+                    $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
+                    $QuoDetailExistDetails->save();
+                 }
+                }else {
+                    if (!empty($QuoDetailExist)) {
                     foreach ($QuoDetailExist as $row) {
                         $itemDrt = $row['itemPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
+                }
+                
             }
         }
 
@@ -899,7 +914,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         $deliveryOrder = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)->first();
-
         //check PO segment is correct with PR pull segment
 
         /*foreach ($input['detailTable'] as $itemExist) {
@@ -1263,13 +1277,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 $quoMasterfullyOrdered = QuotationDetails::where('quotationMasterID', $new['quotationMasterID'])
                     ->whereIn('fullyOrdered', [1, 0])
                     ->get()->toArray();
-
                 if (empty($quoMasterfullyOrdered)) {
-                    $updateQuotation = QuotationMaster::find($new['quotationMasterID'])
-                        ->update([
-                            'selectedForDeliveryOrder' => -1,
-                            'closedYN' => -1,
-                        ]);
+                      $updateQuotation = QuotationMaster::find($new['quotationMasterID']);
+                      $updateQuotation->selectedForDeliveryOrder = -1 ;
+                      $updateQuotation->closedYN = -1 ;
+                      $updateQuotation->save();
+                   
                 } else {
                     $updateQuotation = QuotationMaster::find($new['quotationMasterID'])
                         ->update([

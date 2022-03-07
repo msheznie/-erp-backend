@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateItemMasterAPIRequest;
 use App\Models\DeliveryOrder;
 use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
+use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemMaster;
 use App\Models\Company;
@@ -208,7 +209,12 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $search = $request->input('search.value');
-        $itemMasters = ($this->getAllItemsQry($input, $search));
+
+        $financeCategorySub = $request['financeCategorySub'];
+        $financeCategorySub = (array)$financeCategorySub;
+        $financeCategorySub = collect($financeCategorySub)->pluck('id');
+
+        $itemMasters = ($this->getAllItemsQry($input, $search, $financeCategorySub));
 
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
@@ -236,7 +242,12 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $search = $request->input('search.value');
-        $items = ($this->getAllItemsQry($input, $search))->orderBy('itemCodeSystem', $sort)->get();
+
+        $financeCategorySub = $request['financeCategorySub'];
+        $financeCategorySub = (array)$financeCategorySub;
+        $financeCategorySub = collect($financeCategorySub)->pluck('id');
+
+        $items = ($this->getAllItemsQry($input, $search, $financeCategorySub))->orderBy('itemCodeSystem', $sort)->get();
         $type = $request->get('type');
         if ($items) {
             $x = 0;
@@ -283,7 +294,7 @@ class ItemMasterAPIController extends AppBaseController
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
 
-    public function getAllItemsQry($request, $search)
+    public function getAllItemsQry($request, $search, $financeCategorySub)
     {
 
         $input = $request;
@@ -310,7 +321,7 @@ class ItemMasterAPIController extends AppBaseController
 
         if (array_key_exists('financeCategorySub', $input)) {
             if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
-                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
+                $itemMasters->whereIn('financeCategorySub', $financeCategorySub);
             }
         }
 
@@ -1357,6 +1368,23 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function checkLedgerQty(Request $request)
+    {
+        $wareHouseSystemCode = $request->wareHouseSystemCode;
+        $itemSystemCode = $request->itemSystemCode;
+        $companySystemID = $request->companySystemID;
+        $sumWarehouse = null;
+        if($wareHouseSystemCode != null) {
+            $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
+        }
+        $sumGlobal= ErpItemLedger::where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
+
+        $sum=array("sumWarehouse"=>$sumWarehouse,"sumGlobal"=>$sumGlobal);
+
+
+        return $this->sendResponse($sum, 'Data retrieved successfully');
     }
 
     public function getSupplierByCatalogItemDetail(Request $request) {

@@ -242,6 +242,9 @@
                         @if($masterdata->documentType == 1)
                             Direct Invoice Voucher
                         @endif
+                        @if($masterdata->documentType == 3)
+                            Supplier Item Invoice Voucher
+                        @endif
                     </span>
                 </div>
             </td>
@@ -452,6 +455,57 @@
             </table>
         </div>
     @endif
+    @if($masterdata->documentType == 3)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th></th>
+                    <th class="text-center">GL Code</th>
+                    <th class="text-center">GL Type</th>
+                    <th class="text-center">GL Code Description</th>
+                    <th class="text-center">Supplier Currency (
+                        @if($masterdata->transactioncurrency)
+                            {{$masterdata->transactioncurrency->CurrencyCode}}
+                        @endif
+                        )
+                    </th>
+                </tr>
+                <tr class="theme-tr-head">
+                    <th colspan="4"></th>
+                    <th class="text-center">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->item_details as $item)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>
+                            @if($masterdata->suppliergrv)
+                                {{$masterdata->suppliergrv->AccountCode}}
+                            @endif
+                        </td>
+                        <td>
+                            @if($masterdata->suppliergrv)
+                                {{$masterdata->suppliergrv->catogaryBLorPL}}
+                            @endif
+                        </td>
+                        <td>
+                            @if($masterdata->suppliergrv)
+                                {{$masterdata->suppliergrv->AccountDescription}}
+                            @endif
+                        </td>
+                        <td class="text-right">{{number_format(($item->netAmount + ($item->VATAmount * $item->noQty)), $transDecimal)}}</td>
+                    </tr>
+                @endforeach
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="4" class="text-right border-bottom-remov"></td>
+                    <td class="text-right ">{{number_format($grvTotTra, $transDecimal)}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif
     @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
@@ -502,6 +556,110 @@
                     <td colspan="3" class="text-right border-bottom-remov"></td>
                     <td class="text-right">{{number_format($grvTotLoc, $localDecimal )}}</td>
                     <td class="text-right">{{number_format($grvTotRpt, $rptDecimal)}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif
+    @if($masterdata->documentType == 3)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="border-bottom-remov">
+                    <th colspan="2" style="background-color: rgb(215,215,215)">Item Details</th>
+                    <th colspan="9">&nbsp;</th>
+                </tr>
+                 <tr style="border-top: 1px solid black;">
+                    <th style="text-align: center">#</th>
+                    <th style="text-align: center">Item Code</th>
+                    <th style="text-align: center">Item Description</th>
+                    <th style="text-align: center">Part No / Ref.Number</th>
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">Qty</th>
+                    <th style="text-align: center">Unit Cost</th>
+                    <th style="text-align: center">Dis. Per Unit</th>
+                    @if ($masterdata->isVatEligible)
+                      <th style="text-align: center">VAT. Per Unit</th>
+                    @endif
+                    <th style="text-align: center">Net Cost Per Unit</th>
+                    <th style="text-align: center">Net Amount</th>
+                </tr>
+                </thead>
+                <tbody style="width: 100%">
+                    {{ $subTotal = 0 }}
+                    {{ $VATTotal = 0 }}
+                    {{ $x = 1 }}
+                    {{ $subColspan = $masterdata->isVatEligible ? 1 : 0}}
+                    @foreach ($masterdata->item_details as $det)
+                        {{ $netUnitCost = 0 }}
+                        {{ $subTotal += $det->netAmount }}
+                        {{ $VATTotal += ($det->VATAmount * $det->noQty) }}
+                        {{ $netUnitCost = $det->unitCost - $det->discountAmount + $det->VATAmount }}
+                        <tr style="border-bottom: 1px solid black; width: 100%">
+                            <td>{{ $x  }}</td>
+                            <td>{{$det->itemPrimaryCode}}</td>
+                            <td nobr="true" style="width: 30%">{{$det->itemDescription}}</td>
+                            <td>{{$det->supplierPartNumber}}</td>
+                            <td>{{$det->unit->UnitShortCode}}</td>
+                            <td class="text-right">{{$det->noQty}}</td>
+                            <td class="text-right">{{number_format($det->unitCost, $transDecimal)}}</td>
+                            <td class="text-right">{{number_format($det->discountAmount, $transDecimal)}}</td>
+                            @if ($masterdata->isVatEligible)
+                                <td class="text-right">{{number_format($det->VATAmount, $transDecimal)}}</td>
+                            @endif
+                            <td class="text-right">{{number_format($netUnitCost, $transDecimal)}}</td>
+                            <td class="text-right">{{number_format($det->netAmount, $transDecimal)}}</td>
+                        </tr>
+                        {{ $x++ }}
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+         <div class="row">
+            <table style="width:100%;" class="table table-bordered">
+                <tbody>
+                <tr>
+                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                    <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold" style="font-size: 11px">Total Order Amount</span></td>
+                    <td class="text-right"
+                        style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                    @if ($masterdata->item_details)
+                            {{number_format($subTotal, $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                @if ($masterdata->isVatEligible || $masterdata->vatRegisteredYN)
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                            &nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                    class="font-weight-bold"
+                                    style="font-size: 11px">VAT{{--({{$masterdata->VATPercentage .'%'}})--}}
+                            </span></td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
+                                    class="font-weight-bold">{{number_format($VATTotal, $transDecimal)}}</span>
+                        </td>
+                    </tr>
+                @endif
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Net Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                    @if ($masterdata->detail)
+                            {{number_format(($subTotal + $VATTotal), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
                 </tr>
                 </tbody>
             </table>

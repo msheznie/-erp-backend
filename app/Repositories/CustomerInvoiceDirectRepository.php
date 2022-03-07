@@ -202,7 +202,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $customerInvoiceDirect;
     }
 
-    public function customerInvoiceListQuery($request, $input, $search = '') {
+    public function customerInvoiceListQuery($request, $input, $search = '', $customerID) {
 
         $invMaster = DB::table('erp_custinvoicedirect')
             ->leftjoin('currencymaster', 'custTransactionCurrencyID', '=', 'currencyID')
@@ -243,7 +243,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if (($input['customerID'] != '')) {
-                $invMaster->where('erp_custinvoicedirect.customerID', $input['customerID']);
+                $invMaster->whereIn('erp_custinvoicedirect.customerID', $customerID);
             }
         }
 
@@ -308,7 +308,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->empName;
                 $data[$x]['Currency'] = $val->CurrencyCode;
-                $data[$x]['Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
+                $data[$x]['Amount'] = number_format($val->bookingAmountTrans + $val->VATAmount, $val->DecimalPlaces? $val->DecimalPlaces : 3, ".", "");
                 $data[$x]['Status'] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

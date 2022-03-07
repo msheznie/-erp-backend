@@ -383,16 +383,27 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
         $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
 
+
+
+        if($policy == true) {
+            $input['VATAmountLocal'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->localCurrencyER);
+            $input['VATAmountRpt'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->companyReportingER);
+        }  if($policy == false) {
         $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+    }
         $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
 
         $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
         $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
 
+        if($policy == true) {
+            $input['netAmountLocal'] = \Helper::roundValue( $input['netAmount']/ $BookInvSuppMaster->localCurrencyER);
+            $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $BookInvSuppMaster->companyReportingER);
+        } if($policy == false) {
         $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
         $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
-
+    }
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->update($input, $id);
 

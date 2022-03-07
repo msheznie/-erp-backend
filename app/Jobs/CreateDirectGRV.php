@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\Company;
+use App\Models\InterCompanyAssetDisposal;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
@@ -169,6 +170,14 @@ class CreateDirectGRV implements ShouldQueue
 
                     Log::info($directGRV);
                     $grvMaster = $grvMasterRepo->create($directGRV);
+
+                    $interComapnyData = InterCompanyAssetDisposal::where('assetDisposalID', $data['assetdisposalMasterAutoID'])
+                                                                 ->first();
+
+                    $interComapnyData->grvID = $grvMaster['grvAutoID'];
+
+                    $interComapnyData->save();
+
 
                     $disposalDetail = AssetDisposalDetail::with(['item_by' => function ($query) {
                         $query->with('financeSubCategory');

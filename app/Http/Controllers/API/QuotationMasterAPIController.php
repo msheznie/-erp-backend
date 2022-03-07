@@ -68,6 +68,7 @@ use App\Models\CustomerContactDetails;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 use Carbon\Carbon;
 use Response;
@@ -308,6 +309,12 @@ class QuotationMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
 
+        if(isset($input['quoId'])) {
+            $quoMaster = QuotationMaster::find($input['quoId']);
+            $quoMaster->isInSO = 1;
+            $quoMaster->save();
+        }
+
         $quotationMasters = $this->quotationMasterRepository->create($input);
 
         return $this->sendResponse($quotationMasters->toArray(), 'Quotation Master saved successfully');
@@ -426,6 +433,20 @@ class QuotationMasterAPIController extends AppBaseController
 
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+        if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
+            $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
+           if($quotationParent->detail()->count()) {
+                $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
+               if($details_count == $quotationParent->detail()->count()) {
+                $quotationParent->isInSO = 2 ;
+                $quotationParent->orderStatus = 2 ;
+               }else {
+                $quotationParent->isInSO = 1 ;
+               }
+                $quotationParent->update();
+           }
+        } 
 
         if (empty($quotationMaster)) {
             return $this->sendError('Sales ' . $tempName . ' not found');
@@ -775,7 +796,11 @@ class QuotationMasterAPIController extends AppBaseController
         ->where('companySystemID', $companyId)
         ->first();
 
-
+        // check policy 44 is on for CI
+        $isEQOINVPolicyOn = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 44)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
@@ -788,7 +813,8 @@ class QuotationMasterAPIController extends AppBaseController
             'salespersons' => $salespersons,
             'segments' => $segments,
             'soPaymentTermsDrop' => $soPaymentTermsDrop,
-            'addNewItemPolicy' => ($addNewItem) ? $addNewItem->isYesNO : false
+            'addNewItemPolicy' => ($addNewItem) ? $addNewItem->isYesNO : false,
+            'isEQOINVPolicyOn' => ($isEQOINVPolicyOn) ? $isEQOINVPolicyOn : false
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -895,7 +921,8 @@ class QuotationMasterAPIController extends AppBaseController
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', 0)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -968,7 +995,8 @@ class QuotationMasterAPIController extends AppBaseController
             $query->on('erp_documentapproved.documentSystemCode', '=', 'quotationMasterID')
                 ->where('erp_quotationmaster.companySystemID', $companyID)
                 ->where('erp_quotationmaster.approvedYN', -1)
-                ->where('erp_quotationmaster.confirmedYN', 1);
+                ->where('erp_quotationmaster.confirmedYN', 1)
+                ->where('erp_quotationmaster.cancelledYN', 0);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'transactionCurrencyID', 'currencymaster.currencyID')
@@ -1085,10 +1113,23 @@ class QuotationMasterAPIController extends AppBaseController
     public function updateSentCustomerDetail(Request $request){
         $input = $request->quomaster;
         $id = $input['quotationMasterID'];
-        $sentToCustomer = $input['sent_to_customer'];
+        $documentTypeTitle = $input['documentTypeTitle'];
+
+        if($documentTypeTitle == 'sales_order'){
+            $documentTypeTitle = 'Sales Order';
+        }
+
+        if($documentTypeTitle == 'quotation'){
+            $documentTypeTitle = 'Quotation';
+        }
+
         $customerCodeSystem = $input['customer']['customerCodeSystem'];
 
-        $updateSentToCustomer = QuotationMaster::where('quotationMasterID', $id)->update(['sent_to_customer'=>$sentToCustomer]);
+        $path = public_path().'/uploads/emailAttachment';
+
+        if (!file_exists($path)) {
+            File::makeDirectory($path, 0777, true, true);
+        }
 
         $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
 
@@ -1096,87 +1137,85 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError('Quotation Master not found');
         }
 
-        if ($quotationMasterData->sent_to_customer == 1) {
-            
-            $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
-                $query->with('employee');
-                $query->whereIn('documentSystemID', [67,68]);
-            }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
+            $query->with('employee');
+            $query->whereIn('documentSystemID', [67,68]);
+        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
-            $quotationCode = $output->quotationCode;
+        $quotationCode = $output->quotationCode;
 
-            $netTotal = QuotationDetails::where('quotationMasterID', $id)
-                ->sum('transactionAmount');
+        $netTotal = QuotationDetails::where('quotationMasterID', $id)
+            ->sum('transactionAmount');
 
-            $soPaymentTerms = SoPaymentTerms::where('soID', $id)
-                                            ->with(['term_description'])
-                                            ->get();
+        $soPaymentTerms = SoPaymentTerms::where('soID', $id)
+                                        ->with(['term_description'])
+                                        ->get();
 
-            $paymentTermsView = '';
+        $paymentTermsView = '';
 
-            if ($soPaymentTerms) {
-                foreach ($soPaymentTerms as $val) {
-                    $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
-                }
+        if ($soPaymentTerms) {
+            foreach ($soPaymentTerms as $val) {
+                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
             }
+        }
 
-            $order = array(
-                'masterdata' => $output,
-                'paymentTermsView' => $paymentTermsView,
-                'netTotal' => $netTotal
-            );
+        $order = array(
+            'masterdata' => $output,
+            'paymentTermsView' => $paymentTermsView,
+            'netTotal' => $netTotal
+        );
 
-            $html = view('print.sales_quotation', $order);
+        $html = view('print.sales_quotation', $order);
 
-            $pdf = \App::make('dompdf.wrapper');
-            $nowTime = time();
-            // $pdf->loadHTML($html)->save('uploads/emailAttachment/customer_quotation_' . $nowTime.$customerCodeSystem . '.pdf');
-            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_quotation_' . $nowTime.$customerCodeSystem . '.pdf');
+        $pdf = \App::make('dompdf.wrapper');
+        $nowTime = time();
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_' .$documentTypeTitle . $nowTime.$customerCodeSystem . '.pdf');
 
 
-            $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+        $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
+                                                ->where('isDefault' , -1)
                                                 ->get();
 
-            $customerMaster = CustomerMaster::find($customerCodeSystem);
+        $customerMaster = CustomerMaster::find($customerCodeSystem);
 
-            $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            $emailSentTo = 0;
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        $emailSentTo = 0;
 
-            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-                "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
-                if ($fetchCusEmail) {
-                    foreach ($fetchCusEmail as $row) {
-                        if (!empty($row->contactPersonEmail)) {
-                            $emailSentTo = 1;
-                            $dataEmail['empEmail'] = $row->contactPersonEmail;
-        
-                            $dataEmail['companySystemID'] = $input['companySystemID'];
-        
-                            $temp = "Dear " . $customerMaster->CustomerName .',<p> Quotation ' .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
-        
-                            $pdfName = realpath("uploads/emailAttachment/customer_quotation_" . $nowTime.$customerCodeSystem . ".pdf");
-        
-                            $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Quotation " .$quotationCode. " from " . $company->CompanyName;
-                            $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                return $this->sendError($sendEmail["message"], 500);
-                            }
+            if (count($fetchCusEmail) > 0) {
+                foreach ($fetchCusEmail as $row) {
+                    if ($row->contactPersonEmail) {
+                        $emailSentTo = 1;
+                        $dataEmail['empEmail'] = $row->contactPersonEmail;
+    
+                        $dataEmail['companySystemID'] = $input['companySystemID'];
+    
+                        $temp = "Dear " . $customerMaster->CustomerName .',<p> ' .$documentTypeTitle. ' '  .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
+    
+                        $pdfName = realpath("uploads/emailAttachment/customer_" .$documentTypeTitle . $nowTime.$customerCodeSystem . ".pdf");
+    
+                        $dataEmail['isEmailSend'] = 0;
+                        $dataEmail['attachmentFileName'] = $pdfName;
+                        $dataEmail['alertMessage'] = $documentTypeTitle. " " .$quotationCode. " from " . $company->CompanyName;
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        if (!$sendEmail["success"]) {
+                            return $this->sendError($sendEmail["message"], 500);
                         }
                     }
                 }
-        
-                if ($emailSentTo == 0) {
-                    return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
-                } else {
-                    return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
-                }
-
             }
+    
+            if ($emailSentTo == 0) {
+                return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+            } else {
+                return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
+            }
+
+            
 
     }
 
@@ -1503,6 +1542,8 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isInDOorCI', '!=',1)
             ->where('isInSO', '!=',1)
             ->where('closedYN',0)
+            ->where('cancelledYN',0)
+            ->where('manuallyClosed',0)
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
@@ -1551,10 +1592,19 @@ class QuotationMasterAPIController extends AppBaseController
      public function salesQuotationForSO(Request $request){
         $input = $request->all();
         $documentSystemID = 67;
-
       
         $salesOrderData = QuotationMaster::find($input['salesOrderID']);
-        
+
+        $quotaionDetails = QuotationDetails::where('quotationMasterID',$input['salesOrderID'])->pluck('soQuotationMasterID')->values()->toArray();
+       
+        $existsSo = QuotationMaster::where('documentSystemID',$documentSystemID)
+            ->where('companySystemID',$input['companySystemID'])
+            ->whereIn('quotationMasterID',$quotaionDetails)
+            ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
+            ->where('customerSystemCode', $salesOrderData->customerSystemCode)
+            ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->orderBy('quotationMasterID','DESC')
+            ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1563,13 +1613,16 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isInDOorCI', '!=',2)
             ->where('isInDOorCI', '!=',1)
             ->where('closedYN',0)
+            ->where('cancelledYN',0)
+            ->where('manuallyClosed',0)
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
-        return $this->sendResponse($master->toArray(), 'Quotations retrieved successfully');
+
+        return $this->sendResponse($master->merge($existsSo)->toArray(), 'Quotations retrieved successfully');
     }
 
     public function getSalesQuoatationDetailForSO(Request $request){
@@ -1727,6 +1780,177 @@ class QuotationMasterAPIController extends AppBaseController
         }
     }
 
+    public function cancelQuatation(Request $request)
+    {
+      
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+        $comment = $input['cancelComments'];
 
+        $doc_id = $input['documentSystemID'];
+
+
+        $order_type = '';
+        $is_return = false;
+
+        $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+
+        if($doc_id == 67)
+        {
+            $order_type = 'Quotation';
+        }
+        else
+        {
+            $order_type = 'Sales Order';
+            $is_return = $quotationMaster->is_return;
+        }
+
+        
+        if ($quotationMaster->manuallyClosed == 1) {
+            return $this->sendError('This '.$order_type.' already manually closed');
+        }
+
+        if ($quotationMaster->cancelledYN == -1) {
+            return $this->sendError('This '.$order_type.' already cancelled');
+        }
+      
+        if($doc_id == 67)
+        {
+           
+            $sales_order = QuotationDetails::where('soQuotationMasterID','=',$id)->count();
+            if ($sales_order > 0) {
+                return $this->sendError('Quotation  added to sales order');
+            }
+        }   
+
+
+        if(!$is_return)
+        {
+            $delivery_order = DeliveryOrderDetail::where('quotationMasterID','=',$id)->count();
+            if ($delivery_order > 0) {
+                return $this->sendError($order_type.' added to delivery order');
+            }
+    
+            $invoice = CustomerInvoiceItemDetails::where('quotationMasterID','=',$id)->count();
+            if ($invoice > 0) {
+                return $this->sendError($order_type.' added to invoice ');
+            }
+        }
+
+        $msg = $order_type.' successfully canceled';
+        
+        $employee = \Helper::getEmployeeInfo();
+
+        $quotationMaster->cancelledYN =-1;
+        $quotationMaster->cancelledByEmpID = $employee->empID;
+        $quotationMaster->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $quotationMaster->cancelledByEmpName = $employee->empName;
+        $quotationMaster->cancelledComments = $comment;
+        $quotationMaster->cancelledDate =  now();
+        $quotationMaster->save();
+
+        return $this->sendResponse($quotationMaster, $msg);
+
+    }
+
+
+    public function closeQuatation(Request $request)
+    {
+       
+     
+        $input = $request->all();
+        $id = $input['quotationMasterID'];
+        $comment = $input['closeComments'];
+
+        $doc_id = $input['documentSystemID'];
+
+
+        $orderStatus = $input['orderStatus'];
+        $invoiceStatus = $input['invoiceStatus'];
+        $deliveryStatus = $input['deliveryStatus'];
+
+
+        $order_type = '';
+        if($doc_id == 67)
+        {
+            $order_type = 'Quotation';
+        }   
+        else
+        {
+            $order_type = 'Sales Order';
+        }
+
+        $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+
+        if ($quotationMaster->cancelledYN == -1) {
+            return $this->sendError('This '.$order_type.' already cancelled');
+        }
+
+        if ($quotationMaster->manuallyClosed == 1) {
+            return $this->sendError('This '.$order_type.' already manually closed');
+        }
+
+
+
+
+        $is_partially_added = false;
+
+        if($orderStatus == 1)
+        {
+            $is_partially_added = true;
+        }
+
+        if($invoiceStatus == 1)
+        {
+            $is_partially_added = true;
+        }
+
+        if($deliveryStatus == 1)
+        {
+            $is_partially_added = true;
+            
+        }
+
+
+        if(!$is_partially_added)
+        {
+            return $this->sendError($order_type.' cannot be closed, not partially added to any orders');
+        }   
+        
+  
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $quotationMaster->manuallyClosed =1;
+        $quotationMaster->manuallyClosedByEmpID = $employee->empID;
+        $quotationMaster->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $quotationMaster->manuallyClosedByEmpName = $employee->empName;
+        $quotationMaster->manuallyClosedComment = $comment;
+        $quotationMaster->manuallyClosedDate =  now();
+        $quotationMaster->save();
+
+        return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
+
+    }
+
+
+    public function checkItemExists(Request $request) {
+        $input = $request->all();
+        if($input['doc'] == "SO") {
+            $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+        }else if($input['doc'] == "DO") {
+            $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }else {
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+        }
+
+
+        if($master) {
+                return $this->sendResponse(true,"success");
+        }else {
+                return $this->sendResponse(false,'False');
+        }
+    }
     
 }

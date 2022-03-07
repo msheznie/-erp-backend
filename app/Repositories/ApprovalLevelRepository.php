@@ -101,7 +101,10 @@ class ApprovalLevelRepository extends BaseRepository
         }
 
         if ($search) {
-            $approvalLevel = $approvalLevel->where('levelDescription', 'LIKE', "%{$search}%");
+            $approvalLevel = $approvalLevel->where('levelDescription', 'LIKE', "%{$search}%")
+            ->orWhereHas('document', function($query) use ($search) {
+                $query->where('documentDescription', 'LIKE', "%{$search}%");
+            });
         }
 
         //return datatables($approvalLevel)->toJson();

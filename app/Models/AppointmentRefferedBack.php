@@ -36,7 +36,7 @@ class AppointmentRefferedBack extends Model
         'approved_date',
         'approved_by_emp_name',
         'approved_by_emp_id',
-        'current_level_no',
+        'RollLevForApp_curr',
         'timesReferred',
         'confirmed_yn',
         'refferedBackYN',

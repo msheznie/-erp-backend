@@ -30,7 +30,19 @@ use Carbon\CarbonPeriod;
           </thead>
 	 	<tbody>
                       <?php 
+
+                      if(isset($companyReportingCurrency))
+                      {
                         $decimalPoint = $companyReportingCurrency->DecimalPlaces;
+                        $CurrencyName =$companyReportingCurrency->CurrencyName;
+                        $CurrencyCode = $companyReportingCurrency->CurrencyCode;
+                      }
+                      else
+                      {
+                        $decimalPoint = 2;
+                        $CurrencyName ='N/A';
+                        $CurrencyCode = 'N/A';
+                      } 
                       ?>
              
                     <tr>
@@ -43,10 +55,10 @@ use Carbon\CarbonPeriod;
                         <td>Project Currency - {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
                     </tr>
                     <tr>
-                      <td>Reporting  Currency :- {{$companyReportingCurrency->CurrencyName}}</td>
+                      <td>Reporting  Currency :- {{$CurrencyName}}</td>
                     </tr>
                     <tr>
-                        <td>Amount - {{ round($projectAmount, $decimalPoint)}}({{$companyReportingCurrency->CurrencyCode}})</td>
+                        <td>Amount - {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
                     </tr>
               
 	 	</tbody>

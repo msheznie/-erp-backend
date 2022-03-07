@@ -686,8 +686,10 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $search = $request->input('search.value');
-
-        $stockReceive = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search);
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+        $stockReceive = $this->stockReceiveRepository->stockReceiveListQuery($request, $input, $search, $serviceLineSystemID);
 
         $policy = 0;
 

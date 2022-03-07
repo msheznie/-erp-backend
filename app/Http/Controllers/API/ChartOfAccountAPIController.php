@@ -46,6 +46,7 @@ use Illuminate\Validation\Rule;
 use App\helper\Helper;
 use App\helper\DocumentCodeGenerate;
 use Carbon\Carbon;
+use App\helper\CreateExcel;
 /**
  * Class ChartOfAccountController
  * @package App\Http\Controllers\API
@@ -344,8 +345,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
+                    $primaryCompanySystemID = isset($input['primaryCompanySystemID'][0]) ? $input['primaryCompanySystemID'][0] : $input['primaryCompanySystemID'];
+
                     if ($input['relatedPartyYN'] == 1) {
-                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])
+                        $checkAlreadyInterCompanyCreated = ChartOfAccount::where('interCompanySystemID', $input['interCompanySystemID'])->where('primaryCompanySystemID',$primaryCompanySystemID)
                                                                          ->where('chartOfAccountSystemID', '!=', $input['chartOfAccountSystemID'])
                                                                          ->first();
 
@@ -1007,17 +1010,20 @@ class ChartOfAccountAPIController extends AppBaseController
             $data = array();
         }
 
-        \Excel::create('chart_of_accounts_', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', TRUE);
-                $sheet->setAutoSize(TRUE);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(TRUE);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:H' . $lastrow)->getAlignment()->setWrapText(TRUE);
-        })->download('csv');
 
-        return $this->sendResponse(array(), 'successfully export');
+
+        $fileName = 'chart_of_accounts_';
+        $path = 'system/chart_of_accounts_/excel/';
+        $basePath = CreateExcel::process($data,$request->exte_type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
     public function chartOfAccountReopen(Request $request)

@@ -232,14 +232,6 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        if ($bankAccount->confirmedYN == 1) {
-            return $this->sendError(trans('custom.this_document_already_confirmed'), 500);
-        }
-
-        if ($bankAccount->approvedYN == 1) {
-            return $this->sendError(trans('custom.this_document_already_approved'), 500);
-        }
-
         $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)
             ->where('bankAssignedAutoID', $input['bankAssignedAutoID'])
             ->where('companySystemID', $input['companySystemID'])
@@ -370,9 +362,13 @@ class BankAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $bankmasterAutoID = $request['bankmasterAutoID'];
+        $bankmasterAutoID = (array)$bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $logistics = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search);
+        $logistics = $this->bankAccountRepository->bankAccountListQuery($request, $input, $search, $bankmasterAutoID);
 
         return \DataTables::eloquent($logistics)
             ->addColumn('Actions', 'Actions', "Actions")

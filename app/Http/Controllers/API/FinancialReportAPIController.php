@@ -47,7 +47,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\helper\CreateExcel;
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -1239,6 +1239,7 @@ class FinancialReportAPIController extends AppBaseController
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
+
         $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
@@ -1283,9 +1284,16 @@ class FinancialReportAPIController extends AppBaseController
 
         $openingBalance = $projectAmount - $budgetOpeningConsumption;
 
+        if(isset($reportingCurrency))
+        {
+            $cur_rep = $reportingCurrency->reportingcurrency;
+        }
+        else
+        {
+           $cur_rep = null;      
+        }
 
         $closingBalance = $openingBalance - $budgetAmount;
-
         $output = array(
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
@@ -1297,7 +1305,7 @@ class FinancialReportAPIController extends AppBaseController
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
             'reportTittle' => 'Project Utilization Report',
-            'companyReportingCurrency' => $reportingCurrency->reportingcurrency,
+            'companyReportingCurrency' => $cur_rep,
         );
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {
@@ -1459,18 +1467,24 @@ class FinancialReportAPIController extends AppBaseController
                         }
                     }
                 }
-                \Excel::create('trial_balance', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+         
 
-                return $this->sendResponse(array(), 'successfully export');
+
+                $fileName = 'trial_balance';
+                $path = 'general-ledger/report/trial_balance/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
+
             case 'FTBD':
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
@@ -1814,18 +1828,22 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                \Excel::create('general_ledger', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
 
-                return $this->sendResponse(array(), 'successfully export');
+                $fileName = 'general_ledger';
+                $path = 'general-ledger/report/general_ledger/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
+
             case 'FTD':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -1882,18 +1900,22 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                \Excel::create('trial_balance_details', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+                $fileName = 'trial_balance_details';
+                $path = 'general-ledger/report/trial_balance_details/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), 'successfully export');
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
+
+
             case 'JVD':
 
                 $reportTypeID = $request->reportTypeID;
@@ -2899,7 +2921,7 @@ class FinancialReportAPIController extends AppBaseController
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                        ( erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
@@ -4866,12 +4888,35 @@ GROUP BY
         $unmatchedData = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
             ->where('companySystemID', $input['companySystemID'])
             ->whereDate('documentDate', '<=', $toDate)
-            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->whereHas('charofaccount')
             ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
             ->get();
 
+        $unmatchedData1 = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
+            ->where('companySystemID', $input['companySystemID'])
+            ->whereDate('documentDate', '<=', $toDate)
+            ->whereDoesntHave('charofaccount')
+            ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) != 0 OR round( sum( erp_generalledger.documentLocalAmount ), 3 ) != 0')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->get();
+
+
+        $unmatchedData2 = GeneralLedger::selectRaw('documentCode, round( sum( erp_generalledger.documentLocalAmount ), 3 ), round( sum( erp_generalledger.documentRptAmount ), 2 ), documentSystemCode, documentSystemID')
+            ->where('companySystemID', $input['companySystemID'])
+            ->whereDate('documentDate', '<=', $toDate)
+            ->whereDoesntHave('charofaccount')
+            ->groupBy('companySystemID', 'documentSystemCode', 'documentSystemID')
+            ->havingRaw('round( sum( erp_generalledger.documentRptAmount ), 2 ) = 0 AND round( sum( erp_generalledger.documentLocalAmount ), 3 ) = 0')
+            ->get();
+
+
+        $meregedResultOne = collect($unmatchedData)->merge(collect($unmatchedData2));
+
+        $meregedResultTwo = collect($meregedResultOne)->merge(collect($unmatchedData1));
+
         $respondData = [
-            'unMatchedData' => $unmatchedData
+            'unMatchedData' => collect($meregedResultTwo)->unique('documentCode')->values()->all()
         ];
 
         return $this->sendResponse($respondData, "Unmatched data retrived successfully.");

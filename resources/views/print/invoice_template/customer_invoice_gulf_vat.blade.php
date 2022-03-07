@@ -185,9 +185,14 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    @if($request->logo)
-                        <img src="{{$request->companyLogo}}"
-                             width="180px" height="60px">
+                   @if($request->logo)
+                           @if($type == 1)
+                            <img src="{{$request->companyLogo}}"
+                                width="180px" height="60px">
+                          @else
+                            image not found
+                          @endif
+
                     @endif
                 </td>
 
@@ -722,7 +727,7 @@
             <tr class="theme-tr-head">
                 <th style="width:3%"></th>
                 <th style="width:10%;text-align: center">GL Code</th>
-                <th style="width:60%;text-align: center">GL Description</th>
+                <th style="width:40%;text-align: center">GL Description</th>
                 <th style="width:10%;text-align: center">QTY</th>
                 <th style="width:10%;text-align: center">Unit Price</th>
                 <th style="width:10%;text-align: center">Total Taxable Amount</th>
@@ -877,7 +882,7 @@
             <tr class="theme-tr-head">
                 <th style="width:3%"></th>
                 <th style="width:10%;text-align: center">GL Code</th>
-                <th style="width:60%;text-align: center">GL Description</th>
+                <th style="width:40%;text-align: center">GL Description</th>
                 <th style="width:10%;text-align: center">QTY</th>
                 <th style="width:10%;text-align: center">Unit Price</th>
                 <th style="width:10%;text-align: center">Total Taxable Amount</th>

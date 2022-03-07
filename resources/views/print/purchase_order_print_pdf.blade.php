@@ -599,7 +599,7 @@
                 <th style="text-align: center">Part No / Ref.Number</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
-                @if($allowAltUom)
+                @if(isset($allowAltUom))
                 <th style="text-align: center">Alt.UOM</th>
                 <th style="text-align: center">Alt.Qty</th>
                 @endif
@@ -631,7 +631,7 @@
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
-                    @if($allowAltUom)
+                    @if(isset($allowAltUom))
                     <td>
                        @if($det->altUom)
                         {{$det->altUom->UnitShortCode}}
@@ -657,7 +657,7 @@
                     <td colspan="2"></td>
                     <td>{{$met->category->costCatDes}}</td>
                     <td colspan="{{6 + $subColspan}}"></td>
-                    @if($allowAltUom)
+                    @if(isset($allowAltUom))
                     <td colspan="2"></td>
                     @endif
                     <td class="text-right">{{number_format($met->amount, $numberFormatting)}}</td>
@@ -697,7 +697,7 @@
                 </span>
                 </td>
             </tr>
-            @if ($podata->supplierVATEligible)
+            @if ($podata->isVatEligible || $podata->vatRegisteredYN)
                 <tr>
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;</td>
@@ -758,7 +758,7 @@
         </table>
     </div>
 </div>
-@if ($specification==1)
+@if (isset($specification) && $specification==1)
 
 <div class="row">
         <div class="page_break"></div>

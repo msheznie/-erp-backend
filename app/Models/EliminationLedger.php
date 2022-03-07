@@ -540,7 +540,7 @@ class EliminationLedger extends Model
 
     public function setDocumentDateAttribute($value)
     {
-        $this->attributes['documentDate'] = Helper::dateAddTime($value);
+        $this->attributes['documentDate'] = \Helper::dateAddTime($value);
     }
 
     public function confirm_by(){
