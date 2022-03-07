@@ -2703,3 +2703,6 @@ Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
 
 
+
+
+Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');

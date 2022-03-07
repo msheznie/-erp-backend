@@ -1737,8 +1737,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['glAccountType'] = 'BS';
                             $data['glAccountTypeID'] = 1;
                             $data['supplierCodeSystem'] = $masterData->supplierID;;
-                            $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
-                            $data['glCode'] = $masterData->supplierGLCode;
+                            $data['chartOfAccountSystemID'] = ($masterData->documentType == 4) ? $masterData->employeeControlAcID : $masterData->supplierGLCodeSystemID;
+                            $data['glCode'] = ($masterData->documentType == 4) ? ChartOfAccount::getAccountCode($masterData->employeeControlAcID) : $masterData->supplierGLCode;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionCurrencyER;
 
@@ -4361,6 +4361,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $unbilledModel['companySystemID'] = $prData->companySystemID;
                                     $unbilledModel['documentSystemID'] = $masterModel['documentSystemID'];
                                     $jobUGRV = UnbilledGRVInsert::dispatch($unbilledModel);
+                                }
+                            } else if ($masterModel["documentSystemID"] == 11) {
+                                $suppInvData = BookInvSuppMaster::find($masterModel["autoID"]);
+                                if ($suppInvData->documentType == 4) {
+                                    $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel);
+                                } else {
+                                    $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                                 }
                             } else {
                                 $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);

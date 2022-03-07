@@ -27,6 +27,7 @@ use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
+use App\Models\EmployeeLedger;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PurchaseReturn;
 use App\Models\SalesReturn;
@@ -358,6 +359,13 @@ class GeneralLedgerAPIController extends AppBaseController
             $unbilledLedgerData = $unbilledLedgerData->get();
         }
 
+        $employeeLedgerData = EmployeeLedger::with(['employee','local_currency', 'transaction_currency', 'reporting_currency'])
+                                             ->where('documentSystemID', $request->documentSystemID)
+                                             ->where('documentSystemCode', $request->autoID)
+                                             ->where('companySystemID', $request->companySystemID)
+                                             ->get();
+
+
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
 
@@ -367,6 +375,7 @@ class GeneralLedgerAPIController extends AppBaseController
                 'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
                 'itemLedgerData' => $itemLedgerData,
+                'employeeLedgerData' => $employeeLedgerData,
                 'unbilledLedgerData' => $unbilledLedgerData
             ];
 
