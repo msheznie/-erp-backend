@@ -820,9 +820,13 @@
                     In these Conditions:<br>
                     (A) “Affiliate” means in relation to any person, a subsidiary of that person or a holding company of
                     that person or any other subsidiary of that holding company.<br>
-                    (B) “Company” means either NPS Bahrain for Oil and Gas Wells Services W.L.L, Gulf Energy SAOC,
-                    National
-                    Energy Services Reunited Corp or any of their respective Affiliates placing the Order.<br>
+                    (B) “Company” means @if($isMergedCompany)
+                                            {{$secondaryCompany['name']}}
+                                        @else
+                                            @if ($podata->company)
+                                                {{$podata->company->CompanyName}}
+                                            @endif
+                                        @endif placing the Order.<br>
                     (C) " Goods" means the articles, raw materials or any of them to be supplied by the Supplier to the
                     Company pursuant to the Order (including any articles or materials supplied in connection with the
                     Services).<br>
