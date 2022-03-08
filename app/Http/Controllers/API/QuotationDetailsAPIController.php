@@ -339,6 +339,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
 
         $employee = \Helper::getEmployeeInfo();
+        unset($input['uom_issuing']);
 
         /** @var QuotationDetails $quotationDetails */
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
