@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Http\Requests\API\UpdateFixedAssetCategoryAPIRequest;
 use App\Models\FixedAssetCategory;
+use App\Models\FixedAssetCategorySub;
 use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
@@ -26,16 +28,6 @@ class TenderProcurementCategoryController extends AppBaseController
     }
 
     public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
     {
         //
     }
@@ -87,20 +79,16 @@ class TenderProcurementCategoryController extends AppBaseController
      * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
      * @return \Illuminate\Http\Response
      */
-    public function show(TenderProcurementCategory $tenderProcurementCategory)
+    public function show($id)
     {
-        //
-    }
+        /** @var FixedAssetCategory $fixedAssetCategory */
+        $fixedAssetCategory = TenderProcurementCategory::find($id);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(TenderProcurementCategory $tenderProcurementCategory)
-    {
-        //
+        if (empty($fixedAssetCategory)) {
+            return $this->sendError('Procurement Category not found');
+        }
+
+        return $this->sendResponse($fixedAssetCategory->toArray(), 'Procurement Category retrieved successfully');
     }
 
     /**
@@ -110,9 +98,49 @@ class TenderProcurementCategoryController extends AppBaseController
      * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, TenderProcurementCategory $tenderProcurementCategory)
+    public function update($id, UpdateFixedAssetCategoryAPIRequest $request)
     {
-        //
+        $input = $request->all();
+
+        $procurementCategory = TenderProcurementCategory::find($id);
+
+        if (empty($procurementCategory)) {
+            return $this->sendError('Procurement Category not found');
+        }
+
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'is_active' => 'required|numeric|min:0',
+            'description' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $procurementCodeExist = TenderProcurementCategory::select('id')
+            ->where('id', '!=', $id)
+            ->where('code', '=', $input['code'])->first();
+        if (!empty($procurementCodeExist)) {
+            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+        }
+
+        $procurementDesExist = TenderProcurementCategory::select('id')
+            ->where('id', '!=', $id)
+            ->where('description', '=', $input['description'])->first();
+        if (!empty($procurementDesExist)) {
+            return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+        }
+
+        $input['created_pc'] = gethostname();
+        $input['created_by'] = Helper::getEmployeeID();
+        $input['parent_id'] = 0;
+        $input['level'] = 0;
+
+        $fixedAssetCategory = TenderProcurementCategory::where('id', $id)->update($input);
+
+        return $this->sendResponse($fixedAssetCategory, 'Procurement Category updated successfully');
+
     }
 
     /**
@@ -123,19 +151,23 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function destroy(TenderProcurementCategory $tenderProcurementCategory)
     {
-        //
+        /** @var FixedAssetCategory $fixedAssetCategory */
+        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
+
+        if (empty($fixedAssetCategory)) {
+            return $this->sendError('Asset Category not found');
+        }
+
+        FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
+
+        $fixedAssetCategory->delete();
+
+        return $this->sendResponse($id, 'Asset Category deleted successfully');
     }
 
     public function getAllProcurementCategory(Request $request)
     {
         $input = $request->all();
-        $selectedCompanyId = isset($input['companyId']) ? $input['companyId'] : 0;
-        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
-        if ($isGroup) {
-            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -143,24 +175,19 @@ class TenderProcurementCategoryController extends AppBaseController
             $sort = 'desc';
         }
 
-        $assetCategories = TenderProcurementCategory::withoutGlobalScope(ActiveScope::class)
-            ->with(['company'])
-            ->orderBy('faCatID', $sort);
-
-        if (isset($input['isAll']) && !$input['isAll']) {
-            $assetCategories = $assetCategories->whereIn('companySystemID', $subCompanies);
-        }
+        $procurementCategories = TenderProcurementCategory::withoutGlobalScope(ActiveScope::class)
+            ->orderBy('id', $sort);
 
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $assetCategories = $assetCategories->where(function ($query) use ($search) {
-                $query->where('catDescription', 'LIKE', "%{$search}%");
+            $procurementCategories = $procurementCategories->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($assetCategories)
+        return \DataTables::of($procurementCategories)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->make(true);
