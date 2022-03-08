@@ -153,7 +153,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 
                 $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
 
-                
+         
 
                 $assest_fixds = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
@@ -161,13 +161,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                         $query->where('approved', -1);
                     });
                     $query->groupBy('faID');
-                }])->WhereDate('dateDEP','<',$doc_date->dateTo)
+                }])
+                ->WhereDate('dateDEP','<',$doc_date->dateTo)
                 ->ofCompany([$input['companySystemID']])
                 ->isApproved()
                 ->assetType(1)
                 ->isDisposed()->get();
 
-
+               
                 foreach($assest_fixds as $key=>$val)
                 {
                     $cos_unit = $val->COSTUNIT;
@@ -188,7 +189,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
               
                 }  
          
-
+            
                $count_assest = count($assest_fixds);
 
       
@@ -286,7 +287,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
                 DB::commit();
-                return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
+                return $this->sendResponse($input, 'Fixed Asset Depreciation Master saved successfully');
 
                }
                else{
