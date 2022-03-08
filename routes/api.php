@@ -2510,6 +2510,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('loadBidFormatMaster', 'TenderBidFormatMasterAPIController@loadBidFormatMaster');
         Route::post('addPriceBidDetail', 'TenderBidFormatMasterAPIController@addPriceBidDetail');
         Route::post('updatePriceBidDetail', 'TenderBidFormatMasterAPIController@updatePriceBidDetail');
+        Route::post('updateBidFormat', 'TenderBidFormatMasterAPIController@updateBidFormat');
+        Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail');
+        Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster');
 
     });
 

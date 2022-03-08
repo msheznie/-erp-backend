@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @SWG\Definition(
  *      definition="TenderBidFormatMaster",
@@ -71,6 +71,7 @@ use Eloquent as Model;
  */
 class TenderBidFormatMaster extends Model
 {
+    use SoftDeletes;
 
     public $table = 'tender_bid_format_master';
     
@@ -78,7 +79,7 @@ class TenderBidFormatMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'tender_name',
