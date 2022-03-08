@@ -433,19 +433,30 @@ class QuotationMasterAPIController extends AppBaseController
 
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
-
         if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
             $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
-           if($quotationParent->detail()->count()) {
-                $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->count();
-               if($details_count == $quotationParent->detail()->count()) {
-                $quotationParent->isInSO = 2 ;
-                $quotationParent->orderStatus = 2 ;
-               }else {
+            $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->get();
+            foreach($quotationParent->detail as $item) {
+                foreach($details_count as $itemNew) {
+                    if($item->requestedQty == $itemNew->requestedQty) {
+                        $itemNew->fullyOrdered = 1;
+                        $itemNew->save();
+                    }   
+                }
+            }
+
+            if(isset($quotationParent->detail)) {
+                if($quotationParent->detail->sum('requestedQty') == $details_count->sum('requestedQty')){
+                    $quotationParent->isInSO = 2 ;
+                    $quotationParent->orderStatus = 2 ;
+                }else {
+                    $quotationParent->isInSO = 1 ;
+                }
+            }else {
                 $quotationParent->isInSO = 1 ;
-               }
-                $quotationParent->update();
-           }
+            }
+            $quotationParent->update();
+
         } 
 
         if (empty($quotationMaster)) {
@@ -1942,8 +1953,7 @@ class QuotationMasterAPIController extends AppBaseController
         
         if($input['doc'] == "SO") {
             $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
-            // $count = QuotationDetails::where('soQuotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
-
+            $count = QuotationDetails::where('soQuotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
         }else if($input['doc'] == "DO") {
             $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
             // $count = DeliveryOrderDetail::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
@@ -1960,7 +1970,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendResponse(['status' => false , 'data' => $input],'False');
         }
 
-        if($master) {
+        if(isset($master)) {
                 return $this->sendResponse(['status' => true , 'data' => $input],'success');
 
         }else {
