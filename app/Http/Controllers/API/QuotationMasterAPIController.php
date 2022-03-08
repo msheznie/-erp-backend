@@ -1937,11 +1937,35 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function checkItemExists(Request $request) {
         $input = $request->all();
-        $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
-        if($master) {
-                return $this->sendResponse(true,"success");
+        $count = 0;
+        $quotationRequestedCount = QuotationDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+        
+        if($input['doc'] == "SO") {
+            $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+            // $count = QuotationDetails::where('soQuotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+
+        }else if($input['doc'] == "DO") {
+            $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            // $count = DeliveryOrderDetail::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
+
         }else {
-                return $this->sendResponse(false,'False');
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            $count = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
+        }
+
+        if($count !=0 && $quotationRequestedCount != $count) {
+            $input['requestedQty'] = ($quotationRequestedCount - $count);
+            $input['qtyIssued'] = ($quotationRequestedCount - $count);
+            $input['qtyIssuedDefaultMeasure'] = ($quotationRequestedCount - $count);
+            return $this->sendResponse(['status' => false , 'data' => $input],'False');
+        }
+
+        if($master) {
+                return $this->sendResponse(['status' => true , 'data' => $input],'success');
+
+        }else {
+                return $this->sendResponse(['status' => false , 'data' => $input],'False');
+
         }
     }
     

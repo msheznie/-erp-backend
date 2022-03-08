@@ -1128,17 +1128,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAllCostingByCompany(Request $request)
     {
         $input = $request->all();
-        $mainCategory= $request['mainCategory'];
-        $mainCategory = (array)$mainCategory;
-        $mainCategory = collect($mainCategory)->pluck('id');
 
-        $subCategory= $request['subCategory'];
-        $subCategory = (array)$subCategory;
-        $subCategory = collect($subCategory)->pluck('id');
-
-        $auditCategory = $request['auditCategory'];
-        $auditCategory = (array)$auditCategory;
-        $auditCategory = collect($auditCategory)->pluck('id');
 
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved','auditCategory','mainCategory','subCategory'));
         $isDeleted = (isset($input['is_deleted']) && $input['is_deleted']==1)?1:0;
@@ -1174,19 +1164,19 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if (array_key_exists('mainCategory', $input)) {
             if ($input['mainCategory']) {
-                $assetCositng->whereIn('faCatID', $mainCategory);
+                $assetCositng->where('faCatID', $input['mainCategory']);
             }
         }
 
         if (array_key_exists('subCategory', $input)) {
             if ($input['subCategory']) {
-                $assetCositng->whereIn('faSubCatID', $subCategory);
+                $assetCositng->where('faSubCatID', $input['subCategory']);
             }
         }
 
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
-                $assetCositng->whereIn('AUDITCATOGARY', $auditCategory);
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
         }
 
@@ -1911,17 +1901,6 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function exportAssetMaster(Request $request){
         $input = $request->all();
-        $mainCategory= $request['mainCategory'];
-        $mainCategory = (array)$mainCategory;
-        $mainCategory = collect($mainCategory)->pluck('id');
-
-        $subCategory= $request['subCategory'];
-        $subCategory = (array)$subCategory;
-        $subCategory = collect($subCategory)->pluck('id');
-
-        $auditCategory = $request['auditCategory'];
-        $auditCategory = (array)$auditCategory;
-        $auditCategory = collect($auditCategory)->pluck('id');
 
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'mainCategory', 'subCategory'));
 
@@ -1943,19 +1922,19 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if (array_key_exists('mainCategory', $input)) {
             if ($input['mainCategory'] && !is_null($input['mainCategory'])) {
-                $assetCositng->whereIn('faCatID', $mainCategory);
+                $assetCositng->where('faCatID', $input['mainCategory']);
             }
         }
 
         if (array_key_exists('subCategory', $input)) {
             if ($input['subCategory'] && !is_null($input['subCategory'])) {
-                $assetCositng->whereIn('faSubCatID', $subCategory);
+                $assetCositng->where('faSubCatID', $input['subCategory']);
             }
         }
 
         if (array_key_exists('auditCategory', $input)) {
             if ($input['auditCategory']) {
-                $assetCositng->whereIn('AUDITCATOGARY', $auditCategory);
+                $assetCositng->where('AUDITCATOGARY', $input['auditCategory']);
             }
         }
 
