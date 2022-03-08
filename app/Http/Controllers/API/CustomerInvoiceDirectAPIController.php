@@ -437,18 +437,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
-            $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
-            if(isset($qo_master->detail) && $qo_master->detail->count() == count($details)) {
-                $qo_master->isInDOorCI = 2;
-                $qo_master->save();
-            }else {
-                $qo_master->isInDOorCI = 4;
-                $qo_master->save();
+
+            if ($qo_master) {
+                $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
+                if(isset($qo_master->detail) && $qo_master->detail->count() == count($details)) {
+                    $qo_master->isInDOorCI = 2;
+                    $qo_master->save();
+                }else {
+                    $qo_master->isInDOorCI = 4;
+                    $qo_master->save();
+                }
             }
         }
-
-
-
 
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
