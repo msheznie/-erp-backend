@@ -339,11 +339,11 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
 
         $employee = \Helper::getEmployeeInfo();
-        unset($input['uom_issuing']);
 
         /** @var QuotationDetails $quotationDetails */
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
 
+        
         if (empty($quotationDetails)) {
             return $this->sendError('Quotation Details not found');
         }
@@ -566,7 +566,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+        $items = QuotationDetails::join('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
             ->get();
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
@@ -944,4 +944,6 @@ WHERE
         return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['orderStatus' => $status,'isInSO'=>$isInDO]);
 
     }
+
+    
 }
