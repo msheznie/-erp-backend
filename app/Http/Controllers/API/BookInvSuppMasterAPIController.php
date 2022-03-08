@@ -2029,6 +2029,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -2043,6 +2044,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'wareHouseLocation' => $wareHouseLocation,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
+            'employeeControlAccount' => $employeeControlAccount,
             'segments' => $segments,
             'isVATEligible' => $isVATEligible
         );

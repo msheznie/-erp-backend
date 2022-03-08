@@ -2704,3 +2704,6 @@ Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
 Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
 
 Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
+
+
+Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
