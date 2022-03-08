@@ -551,7 +551,9 @@ class FixedAssetMaster extends Model
         'postToGLCodeSystemID',
         'postToGLCode',
         'deleteComment',
-        'timestamp'
+        'timestamp',
+        'accumulated_depreciation_amount',
+        'accumulated_depreciation_date'
     ];
 
     /**
