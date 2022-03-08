@@ -137,10 +137,17 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
-        
-        $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
-        ->where('companySystemID', $companySystemID)
-        ->first();
+        if(isset($input['itemCode'])) {
+                $item = ItemAssigned::where('itemCodeSystem', $input['itemCode']['id'])
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+        }else {
+            $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+        }
+
 
         if($input['itemAutoID']) {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
@@ -558,10 +565,8 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+        $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)->with(['uom_issuing'])
             ->get();
-            
-
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
 
