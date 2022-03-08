@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class TenderProcurementCategory extends Model
 {
-    // use ActiveTrait;
-
     public $table = 'srm_tender_procument_category';
 
     protected $primaryKey = 'id';
@@ -34,7 +32,6 @@ class TenderProcurementCategory extends Model
         'parent_id' => 'integer',
         'level' => 'string',
         'is_active' => 'integer',
-        'isActive' => 'integer',
         'created_pc' => 'string',
         'created_by' => 'string',
         'updated_pc' => 'string',
