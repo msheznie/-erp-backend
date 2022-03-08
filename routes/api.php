@@ -1759,6 +1759,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
         Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
 
+        Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
+        Route::resource('procurement_categories', 'TenderProcurementCategoryController');
+
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
