@@ -2503,6 +2503,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems');
         Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
 
+
+        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
+        Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
+        Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
+
+        Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
+
+        Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
+        Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2697,10 +2709,3 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-
-Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
-Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
-
-Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
