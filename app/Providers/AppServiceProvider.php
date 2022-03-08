@@ -33,7 +33,6 @@ class AppServiceProvider extends ServiceProvider
             // $event->job
             // $event->exception
         });
-        FixedAssetMaster::observe(AssetObserver::class);
         AssetCapitalizationDetail::observe(CapitalizationDetailObserver::class);
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);
