@@ -458,4 +458,80 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
     }
+
+    public function updateBidFormat(Request $request)
+    {
+        $input = $request->all();
+
+        $employee = \Helper::getEmployeeInfo();
+        $boq_applicable = 0;
+        if(isset($input['boq_applicable']) && $input['boq_applicable']){
+            $boq_applicable = 1;
+        }
+
+        $exist = TenderBidFormatMaster::where('tender_name',$input['tender_name'])
+            ->where('id','!=',$input['id'])
+            ->where('company_id',$input['companySystemID'])->first();
+
+        if(!empty($exist)){
+            return ['success' => false, 'message' => 'Description already exist'];
+        }
+
+        DB::beginTransaction();
+        try {
+            $data['boq_applicable']=$boq_applicable;
+            $data['tender_name']=$input['tender_name'];
+            $data['updated_by'] = $employee->employeeSystemID;
+
+            $result = TenderBidFormatMaster::where('id',$input['id'])->update($data);
+
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deletePriceBideDetail(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = TenderBidFormatDetail::where('id',$input['id'])->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deletePriceBidMaster(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $data['deleted_by'] = $employee->employeeSystemID;
+            $data['deleted_at'] = now();
+            $result = TenderBidFormatMaster::where('id',$input['id'])->update($data);
+            TenderBidFormatDetail::where('tender_id',$input['id'])->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
 }
