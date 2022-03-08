@@ -132,5 +132,28 @@ class ExpenseEmployeeAllocation extends Model
         
     ];
 
-    
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employeeSystemID','employeeSystemID');
+    } 
+
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function supplier_invoice()
+    {
+       return $this->belongsTo('App\Models\BookInvSuppMaster', 'documentSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
+    public function payment_voucher()
+    {
+       return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'documentSystemCode', 'PayMasterAutoId');
+    }
+
+    public function meterial_issue()
+    {
+       return $this->belongsTo('App\Models\ItemIssueDetails', 'documentSystemCode', 'itemIssueAutoID');
+    }
 }

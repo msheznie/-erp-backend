@@ -5,12 +5,14 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateExpenseEmployeeAllocationAPIRequest;
 use App\Http\Requests\API\UpdateExpenseEmployeeAllocationAPIRequest;
 use App\Models\ExpenseEmployeeAllocation;
+use App\Models\DirectInvoiceDetails;
 use App\Repositories\ExpenseEmployeeAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class ExpenseEmployeeAllocationController
@@ -110,9 +112,86 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (!isset($input['documentSystemID'])) {
+            return $this->sendError("Document system ID not found");
+        }
+
+        $checkForAssetDuplicate = ExpenseEmployeeAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                  ->where('documentSystemID', $input['documentSystemID'])
+                                                  ->where('employeeSystemID', $input['employeeSystemID'])
+                                                  ->first();
+
+        if ($checkForAssetDuplicate) {
+            return $this->sendError("This employee is alreday allocated", 500);
+        }
+
+        $detailTotal = 0;
+        $companySystemID = 0;
+        $transactionCurrencyID = 0;
+        if ($input['documentSystemID'] == 11) {
+            $directDetail = DirectInvoiceDetails::with(['supplier_invoice_master'])->find($input['documentDetailID']);
+
+            if (!$directDetail) {
+                return $this->sendError("Supplier invoice detail not found");
+            }
+
+            $detailTotal = $directDetail->netAmount + $directDetail->VATAmount;
+
+            $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
+            $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
+            $transactionCurrencyID = isset($directDetail->supplier_invoice_master->supplierTransactionCurrencyID) ? $directDetail->supplier_invoice_master->supplierTransactionCurrencyID : null;
+
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+            $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
+        } 
+        else if($input['documentSystemID'] == 4) {
+            // $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
+            
+            // if (!$directDetail) {
+            //     return $this->sendError("Payment voucher detail not found");
+            // }
+
+            // $detailTotal = $directDetail->DPAmount;
+            // $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
+            // $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
+            // $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
+
+            // $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+
+            // $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            // $input['amountLocal'] = $currencyConversion['localAmount'];
+        }
+        
+        
+        $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                  ->where('documentSystemID', $input['documentSystemID'])
+                                                  ->sum('amount');
+
+        $newTotal = $allocatedSum + floatval($input['amount']);
+
+
+        if ($newTotal > $detailTotal) {
+            return $this->sendError("Allocated amount cannot be greater than detail amount.");
+        }
+
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->create($input);
 
         return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'Expense Employee Allocation saved successfully');
+    }
+
+    public function getAllocatedEmployeesForExpense(Request $request)
+    {
+        $input = $request->all();
+
+        $allocatedEmployees = ExpenseEmployeeAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                  ->where('documentSystemID', $input['documentSystemID'])
+                                                  ->with(['employee'])
+                                                  ->get();
+
+        return $this->sendResponse($allocatedEmployees, 'Data retrieved successfully');
     }
 
     /**
@@ -276,6 +355,6 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         $expenseEmployeeAllocation->delete();
 
-        return $this->sendSuccess('Expense Employee Allocation deleted successfully');
+        return $this->sendResponse([], 'Expense Employee Allocation deleted successfully');
     }
 }
