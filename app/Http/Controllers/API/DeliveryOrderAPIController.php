@@ -372,21 +372,23 @@ class DeliveryOrderAPIController extends AppBaseController
         /** @var DeliveryOrder $deliveryOrder */
         $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
 
-                     $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
+        $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
 
-                $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
-                $count  = $quotationMaster->detail->count();
-
+        $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
+            
+        if ($quotationMaster) {
+            $count  = $quotationMaster->detail->count();
 
             if($deliveryOrderDetaiCountl == $count) {
-                    $quotationMaster->isInDOorCI = 1;
-            $quotationMaster->save();
-
+                $quotationMaster->isInDOorCI = 1;
+                $quotationMaster->save();
             }else {
-                    $quotationMaster->isInDOorCI = 3;
-            $quotationMaster->save();
+                $quotationMaster->isInDOorCI = 3;
+                $quotationMaster->save();
 
             }
+        }
+
 
 
         if (empty($deliveryOrder)) {
