@@ -1947,6 +1947,9 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function checkItemExists(Request $request) {
         $input = $request->all();
+        $count = 0;
+        $quotationRequestedCount = QuotationDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+        
         if($input['doc'] == "SO") {
             $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
             $count = QuotationDetails::where('soQuotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
@@ -1956,8 +1959,8 @@ class QuotationMasterAPIController extends AppBaseController
 
         }else {
             $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            $count = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
         }
-
 
         if($count !=0 && $quotationRequestedCount != $count) {
             $input['requestedQty'] = ($quotationRequestedCount - $count);
@@ -1970,7 +1973,8 @@ class QuotationMasterAPIController extends AppBaseController
                 return $this->sendResponse(['status' => true , 'data' => $input],'success');
 
         }else {
-                return $this->sendResponse(false,'False');
+                return $this->sendResponse(['status' => false , 'data' => $input],'False');
+
         }
     }
     
