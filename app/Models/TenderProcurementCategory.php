@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use App\Traits\ActiveTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TenderProcurementCategory extends Model
 {
     public $table = 'srm_tender_procument_category';
+
+    use SoftDeletes;
 
     protected $primaryKey = 'id';
 

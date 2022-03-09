@@ -4,15 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
-use App\Http\Requests\API\UpdateFixedAssetCategoryAPIRequest;
-use App\Models\FixedAssetCategory;
-use App\Models\FixedAssetCategorySub;
 use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 class TenderProcurementCategoryController extends AppBaseController
@@ -83,9 +79,9 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
-        $fixedAssetCategories = $this->procurementCategoryRepository->create($input);
+        $procurementCategories = $this->procurementCategoryRepository->create($input);
 
-        return $this->sendResponse($fixedAssetCategories->toArray(), 'Procurement Category saved successfully');
+        return $this->sendResponse($procurementCategories->toArray(), 'Procurement Category saved successfully');
     }
 
     /**
@@ -96,24 +92,23 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = TenderProcurementCategory::find($id);
+        $procurementCategory = TenderProcurementCategory::find($id);
 
-        if (empty($fixedAssetCategory)) {
+        if (empty($procurementCategory)) {
             return $this->sendError('Procurement Category not found');
         }
 
-        return $this->sendResponse($fixedAssetCategory->toArray(), 'Procurement Category retrieved successfully');
+        return $this->sendResponse($procurementCategory->toArray(), 'Procurement Category retrieved successfully');
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param $id
-     * @param UpdateFixedAssetCategoryAPIRequest $request
+     * @param Request $request
      * @return Response
      */
-    public function update($id, UpdateFixedAssetCategoryAPIRequest $request)
+    public function update($id, Request $request)
     {
         $level = 0;
         $parent_id = 0;
@@ -154,7 +149,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $procurementDesExist = TenderProcurementCategory::select('id')
             ->where('id', '!=', $id)
             ->where('description', '=', $input['description'])->first();
-        if (!empty($procurementDesExist)) {
+        if(!empty($procurementDesExist)) {
             return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
         }
 
@@ -164,9 +159,9 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
 
-        $fixedAssetCategory = TenderProcurementCategory::where('id', $id)->update($input);
+        $procurementCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
-        return $this->sendResponse($fixedAssetCategory, 'Procurement Category updated successfully');
+        return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
     }
 
     /**
@@ -182,8 +177,6 @@ class TenderProcurementCategoryController extends AppBaseController
         if (empty($tenderProcurementCategory)) {
             return $this->sendError('Procurement Category not found');
         }
-
-        // TenderProcurementCategory::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
 
         $tenderProcurementCategory->delete();
 
@@ -205,8 +198,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $sort = 'desc';
         }
 
-        $procurementCategories = TenderProcurementCategory::withoutGlobalScope(ActiveScope::class)
-            ->where('level', $level)
+        $procurementCategories = TenderProcurementCategory::where('level', $level)
             ->orderBy('id', $sort);
 
         $search = $request->input('search.value');
