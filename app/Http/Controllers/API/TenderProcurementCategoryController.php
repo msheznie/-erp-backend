@@ -11,14 +11,16 @@ use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
 
     private $procurementCategoryRepository;
@@ -37,15 +39,21 @@ class TenderProcurementCategoryController extends AppBaseController
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     * @throws \Prettus\Validator\Exceptions\ValidatorException
+     * @return Response
+     * @throws ValidatorException
      */
     public function store(Request $request)
     {
         $level = 0;
+        $parent_id = 0;
         $input = $request->all();
+
         if(isset($input['level'])){
             $level = $input['level'];
+        }
+
+        if(isset($input['parent_id'])){
+            $parent_id = $input['parent_id'];
         }
 
         $input = $this->convertArrayToValue($input);
@@ -74,6 +82,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['created_by'] = Helper::getEmployeeID();
         $input['parent_id'] = 0;
         $input['level'] = $level;
+        $input['parent_id'] = $parent_id;
         $fixedAssetCategories = $this->procurementCategoryRepository->create($input);
 
         return $this->sendResponse($fixedAssetCategories->toArray(), 'Procurement Category saved successfully');
@@ -82,8 +91,8 @@ class TenderProcurementCategoryController extends AppBaseController
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return Response
      */
     public function show($id)
     {
@@ -100,18 +109,23 @@ class TenderProcurementCategoryController extends AppBaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @param UpdateFixedAssetCategoryAPIRequest $request
+     * @return Response
      */
     public function update($id, UpdateFixedAssetCategoryAPIRequest $request)
     {
         $level = 0;
+        $parent_id = 0;
 
         $input = $request->all();
 
         if(isset($input['level'])){
             $level = $input['level'];
+        }
+
+        if(isset($input['parent_id'])){
+            $parent_id = $input['parent_id'];
         }
 
         $procurementCategory = TenderProcurementCategory::find($id);
@@ -148,33 +162,32 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['created_by'] = Helper::getEmployeeID();
         $input['parent_id'] = 0;
         $input['level'] = $level;
+        $input['parent_id'] = $parent_id;
 
         $fixedAssetCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
         return $this->sendResponse($fixedAssetCategory, 'Procurement Category updated successfully');
-
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\TenderProcurementCategory  $tenderProcurementCategory
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return Response
      */
-    public function destroy(TenderProcurementCategory $tenderProcurementCategory)
+    public function destroy($id)
     {
-        /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
+        $tenderProcurementCategory = TenderProcurementCategory::find($id);
 
-        if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+        if (empty($tenderProcurementCategory)) {
+            return $this->sendError('Procurement Category not found');
         }
 
-        FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
+        // TenderProcurementCategory::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
 
-        $fixedAssetCategory->delete();
+        $tenderProcurementCategory->delete();
 
-        return $this->sendResponse($id, 'Asset Category deleted successfully');
+        return $this->sendResponse($id, 'Procurement category deleted successfully');
     }
 
     public function getAllProcurementCategory(Request $request)
