@@ -370,7 +370,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function finance_item_category_subs_update(Request $request)
     {
 
-        $input = $request->all();
+       $input = $request->all();
 
        if((isset($input['financeGLcodebBSSystemID']) && $input['financeGLcodebBSSystemID'] == 0) && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
              return $this->sendError('Please check Include PL For GRV YN',500);
@@ -414,6 +414,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         if (isset($input['itemCategorySubID'])){
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
+            unset($masterData['itemCategoryID'],$masterData['trackingType'],$masterData['modifiedPc'],$masterData['modifiedUser']);
+            $financeItemcategorySubAssigned  = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
+                                    ->update($masterData);
+
         return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);

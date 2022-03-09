@@ -43,6 +43,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ExpenseEmployeeAllocation;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
@@ -727,6 +728,34 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if ($checkItems == 0) {
                     return $this->sendError('Every Supplier Invoice should have at least one item', 500);
                 }
+
+                $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                    ->first();
+
+                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, 12);
+
+                $companyData = Company::find($bookInvSuppMaster->companySystemID);
+
+                if ($employeeInvoice && $employeeInvoice->isYesNO == 1 && $companyData && $companyData->isHrmsIntergrated && ($employeeControlAccount > 0)) {
+                    $employeeControlRelatedAc = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                                                                   ->where('chartOfAccountSystemID', $employeeControlAccount)
+                                                                   ->get();
+
+
+                    foreach ($employeeControlRelatedAc as $key => $value) {
+                        $detailTotalOfLine = $value->netAmount + $value->VATAmount;
+
+                        $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $value['directInvoiceDetailsID'])
+                                                                          ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+                                                                          ->sum('amount');
+
+                        if ($allocatedSum != $detailTotalOfLine) {
+                            return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                        }
+                    }
+                }
+
             } 
 
             if ($checkItems > 0) {
@@ -2029,6 +2058,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+
+        $companyData = Company::find($companyId);
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -2040,9 +2072,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'employeeInvoicePolicy' => ($employeeInvoice && $employeeInvoice->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
+            'isHrmsIntergrated' => ($companyData) ? $companyData->isHrmsIntergrated : false,
             'wareHouseLocation' => $wareHouseLocation,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
+            'employeeControlAccount' => $employeeControlAccount,
             'segments' => $segments,
             'isVATEligible' => $isVATEligible
         );
@@ -2284,7 +2318,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 11)
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            ->where('erp_documentapproved.companySystemID', $companyID)->groupBy('employeesdepartments.employeeSystemID');
 
         $search = $request->input('search.value');
 

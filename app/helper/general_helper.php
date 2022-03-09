@@ -4141,7 +4141,7 @@ class Helper
                     $documentYearMonth = $documentDate->format('Y-m');
 
                     $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                        ->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])
+                        ->whereRaw('? between bigginingDate and endingDate', $documentDate)
                         ->first();
 
                     if (empty($companyFinanceYear)) {
