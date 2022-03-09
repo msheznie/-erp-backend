@@ -206,7 +206,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $data['search']['value'] = '';
                 $request->merge($data);
                 $request->request->remove('search.value');
-                $totalValue = $output->get();
+                $totalValue = $output;
                 return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -218,9 +218,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                         ->addIndexColumn()
                         ->with('orderCondition', $sort)
                         ->with('companyName', $company->CompanyName)
-                        ->with('salesValueTotal', $this->salesDetailReportTotal($input, $totalValue, 'salesValueTotal'))
-                        ->with('costTotal', $this->salesDetailReportTotal($input, $totalValue, 'costTotal'))
-                        ->with('profitTotal', $this->salesDetailReportTotal($input, $totalValue, 'profitTotal'))
+                    ->with('salesValueTotal', $this->salesDetailReportTotal($input, $totalValue, 'salesValueTotal'))
+                    ->with('costTotal', $this->salesDetailReportTotal($input, $totalValue, 'costTotal'))
+                    ->with('profitTotal', $this->salesDetailReportTotal($input, $totalValue, 'profitTotal'))
                         ->with('CurrencyCode', $currency->CurrencyCode)
                         ->with('DecimalPlaces', $currency->DecimalPlaces)
                         ->addColumn('average_cost', function ($row) use ($input, $currency){
@@ -776,94 +776,73 @@ class SalesMarketingReportAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
         }
 
+        $companyIDArray = implode(',', $companyID);
 
-        $deliveryOrderDetail = DB::table('erp_delivery_order_detail')
-                                 ->selectRaw('erp_delivery_order.documentSystemID as documentSystemID, erp_delivery_order.deliveryOrderID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_delivery_order.deliveryOrderCode as documentCode, erp_delivery_order.deliveryOrderDate as documentDate, erp_delivery_order_detail.itemPrimaryCode as itemCode, erp_delivery_order_detail.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_delivery_order_detail.qtyIssued as quantity, (erp_delivery_order_detail.companyLocalAmount*qtyIssued) + (erp_delivery_order_detail.VATAmountLocal*qtyIssued) as localAmount, (erp_delivery_order_detail.companyReportingAmount*qtyIssued) + (erp_delivery_order_detail.VATAmountRpt*qtyIssued)  as rptAmount, erp_delivery_order_detail.wacValueLocal*qtyIssued as localCost, erp_delivery_order_detail.wacValueReporting*qtyIssued as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_delivery_order_detail.itemCodeSystem as itemCodeSystem, discountAmount, erp_delivery_order.companySystemID')
-                                 ->join('erp_delivery_order', 'erp_delivery_order.deliveryOrderID', '=', 'erp_delivery_order_detail.deliveryOrderID')
-                                 ->leftJoin('units', 'units.UnitID', '=', 'erp_delivery_order_detail.unitOfMeasureIssued')
-                                 ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_delivery_order.customerID')
-                                 ->leftJoin('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_delivery_order_detail.itemFinanceCategorySubID')
-                                 ->where('erp_delivery_order.approvedYN',-1)
-                                 ->whereIn('erp_delivery_order.companySystemID',$companyID)
-                                 ->whereDate('erp_delivery_order.deliveryOrderDate', '>=', $fromDate)
-                                 ->whereDate('erp_delivery_order.deliveryOrderDate', '<=', $toDate)
-                                 ->when(sizeof($customerIds) > 0, function($query) use ($customerIds) {
-                                    $query->whereIn('erp_delivery_order.customerID', $customerIds);
-                                 })
-                                 ->when(sizeof($itemIds) > 0, function($query) use ($itemIds) {
-                                    $query->whereIn('erp_delivery_order_detail.itemCodeSystem', $itemIds);
-                                 })
-                                 ->when(sizeof($wareHouseIds) > 0, function($query) use ($wareHouseIds) {
-                                    $query->whereIn('erp_delivery_order.wareHouseSystemCode', $wareHouseIds);
-                                 });
+        $customerIds = (array) $customerIds;
+        $stringCustomer = '';
 
-        if ($search) {
-            $deliveryOrderDetail = $deliveryOrderDetail->where(function ($query) use ($search) {
-                                                    $query->orWhere('erp_delivery_order.deliveryOrderCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('erp_delivery_order_detail.itemPrimaryCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('erp_delivery_order_detail.itemDescription', 'LIKE', "%{$search}%");
-                                                });
+        foreach($customerIds as $a)
+        {
+            foreach($a as $b=>$c)
+            {
+                $stringCustomer .= $c.',';
+            }
         }
 
-        $salesReturnDetail = DB::table('salesreturndetails')
-                                 ->selectRaw('salesreturn.documentSystemID as documentSystemID, salesreturn.id as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, salesreturn.salesReturnCode as documentCode, salesreturn.salesReturnDate as documentDate, salesreturndetails.itemPrimaryCode as itemCode, salesreturndetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, (salesreturndetails.qtyReturned*-1) as quantity, (salesreturndetails.companyLocalAmount + (salesreturndetails.VATAmountLocal*qtyReturned))*-1 as localAmount, (salesreturndetails.companyReportingAmount + (salesreturndetails.VATAmountRpt*qtyReturned))*-1  as rptAmount, (salesreturndetails.wacValueLocal*qtyReturned)*-1 as localCost, (salesreturndetails.wacValueReporting*qtyReturned)*-1 as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, salesreturndetails.itemCodeSystem as itemCodeSystem, discountAmount, salesreturn.companySystemID')
-                                 ->join('salesreturn', 'salesreturn.id', '=', 'salesreturndetails.salesReturnID')
-                                 ->leftJoin('units', 'units.UnitID', '=', 'salesreturndetails.unitOfMeasureIssued')
-                                 ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'salesreturn.customerID')
-                                 ->leftJoin('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'salesreturndetails.itemFinanceCategorySubID')
-                                 ->where('salesreturn.approvedYN',-1)
-                                 ->whereIn('salesreturn.companySystemID',$companyID)
-                                 ->whereDate('salesreturn.salesReturnDate', '>=', $fromDate)
-                                 ->whereDate('salesreturn.salesReturnDate', '<=', $toDate)
-                                 ->when(sizeof($customerIds) > 0, function($query) use ($customerIds) {
-                                    $query->whereIn('salesreturn.customerID', $customerIds);
-                                 })
-                                 ->when(sizeof($itemIds) > 0, function($query) use ($itemIds) {
-                                    $query->whereIn('salesreturndetails.itemCodeSystem', $itemIds);
-                                 })
-                                 ->when(sizeof($wareHouseIds) > 0, function($query) use ($wareHouseIds) {
-                                    $query->whereIn('salesreturn.wareHouseSystemCode', $wareHouseIds);
-                                 });
+        $customerIDArray = substr($stringCustomer,0,-1);
 
-        if ($search) {
-            $salesReturnDetail = $salesReturnDetail->where(function ($query) use ($search) {
-                                                    $query->orWhere('salesreturn.salesReturnCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('salesreturndetails.itemPrimaryCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('salesreturndetails.itemDescription', 'LIKE', "%{$search}%");
-                                                });
+
+        $itemIds = (array) $itemIds;
+        $stringItem = '';
+
+        foreach($itemIds as $a)
+        {
+            foreach($a as $b=>$c)
+            {
+                $stringItem .= $c.',';
+            }
         }
 
+        $itemIDArray = substr($stringItem,0,-1);
 
-        $salesInvoiceDetail = DB::table('erp_customerinvoiceitemdetails')
-                             ->selectRaw('erp_custinvoicedirect.documentSystemiD as documentSystemID, erp_custinvoicedirect.custInvoiceDirectAutoID as documentAutoID, customermaster.CutomerCode as customerCode, customermaster.CustomerName as customerName, erp_custinvoicedirect.bookingInvCode as documentCode, erp_custinvoicedirect.bookingDate as documentDate, erp_customerinvoiceitemdetails.itemPrimaryCode as itemCode, erp_customerinvoiceitemdetails.itemDescription as itemDescription, units.UnitShortCode as unitShortCode, erp_customerinvoiceitemdetails.qtyIssuedDefaultMeasure as quantity, (erp_customerinvoiceitemdetails.sellingCostAfterMarginLocal*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountLocal*qtyIssuedDefaultMeasure) as localAmount, (erp_customerinvoiceitemdetails.sellingCostAfterMarginRpt*qtyIssuedDefaultMeasure) + (erp_customerinvoiceitemdetails.VATAmountRpt*qtyIssuedDefaultMeasure) as rptAmount, erp_customerinvoiceitemdetails.issueCostLocal*qtyIssuedDefaultMeasure as localCost, erp_customerinvoiceitemdetails.issueCostRpt*qtyIssuedDefaultMeasure as rptCost, financeitemcategorysub.categoryDescription as categoryDescription, erp_customerinvoiceitemdetails.itemCodeSystem as itemCodeSystem, issueCostRpt as discountAmount, erp_custinvoicedirect.companySystemID')
-                             ->join('erp_custinvoicedirect', 'erp_custinvoicedirect.custInvoiceDirectAutoID', '=', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID')
-                             ->leftJoin('units', 'units.UnitID', '=', 'erp_customerinvoiceitemdetails.unitOfMeasureIssued')
-                             ->leftJoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_custinvoicedirect.customerID')
-                             ->leftJoin('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'erp_customerinvoiceitemdetails.itemFinanceCategorySubID')
-                             ->where('erp_custinvoicedirect.approved',-1)
-                             ->whereIn('erp_custinvoicedirect.companySystemID',$companyID)
-                             ->whereIn('erp_custinvoicedirect.isPerforma',[2,4,5])
-                             ->whereDate('erp_custinvoicedirect.bookingDate', '>=', $fromDate)
-                             ->whereDate('erp_custinvoicedirect.bookingDate', '<=', $toDate)
-                             ->when(sizeof($customerIds) > 0, function($query) use ($customerIds) {
-                                $query->whereIn('erp_custinvoicedirect.customerID', $customerIds);
-                             })
-                             ->when(sizeof($itemIds) > 0, function($query) use ($itemIds) {
-                                $query->whereIn('erp_customerinvoiceitemdetails.itemCodeSystem', $itemIds);
-                             })
-                             ->when(sizeof($wareHouseIds) > 0, function($query) use ($wareHouseIds) {
-                                $query->whereIn('erp_custinvoicedirect.wareHouseSystemCode', $wareHouseIds);
-                             })
-                             ->union($salesReturnDetail)
-                             ->union($deliveryOrderDetail)
-                             ->orderBy('documentDate', 'desc');
+        $wareHouseIds = (array) $wareHouseIds;
+        $stringWareHouse = '';
 
-         if ($search) {
-            $salesInvoiceDetail = $salesInvoiceDetail->where(function ($query) use ($search) {
-                                                    $query->orWhere('erp_custinvoicedirect.bookingInvCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('erp_customerinvoiceitemdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
-                                                          ->orWhere('erp_customerinvoiceitemdetails.itemDescription', 'LIKE', "%{$search}%");
-                                                });
+        foreach($wareHouseIds as $a)
+        {
+            foreach($a as $b=>$c)
+            {
+                $stringWareHouse .= $c.',';
+            }
+        }
+
+        $wareHouseIDArray = substr($stringWareHouse,0,-1);
+
+        $toDate = json_encode(['toDateSql' => $toDate]);
+        $fromDate = json_encode(['fromDateSql' => $fromDate]);
+        $companyIDArray = json_encode(['companyIDSql' => $companyIDArray]);
+
+
+        $customerIDArray = json_encode(['customerIDSql' => $customerIDArray]);
+        $itemIDArray = json_encode(['itemIDSql' => $itemIDArray]);
+        $wareHouseIDArray = json_encode(['warehouseIDSql' => $wareHouseIDArray]);
+
+        $salesInvoiceDetail = DB::select('CALL getSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray]);
+
+
+        if ($search) {
+
+            $searchArray = json_encode(['searchSql' => $search]);
+            $fromDate = new Carbon($input['fromDate']);
+            $fromDate = $fromDate->format('Y-m-d');
+
+            $toDate = new Carbon($input['toDate']);
+            $toDate = $toDate->format('Y-m-d');
+            $toDate = json_encode(['toDateSql' => $toDate]);
+            $fromDate = json_encode(['fromDateSql' => $fromDate]);
+
+            $salesInvoiceDetail = DB::select('CALL searchGetSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse,:search)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray, 'search' => $searchArray]);
+
         }
 
         return $salesInvoiceDetail;
@@ -1333,7 +1312,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                 $company = Company::find($input['companySystemID']);
-                $output = $this->getSalesDetailQry($input, $search)->get();
+                $output = $this->getSalesDetailQry($input, $search);
 
                 $locaCurrencyID = $company->localCurrencyID;
                 $reportingCurrencyID = $company->reportingCurrency;
