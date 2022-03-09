@@ -370,10 +370,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     public function finance_item_category_subs_update(Request $request)
     {
 
-        $input = $request->all();
+       $input = $request->all();
 
-       if($input['financeGLcodebBSSystemID'] == 0 && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
+       if((!isset($input['financeGLcodebBSSystemID']) || $input['financeGLcodebBSSystemID'] == 0) && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN']) && !isset($input['financeGLcodePLSystemID'])) {
              return $this->sendError('Please check Include PL For GRV YN',500);
+       }
+
+       if((!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'] && !isset($input['financeGLcodePLSystemID']))) {
+            return $this->sendError('Please Select Cost GL Code',500);
        }
 
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType']);
@@ -410,6 +414,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         if (isset($input['itemCategorySubID'])){
             $itemCategorySubUpdate = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
+            unset($masterData['itemCategoryID'],$masterData['trackingType'],$masterData['modifiedPc'],$masterData['modifiedUser']);
+            $financeItemcategorySubAssigned  = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
+                                    ->update($masterData);
+
         return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
