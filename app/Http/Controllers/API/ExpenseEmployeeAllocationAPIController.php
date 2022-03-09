@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateExpenseEmployeeAllocationAPIRequest;
 use App\Http\Requests\API\UpdateExpenseEmployeeAllocationAPIRequest;
 use App\Models\ExpenseEmployeeAllocation;
+use App\Models\DirectPaymentDetails;
 use App\Models\DirectInvoiceDetails;
 use App\Repositories\ExpenseEmployeeAllocationRepository;
 use Illuminate\Http\Request;
@@ -148,21 +149,22 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
         } 
         else if($input['documentSystemID'] == 4) {
-            // $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
+            $directDetail = DirectPaymentDetails::with(['master'])->find($input['documentDetailID']);
             
-            // if (!$directDetail) {
-            //     return $this->sendError("Payment voucher detail not found");
-            // }
+            if (!$directDetail) {
+                return $this->sendError("Payment voucher detail not found");
+            }
 
-            // $detailTotal = $directDetail->DPAmount;
-            // $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
-            // $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
-            // $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
+            $detailTotal = $directDetail->DPAmount;
+            $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
+            $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
+            $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
 
-            // $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
 
-            // $input['amountRpt'] = $currencyConversion['reportingAmount'];
-            // $input['amountLocal'] = $currencyConversion['localAmount'];
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+            $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
         }
         
         
