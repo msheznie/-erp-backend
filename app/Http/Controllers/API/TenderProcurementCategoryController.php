@@ -172,23 +172,22 @@ class TenderProcurementCategoryController extends AppBaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param TenderProcurementCategory $tenderProcurementCategory
+     * @param $id
      * @return Response
      */
-    public function destroy(TenderProcurementCategory $tenderProcurementCategory)
+    public function destroy($id)
     {
-        /** @var FixedAssetCategory $fixedAssetCategory */
-        $fixedAssetCategory = FixedAssetCategory::withoutGlobalScope(ActiveScope::class)->find($id);
+        $tenderProcurementCategory = TenderProcurementCategory::find($id);
 
-        if (empty($fixedAssetCategory)) {
-            return $this->sendError('Asset Category not found');
+        if (empty($tenderProcurementCategory)) {
+            return $this->sendError('Procurement Category not found');
         }
 
-        FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
+        // TenderProcurementCategory::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
 
-        $fixedAssetCategory->delete();
+        $tenderProcurementCategory->delete();
 
-        return $this->sendResponse($id, 'Asset Category deleted successfully');
+        return $this->sendResponse($id, 'Procurement category deleted successfully');
     }
 
     public function getAllProcurementCategory(Request $request)
