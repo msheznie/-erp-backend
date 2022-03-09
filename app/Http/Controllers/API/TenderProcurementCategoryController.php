@@ -198,8 +198,13 @@ class TenderProcurementCategoryController extends AppBaseController
             $sort = 'desc';
         }
 
-        $procurementCategories = TenderProcurementCategory::where('level', $level)
-            ->orderBy('id', $sort);
+        $procurementCategories = TenderProcurementCategory::where('level', $level);
+
+        if(isset($input['id']) && $input['id'] !== 0) {
+            $procurementCategories->where('parent_id', $input['id']);
+        }
+
+        $procurementCategories->orderBy('id', $sort);
 
         $search = $request->input('search.value');
 
