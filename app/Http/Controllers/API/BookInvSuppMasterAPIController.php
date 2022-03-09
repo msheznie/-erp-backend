@@ -2318,7 +2318,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 11)
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            ->where('erp_documentapproved.companySystemID', $companyID)->groupBy('employeesdepartments.employeeSystemID');
 
         $search = $request->input('search.value');
 
