@@ -11,6 +11,7 @@ use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
+use Illuminate\Support\Facades\Log;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
@@ -41,7 +42,12 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function store(Request $request)
     {
+        $level = 0;
         $input = $request->all();
+        if(isset($input['level'])){
+            $level = $input['level'];
+        }
+
         $input = $this->convertArrayToValue($input);
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
@@ -67,7 +73,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['created_pc'] = gethostname();
         $input['created_by'] = Helper::getEmployeeID();
         $input['parent_id'] = 0;
-        $input['level'] = 0;
+        $input['level'] = $level;
         $fixedAssetCategories = $this->procurementCategoryRepository->create($input);
 
         return $this->sendResponse($fixedAssetCategories->toArray(), 'Procurement Category saved successfully');
@@ -100,7 +106,13 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function update($id, UpdateFixedAssetCategoryAPIRequest $request)
     {
+        $level = 0;
+
         $input = $request->all();
+
+        if(isset($input['level'])){
+            $level = $input['level'];
+        }
 
         $procurementCategory = TenderProcurementCategory::find($id);
 
@@ -135,7 +147,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['created_pc'] = gethostname();
         $input['created_by'] = Helper::getEmployeeID();
         $input['parent_id'] = 0;
-        $input['level'] = 0;
+        $input['level'] = $level;
 
         $fixedAssetCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
@@ -167,7 +179,12 @@ class TenderProcurementCategoryController extends AppBaseController
 
     public function getAllProcurementCategory(Request $request)
     {
+        $level = 0;
         $input = $request->all();
+
+        if(isset($input['extra']['level'])){
+            $level = $input['extra']['level'];
+        }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -176,6 +193,7 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         $procurementCategories = TenderProcurementCategory::withoutGlobalScope(ActiveScope::class)
+            ->where('level', $level)
             ->orderBy('id', $sort);
 
         $search = $request->input('search.value');
