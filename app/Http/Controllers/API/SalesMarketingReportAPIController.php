@@ -826,13 +826,14 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerIDArray = json_encode(['customerIDSql' => $customerIDArray]);
         $itemIDArray = json_encode(['itemIDSql' => $itemIDArray]);
         $wareHouseIDArray = json_encode(['warehouseIDSql' => $wareHouseIDArray]);
+        $searchArray = json_encode(['searchSql' => $search]);
 
-        $salesInvoiceDetail = DB::select('CALL getSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray]);
-
+        $salesInvoiceDetail = DB::select('CALL getSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse, :search)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray, 'search' => $searchArray]);
 
         if ($search) {
 
             $searchArray = json_encode(['searchSql' => $search]);
+          
             $fromDate = new Carbon($input['fromDate']);
             $fromDate = $fromDate->format('Y-m-d');
 
@@ -841,7 +842,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             $toDate = json_encode(['toDateSql' => $toDate]);
             $fromDate = json_encode(['fromDateSql' => $fromDate]);
 
-            $salesInvoiceDetail = DB::select('CALL searchGetSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse,:search)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray, 'search' => $searchArray]);
+            $salesInvoiceDetail = DB::select('CALL getSalesDetailQry(:toDate,:fromDate,:company,:customer,:item,:warehouse,:search)', ['toDate' => $toDate,'fromDate' => $fromDate,'company' => $companyIDArray , 'customer' => $customerIDArray, 'item' => $itemIDArray, 'warehouse' => $wareHouseIDArray, 'search' => $searchArray]);
 
         }
 
