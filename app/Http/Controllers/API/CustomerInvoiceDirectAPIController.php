@@ -440,20 +440,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
 
-            foreach($qo_master->detail as $item) {
-                $item_details_count = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->where('itemCodeSystem',$item->itemAutoID)->sum('qtyIssued');
-                $qo_master_count = QuotationDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->where('itemAutoID',$item->itemAutoID)->sum('requestedQty');
+            if(isset($qo_master->detail)) {
+                foreach ($qo_master->detail as $item) {
+                    $item_details_count = CustomerInvoiceItemDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemCodeSystem', $item->itemAutoID)->sum('qtyIssued');
+                    $qo_master_count = QuotationDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemAutoID', $item->itemAutoID)->sum('requestedQty');
 
-                if ($qo_master) {
-                    if($qo_master_count == $item_details_count) {
-                        $qo_master->isInDOorCI = 2;
-                        $qo_master->save();
-                    }else {
-                        $qo_master->isInDOorCI = 4;
-                        $qo_master->save();
+                    if ($qo_master) {
+                        if ($qo_master_count == $item_details_count) {
+                            $qo_master->isInDOorCI = 2;
+                            $qo_master->save();
+                        } else {
+                            $qo_master->isInDOorCI = 4;
+                            $qo_master->save();
+                        }
                     }
                 }
             }
+
+
         }
 
         if ($isPerforma == 1) {
