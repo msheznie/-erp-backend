@@ -2181,7 +2181,6 @@ WHERE
                                 )
                                 ->whereHas('issue_item_details', function ($query) use ($row) {
                                     $query->where('itemCodeSystem', $row['itemAutoID']);
-                                    $query->where('quotationMasterID', $row['quotationMasterID']);
                                 })
                                 ->where('approved', 0)
                                 ->where('canceledYN', 0)
