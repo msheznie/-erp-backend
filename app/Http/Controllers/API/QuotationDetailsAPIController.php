@@ -558,10 +558,8 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::where('quotationMasterID', $quotationMasterID)
+        $items = QuotationDetails::join('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
             ->get();
-            
-
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
 
