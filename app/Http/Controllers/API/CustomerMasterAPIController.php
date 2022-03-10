@@ -486,15 +486,14 @@ class CustomerMasterAPIController extends AppBaseController
                 return $this->sendError('Linked company is required',500);
             }
 
-            $checkCustomerForInterCompany = CustomerMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
-                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+            $checkCustomerForInterCompany = CustomerMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
                                            ->when(array_key_exists('customerCodeSystem', $input), function($query) use ($input) {
                                                 $query->where('customerCodeSystem', '!=', $input['customerCodeSystem']);
                                            })
                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('Intercompany customer has been already created for this company',500);
+                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->CustomerName,500);
             }
 
 
