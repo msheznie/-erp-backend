@@ -22,6 +22,7 @@ use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateGRVSupplierInvoice;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
+use App\Jobs\CreateSupplierTransactions;
 use App\Jobs\EliminationLedgerInsert;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
@@ -1991,10 +1992,12 @@ class Helper
                             ];
                         }
 
-
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
-
+                            if($input["documentSystemID"] == 2){
+                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"]];
+                                CreateSupplierTransactions::dispatch($masterModel);
+                            }
 
                             // create monthly deduction
                             if (

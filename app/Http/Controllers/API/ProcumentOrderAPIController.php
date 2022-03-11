@@ -57,6 +57,7 @@ use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Jobs\CreateSupplierTransactions;
 use App\Models\AddonCostCategories;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -1968,9 +1969,12 @@ class ProcumentOrderAPIController extends AppBaseController
     public function approveProcurementOrder(Request $request)
     {
         $approve = \Helper::approveDocument($request);
+
         if (!$approve["success"]) {
+
             return $this->sendError($approve["message"]);
         } else {
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }
