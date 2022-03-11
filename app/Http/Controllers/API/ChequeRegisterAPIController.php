@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class ChequeRegisterController
  * @package App\Http\Controllers\API
@@ -655,17 +655,21 @@ class ChequeRegisterAPIController extends AppBaseController
             }
 
         }
-         \Excel::create('cheque_registry', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle("A1:I1")->getFont()->setBold( true );
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+        $fileName = 'cheque_registry';
+        $path = 'treasury/transaction/cheque_registry/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
 
     }
 
