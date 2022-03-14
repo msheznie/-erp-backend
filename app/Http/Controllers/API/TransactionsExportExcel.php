@@ -218,8 +218,8 @@ class TransactionsExportExcel extends AppBaseController
                 $serviceLineSystemID = $request['serviceLineSystemID'];
                 $serviceLineSystemID = (array)$serviceLineSystemID;
                 $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-
-                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
+                $reasons = (isset($input['reason'])) ? collect($input['reason'])->pluck('id') : null;
+                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID,$reasons);
                 $data = $this->stockAdjustmentRepository->setExportExcelData($dataQry);
                 break;
 
