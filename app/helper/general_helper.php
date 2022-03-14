@@ -81,6 +81,7 @@ use App\helper\ChartOfAccountDependency;
 use App\helper\CurrencyConversionService;
 use App\Jobs\BudgetAdditionAdjustment;
 use App\helper\SendEmailForDocument;
+use App\helper\HrMonthlyDeductionService;
 use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
@@ -2152,6 +2153,17 @@ class Helper
                                     $jobIL = ItemLedgerInsert::dispatch($masterData);
                                 }
                             }
+
+                            if ($input["documentSystemID"] == 11) {
+                                if ($sourceModel->documentType == 1 && $sourceModel->createMonthlyDeduction) {
+                                    $monthlyDedRes = HrMonthlyDeductionService::createMonthlyDeductionForSupplierInvoice($masterData);
+
+                                    if (!$monthlyDedRes['status']) {
+                                        return ['success' => false, 'message' => $monthlyDedRes['message']];
+                                    }
+                                }
+                            }
+
 
                             // insert the record to general ledger
 
