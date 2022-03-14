@@ -1569,17 +1569,22 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
-         \Excel::create('asset_insurance_report', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+
+        $fileName = 'asset_insurance_report';
+        $path = 'asset/report/asset_insurance_report/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+        
     }
 
     public function assetInsuranceReport($input, $search)
