@@ -40,10 +40,8 @@ class CreateSupplierTransactions implements ShouldQueue
                 try {
                     $masterModel = $this->masterModel;
 
-                    $supplier = SupplierMaster::where('primarySupplierCode',$masterModel['supplierPrimaryCode'])->get();
-                    $supplierCodeSystem = isset($supplier[0]->supplierCodeSystem) ? $supplier[0]->supplierCodeSystem : '';
                     $today = NOW();
-                    $supplierMasterRepository->update(['last_activity'=>$today],$supplierCodeSystem);
+                    $supplierMasterRepository->update(['last_activity'=>$today],$masterModel['supplierID']);
 
                     $supplierMaster = array();
                     $supplierMaster['documentSystemID'] = $masterModel['documentSystemID'];
