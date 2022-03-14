@@ -51,6 +51,7 @@ class StockAdjustmentRepository extends BaseRepository
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
+        'reason',
         'timestamp'
     ];
 
@@ -72,7 +73,7 @@ class StockAdjustmentRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function stockAdjustmentListQuery($request, $input, $search = '',$grvLocation, $serviceLineSystemID) {
+    public function stockAdjustmentListQuery($request, $input, $search = '',$grvLocation, $serviceLineSystemID,$reasons) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -84,7 +85,7 @@ class StockAdjustmentRepository extends BaseRepository
         }
 
         $stockAdjustments = StockAdjustment::whereIn('companySystemID', $subCompanies)
-            ->with(['created_by', 'warehouse_by', 'segment_by']);
+            ->with(['created_by', 'warehouse_by', 'segment_by','reason']);
 
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -123,10 +124,19 @@ class StockAdjustmentRepository extends BaseRepository
             }
         }
 
+        if(array_key_exists('reason', $input)) {
+            if ($input['reason'] && !is_null($input['reason'])) {
+                $stockAdjustments->whereIn('reason', $reasons);
+            }
+        }
+
+        // if(array_key_exists('year', $input))
+
 
         $stockAdjustments = $stockAdjustments->select(
             ['stockAdjustmentAutoID',
                 'stockAdjustmentCode',
+                'stockAdjustmentType',
                 'comment',
                 'stockAdjustmentDate',
                 'confirmedYN',
@@ -139,7 +149,8 @@ class StockAdjustmentRepository extends BaseRepository
                 'createdDateTime',
                 'refNo',
                 'location',
-                'refferedBackYN'
+                'refferedBackYN',
+                'reason'
             ]);
 
 
