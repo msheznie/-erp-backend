@@ -375,10 +375,9 @@ class DeliveryOrderAPIController extends AppBaseController
         $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
 
         $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
-    
+            
         if ($quotationMaster) {
             $count  = $quotationMaster->detail->count();
-
 
             if($deliveryOrderDetaiCountl == $count) {
                 $quotationMaster->isInDOorCI = 1;
@@ -386,10 +385,9 @@ class DeliveryOrderAPIController extends AppBaseController
             }else {
                 $quotationMaster->isInDOorCI = 3;
                 $quotationMaster->save();
+
             }
         }
-
-
 
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
