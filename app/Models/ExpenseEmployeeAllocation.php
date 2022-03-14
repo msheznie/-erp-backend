@@ -156,4 +156,9 @@ class ExpenseEmployeeAllocation extends Model
     {
        return $this->belongsTo('App\Models\ItemIssueDetails', 'documentSystemCode', 'itemIssueAutoID');
     }
+
+    public function invoice_detail()
+    {
+       return $this->belongsTo('App\Models\DirectInvoiceDetails', 'documentDetailID', 'directInvoiceDetailsID');
+    }
 }
