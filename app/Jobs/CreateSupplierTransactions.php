@@ -47,20 +47,20 @@ class CreateSupplierTransactions implements ShouldQueue
 
                     $supplierMaster = array();
                     $supplierMaster['documentSystemID'] = $masterModel['documentSystemID'];
-                    $supplierMaster['documentID'] = 0;
-                    $supplierMaster['documentSystemCode'] = 0;
-                    $supplierMaster['documentCode'] = 0;
-                    $supplierMaster['documentDate'] = $today;
-                    $supplierMaster['documentNarration'] = 0;
-                    $supplierMaster['supplierID'] = 0;
-                    $supplierMaster['supplierCode'] = 0;
-                    $supplierMaster['supplierName'] = 0;
-                    $supplierMaster['confirmedDate'] = $today;
-                    $supplierMaster['confirmedBy'] = 0;
+                    $supplierMaster['documentID'] = $masterModel['documentID'];
+                    $supplierMaster['documentSystemCode'] = $masterModel['documentSystemCode'];
+                    $supplierMaster['documentCode'] = $masterModel['documentCode'];
+                    $supplierMaster['documentDate'] = $masterModel['documentDate'];
+                    $supplierMaster['documentNarration'] = $masterModel['documentNarration'];
+                    $supplierMaster['supplierID'] = $masterModel['supplierID'];
+                    $supplierMaster['supplierCode'] = $masterModel['supplierCode'];
+                    $supplierMaster['supplierName'] = $masterModel['supplierName'];
+                    $supplierMaster['confirmedDate'] = $masterModel['confirmedDate'];
+                    $supplierMaster['confirmedBy'] = $masterModel['confirmedBy'];
                     $supplierMaster['approvedDate'] = $today;
-                    $supplierMaster['lastApprovedBy'] = 0;
-                    $supplierMaster['transactionCurrency'] = 0;
-                    $supplierMaster['amount'] = 0;
+                    $supplierMaster['lastApprovedBy'] = $masterModel['lastApprovedBy'];
+                    $supplierMaster['transactionCurrency'] = $masterModel['transactionCurrency'];
+                    $supplierMaster['amount'] = $masterModel['amount'];
                     $supplierTransactionsRepository->create($supplierMaster);
 
                     DB::commit();

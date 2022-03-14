@@ -46,7 +46,9 @@ use App\Models\DocumentRestrictionAssign;
 use App\Models\EmployeeNavigation;
 use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\BookInvSuppMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseReturnDetails;
@@ -1995,7 +1997,24 @@ class Helper
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
                             if($input["documentSystemID"] == 2){
-                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"]];
+
+                                $purchaseOrderMaster  = ProcumentOrder::find($input["documentSystemCode"]);
+                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$purchaseOrderMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$purchaseOrderMaster->purchaseOrderCode, 'documentDate'=>$purchaseOrderMaster->createdDateTime,'documentNarration'=>$purchaseOrderMaster->narration,'supplierID'=>$purchaseOrderMaster->supplierID, 'supplierCode'=>$purchaseOrderMaster->supplierPrimaryCode,'supplierName'=>$purchaseOrderMaster->supplierName,'confirmedDate'=>$purchaseOrderMaster->poConfirmedDate, 'confirmedBy'=>$purchaseOrderMaster->poConfirmedByEmpSystemID, 'approvedDate'=>$purchaseOrderMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$purchaseOrderMaster->supplierTransactionCurrencyID, 'amount'=>$purchaseOrderMaster->poTotalSupplierTransactionCurrency];
+                                CreateSupplierTransactions::dispatch($masterModel);
+                            }
+
+                            if($input["documentSystemID"] == 3){
+
+                                $grvMaster  = GRVMaster::find($input["documentSystemCode"]);
+                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$grvMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$grvMaster->grvPrimaryCode, 'documentDate'=>$grvMaster->createdDateTime,'documentNarration'=>$grvMaster->grvNarration,'supplierID'=>$grvMaster->supplierID, 'supplierCode'=>$grvMaster->supplierPrimaryCode,'supplierName'=>$grvMaster->supplierName,'confirmedDate'=>$grvMaster->grvConfirmedDate, 'confirmedBy'=>$grvMaster->grvConfirmedByEmpSystemID, 'approvedDate'=>$grvMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$grvMaster->supplierTransactionCurrencyID, 'amount'=>$grvMaster->grvTotalSupplierTransactionCurrency];
+                                CreateSupplierTransactions::dispatch($masterModel);
+                            }
+
+
+                            if($input["documentSystemID"] == 11){
+
+                                $supplierMaster  = BookInvSuppMaster::find($input["documentSystemCode"]);
+                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$supplierMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$supplierMaster->grvPrimaryCode, 'documentDate'=>$supplierMaster->createdDateTime,'documentNarration'=>$supplierMaster->grvNarration,'supplierID'=>$supplierMaster->supplierID, 'supplierCode'=>$supplierMaster->supplierPrimaryCode,'supplierName'=>$supplierMaster->supplierName,'confirmedDate'=>$supplierMaster->grvConfirmedDate, 'confirmedBy'=>$grvMaster->grvConfirmedByEmpSystemID, 'approvedDate'=>$supplierMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$supplierMaster->supplierTransactionCurrencyID, 'amount'=>$supplierMaster->grvTotalSupplierTransactionCurrency];
                                 CreateSupplierTransactions::dispatch($masterModel);
                             }
 
