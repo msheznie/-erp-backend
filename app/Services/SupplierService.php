@@ -58,7 +58,7 @@ class SupplierService
         ];
 
         $confirm = Helper::confirmDocument($params);
-        throw_unless($confirm && $confirm['success'], $confirm['message']);
+      //  throw_unless($confirm && $confirm['success'], $confirm['message']);
 
         return [
             'success'   => $confirm['success'],
