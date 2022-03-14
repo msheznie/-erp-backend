@@ -236,7 +236,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         $fileName = 'supplier_master';
-        $path = 'procurement/master/supplier/excel/';
+        $path = 'system/supplier_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
