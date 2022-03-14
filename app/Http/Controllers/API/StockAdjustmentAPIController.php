@@ -760,7 +760,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_stockadjustment.*',
+                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -777,6 +777,7 @@ class StockAdjustmentAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [7])
             ->where('erp_documentapproved.companySystemID', $companyId)
@@ -848,7 +849,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_stockadjustment.*',
+                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -884,6 +885,7 @@ class StockAdjustmentAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
