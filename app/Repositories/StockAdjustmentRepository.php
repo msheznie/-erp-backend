@@ -146,6 +146,7 @@ class StockAdjustmentRepository extends BaseRepository
                 'confirmedByEmpSystemID',
                 'createdUserSystemID',
                 'confirmedDate',
+                'approvedDate',
                 'createdDateTime',
                 'refNo',
                 'location',
