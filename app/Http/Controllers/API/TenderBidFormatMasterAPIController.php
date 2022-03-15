@@ -534,4 +534,5 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
     }
+
 }

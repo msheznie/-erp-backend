@@ -293,7 +293,7 @@ class TenderMaster extends Model
 
     public function envelop_type()
     {
-        return $this->hasOne('App\Models\EnvelopType', 'id', 'evaluation_type_id');
+        return $this->hasOne('App\Models\EnvelopType', 'id', 'envelop_type_id');
     }
 
     public function currency()

@@ -6,11 +6,15 @@ use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\CurrencyMaster;
 use App\Models\EnvelopType;
+use App\Models\EvaluationType;
 use App\Models\TenderMaster;
+use App\Models\TenderProcurementCategory;
 use App\Models\TenderType;
 use App\Repositories\TenderMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -337,6 +341,72 @@ class TenderMasterAPIController extends AppBaseController
         $data['tenderType'] = TenderType::get();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
+        $data['evaluationTypes'] = EvaluationType::get();
+        $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->get();
+
+        return $data;
+    }
+
+    public function createTender(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $data['currency_id']=$input['currency_id'];
+            $data['description']=$input['description'];
+            $data['description_sec_lang']=$input['description_sec_lang'];
+            $data['envelop_type_id']=$input['envelop_type_id'];
+            $data['tender_type_id']=$input['tender_type_id'];
+            $data['title']=$input['title'];
+            $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['company_id']=$input['companySystemID'];
+            $data['created_by'] = $employee->employeeSystemID;
+
+            $result = TenderMaster::create($data);
+
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteTenderMaster(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $data['deleted_by'] = $employee->employeeSystemID;
+            $data['deleted_at'] = now();
+            $result = TenderMaster::where('id',$input['id'])->update($data);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function getTenderMasterData(Request $request)
+    {
+        $input = $request->all();
+        return TenderMaster::where('id',$input['tenderMasterId'])->first();
+    }
+
+    public function loadTenderSubCategory(Request $request)
+    {
+        $input = $request->all();
+        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->get();
 
         return $data;
     }
