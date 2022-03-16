@@ -301,7 +301,6 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             $childCompanies = [$companyId];
         }
-
         if ($request['type'] == 'all') {
             $supplierMasters = SupplierMaster::with(['liablity_account', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
@@ -309,7 +308,7 @@ class SupplierMasterAPIController extends AppBaseController
             }]);
         } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'master', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
