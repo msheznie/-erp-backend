@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
+use App\Models\BankAccount;
+use App\Models\BankMaster;
 use App\Models\CurrencyMaster;
 use App\Models\EnvelopType;
 use App\Models\EvaluationType;
+use App\Models\ProcumentActivity;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
+use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Repositories\TenderMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -342,6 +349,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
+        $data['bank'] = BankMaster::get();
         $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->get();
 
         return $data;
@@ -400,7 +408,12 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
-        return TenderMaster::where('id',$input['tenderMasterId'])->first();
+        return TenderMaster::with(['procument_activity' => function($query){
+            $query->select('id','test as itemName');
+            $query->select(DB::raw('id',"COALESCE(SUM(noQty),0) as grvNoQty"));
+        }])->where('id',$input['tenderMasterId'])->first();
+
+
     }
 
     public function loadTenderSubCategory(Request $request)
@@ -409,5 +422,216 @@ class TenderMasterAPIController extends AppBaseController
         $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->get();
 
         return $data;
+    }
+
+    public function loadTenderBankAccount(Request $request)
+    {
+        $input = $request->all();
+        $data['bankAccountDrop'] = BankAccount::where('bankmasterAutoID',$input['bank_id'])->where('companySystemID',$input['companySystemID'])->get();
+
+        return $data;
+    }
+
+    public function updateTender(Request $request)
+    {
+        $input = $this->convertArrayToSelectedValue($request->all(), array('bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'envelop_type_id', 'evaluation_type_id', 'procument_cat_id', 'procument_sub_cat_id', 'tender_type_id'));
+
+
+        $resValidate = $this->validateTenderHeader($input);
+
+        if (!$resValidate['status']) {
+            return $resValidate;
+        }
+
+        $document_sales_start_date = new Carbon($input['document_sales_start_date']);
+        $document_sales_start_date = $document_sales_start_date->format('Y-m-d');
+
+        $document_sales_end_date = new Carbon($input['document_sales_end_date']);
+        $document_sales_end_date = $document_sales_end_date->format('Y-m-d');
+
+        $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
+        $bid_submission_opening_date = $bid_submission_opening_date->format('Y-m-d');
+
+        $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
+        $bid_submission_closing_date = $bid_submission_closing_date->format('Y-m-d');
+
+        $pre_bid_clarification_start_date = new Carbon($input['pre_bid_clarification_start_date']);
+        $pre_bid_clarification_start_date = $pre_bid_clarification_start_date->format('Y-m-d');
+
+        $pre_bid_clarification_end_date = new Carbon($input['pre_bid_clarification_end_date']);
+        $pre_bid_clarification_end_date = $pre_bid_clarification_end_date->format('Y-m-d');
+        $site_visit_date = null;
+        if($input['site_visit_date']){
+            $site_visit_date = new Carbon($input['site_visit_date']);
+            $site_visit_date = $site_visit_date->format('Y-m-d');
+        }
+
+
+        if($document_sales_start_date>$document_sales_end_date){
+            return ['success' => false, 'message' => 'Document sales start date cannot be greater than Document sales end date'];
+        }
+
+        if($pre_bid_clarification_start_date>$pre_bid_clarification_end_date){
+            return ['success' => false, 'message' => 'Pre-bid clarification end date cannot be greater than Pre-bid clarification start date'];
+        }
+
+        if($bid_submission_opening_date>$bid_submission_closing_date){
+            return ['success' => false, 'message' => 'Bid submission opening date cannot be greater than Bid submission closing date'];
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+        $exist = TenderMaster::where('id',$input['id'])->first();
+        DB::beginTransaction();
+        try {
+
+            $data['title']=$input['title'];
+            $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['tender_type_id']=$input['tender_type_id'];
+            $data['currency_id']=$input['currency_id'];
+            $data['envelop_type_id']=$input['envelop_type_id'];
+            $data['procument_cat_id']=$input['procument_cat_id'];
+            $data['procument_sub_cat_id']=$input['procument_sub_cat_id'];
+            $data['evaluation_type_id']=$input['evaluation_type_id'];
+            $data['estimated_value']=$input['estimated_value'];
+            $data['allocated_budget']=$input['allocated_budget'];
+            $data['tender_document_fee']=$input['tender_document_fee'];
+            $data['bank_id']=$input['bank_id'];
+            $data['bank_account_id']=$input['bank_account_id'];
+            $data['document_sales_start_date']=$document_sales_start_date;
+            $data['document_sales_end_date']=$document_sales_end_date;
+            $data['pre_bid_clarification_start_date']=$pre_bid_clarification_start_date;
+            $data['pre_bid_clarification_end_date']=$pre_bid_clarification_end_date;
+            $data['pre_bid_clarification_method']=$input['pre_bid_clarification_method'];
+            $data['site_visit_date']=$site_visit_date;
+            $data['bid_submission_opening_date']=$bid_submission_opening_date;
+            $data['bid_submission_closing_date']=$bid_submission_closing_date;
+
+
+
+            $data['updated_by'] = $employee->employeeSystemID;
+
+            $result = TenderMaster::where('id',$input['id'])->update($data);
+
+            if($result){
+                if(isset($input['procument_activity'])){
+                    if(count($input['procument_activity'])>0){
+                        ProcumentActivity::where('tender_id',$input['id'])->where('company_id',$input['company_id'])->delete();
+                        foreach ($input['procument_activity'] as $vl){
+                            $activity['tender_id']=$input['id'];
+                            $activity['category_id'] = $vl['id'];
+                            $activity['company_id'] = $input['company_id'];
+                            $activity['created_by'] = $employee->employeeSystemID;
+
+                            ProcumentActivity::create($activity);
+                        }
+                    }
+                }
+
+                if($exist['site_visit_date'] != $site_visit_date){
+                    $site['tender_id'] = $input['id'];
+                    $site['date'] = $site_visit_date;
+                    $site['company_id'] = $input['company_id'];
+                    $site['created_by'] = $employee->employeeSystemID;
+
+                    TenderSiteVisitDates::create($site);
+                }
+
+                if(isset($input['nextAttachment']) && !empty($input['nextAttachment'])){
+                    $attachment = $input['nextAttachment'];
+
+                    if(!empty($attachment) && isset($attachment['file'])){
+                        $extension = $attachment['fileType'];
+                        $allowExtensions = ['pdf','txt','xlsx','docx'];
+
+                        if (!in_array($extension, $allowExtensions))
+                        {
+                            return $this->sendError('This type of file not allow to upload.',500);
+                        }
+
+                        if(isset($attachment['size'])){
+                            if ($attachment['size'] > 2097152) {
+                                return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.",500);
+                            }
+                        }
+
+                        $file = $attachment['file'];
+                        $decodeFile = base64_decode($file);
+
+                        $attch = $input['company_id'].'_TenderBudgetDocument.' . $extension;
+
+                        $path = $input['company_id'].'/TenderBudgetDocument/' . $attch;
+
+                        Storage::disk(Helper::policyWiseDisk($input['company_id'], 'public'))->put($path, $decodeFile);
+
+                        $att['budget_document'] = $path;
+                        TenderMaster::where('id',$input['id'])->update($att);
+                    }
+                }
+
+
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated'];
+            }
+
+
+
+        }catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function validateTenderHeader($input)
+    {
+        $messages = [
+            'title.required' => 'Title is required.',
+            'title_sec_lang.required' => 'Title In Arabic is required.',
+            'tender_type_id.required' => 'Type is required.',
+            'envelop_type_id.required' => 'Envelop Type is required.',
+            'procument_cat_id.required' => 'Procurement Category is required.',
+            'procument_sub_cat_id.required' => 'Procurement Sub Category is required.',
+            'estimated_value.required' => 'Estimated Value is required.',
+            'allocated_budget.required' => 'Allocated Budget is required.',
+            'tender_document_fee.required' => 'Tender Document Fee is required.',
+            'bank_id.required' => 'Bank is required.',
+            'bank_account_id.required' => 'Bank Account is required.',
+            'document_sales_start_date.required' => 'Document Sales Start Date is required.',
+            'document_sales_end_date.required' => 'Document Sales End Date is required.',
+            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification Start Date.',
+            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification End Date.',
+            'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
+            'bid_submission_opening_date.required' => 'Bid Submission Opening Date.',
+            'bid_submission_closing_date.required' => 'Bid Submission Closing Date.',
+
+        ];
+
+        $validator = \Validator::make($input, [
+            'title' => 'required',
+            'title_sec_lang' => 'required',
+            'tender_type_id' => 'required',
+            'envelop_type_id' => 'required',
+            'procument_cat_id' => 'required',
+            'procument_sub_cat_id' => 'required',
+            'estimated_value' => 'required',
+            'allocated_budget' => 'required',
+            'tender_document_fee' => 'required',
+            'bank_id' => 'required',
+            'bank_account_id' => 'required',
+            'document_sales_start_date' => 'required',
+            'document_sales_end_date' => 'required',
+            'pre_bid_clarification_start_date' => 'required',
+            'pre_bid_clarification_end_date' => 'required',
+            'pre_bid_clarification_method' => 'required',
+            'bid_submission_opening_date' => 'required',
+            'bid_submission_closing_date' => 'required',
+
+        ], $messages);
+
+        if ($validator->fails()) {
+            return ['status' => false, 'message' => $validator->messages()];
+        }
+
+        return ['status' => true, 'message' => "success"];
     }
 }

@@ -301,5 +301,10 @@ class TenderMaster extends Model
         return $this->hasOne('App\Models\CurrencyMaster', 'currencyID', 'currency_id');
     }
 
+    public function procument_activity()
+    {
+        return $this->hasMany('App\Models\ProcumentActivity', 'tender_id', 'id');
+    }
+
     
 }

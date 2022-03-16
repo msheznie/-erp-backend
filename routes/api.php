@@ -2523,6 +2523,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteTenderMaster', 'TenderMasterAPIController@deleteTenderMaster');
         Route::post('getTenderMasterData', 'TenderMasterAPIController@getTenderMasterData');
         Route::post('loadTenderSubCategory', 'TenderMasterAPIController@loadTenderSubCategory');
+        Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
+        Route::post('updateTender', 'TenderMasterAPIController@updateTender');
 
     });
 
@@ -2727,3 +2729,8 @@ Route::resource('envelop_types', 'EnvelopTypeAPIController');
 
 
 Route::resource('evaluation_types', 'EvaluationTypeAPIController');
+
+
+Route::resource('procument_activities', 'ProcumentActivityAPIController');
+
+Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
