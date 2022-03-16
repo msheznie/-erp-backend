@@ -38,6 +38,7 @@ class ShiftPeriodEndNotificationService
             $q->where('isDischarged', 0);
         }]);
         $data = $data->with('shift_master');
+        $data = $data->where('endDate', $this->expiry_date);
         $data = $data->get();
 
         if(count($data) == 0){
@@ -54,41 +55,28 @@ class ShiftPeriodEndNotificationService
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
         if(count($users_setup) == 0){
-            Log::error("User's not configured for Expiry HR contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("User's not configured for Employee shift period end reminder. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
             foreach ($users_setup as $row){
+                $mail_to = $row->empID;
+                switch ($row->applicableCategoryID) {
+                    case 1: //Employee
+                        $this->to_specific_employee($mail_to, $data);
+                    break;
 
-                $payShiftEmployee = SrpErpPayShiftEmployees::where('companyID', $this->company)
-                                                                ->where('empID', $row->empID)
-                                                                ->first();
-                $endDate = $payShiftEmployee['endDate'];
-                $currentDate = Carbon::now();
-    
-                $endDate = date('Y-m-d', strtotime($endDate));
-                $currentDate = date('Y-m-d', strtotime($currentDate));
-    
-                if($endDate == $currentDate){
-                    $mail_to = $row->empID;
-                    switch ($row->applicableCategoryID) {
-                        case 1: //Employee
-                            $this->to_specific_employee($mail_to);
-                        break;
-    
-                        case 7: //Reporting manager
-                            $this->to_reporting_manager($mail_to);
-                        break;
-    
-                        case 9: //Applicable Employee
-                            $this->to_document_owner($mail_to);
-                        break;
-    
-                        default:
-                            Log::error("Unknown Applicable Category \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-                    }
+                    case 7: //Reporting manager
+                        $this->to_reporting_manager($data);
+                    break;
+
+                    case 9: //Applicable Employee
+                        $this->to_document_owner($data);
+                    break;
+
+                    default:
+                        Log::error("Unknown Applicable Category \t on file: " . __CLASS__ ." \tline no :".__LINE__);
                 }
-
             }
         
 
@@ -97,7 +85,8 @@ class ShiftPeriodEndNotificationService
         return true;
     }
 
-    public function to_specific_employee($mail_to_emp){
+    public function to_specific_employee($mail_to_emp , $data){
+
         $mail_to = SrpEmployeeDetails::selectRaw('Ename2, EEmail')->find( $mail_to_emp );
 
         if(empty($mail_to)){
@@ -107,7 +96,7 @@ class ShiftPeriodEndNotificationService
 
         $mail_body = "Dear {$mail_to->Ename2},<br/>";
         $mail_body .= $this->email_body(1 );
-        // $mail_body .= $this->expiry_table($this->expired_docs);
+        $mail_body .= $this->expiry_table($data);
 
         $empEmail = $mail_to->EEmail;
         $subject = $this->mail_subject;
@@ -124,44 +113,46 @@ class ShiftPeriodEndNotificationService
         return true;
     }
 
-    public function to_document_owner($mail_to_emp){
-        $mail_to = SrpEmployeeDetails::selectRaw('Ename2, EEmail')->find( $mail_to_emp );
+    public function to_document_owner($data){
+        $data = collect( $data )->groupBy('empID')->toArray();
+        foreach ($data as $row){
 
-        if(empty($mail_to)){
-            Log::error("Employee Not found \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-            return false;
+            $mail_to = $row[0]['employee'];
+
+            $mail_body = "Dear {$mail_to['Ename2']},<br/>";
+            $mail_body .= $this->email_body(9 );
+
+
+            $empEmail = $mail_to['EEmail'];
+            $subject = $this->mail_subject;
+
+            NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
+
+            $this->sent_mail_count++;
         }
-
-        $mail_body = "Dear {$mail_to->Ename2},<br/>";
-        $mail_body .= $this->email_body(1 );
-        // $mail_body .= $this->expiry_table($this->expired_docs);
-
-        $empEmail = $mail_to->EEmail;
-        $subject = $this->mail_subject;
-
-        NotificationService::emailNotification($this->company, $subject, $empEmail, $mail_body);
-
-        $this->sent_mail_count++;
 
         if($this->debug){
             echo '<br/> <h3>to_document_owner line no '. __LINE__.'</h3> <br/>';
-            echo $mail_body;
         }
 
         return true;
     }
 
-    public function to_reporting_manager($mail_to){
+    public function to_reporting_manager($data){
+        $employeeIds = [];
+        foreach($data as $a){
+            $employeeIds[] = $a->empID;
+        }
 
         $manager = HrmsEmployeeManager::selectRaw('empID,managerID')
             ->where('active', 1)
-            ->whereIn('empID', $mail_to)
+            ->whereIn('empID', $employeeIds)
             ->whereHas('info')
             ->with('info:EIdNo,Ename2,EEmail')
             ->get();
 
         if(count($manager) == 0){
-            Log::error("Manager details not found for expiry employee contract. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::error("Manager details not found for shift period expiry. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return false;
         }
 
@@ -170,13 +161,27 @@ class ShiftPeriodEndNotificationService
         }
 
         $manager = collect( $manager->toArray() )->groupBy('managerID')->toArray();
+
         $mail_body_str = '';
 
         foreach ($manager as $row){
-            $manager_info = $row[0]['info'];
+            $employeeID = collect($row)->pluck('empID')->toArray();
 
+            $data = SrpErpPayShiftEmployees::where('companyID', $this->company);
+            $data = $data->with(['employee'=> function($q){
+                $q->where('isDischarged', 0);
+            }]);
+            $data = $data->with('shift_master');
+            $data = $data->where('endDate', $this->expiry_date);
+            $data = $data->whereIn('empID', $employeeID);
+            $data = $data->get();
+
+
+            $manager_info = $row[0]['info'];
             $mail_body = "Dear {$manager_info['Ename2']},<br/>";
             $mail_body .= $this->email_body(7 );
+            $mail_body .= $this->expiry_table($data);
+
 
             $empEmail = $manager_info['EEmail'];
             $subject = $this->mail_subject;
@@ -202,18 +207,50 @@ class ShiftPeriodEndNotificationService
 
         switch ($for){
             case 1: //Employee
-                $str .= "your employee Shift expired today";
+                $str .= "Employee shift period details are as follows";
                 break;
 
             case 7: //Reporting manager
-                $str .= "Shift of your reporting manager expired today";
+                $str .= "Shift period of your reporting employees' details are as follow";
                 break;
 
             case 9: //Applicable Employee
-                $str .= "Your Shift expired today";
+                $str .= "Your shift period details are as follows";
                 break;
         }
+        $str .= ".<br/><b> Expiry date </b> : " . $this->expiry_date;
+        $str .= ' ( '. Carbon::parse( $this->expiry_date )->diffForHumans() . " ) <br/><br/><br/>";
+
         return $str;
+    }
+
+    public function expiry_table($data)
+    {
+        
+        $body = '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;border: 1px solid black;">#</th>
+                        <th style="text-align: center;border: 1px solid black;">Employee Code</th>
+                        <th style="text-align: center;border: 1px solid black;">Employee Name</th>                                            
+                        <th style="text-align: center;border: 1px solid black;">Employee Email</th>                                            
+                    </tr>
+                </thead>';
+        $body .= '<tbody>';
+
+        $x = 1;
+        foreach ($data as $row) {
+            $body .= '<tr>
+                <td style="text-align:left;border: 1px solid black;">' . $x . '</td>
+                <td style="text-align:left;border: 1px solid black;">' . $row['employee']['ECode'] . '</td> 
+                <td style="text-align:left;border: 1px solid black;">' . $row['employee']['Ename2'] . '</td>                 
+                <td style="text-align:left;border: 1px solid black;">' . $row['employee']['EEmail'] . '</td>                 
+                </tr>';
+            $x++;
+        }
+        $body .= '</tbody>
+        </table>';
+        return $body;
     }
 
 }

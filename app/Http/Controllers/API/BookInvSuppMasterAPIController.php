@@ -39,6 +39,7 @@ use App\Models\AccountsPayableLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
+use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
 use App\Models\TaxVatCategories;
@@ -753,7 +754,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         if ($allocatedSum != $detailTotalOfLine) {
                             return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
                         }
+
+                        if ($bookInvSuppMaster->createMonthlyDeduction && (is_null($value->deductionType) || $value->deductionType == 0)) {
+                            return $this->sendError("Please set deduction Type for ".$value->glCode." - ".$value->glCodeDes);
+                        }
                     }
+
                 }
 
             } 
@@ -2062,6 +2068,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $companyData = Company::find($companyId);
 
+
+        $monthly_declarations_drop = MonthlyDeclarationsTypes::selectRaw("monthlyDeclarationID, monthlyDeclaration")
+                    ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
+                    ->get();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -2074,6 +2085,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'isHrmsIntergrated' => ($companyData) ? $companyData->isHrmsIntergrated : false,
             'wareHouseLocation' => $wareHouseLocation,
+            'deduction_type_drop' => $monthly_declarations_drop,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
             'employeeControlAccount' => $employeeControlAccount,

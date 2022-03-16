@@ -236,7 +236,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         $fileName = 'supplier_master';
-        $path = 'procurement/master/supplier/excel/';
+        $path = 'system/supplier_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
@@ -539,15 +539,14 @@ class SupplierMasterAPIController extends AppBaseController
                 return $this->sendError('Linked company is required',500);
             }
 
-            $checkCustomerForInterCompany = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
-                                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+            $checkCustomerForInterCompany = SupplierMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
                                                            ->when(array_key_exists('supplierCodeSystem', $input), function($query) use ($input) {
                                                                 $query->where('supplierCodeSystem', '!=', $input['supplierCodeSystem']);
                                                            })
                                                            ->first();
-
+            
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('Intercompany supplier has been already created for this company',500);
+                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->supplierName,500);
             }
 
 
@@ -642,15 +641,14 @@ class SupplierMasterAPIController extends AppBaseController
                 return $this->sendError('Linked company is required',500);
             }
 
-            $checkCustomerForInterCompany = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
-                                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+            $checkCustomerForInterCompany = SupplierMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
                                                            ->when(array_key_exists('supplierCodeSystem', $input), function($query) use ($input) {
                                                                 $query->where('supplierCodeSystem', '!=', $input['supplierCodeSystem']);
                                                            })
                                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('Intercompany supplier has been already created for this company',500);
+                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->supplierName,500);
             }
 
 

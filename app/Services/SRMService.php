@@ -481,8 +481,8 @@ class SRMService
         ]);
 
         return [
-            'success'   => true,
-            'message'   => 'Supplier approval setup created!',
+            'success'   => $data['success'],
+            'message'   => $data['message'],
             'data'      => $data
         ];
     }

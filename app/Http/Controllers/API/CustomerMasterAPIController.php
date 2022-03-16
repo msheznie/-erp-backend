@@ -65,6 +65,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\Unit;
 use App\Repositories\ItemMasterRepository;
 use App\Models\SupplierMaster;
+use App\helper\CreateExcel;
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -486,15 +487,14 @@ class CustomerMasterAPIController extends AppBaseController
                 return $this->sendError('Linked company is required',500);
             }
 
-            $checkCustomerForInterCompany = CustomerMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])
-                                           ->where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
+            $checkCustomerForInterCompany = CustomerMaster::where('companyLinkedToSystemID', $input['companyLinkedToSystemID'])
                                            ->when(array_key_exists('customerCodeSystem', $input), function($query) use ($input) {
                                                 $query->where('customerCodeSystem', '!=', $input['customerCodeSystem']);
                                            })
                                            ->first();
 
             if ($checkCustomerForInterCompany) {
-                return $this->sendError('Intercompany customer has been already created for this company',500);
+                return $this->sendError('The selected company is already assigned to ' .$checkCustomerForInterCompany->CustomerName,500);
             }
 
 
@@ -888,17 +888,21 @@ class CustomerMasterAPIController extends AppBaseController
             $data = array();
         }
 
-         \Excel::create('customer_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        $fileName = 'customer_master';
+        $path = 'system/customer_master/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-        return $this->sendResponse(array(), 'successfully export');
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+
     }
 
  public function getPosCustomerSearch(Request $request)

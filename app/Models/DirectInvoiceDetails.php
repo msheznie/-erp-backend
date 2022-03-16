@@ -177,6 +177,7 @@ class DirectInvoiceDetails extends Model
         'VATAmountRpt',
         'exempt_vat_portion',
         'netAmount',
+        'deductionType',
         'netAmountLocal',
         'netAmountRpt',
     ];
@@ -196,6 +197,7 @@ class DirectInvoiceDetails extends Model
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'chartOfAccountSystemID' => 'integer',
+        'deductionType' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
         'comments' => 'string',
@@ -255,4 +257,8 @@ class DirectInvoiceDetails extends Model
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
     
+    public function monthly_deduction_det()
+    {
+        return $this->belongsTo(MonthlyDeclarationsTypes::class, 'deductionType', 'monthlyDeclarationID');
+    }
 }

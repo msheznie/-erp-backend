@@ -70,6 +70,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer supplierTypeID
  * @property integer WHTApplicable
  * @property string|\Carbon\Carbon timestamp
+ * @property string|\Carbon\Carbon last_activity
  */
 class SupplierMaster extends Model
 {
@@ -163,7 +164,8 @@ class SupplierMaster extends Model
         'jsrsExpiry',
         'createdFrom',
         'supplier_category_id',
-        'supplier_group_id'
+        'supplier_group_id',
+        'last_activity'
     ];
 
     /**

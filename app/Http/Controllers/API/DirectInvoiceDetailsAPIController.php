@@ -18,6 +18,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateDirectInvoiceDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
 use App\Models\BookInvSuppMaster;
+use App\Models\ExpenseEmployeeAllocation;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
@@ -463,7 +464,14 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('You cannot delete Supplier Invoice Details, this document already confirmed',500);
         }
 
+
+        ExpenseEmployeeAllocation::where('documentSystemID', 11)
+                                 ->where('documentDetailID', $id)
+                                 ->where('documentSystemCode', $directInvoiceDetails->directInvoiceAutoID)
+                                 ->delete();
+
         $directInvoiceDetails->delete();
+
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
     }

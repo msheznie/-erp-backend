@@ -285,6 +285,7 @@ class BookInvSuppMaster extends Model
         'companySystemID',
         'companyID',
         'documentSystemID',
+        'createMonthlyDeduction',
         'documentID',
         'serialNo',
         'companyFinanceYearID',
@@ -373,6 +374,7 @@ class BookInvSuppMaster extends Model
     protected $casts = [
         'bookingSuppMasInvAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'createMonthlyDeduction' => 'integer',
         'employeeID' => 'integer',
         'employeeControlAcID' => 'integer',
         'vatRegisteredYN' => 'integer',
