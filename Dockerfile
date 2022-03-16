@@ -31,6 +31,7 @@ COPY --from=assets-build /var/www/html/dist/ /var/www/html/public/
 RUN ls /var/www/html/public/assets
 
 RUN composer install
+RUN cp .env.example .env &&  php artisan passport:keys && php artisan key:generate
 
 FROM build-fpm AS fpm-k8
 RUN mkdir -p /app
