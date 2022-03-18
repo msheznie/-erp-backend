@@ -2709,3 +2709,6 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+
+
+Route::resource('item_batches', 'ItemBatchAPIController');
