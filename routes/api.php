@@ -2517,6 +2517,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail');
         Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster');
 
+        Route::post('getTenderMasterList', 'TenderMasterAPIController@getTenderMasterList');
+        Route::post('getTenderDropDowns', 'TenderMasterAPIController@getTenderDropDowns');
+        Route::post('createTender', 'TenderMasterAPIController@createTender');
+        Route::post('deleteTenderMaster', 'TenderMasterAPIController@deleteTenderMaster');
+        Route::post('getTenderMasterData', 'TenderMasterAPIController@getTenderMasterData');
+        Route::post('loadTenderSubCategory', 'TenderMasterAPIController@loadTenderSubCategory');
+        Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
+        Route::post('updateTender', 'TenderMasterAPIController@updateTender');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2709,3 +2718,19 @@ Route::resource('tender_bid_format_details', 'TenderBidFormatDetailAPIController
 
 
 Route::resource('tender_field_types', 'TenderFieldTypeAPIController');
+
+
+Route::resource('tender_masters', 'TenderMasterAPIController');
+
+
+Route::resource('tender_types', 'TenderTypeAPIController');
+
+Route::resource('envelop_types', 'EnvelopTypeAPIController');
+
+
+Route::resource('evaluation_types', 'EvaluationTypeAPIController');
+
+
+Route::resource('procument_activities', 'ProcumentActivityAPIController');
+
+Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
