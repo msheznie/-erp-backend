@@ -86,5 +86,10 @@ class ProcumentActivity extends Model
         
     ];
 
+    public function tender_procurement_category()
+    {
+        return $this->hasOne('App\Models\TenderProcurementCategory', 'id', 'category_id');
+    }
+
     
 }
