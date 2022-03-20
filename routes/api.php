@@ -2526,6 +2526,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
         Route::post('updateTender', 'TenderMasterAPIController@updateTender');
 
+        Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
+        Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
+        Route::post('addPricingSchedule', 'PricingScheduleMasterAPIController@addPricingSchedule');
+        Route::post('getPricingScheduleMaster', 'PricingScheduleMasterAPIController@getPricingScheduleMaster');
+        Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2734,3 +2740,5 @@ Route::resource('evaluation_types', 'EvaluationTypeAPIController');
 Route::resource('procument_activities', 'ProcumentActivityAPIController');
 
 Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
+
+Route::resource('pricing_schedule_masters', 'PricingScheduleMasterAPIController');

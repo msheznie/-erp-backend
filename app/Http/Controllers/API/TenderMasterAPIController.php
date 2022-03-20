@@ -408,10 +408,18 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
-        return TenderMaster::with(['procument_activity' => function($query){
-            $query->select('id','test as itemName');
-            $query->select(DB::raw('id',"COALESCE(SUM(noQty),0) as grvNoQty"));
-        }])->where('id',$input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity'])->where('id',$input['tenderMasterId'])->first();
+        $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->get();
+        $act = array();
+        if(!empty($activity)){
+            foreach ($activity as $vl){
+                $dt['id'] = $vl['tender_procurement_category']['id'];
+                $dt['itemName'] = $vl['tender_procurement_category']['code'].' | '.$vl['tender_procurement_category']['description'];
+                array_push($act,$dt);
+            }
+        }
+        $data['activity'] = $act;
+        return $data;
 
 
     }
