@@ -2531,6 +2531,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addPricingSchedule', 'PricingScheduleMasterAPIController@addPricingSchedule');
         Route::post('getPricingScheduleMaster', 'PricingScheduleMasterAPIController@getPricingScheduleMaster');
         Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
+        Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails');
 
     });
 

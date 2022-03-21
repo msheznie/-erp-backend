@@ -107,5 +107,10 @@ class TenderBidFormatDetail extends Model
         
     ];
 
+    public function tender_field_type()
+    {
+        return $this->hasOne('App\Models\TenderFieldType', 'id', 'field_type');
+    }
+
     
 }
