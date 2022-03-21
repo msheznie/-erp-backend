@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePricingScheduleMasterAPIRequest;
 use App\Http\Requests\API\UpdatePricingScheduleMasterAPIRequest;
 use App\Models\PricingScheduleMaster;
+use App\Models\TenderBidFormatDetail;
 use App\Models\TenderBidFormatMaster;
 use App\Repositories\PricingScheduleMasterRepository;
 use Illuminate\Http\Request;
@@ -416,5 +417,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
 
+    }
+
+    public function getPriceBidFormatDetails(Request $request)
+    {
+        $input = $request->all();
+
+        return TenderBidFormatDetail::with(['tender_field_type'])->where('tender_id',$input['price_bid_format_id'])->get();
     }
 }

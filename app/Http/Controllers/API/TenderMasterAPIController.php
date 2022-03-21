@@ -544,8 +544,8 @@ class TenderMasterAPIController extends AppBaseController
                     TenderSiteVisitDates::create($site);
                 }
 
-                if(isset($input['nextAttachment']) && !empty($input['nextAttachment'])){
-                    $attachment = $input['nextAttachment'];
+                if(isset($input['Attachment']) && !empty($input['Attachment'])){
+                    $attachment = $input['Attachment'];
 
                     if(!empty($attachment) && isset($attachment['file'])){
                         $extension = $attachment['fileType'];
@@ -565,7 +565,7 @@ class TenderMasterAPIController extends AppBaseController
                         $file = $attachment['file'];
                         $decodeFile = base64_decode($file);
 
-                        $attch = $input['company_id'].'_TenderBudgetDocument.' . $extension;
+                        $attch = time().'_TenderBudgetDocument.' . $extension;
 
                         $path = $input['company_id'].'/TenderBudgetDocument/' . $attch;
 
