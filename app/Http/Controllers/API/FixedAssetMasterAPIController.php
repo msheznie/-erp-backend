@@ -445,6 +445,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function create(CreateFixedAssetMasterAPIRequest $request)
     {
 
+       
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
@@ -459,7 +460,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError("Salvage value cannot be less than Zero", 500);
         }
 
-       // DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aquired',
@@ -580,6 +581,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
             }
 
+            $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
+            if ($accumulateCurrencyConversion) {
+                $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+            }
+
 
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
@@ -615,7 +621,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             DB::commit();
             return $this->sendResponse($fixedAssetMasters, 'Fixed Asset Master saved successfully');
         } catch (\Exception $exception) {
-            //DB::rollBack();
+            DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
     }

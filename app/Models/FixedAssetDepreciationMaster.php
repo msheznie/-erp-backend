@@ -169,7 +169,8 @@ class FixedAssetDepreciationMaster extends Model
         'createdUserID',
         'createdUserSystemID',
         'createdPCID',
-        'timeStamp'
+        'timeStamp',
+        'is_acc_dep'
     ];
 
     /**
