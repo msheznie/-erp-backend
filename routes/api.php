@@ -83,7 +83,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
         Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
         Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
-
+        Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
         
