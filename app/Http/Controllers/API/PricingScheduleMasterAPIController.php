@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePricingScheduleMasterAPIRequest;
 use App\Http\Requests\API\UpdatePricingScheduleMasterAPIRequest;
 use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderBidFormatDetail;
 use App\Models\TenderBidFormatMaster;
 use App\Repositories\PricingScheduleMasterRepository;
@@ -423,6 +424,75 @@ class PricingScheduleMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        return TenderBidFormatDetail::with(['tender_field_type'])->where('tender_id',$input['price_bid_format_id'])->get();
+        $price_bid_format_id=$input['price_bid_format_id'];
+        $schedule_id=$input['schedule_id'];
+        return DB::select("SELECT
+	tender_bid_format_detail.id,
+	tender_id,
+	label,
+	is_disabled,
+	tender_field_type.type,
+	srm_schedule_bid_format_details.`value` 
+FROM
+	tender_bid_format_detail
+	INNER JOIN tender_field_type ON tender_field_type.id = tender_bid_format_detail.field_type
+	LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = tender_bid_format_detail.id 
+	AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
+WHERE
+	tender_id = $price_bid_format_id 
+ORDER BY
+	id ASC");
+    }
+
+    public function addPriceBidDetails(Request $request)
+    {
+        $input = $request->all();
+        $masterData = $input['masterData'];
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->delete();
+            if(isset($input['priceBidFormat'])){
+                if(count($input['priceBidFormat'])>0){
+                    $result = false;
+                    foreach ($input['priceBidFormat'] as $val){
+                        if($val['value']>0){
+                            $data['bid_format_detail_id'] = $val['id'];
+                            $data['schedule_id'] = $masterData['schedule_id'];
+                            $data['value'] = $val['value'];
+                            $data['created_by'] = $employee->employeeSystemID;
+                            $data['company_id'] = $masterData['companySystemID'];
+                            $result = ScheduleBidFormatDetails::create($data);
+                        }
+                    }
+                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->first();
+                    if($result){
+                        if(!empty($exist)){
+                            $master['status']=1;
+                            PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
+                        }
+                        DB::commit();
+                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                    }else{
+                        if(empty($exist)){
+                            $master['status']=0;
+                            PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
+                        }
+                        DB::commit();
+                        return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                    }
+                }else{
+                    return ['success' => false, 'message' => 'Price bid format does not exist'];
+                }
+            }else{
+                return ['success' => false, 'message' => 'Price bid format does not exist'];
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
     }
 }
