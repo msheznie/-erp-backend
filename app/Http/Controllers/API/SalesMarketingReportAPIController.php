@@ -104,7 +104,9 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'customers' => 'required',
                     'wareHouse' => 'required',
                     'customer_category' => 'required',
-                ]);
+                ],
+                    ['wareHouse.required' => 'The warehouse field is required']
+                );
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
