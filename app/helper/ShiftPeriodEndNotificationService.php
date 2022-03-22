@@ -211,7 +211,7 @@ class ShiftPeriodEndNotificationService
                 break;
 
             case 7: //Reporting manager
-                $str .= "Shift period of your reporting employees' details are as follow";
+                $str .= "Shift period of your reporting employees' details are as follows";
                 break;
 
             case 9: //Applicable Employee
