@@ -2610,9 +2610,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getAppointmentListSummaryView', 'AppointmentAPIController@getAppointmentListSummaryView');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
-    Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
-
+    Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM'); 
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
+    Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
 });
 
 
