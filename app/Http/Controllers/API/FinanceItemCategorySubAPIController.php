@@ -27,6 +27,9 @@ use App\Repositories\UserRepository;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use Mpdf\Tag\Select;
+use App\Jobs\ResetFinaceSubCategoryValuesInAllDocuments;
+use Artisan;
+
 use Illuminate\Support\Facades\Validator;
 /**
  * Class FinanceItemCategorySubController
@@ -417,7 +420,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             unset($masterData['itemCategoryID'],$masterData['trackingType'],$masterData['modifiedPc'],$masterData['modifiedUser']);
             $financeItemcategorySubAssigned  = FinanceItemcategorySubAssigned::where('itemCategorySubID', $input['itemCategorySubID'])
                                     ->update($masterData);
-
+        \Artisan::call('reset:sub-category-values');
         return $this->sendResponse($itemCategorySubUpdate, 'Finance Item Category Sub updated successfully');
         } else {
             $itemCategorySubCreate = FinanceItemCategorySub::create($masterData);
