@@ -206,7 +206,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
     
-                $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
+                $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['is_acc_dep'=> 0, 'companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
     
                 if (count($alreadyExist) > 0) {
                     return $this->sendError('Depreciation already processed for the selected month', 500);

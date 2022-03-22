@@ -46,7 +46,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
         $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->first();
 
         $accumulated_date = $faMaster->accumulated_depreciation_date;
-        $accumulated_amount = $faMaster->accumulated_depreciation_amount;
+        $accumulated_amount = $faMaster->accumulated_depreciation_amount_rpt;
 
         $unit_salvage_val = doubleval($faMaster->costUnitRpt) -doubleval($faMaster->salvage_value_rpt);
 
@@ -63,6 +63,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
             $companyFinanceYearID = '';
             $companyFinancePeriodID = '';
             $companyFinanceYear = \Helper::companyFinanceYear($faMaster->companySystemID,1);
+
             foreach($companyFinanceYear as $companyFinance)
             {
     
@@ -72,28 +73,41 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     $companyFinanceYearID = $companyFinance->companyFinanceYearID;
                     break;
                 }
-             
+                
             }
+
+
+
             if($companyFinanceYearID != '')
             {
                 
 
                     
-            if(isset($faMaster->departmentSystemID))
-            {
-                          
-                $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
-                ->where('companySystemID', '=', $faMaster->companySystemID)
-                ->where('companyFinanceYearID', $companyFinanceYearID)
-                ->where('departmentSystemID', $faMaster->departmentSystemID)
-                ->where('isActive', -1)
-                ->get();
+                if(isset($faMaster->departmentSystemID))
+                {
+                            
+                    $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+                    ->where('companySystemID', '=', $faMaster->companySystemID)
+                    ->where('companyFinanceYearID', $companyFinanceYearID)
+                    ->where('departmentSystemID', $faMaster->departmentSystemID)
+                    ->where('isActive', -1)
+                    ->get();
+
+                   
+        
+                    $accumulated_month = $accumulated_month - 1;
+
+               
+                    if(count($output) >= $accumulated_month)
+                    {
+                        $companyFinancePeriodID = $output[$accumulated_month]->companyFinancePeriodID;
+                    }
+               
+                   
+            
+                }
     
-                $accumulated_month = $accumulated_month - 1;
-                $companyFinancePeriodID = $output[$accumulated_month]->companyFinancePeriodID;
-           
-            }
-    
+             
             if($companyFinancePeriodID != '')
             {
 
@@ -107,8 +121,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
                     $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
                 }
-        
-        
+
                 $inputParam = $finance_data;
                 $inputParam["departmentSystemID"] = 9;
                 $inputParam["companyFinancePeriodID"] = $companyFinancePeriodID;
@@ -121,21 +134,21 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                     $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
                 }
-        
-        
-        
+
+
+                                
                 $subMonth = new Carbon($dep_data['FYPeriodDateFrom']);
                 $subMonthStart = $subMonth->subMonth()->startOfMonth()->format('Y-m-d');
                 $subMonthStartCarbon = new Carbon($subMonthStart);
                 $subMonthEnd = $subMonthStartCarbon->endOfMonth()->format('Y-m-d');
         
-                $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $faMaster->companySystemID)->where('companyFinanceYearID', $companyFinanceYearID)->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
+                // $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $faMaster->companySystemID)->where('companyFinanceYearID', $companyFinanceYearID)->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
         
-                if (!empty($lastMonthRun)) {
-                    if ($lastMonthRun->approved == 0) {
-                        Log::info('Last month depreciation is not approved. Please approve it before you run for this month');
-                    }
-                }
+                // if (!empty($lastMonthRun)) {
+                //     if ($lastMonthRun->approved == 0) {
+                //         Log::info('Last month depreciation is not approved. Please approve it before you run for this month');
+                //     }
+                // }
         
                 $company = Company::find($faMaster->companySystemID);
                 if ($company) {
@@ -174,7 +187,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 $dep_data['companyFinanceYearID'] = $companyFinanceYearID;
                 $dep_data['companyFinancePeriodID'] = $companyFinancePeriodID;
                 $dep_data['companySystemID'] = $faMaster->companySystemID;
-                $dep_data['documentSystemID'] = $faMaster->documentSystemID;
+                $dep_data['documentSystemID'] =23;
         
                 $dep_data['depCode'] = $documentCode;
                 $dep_data['serialNo'] = $lastSerialNumber;
@@ -185,7 +198,9 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 $dep_data['createdPCID'] = gethostname();
                 $dep_data['createdUserID'] = 8888;
                 $dep_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                $dep_data['approved'] = -1;
+                //$dep_data['approved'] = -1;
+                $dep_data['is_acc_dep'] = true;
+                
                 
                 $depMaster = FixedAssetDepreciationMaster::create($dep_data);
         
@@ -196,26 +211,27 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                     $query->whereHas('master_by', function ($query) {
-                        $query->where('approved', -1);
+                        //$query->where('approved', -1);
                     });
                     $query->groupBy('faID');
                 }])
                 ->ofCompany([$faMaster->companySystemID])
-                 ->isApproved()
-                 ->assetType(1)
+                 //->isApproved()
+                ->assetType(1)
                 ->orderBy('faID', 'desc')
                 ->first();
 
                 if(isset($faMaster))
                 {
-                    $depAmountRpt = count($faMaster->depperiod_by) > 0 ? $faMaster->depperiod_by[0]->depAmountRpt : 0;
-                    $depAmountLocal = count($faMaster->depperiod_by) > 0 ? $faMaster->depperiod_by[0]->depAmountLocal : 0;
+                    $depAmountRpt = $faMaster->accumulated_depreciation_amount_rpt;
+                    $depAmountLocal = $faMaster->accumulated_depreciation_amount_lcl;
                     $nbvLocal = $faMaster->COSTUNIT - $depAmountLocal;
                     $nbvRpt = $faMaster->costUnitRpt - $depAmountRpt;
                     $monthlyLocal = (($faMaster->COSTUNIT - $faMaster->salvage_value) * ($faMaster->DEPpercentage / 100)) / 12;
                     $monthlyRpt = (($faMaster->costUnitRpt - $faMaster->salvage_value_rpt) * ($faMaster->DEPpercentage / 100)) / 12;
             
-                    if (round($nbvLocal,2) > $faMaster->salvage_value || round($nbvRpt,2) > $faMaster->salvage_value_rpt) {
+                    if (round($nbvLocal,2) > $faMaster->salvage_value || round($nbvRpt,2) > $faMaster->salvage_value_rpt) 
+                    {
             
             
                         $data['depMasterAutoID'] = $depMaster->depMasterAutoID;
@@ -240,101 +256,35 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                         $data['depMonth'] = $faMaster->depMonth;
                         $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
                         $data['depAmountRptCurr'] = $depMaster->depRptCur;
+                        $data['depAmountLocal'] = $depAmountLocal;
+                        $data['depAmountRpt'] = $depAmountRpt;
             
-                        if ($nbvLocal < $monthlyLocal) {
-                            $data['depAmountLocal'] = $nbvLocal;
-                            $amount_local = $nbvLocal;
-                        } else {
-                            $data['depAmountLocal'] = $monthlyLocal;
-                            $amount_local = $monthlyLocal;
+            
+                        if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
+                            $data['FYID'] = $depMaster->companyFinanceYearID;
+                            $data['depForFYStartDate'] = $depMaster->FYBiggin;
+                            $data['depForFYEndDate'] = $depMaster->FYEnd;
+                            $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
+                            $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
+                            $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
+                            $data['timestamp'] = NOW();
                         }
             
-                        if ($nbvRpt < $monthlyRpt) {
-                            $data['depAmountRpt'] = $nbvRpt;
-                        } else {
-                            $data['depAmountRpt'] = $monthlyRpt;
-                        }
-            
-            
-                        
-                        if (round($depAmountRpt,2) == 0 && round($depAmountLocal,2) == 0) {
-            
-                                  
-                            $dateDEP = Carbon::parse($faMaster->accumulated_depreciation_date);
-                            $dateDEP1 = Carbon::parse($faMaster->accumulated_depreciation_date);
-            
-                      
-                            if ($dateDEP->lessThanOrEqualTo($depDate)) {
-            
-            
-                                $life_time_month = ($faMaster->depMonth*12) - 1;
-                          
-                                $life_time_period = $dateDEP->addMonths($life_time_month);
-            
-                           
-                                if($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
-                                {
-                                    
-                                    $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
-                                 
-                                }
-                                else
-                                {
-                                    $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
-                                 
-                                }
-                                
-                              
-                                if ($differentMonths) {
-                                    foreach ($differentMonths as $dt) {
-                                       
-                                        $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
-                                        if ($companyFinanceYearID) {
-                                           
-                                           
-                                            $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
-                                            $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
-                                            $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
-                                            $companyFinancePeriodID1 = CompanyFinancePeriod::ofCompany($depMaster->companySystemID)->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
-            
-                                            
-                                            $data['FYperiodID'] = $companyFinancePeriodID1->companyFinancePeriodID;
-                                            $data['depForFYperiodStartDate'] = $companyFinancePeriodID1->dateFrom;
-                                            $data['depForFYperiodEndDate'] = $companyFinancePeriodID1->dateTo;
-                                            $data['timestamp'] = NOW();
-                                           // array_push($finalData, $data);
-                                        }
-                                    }
-            
-                                    
-                                
-                                }
-            
-                            }
-                        } else {
-                            if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
-                                $data['FYID'] = $depMaster->companyFinanceYearID;
-                                $data['depForFYStartDate'] = $depMaster->FYBiggin;
-                                $data['depForFYEndDate'] = $depMaster->FYEnd;
-                                $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
-                                $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
-                                $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
-                                $data['timestamp'] = NOW();
-                               // array_push($finalData, $data);
-                            }
-                        }
-            
-                    }
+                    
             
             
                     FixedAssetDepreciationPeriod::insert($data);
             
                     $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
                     // Log::info('Depreciation processing');
-                    if($depDetail) {
-                        //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
-            
-                        $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
+                    if($depDetail) 
+                        {
+                            //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
+                            Log::info('job is processing..');
+                            $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
+                        }
+
+                        Log::info('job is End..');
                     }
                 }
                 else
