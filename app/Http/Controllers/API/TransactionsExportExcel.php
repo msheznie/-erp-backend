@@ -411,7 +411,12 @@ class TransactionsExportExcel extends AppBaseController
 
             case '64':
                 $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
-                $dataQry = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search);
+
+                $bankmasterAutoID = $request['bankmasterAutoID'];
+                $bankmasterAutoID = (array)$bankmasterAutoID;
+                $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+                $dataQry = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->paymentBankTransferRepository->setExportExcelData($dataQry);
                 break;
 
