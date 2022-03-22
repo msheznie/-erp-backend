@@ -372,6 +372,23 @@ class DeliveryOrderAPIController extends AppBaseController
         /** @var DeliveryOrder $deliveryOrder */
         $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
 
+        $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
+
+        $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
+            
+        if ($quotationMaster) {
+            $count  = $quotationMaster->detail->count();
+
+            if($deliveryOrderDetaiCountl == $count) {
+                $quotationMaster->isInDOorCI = 1;
+                $quotationMaster->save();
+            }else {
+                $quotationMaster->isInDOorCI = 3;
+                $quotationMaster->save();
+
+            }
+        }
+
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }
@@ -532,6 +549,8 @@ class DeliveryOrderAPIController extends AppBaseController
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
+
+
             foreach ($detail as $item) {
 
                 $updateItem = DeliveryOrderDetail::find($item['deliveryOrderDetailID']);
@@ -646,6 +665,8 @@ class DeliveryOrderAPIController extends AppBaseController
                 'category' => '',
                 'amount' => $amount
             );
+
+
             $update = array_except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
             $confirm = Helper::confirmDocument($params);
@@ -1470,25 +1491,25 @@ WHERE
             if (!empty($checkWhetherInvoice)) {
                 return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
-                // check in delivery order
-        $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
-            ->select([
-                'erp_delivery_order.deliveryOrderID',
-                'erp_delivery_order.deliveryOrderCode'
-            ])
-            ->groupBy(
-                'erp_delivery_order.deliveryOrderID',
-                'erp_delivery_order.companySystemID'
-            )
-            ->whereHas('detail', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemAutoID']);
-            })
-            ->where('approvedYN', 0)
-            ->first();
+        //         // check in delivery order
+        // $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
+        //     ->select([
+        //         'erp_delivery_order.deliveryOrderID',
+        //         'erp_delivery_order.deliveryOrderCode'
+        //     ])
+        //     ->groupBy(
+        //         'erp_delivery_order.deliveryOrderID',
+        //         'erp_delivery_order.companySystemID'
+        //     )
+        //     ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+        //         $query->where('itemCodeSystem', $input['itemAutoID']);
+        //     })
+        //     ->where('approvedYN', 0)
+        //     ->first();
 
-        if (!empty($checkWhetherDeliveryOrder)) {
-                return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.",500);
-        }
+        // if (!empty($checkWhetherDeliveryOrder)) {
+        //         return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.",500);
+        // }
 
          /*Check in purchase return*/
             $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)

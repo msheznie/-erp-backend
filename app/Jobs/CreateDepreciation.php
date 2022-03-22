@@ -46,6 +46,10 @@ class CreateDepreciation implements ShouldQueue
             $depMasterAutoID = $this->depAutoID;
             $depMaster = $faDepMaster->find($depMasterAutoID);
             if($depMaster) {
+                if(!$depMaster->is_acc_dep)
+                {
+
+                
                 $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
                 $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
@@ -210,6 +214,7 @@ class CreateDepreciation implements ShouldQueue
 
                 DB::commit();
                 Log::info('Depreciation End');
+            }
             }
         } catch (\Exception $e) {
             DB::rollBack();

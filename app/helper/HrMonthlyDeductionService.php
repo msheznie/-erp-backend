@@ -11,6 +11,9 @@ use App\Models\HrMonthlyDeductionMaster;
 use App\Models\HrPayrollHeaderDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SrpEmployeeDetails;
+use App\Models\ExpenseEmployeeAllocation;
+use App\Models\BookInvSuppMaster;
+use App\Models\Employee;
 use Carbon\Carbon;
 
 class HrMonthlyDeductionService
@@ -76,7 +79,7 @@ class HrMonthlyDeductionService
     function create_header(){
         $this->generator_code();
 
-        $this->setup_document_date();
+        $this->setup_document_date($this->pv_master->BPVdate);
 
         $header = new HrMonthlyDeductionMaster;
 
@@ -211,8 +214,8 @@ class HrMonthlyDeductionService
         }
     }
 
-    function setup_document_date(){
-        $document_date = Carbon::parse( $this->pv_master->BPVdate );
+    function setup_document_date($docDate){
+        $document_date = Carbon::parse($docDate);
 
 
         $is_processed = true;
@@ -292,5 +295,203 @@ class HrMonthlyDeductionService
         }
 
         return false;
+    }
+
+    public static function createMonthlyDeductionForSupplierInvoice($supplierInvoice)
+    {
+        $supplierInvoiceData = BookInvSuppMaster::find($supplierInvoice['autoID']);
+
+        if(!$supplierInvoiceData->createMonthlyDeduction){
+            $msg = "No need to create the Monthly deduction document for this PV";
+            return ['status'=> true, 'message'=> $msg];
+        }
+
+
+        $employeeDeductions = ExpenseEmployeeAllocation::where('documentSystemCode', $supplierInvoiceData->bookingSuppMasInvAutoID)
+                                                       ->with(['invoice_detail' => function($query) {
+                                                            $query->with(['monthly_deduction_det'])
+                                                                  ->whereHas('monthly_deduction_det');                                                        
+                                                       }, 'supplier_invoice'])
+                                                       ->whereHas('invoice_detail', function($query) {
+                                                            $query->whereHas('monthly_deduction_det');
+                                                       })
+                                                       ->whereHas('supplier_invoice')
+                                                       ->get();
+
+        $groupedData = collect($employeeDeductions)->groupBy(function ($item, $key) {
+                                                        return Carbon::parse($item['dateOfDeduction'])->format('m-Y');
+                                                    });
+
+
+
+        $user_id = Helper::getEmployeeSystemID();
+        $empDetails = SrpEmployeeDetails::with('currency')->find($user_id);
+        $user_name = ($empDetails) ? $empDetails->Ename2 : null;
+
+        $company_det = Helper::companyCurrency($supplierInvoiceData->companySystemID);
+
+        if(empty($company_det->localcurrency)){
+            return ['status'=> false, 'message'=> "Company local currency details not found"];
+        }
+
+        if(empty($company_det->reportingcurrency)){
+            return ['status'=> false, 'message'=> "Company Reporting currency details not found"];
+        }
+
+        $local_currency = $company_det->localcurrency;
+
+        $rpt_currency = $company_det->reportingcurrency;
+
+
+        foreach ($groupedData as $key => $value) {
+            if (count($value) > 0) {
+                
+                $serialNo = HrMonthlyDeductionMaster::where('companyID', $supplierInvoiceData->companySystemID)
+                                                    ->max('serialNo');
+
+                $serialNo += 1;
+
+                $serial_no = $serialNo;
+
+                $md_code = HrDocumentCodeService::generate($supplierInvoiceData->companySystemID,$supplierInvoiceData->companyID,'MD',$serialNo);
+
+
+                $documentDate = self::setupDocumentDate($value[0]['dateOfDeduction'], $value[0]['employeeSystemID']);          
+
+
+                $doc = HrMonthlyDeductionMaster::where('supplierInvoiceID', $supplierInvoiceData->bookingSuppMasInvAutoID)
+                                               ->whereDate('dateMD', $documentDate)
+                                               ->first();
+
+                if ($doc) {
+                    return ['status'=> false, 'message'=> "Monthly deduction already created"];
+                }
+
+
+                $header = new HrMonthlyDeductionMaster;
+
+                $header->monthlyDeductionCode = $md_code;
+                $header->serialNo = $serial_no;
+                $header->documentID = 'MD';
+                $header->description = "System generated document - ".$supplierInvoiceData->bookingInvCode;
+                $header->currency = $local_currency->CurrencyCode;
+                $header->dateMD = $documentDate;
+                $header->isNonPayroll = 'N';
+                $header->supplierInvoiceID = $supplierInvoice['autoID'];
+
+                $header->confirmedYN = 1;
+                $header->confirmedByEmpID = $user_id;
+                $header->confirmedByName = $user_name;
+                $header->confirmedDate = Carbon::now();
+
+                $header->companyID = $supplierInvoiceData->companySystemID;
+                $header->companyCode = $supplierInvoiceData->companyID;
+
+                $header->createdPCID = gethostname();
+                $header->createdUserID = $user_id;
+                $header->createdUserName = $user_name;
+                $header->createdDateTime = Carbon::now();
+                $header->timestamp = Carbon::now();
+
+                $header->save();
+                
+                $monthly_ded_id = $header->id;
+                self::addDetailsForMonthlyDeduction($monthly_ded_id, $value, $empDetails, $local_currency, $rpt_currency, $supplierInvoiceData, $user_id, $user_name);
+            }
+        }
+        
+        return ['status'=> true, 'message'=> "Monthly deduction created successfully"];
+    }
+
+
+    public static function addDetailsForMonthlyDeduction($monthly_ded_id, $details, $empDetails, $local_currency, $rpt_currency, $supplierInvoiceData, $user_id, $user_name)
+    {
+        $data = [];
+        $employeeCurrency = ($empDetails) ? $empDetails->currency : null;
+
+
+        foreach ($details as $row){
+            $ded_det = $row->invoice_detail->monthly_deduction_det;
+
+
+            $sup_currency = $row->supplier_invoice->supplierTransactionCurrencyID;
+            $emp_currency = ($employeeCurrency) ? $employeeCurrency->currencyID : null;
+
+            if($emp_currency == $sup_currency){
+                $employeeCurrency->ExchangeRate = 1;
+                $local_currency->ExchangeRate = $row->invoice_detail->localCurrencyER;
+                $rpt_currency->ExchangeRate = $row->invoice_detail->comRptCurrencyER;
+            }
+
+            if ($employeeCurrency) {
+                $employeeCurrency->ExchangeRate = self::currency_conversion($emp_currency, $sup_currency);
+            }
+
+            $local_currency->ExchangeRate = self::currency_conversion($emp_currency, $local_currency->currencyID);
+            $rpt_currency->ExchangeRate = self::currency_conversion($emp_currency, $rpt_currency->currencyID);
+
+            $data[] = [
+                'monthlyDeductionMasterID'=> $monthly_ded_id, 'empID'=> ($empDetails) ? $empDetails->EIdNo : null,
+                'accessGroupID'=> 0,
+                'declarationID'=> $row->supplier_invoice->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
+                'categoryID'=> $ded_det->salaryCategoryID,
+
+                'transactionCurrencyID'=> ($employeeCurrency) ? $employeeCurrency->currencyID : 0,
+                'transactionCurrency'=> ($employeeCurrency) ? $employeeCurrency->CurrencyCode : null,
+                'transactionCurrencyDecimalPlaces'=> ($employeeCurrency) ? $employeeCurrency->DecimalPlaces : null,
+                'transactionExchangeRate'=> 1, 'transactionAmount'=> ($row->amount * (($employeeCurrency) ? $employeeCurrency->ExchangeRate : 1)),
+
+                'companyLocalCurrencyID'=> $local_currency->currencyID,
+                'companyLocalCurrency'=> $local_currency->CurrencyCode,
+                'companyLocalCurrencyDecimalPlaces'=> $local_currency->DecimalPlaces,
+                'companyLocalExchangeRate'=> $local_currency->ExchangeRate, 'companyLocalAmount'=> $row->amountLocal,
+
+                'companyReportingCurrencyID'=> $rpt_currency->currencyID,
+                'companyReportingCurrency'=> $rpt_currency->CurrencyCode,
+                'companyReportingCurrencyDecimalPlaces'=> $rpt_currency->DecimalPlaces,
+                'companyReportingExchangeRate'=> $rpt_currency->ExchangeRate, 'companyReportingAmount'=> $row->amountRpt,
+
+                'companyID'=> $supplierInvoiceData->companySystemID, 'companyCode'=> $supplierInvoiceData->companyID,
+                'createdPCID'=> gethostname(), 'createdUserID'=> $user_id,
+                'createdDateTime'=> Carbon::now(), 'createdUserName'=> $user_name,
+                'timestamp'=> Carbon::now()
+            ];
+        }
+
+        HrMonthlyDeductionDetail::insert($data);
+
+        return true;
+    }
+
+    public static function setupDocumentDate($docDate, $empID)
+    {
+        $document_date = Carbon::parse($docDate);
+
+        $employee = SrpEmployeeDetails::with('currency')->find($empID);
+        
+        $is_processed = true;
+        while( $is_processed ){
+            $pv_date_arr = [
+                'year'=> $document_date->format('Y'),
+                'month'=> $document_date->format('m')
+            ];
+
+            //check payroll status of given month
+            $is_processed = HrPayrollHeaderDetails::where('EmpID', $employee->EIdNo)
+                ->whereHas('master', function ($q) use ($pv_date_arr){
+                    $q->where('payrollYear', $pv_date_arr['year'])
+                        ->where('payrollMonth', $pv_date_arr['month']);
+                })
+                ->with('master')
+                ->first();
+
+            if($is_processed){
+                //if payroll processed check next month payroll
+                $document_date = $document_date->firstOfMonth();
+                $document_date = $document_date->addMonth();
+            }
+        }
+
+        return $document_date->format('Y-m-d');
     }
 }

@@ -481,8 +481,8 @@ class SRMService
         ]);
 
         return [
-            'success'   => true,
-            'message'   => 'Supplier approval setup created!',
+            'success'   => $data['success'],
+            'message'   => $data['message'],
             'data'      => $data
         ];
     }
@@ -616,7 +616,7 @@ class SRMService
                 'appointment.approved_date',
                 'appointment.approved_by_emp_name',
                 'appointment.approved_by_emp_id',
-                'appointment.current_level_no',
+                'appointment.RollLevForApp_curr',
                 'appointment.timesReferred',
                 'appointment.confirmed_yn',
                 'appointment.refferedBackYN'
