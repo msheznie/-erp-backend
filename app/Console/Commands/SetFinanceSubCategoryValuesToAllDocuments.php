@@ -211,23 +211,23 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "includePLForGRVYN"
                     )
             ),
-            array(
-                "table" => "erp_purchaseorderdetails ",
-                "master" => "erp_purchaseordermaster",
-                "key" => "purchaseOrderMasterID",
-                "masterKey" => "purchaseOrderID",
-                "confirm" => "WO_confirmedYN",
-                "gParent" => null,
-                "gParentKey" => null,
-                "gConfirm" => null,
-                 "columns" => array(
-                        "financeGLcodebBSSystemID",
-                        "financeGLcodebBS",
-                        "financeGLcodePLSystemID",
-                        "financeGLcodePL",
-                        "includePLForGRVYN"
-                    )
-            ),
+            // array(
+            //     "table" => "erp_purchaseorderdetails ",
+            //     "master" => "erp_purchaseordermaster",
+            //     "key" => "purchaseOrderMasterID",
+            //     "masterKey" => "purchaseOrderID",
+            //     "confirm" => "WO_confirmedYN",
+            //     "gParent" => null,
+            //     "gParentKey" => null,
+            //     "gConfirm" => null,
+            //      "columns" => array(
+            //             "financeGLcodebBSSystemID",
+            //             "financeGLcodebBS",
+            //             "financeGLcodePLSystemID",
+            //             "financeGLcodePL",
+            //             "includePLForGRVYN"
+            //         )
+            // ),
             // array(
             //     "table" => "erp_purchaseorderdetailsrefferedhistory",
             //     "master" => "erp_purchaseorderdetails",

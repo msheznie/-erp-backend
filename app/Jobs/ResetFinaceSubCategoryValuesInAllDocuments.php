@@ -84,17 +84,17 @@ class ResetFinaceSubCategoryValuesInAllDocuments implements ShouldQueue
 
             if($record['confirm']) {
               $query =  $query." WHERE ".$master.".".$record['confirm']." = 0";
-            //   \DB::statement($query);
+              \DB::statement($query);
 
             }
             
             if($record['gConfirm']){
               $query =  $query." WHERE ".$gParent.".".$record['gConfirm']." = 0";
-            //  \DB::statement($query);
+             \DB::statement($query);
 
             }
 
-            Log::info($query);
+            // Log::info($query);
         }
         
     }
