@@ -3473,56 +3473,10 @@ class GeneralLedgerInsert implements ShouldQueue
                             ->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.accdepglCodeSystemID')
                             ->get();
 
-                        if ($debit) {
-                            foreach ($debit as $val) {
-                                $data['companySystemID'] = $val->companySystemID;
-                                $data['companyID'] = $val->companyID;
-                                $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                                $data['serviceLineCode'] = $val->serviceLineCode;
-                                $data['masterCompanyID'] = null;
-                                $data['documentSystemID'] = $masterData->documentSystemID;
-                                $data['documentID'] = $masterData->documentID;
-                                $data['documentSystemCode'] = $masterModel["autoID"];
-                                $data['documentCode'] = $masterData->depCode;
-                                $data['documentDate'] = $masterData->depDate;
-                                $data['documentYear'] = \Helper::dateYear($masterData->depDate);
-                                $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
-                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                                $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                                $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-                                $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                                $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                                $data['documentNarration'] = null;
-                                $data['clientContractID'] = 'X';
-                                $data['contractUID'] = 159;
-                                $data['supplierCodeSystem'] = 0;
-                                $data['chartOfAccountSystemID'] = $val->depglCodeSystemID;
-                                $data['glCode'] = $val->DEPGLCODE;
-                                $data['glAccountType'] = $val->catogaryBLorPL;
-                                $data['glAccountTypeID'] = $val->catogaryBLorPLID;
-                                $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
-                                $data['documentLocalCurrencyER'] = 0;
-                                $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal);
-                                $data['documentRptCurrencyID'] = $val->depAmountRptCurr;
-                                $data['documentRptCurrencyER'] = 0;
-                                $data['documentRptAmount'] = ABS($val->sumDepAmountRpt);
-                                $data['documentTransCurrencyID'] = 0;
-                                $data['documentTransCurrencyER'] = 0;
-                                $data['documentTransAmount'] = 0;
-                                $data['holdingShareholder'] = null;
-                                $data['holdingPercentage'] = 0;
-                                $data['nonHoldingPercentage'] = 0;
-                                $data['createdDateTime'] = \Helper::currentDateTime();
-                                $data['createdUserID'] = $empID->empID;
-                                $data['createdUserSystemID'] = $empID->employeeSystemID;
-                                $data['createdUserPC'] = gethostname();
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
-                            }
-
-                            if ($credit) {
-                                foreach ($credit as $val) {
+                        if(!$masterData->is_acc_dep)
+                        {
+                            if ($debit) {
+                                foreach ($debit as $val) {
                                     $data['companySystemID'] = $val->companySystemID;
                                     $data['companyID'] = $val->companyID;
                                     $data['serviceLineSystemID'] = $val->serviceLineSystemID;
@@ -3545,16 +3499,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['clientContractID'] = 'X';
                                     $data['contractUID'] = 159;
                                     $data['supplierCodeSystem'] = 0;
-                                    $data['chartOfAccountSystemID'] = $val->accdepglCodeSystemID;
-                                    $data['glCode'] = $val->ACCDEPGLCODE;
+                                    $data['chartOfAccountSystemID'] = $val->depglCodeSystemID;
+                                    $data['glCode'] = $val->DEPGLCODE;
                                     $data['glAccountType'] = $val->catogaryBLorPL;
                                     $data['glAccountTypeID'] = $val->catogaryBLorPLID;
                                     $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
                                     $data['documentLocalCurrencyER'] = 0;
-                                    $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal) * -1;
+                                    $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal);
                                     $data['documentRptCurrencyID'] = $val->depAmountRptCurr;
                                     $data['documentRptCurrencyER'] = 0;
-                                    $data['documentRptAmount'] = ABS($val->sumDepAmountRpt) * -1;
+                                    $data['documentRptAmount'] = ABS($val->sumDepAmountRpt);
                                     $data['documentTransCurrencyID'] = 0;
                                     $data['documentTransCurrencyER'] = 0;
                                     $data['documentTransAmount'] = 0;
@@ -3568,8 +3522,161 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
+    
+                                if ($credit) {
+                                    foreach ($credit as $val) {
+                                        $data['companySystemID'] = $val->companySystemID;
+                                        $data['companyID'] = $val->companyID;
+                                        $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $val->serviceLineCode;
+                                        $data['masterCompanyID'] = null;
+                                        $data['documentSystemID'] = $masterData->documentSystemID;
+                                        $data['documentID'] = $masterData->documentID;
+                                        $data['documentSystemCode'] = $masterModel["autoID"];
+                                        $data['documentCode'] = $masterData->depCode;
+                                        $data['documentDate'] = $masterData->depDate;
+                                        $data['documentYear'] = \Helper::dateYear($masterData->depDate);
+                                        $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
+                                        $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                        $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                        $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                                        $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                                        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                                        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                                        $data['documentNarration'] = null;
+                                        $data['clientContractID'] = 'X';
+                                        $data['contractUID'] = 159;
+                                        $data['supplierCodeSystem'] = 0;
+                                        $data['chartOfAccountSystemID'] = $val->accdepglCodeSystemID;
+                                        $data['glCode'] = $val->ACCDEPGLCODE;
+                                        $data['glAccountType'] = $val->catogaryBLorPL;
+                                        $data['glAccountTypeID'] = $val->catogaryBLorPLID;
+                                        $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
+                                        $data['documentLocalCurrencyER'] = 0;
+                                        $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal) * -1;
+                                        $data['documentRptCurrencyID'] = $val->depAmountRptCurr;
+                                        $data['documentRptCurrencyER'] = 0;
+                                        $data['documentRptAmount'] = ABS($val->sumDepAmountRpt) * -1;
+                                        $data['documentTransCurrencyID'] = 0;
+                                        $data['documentTransCurrencyER'] = 0;
+                                        $data['documentTransAmount'] = 0;
+                                        $data['holdingShareholder'] = null;
+                                        $data['holdingPercentage'] = 0;
+                                        $data['nonHoldingPercentage'] = 0;
+                                        $data['createdDateTime'] = \Helper::currentDateTime();
+                                        $data['createdUserID'] = $empID->empID;
+                                        $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                        $data['createdUserPC'] = gethostname();
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+                                }
                             }
-                        }
+                        }  
+                        else if($masterData->is_acc_dep)
+                        {
+
+                            $accumulate_Dep = DB::table('erp_fa_assetdepreciationperiods')
+                            ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.*,
+                                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
+                            ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')
+                            ->join('chartofaccounts', 'chartOfAccountSystemID', 'depglCodeSystemID')
+                            ->where('depMasterAutoID', $masterModel["autoID"])
+                            ->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.depglCodeSystemID')
+                            ->first();
+                            $gl_data = array();
+                            $gl_data['companySystemID'] = $masterData->companySystemID;
+                            $gl_data['companyID'] = $masterData->companyID;
+                            $gl_data['serviceLineSystemID'] = $accumulate_Dep->serviceLineSystemID;
+                            $gl_data['serviceLineCode'] = $accumulate_Dep->serviceLineCode;
+                            $gl_data['masterCompanyID'] = null;
+                            $gl_data['documentSystemID'] = $masterData->documentSystemID;
+                            $gl_data['documentID'] = $masterData->documentID;
+                            $gl_data['documentSystemCode'] = $masterData->depMasterAutoID;
+                            $gl_data['documentCode'] = $masterData->depCode;
+                            $gl_data['documentDate'] = $masterData->depDate;
+                            $gl_data['documentYear'] = \Helper::dateYear($masterData->depDate);
+                            $gl_data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
+
+                   
+
+                            $gl_data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $gl_data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $gl_data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+
+                            $gl_data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $gl_data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $gl_data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+
+                            $gl_data['documentNarration'] = null;
+                            $gl_data['clientContractID'] = 'X';
+                            $gl_data['contractUID'] = 159;
+                            $gl_data['supplierCodeSystem'] = 0;
+
+
+                            
+                            $gl_data['documentTransCurrencyID'] = 0;
+                            $gl_data['documentTransCurrencyER'] = 0;
+                            $gl_data['documentTransAmount'] = 0;
+                            $gl_data['documentLocalCurrencyID'] = $masterData->depLocalCur;
+                            $gl_data['documentLocalCurrencyER'] = 0;
+                           
+                            $gl_data['documentRptCurrencyID'] = $masterData->depRptCur;
+                            $gl_data['documentRptCurrencyER'] = 0;
+                          
+                            $gl_data['holdingShareholder'] = null;
+                            $gl_data['holdingPercentage'] = 0;
+                            $gl_data['nonHoldingPercentage'] = 0;
+                            $gl_data['createdDateTime'] = \Helper::currentDateTime();
+                            $gl_data['createdUserID'] = 8888;
+                            $gl_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $gl_data['createdUserPC'] = gethostname();
+                            $gl_data['timestamp'] = \Helper::currentDateTime();
+
+                            if($accumulate_Dep->postToGLYN)
+                            {
+                                $finalData1 = [1,2,3];
+                                foreach ($finalData1 as $da) {
+                                    
+                                    if($da == 1)
+                                    {
+                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->costglCodeSystemID;
+                                        $gl_data['glCode'] = $accumulate_Dep->COSTGLCODE;
+                                        $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
+                                        $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
+    
+                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT * -1;
+                                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt * -1;
+                                    }
+                                    else if($da == 2)
+                                    {
+                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->accdepglCodeSystemID;
+                                        $gl_data['glCode'] = $accumulate_Dep->ACCDEPGLCODE;
+                                        $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
+                                        $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
+    
+                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl;
+                                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt;
+                                    }
+                                    
+                                    else if($da == 3)
+                                    {
+                                        
+                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->postToGLCodeSystemID;
+                                        $gl_data['glCode'] = $accumulate_Dep->postToGLCode;
+                                        $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
+                                        $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
+    
+                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT - $accumulate_Dep->accumulated_depreciation_amount_lcl;
+                                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt - $accumulate_Dep->accumulated_depreciation_amount_rpt;
+                                    }
+                                    array_push($finalData, $gl_data);
+                                   
+                                }
+                            }
+                        
+                        }  
+                      
                         break;
                     case 41: // FADS - Fixed Asset Disposal
                         $masterData = AssetDisposalMaster::with(['disposal_type' => function ($query) {

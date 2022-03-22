@@ -19,6 +19,9 @@ use Carbon\CarbonPeriod;
 use App\Models\FixedAssetDepreciationPeriod;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChartOfAccount;
+use App\Models\GeneralLedger;
 class CreateAccumulatedDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -42,6 +45,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
     {
 
         Log::info('job is starting..');
+        
 
         $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->first();
 
@@ -76,7 +80,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 
             }
 
-
+         
 
             if($companyFinanceYearID != '')
             {
@@ -85,16 +89,28 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     
                 if(isset($faMaster->departmentSystemID))
                 {
-                            
-                    $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
-                    ->where('companySystemID', '=', $faMaster->companySystemID)
-                    ->where('companyFinanceYearID', $companyFinanceYearID)
-                    ->where('departmentSystemID', $faMaster->departmentSystemID)
-                    ->where('isActive', -1)
-                    ->get();
+                    if($faMaster->departmentSystemID != 0)
+                    {
+                        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+                        ->where('companySystemID', '=', $faMaster->companySystemID)
+                        ->where('companyFinanceYearID', $companyFinanceYearID)
+                        ->where('departmentSystemID', $faMaster->departmentSystemID)
+                        //->where('isActive', -1)
+                        ->get();
+                    }    
+                    else
+                    {
+                        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+                        ->where('companySystemID', '=', $faMaster->companySystemID)
+                        ->where('companyFinanceYearID', $companyFinanceYearID)
+                        //->where('isActive', -1)
+                        ->get();
+                    }    
 
-                   
-        
+           
+
+              
+                    
                     $accumulated_month = $accumulated_month - 1;
 
                
@@ -107,7 +123,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
             
                 }
     
-             
             if($companyFinancePeriodID != '')
             {
 
@@ -154,8 +169,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 if ($company) {
                     $dep_data['companyID'] = $company->CompanyID;
                 }
-            
-                $documentMaster = DocumentMaster::find($faMaster->documentSystemID);
+                $doc_id = 23;
+                $documentMaster = DocumentMaster::find($doc_id);
                 if ($documentMaster) {
                     $dep_data['documentID'] = $documentMaster->documentID;
                 }
@@ -282,6 +297,10 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
                             Log::info('job is processing..');
                             $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
+
+
+                            //cost
+
                         }
 
                         Log::info('job is End..');
