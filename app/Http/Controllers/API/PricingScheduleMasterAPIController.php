@@ -429,9 +429,10 @@ class PricingScheduleMasterAPIController extends AppBaseController
         return DB::select("SELECT
 	tender_bid_format_detail.id,
 	tender_id,
-	label,
+	tender_bid_format_detail.label,
 	is_disabled,
 	tender_field_type.type,
+	tender_field_type.id as typeId,
 	srm_schedule_bid_format_details.`value` 
 FROM
 	tender_bid_format_detail
