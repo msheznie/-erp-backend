@@ -44,8 +44,9 @@ class CreateAccumulatedDepreciation implements ShouldQueue
     public function handle()
     {
 
+     
+        Log::useFiles(storage_path() . '/logs/accumulated_dep_job.log');
         Log::info('job is starting..');
-        
 
         $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->first();
 
