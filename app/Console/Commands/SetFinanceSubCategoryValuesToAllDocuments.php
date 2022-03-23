@@ -167,9 +167,9 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
             ),
             array(
                 "table" => "erp_itemreturndetails",
-                "master" => "erp_itemissuedetails",
-                "key" => "itemIssueDetailID",
-                "confirm" => null,
+                "master" => "erp_itemreturnmaster",
+                "key" => "itemReturnAutoID",
+                "confirm" => "confirmedYN",
                 "gParent" => null,
                 "gParentKey" => null,
                 "gConfirm" => null,
@@ -211,23 +211,23 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "includePLForGRVYN"
                     )
             ),
-            // array(
-            //     "table" => "erp_purchaseorderdetails ",
-            //     "master" => "erp_purchaseordermaster",
-            //     "key" => "purchaseOrderMasterID",
-            //     "masterKey" => "purchaseOrderID",
-            //     "confirm" => "WO_confirmedYN",
-            //     "gParent" => null,
-            //     "gParentKey" => null,
-            //     "gConfirm" => null,
-            //      "columns" => array(
-            //             "financeGLcodebBSSystemID",
-            //             "financeGLcodebBS",
-            //             "financeGLcodePLSystemID",
-            //             "financeGLcodePL",
-            //             "includePLForGRVYN"
-            //         )
-            // ),
+            array(
+                "table" => "erp_purchaseorderdetails",
+                "master" => "erp_purchaseordermaster",
+                "key" => "purchaseOrderMasterID",
+                "masterKey" => "purchaseOrderID",
+                "confirm" => "WO_confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                 "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
             // array(
             //     "table" => "erp_purchaseorderdetailsrefferedhistory",
             //     "master" => "erp_purchaseorderdetails",
@@ -251,6 +251,22 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                 "master" => "erp_purchaserequest",
                 "key" => "purchaseRequestID",
                 "confirm" => "PRConfirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
+            array(
+                "table" => "erp_purchasereturndetails",
+                "master" => "erp_purchasereturnmaster",
+                "key" => "purhaseReturnAutoID",
+                "confirm" => "confirmedYN",
                 "gParent" => null,
                 "gParentKey" => null,
                 "gConfirm" => null,
@@ -314,9 +330,9 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                 "master" => "erp_stockadjustmentdetails",
                 "key" => "stockAdjustmentDetailsAutoID",
                 "confirm" => null,
-                "gParent" => null,
-                "gParentKey" => null,
-                "gConfirm" => null,
+                "gParent" => "erp_stockadjustment",
+                "gParentKey" => "stockAdjustmentAutoID",
+                "gConfirm" => "confirmedYN",
                 "columns" => array(
                         "financeGLcodebBSSystemID",
                         "financeGLcodebBS",

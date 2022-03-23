@@ -57,17 +57,22 @@ class ResetFinaceSubCategoryValuesInAllDocuments implements ShouldQueue
             $query = "
                 UPDATE ".$table."
                 INNER JOIN financeitemcategorysub ON ".$table.".itemFinanceCategorySubID = financeitemcategorysub.itemCategorySubID
-                INNER JOIN  ".$master." ON ".$master.".".$key." = ".$table.".".$key." 
                 
             ";
 
-            if(!$record['confirm'] && $record["gConfirm"] && !isset($record['masterKey'])) {
-                $query = $query."INNER JOIN ".$gParent." ON ".$gParent.".".$gParentKey." = ".$master.".".$gParentKey."";
+            if(!isset($record['masterKey'])) {
+                $query .= " INNER JOIN  ".$master." ON ".$master.".".$key." = ".$table.".".$key."";
+            }else {
+                $query .= " INNER JOIN  ".$master." ON ".$master.".".$masterKey." = ".$table.".".$key."";
             }
 
-            if(isset($record['masterKey']) && $record["confirm"]) {
-                $query = $query."INNER JOIN ".$table." ON ".$table.".".$key." = ".$master.".".$masterKey."";
+            if(!$record['confirm'] && $record["gConfirm"] && !isset($record['masterKey'])) {
+                $query = $query." INNER JOIN ".$gParent." ON ".$gParent.".".$gParentKey." = ".$master.".".$gParentKey."";
             }
+
+            // if(isset($record['masterKey']) && $record["confirm"]) {
+            //     $query = $query."INNER JOIN ".$table." ON ".$table.".".$key." = ".$master.".".$masterKey."";
+            // }
                     //  ".$table.".financeGLcodeRevenueSystemID = financeitemcategorysub.financeGLcodeRevenueSystemID,
                     //  ".$table.".financeGLcodeRevenue = financeitemcategorysub.financeGLcodeRevenue,
 //  ".$table.".financeGLcodebBSSystemID = financeitemcategorysub.financeGLcodebBSSystemID,
