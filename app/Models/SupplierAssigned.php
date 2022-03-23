@@ -226,4 +226,9 @@ class SupplierAssigned extends Model
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'UnbilledGRVAccountSystemID', 'chartOfAccountSystemID');
     }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierCodeSytem','supplierCodeSystem');
+    }
 }

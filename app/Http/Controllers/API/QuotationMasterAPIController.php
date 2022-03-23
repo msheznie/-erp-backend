@@ -433,6 +433,31 @@ class QuotationMasterAPIController extends AppBaseController
 
         /** @var QuotationMaster $quotationMaster */
         $quotationMaster = $this->quotationMasterRepository->findWithoutFail($id);
+        if(isset($quotationMaster->detail()->first()['soQuotationMasterID'])) {
+            $quotationParent = $this->quotationMasterRepository->findWithoutFail(($quotationMaster->detail()->first()['soQuotationMasterID']));
+            $details_count = QuotationDetails::where('soQuotationMasterID',$quotationMaster->detail()->first()['soQuotationMasterID'])->get();
+            foreach($quotationParent->detail as $item) {
+                foreach($details_count as $itemNew) {
+                    if($item->requestedQty == $itemNew->requestedQty) {
+                        $itemNew->fullyOrdered = 1;
+                        $itemNew->save();
+                    }   
+                }
+            }
+
+            if(isset($quotationParent->detail)) {
+                if($quotationParent->detail->sum('requestedQty') == $details_count->sum('requestedQty')){
+                    $quotationParent->isInSO = 2 ;
+                    $quotationParent->orderStatus = 2 ;
+                }else {
+                    $quotationParent->isInSO = 1 ;
+                }
+            }else {
+                $quotationParent->isInSO = 1 ;
+            }
+            $quotationParent->update();
+
+        } 
 
         if (empty($quotationMaster)) {
             return $this->sendError('Sales ' . $tempName . ' not found');
@@ -1918,6 +1943,40 @@ class QuotationMasterAPIController extends AppBaseController
 
         return $this->sendResponse($quotationMaster, $order_type.' successfully closed');
 
+    }
+
+
+    public function checkItemExists(Request $request) {
+        $input = $request->all();
+        $count = 0;
+        $quotationRequestedCount = QuotationDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+        
+        if($input['doc'] == "SO") {
+            $master = QuotationDetails::where('soQuotationMasterID',$input['soQuotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->first();
+            $count = QuotationDetails::where('soQuotationMasterID',$input['quotationMasterID'])->where('itemAutoID',$input['itemAutoID'])->sum('requestedQty');
+        }else if($input['doc'] == "DO") {
+            $master = DeliveryOrderDetail::where('quotationMasterID',$input['soQuotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            // $count = DeliveryOrderDetail::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
+
+        }else {
+            $master = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->first();
+            $count = CustomerInvoiceItemDetails::where('quotationMasterID',$input['quotationMasterID'])->where('itemCodeSystem',$input['itemAutoID'])->sum('qtyIssued');
+        }
+
+        if($count !=0 && $quotationRequestedCount != $count) {
+            $input['requestedQty'] = ($quotationRequestedCount - $count);
+            $input['qtyIssued'] = ($quotationRequestedCount - $count);
+            $input['qtyIssuedDefaultMeasure'] = ($quotationRequestedCount - $count);
+            return $this->sendResponse(['status' => false , 'data' => $input],'False');
+        }
+
+        if(isset($master)) {
+                return $this->sendResponse(['status' => true , 'data' => $input],'success');
+
+        }else {
+                return $this->sendResponse(['status' => false , 'data' => $input],'False');
+
+        }
     }
     
 }

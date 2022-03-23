@@ -57,6 +57,7 @@ use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Jobs\CreateSupplierTransactions;
 use App\Models\AddonCostCategories;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -201,9 +202,13 @@ class ProcumentOrderAPIController extends AppBaseController
       
         $input = $this->convertArrayToValue($input);
 
-       if (isset($input['preCheck']) && $input['preCheck']) {
+        if (!isset($input['supplierID']) || (isset($input['supplierID']) && is_null($input['supplierID']))) {
+            return $this->sendError('Please select a supplier', 500);
+        }
+
+        if (isset($input['preCheck']) && $input['preCheck']) {
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
-            if (!empty($company) && $company->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
+            if (!empty($company) && $company->vatRegisteredYN == 1 && !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));
             }
         }
@@ -493,15 +498,21 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
-
+        //$newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+       // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
+        $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+    
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
-
+     
             if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
+            
+         
         }
+
+        
         if(isset($input['isConfirm'])) {
             unset($input['isConfirm']);
         }
@@ -1957,10 +1968,14 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function approveProcurementOrder(Request $request)
     {
+
         $approve = \Helper::approveDocument($request);
+
         if (!$approve["success"]) {
+
             return $this->sendError($approve["message"]);
         } else {
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }
@@ -4030,9 +4045,15 @@ WHERE
         if (empty($supplier)) {
             return $this->sendError('Supplier not found');
         }
-        $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+
+        if (!isset($input['fromAmend'])) {
+            $purchaseOrder->rcmActivated = isset($input['rcmActivated']) ? $input['rcmActivated'] : 0;
+        }
+        
         if (Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
-            $purchaseOrder->rcmActivated = 0;
+            if (!isset($input['fromAmend'])) {
+                $purchaseOrder->rcmActivated = 0;
+            }
         } else if (isset($input['preCheck']) && $input['preCheck']) {
             if ($purchaseOrder->vatRegisteredYN == 1) {   //  (isset($input['rcmActivated']) && $input['rcmActivated'])
                 return $this->sendError('Do you want to activate Reverse Charge Mechanism for this PO', 500, array('type' => 'rcm_confirm'));

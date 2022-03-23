@@ -408,9 +408,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
-       if($input['isInDOorCI']) {
-            $this->updateSalesQuotationDeliveryStatus($input['quotationMasterID']);
-       }
 
 
 
@@ -640,6 +637,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $input['companyReportingAmount'] = Helper::roundValue($input['companyReportingAmount']);
 
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->update($input, $id);
+
+       
+
 
         $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
         if (!$resVat['status']) {

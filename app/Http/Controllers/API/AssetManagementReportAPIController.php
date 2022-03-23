@@ -1183,17 +1183,25 @@ class AssetManagementReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-                 \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+      
+                $fileName = 'asset-addition';
+                $path = 'asset/report/asset-addition/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
+
+
+
+
                 break;
             case 'AMAD': //Asset Disposal
 
@@ -1237,17 +1245,19 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $x++;
                 }
-                 \Excel::create('asset_disposal', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+ 
+                $fileName = 'asset_disposal';
+                $path = 'asset/report/asset_disposal/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             case 'AMADR': //Asset Depreciation Register
@@ -1345,16 +1355,24 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                 }
-                 \Excel::create('asset_depreciation', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
+   
+
+                $fileName = 'asset_depreciation_register';
+                $path = 'asset/report/asset_depreciation_register/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
+
+
                 break;
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
@@ -1375,21 +1393,25 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('asset_cwip', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = 'asset_cwip';
+                $path = 'asset/report/asset_cwip/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             case 'AEA': //Asset Expense
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $decimalPlaces = 2;
                 $output = $this->getAssetExpenseQRY($request);
+                $data = [];
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
                 if (count($output) > 0) {
                     $x = 0;
@@ -1422,16 +1444,20 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('asset_expenses', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $fileName = 'asset_expenses';
+                $path = 'asset/report/asset_expenses/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
+
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));

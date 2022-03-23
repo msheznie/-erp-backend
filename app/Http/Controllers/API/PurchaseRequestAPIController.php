@@ -1473,8 +1473,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        $input['createdUserSystemID'] = $request->employee_id;
 
         $input['PRRequestedDate'] = now();
 
@@ -1994,7 +1993,6 @@ class PurchaseRequestAPIController extends AppBaseController
             $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
             return $this->sendResponse($more_data, $approve["message"]);
         }
-
     }
 
     /**

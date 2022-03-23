@@ -27,6 +27,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\ExpenseEmployeeAllocation;
 use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
@@ -324,7 +325,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN']) {
+                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
@@ -605,18 +606,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
-            if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN']) {
-                    $input['chequePaymentYN'] = -1;
-                } else {
-                    $input['chequePaymentYN'] = 0;
-                }
-            } else {
-                $input['chequePaymentYN'] = 0;
-            }
-
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-                $input['chequePaymentYN'] = 0;
                 $input['BPVchequeDate'] = null;
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
@@ -629,7 +619,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
-                $input['chequePaymentYN'] = 0;
                 if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
@@ -1485,7 +1474,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN']) {
+                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
@@ -1495,7 +1484,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-                $input['chequePaymentYN'] = 0;
                 $input['BPVchequeDate'] = null;
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
@@ -1508,8 +1496,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
-                $input['chequePaymentYN'] = 0;
-                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0 && $input['paymentMode'] == 2) {
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
@@ -1865,6 +1852,34 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $error_count = 0;
 
+
+                    $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                                    ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                    ->first();
+
+                    $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($paySupplierInvoiceMaster->companySystemID, null, 12);
+
+                    $companyData = Company::find($paySupplierInvoiceMaster->companySystemID);
+
+                    if ($employeeInvoice && $employeeInvoice->isYesNO == 1 && $companyData && $companyData->isHrmsIntergrated && ($employeeControlAccount > 0)) {
+                        $employeeControlRelatedAc = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                       ->where('chartOfAccountSystemID', $employeeControlAccount)
+                                                                       ->get();
+
+
+                        foreach ($employeeControlRelatedAc as $key => $value) {
+                            $detailTotalOfLine = $value->DPAmount;
+
+                            $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $value->directPaymentDetailsID)
+                                                                              ->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                                                              ->sum('amount');
+
+                            if ($allocatedSum != $detailTotalOfLine) {
+                                return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes, 500);
+                            }
+                        }
+                    }
+
                     foreach ($pvDetailExist as $item) {
                         if ($item->serviceLineSystemID && !is_null($item->serviceLineSystemID)) {
                             $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $item->serviceLineSystemID)
@@ -2033,7 +2048,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
 
                             } else {
-                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500);
+                                return $this->sendError('Could not found any unassigned cheques. Please add cheques to cheque registry', 500, ['type' => 'confirm']);
                             }
 
                         } else {
@@ -2609,6 +2624,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $paymentMode = PaymentType::all();
 
+             $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                                    ->where('companySystemID', $companyId)
+                                    ->first();
+
+            $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+
+            $companyData = Company::find($companyId);
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -2621,7 +2643,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'chequeRegistryPolicy' => $is_exist_policy_GCNFCR ? true : false,
                 'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
                 'payee' => $payee,
+                'employeeInvoicePolicy' => ($employeeInvoice && $employeeInvoice->isYesNO == 1) ? true : false,
                 'bank' => $bank,
+                'employeeControlAccount' => $employeeControlAccount,
+                'isHrmsIntergrated' => ($companyData) ? $companyData->isHrmsIntergrated : false,
                 'currency' => $currency,
                 'segments' => $segment,
                 'expenseClaimType' => $expenseClaimType,

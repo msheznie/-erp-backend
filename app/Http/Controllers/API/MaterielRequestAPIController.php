@@ -896,11 +896,8 @@ class MaterielRequestAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $employee = \Helper::getEmployeeInfo();
-
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = $employee->empID;
-            $input['createdUserSystemID'] = $employee->employeeSystemID;
+            $input['createdUserSystemID'] = $request->employee_id;
 
             $validator = \Validator::make($input, [
                 // 'serviceLineSystemID' => 'required|numeric|min:1',
@@ -1150,7 +1147,6 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
-
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
@@ -1161,6 +1157,10 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $itemRequestArray = $itemRequest->toArray();
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 
