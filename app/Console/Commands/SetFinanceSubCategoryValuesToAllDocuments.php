@@ -373,7 +373,22 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "financeGLcodePL",
                         "includePLForGRVYN"
                     )
-            )
+            ),
+           array(
+                "table" => "supplier_invoice_items",
+                "master" => "erp_bookinvsuppmaster",
+                "key" => "bookingSuppMasInvAutoID",
+                "confirm" => "confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodePLSystemID",
+                        "includePLForGRVYN"
+                    )
+                
+            ),
         ];
         // $tenants = CommonJobService::tenant_list();
         
