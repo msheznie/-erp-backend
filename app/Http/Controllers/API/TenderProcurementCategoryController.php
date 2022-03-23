@@ -212,6 +212,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $procurementCategories = $procurementCategories->where(function ($query) use ($search) {
                 $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('code', 'LIKE', "%{$search}%");
             });
         }
 
