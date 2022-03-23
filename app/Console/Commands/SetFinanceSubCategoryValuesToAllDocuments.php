@@ -288,11 +288,11 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
             ),
             array(
                 "table" => "erp_purchasereturndetails_refferedback",
-                "master" => "erp_purchasereturnmaster",
+                "master" => "erp_purchasereturndetails",
                 "key" => "purhaseReturnAutoID",
-                "confirm" => "confirmedYN",
-                "gParent" => null,
-                "gParentKey" => null,
+                "confirm" => null,
+                "gParent" => "erp_purchasereturnmaster",
+                "gParentKey" => "confirmedYN",
                 "gConfirm" => null,
                 "columns" => 
                     array(
