@@ -62,12 +62,22 @@ class ResetFinaceSubCategoryValuesInAllDocuments implements ShouldQueue
 
             if(!isset($record['masterKey'])) {
                 $query .= " INNER JOIN  ".$master." ON ".$master.".".$key." = ".$table.".".$key."";
-            }else {
+            }
+            
+            if(isset($record['masterKey']) && !isset($record["gConfirm"])){
                 $query .= " INNER JOIN  ".$master." ON ".$master.".".$masterKey." = ".$table.".".$key."";
+            }
+
+            if(isset($record['masterKey']) && isset($record["gConfirm"])){
+                $query .= " INNER JOIN  ".$master." ON ".$master.".".$key." = ".$table.".".$key."";
             }
 
             if(!$record['confirm'] && $record["gConfirm"] && !isset($record['masterKey'])) {
                 $query = $query." INNER JOIN ".$gParent." ON ".$gParent.".".$gParentKey." = ".$master.".".$gParentKey."";
+            }
+            
+            if(!$record['confirm'] && $record["gConfirm"] && isset($record['masterKey'])){
+                $query = $query." INNER JOIN ".$gParent." ON ".$gParent.".".$masterKey." = ".$master.".".$gParentKey."";
             }
 
             // if(isset($record['masterKey']) && $record["confirm"]) {

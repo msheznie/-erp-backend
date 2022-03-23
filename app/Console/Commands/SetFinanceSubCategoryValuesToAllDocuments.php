@@ -228,15 +228,23 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "includePLForGRVYN"
                     )
             ),
-            // array(
-            //     "table" => "erp_purchaseorderdetailsrefferedhistory",
-            //     "master" => "erp_purchaseorderdetails",
-            //     "key" => "purchaseOrderDetailsID",
-            //     "confirm" => null,
-            //     "gParent" => "erp_purchaseordermaster",
-            //     "gParentKey" => "purchaseOrderID",
-            //     "gConfirm" => "WO_confirmedYN"
-            // ),
+            array(
+                "table" => "erp_purchaseorderdetailsrefferedhistory",
+                "master" => "erp_purchaseorderdetails",
+                "key" => "purchaseOrderDetailsID",
+                "masterKey" => "purchaseOrderID",
+                "confirm" => null,
+                "gParent" => "erp_purchaseordermaster",
+                "gParentKey" => "purchaseOrderMasterID",
+                "gConfirm" => "WO_confirmedYN",
+                 "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
             // array(
             //     "table" => "erp_purchaseorderprocessdetails",
             //     "master" => "erp_purchaseorderdetails",
@@ -280,12 +288,12 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
             ),
             array(
                 "table" => "erp_purchasereturndetails_refferedback",
-                "master" => "erp_grvdetails",
-                "key" => "grvDetailsID",
-                "confirm" => null,
-                "gParent" => "erp_grvmaster",
-                "gParentKey" => "grvAutoID",
-                "gConfirm" => "grvConfirmedYN",
+                "master" => "erp_purchasereturnmaster",
+                "key" => "purhaseReturnAutoID",
+                "confirm" => "confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
                 "columns" => 
                     array(
                         "financeGLcodebBSSystemID",
