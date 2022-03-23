@@ -145,7 +145,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
         
                 if (!$companyFinancePeriod["success"]) {
                    
-                    Log::info($companyFinancePeriod["message"]);
+                    Log::info('company finance period not found');
                 } else {
                     $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                     $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
@@ -212,13 +212,16 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 $dep_data['depLocalCur'] = $company->localCurrencyID;
                 $dep_data['depRptCur'] = $company->reportingCurrency;
                 $dep_data['createdPCID'] = gethostname();
-                $dep_data['createdUserID'] = 8888;
+                $dep_data['createdUserID'] =  \Helper::getEmployeeID();
                 $dep_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 //$dep_data['approved'] = -1;
                 $dep_data['is_acc_dep'] = true;
-                
+
+                Log::info('job is creating..');
                 
                 $depMaster = FixedAssetDepreciationMaster::create($dep_data);
+
+                //Log::info(print_r($depMaster, true));
         
                 // $amount_local = 0;
         
@@ -266,8 +269,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                         $data['costUnitRpt'] = $faMaster->costUnitRpt;
                         $data['depDoneYN'] = -1;
                         $data['createdPCid'] = gethostname();
-                        $data['createdBy'] = $depMaster->createdUserID;
-                        $data['createdUserSystemID'] = $depMaster->createdUserSystemID;
+                        $data['createdBy'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         $data['depMonthYear'] = $depMaster->depMonthYear;
                         $data['depMonth'] = $faMaster->depMonth;
                         $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
@@ -289,8 +292,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     
             
             
-                    FixedAssetDepreciationPeriod::insert($data);
-            
+                    $dep_per = FixedAssetDepreciationPeriod::create($data);
+                   
                     $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
                     // Log::info('Depreciation processing');
                     if($depDetail) 
