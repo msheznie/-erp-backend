@@ -416,7 +416,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     public function updatePriceBidDetail(Request $request)
     {
-        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('field_type'));
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         if(!isset($input['label']) || empty($input['label'])){
@@ -442,7 +442,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         try {
             $data['is_disabled']=$is_disabled;
             $data['label']=$input['label'];
-            $data['field_type']=$input['field_type'][0];
+            $data['field_type']=$input['field_type'];
             $data['updated_by'] = $employee->employeeSystemID;
 
             $result = TenderBidFormatDetail::where('id',$input['id'])->update($data);

@@ -58,6 +58,7 @@ class TenderFieldType extends Model
 
     public $fillable = [
         'type',
+        'label',
         'created_by',
         'updated_by'
     ];
@@ -70,6 +71,7 @@ class TenderFieldType extends Model
     protected $casts = [
         'id' => 'integer',
         'type' => 'string',
+        'label' => 'string',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];
