@@ -83,7 +83,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
         Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
         Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
-
+        Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
         
@@ -2460,6 +2460,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
 
+        Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
+        Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
+
+        
+        Route::post('get-supplier-categories', 'SupplierCategoryConfigurationController@getSupplierCategories');
+        Route::post('delete-category', 'SupplierCategoryConfigurationController@deleteCategory');
+        Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
+        Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
+
+        
+       
+        
         /**
          * Supplier registration approval routes
          */

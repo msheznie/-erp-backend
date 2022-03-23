@@ -622,7 +622,11 @@ class FixedAssetMasterReferredHistory extends Model
         'tempRecord',
         'toolsCondition',
         'selectedforJobYN',
-        'timestamp'
+        'timestamp',
+        'accumulated_depreciation_amount_rpt',
+        'accumulated_depreciation_amount_lcl',
+        'is_acc_dep',
+        'accumulated_depreciation_date'
     ];
 
     /**

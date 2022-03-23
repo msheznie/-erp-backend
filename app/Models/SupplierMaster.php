@@ -163,6 +163,8 @@ class SupplierMaster extends Model
         'blockedReason',
         'jsrsExpiry',
         'createdFrom',
+        'supplier_category_id',
+        'supplier_group_id',
         'last_activity'
     ];
 
@@ -244,7 +246,9 @@ class SupplierMaster extends Model
         'blockedDate' => 'datetime',
         'blockedReason' => 'string',
         'jsrsExpiry' => 'string',
-        'createdFrom' => 'integer'
+        'createdFrom' => 'integer',
+        'supplier_category_id'  => 'integer',
+        'supplier_group_id'  => 'integer'
     ];
 
     /**

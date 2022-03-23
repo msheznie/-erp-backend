@@ -1147,7 +1147,6 @@ class MaterielRequestAPIController extends AppBaseController
         $id = $input['id'];
 
         $itemRequest = $this->materielRequestRepository->find($id);
-
         if (empty($itemRequest)) {
             return $this->sendError('Request not found');
         }
@@ -1158,6 +1157,10 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $itemRequestArray = $itemRequest->toArray();
+
+        if(isset($itemRequestArray['material_issue'])) {
+            unset($itemRequestArray['material_issue']);
+        }
 
         $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
 

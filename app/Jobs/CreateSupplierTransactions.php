@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\SupplierMaster;
+use App\Models\SupplierTransactions;
 use App\Repositories\SupplierMasterRepository;
 use App\Repositories\SupplierTransactionsRepository;
 use Illuminate\Bus\Queueable;
@@ -16,7 +17,6 @@ class CreateSupplierTransactions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $masterModel;
-
     /**
      * Create a new job instance.
      *
@@ -26,7 +26,6 @@ class CreateSupplierTransactions implements ShouldQueue
     {
 
         $this->masterModel = $masterModel;
-
     }
 
     /**
@@ -41,7 +40,7 @@ class CreateSupplierTransactions implements ShouldQueue
                     $masterModel = $this->masterModel;
 
                     $today = NOW();
-                    $supplierMasterRepository->update(['last_activity'=>$today],$masterModel['supplierID']);
+                    $supplierMasterRepository->update(['last_activity'=>$masterModel['documentDate']],$masterModel['supplierID']);
 
                     $supplierMaster = array();
                     $supplierMaster['documentSystemID'] = $masterModel['documentSystemID'];
@@ -59,8 +58,14 @@ class CreateSupplierTransactions implements ShouldQueue
                     $supplierMaster['lastApprovedBy'] = $masterModel['lastApprovedBy'];
                     $supplierMaster['transactionCurrency'] = $masterModel['transactionCurrency'];
                     $supplierMaster['amount'] = $masterModel['amount'];
-                    $supplierTransactionsRepository->create($supplierMaster);
-
+                    $supplierTransAvailable = $supplierTransactionsRepository->where('documentSystemCode', $masterModel['documentSystemCode'])->get();
+                    $checkSupplierTrans = isset($supplierTransAvailable[0]->id) ? $supplierTransAvailable[0]->id: null;
+                    if($checkSupplierTrans != null) {
+                        $supplierTransactionsRepository->update($supplierMaster, $supplierTransAvailable[0]->id);
+                    }
+                    if($checkSupplierTrans == null) {
+                        $supplierTransactionsRepository->create($supplierMaster);
+                    }
                     DB::commit();
                 }
                 catch (\Exception $e)

@@ -176,6 +176,5 @@ class SrpErpPayShiftEmployees extends Model
     function employee(){
         return $this->belongsTo(SrpEmployeeDetails::class, 'empID', 'EIdNo');
     }
-
     
 }
