@@ -63,13 +63,15 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         $procurementCatCodeExist = TenderProcurementCategory::select('id')
-            ->where('code', '=', $input['code'])->first();
+            ->where('code', '=', $input['code'])
+            ->where('level', '=', $level)->first();
         if (!empty($procurementCatCodeExist)) {
             return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
         }
 
         $procurementCatDesExist = TenderProcurementCategory::select('id')
-            ->where('description', '=', $input['description'])->first();
+            ->where('description', '=', $input['description'])
+            ->where('level', '=', $level)->first();
         if (!empty($procurementCatDesExist)) {
             return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
         }
@@ -141,14 +143,16 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $procurementCodeExist = TenderProcurementCategory::select('id')
             ->where('id', '!=', $id)
-            ->where('code', '=', $input['code'])->first();
+            ->where('code', '=', $input['code'])
+            ->where('level', '=', $level)->first();
         if (!empty($procurementCodeExist)) {
             return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
         }
 
         $procurementDesExist = TenderProcurementCategory::select('id')
             ->where('id', '!=', $id)
-            ->where('description', '=', $input['description'])->first();
+            ->where('description', '=', $input['description'])
+            ->where('level', '=', $level)->first();
         if(!empty($procurementDesExist)) {
             return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
         }
