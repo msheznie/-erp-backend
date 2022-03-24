@@ -361,9 +361,9 @@ class TenderMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
-            $data['currency_id']=$input['currency_id'];
-            $data['description']=$input['description'];
-            $data['description_sec_lang']=$input['description_sec_lang'];
+            $data['currency_id']= isset($input['currency_id'])?$input['currency_id'] : null;
+            $data['description']= isset($input['description'])?$input['description'] : null;
+            $data['description_sec_lang']=isset($input['description_sec_lang'])?$input['description_sec_lang'] : null;
             $data['envelop_type_id']=$input['envelop_type_id'];
             $data['tender_type_id']=$input['tender_type_id'];
             $data['title']=$input['title'];
