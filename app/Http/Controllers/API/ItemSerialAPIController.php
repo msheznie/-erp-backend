@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateItemSerialAPIRequest;
 use App\Http\Requests\API\UpdateItemSerialAPIRequest;
 use App\Models\ItemSerial;
+use App\Models\ItemBatch;
 use App\Models\DocumentSubProduct;
 use App\Repositories\ItemSerialRepository;
 use Illuminate\Http\Request;
@@ -324,19 +325,29 @@ class ItemSerialAPIController extends AppBaseController
             return $this->sendError("No of quantity should be greater than zero", 500);
         }
 
-
-        $iterate = 0;
-        $startSN = floatval($input['first_sn']);
-        $duplicateSerials = [];
-
-        $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
-                                         ->where('documentSystemID', $input['documentSystemID'])
-                                         ->count();
-
-        $noOfQty = $input['noQty'] - $subProducts;
-
         DB::beginTransaction();
         try {
+
+            if (isset($input['trackingType']) && $input['trackingType'] == 1) {
+                $resBatch = $this->generateItemBatchNumbers($input);
+                if (!$resBatch['status']) {
+                    return $this->sendError($resBatch['message'], 500);
+                } else {
+                    DB::commit();
+                    return $this->sendResponse([], 'product batch generated successfully');
+                }
+            }
+
+
+            $iterate = 0;
+            $startSN = floatval($input['first_sn']);
+            $duplicateSerials = [];
+
+            $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
+                                             ->where('documentSystemID', $input['documentSystemID'])
+                                             ->count();
+
+            $noOfQty = $input['noQty'] - $subProducts;
             while ($iterate < $noOfQty) {
                 $productSerial = isset($input['prefix']) ? $input['prefix'].$startSN : $startSN;
                 $startSN++;
@@ -386,6 +397,54 @@ class ItemSerialAPIController extends AppBaseController
         }
 
     }
+
+    public function generateItemBatchNumbers($input)
+    {
+        $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
+                                             ->where('documentSystemID', $input['documentSystemID'])
+                                             ->sum('quantity');
+
+        $noOfQty = $input['noQty'] - $subProducts;
+
+        if ($input['quantity'] > $noOfQty) {
+            return ['status' => false, 'message' => "Quantity cannot be greater than remaining quantity"];
+        }
+
+        if (strlen($input['batchCode']) > 20) {
+            return ['status' => false, 'message' => "Batch Code length cannot be greater than 20"];
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['batchCode'])) {
+            return ['status' => false, 'message' => "Serial code can contain only / and - in special character"];
+        }
+
+
+        $checkProductSerialDuplication = ItemBatch::where('itemSystemCode', $input['itemID'])
+                                                           ->where('batchCode', $input['batchCode'])
+                                                           ->first();
+
+        if ($checkProductSerialDuplication) {
+            return ['status' => false, 'message' => "Batch Code already exists for this product"];
+        }
+
+
+        $saveData = [
+            'itemSystemCode' => $input['itemID'],
+            'wareHouseSystemID' => $input['wareHouseSystemCode'],
+            'batchCode' => $input['batchCode'],
+            'quantity' => $input['quantity'],
+        ];
+
+        $res = ItemBatch::create($saveData);
+
+
+        if ($res) {
+            $this->itemSerialRepository->mapBatchSubProducts($res->id, $input['documentSystemID'], $input['documentDetailID']);
+        }
+
+        return ['status' => true];
+    }
+
 
     public function getGeneratedSerialNumbers(Request $request)
     {
