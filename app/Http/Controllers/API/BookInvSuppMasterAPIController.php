@@ -39,10 +39,12 @@ use App\Models\AccountsPayableLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
+use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ExpenseEmployeeAllocation;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
@@ -55,10 +57,12 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\Employee;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
@@ -195,8 +199,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
-            ->where('supplierID', $input['supplierID'])
-            ->first();
+                                        ->when($input['documentType'] != 4, function($query) use ($input) {
+                                            $query->where('supplierID', $input['supplierID']);
+                                        })
+                                        ->when($input['documentType'] == 4, function($query) use ($input) {
+                                            $query->where('employeeID', $input['employeeID']);
+                                        })
+                                        ->first();
 
         if ($alreadyAdded) {
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
@@ -244,6 +253,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Document date is not within the financial period!');
+        }
+
+        if (!isset($input['supplierID'])) {
+            $input['supplierID'] = null;
         }
 
 
@@ -309,23 +322,34 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingInvCode'] = $bookingInvCode;
         }
 
-        // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
-            'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
-            ->where('supplierCodeSytem', $input['supplierID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
+        if ($input['documentType'] != 4) {
+            // adding supplier grv details
+            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
+                'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
+                ->where('supplierCodeSytem', $input['supplierID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
 
-        $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
+            $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
 
-        if ($supplierAssignedDetail) {
-            $input['supplierVATEligible'] = $supplierAssignedDetail->vatEligible;
-            $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
-            $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-            $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
-            $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            if ($supplierAssignedDetail) {
+                $input['supplierVATEligible'] = $supplierAssignedDetail->vatEligible;
+                $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
+                $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            }
+        } else {
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+
+            if (is_null($checkEmployeeControlAccount)) {
+                return $this->sendError('Please configure Employee control account for this company', 500);
+            }
+
+            $input['employeeControlAcID'] = $checkEmployeeControlAccount;
         }
+
 
         $bookInvSuppMasters = $this->bookInvSuppMasterRepository->create($input);
 
@@ -379,6 +403,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage');
+        },'employee' => function($query){
+            $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         },'direct_customer_invoice' => function($query) {
@@ -441,7 +467,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function update($id, UpdateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
         $input = $this->convertArrayToValue($input);
 
@@ -454,7 +480,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+        if ($input['supplierID'] != $bookInvSuppMaster->supplierID && $input['documentType'] != 4) {
             $input['isLocalSupplier'] = Helper::isLocalSupplier($input['supplierID'], $input['companySystemID']);
         }
 
@@ -466,9 +492,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
 
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
-            ->where('supplierID', $input['supplierID'])
-            ->where('bookingSuppMasInvAutoID', '<>', $id)
-            ->first();
+                                        ->when($input['documentType'] != 4, function($query) use ($input) {
+                                            $query->where('supplierID', $input['supplierID']);
+                                        })
+                                        ->when($input['documentType'] == 4, function($query) use ($input) {
+                                            $query->where('employeeID', $input['employeeID']);
+                                        })
+                                        ->where('bookingSuppMasInvAutoID', '<>', $id)
+                                        ->first();
 
         if ($alreadyAdded) {
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
@@ -484,20 +515,31 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
-            ->where('supplierCodeSytem', $input['supplierID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
+        if ($input['documentType'] != 4) {
+            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
+                ->where('supplierCodeSytem', $input['supplierID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
 
-        if ($supplierAssignedDetail) {
-            $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
-            $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-            $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
-            if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
-                $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+            if ($supplierAssignedDetail) {
+                $input['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input['supplierGLCode'] = $supplierAssignedDetail->liabilityAccount;
+                $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+                if ($input['supplierID'] != $bookInvSuppMaster->supplierID) {
+                    $input['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
+                }
             }
+        } else {
+            $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
+
+            if (is_null($checkEmployeeControlAccount)) {
+                return $this->sendError('Please configure Employee control account for this company', 500);
+            }
+
+            $input['employeeControlAcID'] = $checkEmployeeControlAccount;
         }
+
 
         if (isset($input['bookingDate']) && $input['bookingDate']) {
             $input['bookingDate'] = new Carbon($input['bookingDate']);
@@ -631,12 +673,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'bookingDate' => 'required',
                 'supplierInvoiceDate' => 'required',
                 'supplierInvoiceNo' => 'required',
-                'supplierID' => 'required|numeric|min:1',
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
             ]);
 
             if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            if ($input['documentType'] == 4) {
+                $validatorSupp = \Validator::make($input, [
+                    'employeeID' => 'required|numeric|min:1',
+                ]);
+            } else {
+                $validatorSupp = \Validator::make($input, [
+                    'supplierID' => 'required|numeric|min:1',
+                ]);
+            }
+
+            if ($validatorSupp->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
@@ -674,6 +729,39 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if ($checkItems == 0) {
                     return $this->sendError('Every Supplier Invoice should have at least one item', 500);
                 }
+
+                $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                                    ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                                    ->first();
+
+                $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($bookInvSuppMaster->companySystemID, null, 12);
+
+                $companyData = Company::find($bookInvSuppMaster->companySystemID);
+
+                if ($employeeInvoice && $employeeInvoice->isYesNO == 1 && $companyData && $companyData->isHrmsIntergrated && ($employeeControlAccount > 0)) {
+                    $employeeControlRelatedAc = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                                                                   ->where('chartOfAccountSystemID', $employeeControlAccount)
+                                                                   ->get();
+
+
+                    foreach ($employeeControlRelatedAc as $key => $value) {
+                        $detailTotalOfLine = $value->netAmount + $value->VATAmount;
+
+                        $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $value['directInvoiceDetailsID'])
+                                                                          ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+                                                                          ->sum('amount');
+
+                        if ($allocatedSum != $detailTotalOfLine) {
+                            return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                        }
+
+                        if ($bookInvSuppMaster->createMonthlyDeduction && (is_null($value->deductionType) || $value->deductionType == 0)) {
+                            return $this->sendError("Please set deduction Type for ".$value->glCode." - ".$value->glCodeDes);
+                        }
+                    }
+
+                }
+
             } 
 
             if ($checkItems > 0) {
@@ -1906,7 +1994,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1972,6 +2060,18 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                     ->where('companySystemID', $companyId)
                                     ->first();
 
+        $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                                    ->where('companySystemID', $companyId)
+                                    ->first();
+
+        $employeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyId, null, 12);
+
+        $companyData = Company::find($companyId);
+
+
+        $monthly_declarations_drop = MonthlyDeclarationsTypes::selectRaw("monthlyDeclarationID, monthlyDeclaration")
+                    ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
+                    ->get();
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1980,11 +2080,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'tax' => $taxMaster,
             'assetAllocatePolicy' => ($assetAllocatePolicy && $assetAllocatePolicy->isYesNO == 1) ? true : false,
             'directGRVPolicy' => ($directGRV && $directGRV->isYesNO == 1) ? true : false,
+            'employeeInvoicePolicy' => ($employeeInvoice && $employeeInvoice->isYesNO == 1) ? true : false,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
+            'isHrmsIntergrated' => ($companyData) ? $companyData->isHrmsIntergrated : false,
             'wareHouseLocation' => $wareHouseLocation,
+            'deduction_type_drop' => $monthly_declarations_drop,
             'suppliers' => $supplier,
             'companyFinanceYear' => $companyFinanceYear,
+            'employeeControlAccount' => $employeeControlAccount,
             'segments' => $segments,
             'isVATEligible' => $isVATEligible
         );
@@ -2004,7 +2108,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierData = $supplierData->where('isAssigned', -1);
         $supplierData = $supplierData->get();
 
-        return $this->sendResponse($supplierData, 'Record retrieved successfully');
+        $employeeData = [];
+        if (isset($request['invoiceType']) && $request['invoiceType'] == 4) {
+            $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')
+                                    ->where('discharegedYN', 0)
+                                    ->get();
+        }
+
+        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData], 'Record retrieved successfully');
     }
 
 
@@ -2194,7 +2305,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'suppliermaster.supplierName As supplierName',
             'approvalLevelID',
             'documentSystemCode',
-            'employees.empName As created_user'
+            'employees.empName As created_user',
+            'inv_emp.empName As employee_inv'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -2217,6 +2329,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
+            ->leftJoin('employees as inv_emp', 'erp_bookinvsuppmaster.employeeID', 'inv_emp.employeeSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 11)
             ->where('erp_documentapproved.companySystemID', $companyID)->groupBy('erp_bookinvsuppmaster.bookingSuppMasInvAutoID');
@@ -2521,7 +2634,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'employee'])->first();
 
         if (empty($bookInvSuppMasterRecord)) {
             return $this->sendError('Supplier Invoice not found');

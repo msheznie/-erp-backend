@@ -57,9 +57,8 @@
 
         #cheque_cheque_date {
             position: absolute;
-            top: 22.5cm;
-            /* top: 26.5cm; */
-            left: 20cm;
+            top: 19.8cm;
+            left: 16.3cm;
         }
 
         #cheque_no_bottom {
@@ -70,28 +69,28 @@
 
         #cheque_amount_no {
             position: absolute;
-            top: 25.8cm;
-            left: 21cm;
+            top: 22.5cm;
+            left: 15.3cm;
         }
 
         #cheque_payee {
             position: absolute;
-            top: 24.6cm;
-            left: 4.5cm;
+            top: 20.6cm;
+            left: 2.7cm;
         }
 
         #word_amount_table {
             width: 12.1cm;
             position: absolute;
             left: 2cm;
-            top: 24.4cm;
+            top: 15cm;
         }
 
         #cheque_amount_word_para {
             line-height: 1cm;
             position: absolute;
-            top: 0.6cm;
-            left: 1cm;
+            top: 21cm;
+            left: 1.6cm;
 
         }
 
@@ -106,12 +105,55 @@
       </style>
 </head>
 <body onload="window.print();window.close()" >
+    @if ($entity != null)
+    <br><br>
+    <br><br>
+    <br><br>
+    <br><br>
+    <br><br>
+
+    <div class="card-body content">
+        <table style="width: 100%">
+            <tr>
+                <td style="width: 15%"><b>Paid To</b></td>
+                <td style="width: 60%"><b>@if($entity->nameOnCheque){{$entity->nameOnCheque}}@endif</b></td>
+                <td style="width: 10%"><b>Date </b></td>
+                <td style="width: 15%"><b>{{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}}</b></td>
+            </tr>
+            <br><br>
+            <tr>
+                <td style="width: 15%"><b>Bank Name</b></td>
+                <td style="width: 60%"><b>@if($entity->bankaccount){{$entity->bankaccount->bankName}}@endif</b></td>
+                <td style="width: 10%"><b>Currency </b></td>
+                <td style="width: 15%"><b>@if($entity->bankcurrency){{$entity->bankcurrency->CurrencyName}}@endif</b></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container">
+        <table style="width: 100%">
+            <tr>
+                <td style="width: 50"><b>Account Name</b></td>
+                <td style="width: 20%"><b>Remarks</b></td>
+                <td style="width: 15%"><b>Ref Amount</b></td>
+                <td style="width: 15%"><b>Amount</b></td>
+            </tr>
+            <br><br>
+            <tr>
+                <td style="width: 50%">{{$entity->nameOnCheque}}</td>
+                <td style="width: 20%">-</td>
+                <td style="width: 15%">{{number_format($entity->payAmountBank,$entity->decimalPlaces)}} </td>
+                <td style="width: 15%">{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</td>
+            </tr>
+        </table>
+    </div>
+@endif
 
 <div class="footer" >
     <div style="font-size: 16px !important;" id="cheque_cheque_date" > {{\App\helper\Helper::dateFormat($entity->BPVchequeDate)}} </div>
     <div style="font-size: 16px !important;" id="cheque_payee" >{{$entity->nameOnCheque}}</div>
 
-    <table id="word_amount_table" class="header-part" >
+    <table class="header-part" >
         <tr >
             <td valign="top" >
                 <p style="font-size: 16px !important;" id="cheque_amount_word_para">  {{$entity->amount_word}} & {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif only</p>

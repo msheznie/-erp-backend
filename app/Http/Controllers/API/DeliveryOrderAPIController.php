@@ -389,8 +389,6 @@ class DeliveryOrderAPIController extends AppBaseController
             }
         }
 
-
-
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }

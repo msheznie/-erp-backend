@@ -1993,7 +1993,6 @@ class PurchaseRequestAPIController extends AppBaseController
             $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
             return $this->sendResponse($more_data, $approve["message"]);
         }
-
     }
 
     /**

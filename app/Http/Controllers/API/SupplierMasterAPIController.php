@@ -236,7 +236,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         $fileName = 'supplier_master';
-        $path = 'procurement/master/supplier/excel/';
+        $path = 'system/supplier_master/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
@@ -301,7 +301,6 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             $childCompanies = [$companyId];
         }
-
         if ($request['type'] == 'all') {
             $supplierMasters = SupplierMaster::with(['liablity_account', 'unbilled_account','categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
@@ -309,7 +308,7 @@ class SupplierMasterAPIController extends AppBaseController
             }]);
         } else {
             //by_company
-            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'supplierCurrency' => function ($query) {
+            $supplierMasters = SupplierAssigned::with(['liablity_account', 'unbilled_account', 'categoryMaster', 'critical', 'country','supplierICVCategories','supplierICVSubCategories', 'master', 'supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
             }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned', -1);
@@ -720,8 +719,8 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']));
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']));
                 // user activity log table
                 if($supplierMaster){
                     $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']);

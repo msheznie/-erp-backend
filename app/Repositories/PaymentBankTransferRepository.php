@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\PaymentBankTransfer;
 use InfyOm\Generator\Common\BaseRepository;
 use Carbon\Carbon;
+use App\helper\StatusService;
 
 /**
  * Class PaymentBankTransferRepository

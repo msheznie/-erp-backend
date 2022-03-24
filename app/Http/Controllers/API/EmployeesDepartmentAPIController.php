@@ -35,7 +35,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class EmployeesDepartmentController
  * @package App\Http\Controllers\API
@@ -959,18 +959,21 @@ class EmployeesDepartmentAPIController extends AppBaseController
             }
         }
 
+        
+        $fileName = 'approval_matrix';
+        $path = 'approval-setup/approval_matrix/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-        \Excel::create('approval_matrix', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
 
-        return $this->sendResponse(array(), 'successfully export');
+
     }
 
     public function getApprovalPersonsByRoll(Request $request)

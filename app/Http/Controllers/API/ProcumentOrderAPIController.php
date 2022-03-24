@@ -57,6 +57,7 @@ use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Jobs\CreateSupplierTransactions;
 use App\Models\AddonCostCategories;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -497,15 +498,21 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
-
+        //$newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+       // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
+        $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+    
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
-
+     
             if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
+            
+         
         }
+
+        
         if(isset($input['isConfirm'])) {
             unset($input['isConfirm']);
         }
@@ -1961,10 +1968,14 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function approveProcurementOrder(Request $request)
     {
+
         $approve = \Helper::approveDocument($request);
+
         if (!$approve["success"]) {
+
             return $this->sendError($approve["message"]);
         } else {
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }

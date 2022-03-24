@@ -59,6 +59,7 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
+use App\helper\CreateExcel;
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -281,15 +282,21 @@ class ItemMasterAPIController extends AppBaseController
             $data = array();
         }
 
-        \Excel::create('item_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+
+        $fileName = 'item_master';
+        $path = 'system/item_master/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
 
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }

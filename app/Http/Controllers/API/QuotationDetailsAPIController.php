@@ -137,10 +137,17 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
 
-        
-        $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
-        ->where('companySystemID', $companySystemID)
-        ->first();
+        if(isset($input['itemCode'])) {
+                $item = ItemAssigned::where('itemCodeSystem', $input['itemCode']['id'])
+                ->where('companySystemID', $companySystemID)
+                ->first();
+
+        }else {
+            $item = ItemAssigned::where('itemCodeSystem', $input['itemAutoID'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+        }
+
 
         if($input['itemAutoID']) {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
@@ -336,6 +343,7 @@ class QuotationDetailsAPIController extends AppBaseController
         /** @var QuotationDetails $quotationDetails */
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
 
+        
         if (empty($quotationDetails)) {
             return $this->sendError('Quotation Details not found');
         }
@@ -936,4 +944,6 @@ WHERE
         return QuotationMaster::where('quotationMasterID',$quotationMasterID)->update(['orderStatus' => $status,'isInSO'=>$isInDO]);
 
     }
+
+    
 }

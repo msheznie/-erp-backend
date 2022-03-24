@@ -70,6 +70,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer supplierTypeID
  * @property integer WHTApplicable
  * @property string|\Carbon\Carbon timestamp
+ * @property string|\Carbon\Carbon last_activity
  */
 class SupplierMaster extends Model
 {
@@ -161,7 +162,10 @@ class SupplierMaster extends Model
         'blockedDate',
         'blockedReason',
         'jsrsExpiry',
-        'createdFrom'
+        'createdFrom',
+        'supplier_category_id',
+        'supplier_group_id',
+        'last_activity'
     ];
 
     /**
@@ -242,7 +246,9 @@ class SupplierMaster extends Model
         'blockedDate' => 'datetime',
         'blockedReason' => 'string',
         'jsrsExpiry' => 'string',
-        'createdFrom' => 'integer'
+        'createdFrom' => 'integer',
+        'supplier_category_id'  => 'integer',
+        'supplier_group_id'  => 'integer'
     ];
 
     /**

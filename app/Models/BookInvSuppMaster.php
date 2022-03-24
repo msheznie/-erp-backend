@@ -285,6 +285,7 @@ class BookInvSuppMaster extends Model
         'companySystemID',
         'companyID',
         'documentSystemID',
+        'createMonthlyDeduction',
         'documentID',
         'serialNo',
         'companyFinanceYearID',
@@ -359,6 +360,8 @@ class BookInvSuppMaster extends Model
         'serviceLineSystemID',
         'wareHouseSystemCode',
         'supplierVATEligible',
+        'employeeID',
+        'employeeControlAcID',
         'VATPercentage'
 
     ];
@@ -371,6 +374,9 @@ class BookInvSuppMaster extends Model
     protected $casts = [
         'bookingSuppMasInvAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'createMonthlyDeduction' => 'integer',
+        'employeeID' => 'integer',
+        'employeeControlAcID' => 'integer',
         'vatRegisteredYN' => 'integer',
         'isLocalSupplier' => 'integer',
         'companyID' => 'string',
@@ -560,4 +566,8 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\SupplierInvoiceDirectItem', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
     }
 
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employeeID', 'employeeSystemID');
+    }
 }
