@@ -464,6 +464,19 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('GRV not found');
         }
 
+
+        $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $input['grvAutoID'])
+                                                ->with(['suppinvmaster'])
+                                                ->whereHas('suppinvmaster', function($query) {
+                                                    $query->where('approved', 0);
+                                                })
+                                                ->first();
+
+        if ($checkGrvAddedToIncoice) {
+            $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
+            return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+        }
+
         $finalError = array('cost_zero' => array(),
             'cost_neg' => array(),
             'same_item' => array(),
@@ -756,6 +769,9 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         }
 
         $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $grvAutoID)
+                                                ->whereHas('suppinvmaster', function($query) {
+                                                    $query->where('approved', -1);
+                                                })
                                                 ->first();
 
         if ($checkGrvAddedToIncoice) {

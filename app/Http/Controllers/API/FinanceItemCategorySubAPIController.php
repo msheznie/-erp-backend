@@ -380,10 +380,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
        }
 
 
-       if(isset($input['financeGLcodePLSystemID']) && is_array($input['financeGLcodePLSystemID']) && ($input['financeGLcodePLSystemID'][0] == 0)) {
-           return $this->sendError('Please Select Cost GL Code',500); 
-       }
-       if( (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN']) && (!isset($input['financeGLcodePLSystemID']) || $input['financeGLcodePLSystemID'] == 0)) {
+       // if(isset($input['financeGLcodePLSystemID']) && is_array($input['financeGLcodePLSystemID']) && ($input['financeGLcodePLSystemID'][0] == 0)) {
+       //     return $this->sendError('Please Select Cost GL Code',500); 
+       // }
+       if( (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN']) && (!isset($input['financeGLcodePLSystemID']) || $input['financeGLcodePLSystemID'] == 0 || (isset($input['financeGLcodePLSystemID']) && is_array($input['financeGLcodePLSystemID']) && ($input['financeGLcodePLSystemID'][0] == 0)))) {
            return $this->sendError('Please Select Cost GL Code',500); 
        }
 
