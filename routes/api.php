@@ -2502,6 +2502,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
         Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
 
+        Route::resource('item_batches', 'ItemBatchAPIController');
+
         Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 
         Route::resource('document_sub_products', 'DocumentSubProductAPIController');
@@ -2723,4 +2725,3 @@ Route::get('runCronJob/{cron}', function ($cron) {
 
 
 
-Route::resource('item_batches', 'ItemBatchAPIController');

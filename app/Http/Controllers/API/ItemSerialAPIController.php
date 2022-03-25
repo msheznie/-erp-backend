@@ -452,7 +452,7 @@ class ItemSerialAPIController extends AppBaseController
 
         $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
                                          ->where('documentSystemID', $input['documentSystemID'])
-                                         ->with(['serial_data'])
+                                         ->with(['serial_data', 'batch_data'])
                                          ->get();
 
         return $this->sendResponse($subProducts, 'product serial retrieved successfully');

@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class ItemBatchController
@@ -214,6 +215,28 @@ class ItemBatchAPIController extends AppBaseController
     public function update($id, UpdateItemBatchAPIRequest $request)
     {
         $input = $request->all();
+        return $input = $this->convertArrayToValue($input);
+        
+        $checkBatchCode = ItemBatch::where('id', '!=', $input['id'])
+                                     ->where('batchCode', $input['batchCode'])
+                                     ->where('itemSystemCode', $input['itemSystemCode'])
+                                     ->first();
+
+        if ($checkBatchCode) {
+            return $this->sendError('Batch code cannot be duplicate');
+        }
+
+        if (isset($input['batchCode']) && strlen($input['batchCode']) > 20) {
+            return $this->sendError('Batch code length cannot greater than 20');
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['batchCode'])) {
+            return $this->sendError('Batch code can contain only / and - in special character');
+        }
+
+        if (!is_null($input['expireDate'])) {
+            $input['expireDate'] = new Carbon($input['expireDate']);
+        }
 
         /** @var ItemBatch $itemBatch */
         $itemBatch = $this->itemBatchRepository->findWithoutFail($id);
@@ -224,7 +247,7 @@ class ItemBatchAPIController extends AppBaseController
 
         $itemBatch = $this->itemBatchRepository->update($input, $id);
 
-        return $this->sendResponse($itemBatch->toArray(), 'ItemBatch updated successfully');
+        return $this->sendResponse($itemBatch->toArray(), 'Item Batch updated successfully');
     }
 
     /**

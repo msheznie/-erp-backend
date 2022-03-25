@@ -132,6 +132,11 @@ class DocumentSubProduct extends Model
         return $this->belongsTo('App\Models\ItemSerial', 'productSerialID', 'id');
     }
 
+    public function batch_data()
+    {
+        return $this->belongsTo('App\Models\ItemBatch', 'productBatchID', 'id');
+    }
+
     public function grv_master()
     {
         return $this->belongsTo('App\Models\GRVMaster', 'documentSystemCode', 'grvAutoID')->where('documentSystemID', 3);
