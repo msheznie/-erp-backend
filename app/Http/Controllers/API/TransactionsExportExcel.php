@@ -218,8 +218,8 @@ class TransactionsExportExcel extends AppBaseController
                 $serviceLineSystemID = $request['serviceLineSystemID'];
                 $serviceLineSystemID = (array)$serviceLineSystemID;
                 $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
-
-                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
+                $reasons = (isset($input['reason'])) ? collect($input['reason'])->pluck('id') : null;
+                $dataQry = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID,$reasons);
                 $data = $this->stockAdjustmentRepository->setExportExcelData($dataQry);
                 break;
 
@@ -411,7 +411,12 @@ class TransactionsExportExcel extends AppBaseController
 
             case '64':
                 $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
-                $dataQry = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search);
+
+                $bankmasterAutoID = $request['bankmasterAutoID'];
+                $bankmasterAutoID = (array)$bankmasterAutoID;
+                $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+
+                $dataQry = $this->paymentBankTransferRepository->paymentBankTransferListQuery($request, $input, $search, $bankmasterAutoID);
                 $data = $this->paymentBankTransferRepository->setExportExcelData($dataQry);
                 break;
 

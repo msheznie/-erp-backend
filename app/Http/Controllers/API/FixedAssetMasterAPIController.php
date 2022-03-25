@@ -57,7 +57,10 @@ use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\CompanyFinancePeriod;
+use App\Models\FixedAssetDepreciationMaster;
+use App\helper\CreateAccumulatedDepreciation;
+use App\helper\CreateExcel;
 /**
  * Class FixedAssetMasterController
  * @package App\Http\Controllers\API
@@ -441,6 +444,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function create(CreateFixedAssetMasterAPIRequest $request)
     {
+
+       
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
@@ -576,6 +581,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
             }
 
+            $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
+            if ($accumulateCurrencyConversion) {
+                $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+            }
+
 
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
@@ -583,7 +593,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-            $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+ 
+           $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
@@ -603,8 +615,11 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
             }
 
+ 
+
+
             DB::commit();
-            return $this->sendResponse($fixedAssetMasters->toArray(), 'Fixed Asset Master saved successfully');
+            return $this->sendResponse($fixedAssetMasters, 'Fixed Asset Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -1060,7 +1075,10 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function getFixedAssetSubCat(Request $request)
     {
-        $subCategory = FixedAssetCategorySub::ofCompany([$request->companySystemID])->byFaCatID($request->faCatID)->get();
+        $faCatID = $request->faCatID;
+        $faCatID = (array)$faCatID;
+        $faCatID= collect($faCatID)->pluck('id');
+        $subCategory = FixedAssetCategorySub::ofCompany([$request->companySystemID])->byFaCatIDMultiSelect([$request->faCatID])->get();
         return $this->sendResponse($subCategory, 'Record retrieved successfully');
     }
 
@@ -1557,17 +1575,22 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
-         \Excel::create('asset_insurance_report', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
 
-        return $this->sendResponse(array(), 'successfully export');
+
+        $fileName = 'asset_insurance_report';
+        $path = 'asset/report/asset_insurance_report/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+        
     }
 
     public function assetInsuranceReport($input, $search)
@@ -1983,18 +2006,22 @@ class FixedAssetMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
+        
+        $fileName = 'asset_cosing';
+        $path = 'asset/costing/asset_cosing/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-         \Excel::create('po_master', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        if($basePath == '')
+        {
+             return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
 
-        return $this->sendResponse(array(), 'successfully export');
+
+
     }
 
     public function amendAssetCostingReview(Request $request)

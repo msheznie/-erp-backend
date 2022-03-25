@@ -33,6 +33,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\QuotationMaster;
+use App\Models\QuotationDetails;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
@@ -437,17 +438,26 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
+            $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
 
-            if ($qo_master) {
-                $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
-                if(isset($qo_master->detail) && $qo_master->detail->count() == count($details)) {
-                    $qo_master->isInDOorCI = 2;
-                    $qo_master->save();
-                }else {
-                    $qo_master->isInDOorCI = 4;
-                    $qo_master->save();
+            if(isset($qo_master->detail)) {
+                foreach ($qo_master->detail as $item) {
+                    $item_details_count = CustomerInvoiceItemDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemCodeSystem', $item->itemAutoID)->sum('qtyIssued');
+                    $qo_master_count = QuotationDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemAutoID', $item->itemAutoID)->sum('requestedQty');
+
+                    if ($qo_master) {
+                        if ($qo_master_count == $item_details_count) {
+                            $qo_master->isInDOorCI = 2;
+                            $qo_master->save();
+                        } else {
+                            $qo_master->isInDOorCI = 4;
+                            $qo_master->save();
+                        }
+                    }
                 }
             }
+
+
         }
 
         if ($isPerforma == 1) {

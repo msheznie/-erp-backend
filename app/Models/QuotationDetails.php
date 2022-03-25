@@ -335,6 +335,11 @@ class QuotationDetails extends Model
         return $this->belongsTo('App\Models\QuotationDetails','soQuotationDetailID','quotationDetailsID');
     }
 
+    public function item() {
+        return $this->belongsTo('App\Models\ItemMaster','itemAutoID','itemCodeSystem');
+
+    }
+
 
      public function uom_issuing(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasureID','UnitID');

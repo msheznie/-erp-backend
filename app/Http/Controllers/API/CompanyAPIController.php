@@ -21,6 +21,9 @@ use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
+use App\Models\SupplierCategory;
+use App\Models\SupplierGroup;
+
 use App\Models\CompanyPolicyMaster;
 use App\Models\CountryMaster;
 use App\Models\SupplierCategoryICVMaster;
@@ -153,6 +156,10 @@ class CompanyAPIController extends AppBaseController
 
         $icvCategories = SupplierCategoryICVMaster::all();
 
+        $supplierCategories = SupplierCategory::onlyNotDeletedAndActive();
+
+        $supplierGroups = SupplierGroup::onlyNotDeletedAndActive();
+
         $hasPolicy = false;
         $hasExternalSupplierGeneratePolicy = false;
         $hasEEOSSPolicy = false;
@@ -192,7 +199,9 @@ class CompanyAPIController extends AppBaseController
             'icvCategories' => $icvCategories,
             'isSupplierCatalogPolicy' => $hasPolicy,
             'hasExternalSupplierGeneratePolicy' => $hasExternalSupplierGeneratePolicy,
-            'isEEOSSPolicy' => $hasEEOSSPolicy
+            'isEEOSSPolicy' => $hasEEOSSPolicy,
+            'supplierCategories' => $supplierCategories,
+            'supplierGroups' => $supplierGroups
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

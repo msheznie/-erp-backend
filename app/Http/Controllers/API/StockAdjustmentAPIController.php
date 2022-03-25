@@ -23,6 +23,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\FinanceItemCategorySub;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\StockAdjustmentReason;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -177,6 +178,7 @@ class StockAdjustmentAPIController extends AppBaseController
             'location' => 'required|numeric|min:1',
             'refNo' => 'required',
             'comment' => 'required',
+            'reason'  => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -365,6 +367,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $confirm_validate = array('type' => 'confirm_validate');
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
+        
 
 
         /** @var StockAdjustment $stockAdjustment */
@@ -415,6 +418,8 @@ class StockAdjustmentAPIController extends AppBaseController
             }
 
             $inputParam = $input;
+
+
             $inputParam["departmentSystemID"] = 10;
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
@@ -433,11 +438,17 @@ class StockAdjustmentAPIController extends AppBaseController
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'location' => 'required|numeric|min:1',
                 'refNo' => 'required',
-                'comment' => 'required'
+                'comment' => 'required',
+                'reason'  => 'required',
             ]);
+
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
+            }
+            
+            if(isset($input['reason']) && $input['reason'] == 0) {
+                return $this->sendError('Please select reason', 500);
             }
 
             $documentDate = $input['stockAdjustmentDate'];
@@ -603,11 +614,13 @@ class StockAdjustmentAPIController extends AppBaseController
         $grvLocation = (array)$grvLocation;
         $grvLocation = collect($grvLocation)->pluck('id');
 
+        $reasons = (isset($input['reason'])) ? collect($input['reason'])->pluck('id') : null;
+
         $serviceLineSystemID = $request['serviceLineSystemID'];
         $serviceLineSystemID = (array)$serviceLineSystemID;
         $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
 
-        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation,$serviceLineSystemID);
+        $stockAdjustments = $this->stockAdjustmentRepository->stockAdjustmentListQuery($request, $input, $search, $grvLocation,$serviceLineSystemID,$reasons);
 
         return \DataTables::eloquent($stockAdjustments)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -643,6 +656,8 @@ class StockAdjustmentAPIController extends AppBaseController
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
+
+        $reasons = StockAdjustmentReason::where('is_active',true)->get();
 
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
@@ -699,7 +714,8 @@ class StockAdjustmentAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
             'contracts' => $contracts,
-            'units' => $units
+            'units' => $units,
+            'reasons' => $reasons
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -744,7 +760,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_stockadjustment.*',
+                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -761,6 +777,7 @@ class StockAdjustmentAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [7])
             ->where('erp_documentapproved.companySystemID', $companyId)
@@ -832,7 +849,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_stockadjustment.*',
+                'erp_stockadjustment.*','stockadjustment_reasons.reason as reason',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As serviceLineDes',
                 'warehousemaster.wareHouseDescription As wareHouseDescription',
@@ -868,6 +885,7 @@ class StockAdjustmentAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('stockadjustment_reasons', 'id', 'erp_stockadjustment.reason')
             ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
             ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)

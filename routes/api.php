@@ -83,7 +83,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
         Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
         Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
-
+        Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
         
@@ -1297,7 +1297,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
         Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-        Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
+        Route::post('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
         Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
         Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
         Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
@@ -2460,6 +2460,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
 
+        Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
+        Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
+
+        
+        Route::post('get-supplier-categories', 'SupplierCategoryConfigurationController@getSupplierCategories');
+        Route::post('delete-category', 'SupplierCategoryConfigurationController@deleteCategory');
+        Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
+        Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
+
+        
+       
+        
         /**
          * Supplier registration approval routes
          */
@@ -2502,6 +2514,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
         Route::get('getSupplierInvDirectItems', 'SupplierInvoiceDirectItemAPIController@getSupplierInvDirectItems');
         Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
+
+
+        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
+        Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
+        Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
+
+        Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
+
+        Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
+        Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
     });
 
@@ -2696,10 +2720,4 @@ Route::get('runCronJob/{cron}', function ($cron) {
     Artisan::call($cron);
     return 'CRON Job run successfully';
 });
-
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-
-
-
 

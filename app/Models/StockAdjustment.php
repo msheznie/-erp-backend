@@ -213,6 +213,7 @@ class StockAdjustment extends Model
         'approvedDate',
         'approvedByUserID',
         'approvedByUserSystemID',
+        'reason',
         'timesReferred '
     ];
 
@@ -256,6 +257,7 @@ class StockAdjustment extends Model
         'approvedDate' => 'string',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'reason' => 'integer',
         'timesReferred' => 'integer'
     ];
 
@@ -324,6 +326,11 @@ class StockAdjustment extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'stockAdjustmentAutoID')->where('documentSystemID',7);
+    }
+
+    public function reason() {
+        return $this->belongsTo('App\Models\StockAdjustmentReason', 'reason', 'id');
+
     }
 
 }

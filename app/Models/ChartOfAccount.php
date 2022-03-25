@@ -221,4 +221,17 @@ class ChartOfAccount extends Model
 
         return ($checkAccountCode) ? $checkAccountCode->AccountDescription : "";
     }
+
+    public static function getGlAccountType($chartOfAccountSystemID) {
+        $checkAccountCode = ChartOfAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->first();
+        return ($checkAccountCode) ? $checkAccountCode->catogaryBLorPL : "";
+
+    }
+
+
+    public static function getGlAccountTypeID($chartOfAccountSystemID) {
+        $checkAccountCode = ChartOfAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->first();
+        return ($checkAccountCode) ? $checkAccountCode->catogaryBLorPLID : "";
+
+    }
 }

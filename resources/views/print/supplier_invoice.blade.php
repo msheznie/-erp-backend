@@ -242,6 +242,9 @@
                         @if($masterdata->documentType == 1)
                             Direct Invoice Voucher
                         @endif
+                         @if($masterdata->documentType == 4)
+                            Employee Direct Invoice
+                        @endif
                         @if($masterdata->documentType == 3)
                             Supplier Item Invoice Voucher
                         @endif
@@ -313,32 +316,62 @@
         <tr style="width:100%">
             <td style="width: 60%">
                 <table>
-                    <tr>
-                        <td width="150px">
-                            <span class="font-weight-bold">Supplier Code</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            @if($masterdata->supplier)
-                                {{$masterdata->supplier->primarySupplierCode}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Supplier Name</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            @if($masterdata->supplier)
-                                {{$masterdata->supplier->supplierName}}
-                            @endif
-                        </td>
-                    </tr>
+                    @if($masterdata->documentType != 4)
+                        <tr>
+                            <td width="150px">
+                                <span class="font-weight-bold">Supplier Code</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->supplier)
+                                    {{$masterdata->supplier->primarySupplierCode}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50px">
+                                <span class="font-weight-bold">Supplier Name</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->supplier)
+                                    {{$masterdata->supplier->supplierName}}
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
+                    @if($masterdata->documentType == 4)
+                        <tr>
+                            <td width="150px">
+                                <span class="font-weight-bold">Employee Code</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->employee)
+                                    {{$masterdata->employee->empID}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50px">
+                                <span class="font-weight-bold">Employee Name</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->employee)
+                                    {{$masterdata->employee->empName}}
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                     <tr>
                         <td width="50px">
                             <span class="font-weight-bold">Reference Number</span>
@@ -665,7 +698,7 @@
             </table>
         </div>
     @endif
-    @if($masterdata->documentType == 1)
+    @if($masterdata->documentType == 1 || $masterdata->documentType == 4)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>

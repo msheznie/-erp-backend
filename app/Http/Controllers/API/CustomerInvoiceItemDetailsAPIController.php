@@ -2181,13 +2181,11 @@ WHERE
                                 )
                                 ->whereHas('issue_item_details', function ($query) use ($row) {
                                     $query->where('itemCodeSystem', $row['itemAutoID']);
-                                    $query->where('quotationMasterID','!=', $row['quotationMasterID']);
                                 })
                                 ->where('approved', 0)
                                 ->where('canceledYN', 0)
                                 ->first();
                             /* approved=0*/
-
                             if (!empty($checkWhether)) {
                                 return $this->sendError("There is a Customer Invoice (" . $checkWhether->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                             }

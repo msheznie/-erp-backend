@@ -91,7 +91,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with('created_by', 'transactioncurrency', 'supplier');
+        $invMaster->with('created_by', 'transactioncurrency', 'supplier', 'employee');
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -147,6 +147,7 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.comments',
                 'erp_bookinvsuppmaster.bookingDate',
                 'erp_bookinvsuppmaster.supplierID',
+                'erp_bookinvsuppmaster.employeeID',
                 'erp_bookinvsuppmaster.confirmedDate',
                 'erp_bookinvsuppmaster.approvedDate',
                 'erp_bookinvsuppmaster.supplierTransactionCurrencyID',
@@ -173,6 +174,9 @@ class BookInvSuppMasterRepository extends BaseRepository
                     ->orWhereHas('supplier', function ($query) use ($search) {
                         $query->where('supplierName', 'like', "%{$search}%")
                             ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    })->orWhereHas('employee', function ($query) use ($search) {
+                        $query->where('empName', 'like', "%{$search}%")
+                            ->orWhere('empID', 'LIKE', "%{$search}%");
                     });
             });
         }
