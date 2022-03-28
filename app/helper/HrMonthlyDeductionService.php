@@ -431,7 +431,7 @@ class HrMonthlyDeductionService
             $rpt_currency->ExchangeRate = self::currency_conversion($emp_currency, $rpt_currency->currencyID);
 
             $data[] = [
-                'monthlyDeductionMasterID'=> $monthly_ded_id, 'empID'=> ($empDetails) ? $empDetails->EIdNo : null,
+                'monthlyDeductionMasterID'=> $monthly_ded_id, 'empID'=> $row->employeeSystemID,
                 'accessGroupID'=> 0,
                 'declarationID'=> $row->supplier_invoice->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
                 'categoryID'=> $ded_det->salaryCategoryID,
