@@ -176,8 +176,6 @@ class MaterielRequestAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
-        $mangerID = Employee::find($empID)->empID;
-
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_request.*',
@@ -203,6 +201,7 @@ class MaterielRequestAPIController extends AppBaseController
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_request.companySystemID', $companyId)
                     ->where('erp_request.approved', 0)
+                    ->where('erp_request.isFromPortal', 0)
                     ->where('erp_request.ConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
@@ -212,7 +211,6 @@ class MaterielRequestAPIController extends AppBaseController
             ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [9])
-            ->where('employees.empManagerAttached', $mangerID)
             ->where('erp_documentapproved.companySystemID', $companyId);
 
         $search = $request->input('search.value');
