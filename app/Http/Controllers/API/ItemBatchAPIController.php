@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateItemBatchAPIRequest;
 use App\Http\Requests\API\UpdateItemBatchAPIRequest;
 use App\Models\ItemBatch;
+use App\Models\DocumentSubProduct;
 use App\Repositories\ItemBatchRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -215,7 +216,7 @@ class ItemBatchAPIController extends AppBaseController
     public function update($id, UpdateItemBatchAPIRequest $request)
     {
         $input = $request->all();
-        return $input = $this->convertArrayToValue($input);
+        $input = $this->convertArrayToValue($input);
         
         $checkBatchCode = ItemBatch::where('id', '!=', $input['id'])
                                      ->where('batchCode', $input['batchCode'])
@@ -233,6 +234,20 @@ class ItemBatchAPIController extends AppBaseController
         if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['batchCode'])) {
             return $this->sendError('Batch code can contain only / and - in special character');
         }
+
+
+        $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
+                                          ->where('documentSystemID', $input['documentSystemID'])
+                                          ->where('productBatchID', '!=', $input['id'])
+                                          ->sum('quantity');
+
+        
+        $newTotalQty = $subProducts + $input['quantity'];
+
+        if ($newTotalQty > $input['noQty']) {
+            
+        }
+
 
         if (!is_null($input['expireDate'])) {
             $input['expireDate'] = new Carbon($input['expireDate']);
