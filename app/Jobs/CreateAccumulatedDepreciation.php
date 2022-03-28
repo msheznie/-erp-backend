@@ -68,143 +68,104 @@ class CreateAccumulatedDepreciation implements ShouldQueue
             $companyFinanceYearID = '';
             $companyFinancePeriodID = '';
             $companyFinanceYear = \Helper::companyFinanceYear($faMaster->companySystemID,1);
+            $doc_id = 23;    
+            $documentMaster = DocumentMaster::find($doc_id);
 
-            foreach($companyFinanceYear as $companyFinance)
-            {
-    
-                $finance_year = date('Y', strtotime($companyFinance->bigginingDate));
-                if($accumulated_year == $finance_year)
-                {
-                    $companyFinanceYearID = $companyFinance->companyFinanceYearID;
-                    break;
-                }
-                
-            }
-
-         
-
-            if($companyFinanceYearID != '')
+            if($documentMaster)
             {
                 
+            $output = CompanyFinancePeriod::where('dateFrom', '<=', $accumulated_date)
+            ->where('dateTo', '>=', $accumulated_date)
+            ->where('departmentSystemID', '=', $documentMaster->departmentSystemID)
+            ->where('companySystemID', '=', $faMaster->companySystemID)
+            ->first();     
 
-                    
-                if(isset($faMaster->departmentSystemID))
+
+
+                if(isset($output))
                 {
-                    if($faMaster->departmentSystemID != 0)
-                    {
-                        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
-                        ->where('companySystemID', '=', $faMaster->companySystemID)
-                        ->where('companyFinanceYearID', $companyFinanceYearID)
-                        ->where('departmentSystemID', $faMaster->departmentSystemID)
-                        //->where('isActive', -1)
-                        ->get();
-                    }    
-                    else
-                    {
-                        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
-                        ->where('companySystemID', '=', $faMaster->companySystemID)
-                        ->where('companyFinanceYearID', $companyFinanceYearID)
-                        //->where('isActive', -1)
-                        ->get();
-                    }    
 
-           
-
-              
-                    
-                    $accumulated_month = $accumulated_month - 1;
-
-               
-                    if(count($output) >= $accumulated_month)
-                    {
-                        $companyFinancePeriodID = $output[$accumulated_month]->companyFinancePeriodID;
-                    }
-               
-                   
-            
-                }
-    
-            if($companyFinancePeriodID != '')
-            {
+                $companyFinanceYearID = $output->companyFinanceYearID;
+                $companyFinancePeriodID = $output->companyFinancePeriodID;
 
                 $finance_data['companyFinanceYearID'] = $companyFinanceYearID;
                 $finance_data['companySystemID'] = $faMaster->companySystemID;
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($finance_data);
                 if (!$companyFinanceYear["success"]) {
-    
-                    Log::info($companyFinanceYear["message"]);
+
+                Log::info($companyFinanceYear["message"]);
                 } else {
-                    $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                    $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
                 }
 
                 $inputParam = $finance_data;
                 $inputParam["departmentSystemID"] = 9;
                 $inputParam["companyFinancePeriodID"] = $companyFinancePeriodID;
                 $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        
+
                 if (!$companyFinancePeriod["success"]) {
-                   
-                    Log::info('company finance period not found');
+
+                Log::info('company finance period not found');
                 } else {
-                    $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                    $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+                $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
                 }
 
 
-                                
+                
                 $subMonth = new Carbon($dep_data['FYPeriodDateFrom']);
                 $subMonthStart = $subMonth->subMonth()->startOfMonth()->format('Y-m-d');
                 $subMonthStartCarbon = new Carbon($subMonthStart);
                 $subMonthEnd = $subMonthStartCarbon->endOfMonth()->format('Y-m-d');
-        
+
                 // $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $faMaster->companySystemID)->where('companyFinanceYearID', $companyFinanceYearID)->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
-        
+
                 // if (!empty($lastMonthRun)) {
                 //     if ($lastMonthRun->approved == 0) {
                 //         Log::info('Last month depreciation is not approved. Please approve it before you run for this month');
                 //     }
                 // }
-        
+
                 $company = Company::find($faMaster->companySystemID);
                 if ($company) {
-                    $dep_data['companyID'] = $company->CompanyID;
+                $dep_data['companyID'] = $company->CompanyID;
                 }
                 $doc_id = 23;
                 $documentMaster = DocumentMaster::find($doc_id);
                 if ($documentMaster) {
-                    $dep_data['documentID'] = $documentMaster->documentID;
+                $dep_data['documentID'] = $documentMaster->documentID;
                 }
-        
+
                 if ($companyFinanceYear["message"]) {
-                    $startYear = $companyFinanceYear["message"]['bigginingDate'];
-                    $finYearExp = explode('-', $startYear);
-                    $finYear = $finYearExp[0];
+                $startYear = $companyFinanceYear["message"]['bigginingDate'];
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
                 } else {
-                    $finYear = date("Y");
+                $finYear = date("Y");
                 }
-        
+
                 $lastSerial = FixedAssetDepreciationMaster::where('companySystemID', $faMaster->companySystemID)
-                    ->where('companyFinanceYearID', $companyFinanceYearID)
-                    ->orderBy('depMasterAutoID', 'desc')
-                    ->first();
-        
+                ->where('companyFinanceYearID', $companyFinanceYearID)
+                ->orderBy('depMasterAutoID', 'desc')
+                ->first();
+
                 $lastSerialNumber = 1;
                 if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
-        
+
                 $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-        
-        
+
+
                 $depDate = Carbon::parse($dep_data['FYPeriodDateTo']);
-        
-        
+
+
                 $dep_data['companyFinanceYearID'] = $companyFinanceYearID;
                 $dep_data['companyFinancePeriodID'] = $companyFinancePeriodID;
                 $dep_data['companySystemID'] = $faMaster->companySystemID;
                 $dep_data['documentSystemID'] =23;
-        
+
                 $dep_data['depCode'] = $documentCode;
                 $dep_data['serialNo'] = $lastSerialNumber;
                 $dep_data['depDate'] = $dep_data['FYPeriodDateTo'];
@@ -218,121 +179,116 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                 $dep_data['is_acc_dep'] = true;
 
                 Log::info('job is creating..');
-                
+
                 $depMaster = FixedAssetDepreciationMaster::create($dep_data);
 
                 //Log::info(print_r($depMaster, true));
-        
+
                 // $amount_local = 0;
-        
+
                 $faDepMaster = FixedAssetDepreciationMaster::where('depMasterAutoID','=',$depMaster->depMasterAutoID)->first();
-        
+
                 $faMaster = FixedAssetMaster::where('faID',$this->assetAutoID)->with(['depperiod_by' => function ($query) {
-                    $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                    $query->whereHas('master_by', function ($query) {
-                        //$query->where('approved', -1);
-                    });
-                    $query->groupBy('faID');
+                $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                $query->whereHas('master_by', function ($query) {
+                //$query->where('approved', -1);
+                });
+                $query->groupBy('faID');
                 }])
                 ->ofCompany([$faMaster->companySystemID])
-                 //->isApproved()
+                //->isApproved()
                 ->assetType(1)
                 ->orderBy('faID', 'desc')
                 ->first();
 
                 if(isset($faMaster))
                 {
-                    $depAmountRpt = $faMaster->accumulated_depreciation_amount_rpt;
-                    $depAmountLocal = $faMaster->accumulated_depreciation_amount_lcl;
-                    $nbvLocal = $faMaster->COSTUNIT - $depAmountLocal;
-                    $nbvRpt = $faMaster->costUnitRpt - $depAmountRpt;
-                    $monthlyLocal = (($faMaster->COSTUNIT - $faMaster->salvage_value) * ($faMaster->DEPpercentage / 100)) / 12;
-                    $monthlyRpt = (($faMaster->costUnitRpt - $faMaster->salvage_value_rpt) * ($faMaster->DEPpercentage / 100)) / 12;
-            
-                    if (round($nbvLocal,2) > $faMaster->salvage_value || round($nbvRpt,2) > $faMaster->salvage_value_rpt) 
-                    {
-            
-            
-                        $data['depMasterAutoID'] = $depMaster->depMasterAutoID;
-                        $data['companySystemID'] = $depMaster->companySystemID;
-                        $data['companyID'] = $depMaster->companyID;
-                        $data['serviceLineSystemID'] = $faMaster->serviceLineSystemID;
-                        $data['serviceLineCode'] = $faMaster->serviceLineCode;
-                        $data['faFinanceCatID'] = $faMaster->AUDITCATOGARY;
-                        $data['faMainCategory'] = $faMaster->faCatID;
-                        $data['faSubCategory'] = $faMaster->faSubCatID;
-                        $data['faID'] = $faMaster->faID;
-                        $data['faCode'] = $faMaster->faCode;
-                        $data['assetDescription'] = $faMaster->assetDescription;
-                        $data['depPercent'] = $faMaster->DEPpercentage;
-                        $data['COSTUNIT'] = $faMaster->COSTUNIT;
-                        $data['costUnitRpt'] = $faMaster->costUnitRpt;
-                        $data['depDoneYN'] = -1;
-                        $data['createdPCid'] = gethostname();
-                        $data['createdBy'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['depMonthYear'] = $depMaster->depMonthYear;
-                        $data['depMonth'] = $faMaster->depMonth;
-                        $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
-                        $data['depAmountRptCurr'] = $depMaster->depRptCur;
-                        $data['depAmountLocal'] = $depAmountLocal;
-                        $data['depAmountRpt'] = $depAmountRpt;
-            
-            
-                        if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
-                            $data['FYID'] = $depMaster->companyFinanceYearID;
-                            $data['depForFYStartDate'] = $depMaster->FYBiggin;
-                            $data['depForFYEndDate'] = $depMaster->FYEnd;
-                            $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
-                            $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
-                            $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
-                            $data['timestamp'] = NOW();
-                        }
-            
-                    
-            
-            
-                    $dep_per = FixedAssetDepreciationPeriod::create($data);
-                   
-                    $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
-                    // Log::info('Depreciation processing');
-                    if($depDetail) 
-                        {
-                            //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
-                            Log::info('job is processing..');
-                            $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
+                $depAmountRpt = $faMaster->accumulated_depreciation_amount_rpt;
+                $depAmountLocal = $faMaster->accumulated_depreciation_amount_lcl;
+                $nbvLocal = $faMaster->COSTUNIT - $depAmountLocal;
+                $nbvRpt = $faMaster->costUnitRpt - $depAmountRpt;
+                $monthlyLocal = (($faMaster->COSTUNIT - $faMaster->salvage_value) * ($faMaster->DEPpercentage / 100)) / 12;
+                $monthlyRpt = (($faMaster->costUnitRpt - $faMaster->salvage_value_rpt) * ($faMaster->DEPpercentage / 100)) / 12;
+
+                if (round($nbvLocal,2) > $faMaster->salvage_value || round($nbvRpt,2) > $faMaster->salvage_value_rpt) 
+                {
 
 
-                            //cost
+                $data['depMasterAutoID'] = $depMaster->depMasterAutoID;
+                $data['companySystemID'] = $depMaster->companySystemID;
+                $data['companyID'] = $depMaster->companyID;
+                $data['serviceLineSystemID'] = $faMaster->serviceLineSystemID;
+                $data['serviceLineCode'] = $faMaster->serviceLineCode;
+                $data['faFinanceCatID'] = $faMaster->AUDITCATOGARY;
+                $data['faMainCategory'] = $faMaster->faCatID;
+                $data['faSubCategory'] = $faMaster->faSubCatID;
+                $data['faID'] = $faMaster->faID;
+                $data['faCode'] = $faMaster->faCode;
+                $data['assetDescription'] = $faMaster->assetDescription;
+                $data['depPercent'] = $faMaster->DEPpercentage;
+                $data['COSTUNIT'] = $faMaster->COSTUNIT;
+                $data['costUnitRpt'] = $faMaster->costUnitRpt;
+                $data['depDoneYN'] = -1;
+                $data['createdPCid'] = gethostname();
+                $data['createdBy'] = \Helper::getEmployeeID();
+                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data['depMonthYear'] = $depMaster->depMonthYear;
+                $data['depMonth'] = $faMaster->depMonth;
+                $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
+                $data['depAmountRptCurr'] = $depMaster->depRptCur;
+                $data['depAmountLocal'] = $depAmountLocal;
+                $data['depAmountRpt'] = $depAmountRpt;
 
-                        }
 
-                        Log::info('job is End..');
-                    }
+                if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
+                $data['FYID'] = $depMaster->companyFinanceYearID;
+                $data['depForFYStartDate'] = $depMaster->FYBiggin;
+                $data['depForFYEndDate'] = $depMaster->FYEnd;
+                $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
+                $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
+                $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
+                $data['timestamp'] = NOW();
+                }
+
+
+
+
+                $dep_per = FixedAssetDepreciationPeriod::create($data);
+
+                $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
+                // Log::info('Depreciation processing');
+                if($depDetail) 
+                {
+                //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
+                Log::info('job is processing..');
+                $fixedAssetDepreciationMasters = $faDepMaster->where('depMasterAutoID', $depMaster->depMasterAutoID)->update(array('depAmountLocal' => $depDetail->depAmountLocal,'depAmountRpt' => $depDetail->depAmountRpt,'isDepProcessingYN' => 1));
+
+
+                //cost
+
+                }
+
+                Log::info('job is End..');
+                }
                 }
                 else
                 {
-                    Log::info('asset not found');
+                Log::info('asset not found');
                 }
-        
 
-    
-    
+
+                }
+                else
+                {
+                Log::info('companyFinanceYear not found');
+
+                }
             }
             else
             {
-                Log::info('companyFinancePeriodID not found');
+                Log::info('Document system not found');
             }
-    
- 
 
-             
-            }
-            else
-            {
-                Log::info('companyFinanceYearID not found');
-
-            }
 
 
             }
