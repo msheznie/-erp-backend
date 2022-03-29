@@ -899,7 +899,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'autoID' => $input['documentSystemCode'],
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                GeneralLedgerInsert::dispatch($masterData);
+                $generalLedger = GeneralLedgerInsert::dispatch($masterData);
             }
 
 
@@ -911,7 +911,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'supplierID' => ($grvData) ? $grvData->supplierID : 0,
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                UnbilledGRVInsert::dispatch($masterData);
+                $unbilledGRVInsert = UnbilledGRVInsert::dispatch($masterData);
 
                 DB::commit();
                 if ($count == 0) {
