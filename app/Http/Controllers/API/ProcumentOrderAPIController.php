@@ -1804,7 +1804,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
 
-        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with([
+        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
             'detail' => function ($query) {
                 $query->with(['unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
@@ -1812,7 +1812,9 @@ class ProcumentOrderAPIController extends AppBaseController
             }, 'supplier' => function ($query) {
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {
-                $query->with('employee');
+                $query->with(['employee'=>function($query2){
+                        $query2->with('erp_designation');
+                }]);
                 $query->where('rejectedYN', 0);
                 $query->whereIN('documentSystemID', [2, 5, 52]);
             }, 'suppliercontact' => function ($query) {
@@ -1861,6 +1863,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
         $output['is_specification'] = $is_specification;
+        // return $output;
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -3156,12 +3159,14 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError('Procurement Order not found');
         }
 
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
             $query->with(['unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {
-            $query->with('employee');
+            $query->with(['employee'=>function($query2){
+                $query2->with('erp_designation');
+            }]);
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'supplier' => function ($query) {
@@ -4775,10 +4780,12 @@ ORDER BY
 
         $company = Company::where('companySystemID', $procumentOrderUpdate->companySystemID)->first();
 
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrderUpdate->purchaseOrderID)->with(['detail' => function ($query) {
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrderUpdate->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
             $query->with('unit');
         }, 'approved_by' => function ($query) {
-            $query->with('employee');
+            $query->with(['employee'=>function($query2){
+                $query2->with('erp_designation');
+            }]);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
