@@ -183,7 +183,7 @@
                             @endif
                         </div>
                         <div>
-                            @if($det->employee->erp_designation)
+                            @if(isset($det->employee->erp_designation))
                                 {{$det->employee->erp_designation->DesDescription }}
                             @endif
                         </div>
@@ -314,7 +314,7 @@
                             <td><span class="font-weight-bold">Segment </span></td>
                             <td><span class="font-weight-bold">:</span></td>
                             <td>
-                                @if ($podata->segment->ServiceLineDes)
+                                @if (isset($podata->segment->ServiceLineDes))
                                     {{$podata->segment->ServiceLineDes}}
                                 @endif
                             </td>
@@ -776,7 +776,11 @@
             <tr style="padding-bottom: 2%;">
                 <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created By</span></td>
                 <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%;vertical-align: top;">{{$podata->created_by->empFullName}}</td>
+                <td style="width:85%;vertical-align: top;">  
+                    @if(isset($podata->created_by->empFullName))
+                        {{$podata->created_by->empFullName}}
+                    @endif
+                </td>
             </tr>
         </table>
     </div>
@@ -785,7 +789,11 @@
             <tr style="padding-bottom: 2%;">
                 <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created Date</span></td>
                 <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%;vertical-align: top;">{{\Carbon\Carbon::parse($podata->createdDateTime)->format('d/m/Y g:i A' )}}</td>
+                <td style="width:85%;vertical-align: top;">
+                    @if(isset($podata->createdDateTime))
+                        {{\Carbon\Carbon::parse($podata->createdDateTime)->format('d/m/Y g:i A' )}}
+                    @endif
+                </td>
 
             </tr>
         </table>
