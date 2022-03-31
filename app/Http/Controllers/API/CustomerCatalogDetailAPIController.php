@@ -144,6 +144,9 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         }
 
         $customer = CustomerMaster::find($catalogMaster->customerID);
+        if (isset($customer->customer_default_currency->currencyID) == null) {
+            return $this->sendError(trans('custom.currency_not_configured'),500);
+        }
 
         $input['localCurrencyID'] = $customer->customer_default_currency->currencyID;
         $input['itemPrimaryCode'] = $item->primaryCode;
