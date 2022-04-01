@@ -376,12 +376,14 @@ class FinanceItemCategorySubAPIController extends AppBaseController
        $input = $request->all();
        // financeGLcodebBSSystemID - balance sheet code 
        // financeGLcodePLSystemID - cost gl
+       
+       
         
-       $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+       $data = $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
         
-       $balance_sheet_gl_code = (isset($input['financeGLcodebBSSystemID'])) ? $input['financeGLcodebBSSystemID'] : null;
-       $cost_gl_code = (isset($input['financeGLcodePLSystemID'])) ? $input['financeGLcodePLSystemID'] : null;
-       $include_pl_for_grvn = (isset($input['includePLForGRVYN'])) ? $input['includePLForGRVYN'] : null;
+       $balance_sheet_gl_code = (isset($data['financeGLcodebBSSystemID'])) ? $data['financeGLcodebBSSystemID'] : null;
+       $cost_gl_code = (isset($data['financeGLcodePLSystemID'])) ? $data['financeGLcodePLSystemID'] : null;
+       $include_pl_for_grvn = (isset($data['includePLForGRVYN'])) ? $data['includePLForGRVYN'] : null;
 
        if(!$include_pl_for_grvn) {
             if(!$balance_sheet_gl_code) {
