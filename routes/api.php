@@ -2787,3 +2787,6 @@ Route::resource('pricing_schedule_masters', 'PricingScheduleMasterAPIController'
 
 
 Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIController');
+
+
+Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
