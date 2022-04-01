@@ -376,6 +376,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
        $input = $request->all();
        // financeGLcodebBSSystemID - balance sheet code 
        // financeGLcodePLSystemID - cost gl
+
         
        $data = $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
         

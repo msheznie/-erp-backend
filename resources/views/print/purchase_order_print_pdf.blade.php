@@ -182,6 +182,11 @@
                                 {{$det->employee->empFullName }}
                             @endif
                         </div>
+                        <div>
+                            @if(isset($det->employee->hr_emp->designation))
+                                {{$det->employee->hr_emp->designation->DesDescription }}
+                            @endif
+                        </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
                                     {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
@@ -302,6 +307,15 @@
                             <td>
                                 @if ($podata->company->vatRegisteredYN == 1)
                                     {{$podata->company->vatRegistratonNumber}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><span class="font-weight-bold">Segment </span></td>
+                            <td><span class="font-weight-bold">:</span></td>
+                            <td>
+                                @if (isset($podata->segment->ServiceLineDes))
+                                    {{$podata->segment->ServiceLineDes}}
                                 @endif
                             </td>
                         </tr>
@@ -749,11 +763,38 @@
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
+        <table style="width:100%;padding-top: 3%;">
             <tr style="padding-bottom: 2%;">
                 <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
                 <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table style="width:100%;padding-top: 3%;">
+            <tr style="padding-bottom: 2%;">
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created By</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">  
+                    @if(isset($podata->created_by->empFullName))
+                        {{$podata->created_by->empFullName}}
+                    @endif
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table style="width:100%;padding-top: 3%;">
+            <tr style="padding-bottom: 2%;">
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created Date</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">
+                    @if(isset($podata->createdDateTime))
+                        {{\Carbon\Carbon::parse($podata->createdDateTime)->format('d/m/Y g:i A' )}}
+                    @endif
+                </td>
+
             </tr>
         </table>
     </div>

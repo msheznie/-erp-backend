@@ -279,6 +279,14 @@ class Employee extends Model
         return $this->belongsTo('App\Models\EmployeeDetails', 'designation','designationID');
     }
 
+    public function erp_designation(){
+        return $this->belongsTo('App\Models\HrmsDesignation', 'designation','DesignationID');
+    }
+
+    public function employee_designation(){
+        return $this->hasOne('App\Models\Designation', 'designation','designationID');
+    }
+
      public function desi_master_hrms(){
         return $this->belongsTo('App\Models\EmployeeDesignation', 'employeeSystemID','EmpID');
     }

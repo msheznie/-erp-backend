@@ -354,6 +354,7 @@
                             @endif
                         </td>
                     </tr>
+                    @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
                             <span class="font-weight-bold">Cheque No</span>
@@ -365,6 +366,8 @@
                             <span>{{$masterdata->BPVchequeNo}}</span>
                         </td>
                     </tr>
+                    @endif
+                    @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
                             <span class="font-weight-bold">Cheque Date</span>
@@ -376,6 +379,7 @@
                             {{ \App\helper\Helper::dateFormat($masterdata->BPVchequeDate)}}
                         </td>
                     </tr>
+                    @endif
                     <tr>
                         <td width="70px">
                             <span class="font-weight-bold">Narration </span>
