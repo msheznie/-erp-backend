@@ -1813,7 +1813,9 @@ class ProcumentOrderAPIController extends AppBaseController
                 $query->select('vatNumber', 'supplierCodeSystem');
             }, 'approved' => function ($query) {
                 $query->with(['employee'=>function($query2){
-                        $query2->with('erp_designation');
+                        $query2->with(['hr_emp'=>function($query3){
+                            $query3->with(['designation']);
+                    }]);
                 }]);
                 $query->where('rejectedYN', 0);
                 $query->whereIN('documentSystemID', [2, 5, 52]);
@@ -3165,7 +3167,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }]);
         }, 'approved_by' => function ($query) {
             $query->with(['employee'=>function($query2){
-                $query2->with('erp_designation');
+                $query2->with(['hr_emp'=>function($query3){
+                    $query3->with(['designation']);
+                }]);
             }]);
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
@@ -4784,7 +4788,9 @@ ORDER BY
             $query->with('unit');
         }, 'approved_by' => function ($query) {
             $query->with(['employee'=>function($query2){
-                $query2->with('erp_designation');
+                $query2->with(['hr_emp'=>function($query3){
+                    $query3->with(['designation']);
+                }]);
             }]);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {

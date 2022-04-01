@@ -183,8 +183,8 @@
                             @endif
                         </div>
                         <div>
-                            @if(isset($det->employee->erp_designation))
-                                {{$det->employee->erp_designation->DesDescription }}
+                            @if(isset($det->employee->hr_emp->designation))
+                                {{$det->employee->hr_emp->designation->DesDescription }}
                             @endif
                         </div>
                         <div><span>
