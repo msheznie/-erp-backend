@@ -62,11 +62,17 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $procurementCatCodeExist = TenderProcurementCategory::select('id')
+        $procurementCatCodeExist = TenderProcurementCategory::withTrashed()
+            ->select('id', 'deleted_at')
             ->where('code', '=', $input['code'])
             ->where('level', '=', $level)->first();
+
         if (!empty($procurementCatCodeExist)) {
-            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+            if(is_null($procurementCatCodeExist['deleted_at'])){
+                return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+            } else {
+                return $this->sendError('Procurement code ' . $input['code'] . $procurementCatCodeExist['deleted_at'] . ' already exists');
+            }
         }
 
         $procurementCatDesExist = TenderProcurementCategory::select('id')
