@@ -306,5 +306,8 @@ class TenderMaster extends Model
         return $this->hasMany('App\Models\ProcumentActivity', 'tender_id', 'id');
     }
 
+    public function srmTenderMasterSupplier(){ 
+        return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
+    }
     
 }
