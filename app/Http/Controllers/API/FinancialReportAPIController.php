@@ -2218,7 +2218,25 @@ class FinancialReportAPIController extends AppBaseController
             $currencyClm = 'erp_generalledger.documentLocalAmount';
         }
 
-        $defaultMonth = array(
+        $period = \Carbon\CarbonPeriod::create($fromDate, '1 month', $toDate);
+
+        $defaultMonth = array();
+        $defaultMonthSum = array();
+        foreach ($period as $dt) {
+            //echo $dt->format("M") . "<br>\n";
+            $monthName = $dt->format("M");
+            if($monthName == 'Dec'){
+                $monthName = 'Dece';
+            }
+
+            array_push($defaultMonth,$monthName);
+            $monthId = ltrim($dt->format("m"), "0");
+            $temMonthSum = "IF ( MONTH ( erp_generalledger.documentDate ) = " . $monthId .", " . $currencyClm . ", 0 ) AS ".$monthName;
+            array_push($defaultMonthSum,$temMonthSum);
+        }
+
+
+        /*$defaultMonth = array(
             'Jan',
             'Feb',
             'March',
@@ -2231,9 +2249,9 @@ class FinancialReportAPIController extends AppBaseController
             'Oct',
             'Nov',
             'Dece'
-        );
+        );*/
 
-        $defaultMonthSum = array(
+       /* $defaultMonthSum = array(
             "IF
                     ( MONTH ( erp_generalledger.documentDate ) = 1, " . $currencyClm . ", 0 ) AS Jan",
             " IF
@@ -2258,7 +2276,7 @@ class FinancialReportAPIController extends AppBaseController
                     ( MONTH ( erp_generalledger.documentDate ) = 11, " . $currencyClm . ", 0 ) AS Nov",
             " IF
                     ( MONTH ( erp_generalledger.documentDate ) = 12, " . $currencyClm . ", 0 ) AS Dece"
-        );
+        );*/
 
         $monthClosing = array(); //'sum(Opening + Jan) AS JanClosing';
 
@@ -2270,15 +2288,15 @@ class FinancialReportAPIController extends AppBaseController
         $totalMonth = "";
 
         foreach ($defaultMonth as $key => $value) {
-            if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
+            //if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
                 array_push($availableMonth, $value);
-            }
+            //}
         }
 
         foreach ($defaultMonthSum as $key => $value) {
-            if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
+           // if (($key + 1) <= intval($toDate1->format('m')) && ($key + 1) >= intval($fromDate1->format('m'))) {
                 array_push($month, $value);
-            }
+           // }
         }
 
 
