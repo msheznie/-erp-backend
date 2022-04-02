@@ -374,18 +374,37 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     {
 
        $input = $request->all();
+       // financeGLcodebBSSystemID - balance sheet code 
+       // financeGLcodePLSystemID - cost gl
 
-       if((!isset($input['financeGLcodebBSSystemID']) || $input['financeGLcodebBSSystemID'] == 0) && (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN'])) {
-             return $this->sendError('Please check Include PL For GRV YN',500);
+        
+       $data = $this->convertArrayToSelectedValue($input,['financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID']);
+        
+       $balance_sheet_gl_code = (isset($data['financeGLcodebBSSystemID'])) ? $data['financeGLcodebBSSystemID'] : null;
+       $cost_gl_code = (isset($data['financeGLcodePLSystemID'])) ? $data['financeGLcodePLSystemID'] : null;
+       $include_pl_for_grvn = (isset($data['includePLForGRVYN'])) ? $data['includePLForGRVYN'] : null;
+
+       if(!$include_pl_for_grvn) {
+            if(!$balance_sheet_gl_code) {
+                if($cost_gl_code) {
+                    return $this->sendError("Please check 'Include PL For GRV YN'",500);     
+                }else {
+                    return $this->sendError("Please select 'Cost GL Code'",500);
+                }
+            }else {
+                if(!$cost_gl_code) {
+                    return $this->sendError("Please select 'Cost GL Code'",500);
+                }
+            }
+
+       }else {
+            if(!$balance_sheet_gl_code) { 
+                if(!$cost_gl_code) {
+                    return $this->sendError("Please select 'Cost GL Code'",500);
+                }
+            }
        }
 
-
-       // if(isset($input['financeGLcodePLSystemID']) && is_array($input['financeGLcodePLSystemID']) && ($input['financeGLcodePLSystemID'][0] == 0)) {
-       //     return $this->sendError('Please Select Cost GL Code',500); 
-       // }
-       if( (!isset($input['includePLForGRVYN']) || !$input['includePLForGRVYN']) && (!isset($input['financeGLcodePLSystemID']) || $input['financeGLcodePLSystemID'] == 0 || (isset($input['financeGLcodePLSystemID']) && is_array($input['financeGLcodePLSystemID']) && ($input['financeGLcodePLSystemID'][0] == 0)))) {
-           return $this->sendError('Please Select Cost GL Code',500); 
-       }
 
         $input =  $this->convertArrayToSelectedValue($input,['itemCategoryID','financeGLcodebBSSystemID','financeGLcodePLSystemID','financeGLcodeRevenueSystemID','trackingType']);
         

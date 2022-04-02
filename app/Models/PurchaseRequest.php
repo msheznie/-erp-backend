@@ -386,4 +386,29 @@ class PurchaseRequest extends Model
         return $this->hasMany('App\Models\BudgetReviewTransferAddition', ['documentSystemCode', 'documentSystemID'], ['purchaseRequestID', 'documentSystemID']);
     }
 
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_purchaserequestdetails','erp_purchaserequestdetails.purchaseRequestID','erp_purchaserequest.purchaseRequestID');
+    }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_purchaserequest.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeDepartmentJoin($q,$as = 'department', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_purchaserequest.'.$column);
+    }
+
+    public function scopeCategoryJoin($q,$as = 'category', $column = 'financeCategory' , $columnAs = 'categoryDescription')
+    {
+        return $q->leftJoin('financeitemcategorymaster as '.$as,$as.'.itemCategoryID','erp_purchaserequest.'.$column);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
+        $q->leftJoin('currencymaster as '. $as, $as.'.currencyID', '=', 'erp_purchaserequest.'.$column)
+            ->addSelect($as.".currencyByName as ".$columnAs);
+    }
+
 }
