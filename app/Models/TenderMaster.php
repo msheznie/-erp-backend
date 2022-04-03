@@ -237,7 +237,11 @@ class TenderMaster extends Model
         'created_by',
         'updated_by',
         'deleted_by',
-        'company_id'
+        'company_id',
+        'document_system_id',
+        'document_id',
+        'tender_code',
+        'serial_number'
     ];
 
     /**
@@ -274,7 +278,11 @@ class TenderMaster extends Model
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
-        'company_id' => 'integer'
+        'company_id' => 'integer',
+        'document_system_id' => 'integer',
+        'document_id' => 'string',
+        'tender_code' => 'string',
+        'serialNumber' => 'integer'
     ];
 
     /**

@@ -7,7 +7,9 @@ use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
+use App\Models\Company;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
 use App\Models\EnvelopType;
 use App\Models\EvaluationType;
 use App\Models\ProcumentActivity;
@@ -324,6 +326,7 @@ class TenderMasterAPIController extends AppBaseController
                 });
                 $query->orWhere('description', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('tender_code', 'LIKE', "%{$search}%");
             });
         }
 
@@ -359,6 +362,17 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        $documentMaster = DocumentMaster::where('documentSystemID', 108)->first();
+        $lastSerial = TenderMaster::where('company_id', $input['companySystemID'])
+            ->where('document_system_id', 108)
+            ->orderBy('id', 'desc')
+            ->first();
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serial_number) + 1;
+        }
+        $tenderCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
         DB::beginTransaction();
         try {
             $data['currency_id']= isset($input['currency_id'])?$input['currency_id'] : null;
@@ -368,8 +382,12 @@ class TenderMasterAPIController extends AppBaseController
             $data['tender_type_id']=$input['tender_type_id'];
             $data['title']=$input['title'];
             $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['document_system_id']=108;
+            $data['document_id']= $documentMaster['documentID'];
             $data['company_id']=$input['companySystemID'];
             $data['created_by'] = $employee->employeeSystemID;
+            $data['tender_code'] = $tenderCode;
+            $data['serial_number'] = $lastSerialNumber;
 
             $result = TenderMaster::create($data);
 
