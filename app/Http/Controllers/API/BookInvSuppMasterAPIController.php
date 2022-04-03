@@ -1296,7 +1296,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice','employee']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
