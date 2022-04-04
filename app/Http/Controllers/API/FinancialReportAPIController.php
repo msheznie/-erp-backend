@@ -616,7 +616,7 @@ class FinancialReportAPIController extends AppBaseController
                 break;
             case 'FCT': // Finance Customize reports (Income statement, P&L, Cash flow)
                 $request = (object)$request->all();
-
+                $showZeroGL = isset($request->showZeroGL) ? $request->showZeroGL : false;
                 if ($request->accountType == 1) { // if account type is BS and if any new chart of account created automatically link the gl account
                     $detID = ReportTemplateDetails::ofMaster($request->templateType)->where('itemType', 4)->whereNotNull('masterID')->first();
                     if (!empty($detID->detID) && !is_null($detID->detID)) {
@@ -672,7 +672,7 @@ class FinancialReportAPIController extends AppBaseController
                 $columnTemplateID = $generatedColumn['columnTemplateID']; // customized coloumn from template
 
                 $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)); // main query
-                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)); // detail query
+                $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL)); // detail query
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
                 $grandTotalUncatArr = [];
                 $uncategorizeArr = [];
@@ -3632,7 +3632,7 @@ GROUP BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
+    function getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -3709,6 +3709,13 @@ GROUP BY
         }
 
         $budgetJoin = '';
+        $whereNonZero = '';
+
+        if (!$showZeroGL) {
+            $whereNonZero = ' WHERE (' . join(' OR ', $whereQry) . ')';
+        }
+
+
         $generalLedgerGroup = '';
         if ($columnTemplateID == 1) {
             $secondLinkedcolumnQry .= ' gl.compID,';
@@ -3754,7 +3761,7 @@ FROM
 WHERE
 	erp_companyreporttemplatelinks.templateMasterID = ' . $request->templateType . ' AND erp_companyreporttemplatelinks.glAutoID IS NOT NULL
 ORDER BY
-	erp_companyreporttemplatelinks.sortOrder) a WHERE (' . join(' OR ', $whereQry) . ')';
+	erp_companyreporttemplatelinks.sortOrder) a '.$whereNonZero;
 
         $output = \DB::select($sql);
         return $output;
