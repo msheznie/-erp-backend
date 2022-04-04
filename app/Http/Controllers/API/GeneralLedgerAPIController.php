@@ -766,6 +766,10 @@ class GeneralLedgerAPIController extends AppBaseController
                     ->where('documentSystemCode',$documentSystemCode)
                     ->update(['documentDate' => $documentDate]);
 
+                     UnbilledGrvGroupBy::where('companySystemID',$companySystemID)
+                        ->where('purhaseReturnAutoID',$documentSystemCode)
+                        ->update(['grvDate' => $documentDate]);
+
                 case 41:
                     /*
                      * FADS - Fixed Asset Depreciation
