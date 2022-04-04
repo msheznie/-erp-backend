@@ -372,7 +372,7 @@ class TenderMasterAPIController extends AppBaseController
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serial_number) + 1;
         }
-        $tenderCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $tenderCode = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
         DB::beginTransaction();
         try {
             $data['currency_id']= isset($input['currency_id'])?$input['currency_id'] : null;
