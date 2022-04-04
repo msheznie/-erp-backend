@@ -2516,8 +2516,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
 
 
-        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+        
 
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2721,3 +2720,7 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+
+/* Below two request must be always separated from tenant, auth middlewares */
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
