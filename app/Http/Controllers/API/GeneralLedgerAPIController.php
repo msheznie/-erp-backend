@@ -837,6 +837,11 @@ class GeneralLedgerAPIController extends AppBaseController
                         ->where('documentSystemID',$documentSystemID)
                         ->update(['postedDate' => $documentDate]);
 
+                    AccountsReceivableLedger::where('companySystemID',$companySystemID)
+                        ->where('documentSystemID',$documentSystemID)
+                        ->where('documentCodeSystem',$documentSystemCode)
+                        ->update(['documentDate' => $documentDate]);
+
 
 
             }
