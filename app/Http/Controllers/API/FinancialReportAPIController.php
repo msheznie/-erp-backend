@@ -456,6 +456,10 @@ class FinancialReportAPIController extends AppBaseController
                 $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
                 $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
 
+                $fromDate = new Carbon($request->fromDate);
+                $fromDate = $fromDate->format('Y-m-d');
+
+
 
                 if (!empty($decimalPlaceUniqueLocal)) {
                     $currencyIdLocal = $decimalPlaceUniqueLocal[0];
@@ -1396,12 +1400,15 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Type'] = $val->glAccountType;
 
                                 if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round($val->openingBalLocal, $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round($val->openingBalLocal + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
-
+                                $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($val->openingBalRpt, $decimalPlaceRpt);
                                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                                 $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
+                                $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($val->openingBalRpt + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
                                 $x++;
                             }
                         }
@@ -2041,6 +2048,7 @@ class FinancialReportAPIController extends AppBaseController
                         glCode,
                         AccountDescription,
                         glAccountType,
+                        glAccountTypeID,
                         documentLocalCurrencyID,
                         IF((SUM( documentLocalAmount))<0,0,(SUM(documentLocalAmount))) AS documentLocalAmountDebit,
                         IF((SUM( documentLocalAmount))<0,(SUM(documentLocalAmount*-1)),0) AS documentLocalAmountCredit,
@@ -2061,6 +2069,7 @@ class FinancialReportAPIController extends AppBaseController
                         0 AS chartOfAccountSystemID,
                         "-" AS glCode,
                         "BS" AS glAccountType,
+                        "1" AS glAccountTypeID,
                         "Retained Earning" AS AccountDescription,
                         erp_generalledger.documentLocalCurrencyID,
                         erp_generalledger.documentLocalCurrencyER,
@@ -2094,6 +2103,7 @@ class FinancialReportAPIController extends AppBaseController
                             erp_generalledger.chartOfAccountSystemID,
                             erp_generalledger.glCode AS glCode,
                             erp_generalledger.glAccountType AS glAccountType,
+                            erp_generalledger.glAccountTypeID AS glAccountTypeID,
                             chartofaccounts.AccountDescription AS AccountDescription,
                             erp_generalledger.documentLocalCurrencyID,
                             erp_generalledger.documentLocalCurrencyER,
@@ -2124,6 +2134,7 @@ class FinancialReportAPIController extends AppBaseController
                             erp_generalledger.chartOfAccountSystemID,
                             erp_generalledger.glCode AS glCode,
                             erp_generalledger.glAccountType AS glAccountType,
+                            erp_generalledger.glAccountTypeID AS glAccountTypeID,
                             chartofaccounts.AccountDescription AS AccountDescription,
                             erp_generalledger.documentLocalCurrencyID,
                             erp_generalledger.documentLocalCurrencyER,
@@ -2154,6 +2165,7 @@ class FinancialReportAPIController extends AppBaseController
                             erp_generalledger.chartOfAccountSystemID,
                             erp_generalledger.glCode AS glCode,
                             erp_generalledger.glAccountType AS glAccountType,
+                            erp_generalledger.glAccountTypeID AS glAccountTypeID,
                             chartofaccounts.AccountDescription AS AccountDescription,
                             erp_generalledger.documentLocalCurrencyID,
                             erp_generalledger.documentLocalCurrencyER,
@@ -2178,6 +2190,24 @@ class FinancialReportAPIController extends AppBaseController
 
 
         $output = \DB::select($query);
+
+        $i = 0;
+
+        foreach ($output as $item) {
+            $openingBalSumLocal = GeneralLedger::where('documentDate','<',$fromDate)->where('glCode', $item->glCode)->sum('documentLocalAmount');
+            $openingBalSumReporting = GeneralLedger::where('documentDate','<',$fromDate)->where('glCode', $item->glCode)->sum('documentRptAmount');
+            if($item->glAccountTypeID == 1) {
+                $output[$i]->openingBalLocal = $openingBalSumLocal;
+                $output[$i]->openingBalRpt = $openingBalSumReporting;
+            }
+            if($item->glAccountTypeID > 1) {
+                $output[$i]->openingBalLocal = 0;
+                $output[$i]->openingBalRpt = 0;
+            }
+            $i++;
+
+        }
+
         //dd(DB::getQueryLog());
         return $output;
     }
