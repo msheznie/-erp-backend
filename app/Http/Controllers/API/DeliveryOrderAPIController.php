@@ -372,26 +372,32 @@ class DeliveryOrderAPIController extends AppBaseController
         /** @var DeliveryOrder $deliveryOrder */
         $deliveryOrder = $this->deliveryOrderRepository->findWithoutFail($id);
 
-        $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
-
-        $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
-            
-        if ($quotationMaster) {
-            $count  = $quotationMaster->detail->count();
-
-            if($deliveryOrderDetaiCountl == $count) {
-                $quotationMaster->isInDOorCI = 1;
-                $quotationMaster->save();
-            }else {
-                $quotationMaster->isInDOorCI = 3;
-                $quotationMaster->save();
-
-            }
-        }
-
         if (empty($deliveryOrder)) {
             return $this->sendError('Delivery Order not found');
         }
+        
+        $deliveryOrderDetails = DeliveryOrderDetail::where('deliveryOrderID', $id)->count();
+
+        if ($deliveryOrderDetails > 0) {
+            $deliveryOrderDetaiCountl = DeliveryOrderDetail::where('quotationMasterID',$deliveryOrder->detail()->get()[0]['quotationMasterID'])->count();
+
+            $quotationMaster = QuotationMaster::find($deliveryOrder->detail()->get()[0]['quotationMasterID']);
+                
+            if ($quotationMaster) {
+                $count  = $quotationMaster->detail->count();
+
+                if($deliveryOrderDetaiCountl == $count) {
+                    $quotationMaster->isInDOorCI = 1;
+                    $quotationMaster->save();
+                }else {
+                    $quotationMaster->isInDOorCI = 3;
+                    $quotationMaster->save();
+
+                }
+            }
+        }
+
+
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
         $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
