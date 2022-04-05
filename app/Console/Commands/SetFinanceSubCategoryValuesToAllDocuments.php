@@ -167,9 +167,9 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
             ),
             array(
                 "table" => "erp_itemreturndetails",
-                "master" => "erp_itemissuedetails",
-                "key" => "itemIssueDetailID",
-                "confirm" => null,
+                "master" => "erp_itemreturnmaster",
+                "key" => "itemReturnAutoID",
+                "confirm" => "confirmedYN",
                 "gParent" => null,
                 "gParentKey" => null,
                 "gConfirm" => null,
@@ -211,32 +211,40 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "includePLForGRVYN"
                     )
             ),
-            // array(
-            //     "table" => "erp_purchaseorderdetails ",
-            //     "master" => "erp_purchaseordermaster",
-            //     "key" => "purchaseOrderMasterID",
-            //     "masterKey" => "purchaseOrderID",
-            //     "confirm" => "WO_confirmedYN",
-            //     "gParent" => null,
-            //     "gParentKey" => null,
-            //     "gConfirm" => null,
-            //      "columns" => array(
-            //             "financeGLcodebBSSystemID",
-            //             "financeGLcodebBS",
-            //             "financeGLcodePLSystemID",
-            //             "financeGLcodePL",
-            //             "includePLForGRVYN"
-            //         )
-            // ),
-            // array(
-            //     "table" => "erp_purchaseorderdetailsrefferedhistory",
-            //     "master" => "erp_purchaseorderdetails",
-            //     "key" => "purchaseOrderDetailsID",
-            //     "confirm" => null,
-            //     "gParent" => "erp_purchaseordermaster",
-            //     "gParentKey" => "purchaseOrderID",
-            //     "gConfirm" => "WO_confirmedYN"
-            // ),
+            array(
+                "table" => "erp_purchaseorderdetails",
+                "master" => "erp_purchaseordermaster",
+                "key" => "purchaseOrderMasterID",
+                "masterKey" => "purchaseOrderID",
+                "confirm" => "WO_confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                 "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
+            array(
+                "table" => "erp_purchaseorderdetailsrefferedhistory",
+                "master" => "erp_purchaseorderdetails",
+                "key" => "purchaseOrderDetailsID",
+                "masterKey" => "purchaseOrderID",
+                "confirm" => null,
+                "gParent" => "erp_purchaseordermaster",
+                "gParentKey" => "purchaseOrderMasterID",
+                "gConfirm" => "poConfirmedYN",
+                 "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
             // array(
             //     "table" => "erp_purchaseorderprocessdetails",
             //     "master" => "erp_purchaseorderdetails",
@@ -263,13 +271,29 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                     )
             ),
             array(
+                "table" => "erp_purchasereturndetails",
+                "master" => "erp_purchasereturnmaster",
+                "key" => "purhaseReturnAutoID",
+                "confirm" => "confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodebBS",
+                        "financeGLcodePLSystemID",
+                        "financeGLcodePL",
+                        "includePLForGRVYN"
+                    )
+            ),
+            array(
                 "table" => "erp_purchasereturndetails_refferedback",
-                "master" => "erp_grvdetails",
-                "key" => "grvDetailsID",
-                "confirm" => null,
-                "gParent" => "erp_grvmaster",
-                "gParentKey" => "grvAutoID",
-                "gConfirm" => "grvConfirmedYN",
+                "master" => "erp_purchasereturnmaster",
+                "key" => "purhaseReturnAutoID",
+                "confirm" => "confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
                 "columns" => 
                     array(
                         "financeGLcodebBSSystemID",
@@ -314,9 +338,9 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                 "master" => "erp_stockadjustmentdetails",
                 "key" => "stockAdjustmentDetailsAutoID",
                 "confirm" => null,
-                "gParent" => null,
-                "gParentKey" => null,
-                "gConfirm" => null,
+                "gParent" => "erp_stockadjustment",
+                "gParentKey" => "stockAdjustmentAutoID",
+                "gConfirm" => "confirmedYN",
                 "columns" => array(
                         "financeGLcodebBSSystemID",
                         "financeGLcodebBS",
@@ -357,7 +381,22 @@ class SetFinanceSubCategoryValuesToAllDocuments extends Command
                         "financeGLcodePL",
                         "includePLForGRVYN"
                     )
-            )
+            ),
+           array(
+                "table" => "supplier_invoice_items",
+                "master" => "erp_bookinvsuppmaster",
+                "key" => "bookingSuppMasInvAutoID",
+                "confirm" => "confirmedYN",
+                "gParent" => null,
+                "gParentKey" => null,
+                "gConfirm" => null,
+                "columns" => array(
+                        "financeGLcodebBSSystemID",
+                        "financeGLcodePLSystemID",
+                        "includePLForGRVYN"
+                    )
+                
+            ),
         ];
         // $tenants = CommonJobService::tenant_list();
         

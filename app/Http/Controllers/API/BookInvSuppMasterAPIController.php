@@ -1296,7 +1296,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice','employee']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -2109,13 +2109,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierData = $supplierData->get();
 
         $employeeData = [];
+        $currencies = [];
         if (isset($request['invoiceType']) && $request['invoiceType'] == 4) {
             $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')
                                     ->where('discharegedYN', 0)
                                     ->get();
+
+            $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+                                        ->get();
         }
 
-        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData], 'Record retrieved successfully');
+        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData, 'currencies' => $currencies], 'Record retrieved successfully');
     }
 
 
@@ -2305,7 +2309,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'suppliermaster.supplierName As supplierName',
             'approvalLevelID',
             'documentSystemCode',
-            'employees.empName As created_user'
+            'employees.empName As created_user',
+            'inv_emp.empName As employee_inv'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -2328,6 +2333,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
             ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
+            ->leftJoin('employees as inv_emp', 'erp_bookinvsuppmaster.employeeID', 'inv_emp.employeeSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 11)
             ->where('erp_documentapproved.companySystemID', $companyID)->groupBy('erp_bookinvsuppmaster.bookingSuppMasInvAutoID');
