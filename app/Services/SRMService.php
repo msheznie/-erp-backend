@@ -1129,12 +1129,16 @@ class SRMService
         if($request->input('extra.tender_status') == 1){ 
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId); 
-            }])->whereDoesntHave('srmTenderMasterSupplier'); 
+            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }); 
             
         }else if ($request->input('extra.tender_status') == 2) {  
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
-            }])->whereHas('srmTenderMasterSupplier');  
+            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            });  
          } 
         $search = $request->input('search.value');
         if($search){ 
