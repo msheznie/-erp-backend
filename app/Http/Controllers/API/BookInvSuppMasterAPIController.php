@@ -65,6 +65,7 @@ use App\Models\Months;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
+use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
@@ -2073,6 +2074,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
                     ->get();
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $projects = [];
+        $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->get();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -2090,7 +2100,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'employeeControlAccount' => $employeeControlAccount,
             'segments' => $segments,
-            'isVATEligible' => $isVATEligible
+            'isVATEligible' => $isVATEligible,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2122,7 +2134,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType', 'projectID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2133,9 +2145,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
 
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
         $search = $request->input('search.value');
         
-        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID, $projectID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")
