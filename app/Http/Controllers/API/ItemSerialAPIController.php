@@ -462,22 +462,40 @@ class ItemSerialAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $trackingType = isset($input['trackingType']) ? $input['trackingType'] : 2;
+
         $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
                                          ->where('documentSystemID', $input['documentSystemID'])
                                          ->get();
 
-        $serialIds = collect($subProducts)->pluck('productSerialID')->toArray();
+        if ($trackingType == 2) {
+            $serialIds = collect($subProducts)->pluck('productSerialID')->toArray();
 
-        $checkItemSerialForDelete = ItemSerial::whereIn('id', $serialIds)
-                                              ->where('soldFlag', 1)
-                                              ->first();
+            $checkItemSerialForDelete = ItemSerial::whereIn('id', $serialIds)
+                                                  ->where('soldFlag', 1)
+                                                  ->first();
 
-        if ($checkItemSerialForDelete) {
-             return $this->sendError("There are some items are already sold, therefore cannot delete ", 500);    
+            if ($checkItemSerialForDelete) {
+                 return $this->sendError("There are some items are already sold, therefore cannot delete ", 500);    
+            }
+
+            $deleteRes = ItemSerial::whereIn('id', $serialIds)
+                                                  ->delete();
+        } else {
+            $batchIds = collect($subProducts)->pluck('productBatchID')->toArray();
+
+            $checkItemSerialForDelete = ItemBatch::whereIn('id', $batchIds)
+                                                  ->where('copiedQty','>', 0)
+                                                  ->first();
+
+            if ($checkItemSerialForDelete) {
+                 return $this->sendError("There are some items are already sold, therefore cannot delete ", 500);    
+            }
+
+            $deleteRes = ItemBatch::whereIn('id', $batchIds)
+                                                  ->delete();
         }
 
-        $deleteRes = ItemSerial::whereIn('id', $serialIds)
-                                              ->delete();
 
         $deleteRes = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
                                          ->where('documentSystemID', $input['documentSystemID'])

@@ -123,5 +123,23 @@ class ItemBatch extends Model
         
     ];
 
-    
+    public function document_in_product()
+    {
+        return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productBatchID')->whereIn('documentSystemID', [3, 8, 12, 24, 71, 20, 87]);
+    }
+
+    public function document_product()
+    {
+        return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productBatchID');
+    }
+
+     public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseSystemID', 'wareHouseSystemCode');
+    }
+
+     public function bin_location()
+    {
+        return $this->belongsTo('App\Models\WarehouseBinLocation', 'binLocation', 'binLocationID');
+    }
 }

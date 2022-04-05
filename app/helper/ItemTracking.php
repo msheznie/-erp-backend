@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use App\Models\DocumentSubProduct;
 use App\Models\GRVDetails;
 use App\Models\ItemSerial;
+use App\Models\ItemBatch;
 use App\Models\ItemIssueDetails;
 use App\Models\CustomerAssigned;
 use App\Models\ItemReturnDetails;
@@ -39,7 +40,7 @@ class ItemTracking
 			case 3:
 				$checkTrackingAvaliability = GRVDetails::with(['item_by'])
 														->where('grvAutoID', $documentSystemCode)
-														->where('trackingType', 2)
+														->whereIn('trackingType', [1,2])
 														->get();
 
 				if (count($checkTrackingAvaliability) == 0) {
@@ -47,32 +48,57 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
 
-					if ($trackingCheck != $value->noQty) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
-					}
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
-						$expireCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNull('expireDate');
-													   })
-													   ->count();
+						if ($trackingCheck != $value->noQty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 
-						if ($expireCheck > 0) {
-							$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+						if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
+							$expireCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNull('expireDate');
+														   })
+														   ->count();
+
+							if ($expireCheck > 0) {
+								$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+							}
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('batch_data', function($query) {
+														   		$query->whereNotNull('batchCode');
+														   })
+														   ->sum('quantity');
+
+						if ($trackingCheck != $value->noQty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+
+						if (isset($value->item_by->expiryYN) && $value->item_by->expiryYN == 1) {
+							$expireCheck = DocumentSubProduct::where('documentDetailID', $value->grvDetailsID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('batch_data', function($query) {
+														   		$query->whereNull('expireDate');
+														   })
+														   ->count();
+
+							if ($expireCheck > 0) {
+								$errorMessage[] = "Expiry dates of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is required.";
+							}
 						}
 					}
-
 				}
-
 
 				break;
 			case 8:
@@ -263,7 +289,10 @@ class ItemTracking
 			case 3:
 				$checkProduct =  DocumentSubProduct::where('documentSystemCode', $documentSystemCode)
 													   ->where('documentSystemID', $documentSystemID)
-													   ->where('sold', 1)
+													   ->where(function($query) {
+													   		$query->where('sold', 1)
+													   			  ->orWhere('soldQty', '>', 0);
+													   })
 													   ->first();
 
 				if ($checkProduct) {
@@ -271,6 +300,12 @@ class ItemTracking
 				}
 
 				$updateWareHouse = ItemSerial::whereHas('document_product', function($query) use ($documentSystemCode, $documentSystemID) {
+												$query->where('documentSystemCode', $documentSystemCode)
+													   ->where('documentSystemID', $documentSystemID);
+											})
+											->update(['wareHouseSystemID' => $wareHouseSystemID]);
+
+				$updateWareHouse = ItemBatch::whereHas('document_product', function($query) use ($documentSystemCode, $documentSystemID) {
 												$query->where('documentSystemCode', $documentSystemCode)
 													   ->where('documentSystemID', $documentSystemID);
 											})

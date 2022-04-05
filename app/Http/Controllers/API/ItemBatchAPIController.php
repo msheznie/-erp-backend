@@ -240,14 +240,12 @@ class ItemBatchAPIController extends AppBaseController
                                           ->where('documentSystemID', $input['documentSystemID'])
                                           ->where('productBatchID', '!=', $input['id'])
                                           ->sum('quantity');
-
         
-        $newTotalQty = $subProducts + $input['quantity'];
+        $newTotalQty = $subProducts + floatval($input['quantity']);
 
         if ($newTotalQty > $input['noQty']) {
-            
+            return $this->sendError('Batch quantity cannot be greater than total quantity');
         }
-
 
         if (!is_null($input['expireDate'])) {
             $input['expireDate'] = new Carbon($input['expireDate']);
@@ -259,6 +257,12 @@ class ItemBatchAPIController extends AppBaseController
         if (empty($itemBatch)) {
             return $this->sendError('Item Batch not found');
         }
+
+
+        $subProducts = DocumentSubProduct::where('documentDetailID', $input['documentDetailID'])
+                                          ->where('documentSystemID', $input['documentSystemID'])
+                                          ->where('productBatchID', $input['id'])
+                                          ->update(['quantity' => floatval($input['quantity'])]);
 
         $itemBatch = $this->itemBatchRepository->update($input, $id);
 
@@ -312,8 +316,16 @@ class ItemBatchAPIController extends AppBaseController
             return $this->sendError('Item Batch not found');
         }
 
+        if ($itemBatch->copiedQty > 0) {
+            return $this->sendError('Item Batch cannot be deleted. It has been sold');
+        }
+
+        $delteSubProduct = DocumentSubProduct::where('productBatchID', $itemBatch->id)
+                                             ->whereNull('productInID')
+                                             ->delete();
+
         $itemBatch->delete();
 
-        return $this->sendSuccess('Item Batch deleted successfully');
+        return $this->sendResponse([],'Item Batch deleted successfully');
     }
 }
