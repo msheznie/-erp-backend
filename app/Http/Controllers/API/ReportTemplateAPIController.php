@@ -333,7 +333,7 @@ class ReportTemplateAPIController extends AppBaseController
 
             if (isset($input['reportID']) && isset($input['companyReportTemplateID'])) {
                 $isDefault = ReportTemplate::find($input['companyReportTemplateID']);
-                if($isDefault) {
+                if($isDefault && isset($input['isDefault'])) {
                     if ($input['isDefault'] != $isDefault->isDefault) {
                         if ($input['reportID'] == 1 || $input['reportID'] == 2) {
                             $templates = ReportTemplate::with(['details' => function ($query) {
