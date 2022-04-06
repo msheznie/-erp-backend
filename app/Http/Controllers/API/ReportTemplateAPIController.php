@@ -421,7 +421,14 @@ class ReportTemplateAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyID = $input['companyID'];
-        $reportTemplate = ReportTemplate::with(['template_type'])->OfCompany($companyID);
+
+
+        $reportTemplate= ReportTemplate::with(['template_type','details'=>
+            function($query) {
+                $query->with(['gllink']);
+            }])->OfCompany($companyID);
+
+
         $search = $request->input('search.value');
 
         if ($search) {
