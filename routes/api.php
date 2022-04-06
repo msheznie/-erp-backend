@@ -2503,6 +2503,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
 
         Route::resource('item_batches', 'ItemBatchAPIController');
+        Route::get('getBatchNumbersForOut', 'ItemBatchAPIController@getBatchNumbersForOut');
+        Route::post('updateSoldStatusOfBatch', 'ItemBatchAPIController@updateSoldStatusOfBatch');
 
         Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 

@@ -114,7 +114,7 @@ class ItemSerialRepository extends BaseRepository
         return ['status' => true];
     }
 
-    public function mapBatchSubProducts($productBatchID, $documentSystemID, $documentDetailID, $productInID = null)
+    public function mapBatchSubProducts($productBatchID, $documentSystemID, $documentDetailID, $productInID = null, $quantity = 0)
     {
         $productBatch = ItemBatch::find($productBatchID);
 
@@ -122,7 +122,7 @@ class ItemSerialRepository extends BaseRepository
             'documentSystemID' => $documentSystemID,
             'documentDetailID' => $documentDetailID,
             'productBatchID' => $productBatchID,
-            'quantity' => ($productBatch) ? $productBatch->quantity : 0,
+            'quantity' => ($productBatch && $quantity == 0) ? $productBatch->quantity : $quantity,
             'sold' => 0,
             'soldQty' => 0
         ];

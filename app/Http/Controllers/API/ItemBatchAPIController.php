@@ -6,12 +6,14 @@ use App\Http\Requests\API\CreateItemBatchAPIRequest;
 use App\Http\Requests\API\UpdateItemBatchAPIRequest;
 use App\Models\ItemBatch;
 use App\Models\DocumentSubProduct;
+use App\Repositories\ItemSerialRepository;
 use App\Repositories\ItemBatchRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 /**
@@ -23,10 +25,12 @@ class ItemBatchAPIController extends AppBaseController
 {
     /** @var  ItemBatchRepository */
     private $itemBatchRepository;
+    private $itemSerialRepository;
 
-    public function __construct(ItemBatchRepository $itemBatchRepo)
+    public function __construct(ItemBatchRepository $itemBatchRepo, ItemSerialRepository $itemSerialRepo)
     {
         $this->itemBatchRepository = $itemBatchRepo;
+        $this->itemSerialRepository = $itemSerialRepo;
     }
 
     /**
@@ -327,5 +331,201 @@ class ItemBatchAPIController extends AppBaseController
         $itemBatch->delete();
 
         return $this->sendResponse([],'Item Batch deleted successfully');
+    }
+
+
+    public function getBatchNumbersForOut(Request $request)
+    {
+        $input = $request->all();
+
+        $itemSerials = ItemBatch::where('itemSystemCode', $input['itemSystemCode'])
+                                 ->when($input['documentSystemID'] != 13, function($query) use ($input){
+                                    $query->where('wareHouseSystemID',$input['warehouse']);
+                                 })
+                                 ->when($input['documentSystemID'] == 13, function($query) use ($input){
+                                    $query->where(function($query) use ($input) {
+                                        $query->where('wareHouseSystemID',$input['warehouse'])
+                                          ->orWhere(function($query) use ($input) {
+                                            $query->where('wareHouseSystemID',$input['wareHouseCodeTo'])
+                                                  ->where('soldFlag', 0)
+                                                  ->whereHas('document_product', function($query) use ($input) {
+                                                        $query->where('documentSystemID', $input['documentSystemID'])
+                                                              ->where('documentDetailID', $input['documentDetailID']);
+                                                  });
+                                          });    
+                                      });                                
+                                 })
+                                 ->where(function($query) use ($input){
+                                        $query->where(function($query) use ($input) {
+                                                $query->where('soldFlag', 1)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->where('soldFlag', 0)
+                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->when($input['documentSystemID'] == 13, function($query) use ($input){
+                                                    $query->where('soldFlag', 0)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      }); 
+                                                });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->when(in_array($input['documentSystemID'], [71, 20]), function($query) use ($input){
+                                                    $query->where('soldFlag', 0)
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      }); 
+                                                });
+                                            });
+                                  })
+                                  ->with(['document_product' => function($query) use ($input) {
+                                        $query->where('documentSystemID', $input['documentSystemID'])
+                                              ->where('documentDetailID', $input['documentDetailID']);
+                                  }, 'warehouse', 'bin_location'])
+                                  ->whereHas('document_in_product', function($query) use ($input) { 
+                                        $query->where(function($query) use ($input) {
+                                            $query->whereHas('grv_master', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('material_issue', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('material_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('purchase_return', function($query) use ($input) {
+                                                    $query->where('approved', -1);
+                                                })->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('sales_return', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
+                                                });
+                                        });
+                                    })
+                                  ->get();
+
+        return $this->sendResponse($itemSerials, 'product batch retrived successfully');
+    }
+
+    public function updateSoldStatusOfBatch(Request $request) 
+    {
+        $input = $request->all();
+
+        $checkBatch = ItemBatch::find($input['id']);
+
+        if (!$checkBatch) {
+            return $this->sendError("Serial not found");
+        }
+
+        DB::beginTransaction();
+        try {
+            $input['quantityCopied'] = isset($input['quantityCopied']) ? floatval($input['quantityCopied']) : 0;
+
+            if ($input['quantityCopied'] > 0) {
+
+                $checkCountOfOut = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productBatchID', '!=', $input['id'])
+                                                             ->sum('quantity');
+
+                $previousOutCount = DocumentSubProduct::where('documentSystemID', '!=', $input['documentSystemID'])
+                                                             ->where('documentDetailID', '!=', $input['documentDetailID'])
+                                                             ->where('productBatchID',  $input['id'])
+                                                             ->whereNotNull('productInID')
+                                                             ->sum('quantity');
+
+                $previousLineOutCount = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productBatchID',  $input['id'])
+                                                             ->whereNotNull('productInID')
+                                                             ->sum('quantity');
+
+                if (($checkCountOfOut + $input['quantityCopied']) > floatval($input['noQty'])) {
+                    return $this->sendError("Out quantity cannot be greater than issue quantity");
+                }
+
+                if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
+                    $checkBatch->wareHouseSystemID = $input['wareHouseCodeTo'];
+                } else {
+                    $newCopiedQty = ($previousOutCount + $input['quantityCopied']);
+                    $checkBatch->soldFlag = ($checkBatch->quantity == $newCopiedQty) ? 1 : 0;
+                    $checkBatch->copiedQty = $newCopiedQty;
+                }
+
+                $checkBatch->save();
+
+                $checkInData = DocumentSubProduct::selectRaw('SUM(quantity - soldQty) as remaingQty')
+                                                 ->where('productBatchID', $input['id'])
+                                                 ->whereNull('productInID')
+                                                 ->where('sold', 0)
+                                                 ->first();     
+                                                 
+                if (!$checkInData) {
+                    return $this->sendError("Batch has been sold.");
+                }      
+
+                if (($checkInData->remaingQty - $previousLineOutCount) < $input['quantityCopied']) {
+                    return $this->sendError("Batch quantity has been sold.");
+                }
+
+
+                $productInDatas = DocumentSubProduct::where('productBatchID', $input['id'])
+                                                 ->whereNull('productInID')
+                                                 ->where('sold', 0)
+                                                 ->get();
+
+                foreach ($productInDatas as $key => $value) {
+                         
+                    $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id);
+                }     
+
+
+                
+                // $checkInData->sold = 1;
+                // $checkInData->soldQty = 1;
+
+                // $checkInData->save();
+            } else {
+                $checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productSerialID', $input['id'])
+                                                             ->first();
+
+                if ($checkDocumentSubProduct) {
+                    $soldProduct = DocumentSubProduct::find($checkDocumentSubProduct->productInID);
+                    if ($soldProduct) {
+                        $soldProduct->sold = 0;
+                        $soldProduct->soldQty = 0;
+                        $soldProduct->save();
+                    }
+
+                    if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
+                        $cehckSerial->wareHouseSystemID = isset($input['wareHouseCodeFrom']) ? $input['wareHouseCodeFrom'] : null;
+                    } else {
+                        $cehckSerial->soldFlag = 0;
+                    }
+                    $cehckSerial->save();
+
+
+                    DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productSerialID', $input['id'])
+                                                             ->delete();
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'product serial generated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage(), 422);
+        }
     }
 }
