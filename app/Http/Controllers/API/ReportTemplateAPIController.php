@@ -316,7 +316,7 @@ class ReportTemplateAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['template_type', 'details', 'Actions', 'DT_Row_Index']);
+        $input = array_except($input, ['template_type', 'Actions', 'DT_Row_Index']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ReportTemplate $reportTemplate */
@@ -329,14 +329,34 @@ class ReportTemplateAPIController extends AppBaseController
         if (isset($input['chartOfAccountSerialLength']) && ($input['chartOfAccountSerialLength'] < 0 || $input['chartOfAccountSerialLength'] == 0 || $input['chartOfAccountSerialLength'] == null)) {
             return $this->sendError('Serial Length should be greater than zero', 500);
         }
+        if (isset($input['reportID'])) {
+            $templates = ReportTemplate::with(['details' => function ($query) {
+                $query->with(['gllink']);
+            }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
+            $isCOA = false;
+            foreach ($templates as $template) {
+                foreach ($template->details as $detail) {
+                    foreach ($detail->gllink as $gllink) {
+                        $isCOA = true;
+                    }
+                }
+            }
 
+            if ($isCOA == true) {
+                return $this->sendError('Report template cannot be made default as chart of accounts is already present', 500);
+            }
+        }
 
         $reportTemplate = $this->reportTemplateRepository->update($input, $id);
 
         if (isset($input['isDefault']) && $input['isDefault']) {
+
+
             $updateOtherDefault = ReportTemplate::where('reportID', $input['reportID'])
                                                 ->where('companyReportTemplateID', '!=', $input['companyReportTemplateID'])
                                                 ->update(['isDefault' => 0]);
+
+
         }
 
 
@@ -423,10 +443,8 @@ class ReportTemplateAPIController extends AppBaseController
         $companyID = $input['companyID'];
 
 
-        $reportTemplate= ReportTemplate::with(['template_type','details'=>
-            function($query) {
-                $query->with(['gllink']);
-            }])->OfCompany($companyID);
+        $reportTemplate = ReportTemplate::with(['template_type'])->OfCompany($companyID);
+
 
 
         $search = $request->input('search.value');
