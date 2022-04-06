@@ -333,26 +333,28 @@ class ReportTemplateAPIController extends AppBaseController
 
             if (isset($input['reportID']) && isset($input['companyReportTemplateID'])) {
                 $isDefault = ReportTemplate::find($input['companyReportTemplateID']);
-                if ($input['isDefault'] != $isDefault->isDefault) {
-                if ($input['reportID'] == 1 || $input['reportID'] == 2) {
-                    $templates = ReportTemplate::with(['details' => function ($query) {
-                        $query->with(['gllink']);
-                    }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
-                    $isCOA = false;
-                    foreach ($templates as $template) {
-                        foreach ($template->details as $detail) {
-                            foreach ($detail->gllink as $gllink) {
-                                $isCOA = true;
+                if($isDefault) {
+                    if ($input['isDefault'] != $isDefault->isDefault) {
+                        if ($input['reportID'] == 1 || $input['reportID'] == 2) {
+                            $templates = ReportTemplate::with(['details' => function ($query) {
+                                $query->with(['gllink']);
+                            }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
+                            $isCOA = false;
+                            foreach ($templates as $template) {
+                                foreach ($template->details as $detail) {
+                                    foreach ($detail->gllink as $gllink) {
+                                        $isCOA = true;
+                                    }
+                                }
+                            }
+
+                            if ($isCOA == true) {
+                                return $this->sendError('Cannot change default report template because chart of account is created already', 500);
                             }
                         }
                     }
-
-                    if ($isCOA == true) {
-                        return $this->sendError('Cannot change default report template because chart of account is created already', 500);
-                    }
                 }
             }
-        }
 
         $reportTemplate = $this->reportTemplateRepository->update($input, $id);
 
