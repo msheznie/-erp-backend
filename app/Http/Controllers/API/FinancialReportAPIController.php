@@ -675,7 +675,7 @@ class FinancialReportAPIController extends AppBaseController
                 $budgetWhereQuery = $generatedColumn['budgetWhereQuery']; // generated select statement for budget query
                 $columnTemplateID = $generatedColumn['columnTemplateID']; // customized coloumn from template
 
-                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)); // main query
+                $outputCollect = collect($this->getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL)); // main query
                 $outputDetail = collect($this->getCustomizeFinancialDetailRptQry($request, $linkedcolumnQry, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL)); // detail query
                 $headers = $outputCollect->where('masterID', null)->sortBy('sortOrder')->values();
                 $grandTotalUncatArr = [];
@@ -3410,7 +3410,7 @@ AND MASTER .canceledYN = 0';
         }
     }
 
-    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID)
+    function getCustomizeFinancialRptQry($request, $linkedcolumnQry, $linkedcolumnQry2, $columnKeys, $financeYear, $period, $budgetQuery, $budgetWhereQuery, $columnTemplateID, $showZeroGL)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
@@ -3500,6 +3500,7 @@ AND MASTER .canceledYN = 0';
         }
 
         $budgetJoin = '';
+        $whereNonZero = '';
         $generalLedgerGroup = '';
         $templateGroup = '';
         if ($columnTemplateID == 1) {
@@ -3510,6 +3511,10 @@ AND MASTER .canceledYN = 0';
             $budgetJoin = ' AND g.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $templateGroup = ', compID';
+        }
+
+        if (!$showZeroGL) {
+            $whereNonZero = ' WHERE (' . join(' OR ', $whereQry) . ')';
         }
 
         $sql = 'SELECT * FROM (SELECT
@@ -3674,7 +3679,7 @@ WHERE
 	AND subCategory IS NOT NULL 
 GROUP BY
 	erp_companyreporttemplatelinks.templateDetailID ' . $templateGroup . '
-	) e ON e.templateDetailID = c.detID) d WHERE (' . join(' OR ', $whereQry) . ')';
+	) e ON e.templateDetailID = c.detID) d '.$whereNonZero;
 
         $output = \DB::select($sql);
         return $output;
