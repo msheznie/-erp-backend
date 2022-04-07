@@ -3513,9 +3513,9 @@ AND MASTER .canceledYN = 0';
             $templateGroup = ', compID';
         }
 
-        if (!$showZeroGL) {
-            $whereNonZero = ' WHERE (' . join(' OR ', $whereQry) . ')';
-        }
+        // if (!$showZeroGL) {
+        //     $whereNonZero = ' WHERE (' . join(' OR ', $whereQry) . ')';
+        // }
 
         $sql = 'SELECT * FROM (SELECT
 	c.detDescription,
