@@ -1119,17 +1119,27 @@ class SRMService
     public function getTenders(Request $request)
     {
         $input = $request->all();
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
-        } 
-  
-        $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
-            $q->where('purchased_by','=',$supplierRegId);
-        }]);  
-        
+        }  
+
+        if($request->input('extra.tender_status') == 1){ 
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }); 
+            
+        }else if ($request->input('extra.tender_status') == 2) {  
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            });  
+         } 
         $search = $request->input('search.value');
         if($search){ 
              $search = str_replace("\\", "\\\\", $search);
