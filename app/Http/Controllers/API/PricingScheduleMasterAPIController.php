@@ -372,7 +372,6 @@ class PricingScheduleMasterAPIController extends AppBaseController
             $data['schedule_mandatory']=$schedule_mandatory;
             $data['items_mandatory']=$items_mandatory;
             $data['company_id']=$input['companySystemID'];
-            $data['created_by'] = $employee->employeeSystemID;
 
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
@@ -382,6 +381,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
                 }
             }else{
+                $data['created_by'] = $employee->employeeSystemID;
                 $result = PricingScheduleMaster::create($data);
                 if($result){
                     DB::commit();
