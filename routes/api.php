@@ -2557,6 +2557,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
         Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
+        Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList');
+        Route::post('addMainWorks', 'TenderMainWorksAPIController@addMainWorks');
+        Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
+        Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
+        Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+
 
     });
 
@@ -2790,3 +2796,5 @@ Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIContr
 
 
 Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
+
+Route::resource('tender_main_works', 'TenderMainWorksAPIController');
