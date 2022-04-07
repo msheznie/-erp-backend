@@ -2073,10 +2073,10 @@ class FinancialReportAPIController extends AppBaseController
                         "Retained Earning" AS AccountDescription,
                         erp_generalledger.documentLocalCurrencyID,
                         erp_generalledger.documentLocalCurrencyER,
-                        sum( erp_generalledger.documentLocalAmount *- 1 ) AS documentLocalAmount,
+                        0 AS documentLocalAmount,
                         erp_generalledger.documentRptCurrencyID,
                         erp_generalledger.documentRptCurrencyER,
-                        sum( erp_generalledger.documentRptAmount * - 1 ) documentRptAmount 
+                        0 documentRptAmount 
                     FROM
                         erp_generalledger
                         LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
@@ -2107,10 +2107,10 @@ class FinancialReportAPIController extends AppBaseController
                             chartofaccounts.AccountDescription AS AccountDescription,
                             erp_generalledger.documentLocalCurrencyID,
                             erp_generalledger.documentLocalCurrencyER,
-                            erp_generalledger.documentLocalAmount AS documentLocalAmount,
+                            0 AS documentLocalAmount,
                             erp_generalledger.documentRptCurrencyID,
                             erp_generalledger.documentRptCurrencyER,
-                            erp_generalledger.documentRptAmount documentRptAmount 
+                            0 documentRptAmount 
                         FROM
                             erp_generalledger
                             LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
@@ -2190,15 +2190,156 @@ class FinancialReportAPIController extends AppBaseController
 
 
         $output = \DB::select($query);
+        $query1 = 'SELECT
+                        companySystemID,
+                        companyID,
+                        CompanyName,
+                        chartOfAccountSystemID,
+                        glCode,
+                        AccountDescription,
+                        glAccountType,
+                        documentLocalCurrencyID,
+                       SUM(documentLocalAmount) AS openingBalLocal,
+                        documentRptCurrencyID,
+                        SUM( documentRptAmount) AS openingBalRpt
+                    FROM
+                        (
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        companymaster.CompanyName,
+                        "" AS documentDate,
+                        0 AS chartOfAccountSystemID,
+                        "-" AS glCode,
+                        "BS" AS glAccountType,
+                        "Retained Earning" AS AccountDescription,
+                        erp_generalledger.documentLocalCurrencyID,
+                        erp_generalledger.documentLocalCurrencyER,
+                        sum( erp_generalledger.documentLocalAmount *- 1 ) AS documentLocalAmount,
+                        erp_generalledger.documentRptCurrencyID,
+                        erp_generalledger.documentRptCurrencyER,
+                        sum( erp_generalledger.documentRptAmount * - 1 ) documentRptAmount 
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    WHERE
+                        erp_generalledger.glAccountType = "BS" 
+                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" -- filter by from date
+                    GROUP BY
+                        ' . $isCompanyWiseGL . '
+                        glCode
+                        ) AS ERP_qry_TBBS_BF_sum -- ERP_qry_TBBS_BF_sum
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentLocalCurrencyER,
+                            erp_generalledger.documentLocalAmount AS documentLocalAmount,
+                            erp_generalledger.documentRptCurrencyID,
+                            erp_generalledger.documentRptCurrencyER,
+                            erp_generalledger.documentRptAmount documentRptAmount 
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                        WHERE
+                            erp_generalledger.glAccountType = "BS" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
+                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                        ) AS ERP_qry_TBBS_BF -- filter by from date ERP_qry_TBBS_BF;
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentLocalCurrencyER,
+                            0 AS documentLocalAmount,
+                            erp_generalledger.documentRptCurrencyID,
+                            erp_generalledger.documentRptCurrencyER,
+                            0 documentRptAmount 
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "BS" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
+                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        ) AS ERP_qry_TBBS -- ERP_qry_TBBS
+                    UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                        SELECT
+                            erp_generalledger.companySystemID,
+                            erp_generalledger.companyID,
+                            companymaster.CompanyName,
+                            erp_generalledger.documentDate AS documentDate,
+                            erp_generalledger.chartOfAccountSystemID,
+                            erp_generalledger.glCode AS glCode,
+                            erp_generalledger.glAccountType AS glAccountType,
+                            chartofaccounts.AccountDescription AS AccountDescription,
+                            erp_generalledger.documentLocalCurrencyID,
+                            erp_generalledger.documentLocalCurrencyER,
+                            0 AS documentLocalAmount,
+                            erp_generalledger.documentRptCurrencyID,
+                            erp_generalledger.documentRptCurrencyER,
+                            0 documentRptAmount 
+                        FROM
+                            erp_generalledger
+                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID 
+                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                        WHERE
+                            chartofaccounts.catogaryBLorPL = "PL" 
+                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                               AND erp_generalledger.serviceLineSystemID IN (' . $serviceLines . ')
+                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        ) AS ERP_qry_TBPL 
+                        ) AS FINAL 
+                    GROUP BY
+                        ' . $isCompanyWise . 'chartOfAccountSystemID
+                        order by glCode';
+        $output1 = \DB::select($query1);
+
+
 
         $i = 0;
 
         foreach ($output as $item) {
-            $openingBalSumLocal = GeneralLedger::where('documentDate','<',$fromDate)->where('glCode', $item->glCode)->sum('documentLocalAmount');
-            $openingBalSumReporting = GeneralLedger::where('documentDate','<',$fromDate)->where('glCode', $item->glCode)->sum('documentRptAmount');
             if($item->glAccountTypeID == 1) {
-                $output[$i]->openingBalLocal = $openingBalSumLocal;
-                $output[$i]->openingBalRpt = $openingBalSumReporting;
+                $output[$i]->openingBalLocal = $output1[$i]->openingBalLocal;
+                $output[$i]->openingBalRpt = $output1[$i]->openingBalRpt;
             }
             if($item->glAccountTypeID > 1) {
                 $output[$i]->openingBalLocal = 0;
@@ -2207,7 +2348,6 @@ class FinancialReportAPIController extends AppBaseController
             $i++;
 
         }
-
         //dd(DB::getQueryLog());
         return $output;
     }
