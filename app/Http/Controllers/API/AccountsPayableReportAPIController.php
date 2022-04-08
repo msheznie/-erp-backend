@@ -1018,19 +1018,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-  
-                $fileName = 'payment_suppliers_by_year';
-                $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                $templateName = "export_report.payment_suppliers";
+
+                $reportData = [];
+
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
 
 
                 break;
