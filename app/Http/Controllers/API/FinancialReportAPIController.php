@@ -447,30 +447,11 @@ class FinancialReportAPIController extends AppBaseController
                     $headers = $result['headers'];
                 }
 
-                $currencyIdLocal = 1;
-                $currencyIdRpt = 2;
-
-                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
-
-                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-                $fromDate = new Carbon($request->fromDate);
-                $fromDate = $fromDate->format('Y-m-d');
-
-
-
-                if (!empty($decimalPlaceUniqueLocal)) {
-                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if($companyCurrency) {
+                    $requestCurrencyLocal = $companyCurrency->localcurrency;
+                    $requestCurrencyRpt = $companyCurrency->reportingcurrency;
                 }
-
-                if (!empty($decimalPlaceUniqueRpt)) {
-                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                }
-
-                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
 
                 $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
@@ -1361,29 +1342,15 @@ class FinancialReportAPIController extends AppBaseController
                     } else {
                         $output = $this->getTrialBalance($request);
 
-                        $currencyIdLocal = 1;
-                        $currencyIdRpt = 2;
-
-                        $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                        $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
-
-                        $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                        $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-                        if (!empty($decimalPlaceUniqueLocal)) {
-                            $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                        if($companyCurrency) {
+                            $requestCurrencyLocal = $companyCurrency->localcurrency;
+                            $requestCurrencyRpt = $companyCurrency->reportingcurrency;
                         }
-
-                        if (!empty($decimalPlaceUniqueRpt)) {
-                            $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                        }
-
-                        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
 
                         $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
                         $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
 
                         $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                         $currencyRpt = $requestCurrencyRpt->CurrencyCode;
@@ -2331,7 +2298,6 @@ class FinancialReportAPIController extends AppBaseController
                         ' . $isCompanyWise . 'chartOfAccountSystemID
                         order by glCode';
         $output1 = \DB::select($query1);
-
 
 
         $i = 0;
