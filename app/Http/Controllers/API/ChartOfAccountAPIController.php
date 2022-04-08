@@ -1000,7 +1000,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 $data[$x]['Control Account'] = isset($val->controlAccount->description) ? $val->controlAccount->description : '';
                 $data[$x]['Category BL or PL'] = isset($val->accountType->description) ? $val->accountType->description : '';
                 $data[$x]['Report Template'] = isset($val->templateCategoryDetails->master->description) ? $val->templateCategoryDetails->master->description : '';
-                $data[$x]['Report Template Category'] = isset($val->templateCategoryDetails->description) ? $val->templateCategoryDetails->description : '';
+                $data[$x]['Default Template Category'] = isset($val->templateCategoryDetails->description) ? $val->templateCategoryDetails->description : '';
                 $data[$x]['isBank'] = ($val->isBank) ? "Yes" : 'No';
                 $data[$x]['Allocation'] = isset($val->allocation->Desciption) ? $val->allocation->Desciption : '';
                 $data[$x]['Status'] = $status;
