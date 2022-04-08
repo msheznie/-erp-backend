@@ -2109,13 +2109,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierData = $supplierData->get();
 
         $employeeData = [];
+        $currencies = [];
         if (isset($request['invoiceType']) && $request['invoiceType'] == 4) {
             $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')
                                     ->where('discharegedYN', 0)
                                     ->get();
+
+            $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+                                        ->get();
         }
 
-        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData], 'Record retrieved successfully');
+        return $this->sendResponse(['supplierData' => $supplierData, 'employeeData' => $employeeData, 'currencies' => $currencies], 'Record retrieved successfully');
     }
 
 
