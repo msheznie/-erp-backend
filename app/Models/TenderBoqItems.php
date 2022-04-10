@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="TenderMainWorks",
+ *      definition="TenderBoqItems",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,26 +15,28 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="tender_id",
- *          description="tender_id",
+ *          property="main_work_id",
+ *          description="main_work_id",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="schedule_id",
- *          description="schedule_id",
+ *          property="item_id",
+ *          description="item_id",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="item",
- *          description="item",
- *          type="string"
+ *          property="uom",
+ *          description="uom",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="description",
- *          description="description",
- *          type="string"
+ *          property="qty",
+ *          description="qty",
+ *          type="number",
+ *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="created_at",
@@ -68,10 +70,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class TenderMainWorks extends Model
+class TenderBoqItems extends Model
 {
 
-    public $table = 'srm_tender_main_works';
+    public $table = 'srm_tender_boq_items';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -80,10 +82,10 @@ class TenderMainWorks extends Model
 
 
     public $fillable = [
-        'tender_id',
-        'schedule_id',
-        'item',
-        'description',
+        'main_work_id',
+        'item_id',
+        'uom',
+        'qty',
         'created_by',
         'updated_by',
         'company_id'
@@ -96,10 +98,10 @@ class TenderMainWorks extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'tender_id' => 'integer',
-        'schedule_id' => 'integer',
-        'item' => 'string',
-        'description' => 'string',
+        'main_work_id' => 'integer',
+        'item_id' => 'integer',
+        'uom' => 'integer',
+        'qty' => 'float',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'company_id' => 'integer'
@@ -113,10 +115,6 @@ class TenderMainWorks extends Model
     public static $rules = [
         
     ];
-
-    public function tender_boq_items(){
-        return $this->hasMany('App\Models\TenderBoqItems', 'main_work_id', 'id');
-    }
 
     
 }
