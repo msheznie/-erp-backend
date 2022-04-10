@@ -117,6 +117,5 @@ class TenderMainWorks extends Model
     public function tender_boq_items(){
         return $this->hasMany('App\Models\TenderBoqItems', 'main_work_id', 'id');
     }
-
-    
+  
 }
