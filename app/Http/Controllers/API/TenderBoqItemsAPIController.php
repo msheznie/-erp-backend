@@ -375,7 +375,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             }
         }
 
-        $exist = TenderBoqItems::where('item_id',$input['item_id'])
+        $exist = TenderBoqItems::where('item_id',$input['item_id'])->where('id','!=',$input['id'])
             ->where('main_work_id',$input['main_work_id'])->first();
 
         if(!empty($exist)){
