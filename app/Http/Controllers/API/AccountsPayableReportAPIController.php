@@ -996,6 +996,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSL':
+                $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
@@ -1025,12 +1026,18 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $reportData = ['reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('xls');
+                $fileName = 'supplier_balance_summary';
+                $path = 'accounts-payable/report/supplier_summary/excel/';
+                $basePath = CreateExcel::loadView($reportData,$type,$fileName,$path,$templateName);
 
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             case 'APSBS':
