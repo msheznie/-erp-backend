@@ -102,7 +102,7 @@ class ItemTracking
 
 				break;
 			case 8:
-				$checkTrackingAvaliability = ItemIssueDetails::where('trackingType', 2)
+				$checkTrackingAvaliability = ItemIssueDetails::whereIn('trackingType', [1,2])
 														->where('itemIssueAutoID', $documentSystemCode)
 														->get();
 
@@ -111,18 +111,32 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemIssueDetailID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
 
-					if ($trackingCheck != $value->qtyIssued) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemIssueDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
+
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemIssueDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('batch_data', function($query) {
+														   		$query->whereNotNull('batchCode');
+														   })
+														   ->sum('quantity');
+
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
-				}
 
+				}
 
 				break;
 			case 12:
@@ -315,28 +329,80 @@ class ItemTracking
 			case 8:
 				$validateSubProductSold = DocumentSubProduct::where('documentSystemID', $documentSystemID)
                                                          ->where('documentSystemCode', $documentSystemCode)
-                                                         ->where('sold', 1)
+                                                          ->where(function($query) {
+														   		$query->where('sold', 1)
+														   			  ->orWhere('soldQty', '>', 0);
+														   })
                                                          ->first();
 
 	            if ($validateSubProductSold) {
 	            	return ['status' => false, 'message' => "Some serial has been sold. Therefore cannot edit the warehouse"];
 	            }
 
-	            $subProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
-	                                             ->where('documentSystemCode', $documentSystemCode);
+	            $subProductSerial = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+	                                             ->where('documentSystemCode', $documentSystemCode)
+	                                             ->whereNull('productBatchID');
 
-	            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
-	            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+	            $productInIDsSerial = ($subProductSerial->count() > 0) ? $subProductSerial->get()->pluck('productInID')->toArray() : [];
+	            $serialIds = ($subProductSerial->count() > 0) ? $subProductSerial->get()->pluck('productSerialID')->toArray() : [];
 
-	            if (count($productInIDs) > 0) {
+	            if (count($productInIDsSerial) > 0) {
 	                $updateSerial = ItemSerial::whereIn('id', $serialIds)
 	                                          ->update(['soldFlag' => 0]);
 
-	                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+	                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDsSerial)
+	                						  ->whereIn('productSerialID', $serialIds)
 	                                          ->update(['sold' => 0, 'soldQty' => 0]);
 
-	                $subProduct->delete();
+
+
+	                $subProductSerial->delete();
 	            }
+
+	            $subProductBatch = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+	                                             ->where('documentSystemCode', $documentSystemCode)
+	                                             ->whereNull('productSerialID');
+
+	            $productBatchIDs = ($subProductBatch->count() > 0) ? $subProductBatch->get()->pluck('productBatchID')->toArray() : [];
+
+
+	            foreach ($productBatchIDs as $key1 => $bValue) {
+	            	$checkBatch = ItemBatch::find($bValue);
+
+	            	$checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                                             ->where('documentSystemCode', $documentSystemCode)
+                                                             ->where('productBatchID', $bValue)
+                                                             ->get();
+
+		            if ($checkDocumentSubProduct) {
+		                $totalQty = 0;
+		                foreach ($checkDocumentSubProduct as $key => $value) {
+		                    
+		                    $soldProduct = DocumentSubProduct::find($value->productInID);
+		                    if ($soldProduct) {
+		                        $soldProduct->sold = 0;
+		                        $soldProduct->soldQty = $soldProduct->soldQty - $value->quantity;
+		                        $soldProduct->save();
+		                    }
+		                    
+		                    $totalQty += $value->quantity;
+		                }
+
+		                
+	                    $checkBatch->soldFlag = 0;
+	                    $checkBatch->copiedQty = $checkBatch->copiedQty - $totalQty;
+		                
+		                $checkBatch->save();
+
+
+		                DocumentSubProduct::where('documentSystemID', $documentSystemID)
+		                                 ->where('documentSystemCode', $documentSystemCode)
+		                                 ->where('productBatchID', $bValue)
+		                                 ->delete();
+		            }
+	            }
+
+
 				break;
 
 			case 12:
