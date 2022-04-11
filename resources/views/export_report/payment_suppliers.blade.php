@@ -3,30 +3,30 @@
 <table>
     <thead>
     <tr>
-        <td>Period From: </td>
-        <td>{{ date('d/m/Y', strtotime($fromDate)) }}</td>
-        <td>Period To:</td>
-        <td>{{ date('d/m/Y', strtotime($toDate)) }}</td>
+        <td><B>Period From: </B></td>
+        <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
+        <td><B>Period To:</B></td>
+        <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
 
     </tr>
     </thead>
 </table>
     @foreach($reportData as $name => $key)
     <div>
-        <h3>{{ $name }}</h3>
+        <B>{{ $name }}</B>
     </div>
     @foreach($reportData[$name] as $currencyKey => $key)
 
         <table>
         <thead>
     <tr>
-        <td>Document Code</td>
-        <td>Posted Date</td>
-        <td>Invoice Number</td>
-        <td>Invoice date</td>
-        <td>Document Narration</td>
-        <td>Currency</td>
-        <td>Document Amount</td>
+        <th>Document Code</th>
+        <th>Posted Date</th>
+        <th>Invoice Number</th>
+        <th>Invoice date</th>
+        <th>Document Narration</th>
+        <th>Currency</th>
+        <th>Document Amount</th>
     </tr>
     </thead>
     <tbody>
@@ -59,9 +59,9 @@
     <tfoot>
     <tr>
         <td colspan="5"></td>
-        <td>Total</td>
+        <td><B>Total</B></td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
-        <td style="text-align: right">{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</td>
+            <td style="text-align: right"><B>{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</B></td>
         @endif
     </tr>
     </tfoot>
@@ -71,8 +71,8 @@
 <table>
     <tr>
         <td colspan="5"></td>
-        <td>Grand Total</td>
-        <td style="text-align: right">{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</td>
+        <td><B>Grand Total</B></td>
+        <td style="text-align: right"><B>{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</B></td>
     </tr>
 </table>
 </html>
