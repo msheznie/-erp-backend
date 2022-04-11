@@ -142,4 +142,9 @@ class ItemBatch extends Model
     {
         return $this->belongsTo('App\Models\WarehouseBinLocation', 'binLocation', 'binLocationID');
     }
+
+     public function document_in_products()
+    {
+        return $this->hasMany('App\Models\DocumentSubProduct', 'productBatchID', 'id')->whereIn('documentSystemID', [3, 8, 12, 24, 71, 20, 87]);
+    }
 }

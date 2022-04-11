@@ -421,7 +421,7 @@ class ItemBatchAPIController extends AppBaseController
         $checkBatch = ItemBatch::find($input['id']);
 
         if (!$checkBatch) {
-            return $this->sendError("Serial not found");
+            return $this->sendError("Batch not found");
         }
 
         DB::beginTransaction();
@@ -507,7 +507,7 @@ class ItemBatchAPIController extends AppBaseController
                 }      
 
                 if (($checkInData->remaingQty - $previousLineOutCount) < $input['quantityCopied']) {
-                    return $this->sendError("Batch quantity cannot be greater than remaing quantity.");
+                    return $this->sendError("Batch quantity cannot be greater than remaining quantity.");
                 }
 
 
@@ -552,4 +552,211 @@ class ItemBatchAPIController extends AppBaseController
             return $this->sendError($exception->getMessage(), 422);
         }
     }
+
+
+    public function getBatchNumbersForReturn(Request $request)
+    {
+        $input = $request->all();
+
+        $itemSerials = ItemBatch::where('itemSystemCode', $input['itemSystemCode'])
+                                 ->where('wareHouseSystemID',$input['wareHouseSystemCode'])
+                                  ->where(function($query) use ($input){
+                                        $query->where(function($query) use ($input) {
+                                                $query->where(function($query) {
+                                                            $query->where('soldFlag', 0)
+                                                                  ->orWhere('copiedQty', 0);
+                                                        })
+                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            })->orWhere(function($query) use ($input) {
+                                                $query->where(function($query) {
+                                                            $query->where('soldFlag', 1)
+                                                                  ->orWhere('copiedQty','>', 0);
+                                                        })
+                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
+                                                            $query->where('documentSystemID', $input['documentSystemID'])
+                                                                  ->where('documentDetailID', $input['documentDetailID']);
+                                                      });
+                                            });
+                                  })
+                                  ->with(['document_in_products' => function($query) use ($input) {
+                                        $query->where(function($query) {
+                                            $query->whereHas('material_issue', function($query) {
+                                                    $query->where('approved', -1);
+                                                })
+                                                ->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
+                                                });
+                                        })
+                                        ->where('documentSystemCode', $input['rootDocumentID']);
+                                  }, 'document_product' => function($query) use ($input) {
+                                        $query->where('documentSystemID', $input['documentSystemID'])
+                                              ->where('documentDetailID', $input['documentDetailID']);
+                                  }, 'warehouse', 'bin_location'])
+                                  ->whereHas('document_in_products', function($query) use ($input){
+                                        $query->where(function($query) {
+                                            $query->whereHas('material_issue', function($query) {
+                                                    $query->where('approved', -1);
+                                                })
+                                                ->orWhereHas('delivery_order', function($query) {
+                                                    $query->where('approvedYN', -1);
+                                                })->orWhereHas('customer_invoice', function($query) {
+                                                    $query->where('approved', -1);
+                                                });
+                                        })
+                                        ->where('documentSystemCode', $input['rootDocumentID']);
+                                  })
+                                  ->get();
+
+        return $this->sendResponse($itemSerials, 'product batch retrived successfully');
+    }
+
+    public function updateReturnStatusOfBatch(Request $request) 
+    {
+        $input = $request->all();
+
+        $checkBatch = ItemBatch::find($input['id']);
+
+        if (!$checkBatch) {
+            return $this->sendError("Batch not found");
+        }
+
+
+
+        DB::beginTransaction();
+        try {
+            $input['quantityCopied'] = isset($input['quantityCopied']) ? floatval($input['quantityCopied']) : 0;
+
+            $checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productBatchID', $input['id'])
+                                                             ->get();
+
+            if (count($checkDocumentSubProduct) > 0) {
+                $totalQty = 0;
+                foreach ($checkDocumentSubProduct as $key => $value) {
+                    
+                    $soldProduct = DocumentSubProduct::find($value->productInID);
+                    if ($soldProduct) {
+                        $soldProduct->sold = 0;
+                        $soldProduct->soldQty = $soldProduct->soldQty - $value->quantity;
+                        $soldProduct->save();
+                    }
+                    
+                    $totalQty += $value->quantity;
+                }
+
+              
+                $checkBatch->soldFlag = (($checkBatch->copiedQty + $totalQty) == $checkBatch->quantity) ? 1 : 0;
+                $checkBatch->copiedQty = $checkBatch->copiedQty + $totalQty;
+                
+                $checkBatch->save();
+
+
+                DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                 ->where('documentDetailID', $input['documentDetailID'])
+                                 ->where('productBatchID', $input['id'])
+                                 ->delete();
+            }
+
+            if ($input['quantityCopied'] > 0) {
+
+                $checkCountOfOut = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productBatchID', '!=', $input['id'])
+                                                             ->sum('quantity');
+
+                $previousOutCount = DocumentSubProduct::where('documentSystemID', '!=', $input['documentSystemID'])
+                                                             ->where('documentDetailID', '!=', $input['documentDetailID'])
+                                                             ->where('productBatchID',  $input['id'])
+                                                             ->whereNotNull('productInID')
+                                                             ->sum('quantity');
+
+                $previousLineOutCount = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
+                                                             ->where('documentDetailID', $input['documentDetailID'])
+                                                             ->where('productBatchID',  $input['id'])
+                                                             ->sum('quantity');
+
+                if (($checkCountOfOut + $input['quantityCopied']) > floatval($input['noQty'])) {
+                    return $this->sendError("Out quantity cannot be greater than issue quantity");
+                }
+
+                if ($previousOutCount < $input['quantityCopied']) {
+                    return $this->sendError("Out quantity cannot be greater than remaining quantity");
+                }
+
+               
+                $newCopiedQty = ($previousOutCount - $input['quantityCopied']);
+                $checkBatch->soldFlag = 0;
+                $checkBatch->copiedQty = $newCopiedQty;
+                $checkBatch->save();
+
+                $checkInData = DocumentSubProduct::selectRaw('SUM(quantity - soldQty) as remaingQty')
+                                                 ->where('productBatchID', $input['id'])
+                                                 ->when(isset($input['rootDocumentID']) && isset($input['rootDocumentSystemID']), function($query) use ($input) {
+                                                    $query->where('documentSystemID', $input['rootDocumentSystemID'])
+                                                          ->where('documentSystemCode', $input['rootDocumentID']);
+                                                 })
+                                                 ->where('sold', 0)
+                                                 ->first();     
+                                                 
+                if (!$checkInData) {
+                    return $this->sendError("Batch has been sold.");
+                }      
+
+                if (($checkInData->remaingQty - $previousLineOutCount) < $input['quantityCopied']) {
+                    return $this->sendError("Batch quantity cannot be greater than remaining quantity.");
+                }
+
+
+                $productInDatas = DocumentSubProduct::where('productBatchID', $input['id'])
+                                                 ->when(isset($input['rootDocumentID']) && isset($input['rootDocumentSystemID']), function($query) use ($input) {
+                                                    $query->where('documentSystemID', $input['rootDocumentSystemID'])
+                                                          ->where('documentSystemCode', $input['rootDocumentID']);
+                                                 })
+                                                 ->where('sold', 0)
+                                                 ->get();
+
+                $quantityCopied = $input['quantityCopied'];
+                foreach ($productInDatas as $key => $value) {
+                    $remaingQtyToCopied = floatval($value->quantity) - floatval($value->soldQty);
+                    if ($quantityCopied > 0) {
+                        if ($quantityCopied <= $remaingQtyToCopied) {
+                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $quantityCopied);
+
+                            $updateData = [
+                                'soldQty' => $value->soldQty + $quantityCopied,
+                                'sold' => (($value->soldQty + $quantityCopied) == $value->quantity) ? 1 : 0
+                            ];
+
+                            DocumentSubProduct::where('id', $value->id)->update($updateData);
+                            $quantityCopied = 0;
+                        } else {
+                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $remaingQtyToCopied);
+
+                            $updateData = [
+                                'soldQty' => $value->soldQty + $remaingQtyToCopied,
+                                'sold' => (($value->soldQty + $remaingQtyToCopied) == $value->quantity) ? 1 : 0
+                            ];
+
+                            DocumentSubProduct::where('id', $value->id)->update($updateData);
+                            $quantityCopied = $quantityCopied - $remaingQtyToCopied;
+                        }
+                    }
+                }     
+            } 
+
+
+            DB::commit();
+            return $this->sendResponse([], 'product batch generated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage(), 422);
+        }
+    }
+
 }
