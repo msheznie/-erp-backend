@@ -1026,8 +1026,8 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $reportData = ['reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
-                $fileName = 'supplier_balance_summary';
-                $path = 'accounts-payable/report/supplier_summary/excel/';
+                $fileName = 'supplier_ledger';
+                $path = 'accounts-payable/report/supplier_ledger/excel/';
                 $basePath = CreateExcel::loadView($reportData,$type,$fileName,$path,$templateName);
 
                 if($basePath == '')

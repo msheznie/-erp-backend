@@ -49,7 +49,7 @@
             @endif
         <td>{{ $data->documentNarration }}</td>
         <td>{{ $data->documentCurrency }}</td>
-        <td>{{ number_format($data->invoiceAmount,$data->balanceDecimalPlaces) }}</td>
+        <td style="text-align: right">{{ number_format($data->invoiceAmount,$data->balanceDecimalPlaces) }}</td>
             @php
                 $total += $data->invoiceAmount;
             @endphp
@@ -61,7 +61,7 @@
         <td colspan="5"></td>
         <td>Total</td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
-        <td>{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</td>
+        <td style="text-align: right">{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</td>
         @endif
     </tr>
     </tfoot>
@@ -72,7 +72,7 @@
     <tr>
         <td colspan="5"></td>
         <td>Grand Total</td>
-        <td>{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</td>
+        <td style="text-align: right">{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</td>
     </tr>
 </table>
 </html>
