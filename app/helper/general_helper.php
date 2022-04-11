@@ -2204,7 +2204,7 @@ class Helper
                                     if ($sourceModel->isFrom != 5) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
-                                } if ($input['documentSystemID'] == 11) {
+                                } else if ($input['documentSystemID'] == 11) {
                                     if ($sourceModel->documentType == 3) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
