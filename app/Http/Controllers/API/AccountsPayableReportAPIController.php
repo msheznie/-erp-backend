@@ -996,38 +996,40 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), trans('custom.success_export'));
                 break;
             case 'APSL':
-                $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                $outputArr = array();
+                $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                $invoiceAmount = array_sum($invoiceAmount);
+
+                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                $paidAmount = array_sum($paidAmount);
+
+                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                $balanceAmount = array_sum($balanceAmount);
+
+                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                $decimalPlace = array_unique($decimalPlace);
+
                 if ($output) {
-                    $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = $val->documentSystemCode != '1970-01-01' ? \Helper::dateFormat($val->documentDate) : null;
-                        $data[$x]['Supplier Code'] = $val->SupplierCode;
-                        $data[$x]['Supplier Name'] = $val->suppliername;
-                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Document Narration'] = $val->documentNarration;
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Document Amount'] = $val->invoiceAmount;
-                        $x++;
+                        $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
                     }
-                } else {
-                    $data = array();
                 }
 
                 $templateName = "export_report.payment_suppliers";
 
-                $reportData = [];
+                $reportData = ['reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
                 \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                     });
-                })->download('csv');
+                })->download('xls');
 
 
                 break;
