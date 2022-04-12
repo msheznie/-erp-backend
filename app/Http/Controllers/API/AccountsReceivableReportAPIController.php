@@ -1075,70 +1075,72 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $data = array();
                 if ($reportTypeID == 'CLT1') { //customer ledger template 1
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerLedgerTemplate1QRY($request);
 
+                    $outputArr = array();
+                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                    $invoiceAmount = array_sum($invoiceAmount);
+
+                    $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                    $paidAmount = array_sum($paidAmount);
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
                     if ($output) {
-                        $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Contract'] = $val->Contract;
-                            $data[$x]['Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
-                            $data[$x]['Paid Amount'] = $val->paidAmount;
-                            $data[$x]['Balance Amount'] = $val->balanceAmount;
-                            $data[$x]['Age Days'] = $val->ageDays;
-                            $x++;
+                            $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
+
+                    $outputData = array('reportData' => $outputArr,
+                             'companyName' => $checkIsGroup->CompanyName, 
+                             'balanceAmount' => $balanceAmount, 
+                             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
+                             'paidAmount' => $paidAmount, 
+                             'invoiceAmount' => $invoiceAmount);
+            
+                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData) {
+                        $excel->sheet('New sheet', function ($sheet) use ($outputData) {
+                            $sheet->loadView('export_report.customer_ledger_template1', $outputData);
+                        });
+                    })->download('xlsx');
 
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerLedgerTemplate2QRY($request); //customer ledger template 2
 
+                    $outputArr = array();
+                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                    $invoiceAmount = array_sum($invoiceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
                     if ($output) {
-                        $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Customer Code'] = $val->CutomerCode;
-                            $data[$x]['Customer Name'] = $val->CustomerName;
-                            $data[$x]['Document Code'] = $val->DocumentCode;
-                            if ($val->PostedDate == '1970-01-01') {
-                                $data[$x]['Posted Date'] = '';
-                            } else {
-                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
-                            }
-                            $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                            $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
-                            $data[$x]['Document Narration'] = $val->DocumentNarration;
-                            $data[$x]['Currency'] = $val->documentCurrency;
-                            $data[$x]['Amount'] = $val->invoiceAmount;
-                            $x++;
+                            $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
-                }
+                    $outputData = array('reportData' => $outputArr, 
+                                    'companyName' => $checkIsGroup->CompanyName, 
+                                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
+                                    'invoiceAmount' => $invoiceAmount,
+                                    'fromDate' =>  $request->fromDate,
+                                    'toDate' =>  $request->toDate);
 
-                $fileName = 'customer_ledger';
-                $path = 'accounts-receivable/report/customer_ledger/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
-
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
+                    return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData) {
+                        $excel->sheet('New sheet', function ($sheet) use ($outputData) {
+                            $sheet->loadView('export_report.customer_ledger_template2', $outputData);
+                        });
+                    })->download('xlsx');
                 }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
-
+                
 
                 break;
             case 'CBSUM': //Customer Balance Summery
@@ -3974,8 +3976,8 @@ WHERE
 	companymaster.CompanyName,
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
-	erp_generalledger.documentSystemID,
 	"Opening Balance" as documentCode,
+	erp_generalledger.documentSystemID,
 	"1970-01-01" as documentDate,
 	erp_generalledger.glCode,
 	erp_generalledger.supplierCodeSystem,

@@ -520,6 +520,7 @@ class PaySupplierInvoiceMaster extends Model
         'companyID',
         'documentSystemID',
         'documentID',
+        'projectID',
         'pdcChequeYN',
         'serialNo',
         'companyFinanceYearID',
@@ -655,6 +656,7 @@ class PaySupplierInvoiceMaster extends Model
         'documentSystemID' => 'integer',
         'pdcChequeYN' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
@@ -769,6 +771,11 @@ class PaySupplierInvoiceMaster extends Model
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
     }
 
     public function paymentmode()

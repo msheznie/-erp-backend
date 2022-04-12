@@ -594,6 +594,24 @@ class PurchaseReturnAPIController extends AppBaseController
             $amount = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
                 ->sum('netAmount');
 
+            $piDetailSingleData = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                                                       ->first();
+
+            if ($piDetailSingleData) {
+                $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $piDetailSingleData->grvAutoID)
+                                                        ->with(['suppinvmaster'])
+                                                        ->whereHas('suppinvmaster', function($query) {
+                                                            $query->where('approved', 0);
+                                                        })
+                                                        ->first();
+
+                if ($checkGrvAddedToIncoice) {
+                    $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
+                    return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+                }
+            }
+
+
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
                 'company' => $purchaseReturn->companySystemID,
@@ -608,8 +626,6 @@ class PurchaseReturnAPIController extends AppBaseController
                 return $this->sendError($confirm["message"], 500);
             }
 
-            $piDetailSingleData = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
-                                                       ->first();
 
             if ($piDetailSingleData) {
                 $input['isInvoiceCreatedForGrv'] =  $this->updateGrvInvoiceStatus($id, $piDetailSingleData->grvAutoID, $input['isInvoiceCreatedForGrv']);
@@ -657,6 +673,9 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $checkGrvAddedToIncoice = BookInvSuppDet::where('grvAutoID', $grvAutoID)
+                                                ->whereHas('suppinvmaster', function($query) {
+                                                    $query->where('approved', -1);
+                                                })
                                                 ->first();
 
         if ($checkGrvAddedToIncoice) {

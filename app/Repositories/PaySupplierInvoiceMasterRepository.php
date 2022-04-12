@@ -195,7 +195,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
-    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID) {
+    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID) {
 
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -206,7 +206,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -247,6 +247,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
+            }
+        }
+
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $paymentVoucher->whereIn('projectID', $projectID);
             }
         }
 

@@ -86,12 +86,12 @@ class BookInvSuppMasterRepository extends BaseRepository
         return BookInvSuppMaster::class;
     }
 
-    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID) {
+    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID, $projectID) {
 
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with('created_by', 'transactioncurrency', 'supplier', 'employee');
+        $invMaster->with('created_by', 'transactioncurrency', 'supplier', 'employee' ,'project');
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -135,6 +135,12 @@ class BookInvSuppMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $invMaster->whereIn('projectID', $projectID);
+            }
+        }
+
         $invMaster = $invMaster->select(
             ['erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
                 'erp_bookinvsuppmaster.bookingInvCode',
@@ -147,6 +153,7 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.comments',
                 'erp_bookinvsuppmaster.bookingDate',
                 'erp_bookinvsuppmaster.supplierID',
+                'erp_bookinvsuppmaster.projectID',
                 'erp_bookinvsuppmaster.employeeID',
                 'erp_bookinvsuppmaster.confirmedDate',
                 'erp_bookinvsuppmaster.approvedDate',

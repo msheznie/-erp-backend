@@ -274,6 +274,7 @@ class DebitNote extends Model
         'companyID',
         'documentSystemID',
         'documentID',
+        'projectID',
         'serialNo',
         'companyFinanceYearID',
         'FYBiggin',
@@ -355,6 +356,7 @@ class DebitNote extends Model
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
@@ -426,6 +428,11 @@ class DebitNote extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
     }
 
     public function confirmed_by()

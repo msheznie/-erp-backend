@@ -557,8 +557,9 @@ class CustomUserReportsAPIController extends AppBaseController
         // return date("Y");
         DB::enableQueryLog();
         $result = $this->getCustomReportQry($request);
+        
 
-
+        
         if (!$result['success']) {
             return $this->sendError($result['message'], 500);
         }
@@ -618,7 +619,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $output['message'] = 'Report not found';
             return $output;
         }
-
+        
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -636,7 +637,7 @@ class CustomUserReportsAPIController extends AppBaseController
          * 5 - Get Column as name, and for multiple column with same table join
          * 6 - Status
          */
-
+       
         $primaryKey = '';
         $detailPrimaryKey = '';
         $masterTable = '';
@@ -653,7 +654,7 @@ class CustomUserReportsAPIController extends AppBaseController
         if($this->checkMasterColumn($report['columns'], 0, 'is_master') || $this->checkMasterColumn($report['filter_columns'], 0, 'is_master')){
             $isDetailExist = true;
         }
-
+        
         $data = [];
         $templateData = array();
 
@@ -701,10 +702,32 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['rptCurrency'] = ['poTotalComRptCurrency','GRVcostPerUnitComRptCur'];
                     $templateData['transCurrency'] = ['poTotalSupplierTransactionCurrency','GRVcostPerUnitSupTransCur'];
                     break;
+                case 9:  
+                    $masterTable = 'erp_purchaserequest';
+                    $detailTable = 'erp_purchaserequestdetails';
+                    $primaryKey  = $masterTable . '.purchaseRequestID';
+                    $detailPrimaryKey = $detailTable . '.purchaseRequestDetailsID';
+                    $templateData['confirmedColumn'] = 'PRConfirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['canceledColumn']  = 'cancelledYN';
+                    $templateData['canceledValue']   =  -1;
+                    $templateData['timesReferredColumn'] = 'refferedBackYN';
+                    $templateData['timesReferredValue'] = -1;
+                    $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                        'currency','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
+                    $templateData['statusColumns'] = ['PRConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
+                        'companySystemID','cancelledYN','refferedBackYN'];
+                    $templateData['model'] = 'PurchaseRequest';
+                    // $templateData['localCurrency'] = ['poTotalLocalCurrency','GRVcostPerUnitLocalCur'];
+                    // $templateData['rptCurrency'] = ['poTotalComRptCurrency','GRVcostPerUnitComRptCur'];
+                    // $templateData['transCurrency'] = ['poTotalSupplierTransactionCurrency','GRVcostPerUnitSupTransCur'];  
+                    break;
                 default;
                     break;
             }
-
+            
             if ($this->checkMasterColumn($report['columns'], 6, 'column_type')) {
                 foreach ($templateData['statusColumns'] as $column) {
                     array_push($columns, $masterTable . '.' . $column);
@@ -826,6 +849,36 @@ class CustomUserReportsAPIController extends AppBaseController
                         $data->currencyJoin('currency_reporting', 'companyReportingCurrencyID', 'rptCurrencyCode', $templateData['rptCurrency']);
                     }
 
+                    $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                    break;
+                case 9:
+                    // details table
+                    if ($isDetailExist) {
+                    $data->detailJoin();
+                    }
+
+                        foreach ($templateData['tables'] as $table) {
+                        if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                            if ($table == 'created_by') {
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                            } else if ($table == 'confirmed_by') {
+                                $data->employeeJoin('confirmed_by', 'PRConfirmedBySystemID', 'confirmedByName');
+                            } else if ($table == 'canceled_by') {
+                                $data->employeeJoin('canceled_by', 'cancelledByEmpSystemID', 'canceledByName');
+                            } 
+                            else if ($table == 'manually_closed_by') {
+                                $data->employeeJoin('manually_closed_by', 'manuallyClosedByEmpSystemID', 'manuallyClosedByName');
+                            } else if ($table == 'department') {
+                                $data->departmentJoin('department', 'serviceLineSystemID', 'ServiceLineDes');
+                            }else if ($table == 'category') {
+                                $data->categoryJoin('category', 'financeCategory', 'claimcategoriesDescription');
+                            }else if($table == 'supplier'){
+                                $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                            }else if ($table == 'currency_by') {
+                                $data->currencyJoin('currency_by', 'currency', 'currencyByName');
+                            } 
+                        }
+                    }
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                     break;
                 default:

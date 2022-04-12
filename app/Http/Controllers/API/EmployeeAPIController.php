@@ -212,6 +212,7 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
         $employees = "";
         $discharged = isset($input['discharged']) ? $input['discharged'] : 0;
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $checkDischarged = isset($input['checkDischarged']) ? $input['checkDischarged'] : 1;
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
@@ -219,6 +220,10 @@ class EmployeeAPIController extends AppBaseController
                 $query->where('empID', 'LIKE', "%{$search}%")
                     ->orWhere('empName', 'LIKE', "%{$search}%");
             });
+
+            if ($companySystemID > 0) {
+                $employees = $employees->where('empCompanySystemID', $companySystemID);
+            }
 
             if(!$discharged && $checkDischarged == 1){
                 $employees = $employees->where('discharegedYN', 0);
