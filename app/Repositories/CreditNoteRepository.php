@@ -100,11 +100,12 @@ class CreditNoteRepository extends BaseRepository
 
     }
 
-    public function creditNoteListQuery($request, $input, $search = '', $customerID) {
+    public function creditNoteListQuery($request, $input, $search = '', $customerID, $projectID) {
 
         $master = DB::table('erp_creditnote')
             ->leftjoin('currencymaster', 'customerCurrencyID', '=', 'currencyID')
             ->leftjoin('employees', 'erp_creditnote.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('erp_projectmaster', 'erp_creditnote.projectID', '=', 'erp_projectmaster.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_creditnote.customerID')
             ->where('erp_creditnote.companySystemID', $input['companyId'])
             ->where('erp_creditnote.documentSystemID', $input['documentId']);
@@ -118,6 +119,12 @@ class CreditNoteRepository extends BaseRepository
         if (array_key_exists('customerID', $input)) {
             if (($input['customerID'] != '')) {
                 $master->whereIn('erp_creditnote.customerID', $customerID);
+            }
+        }
+
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $master->whereIn('projectID', $projectID);
             }
         }
 
@@ -163,12 +170,13 @@ class CreditNoteRepository extends BaseRepository
                     ->orwhere('employees.empName', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
+                    ->orwhere('erp_projectmaster.description', 'LIKE', "%{$search}%")
                     ->orWhere('comments', 'LIKE', "%{$search}%")
                     ->orWhere('creditAmountTrans', 'LIKE', "%{$search_without_comma}%");
             });
         }
         $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans');
+        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans', 'erp_projectmaster.description as project_description');
 
 
         return $master;

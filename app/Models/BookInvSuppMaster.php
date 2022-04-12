@@ -287,6 +287,7 @@ class BookInvSuppMaster extends Model
         'documentSystemID',
         'createMonthlyDeduction',
         'documentID',
+        'projectID',
         'serialNo',
         'companyFinanceYearID',
         'FYBiggin',
@@ -382,6 +383,7 @@ class BookInvSuppMaster extends Model
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
@@ -450,6 +452,11 @@ class BookInvSuppMaster extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+    
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
     }
 
     public function confirmed_by()

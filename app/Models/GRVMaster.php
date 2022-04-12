@@ -122,6 +122,7 @@ class GRVMaster extends Model
         'FYEnd',
         'documentSystemID',
         'documentID',
+        'projectID',
         'grvDate',
         'grvSerialNo',
         'grvPrimaryCode',
@@ -211,6 +212,7 @@ class GRVMaster extends Model
         'companyFinancePeriodID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'grvSerialNo' => 'integer',
         'grvPrimaryCode' => 'string',
         'grvDoRefNo' => 'string',
@@ -287,6 +289,11 @@ class GRVMaster extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
     }
 
     public function confirmed_by()

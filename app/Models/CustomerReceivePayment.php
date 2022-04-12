@@ -398,6 +398,7 @@ class CustomerReceivePayment extends Model
         'companyID',
         'documentSystemID',
         'documentID',
+        'projectID',
         'pdcChequeYN',
         'serialNo',
         'companyFinanceYearID',
@@ -511,6 +512,7 @@ class CustomerReceivePayment extends Model
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'pdcChequeYN' => 'integer',
@@ -604,6 +606,11 @@ class CustomerReceivePayment extends Model
     public static $rules = [
 
     ];
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
+    }
 
     public function details()
     {

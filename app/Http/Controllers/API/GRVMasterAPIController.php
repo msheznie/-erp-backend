@@ -57,6 +57,7 @@ use App\Models\Months;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
+use App\Models\ErpProjectMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
@@ -821,7 +822,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
 
         $grvLocation = $request['grvLocation'];
         $grvLocation = (array)$grvLocation;
@@ -830,6 +831,11 @@ class GRVMasterAPIController extends AppBaseController
         $serviceLineSystemID = $request['serviceLineSystemID'];
         $serviceLineSystemID = (array)$serviceLineSystemID;
         $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
 //        return $this->sendResponse($customers, 'Good Receipt Voucher deleted successfully');
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -840,7 +846,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID, $projectID);
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
             ->where('companySystemID', $input['companyId'])->first();
@@ -924,6 +930,7 @@ class GRVMasterAPIController extends AppBaseController
             $grvTypes = GRVTypes::all();
         }
 
+
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -979,6 +986,22 @@ class GRVMasterAPIController extends AppBaseController
 
         }
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+        $projects = [];
+        $projectGrvMaster = GRVMaster::find($grvAutoID);
+        if ($projectGrvMaster){
+            $serviceLineSystemID = $projectGrvMaster->serviceLineSystemID;
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->where('serviceLineSystemID', $serviceLineSystemID)
+                                        ->get();
+        } else {
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->get();
+        }
+
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
 
         $output = array('segments' => $segments,
@@ -997,7 +1020,9 @@ class GRVMasterAPIController extends AppBaseController
             'warehouseBinLocationPolicy' => $warehouseBinLocationPolicy,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'isEEOSSPolicy' => $hasEEOSSPolicy,
-            'markupAmendRestrictionPolicy' => $markupAmendRestrictionPolicy
+            'markupAmendRestrictionPolicy' => $markupAmendRestrictionPolicy,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
