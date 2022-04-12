@@ -23,6 +23,7 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
@@ -1210,5 +1211,27 @@ class SRMService
             }
         } 
         return 0;
+    }
+
+    public function getFaqList(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $input['extra'];
+        try{
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
+
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $query
+            ];
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'FAQ list failed get',
+                'data' => $exception
+            ];
+        }
+
     }
 }
