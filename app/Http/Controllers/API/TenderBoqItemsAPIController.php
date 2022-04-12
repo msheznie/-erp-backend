@@ -309,7 +309,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
-        if(!isset($input['item_id']) || empty($input['item_id'])){
+        if(!isset($input['item_name']) || empty($input['item_name'])){
             return ['success' => false, 'message' => 'Item is required'];
         }
 
@@ -325,7 +325,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             }
         }
 
-        $exist = TenderBoqItems::where('item_id',$input['item_id'])
+        $exist = TenderBoqItems::where('item_name',$input['item_name'])
             ->where('main_work_id',$input['main_work_id'])->first();
 
         if(!empty($exist)){
@@ -335,7 +335,10 @@ class TenderBoqItemsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $data['main_work_id']=$input['main_work_id'];
-            $data['item_id']=$input['item_id'];
+            $data['item_name']=$input['item_name'];
+            if(isset($input['description'])){
+                $data['description']=$input['description'];
+            }
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
             $data['created_by'] = $employee->employeeSystemID;
@@ -359,7 +362,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('item_id','uom'));
         $employee = \Helper::getEmployeeInfo();
 
-        if(!isset($input['item_id']) || empty($input['item_id'])){
+        if(!isset($input['item_name']) || empty($input['item_name'])){
             return ['success' => false, 'message' => 'Item is required'];
         }
 
@@ -375,7 +378,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             }
         }
 
-        $exist = TenderBoqItems::where('item_id',$input['item_id'])->where('id','!=',$input['id'])
+        $exist = TenderBoqItems::where('item_name',$input['item_name'])->where('id','!=',$input['id'])
             ->where('main_work_id',$input['main_work_id'])->first();
 
         if(!empty($exist)){
@@ -384,7 +387,8 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $data['item_id']=$input['item_id'];
+            $data['item_name']=$input['item_name'];
+            $data['description']=$input['description'];
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
             $data['updated_by'] = $employee->employeeSystemID;
@@ -493,30 +497,25 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
             }
 
-            if (!$validateItem || !$validateUom || !$validateQty) {
+            if (!$validateItem || !$validateQty) {
                 return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
             }
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item', 'uom', 'qty'))->get()->toArray();
+            })->select(array('item', 'description', 'uom', 'qty'))->get()->toArray();
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if (count($record) > 0) {
                 foreach ($record as $vl){
+                    /*$unit = Unit::where('UnitShortCode','=',$vl['uom'])->first();
 
-                    $getItem = ItemMaster::where('itemShortDescription','=',$vl['item'])->where('primaryCompanySystemID',$input['companySystemID'])->first();
-                    $unit = Unit::where('UnitShortCode','=',$vl['uom'])->first();
-
-                    if(empty($getItem)) {
-                        return $this->sendError('Item '.$vl['item'].' can not be found in item master', 500);
-                    }
 
                     if(empty($unit)) {
                         return $this->sendError('Uom '.$vl['uom'].' can not be found in unit of measure master', 500);
-                    }
+                    }*/
 
-                    $exist = TenderBoqItems::where('item_id',$getItem['itemCodeSystem'])
+                    $exist = TenderBoqItems::where('item_name',$vl['item'])
                         ->where('main_work_id',$input['main_work_id'])->first();
 
                     if(!empty($exist)){
@@ -525,11 +524,15 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
                 $employee = \Helper::getEmployeeInfo();
                 foreach ($record as $vl){
-                    $Itm = ItemMaster::where('itemShortDescription','=',$vl['item'])->where('primaryCompanySystemID',$input['companySystemID'])->first();
                     $units = Unit::where('UnitShortCode',$vl['uom'])->first();
                     $data['main_work_id']=$input['main_work_id'];
-                    $data['item_id']=$Itm['itemCodeSystem'];
-                    $data['uom']=$units['UnitID'];
+                    $data['item_name']=$vl['item'];
+                    if(isset($vl['description'])){
+                        $data['description']=$vl['description'];
+                    }
+                    if(!empty($units)){
+                        $data['uom']=$units['UnitID'];
+                    }
                     $data['qty']=$vl['qty'];
                     $data['company_id']=$input['companySystemID'];
                     $data['created_by'] = $employee->employeeSystemID;
