@@ -83,7 +83,8 @@ class TenderBoqItems extends Model
 
     public $fillable = [
         'main_work_id',
-        'item_id',
+        'item_name',
+        'description',
         'uom',
         'qty',
         'created_by',
@@ -99,7 +100,8 @@ class TenderBoqItems extends Model
     protected $casts = [
         'id' => 'integer',
         'main_work_id' => 'integer',
-        'item_id' => 'integer',
+        'item_name' => 'string',
+        'description' => 'string',
         'uom' => 'integer',
         'qty' => 'float',
         'created_by' => 'integer',
