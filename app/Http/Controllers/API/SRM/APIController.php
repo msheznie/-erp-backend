@@ -43,6 +43,9 @@ define('GET_WAREHOUSE', 'GET_WAREHOUSE');
 define('GET_REMAINING_SLOT_COUNT', 'GET_REMAINING_SLOT_COUNT');
 define('CANCEL_APPOINTMENTS', 'CANCEL_APPOINTMENTS');
 define('GET_APPROVED_DETAILS', 'GET_APPROVED_DETAILS');
+define('GET_TENDERS', 'GET_TENDERS');
+define('SAVE_TENDER_PURCHASE', 'SAVE_TENDER_PURCHASE');
+define('GET_FAQ', 'GET_FAQ');
 
 class APIController extends Controller
 {
@@ -117,6 +120,12 @@ class APIController extends Controller
                 return $this->SRMService->cancelAppointments($request);
             case GET_APPROVED_DETAILS:
                 return $this->SRMService->getSrmApprovedDetails($request);
+            case GET_TENDERS:
+                return $this->SRMService->getTenders($request);
+            case SAVE_TENDER_PURCHASE :
+                return $this->SRMService->saveTenderPurchase($request);
+            case GET_FAQ :
+                return $this->SRMService->getFaqList($request);
             default:
                 return [
                     'success'   => false,

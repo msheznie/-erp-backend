@@ -23,6 +23,9 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Models\TenderFaq;
+use App\Models\TenderMaster;
+use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
@@ -1112,6 +1115,123 @@ class SRMService
             'message'   => 'Record retrieved successfully',
             'data'      => $approveDetails
         ];
+
+    }
+    public function getTenders(Request $request)
+    {
+        $input = $request->all();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }  
+
+        if($request->input('extra.tender_status') == 1){ 
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }); 
+            
+        }else if ($request->input('extra.tender_status') == 2) {  
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            });  
+         } 
+        $search = $request->input('search.value');
+        if($search){ 
+             $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%"); 
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+        ->order(function ($query) use ($input) {
+            if (request()->has('order') ) {
+                if($input['order'][0]['column'] == 0)
+                {
+                    $query->orderBy('id', $input['order'][0]['dir']);
+                }
+            }
+        })
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->addColumn('Actions', 'Actions', "Actions") 
+        ->make(true);  
+
+        return [
+            'success' => true,
+            'message' => 'Tender list successfully get',
+            'data' => $data
+        ];
+    }
+    public function saveTenderPurchase(Request $request){ 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderMasterId = $request->input('extra.tenderId');  
+        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        DB::beginTransaction();
+        try { 
+            $data['tender_master_id'] = $tenderMasterId;
+            $data['purchased_date'] = $currentDate;
+            $data['purchased_by'] = $supplierRegId;
+            $data['created_by'] = $supplierRegId;
+            DB::commit();
+            $tenderMasterSupplier = TenderMasterSupplier::create($data);
+            return [
+                'success' => true,
+                'message' => 'Tender Purchase successfully',
+                'data' => $tenderMasterSupplier
+            ];
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return [
+                'success'   => false,
+                'message'   => 'Tender Purchase failed',
+                'data'      => $exception->getMessage()
+            ];
+        }
+ 
+    }
+    public static function getSupplierRegIdByUUID($uuid)
+    {
+
+        if ($uuid) {
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+                ->first();
+
+            if (!empty($supplier)) {
+                return $supplier->id;
+            }
+        } 
+        return 0;
+    }
+
+    public function getFaqList(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $input['extra'];
+        try{
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
+
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $query
+            ];
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'FAQ list failed get',
+                'data' => $exception
+            ];
+        }
 
     }
 }
