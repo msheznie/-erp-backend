@@ -202,7 +202,7 @@ class TenderMaster extends Model
 {
     use SoftDeletes;
     public $table = 'srm_tender_master';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -290,9 +290,7 @@ class TenderMaster extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
 
     public function tender_type()
     {
@@ -314,8 +312,12 @@ class TenderMaster extends Model
         return $this->hasMany('App\Models\ProcumentActivity', 'tender_id', 'id');
     }
 
-    public function srmTenderMasterSupplier(){ 
+    public function srmTenderMasterSupplier()
+    {
         return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
     }
-    
+    public function tenderFaq()
+    {
+        return $this->hasMany('App\Models\TenderFaq', 'tender_master_id', 'id');
+    } 
 }

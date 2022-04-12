@@ -660,4 +660,12 @@ class TenderMasterAPIController extends AppBaseController
 
         return ['status' => true, 'message' => "success"];
     }
+
+    public function getFaqFormData(Request $request)
+    {
+        $input = $request->all(); 
+        $companyId = $input['companySystemID'];
+        $data['tenders'] = TenderMaster::where('company_id',$companyId)->get(); 
+        return $data;
+    }
 }
