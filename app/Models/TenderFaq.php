@@ -66,11 +66,9 @@ class TenderFaq extends Model
 {
 
     public $table = 'srm_tender_faq';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
-
 
 
     public $fillable = [
@@ -107,8 +105,8 @@ class TenderFaq extends Model
         'updated_by' => 'required'
     ];
 
-    public function employee(){ 
+    public function employee()
+    {
         return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'created_by');
     }
-    
 }
