@@ -2574,6 +2574,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateTenderBoqItem', 'TenderBoqItemsAPIController@updateTenderBoqItem');
         Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem');
         Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
+        Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications');
 
     });
 
