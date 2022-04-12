@@ -1216,13 +1216,22 @@ class SRMService
     public function getFaqList(Request $request)
     {
         $input = $request->all();
+        $tenderId = $input['extra'];
+        try{
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
 
-        $query = TenderFaq::select('id','question','answer')->get();
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $query
+            ];
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'FAQ list failed get',
+                'data' => $exception
+            ];
+        }
 
-        return [
-            'success' => true,
-            'message' => 'FAQ list successfully get',
-            'data' => $query
-        ];
     }
 }
