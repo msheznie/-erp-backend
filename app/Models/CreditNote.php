@@ -280,6 +280,7 @@ class CreditNote extends Model
         'companyID',
         'documentSystemiD',
         'documentID',
+        'projectID',
         'serialNo',
         'companyFinanceYearID',
         'FYBiggin',
@@ -357,6 +358,7 @@ class CreditNote extends Model
         'companyID' => 'string',
         'documentSystemiD' => 'integer',
         'documentID' => 'string',
+        'projectID' => 'integer',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
@@ -426,6 +428,12 @@ class CreditNote extends Model
     {
         return $this->hasMany('App\Models\CreditNoteDetails', 'creditNoteAutoID', 'creditNoteAutoID');
     }
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'projectID', 'id');
+    }
+
 
     public function approved_by()
     {

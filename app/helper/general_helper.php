@@ -2000,17 +2000,22 @@ class Helper
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
                             if($input["documentSystemID"] == 2){
-
                                 $purchaseOrderMaster  = ProcumentOrder::find($input["documentSystemCode"]);
-                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$purchaseOrderMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$purchaseOrderMaster->purchaseOrderCode, 'documentDate'=>$purchaseOrderMaster->createdDateTime,'documentNarration'=>$purchaseOrderMaster->narration,'supplierID'=>$purchaseOrderMaster->supplierID, 'supplierCode'=>$purchaseOrderMaster->supplierPrimaryCode,'supplierName'=>$purchaseOrderMaster->supplierName,'confirmedDate'=>$purchaseOrderMaster->poConfirmedDate, 'confirmedBy'=>$purchaseOrderMaster->poConfirmedByEmpSystemID, 'approvedDate'=>$purchaseOrderMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$purchaseOrderMaster->supplierTransactionCurrencyID, 'amount'=>$purchaseOrderMaster->poTotalSupplierTransactionCurrency];
-                                CreateSupplierTransactions::dispatch($masterModel);
+                                if ($purchaseOrderMaster && $purchaseOrderMaster->supplierID > 0) {
+
+                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $purchaseOrderMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $purchaseOrderMaster->purchaseOrderCode, 'documentDate' => $purchaseOrderMaster->createdDateTime, 'documentNarration' => $purchaseOrderMaster->narration, 'supplierID' => $purchaseOrderMaster->supplierID, 'supplierCode' => $purchaseOrderMaster->supplierPrimaryCode, 'supplierName' => $purchaseOrderMaster->supplierName, 'confirmedDate' => $purchaseOrderMaster->poConfirmedDate, 'confirmedBy' => $purchaseOrderMaster->poConfirmedByEmpSystemID, 'approvedDate' => $purchaseOrderMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $purchaseOrderMaster->supplierTransactionCurrencyID, 'amount' => $purchaseOrderMaster->poTotalSupplierTransactionCurrency];
+                                    CreateSupplierTransactions::dispatch($masterModel);
+                                }
                             }
 
                             if($input["documentSystemID"] == 3){
 
                                 $grvMaster  = GRVMaster::find($input["documentSystemCode"]);
-                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$grvMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$grvMaster->grvPrimaryCode, 'documentDate'=>$grvMaster->createdDateTime,'documentNarration'=>$grvMaster->grvNarration,'supplierID'=>$grvMaster->supplierID, 'supplierCode'=>$grvMaster->supplierPrimaryCode,'supplierName'=>$grvMaster->supplierName,'confirmedDate'=>$grvMaster->grvConfirmedDate, 'confirmedBy'=>$grvMaster->grvConfirmedByEmpSystemID, 'approvedDate'=>$grvMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$grvMaster->supplierTransactionCurrencyID, 'amount'=>$grvMaster->grvTotalSupplierTransactionCurrency];
-                                CreateSupplierTransactions::dispatch($masterModel);
+                                if ($grvMaster && $grvMaster->supplierID > 0) {
+
+                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $grvMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $grvMaster->grvPrimaryCode, 'documentDate' => $grvMaster->createdDateTime, 'documentNarration' => $grvMaster->grvNarration, 'supplierID' => $grvMaster->supplierID, 'supplierCode' => $grvMaster->supplierPrimaryCode, 'supplierName' => $grvMaster->supplierName, 'confirmedDate' => $grvMaster->grvConfirmedDate, 'confirmedBy' => $grvMaster->grvConfirmedByEmpSystemID, 'approvedDate' => $grvMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $grvMaster->supplierTransactionCurrencyID, 'amount' => $grvMaster->grvTotalSupplierTransactionCurrency];
+                                    CreateSupplierTransactions::dispatch($masterModel);
+                                }
                             }
 
 
@@ -2018,10 +2023,12 @@ class Helper
 
                                 $supplierInvMaster  = BookInvSuppMaster::find($input["documentSystemCode"]);
 
-                                if ($supplierInvMaster->documentType != 4) {
+                                if ($supplierInvMaster && $supplierInvMaster->supplierID > 0) {
+
                                     $supplierMaster = SupplierMaster::find($supplierInvMaster->supplierID);
-                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$supplierInvMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$supplierInvMaster->bookingInvCode, 'documentDate'=>$supplierInvMaster->createdDateAndTime,'documentNarration'=>$supplierInvMaster->comments,'supplierID'=>$supplierInvMaster->supplierID, 'supplierCode'=>$supplierMaster->primarySupplierCode,'supplierName'=>$supplierMaster->supplierName,'confirmedDate'=>$supplierInvMaster->confirmedDate, 'confirmedBy'=>$supplierInvMaster->confirmedByEmpSystemID, 'approvedDate'=>$supplierInvMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$supplierInvMaster->supplierTransactionCurrencyID, 'amount'=>$supplierInvMaster->bookingAmountTrans];
+                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $supplierInvMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $supplierInvMaster->bookingInvCode, 'documentDate' => $supplierInvMaster->createdDateAndTime, 'documentNarration' => $supplierInvMaster->comments, 'supplierID' => $supplierInvMaster->supplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $supplierInvMaster->confirmedDate, 'confirmedBy' => $supplierInvMaster->confirmedByEmpSystemID, 'approvedDate' => $supplierInvMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $supplierInvMaster->supplierTransactionCurrencyID, 'amount' => $supplierInvMaster->bookingAmountTrans];
                                     CreateSupplierTransactions::dispatch($masterModel);
+
                                 }
                             }
 
@@ -2029,17 +2036,23 @@ class Helper
                             if($input["documentSystemID"] == 15){
 
                                 $debitNoteMaster  = DebitNote::find($input["documentSystemCode"]);
-                                $supplierMaster = SupplierMaster::find($debitNoteMaster->supplierID);
-                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$debitNoteMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$debitNoteMaster->debitNoteCode, 'documentDate'=>$debitNoteMaster->createdDateAndTime,'documentNarration'=>$debitNoteMaster->comments,'supplierID'=>$debitNoteMaster->supplierID, 'supplierCode'=>$supplierMaster->primarySupplierCode,'supplierName'=>$supplierMaster->supplierName,'confirmedDate'=>$debitNoteMaster->confirmedDate, 'confirmedBy'=>$debitNoteMaster->confirmedByEmpSystemID, 'approvedDate'=>$debitNoteMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$debitNoteMaster->supplierTransactionCurrencyID, 'amount'=>$debitNoteMaster->debitAmountTrans];
-                                CreateSupplierTransactions::dispatch($masterModel);
+                                if ($debitNoteMaster && $debitNoteMaster->supplierID > 0) {
+
+                                    $supplierMaster = SupplierMaster::find($debitNoteMaster->supplierID);
+                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $debitNoteMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $debitNoteMaster->debitNoteCode, 'documentDate' => $debitNoteMaster->createdDateAndTime, 'documentNarration' => $debitNoteMaster->comments, 'supplierID' => $debitNoteMaster->supplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $debitNoteMaster->confirmedDate, 'confirmedBy' => $debitNoteMaster->confirmedByEmpSystemID, 'approvedDate' => $debitNoteMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $debitNoteMaster->supplierTransactionCurrencyID, 'amount' => $debitNoteMaster->debitAmountTrans];
+                                    CreateSupplierTransactions::dispatch($masterModel);
+                                }
                             }
 
                             if($input["documentSystemID"] == 4){
 
                                 $paySupplierMaster  = PaySupplierInvoiceMaster::find($input["documentSystemCode"]);
-                                $supplierMaster = SupplierMaster::find($paySupplierMaster->BPVsupplierID);
-                                $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"],'documentSystemID'=>$input["documentSystemID"], 'documentID'=>$paySupplierMaster->documentID, 'documentSystemCode'=>$input["documentSystemCode"], 'documentCode'=>$paySupplierMaster->BPVcode, 'documentDate'=>$paySupplierMaster->createdDateTime,'documentNarration'=>$paySupplierMaster->BPVNarration,'supplierID'=>$paySupplierMaster->BPVsupplierID, 'supplierCode'=>$supplierMaster->primarySupplierCode,'supplierName'=>$supplierMaster->supplierName,'confirmedDate'=>$paySupplierMaster->confirmedDate, 'confirmedBy'=>$paySupplierMaster->confirmedByEmpSystemID, 'approvedDate'=>$paySupplierMaster->approvedDate, 'lastApprovedBy'=>$empInfo->employeeSystemID, 'transactionCurrency'=>$paySupplierMaster->supplierTransCurrencyID, 'amount'=>$paySupplierMaster->suppAmountDocTotal];
-                                CreateSupplierTransactions::dispatch($masterModel);
+                                if ($paySupplierMaster && $paySupplierMaster->BPVsupplierID > 0) {
+
+                                    $supplierMaster = SupplierMaster::find($paySupplierMaster->BPVsupplierID);
+                                    $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $paySupplierMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $paySupplierMaster->BPVcode, 'documentDate' => $paySupplierMaster->createdDateTime, 'documentNarration' => $paySupplierMaster->BPVNarration, 'supplierID' => $paySupplierMaster->BPVsupplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $paySupplierMaster->confirmedDate, 'confirmedBy' => $paySupplierMaster->confirmedByEmpSystemID, 'approvedDate' => $paySupplierMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $paySupplierMaster->supplierTransCurrencyID, 'amount' => $paySupplierMaster->suppAmountDocTotal];
+                                    CreateSupplierTransactions::dispatch($masterModel);
+                                }
                             }
 
                             // create monthly deduction
@@ -2191,7 +2204,7 @@ class Helper
                                     if ($sourceModel->isFrom != 5) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
-                                } if ($input['documentSystemID'] == 11) {
+                                } else if ($input['documentSystemID'] == 11) {
                                     if ($sourceModel->documentType == 3) {
                                         $jobIL = ItemLedgerInsert::dispatch($masterData);
                                     }
@@ -2435,7 +2448,8 @@ class Helper
 
                             if ($input["documentSystemID"] == 22) {
 
-                                CreateAccumulatedDepreciation::dispatch($input["faID"]);
+                               
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
                             }
                             //
 
@@ -5884,5 +5898,41 @@ class Helper
             $bytes /= 1024;
         }
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+
+    public static function customerLedgerReportSum($reportData, $type){
+        $sumAmount = 0;
+
+        if($type == 'invoice'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->invoiceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'paid'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->paidAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'balance'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->balanceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+
+
+        if($sumAmount){
+            return $sumAmount ;
+        } else{
+            $sumAmount = 0;
+            return $sumAmount ;
+        }
+
+        
     }
 }

@@ -41,7 +41,7 @@ class CreateExcel
     }
 
 
-    public static function loadView($data,$type,$fileName,$path_dir)
+    public static function loadView($data,$type,$fileName,$path_dir,$templateName)
     {
 
      $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName) {

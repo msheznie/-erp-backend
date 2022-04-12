@@ -731,6 +731,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
         Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 
+        Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
+
         Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
         Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
@@ -2549,6 +2551,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
         Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 
+
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
 
@@ -2812,3 +2815,7 @@ Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
 Route::resource('tender_main_works', 'TenderMainWorksAPIController');  
 Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
+
+/* Below two request must be always separated from tenant, auth middlewares */
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
