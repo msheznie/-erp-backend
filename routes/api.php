@@ -2562,11 +2562,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
         Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
         Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+
         Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData');
         Route::post('createFaq', 'TenderFaqAPIController@createFaq');
         Route::post('getFaqList', 'TenderFaqAPIController@getFaqList');
         Route::post('getFaq', 'TenderFaqAPIController@getFaq');
         Route::post('deleteFaq', 'TenderFaqAPIController@deleteFaq');
+
+        Route::post('loadTenderBoqItems', 'TenderBoqItemsAPIController@loadTenderBoqItems');
+        Route::post('addTenderBoqItems', 'TenderBoqItemsAPIController@addTenderBoqItems');
+        Route::post('updateTenderBoqItem', 'TenderBoqItemsAPIController@updateTenderBoqItem');
+        Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem');
+        Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
 
     });
 
@@ -2802,3 +2809,5 @@ Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIContr
 Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
 
 Route::resource('tender_main_works', 'TenderMainWorksAPIController');  
+Route::resource('tender_main_works', 'TenderMainWorksAPIController');
+Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');

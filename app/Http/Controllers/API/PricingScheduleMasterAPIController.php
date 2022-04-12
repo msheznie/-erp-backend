@@ -398,7 +398,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
     public function getPricingScheduleMaster(Request $request)
     {
         $input = $request->all();
-        return PricingScheduleMaster::where('id',$input['id'])->first();
+        return PricingScheduleMaster::with(['tender_bid_format_master'])->where('id',$input['id'])->first();
 
     }
 
