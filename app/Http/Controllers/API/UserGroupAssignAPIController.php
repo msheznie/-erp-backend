@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Response;
-
+use App\helper\CreateExcel;
 /**
  * Class UserGroupAssignController
  * @package App\Http\Controllers\API
@@ -200,10 +200,35 @@ class UserGroupAssignAPIController extends AppBaseController
 
     public function getUserGroupNavigation(Request $request)
     {
+     
         $companyID = $request['companyID'];
-        $userGroupID = $request['userGroupID'];
-        //DB::enableQueryLog();
-        $navigationMenu = DB::table('srp_erp_companynavigationmenus')
+        $group = $request['group'];
+        $emp = $request['emp'];
+
+        $userGroupID = null;
+        if($group == 'false')
+        {
+            $userGroupID = $request['userGroupID'];
+        }
+        
+        if($emp == 'false')
+        {
+            
+            $empId = $request['employee'];
+            $userGroup = EmployeeNavigation::where('employeeSystemID',$empId)
+            ->where('companyID',$companyID)
+            ->first();
+            
+            if($userGroup){
+                $userGroupID = $userGroup->userGroupID;
+            }
+            
+        }
+        
+     
+        if(isset($userGroupID))
+        {
+            $navigationMenu = DB::table('srp_erp_companynavigationmenus')
             ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll'))
             ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
                 $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
@@ -212,25 +237,40 @@ class UserGroupAssignAPIController extends AppBaseController
             })
             ->orderBy('srp_erp_companynavigationmenus.sortOrder')
             ->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
+
+
+
+            
         //dd(DB::getQueryLog());
-        $tree = buildTree($navigationMenu);
+            $tree = buildTree($navigationMenu);
 
-        $subMenus = DocumentRestrictionPolicy::with(['assign' => function($q)  use ($companyID, $userGroupID){
-              $q->where('companySystemID',$companyID)
-                 ->where('userGroupID',$userGroupID);
-        }])->get();
+            $subMenus = DocumentRestrictionPolicy::with(['assign' => function($q)  use ($companyID, $userGroupID){
+                $q->where('companySystemID',$companyID)
+                    ->where('userGroupID',$userGroupID);
+            }])->get();
 
-        foreach ($subMenus as $subMenu){
-            $subMenu->isChecked = false;
-            if(count($subMenu['assign']) > 0){
-                $subMenu->isChecked = true;
+            foreach ($subMenus as $subMenu){
+                $subMenu->isChecked = false;
+                if(count($subMenu['assign']) > 0){
+                    $subMenu->isChecked = true;
+                }
+                //$subMenu->count = count($subMenu['assign']);
             }
-            //$subMenu->count = count($subMenu['assign']);
+
+            $array = array('mainMenus' => $tree,'subMenus' => $subMenus);
+            //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
+            return $this->sendResponse($array, 'Record retrieved successfully');
+        }
+        else
+        {
+            $array = array('mainMenus' =>[],'subMenus' => []);
+            //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
+            return $this->sendResponse($array, 'Record retrieved successfully');
         }
 
-        $array = array('mainMenus' => $tree,'subMenus' => $subMenus);
-        //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
-        return $this->sendResponse($array, 'Record retrieved successfully');
+       
+        //DB::enableQueryLog();
+   
     }
 
 
@@ -275,6 +315,94 @@ class UserGroupAssignAPIController extends AppBaseController
 
         return $this->sendResponse($accessRights, 'Record retrieved successfully');
     }
+
+    public function exportNavigationeport(Request $request)
+        {   
+            $input = $request->all();
+
+           
+
+            $companyID = $input['companyID'];
+            $group = $input['group'];
+            $emp = $input['emp'];
+            $cat = $input['category'];
+          
+            $userGroupID = null;
+            if(!$group)
+            {   
+                $userGroupID = $input['userGroupID'];
+            }
+        
+            if(!$emp)
+            {
+                
+                $empId = $input['employee'];
+                $userGroup = EmployeeNavigation::where('employeeSystemID',$empId)
+                ->where('companyID',$companyID)
+                ->first();
+                
+                if($userGroup){
+                    $userGroupID = $userGroup->userGroupID;
+                }
+                
+            }
+       
+            if(isset($userGroupID))
+            {
+                $navigationMenu = DB::table('srp_erp_companynavigationmenus')
+                ->select(DB::raw('srp_erp_companynavigationmenus.*,IFNULL(srp_erp_navigationusergroupsetup.readonly,0) as readonly,IFNULL(srp_erp_navigationusergroupsetup.`create`,0) as `create`,IFNULL(srp_erp_navigationusergroupsetup.`update`,0) as `update`,IFNULL(srp_erp_navigationusergroupsetup.`delete`,0) as `delete`,IFNULL(srp_erp_navigationusergroupsetup.`print`,0) as `print`,IFNULL(srp_erp_navigationusergroupsetup.`export`,0) as `export`,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationusergroupsetup.navigationMenuID,1,0) as isChecked,if(srp_erp_navigationusergroupsetup.readonly = 1 && srp_erp_navigationusergroupsetup.`create` = 1 && srp_erp_navigationusergroupsetup.`update` = 1 && srp_erp_navigationusergroupsetup.`delete` = 1 && srp_erp_navigationusergroupsetup.`print` = 1&& srp_erp_navigationusergroupsetup.`export` = 1,1,0) as accessRightAll'))
+                ->leftJoin('srp_erp_navigationusergroupsetup', function ($join) use ($companyID, $userGroupID) {
+                    $join->on('srp_erp_companynavigationmenus.navigationMenuID', '=', 'srp_erp_navigationusergroupsetup.navigationMenuID')
+                        ->where('srp_erp_navigationusergroupsetup.companyID', '=', $companyID)->where('srp_erp_navigationusergroupsetup.userGroupID', '=', $userGroupID)
+                        ->orderBy('srp_erp_companynavigationmenus.sortOrder');
+                })
+                ->orderBy('srp_erp_companynavigationmenus.sortOrder')
+                ->where('srp_erp_companynavigationmenus.isPortalYN',$cat)
+                ->where('srp_erp_companynavigationmenus.companyID',$companyID)->get();
+            //dd(DB::getQueryLog());
+                $tree = buildTree($navigationMenu);
+    
+                $subMenus = DocumentRestrictionPolicy::with(['assign' => function($q)  use ($companyID, $userGroupID){
+                    $q->where('companySystemID',$companyID)
+                        ->where('userGroupID',$userGroupID);
+                }])->get();
+    
+                foreach ($subMenus as $subMenu){
+                    $subMenu->isChecked = false;
+                    if(count($subMenu['assign']) > 0){
+                        $subMenu->isChecked = true;
+                    }
+                    //$subMenu->count = count($subMenu['assign']);
+                }
+    
+                $array = array('mainMenus' => $tree,'subMenus' => $subMenus,'cat' => $cat);
+            }
+            else
+            {
+                $array = array('mainMenus' =>[],'subMenus' => [],'cat' => $cat);
+              
+            }
+
+            //return $this->sendResponse($array, trans('custom.success_export'));
+           
+            $templateName = "export_report.navigation_report.erp_nav";
+
+            $type = $input['type'];
+            $doc_name = 'erp_navigation';
+            $path = 'Navigation/report/erp_navigation/excel/';
+            $basePath = CreateExcel::loadView($array,$type,$doc_name,$path,$templateName);
+    
+            if($basePath == '')
+            {
+                 return $this->sendError('Unable to export excel');
+            }
+            else
+            {
+                 return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
+
+            
+        }
 
 }
 
