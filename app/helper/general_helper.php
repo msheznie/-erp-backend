@@ -5899,4 +5899,40 @@ class Helper
         }
         return round($bytes, 2) . ' ' . $units[$i];
     }
+
+    public static function customerLedgerReportSum($reportData, $type){
+        $sumAmount = 0;
+
+        if($type == 'invoice'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->invoiceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'paid'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->paidAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'balance'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->balanceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+
+
+        if($sumAmount){
+            return $sumAmount ;
+        } else{
+            $sumAmount = 0;
+            return $sumAmount ;
+        }
+
+        
+    }
 }
