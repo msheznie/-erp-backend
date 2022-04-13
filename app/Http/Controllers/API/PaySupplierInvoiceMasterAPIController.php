@@ -619,7 +619,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
-                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0 && $input['paymentMode'] == 2) {
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
