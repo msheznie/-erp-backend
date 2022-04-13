@@ -1367,10 +1367,10 @@ class FinancialReportAPIController extends AppBaseController
                                 $data[$x]['Type'] = $val->glAccountType;
 
                                 if ($checkIsGroup->isGroup == 0) {
-                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round($val->openingBalLocal, $decimalPlaceLocal);
+                                    $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
-                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round($val->openingBalLocal + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
+                                    $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
                                 $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($val->openingBalRpt, $decimalPlaceRpt);
                                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
