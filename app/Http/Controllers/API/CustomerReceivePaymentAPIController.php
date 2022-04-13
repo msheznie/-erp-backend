@@ -650,27 +650,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isDefault', 1)
                     ->first();
 
-                $input['custTransactionCurrencyER'] = 0;
-                $input['companyRptCurrencyID'] = 0;
-                $input['companyRptCurrencyER'] = 0;
-                $input['localCurrencyID'] = 0;
-                $input['localCurrencyER'] = 0;
-
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }                
                 }
             }
 
@@ -678,19 +664,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
         }
@@ -1567,27 +1545,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isDefault', 1)
                     ->first();
 
-                $input['custTransactionCurrencyER'] = 0;
-                $input['companyRptCurrencyID'] = 0;
-                $input['companyRptCurrencyER'] = 0;
-                $input['localCurrencyID'] = 0;
-                $input['localCurrencyER'] = 0;
-
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
 
@@ -1595,19 +1559,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
         }
