@@ -35,7 +35,7 @@
     </thead>
     <tbody>
           @foreach ($mainMenus as $item)
-          <tr style="border: 1px solid !important;">
+          <tr style="">
                 <td >{{$item->description}}<br></td>
                 @isset($item->children)
                 @foreach ($item->children as $nav)
