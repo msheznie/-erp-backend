@@ -43,7 +43,7 @@
                 <td colspan="1"> </td>
                 <td >
                     <div>
-                       <b>{{nl2br(e($nav->description)) }}</b> <br />
+                      {{$nav->description}} <br />
                     </div>
                 </td>
 
