@@ -46,7 +46,7 @@
                                 <td>-</td>
                             @endif
 
-                            @if ($value->PostedDate)
+                            @if ($value->PostedDate && $value->PostedDate != '1970-01-01')
                                 <td>{{\App\helper\Helper::dateFormat($value->PostedDate)}}</td>
                             @else
                                 <td>-</td>

@@ -36,16 +36,16 @@
     @foreach($reportData[$name][$currencyKey] as $data)
         <tr>
         <td>{{ $data->documentCode }}</td>
-            @if($data->documentDate != null)
+            @if($data->documentSystemCode != '1970-01-01')
         <td>&nbsp;{{ date('d/m/Y', strtotime($data->documentDate)) }}</td>
             @else
-                <td></td>
+                <td>-</td>
             @endif
         <td>{{ $data->invoiceNumber }}</td>
             @if($data->invoiceDate != null)
         <td>&nbsp;{{ date('d/m/Y', strtotime($data->invoiceDate)) }}</td>
             @else
-                <td></td>
+                <td>-</td>
             @endif
         <td>{{ $data->documentNarration }}</td>
         <td>{{ $data->documentCurrency }}</td>
