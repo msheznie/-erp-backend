@@ -668,6 +668,13 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Master not found');
         }
 
+        if(isset($input['retentionPercentage'])){
+            if($input['retentionPercentage'] > 100){
+                return $this->sendError('Retention Percentage cannot be greater than 100%');
+            }
+        }
+
+
         if($supplierMaster->approvedYN){
 
             //check policy 3
