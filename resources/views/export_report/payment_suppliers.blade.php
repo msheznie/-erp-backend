@@ -13,7 +13,7 @@
 </table>
     @foreach($reportData as $name => $key)
     <div>
-        <B>{{ $name }}</B>
+        <h4>{{ $name }}</h4>
     </div>
     @foreach($reportData[$name] as $currencyKey => $key)
 
