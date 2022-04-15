@@ -161,7 +161,7 @@ class ItemTracking
 							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
 						}
 					} else {
-						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemIssueDetailID)
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->itemReturnDetailID)
 														   ->where('documentSystemID', $documentSystemID)
 														   ->whereHas('batch_data', function($query) {
 														   		$query->whereNotNull('batchCode');
@@ -199,7 +199,7 @@ class ItemTracking
 
 				break;
 			case 13:
-				$checkTrackingAvaliability = StockTransferDetails::where('trackingType', 2)
+				$checkTrackingAvaliability = StockTransferDetails::where('trackingType', [2, 1])
 														->where('stockTransferAutoID', $documentSystemCode)
 														->get();
 
@@ -208,15 +208,28 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->stockTransferDetailsID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->stockTransferDetailsID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if ($trackingCheck != $value->qty) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						if ($trackingCheck != $value->qty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->stockTransferDetailsID)
+								   ->where('documentSystemID', $documentSystemID)
+								   ->whereHas('batch_data', function($query) {
+								   		$query->whereNotNull('batchCode');
+								   })
+								   ->sum('quantity');
+
+						if ($trackingCheck != $value->qty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
 				}
 

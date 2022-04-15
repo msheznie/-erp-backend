@@ -430,7 +430,6 @@ class ItemSerialAPIController extends AppBaseController
 
         $saveData = [
             'itemSystemCode' => $input['itemID'],
-            'wareHouseSystemID' => $input['wareHouseSystemCode'],
             'batchCode' => $input['batchCode'],
             'quantity' => $input['quantity'],
         ];
@@ -439,7 +438,7 @@ class ItemSerialAPIController extends AppBaseController
 
 
         if ($res) {
-            $this->itemSerialRepository->mapBatchSubProducts($res->id, $input['documentSystemID'], $input['documentDetailID']);
+            $this->itemSerialRepository->mapBatchSubProducts($res->id, $input['documentSystemID'], $input['documentDetailID'], null, 0, $input['wareHouseSystemCode']);
         }
 
         return ['status' => true];

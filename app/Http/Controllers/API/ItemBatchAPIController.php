@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateItemBatchAPIRequest;
 use App\Http\Requests\API\UpdateItemBatchAPIRequest;
 use App\Models\ItemBatch;
+use App\Models\WarehouseMaster;
 use App\Models\DocumentSubProduct;
 use App\Repositories\ItemSerialRepository;
 use App\Repositories\ItemBatchRepository;
@@ -339,47 +340,39 @@ class ItemBatchAPIController extends AppBaseController
         $input = $request->all();
 
         $itemSerials = ItemBatch::where('itemSystemCode', $input['itemSystemCode'])
-                                 ->when($input['documentSystemID'] != 13, function($query) use ($input){
-                                    $query->where('wareHouseSystemID',$input['warehouse']);
-                                 })
                                  ->when($input['documentSystemID'] == 13, function($query) use ($input){
                                     $query->where(function($query) use ($input) {
-                                        $query->where('wareHouseSystemID',$input['warehouse'])
-                                          ->orWhere(function($query) use ($input) {
-                                            $query->where('wareHouseSystemID',$input['wareHouseCodeTo'])
-                                                  ->where('copiedQty', 0)
-                                                  ->whereHas('document_product', function($query) use ($input) {
+                                        $query->whereHas('document_in_product', function($query) use ($input) { 
+                                                    $query->where('wareHouseSystemID',$input['warehouse']);
+                                                })
+                                                ->orWhereHas('document_product', function($query) use ($input) {
                                                         $query->where('documentSystemID', $input['documentSystemID'])
-                                                              ->where('documentDetailID', $input['documentDetailID']);
-                                                  });
-                                          });    
+                                                              ->where('documentDetailID', $input['documentDetailID'])
+                                                              ->where('wareHouseSystemID',$input['wareHouseCodeTo']);
+                                                });
                                       });                                
                                  })
                                  ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
-                                                $query->where('copiedQty', '>',0)
-                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                $query->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       });
                                             })->orWhere(function($query) use ($input) {
-                                                $query->where('copiedQty', 0)
-                                                      ->whereDoesntHave('document_product', function($query) use ($input) {
+                                                $query->whereDoesntHave('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       });
                                             })->orWhere(function($query) use ($input) {
                                                 $query->when($input['documentSystemID'] == 13, function($query) use ($input){
-                                                    $query->where('copiedQty', 0)
-                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                    $query->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       }); 
                                                 });
                                             })->orWhere(function($query) use ($input) {
                                                 $query->when(in_array($input['documentSystemID'], [71, 20]), function($query) use ($input){
-                                                    $query->where('copiedQty', 0)
-                                                      ->whereHas('document_product', function($query) use ($input) {
+                                                    $query->whereHas('document_product', function($query) use ($input) {
                                                             $query->where('documentSystemID', $input['documentSystemID'])
                                                                   ->where('documentDetailID', $input['documentDetailID']);
                                                       }); 
@@ -389,6 +382,12 @@ class ItemBatchAPIController extends AppBaseController
                                   ->with(['document_product' => function($query) use ($input) {
                                         $query->where('documentSystemID', $input['documentSystemID'])
                                               ->where('documentDetailID', $input['documentDetailID']);
+                                  },'document_in_products' => function($query) use ($input) {
+                                        $query->where('documentSystemID','!=', $input['documentSystemID'])
+                                              ->where('documentDetailID', '!=', $input['documentDetailID'])
+                                              ->where('wareHouseSystemID', $input['warehouse'])
+                                              ->selectRaw('SUM(quantity - soldQty) as remaingQty, productBatchID')
+                                              ->groupBy('productBatchID');
                                   }, 'warehouse', 'bin_location'])
                                   ->whereHas('document_in_product', function($query) use ($input) { 
                                         $query->where(function($query) use ($input) {
@@ -407,7 +406,10 @@ class ItemBatchAPIController extends AppBaseController
                                                 })->orWhereHas('customer_invoice', function($query) {
                                                     $query->where('approved', -1);
                                                 });
-                                        });
+                                        })
+                                        ->when($input['documentSystemID'] != 13, function($query) use ($input){
+                                            $query->where('wareHouseSystemID',$input['warehouse']);
+                                         });
                                     })
                                   ->get();
 
@@ -428,6 +430,7 @@ class ItemBatchAPIController extends AppBaseController
         try {
             $input['quantityCopied'] = isset($input['quantityCopied']) ? floatval($input['quantityCopied']) : 0;
 
+            $wareHouseCodeTo = (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) ? $input['wareHouseCodeTo'] : null;
             $checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
                                                              ->where('documentDetailID', $input['documentDetailID'])
                                                              ->where('productBatchID', $input['id'])
@@ -447,14 +450,12 @@ class ItemBatchAPIController extends AppBaseController
                     $totalQty += $value->quantity;
                 }
 
-                if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
-                    $checkBatch->wareHouseSystemID = isset($input['wareHouseCodeFrom']) ? $input['wareHouseCodeFrom'] : null;
-                } else {
+                if (is_null($wareHouseCodeTo)) {
                     $checkBatch->soldFlag = 0;
                     $checkBatch->copiedQty = $checkBatch->copiedQty - $totalQty;
+                    $checkBatch->save();
                 }
                 
-                $checkBatch->save();
 
 
                 DocumentSubProduct::where('documentSystemID', $input['documentSystemID'])
@@ -486,15 +487,13 @@ class ItemBatchAPIController extends AppBaseController
                     return $this->sendError("Out quantity cannot be greater than issue quantity");
                 }
 
-                if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
-                    $checkBatch->wareHouseSystemID = $input['wareHouseCodeTo'];
-                } else {
-                    $newCopiedQty = ($previousOutCount + $input['quantityCopied']);
+                $newCopiedQty = ($previousOutCount + $input['quantityCopied']);
+                if (is_null($wareHouseCodeTo)) {
                     $checkBatch->soldFlag = ($checkBatch->quantity == $newCopiedQty) ? 1 : 0;
                     $checkBatch->copiedQty = $newCopiedQty;
-                }
 
-                $checkBatch->save();
+                    $checkBatch->save();
+                }
 
                 $checkInData = DocumentSubProduct::selectRaw('SUM(quantity - soldQty) as remaingQty')
                                                  ->where('productBatchID', $input['id'])
@@ -516,12 +515,14 @@ class ItemBatchAPIController extends AppBaseController
                                                  ->where('sold', 0)
                                                  ->get();
 
+
+
                 $quantityCopied = $input['quantityCopied'];
                 foreach ($productInDatas as $key => $value) {
                     $remaingQtyToCopied = floatval($value->quantity) - floatval($value->soldQty);
                     if ($quantityCopied > 0) {
                         if ($quantityCopied <= $remaingQtyToCopied) {
-                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $quantityCopied);
+                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $quantityCopied, $wareHouseCodeTo);
 
                             $updateData = [
                                 'soldQty' => $value->soldQty + $quantityCopied,
@@ -531,7 +532,7 @@ class ItemBatchAPIController extends AppBaseController
                             DocumentSubProduct::where('id', $value->id)->update($updateData);
                             $quantityCopied = 0;
                         } else {
-                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $remaingQtyToCopied);
+                            $this->itemSerialRepository->mapBatchSubProducts($input['id'], $input['documentSystemID'], $input['documentDetailID'], $value->id, $remaingQtyToCopied, $wareHouseCodeTo);
 
                             $updateData = [
                                 'soldQty' => $value->soldQty + $remaingQtyToCopied,
@@ -559,7 +560,6 @@ class ItemBatchAPIController extends AppBaseController
         $input = $request->all();
 
         $itemSerials = ItemBatch::where('itemSystemCode', $input['itemSystemCode'])
-                                 ->where('wareHouseSystemID',$input['wareHouseSystemCode'])
                                   ->where(function($query) use ($input){
                                         $query->where(function($query) use ($input) {
                                                 $query->where(function($query) {
@@ -608,7 +608,8 @@ class ItemBatchAPIController extends AppBaseController
                                                     $query->where('approved', -1);
                                                 });
                                         })
-                                        ->where('documentSystemCode', $input['rootDocumentID']);
+                                        ->where('documentSystemCode', $input['rootDocumentID'])
+                                        ->where('wareHouseSystemID',$input['wareHouseSystemCode']);
                                   })
                                   ->get();
 
@@ -757,6 +758,27 @@ class ItemBatchAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
         }
+    }
+
+    public function getWareHouseDataForItemOut(Request $request)
+    {
+        $input = $request->all();
+
+        $warehouseFrom = "";
+        $warehouseTo = "";
+
+        if (isset($input['warehouse']) && $input['warehouse'] > 0) {
+            $warehouse = WarehouseMaster::find($input['warehouse']);
+            $warehouseFrom = $warehouse ? $warehouse->wareHouseCode ." - ".$warehouse->wareHouseDescription : "";
+        }
+
+        if (isset($input['wareHouseCodeTo']) && $input['wareHouseCodeTo'] > 0) {
+            $warehouse = WarehouseMaster::find($input['wareHouseCodeTo']);
+            $warehouseTo = $warehouse ? $warehouse->wareHouseCode ." - ".$warehouse->wareHouseDescription : "";
+        }
+
+
+        return $this->sendResponse(['warehouseTo' => $warehouseTo, 'warehouseFrom' => $warehouseFrom], 'warehouse data retrieved successfully');
     }
 
 }

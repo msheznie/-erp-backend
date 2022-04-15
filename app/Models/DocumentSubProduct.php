@@ -92,6 +92,7 @@ class DocumentSubProduct extends Model
         'documentSystemCode',
         'documentDetailID',
         'productSerialID',
+        'wareHouseSystemID',
         'productBatchID',
         'quantity',
         'sold',
@@ -112,6 +113,7 @@ class DocumentSubProduct extends Model
         'productSerialID' => 'integer',
         'productBatchID' => 'integer',
         'productInID' => 'integer',
+        'wareHouseSystemID' => 'integer',
         'quantity' => 'float',
         'sold' => 'integer',
         'soldQty' => 'float'

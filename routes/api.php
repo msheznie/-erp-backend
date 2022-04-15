@@ -2506,6 +2506,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBatchNumbersForOut', 'ItemBatchAPIController@getBatchNumbersForOut');
         Route::post('updateSoldStatusOfBatch', 'ItemBatchAPIController@updateSoldStatusOfBatch');
         Route::get('getBatchNumbersForReturn', 'ItemBatchAPIController@getBatchNumbersForReturn');
+        Route::get('getWareHouseDataForItemOut', 'ItemBatchAPIController@getWareHouseDataForItemOut');
         Route::post('updateReturnStatusOfBatch', 'ItemBatchAPIController@updateReturnStatusOfBatch');
 
         Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
