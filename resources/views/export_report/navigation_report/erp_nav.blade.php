@@ -114,11 +114,11 @@
 
                             @if($nav3->export == true)
                             <span>
-                            Export
+                            Export to CSV
                             </span>
                             @else
                             <span>
-                             N/A,
+                             N/A
                             </span>
                             @endif
 
@@ -194,11 +194,11 @@
 
                            @if($nav->export == true)
                            <span>
-                            Export
+                           Export to CSV
                            </span>
                            @else
                             <span>
-                             N/A,
+                             N/A
                             </span>
                             @endif
 
