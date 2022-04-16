@@ -46,6 +46,8 @@ define('GET_APPROVED_DETAILS', 'GET_APPROVED_DETAILS');
 define('GET_TENDERS', 'GET_TENDERS');
 define('SAVE_TENDER_PURCHASE', 'SAVE_TENDER_PURCHASE');
 define('GET_FAQ', 'GET_FAQ');
+define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
+define('SAVE_TENDER_PREBID_CLARIFICATION', 'SAVE_TENDER_PREBID_CLARIFICATION');
 
 class APIController extends Controller
 {
@@ -126,6 +128,10 @@ class APIController extends Controller
                 return $this->SRMService->saveTenderPurchase($request);
             case GET_FAQ :
                 return $this->SRMService->getFaqList($request);
+            case GET_TENDER_PRE_BID_CLARIFICATION :
+                return $this->SRMService->getPrebidClarification($request);
+            case SAVE_TENDER_PREBID_CLARIFICATION :
+                return $this->SRMService->saveTenderPrebidClarification($request);
             default:
                 return [
                     'success'   => false,
