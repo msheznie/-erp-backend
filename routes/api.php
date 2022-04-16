@@ -2578,6 +2578,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem');
         Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
 
+        Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval');
+        Route::post('approveTender', 'TenderMasterAPIController@approveTender');
+        Route::post('rejectTender', 'TenderMasterAPIController@rejectTender');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
