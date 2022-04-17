@@ -9,6 +9,7 @@ use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 class TenderProcurementCategoryController extends AppBaseController
@@ -71,7 +72,7 @@ class TenderProcurementCategoryController extends AppBaseController
             if(is_null($procurementCatCodeExist['deleted_at'])){
                 return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
             } else {
-                return $this->sendError('Procurement code ' . $input['code'] . $procurementCatCodeExist['deleted_at'] . ' already exists');
+                return $this->sendError($procurementCatCodeExist['id'], 409);
             }
         }
 
@@ -122,6 +123,10 @@ class TenderProcurementCategoryController extends AppBaseController
         $parent_id = 0;
 
         $input = $request->all();
+
+        if(isset($input['restore']) && $input['restore'] == true){
+            return $this->restoreDeletedCategory($id);
+        }
 
         if(isset($input['level'])){
             $level = $input['level'];
@@ -230,5 +235,12 @@ class TenderProcurementCategoryController extends AppBaseController
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->make(true);
+    }
+
+    private function restoreDeletedCategory($id){
+
+        $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
+
+        return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
     }
 }
