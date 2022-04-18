@@ -714,7 +714,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['timesReferredColumn'] = 'refferedBackYN';
                     $templateData['timesReferredValue'] = -1;
                     $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
-                        'currency_by','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
+                        'currency_by','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country','location'];
                     $templateData['statusColumns'] = ['PRConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','cancelledYN','refferedBackYN'];
                     $templateData['model'] = 'PurchaseRequest';
@@ -874,7 +874,9 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
                             }else if ($table == 'currency_by') {
                                 $data->currencyJoin('currency_by', 'currency', 'currencyByName');
-                            } 
+                            }else if ($table == 'location') {
+                                $data->locationJoin('location', 'location', 'locationByName');
+                            }  
                         }
                     }
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);

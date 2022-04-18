@@ -408,10 +408,15 @@ class PurchaseRequest extends Model
     }
 
     public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
-
             return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_purchaserequest.'.$column)
             ->addSelect($as.".CurrencyName as ".$columnAs);
 
     }
+
+    public function scopeLocationJoin($q,$as = 'erp_location' ,$column = 'location',$columnAs = 'locationByName'){
+        return $q->leftJoin('erp_location as '.$as,$as.'.locationID','=','erp_purchaserequest.'.$column)
+        ->addSelect($as.".locationName as ".$columnAs);
+
+}
 
 }
