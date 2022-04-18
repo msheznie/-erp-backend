@@ -8,6 +8,7 @@ use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\EnvelopType;
@@ -17,6 +18,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
+use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -349,6 +351,7 @@ class TenderMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $data['tenderType'] = TenderType::get();
+        $data['yesNoSelection'] = YesNoSelection::all();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
@@ -426,7 +429,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
-        $data['master'] = TenderMaster::with(['procument_activity'])->where('id',$input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity','confirmed_by'])->where('id',$input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->get();
         $act = array();
         if(!empty($activity)){
@@ -531,9 +534,6 @@ class TenderMasterAPIController extends AppBaseController
             $data['site_visit_date']=$site_visit_date;
             $data['bid_submission_opening_date']=$bid_submission_opening_date;
             $data['bid_submission_closing_date']=$bid_submission_closing_date;
-
-
-
             $data['updated_by'] = $employee->employeeSystemID;
 
             $result = TenderMaster::where('id',$input['id'])->update($data);
@@ -591,6 +591,22 @@ class TenderMasterAPIController extends AppBaseController
 
                         $att['budget_document'] = $path;
                         TenderMaster::where('id',$input['id'])->update($att);
+                    }
+                }
+
+                if(isset($input['confirmed_yn'])){
+                    if($input['confirmed_yn'] == 1){
+                        $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                        $confirm = \Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
+                            return ['success' => false, 'message' => $confirm["message"]];
+                        } else {
+                            $dataC['confirmed_yn']=1;
+                            $dataC['confirmed_date']=now();
+                            $dataC['confirmed_by_emp_system_id'] = $employee->employeeSystemID;
+
+                            TenderMaster::where('id',$input['id'])->update($dataC);
+                        }
                     }
                 }
 
@@ -667,5 +683,114 @@ class TenderMasterAPIController extends AppBaseController
         $companyId = $input['companySystemID'];
         $data['tenders'] = TenderMaster::where('company_id',$companyId)->get(); 
         return $data;
+    }
+
+    public function getTenderMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'srm_tender_master.document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            $query->where('employeesdepartments.documentSystemID', 108)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('srm_tender_master', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('srm_tender_master.company_id', $companyID)
+                ->where('srm_tender_master.approved', 0)
+                ->where('srm_tender_master.confirmed_yn', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'currency_id', '=', 'currencyID')
+            ->join('employees', 'created_by', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 108)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveTender(Request $request)
+    {
+
+        $approve = \Helper::approveDocument($request);
+
+        if (!$approve["success"]) {
+
+            return $this->sendError($approve["message"]);
+        } else {
+
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+
+    public function rejectTender(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
     }
 }

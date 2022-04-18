@@ -241,7 +241,20 @@ class TenderMaster extends Model
         'document_system_id',
         'document_id',
         'tender_code',
-        'serial_number'
+        'serial_number',
+        'confirmed_yn',
+        'confirmed_by_emp_system_id',
+        'confirmed_by_name',
+        'confirmed_date',
+        'approved',
+        'approved_date',
+        'approved_by_user_system_id',
+        'approval_remarks',
+        'refferedBackYN',
+        'timesReferred',
+        'RollLevForApp_curr',
+        'approved_by_emp_name',
+        'published_yn'
     ];
 
     /**
@@ -282,7 +295,20 @@ class TenderMaster extends Model
         'document_system_id' => 'integer',
         'document_id' => 'string',
         'tender_code' => 'string',
-        'serialNumber' => 'integer'
+        'serialNumber' => 'integer',
+        'confirmed_yn' => 'integer',
+        'confirmed_by_emp_system_id' => 'integer',
+        'confirmed_by_name' => 'string',
+        'confirmed_date' => 'datetime',
+        'approved' => 'integer',
+        'approved_date' => 'datetime',
+        'approved_by_user_system_id' => 'integer',
+        'approval_remarks' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'approved_by_emp_name' => 'string',
+        'published_yn' => 'integer'
     ];
 
     /**
@@ -319,9 +345,15 @@ class TenderMaster extends Model
     public function tenderFaq()
     {
         return $this->hasMany('App\Models\TenderFaq', 'tender_master_id', 'id');
+
     } 
     public function tenderPreBidClarification()
     {
         return $this->hasMany('App\Models\TenderBidClarifications', 'tender_master_id', 'id');
     } 
+ 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmed_by_emp_system_id', 'employeeSystemID');
+    }
 }
