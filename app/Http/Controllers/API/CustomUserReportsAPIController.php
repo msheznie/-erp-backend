@@ -557,9 +557,7 @@ class CustomUserReportsAPIController extends AppBaseController
         // return date("Y");
         DB::enableQueryLog();
         $result = $this->getCustomReportQry($request);
-        
 
-        
         if (!$result['success']) {
             return $this->sendError($result['message'], 500);
         }
@@ -599,7 +597,7 @@ class CustomUserReportsAPIController extends AppBaseController
 
     private function getCustomReportQry(Request $request)
     {
-
+       
         $output = array(
             'success' => false,
             'message' => '',
@@ -614,7 +612,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $q->with(['column'])
                 ->wherehas('column');
         },'summarize.column'])->find($input['id']);
-
+        
         if (empty($report)) {
             $output['message'] = 'Report not found';
             return $output;
@@ -657,7 +655,7 @@ class CustomUserReportsAPIController extends AppBaseController
         
         $data = [];
         $templateData = array();
-
+        
         if (isset($report['columns']) && count($report['columns']) > 0) {
 
             // select columns
@@ -716,7 +714,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['timesReferredColumn'] = 'refferedBackYN';
                     $templateData['timesReferredValue'] = -1;
                     $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
-                        'currency','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
+                        'currency_by','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
                     $templateData['statusColumns'] = ['PRConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','cancelledYN','refferedBackYN'];
                     $templateData['model'] = 'PurchaseRequest';
@@ -733,18 +731,18 @@ class CustomUserReportsAPIController extends AppBaseController
                     array_push($columns, $masterTable . '.' . $column);
                 }
             }
-
+          
             if ($isMasterExist) {
                 array_push($columns, $primaryKey . ' as masterId');
             }
-
+          
             if ($isDetailExist) {
                 array_push($columns, $detailPrimaryKey . ' as detailId');
             }
             $namespacedModel = 'App\Models\\' . $templateData['model'];
             $data = $namespacedModel::selectRaw(implode(",", $columns));
-
-
+            
+            
             // join tables
             switch ($report->report_master_id) {
                 case 1:
@@ -856,7 +854,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     if ($isDetailExist) {
                     $data->detailJoin();
                     }
-
+                    
                         foreach ($templateData['tables'] as $table) {
                         if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
                             if ($table == 'created_by') {
@@ -871,7 +869,7 @@ class CustomUserReportsAPIController extends AppBaseController
                             } else if ($table == 'department') {
                                 $data->departmentJoin('department', 'serviceLineSystemID', 'ServiceLineDes');
                             }else if ($table == 'category') {
-                                $data->categoryJoin('category', 'financeCategory', 'claimcategoriesDescription');
+                                $data->categoryJoin('category', 'financeCategory', 'categoryDescription');
                             }else if($table == 'supplier'){
                                 $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
                             }else if ($table == 'currency_by') {
