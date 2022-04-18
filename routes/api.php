@@ -2579,8 +2579,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
 
         Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval');
+        Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved');
         Route::post('approveTender', 'TenderMasterAPIController@approveTender');
         Route::post('rejectTender', 'TenderMasterAPIController@rejectTender');
+        Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender');
+        Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish');
 
     });
 

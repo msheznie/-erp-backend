@@ -327,7 +327,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
     public function getPricingScheduleDropDowns(Request $request)
     {
         $input = $request->all();
-        $data['priceBidFormatDrop'] = TenderBidFormatMaster::where('company_id',$input['companySystemID'])->get();
+        $data['priceBidFormatDrop'] = TenderBidFormatMaster::with(['tender_bid_format_detail'])->whereHas('tender_bid_format_detail')->where('company_id',$input['companySystemID'])->get();
 
         return $data;
     }
