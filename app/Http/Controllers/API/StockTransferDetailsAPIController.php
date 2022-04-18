@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
+use App\helper\ItemTracking;
 
 /**
  * Class StockTransferDetailsController
@@ -654,7 +655,14 @@ class StockTransferDetailsAPIController extends AppBaseController
 
                 $subProduct->delete();
             }
+        } else if ($stockTransferDetails->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($stockTransfer->documentSystemID, $id, true);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
+            }
         }
+
 
         $stockTransferDetails->delete();
 

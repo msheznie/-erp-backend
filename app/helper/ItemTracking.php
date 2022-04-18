@@ -140,7 +140,7 @@ class ItemTracking
 
 				break;
 			case 12:
-				$checkTrackingAvaliability = ItemReturnDetails::where('trackingType', [2, 1])
+				$checkTrackingAvaliability = ItemReturnDetails::whereIn('trackingType', [2, 1])
 														->where('itemReturnAutoID', $documentSystemCode)
 														->get();
 
@@ -176,7 +176,7 @@ class ItemTracking
 
 				break;
 			case 24:
-				$checkTrackingAvaliability = PurchaseReturnDetails::where('trackingType', 2)
+				$checkTrackingAvaliability = PurchaseReturnDetails::whereIn('trackingType', [2,1])
 														->where('purhaseReturnAutoID', $documentSystemCode)
 														->get();
 
@@ -185,21 +185,34 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->purhasereturnDetailID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->purhasereturnDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if ($trackingCheck != $value->noQty) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						if ($trackingCheck != $value->noQty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->purhasereturnDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('batch_data', function($query) {
+														   		$query->whereNotNull('batchCode');
+														   })
+														   ->sum('quantity');
+
+						if ($trackingCheck != $value->noQty) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
 				}
 
 				break;
 			case 13:
-				$checkTrackingAvaliability = StockTransferDetails::where('trackingType', [2, 1])
+				$checkTrackingAvaliability = StockTransferDetails::whereIn('trackingType', [2, 1])
 														->where('stockTransferAutoID', $documentSystemCode)
 														->get();
 
@@ -235,7 +248,7 @@ class ItemTracking
 
 				break;
 			case 71:
-				$checkTrackingAvaliability = DeliveryOrderDetail::where('trackingType', 2)
+				$checkTrackingAvaliability = DeliveryOrderDetail::whereIn('trackingType', [2, 1])
 														->where('deliveryOrderID', $documentSystemCode)
 														->get();
 
@@ -244,15 +257,28 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->deliveryOrderDetailID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->deliveryOrderDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if ($trackingCheck != $value->qtyIssued) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->deliveryOrderDetailID)
+								   ->where('documentSystemID', $documentSystemID)
+								   ->whereHas('batch_data', function($query) {
+								   		$query->whereNotNull('batchCode');
+								   })
+								   ->sum('quantity');
+
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
 				}
 
@@ -266,7 +292,7 @@ class ItemTracking
 				}
 
 
-				$checkTrackingAvaliability = CustomerInvoiceItemDetails::where('trackingType', 2)
+				$checkTrackingAvaliability = CustomerInvoiceItemDetails::whereIn('trackingType', [2,1])
 														->where('custInvoiceDirectAutoID', $documentSystemCode)
 														->get();
 
@@ -275,21 +301,34 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->customerItemDetailID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->customerItemDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if ($trackingCheck != $value->qtyIssued) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->customerItemDetailID)
+								   ->where('documentSystemID', $documentSystemID)
+								   ->whereHas('batch_data', function($query) {
+								   		$query->whereNotNull('batchCode');
+								   })
+								   ->sum('quantity');
+
+						if ($trackingCheck != $value->qtyIssued) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
 				}
 
 				break;
 			case 87:
-				$checkTrackingAvaliability = SalesReturnDetail::where('trackingType', 2)
+				$checkTrackingAvaliability = SalesReturnDetail::whereIn('trackingType', [2,1])
 														->where('salesReturnID', $documentSystemCode)
 														->get();
 
@@ -298,15 +337,28 @@ class ItemTracking
 				}
 
 				foreach ($checkTrackingAvaliability as $key => $value) {
-					$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->salesReturnDetailID)
-													   ->where('documentSystemID', $documentSystemID)
-													   ->whereHas('serial_data', function($query) {
-													   		$query->whereNotNull('serialCode');
-													   })
-													   ->count();
+					if ($value->trackingType == 2) {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->salesReturnDetailID)
+														   ->where('documentSystemID', $documentSystemID)
+														   ->whereHas('serial_data', function($query) {
+														   		$query->whereNotNull('serialCode');
+														   })
+														   ->count();
 
-					if ($trackingCheck != $value->qtyReturned) {
-						$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						if ($trackingCheck != $value->qtyReturned) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
+					} else {
+						$trackingCheck = DocumentSubProduct::where('documentDetailID', $value->salesReturnDetailID)
+								   ->where('documentSystemID', $documentSystemID)
+								   ->whereHas('batch_data', function($query) {
+								   		$query->whereNotNull('batchCode');
+								   })
+								   ->sum('quantity');
+
+						if ($trackingCheck != $value->qtyReturned) {
+							$errorMessage[] = "Tracking details of item ".$value->itemPrimaryCode." - ".$value->itemDescription. " is not completed.";
+						}
 					}
 				}
 
@@ -512,5 +564,122 @@ class ItemTracking
 		}
 
 		return ['status' => true];
+	}
+
+	public static function revertBatchTrackingSoldStatus($documentSystemID, $documentDetailID, $stcokTransfer = false)
+	{
+		$validateSubProductSold = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                                         ->where('documentDetailID', $documentDetailID)
+                                                         ->where('soldQty', '>', 0)
+                                                         ->first();
+
+        if ($validateSubProductSold) {
+            return ['status' => false, 'message' => 'You cannot delete this line item. batch details are sold already.'];
+        }
+
+        $subProducts = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                         ->where('documentDetailID', $documentDetailID)
+                                         ->whereNotNull('productBatchID');
+
+        $batchIds = ($subProducts->count() > 0) ? $subProducts->get()->pluck('productBatchID')->toArray() : [];
+
+        foreach ($batchIds as $keyBatch => $batchId) {
+			$checkBatch = ItemBatch::find($batchId);
+
+	        if ($checkBatch) {
+				$checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+		                                                             ->where('documentDetailID', $documentDetailID)
+		                                                             ->where('productBatchID', $batchId)
+		                                                             ->get();
+
+		        if ($checkDocumentSubProduct) {
+		            $totalQty = 0;
+		            foreach ($checkDocumentSubProduct as $key => $value) {
+		                
+		                $soldProduct = DocumentSubProduct::find($value->productInID);
+		                if ($soldProduct) {
+		                    $soldProduct->sold = 0;
+		                    $soldProduct->soldQty = $soldProduct->soldQty - $value->quantity;
+		                    $soldProduct->save();
+		                }
+		                
+		                $totalQty += $value->quantity;
+		            }
+
+		            if (!$stcokTransfer) {
+		                $checkBatch->soldFlag = 0;
+		                $checkBatch->copiedQty = $checkBatch->copiedQty - $totalQty;
+		                $checkBatch->save();
+		            }
+		            
+		            DocumentSubProduct::where('documentSystemID', $documentSystemID)
+		                             ->where('documentDetailID', $documentDetailID)
+		                             ->where('productBatchID', $batchId)
+		                             ->delete();
+		        }
+	        }
+        }
+
+
+        return ['status' => true];
+	}
+
+	public static function revertBatchTrackingReturnStatus($documentSystemID, $documentDetailID)
+	{
+		$validateSubProductSold = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                                         ->where('documentDetailID', $documentDetailID)
+                                                         ->where('soldQty', '>', 0)
+                                                         ->first();
+
+        if ($validateSubProductSold) {
+            return ['status' => false, 'message' => 'You cannot delete this line item. batch details are sold already.'];
+        }
+
+        $subProducts = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+                                         ->where('documentDetailID', $documentDetailID)
+                                         ->whereNotNull('productBatchID');
+
+        $batchIds = ($subProducts->count() > 0) ? $subProducts->get()->pluck('productBatchID')->toArray() : [];
+
+        foreach ($batchIds as $keyBatch => $batchId) {
+			$checkBatch = ItemBatch::find($batchId);
+
+	        if ($checkBatch) {
+				$checkDocumentSubProduct = DocumentSubProduct::where('documentSystemID', $documentSystemID)
+		                                                             ->where('documentDetailID', $documentDetailID)
+		                                                             ->where('productBatchID', $batchId)
+		                                                             ->get();
+
+		        if (count($checkDocumentSubProduct) > 0) {
+	                $totalQty = 0;
+	                foreach ($checkDocumentSubProduct as $key => $value) {
+	                    
+	                    $soldProduct = DocumentSubProduct::find($value->productInID);
+	                    if ($soldProduct) {
+	                        $soldProduct->sold = 0;
+	                        $soldProduct->soldQty = $soldProduct->soldQty - $value->quantity;
+	                        $soldProduct->save();
+	                    }
+	                    
+	                    $totalQty += $value->quantity;
+	                }
+
+	              
+	                $checkBatch->soldFlag = (($checkBatch->copiedQty + $totalQty) == $checkBatch->quantity) ? 1 : 0;
+	                $checkBatch->copiedQty = $checkBatch->copiedQty + $totalQty;
+	                
+	                $checkBatch->save();
+
+
+	                DocumentSubProduct::where('documentSystemID', $documentSystemID)
+	                                 ->where('documentDetailID', $documentDetailID)
+	                                 ->where('productBatchID', $batchId)
+	                                 ->delete();
+	            }
+	        }
+        }
+
+
+        return ['status' => true];
 	}
 }

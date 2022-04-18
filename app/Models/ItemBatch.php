@@ -133,6 +133,11 @@ class ItemBatch extends Model
         return $this->belongsTo('App\Models\DocumentSubProduct', 'id', 'productBatchID');
     }
 
+    public function document_products()
+    {
+        return $this->hasMany('App\Models\DocumentSubProduct', 'productBatchID', 'id');
+    }
+
      public function warehouse()
     {
         return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseSystemID', 'wareHouseSystemCode');
@@ -146,5 +151,10 @@ class ItemBatch extends Model
      public function document_in_products()
     {
         return $this->hasMany('App\Models\DocumentSubProduct', 'productBatchID', 'id')->whereIn('documentSystemID', [3, 8, 12, 24, 71, 20, 87]);
+    }
+
+    public function document_in_products_data()
+    {
+        return $this->hasMany('App\Models\DocumentSubProduct', 'productBatchID', 'id')->whereIn('documentSystemID', [3, 12, 87, 13]);
     }
 }

@@ -33,6 +33,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use App\helper\ItemTracking;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -377,12 +378,50 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Return Details not found');
         }
 
+        $purchaseReturn = PurchaseReturn::where('purhaseReturnAutoID', $purchaseReturnDetails->purhaseReturnAutoID)->first();
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        if ($purchaseReturnDetails->trackingType == 2) {
+            $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
+                                                         ->where('documentDetailID', $id)
+                                                         ->where('sold', 1)
+                                                         ->first();
+
+            if ($validateSubProductSold) {
+                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+            }
+
+            $subProduct = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
+                                             ->where('documentDetailID', $id);
+
+            $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+            $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+            if (count($productInIDs) > 0) {
+                $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                          ->update(['soldFlag' => 0]);
+
+                $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                          ->update(['sold' => 0, 'soldQty' => 0]);
+
+                $subProduct->delete();
+            }
+        } else if ($purchaseReturnDetails->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($purchaseReturn->documentSystemID, $id);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
+            }
+        }
+
         $purchaseReturnDetails->delete();
 
 
         $remainingPrnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $purchaseReturnDetails->purhaseReturnAutoID)
                                                     ->first();
-
 
         if (!$remainingPrnDetails) {
             $masterData = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);  
@@ -798,8 +837,49 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('There are no details to delete');
         }
 
+        $purchaseReturn = PurchaseReturn::find($input['purhaseReturnAutoID']);
+
+        if (!$purchaseReturn) {
+            return $this->sendError('Purchase Return not found');
+        }
+
         if (!empty($detailExistAll)) {
             foreach ($detailExistAll as $cvDetail) {
+
+                if ($cvDetail->trackingType == 2) {
+                    $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
+                                                                 ->where('documentDetailID', $cvDetail->purhasereturnDetailID)
+                                                                 ->where('sold', 1)
+                                                                 ->first();
+
+                    if ($validateSubProductSold) {
+                        return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                    }
+
+                    $subProduct = DocumentSubProduct::where('documentSystemID', $purchaseReturn->documentSystemID)
+                                                     ->where('documentDetailID', $cvDetail->purhasereturnDetailID);
+
+                    $productInIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productInID')->toArray() : [];
+                    $serialIds = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productSerialID')->toArray() : [];
+
+                    if (count($productInIDs) > 0) {
+                        $updateSerial = ItemSerial::whereIn('id', $serialIds)
+                                                  ->update(['soldFlag' => 0]);
+
+                        $updateSerial = DocumentSubProduct::whereIn('id', $productInIDs)
+                                                  ->update(['sold' => 0, 'soldQty' => 0]);
+
+                        $subProduct->delete();
+                    }
+                } else if ($cvDetail->trackingType == 1) {
+                    $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($purchaseReturn->documentSystemID, $cvDetail->purhasereturnDetailID);
+
+                    if (!$deleteBatch['status']) {
+                        return $this->sendError($deleteBatch['message'], 422);
+                    }
+                }
+
+
                 $deleteDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $cvDetail['purhasereturnDetailID'])->delete();
             }
         }
@@ -812,7 +892,6 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $grvDetailsID = $input['grvDetailsID'];
 
-
         $detailExistAll = PurchaseReturnDetails::with(['master' => function($query) {
                                                     $query->with(['currency_by']);
                                                 }, 'unit'])
@@ -822,8 +901,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                                                })
                                                ->get();
 
-
-       return $this->sendResponse($detailExistAll, 'Purchase Return details deleted successfully');
+        return $this->sendResponse($detailExistAll, 'Purchase Return details deleted successfully');
     }
 
 }

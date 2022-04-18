@@ -379,10 +379,10 @@ class ItemBatchAPIController extends AppBaseController
                                                 });
                                             });
                                   })
-                                  ->with(['document_product' => function($query) use ($input) {
+                                  ->with(['document_products' => function($query) use ($input) {
                                         $query->where('documentSystemID', $input['documentSystemID'])
                                               ->where('documentDetailID', $input['documentDetailID']);
-                                  },'document_in_products' => function($query) use ($input) {
+                                  },'document_in_products_data' => function($query) use ($input) {
                                         $query->where('documentSystemID','!=', $input['documentSystemID'])
                                               ->where('documentDetailID', '!=', $input['documentDetailID'])
                                               ->where('wareHouseSystemID', $input['warehouse'])
@@ -409,7 +409,11 @@ class ItemBatchAPIController extends AppBaseController
                                         })
                                         ->when($input['documentSystemID'] != 13, function($query) use ($input){
                                             $query->where('wareHouseSystemID',$input['warehouse']);
-                                         });
+                                         })
+                                        ->when((isset($input['rootDocumentSystemID']) && $input['rootDocumentSystemID'] > 0 && isset($input['rootDocumentSystemCode']) && $input['rootDocumentSystemCode'] > 0), function($query) use ($input) {
+                                            $query->where('documentSystemID', $input['rootDocumentSystemID'])
+                                                  ->where('documentSystemCode', $input['rootDocumentSystemCode']);
+                                        });
                                     })
                                   ->get();
 
@@ -497,7 +501,8 @@ class ItemBatchAPIController extends AppBaseController
 
                 $checkInData = DocumentSubProduct::selectRaw('SUM(quantity - soldQty) as remaingQty')
                                                  ->where('productBatchID', $input['id'])
-                                                 ->whereNull('productInID')
+                                                 ->whereIn('documentSystemID', [3, 12, 87, 13])
+                                                 ->where('wareHouseSystemID', $input['wareHouseCodeFrom'])
                                                  ->where('sold', 0)
                                                  ->first();     
                                                  
@@ -511,11 +516,10 @@ class ItemBatchAPIController extends AppBaseController
 
 
                 $productInDatas = DocumentSubProduct::where('productBatchID', $input['id'])
-                                                 ->whereNull('productInID')
+                                                 ->whereIn('documentSystemID', [3, 12, 87, 13])
                                                  ->where('sold', 0)
+                                                 ->where('wareHouseSystemID', $input['wareHouseCodeFrom'])
                                                  ->get();
-
-
 
                 $quantityCopied = $input['quantityCopied'];
                 foreach ($productInDatas as $key => $value) {
