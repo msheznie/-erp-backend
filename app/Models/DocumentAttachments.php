@@ -13,7 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Awobaz\Compoships\Compoships;
 /**
  * Class DocumentAttachments
  * @package App\Models
@@ -35,7 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DocumentAttachments extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'erp_documentattachments';
     
     const CREATED_AT = 'timeStamp';

@@ -320,4 +320,8 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\TenderFaq', 'tender_master_id', 'id');
     } 
+    public function tenderPreBidClarification()
+    {
+        return $this->hasMany('App\Models\TenderBidClarifications', 'tender_master_id', 'id');
+    } 
 }
