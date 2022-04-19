@@ -735,8 +735,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                 $isConfigured = SystemGlCodeScenario::find(13);
                 $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
+
                 if($isConfigured && $isDetailConfigured) {
-                    if ($isConfigured->active != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
+                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
                     }
                 }
@@ -1268,7 +1269,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
 //            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
 //            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
 //        }
-
 
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 

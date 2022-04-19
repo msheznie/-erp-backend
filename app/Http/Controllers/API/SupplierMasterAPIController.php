@@ -455,6 +455,14 @@ class SupplierMasterAPIController extends AppBaseController
             ->make(true);
 
     }
+    public function getRetentionPercentage(Request $request)
+    {
+        $supplierId = $request['supplierId'];
+        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
+            ->first();
+        return $this->sendResponse($supplier->retentionPercentage, 'Supplier Retention Percentage retrieved successfully');
+
+    }
 
     /**
      * get sub categories by supplier.
