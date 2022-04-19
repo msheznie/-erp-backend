@@ -1243,14 +1243,14 @@ class SRMService
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderMasterId;
-            $data['posted_by_type'] = $request->input('extra.posted_by_type');
+            $data['posted_by_type'] = "1";
             $data['post'] = $request->input('extra.post');
             $data['user_id'] = $supplierRegId;
             $data['supplier_id'] = $supplierRegId;
             $data['is_public'] = $supplierRegId;
-            $data['parent_id'] = $request->input('extra.parentId');
+            $data['parent_id'] = 1; //$request->input('extra.parentId');
             $data['created_by'] = $supplierRegId;
-            $data['company_id'] = $request->input('extra.companyId');
+            $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
             DB::commit();
             $tenderPrebidClarification = TenderPrebidClarification::create($data);
