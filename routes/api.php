@@ -32,6 +32,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
         Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
+        Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
         Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
