@@ -668,7 +668,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($input['documentType'] != 4){
             if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
-                return $this->sendError('Retention Due Date cannot be null as retention amount is greater than zero', 500);
+                return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
             }
 
         }
