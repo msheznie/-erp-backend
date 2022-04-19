@@ -666,12 +666,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        if ($input['documentType'] != 4){
-            if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
-                return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
-            }
 
-        }
 
         if(isset($input['retentionPercentage'])){
             if($input['retentionPercentage'] > 100){
@@ -735,6 +730,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
 
                 }
+            }
+
+            if ($input['documentType'] != 4){
+                if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
+                    return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
+                }
+
             }
 
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
