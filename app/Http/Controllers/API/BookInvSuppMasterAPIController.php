@@ -673,6 +673,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         }
 
+        if(isset($input['retentionPercentage'])){
+            if($input['retentionPercentage'] > 100){
+                return $this->sendError('Retention Percentage cannot be greater than 100%');
+            }
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
