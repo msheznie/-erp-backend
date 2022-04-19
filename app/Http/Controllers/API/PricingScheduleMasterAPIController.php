@@ -350,13 +350,13 @@ class PricingScheduleMasterAPIController extends AppBaseController
             }
         }
         if(isset($input['id'])) {
-            $exist = PricingScheduleMaster::where('id','!=',$input['id'])->where('scheduler_name', $input['scheduler_name'])->where('company_id', $input['companySystemID'])->first();
+            $exist = PricingScheduleMaster::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('scheduler_name', $input['scheduler_name'])->where('company_id', $input['companySystemID'])->first();
 
             if(!empty($exist)){
                 return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
             }
         }else{
-            $exist = PricingScheduleMaster::where('scheduler_name', $input['scheduler_name'])->where('company_id', $input['companySystemID'])->first();
+            $exist = PricingScheduleMaster::where('scheduler_name', $input['scheduler_name'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
 
             if(!empty($exist)){
                 return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
