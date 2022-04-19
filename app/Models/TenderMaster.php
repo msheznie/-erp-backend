@@ -345,8 +345,13 @@ class TenderMaster extends Model
     public function tenderFaq()
     {
         return $this->hasMany('App\Models\TenderFaq', 'tender_master_id', 'id');
-    }
 
+    } 
+    public function tenderPreBidClarification()
+    {
+        return $this->hasMany('App\Models\TenderBidClarifications', 'tender_master_id', 'id');
+    } 
+ 
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by_emp_system_id', 'employeeSystemID');
