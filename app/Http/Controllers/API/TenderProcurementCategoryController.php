@@ -9,6 +9,7 @@ use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 class TenderProcurementCategoryController extends AppBaseController
@@ -62,11 +63,17 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $procurementCatCodeExist = TenderProcurementCategory::select('id')
+        $procurementCatCodeExist = TenderProcurementCategory::withTrashed()
+            ->select('id', 'deleted_at')
             ->where('code', '=', $input['code'])
             ->where('level', '=', $level)->first();
+
         if (!empty($procurementCatCodeExist)) {
-            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+            if(is_null($procurementCatCodeExist['deleted_at'])){
+                return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+            } else {
+                return $this->sendError($procurementCatCodeExist['id'], 409);
+            }
         }
 
         $procurementCatDesExist = TenderProcurementCategory::select('id')
@@ -116,6 +123,10 @@ class TenderProcurementCategoryController extends AppBaseController
         $parent_id = 0;
 
         $input = $request->all();
+
+        if(isset($input['restore']) && $input['restore'] == true){
+            return $this->restoreDeletedCategory($id);
+        }
 
         if(isset($input['level'])){
             $level = $input['level'];
@@ -224,5 +235,12 @@ class TenderProcurementCategoryController extends AppBaseController
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
             ->make(true);
+    }
+
+    private function restoreDeletedCategory($id){
+
+        $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
+
+        return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
     }
 }
