@@ -42,6 +42,7 @@ use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
+use App\Models\SystemGlCodeScenario;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ExpenseEmployeeAllocation;
@@ -403,7 +404,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage');
+            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -665,6 +666,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
+
+
+        if(isset($input['retentionPercentage'])){
+            if($input['retentionPercentage'] > 100){
+                return $this->sendError('Retention Percentage cannot be greater than 100%');
+            }
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -720,6 +729,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         }
                     }
 
+                }
+            }
+
+            if ($input['documentType'] != 4){
+                if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
+                    return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
+                }
+
+            }
+
+            if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
+
+                $isConfigured = SystemGlCodeScenario::find(13);
+                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
+
+                if($isConfigured && $isDetailConfigured) {
+                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
+                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                    }
+                }
+                if(isset($isDetailConfigured->chartOfAccountSystemID) == null){
+                    return $this->sendError('Chart of account is not configured for retention control account', 500);
                 }
             }
 
@@ -1246,7 +1277,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
 //            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
 //            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
 //        }
-
 
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
