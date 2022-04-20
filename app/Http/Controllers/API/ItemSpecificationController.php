@@ -68,7 +68,11 @@ class ItemSpecificationController extends AppBaseController
     {
         $data = ItemSpecification::where('item_id',$id)->first();
         
-        return $this->sendResponse($data->toArray(), 'Data Reterived Successfully');
+        if($data) {
+            return $this->sendResponse($data->toArray(), 'Data Reterived Successfully');
+        }else {
+            return $this->sendResponse([], 'Data not found');
+        }
     }
 
     /**

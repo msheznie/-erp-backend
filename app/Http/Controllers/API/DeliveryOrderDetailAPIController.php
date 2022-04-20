@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\ItemTracking;
 
 /**
  * Class DeliveryOrderDetailController
@@ -738,6 +739,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                               ->update(['sold' => 0, 'soldQty' => 0]);
 
                     $subProduct->delete();
+                }
+            } else if ($deliveryOrderDetail->trackingType == 1) {
+                $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($deliveryOrder->documentSystemID, $id);
+
+                if (!$deleteBatch['status']) {
+                    return $this->sendError($deleteBatch['message'], 422);
                 }
             }
 

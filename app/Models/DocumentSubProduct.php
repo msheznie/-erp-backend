@@ -92,6 +92,7 @@ class DocumentSubProduct extends Model
         'documentSystemCode',
         'documentDetailID',
         'productSerialID',
+        'wareHouseSystemID',
         'productBatchID',
         'quantity',
         'sold',
@@ -112,6 +113,7 @@ class DocumentSubProduct extends Model
         'productSerialID' => 'integer',
         'productBatchID' => 'integer',
         'productInID' => 'integer',
+        'wareHouseSystemID' => 'integer',
         'quantity' => 'float',
         'sold' => 'integer',
         'soldQty' => 'float'
@@ -130,6 +132,11 @@ class DocumentSubProduct extends Model
     public function serial_data()
     {
         return $this->belongsTo('App\Models\ItemSerial', 'productSerialID', 'id');
+    }
+
+    public function batch_data()
+    {
+        return $this->belongsTo('App\Models\ItemBatch', 'productBatchID', 'id');
     }
 
     public function grv_master()
