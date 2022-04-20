@@ -187,8 +187,8 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
-        $input['created_pc'] = gethostname();
-        $input['created_by'] = Helper::getEmployeeID();
+        $input['updated_pc'] = gethostname();
+        $input['updated_by'] = Helper::getEmployeeID();
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
@@ -211,8 +211,12 @@ class TenderProcurementCategoryController extends AppBaseController
         if (empty($tenderProcurementCategory)) {
             return $this->sendError('Procurement Category not found');
         }
-
-        $tenderProcurementCategory->delete();
+        $input['deleted_by'] = Helper::getEmployeeID();
+        $procurementCategoryDeleted = TenderProcurementCategory::where('id', $id)->update($input);
+        
+        if($procurementCategoryDeleted){
+            $tenderProcurementCategory->delete();
+        }
 
         return $this->sendResponse($id, 'Procurement category deleted successfully');
     }
