@@ -14,6 +14,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
@@ -1298,6 +1299,30 @@ class SRMService
                 'data' => $exception
             ];
         }
+    }
 
+    public function getPreBidClarificationsResponse(Request $request)
+    {
+        $input = $request->all();
+        $id = 1; //$input['Id'];
+        $employeeId = Helper::getEmployeeSystemID();
+
+        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        },'attachment'])
+            ->where('id', '=', $id)
+            ->orWhere('parent_id', '=', $id)
+            ->orderBy('parent_id', 'asc')
+            ->get();
+        /*$profilePic = Employee::with(['profilepic'])
+            ->where('employeeSystemID', $employeeId)
+            ->first();
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+
+        return [
+            'success' => true,
+            'message' => 'Pre-bid response list successfully get',
+            'data' => $data
+        ];
     }
 }
