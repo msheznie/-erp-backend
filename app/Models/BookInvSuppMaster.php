@@ -580,4 +580,28 @@ class BookInvSuppMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'employeeID', 'employeeSystemID');
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_bookinvsuppmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_bookinvsuppmaster.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeSupplierJoin($q,$as = 'supplier', $column = 'supplierID' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_bookinvsuppmaster.'.$column)
+        ->addSelect($as.".supplierName as ".$columnAs);
+    }
+
+        public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_bookinvsuppmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
 }

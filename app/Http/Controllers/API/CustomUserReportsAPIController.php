@@ -561,7 +561,7 @@ class CustomUserReportsAPIController extends AppBaseController
         if (!$result['success']) {
             return $this->sendError($result['message'], 500);
         }
-
+       
         $data = $result['data'];
         if($data){
             $data = $data->paginate($limit);
@@ -604,7 +604,7 @@ class CustomUserReportsAPIController extends AppBaseController
             'data' => [],
             'report' => []
         );
-
+        
         $input = $request->all();
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
@@ -644,7 +644,7 @@ class CustomUserReportsAPIController extends AppBaseController
 
         // sort by columns
         $sortByColumns = $this->getSortByColumns($report['columns']);
-
+        
 
         $isMasterExist = $this->checkMasterColumn($report['columns'], 1, 'is_master'); // 1 - master, 0 - details
         $isDetailExist = false ; // $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
@@ -722,6 +722,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     // $templateData['rptCurrency'] = ['poTotalComRptCurrency','GRVcostPerUnitComRptCur'];
                     // $templateData['transCurrency'] = ['poTotalSupplierTransactionCurrency','GRVcostPerUnitSupTransCur'];  
                     break;
+                case 2:  
+                    $masterTable = 'erp_bookinvsuppmaster';
+                    $primaryKey  = $masterTable . '.bookingSuppMasInvAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['canceledColumn']  = 'cancelYN';
+                    $templateData['canceledValue']   =  -1;
+                    $templateData['model'] = 'BookInvSuppMaster';
+                    $templateData['tables'] = ['created_by','modified_by','confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','localcurrency','transactioncurrency','supplier_country','location','approved_by','modified_by','company'];
+                 
+                    break;    
                 default;
                     break;
             }
@@ -735,13 +749,12 @@ class CustomUserReportsAPIController extends AppBaseController
             if ($isMasterExist) {
                 array_push($columns, $primaryKey . ' as masterId');
             }
-          
+           
             if ($isDetailExist) {
                 array_push($columns, $detailPrimaryKey . ' as detailId');
             }
             $namespacedModel = 'App\Models\\' . $templateData['model'];
             $data = $namespacedModel::selectRaw(implode(",", $columns));
-            
             
             // join tables
             switch ($report->report_master_id) {
@@ -881,17 +894,55 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                     break;
+                case 2:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                      }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                   
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                 }
+                                 else if ($table == 'transactioncurrency') {
+                                    
+                                    $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if($table == 'supplier'){
+                                    $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                                } 
+                                  else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'localcurrency') {
+                                    $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                              
+                            }
+                        }
+                    $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                    break;
                 default:
                     $data = [];
                     break;
             }
-
-
+                
+           
             $uniqueId = $detailPrimaryKey;
             if (!$isDetailExist) {
                 $uniqueId = $primaryKey;
             }
-
+            
             $search = isset($input['search']) ? $input['search'] : '';
 
             /*  1 : 'equals',
@@ -1085,26 +1136,26 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
                 });
             }
-
+            
             // sort by
             if (!$sortByColumns) {
                 array_push($sortByColumns, array('column' => $uniqueId, 'by' => 'desc'));
             }
-
+            
             foreach ($sortByColumns as $column) {
                 $data = $data->orderBy($column['column'], $column['by']);
             }
-
+            
             // group by columns
             $groupByColumns = $this->getGroupByColumns($report['columns'], $masterTable, $detailTable);
-
+           
             // group by
             if (!$groupByColumns) {
                 array_push($groupByColumns, $uniqueId);
             }
 
             $summarizeColumns = $this->getSummarizeColumns($report['summarize']);
-
+            
             if(count($summarizeColumns) > 0 && $data){
                 foreach ($summarizeColumns as $key => $summarizeColumn){
                     $tem = array(
@@ -1141,8 +1192,10 @@ class CustomUserReportsAPIController extends AppBaseController
 
                 }
             }
-
+            
             $data = $data->groupBy($groupByColumns);
+            
+          
             // paginate
         }
 
