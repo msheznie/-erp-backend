@@ -353,13 +353,25 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        if(!empty($tenderMaster['procument_cat_id'])){
+           $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
+        }else{
+            $category['is_active'] = 1;
+        }
+
         $data['tenderType'] = TenderType::get();
         $data['yesNoSelection'] = YesNoSelection::all();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
-        $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->get();
+        $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
+
+        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
+            $data['procurementCategory'][] = $category;
+        }
 
         return $data;
     }
@@ -451,7 +463,20 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderSubCategory(Request $request)
     {
         $input = $request->all();
-        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->get();
+
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        if(!empty($tenderMaster['procument_sub_cat_id'])){
+            $category = TenderProcurementCategory::where('id',$tenderMaster['procument_sub_cat_id'])->first();
+        }else{
+            $category['is_active'] = 1;
+        }
+
+        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+
+        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
+            $data['procurementSubCategory'][] = $category;
+        }
 
         return $data;
     }
@@ -1005,5 +1030,29 @@ class TenderMasterAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    public function loadTenderSubActivity(Request $request)
+    {
+        $input = $request->all();
+
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+
+        $activity = ProcumentActivity::where('tender_id',$input['tenderMasterId'])->get();
+
+        if($tenderMaster['confirmed_yn'] == 1){
+            if(count($activity)>0){
+                foreach ($activity as $vl){
+                    $category = TenderProcurementCategory::where('id',$vl['category_id'])->first();
+                    if($category['is_active'] == 0){
+                        $data['procurementSubCategory'][] = $category;
+                    }
+                }
+            }
+        }
+
+        return $data;
     }
 }

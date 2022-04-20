@@ -2536,6 +2536,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteTenderMaster', 'TenderMasterAPIController@deleteTenderMaster');
         Route::post('getTenderMasterData', 'TenderMasterAPIController@getTenderMasterData');
         Route::post('loadTenderSubCategory', 'TenderMasterAPIController@loadTenderSubCategory');
+        Route::post('loadTenderSubActivity', 'TenderMasterAPIController@loadTenderSubActivity');
         Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
         Route::post('updateTender', 'TenderMasterAPIController@updateTender');
 
