@@ -45,6 +45,7 @@ use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
+use App\Models\ErpProjectMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
@@ -1205,7 +1206,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1217,8 +1218,13 @@ class DebitNoteAPIController extends AppBaseController
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
 
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
+
         $search = $request->input('search.value');
-        $debitNotes = $this->debitNotesByCompany($input, $search, $supplierID);
+        $debitNotes = $this->debitNotesByCompany($input, $search, $supplierID, $projectID);
 
         return \DataTables::of($debitNotes)
             ->order(function ($query) use ($input) {
@@ -1267,6 +1273,14 @@ class DebitNoteAPIController extends AppBaseController
             ->where('approved', -1)
             ->get();
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
+
+        $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->get();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1275,7 +1289,9 @@ class DebitNoteAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'suppliers' => $suppliers,
             'segments' => $segments,
-            'companyBasePO' => $companyBasePO
+            'companyBasePO' => $companyBasePO,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2052,7 +2068,7 @@ UNION ALL
     }
 
 
-    private function debitNotesByCompany($request, $search, $supplierID)
+    private function debitNotesByCompany($request, $search, $supplierID, $projectID)
     {
         $input = $request;
         $selectedCompanyId = $input['companyId'];
@@ -2065,12 +2081,18 @@ UNION ALL
         }
 
         $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
-            ->with('created_by', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'final_approved_by')
+            ->with('created_by', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'final_approved_by', 'project')
             ->where('documentSystemID', $input['documentId']);
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
                 $debitNotes = $debitNotes->whereIn('supplierID', $supplierID);
+            }
+        }
+
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $debitNotes = $debitNotes->whereIn('projectID', $projectID);
             }
         }
 

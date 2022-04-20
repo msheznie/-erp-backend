@@ -32,6 +32,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
         Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
+        Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
         Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
@@ -730,6 +731,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
         Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
         Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
+
+        Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
         Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
         Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
@@ -1757,6 +1760,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
         Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
 
+        Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
+        Route::resource('procurement_categories', 'TenderProcurementCategoryController');
+
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
@@ -2523,7 +2529,36 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
 
 
-        
+        Route::post('getTenderBidFormats', 'TenderBidFormatMasterAPIController@getTenderBidFormats');
+        Route::post('storeBidFormat', 'TenderBidFormatMasterAPIController@storeBidFormat');
+        Route::post('loadBidFormatMaster', 'TenderBidFormatMasterAPIController@loadBidFormatMaster');
+        Route::post('addPriceBidDetail', 'TenderBidFormatMasterAPIController@addPriceBidDetail');
+        Route::post('updatePriceBidDetail', 'TenderBidFormatMasterAPIController@updatePriceBidDetail');
+        Route::post('updateBidFormat', 'TenderBidFormatMasterAPIController@updateBidFormat');
+        Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail');
+        Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster');
+
+        Route::post('getTenderMasterList', 'TenderMasterAPIController@getTenderMasterList');
+        Route::post('getTenderDropDowns', 'TenderMasterAPIController@getTenderDropDowns');
+        Route::post('createTender', 'TenderMasterAPIController@createTender');
+        Route::post('deleteTenderMaster', 'TenderMasterAPIController@deleteTenderMaster');
+        Route::post('getTenderMasterData', 'TenderMasterAPIController@getTenderMasterData');
+        Route::post('loadTenderSubCategory', 'TenderMasterAPIController@loadTenderSubCategory');
+        Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
+        Route::post('updateTender', 'TenderMasterAPIController@updateTender');
+
+        Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
+        Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
+        Route::post('addPricingSchedule', 'PricingScheduleMasterAPIController@addPricingSchedule');
+        Route::post('getPricingScheduleMaster', 'PricingScheduleMasterAPIController@getPricingScheduleMaster');
+        Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
+        Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails');
+        Route::post('addPriceBidDetails', 'PricingScheduleMasterAPIController@addPriceBidDetails');
+
+
+        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
 
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2532,6 +2567,24 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
         Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
+
+        Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList');
+        Route::post('addMainWorks', 'TenderMainWorksAPIController@addMainWorks');
+        Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
+        Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
+        Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+
+        Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData');
+        Route::post('createFaq', 'TenderFaqAPIController@createFaq');
+        Route::post('getFaqList', 'TenderFaqAPIController@getFaqList');
+        Route::post('getFaq', 'TenderFaqAPIController@getFaq');
+        Route::post('deleteFaq', 'TenderFaqAPIController@deleteFaq');
+
+        Route::post('loadTenderBoqItems', 'TenderBoqItemsAPIController@loadTenderBoqItems');
+        Route::post('addTenderBoqItems', 'TenderBoqItemsAPIController@addTenderBoqItems');
+        Route::post('updateTenderBoqItem', 'TenderBoqItemsAPIController@updateTenderBoqItem');
+        Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem');
+        Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
 
     });
 
@@ -2610,9 +2663,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getAppointmentListSummaryView', 'AppointmentAPIController@getAppointmentListSummaryView');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
-    Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
-
+    Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM'); 
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
+    Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
 });
 
 
@@ -2727,6 +2780,48 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
+
+
+
+
+
+Route::resource('tender_bid_format_masters', 'TenderBidFormatMasterAPIController');
+
+Route::resource('tender_bid_format_details', 'TenderBidFormatDetailAPIController');
+
+
+Route::resource('tender_field_types', 'TenderFieldTypeAPIController');
+
+
+Route::resource('tender_masters', 'TenderMasterAPIController');
+
+
+Route::resource('tender_types', 'TenderTypeAPIController');
+
+Route::resource('envelop_types', 'EnvelopTypeAPIController');
+
+
+Route::resource('evaluation_types', 'EvaluationTypeAPIController');
+
+
+Route::resource('procument_activities', 'ProcumentActivityAPIController');
+
+Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
+
+Route::resource('pricing_schedule_masters', 'PricingScheduleMasterAPIController');
+
+
+Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIController');
+
+
+Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
+
+Route::resource('tender_main_works', 'TenderMainWorksAPIController');  
+Route::resource('tender_main_works', 'TenderMainWorksAPIController');
+Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 /* Below two request must be always separated from tenant, auth middlewares */
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');

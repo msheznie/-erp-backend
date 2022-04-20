@@ -53,6 +53,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
+use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerReceivePaymentDetail;
@@ -422,7 +423,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
       
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
 
@@ -650,27 +651,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isDefault', 1)
                     ->first();
 
-                $input['custTransactionCurrencyER'] = 0;
-                $input['companyRptCurrencyID'] = 0;
-                $input['companyRptCurrencyER'] = 0;
-                $input['localCurrencyID'] = 0;
-                $input['localCurrencyER'] = 0;
-
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }                
                 }
             }
 
@@ -678,19 +665,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
         }
@@ -1347,7 +1326,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
 
@@ -1567,27 +1546,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isDefault', 1)
                     ->first();
 
-                $input['custTransactionCurrencyER'] = 0;
-                $input['companyRptCurrencyID'] = 0;
-                $input['companyRptCurrencyER'] = 0;
-                $input['localCurrencyID'] = 0;
-                $input['localCurrencyER'] = 0;
-
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
 
@@ -1595,19 +1560,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
-                    $input['bankCurrencyER'] = 1;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
-                    $input['custTransactionCurrencyER'] = 1;
-
-                    $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
-                    /*exchange added*/
-                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMasterBank) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
+                    }
                 }
             }
         }
@@ -2411,6 +2368,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
                 $output['paymentType'] = PaymentType::all();
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
 
                 break;
 
@@ -2434,6 +2393,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
+
+                $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
+
                 break;
             case 'getCurrency':
                 $customerID = $input['customerID'];
@@ -2492,6 +2460,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
                 $output['paymentType'] = PaymentType::all();
 
+                $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
+
                 break;
             case 'amendEdit':
                 $id = $input['id'];
@@ -2544,6 +2520,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         ->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')
                         ->get();
                 }
+
+                $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
+
                 break;
             default:
                 $output = [];
@@ -2555,12 +2540,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     public function recieptVoucherDataTable(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType', 'projectID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
 
         $search = $request->input('search.value');
 
@@ -2568,6 +2557,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('erp_projectmaster', 'erp_customerreceivepayment.projectID', '=', 'erp_projectmaster.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
             ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
             ->leftJoin('erp_bankledger', function ($join) {
@@ -2620,6 +2610,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master->where('payment_type.id', '=', $input['paymentType']);
             }
         }
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $master->whereIn('projectID', $projectID);
+            }
+        }
 
         $master = $master->select([
             'custPaymentReceiveCode',
@@ -2644,7 +2639,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'receivedAmount as receivedAmount',
             'bankAmount as bankAmount',
             'erp_bankledger.trsClearedYN as trsClearedYN',
-            'payment_type.description as paymentType'
+            'payment_type.description as paymentType',
+            'projectID',
+            'erp_projectmaster.description as project_description'
         ]);
 
         if ($search) {
@@ -2657,6 +2654,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
                     ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%")
                     ->orWhere('payment_type.description', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_projectmaster.description', 'LIKE', "%{$search}%")
                     ->orWhere('erp_customerreceivepayment.receivedAmount', 'LIKE', "%{$search_without_comma}%")
                     ->orWhere('erp_customerreceivepayment.bankAmount', 'LIKE', "%{$search_without_comma}%");
             });

@@ -34,7 +34,8 @@ class SupplierRegistrationLink extends Model
         'RollLevForApp_curr',
         'timesReferred',
         'confirmed_yn',
-        'refferedBackYN'
+        'refferedBackYN',
+        'is_bid_tender'
     ];
 
     protected $appends = ['appointment_date_expired'];

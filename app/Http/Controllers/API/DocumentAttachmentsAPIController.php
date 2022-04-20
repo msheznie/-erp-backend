@@ -956,4 +956,19 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Attachments not found', 500);
         }
     }
+    public function downloadFileTender(Request $request){ 
+      
+        $input = $request->all(); 
+        $companyId = $input['company_id'];
+        $filePath = $input['fileName']; 
+        if (!is_null($filePath)) {
+            if ($exists = Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->exists($filePath)) {
+                return Storage::disk(Helper::policyWiseDisk($companyId, 'public'))->download($filePath, 'File');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+        } else {
+            return $this->sendError('Attachment is not attached', 404);
+        }
+    }
 }

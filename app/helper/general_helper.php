@@ -1335,7 +1335,7 @@ class Helper
      */
     public static function approveDocument($input)
     {
-    
+        
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
@@ -4933,7 +4933,9 @@ class Helper
                                         "consumedLocalAmount" => abs($value->localAmountTot),
                                         "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                         "consumedRptAmount" => abs($value->comRptAmountTot),
-                                        "timestamp" => date('d/m/Y H:i:s A')
+                                        "timestamp" => date('d/m/Y H:i:s A'),
+                                        "projectID" => $masterRec->projectID
+
                                     );
                                 }
                             }
@@ -4973,7 +4975,8 @@ class Helper
                                         "consumedLocalAmount" => abs($value->localAmountTot),
                                         "consumedRptCurrencyID" => $masterRec->companyRptCurrencyID,
                                         "consumedRptAmount" => abs($value->comRptAmountTot),
-                                        "timestamp" => date('d/m/Y H:i:s A')
+                                        "timestamp" => date('d/m/Y H:i:s A'),
+                                        "projectID" => $masterRec->projectID
                                     );
                                 }
                             }
@@ -5012,7 +5015,8 @@ class Helper
                                     "consumedLocalAmount" => ($value->localAmountTot * -1),
                                     "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                     "consumedRptAmount" => ($value->comRptAmountTot * -1),
-                                    "timestamp" => date('d/m/Y H:i:s A')
+                                    "timestamp" => date('d/m/Y H:i:s A'),
+                                    "projectID" => $masterRec->projectID
                                 );
                             }
                         }
@@ -5050,7 +5054,9 @@ class Helper
                                     "consumedLocalAmount" => ($value->localAmountTot * -1),
                                     "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                     "consumedRptAmount" => ($value->comRptAmountTot * -1),
-                                    "timestamp" => date('d/m/Y H:i:s A')
+                                    "timestamp" => date('d/m/Y H:i:s A'),
+                                    "projectID" => $masterRec->projectID
+
                                 );
                             }
                         }
@@ -5898,5 +5904,41 @@ class Helper
             $bytes /= 1024;
         }
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+
+    public static function customerLedgerReportSum($reportData, $type){
+        $sumAmount = 0;
+
+        if($type == 'invoice'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->invoiceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'paid'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->paidAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+        if($type == 'balance'){
+            foreach($reportData as $data => $value){
+                $amount = collect($value->balanceAmount)->sum();
+                $sumAmount = $sumAmount + $amount;
+            }
+        }
+
+
+
+        if($sumAmount){
+            return $sumAmount ;
+        } else{
+            $sumAmount = 0;
+            return $sumAmount ;
+        }
+
+        
     }
 }

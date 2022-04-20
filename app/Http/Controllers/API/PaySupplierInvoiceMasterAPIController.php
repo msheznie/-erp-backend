@@ -35,6 +35,7 @@ use App\Models\BankMemoPayee;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegister;
+use App\Models\ErpProjectMaster;
 use App\Models\ChequeRegisterDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -619,7 +620,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
 
             } else {
-                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0) {
+                if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == 0 && $input['paymentMode'] == 2) {
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
@@ -2478,7 +2479,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode', 'projectID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -2489,6 +2490,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
+
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
 
         $search = $request->input('search.value');
         
@@ -2519,7 +2524,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['payment_mode']);
         }
         
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2632,6 +2637,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $companyData = Company::find($companyId);
 
+            $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
+
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
+         
+
             $output = array(
                 'financialYears' => $financialYears,
                 'companyFinanceYear' => $companyFinanceYear,
@@ -2655,6 +2668,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'isPolicyOn' => $policyOn,
                 'deduction_type_drop' => $monthly_declarations_drop,
                 'paymentMode' => $paymentMode,
+                'isProjectBase' => $isProject_base,
+                'projects' => $projects,
             );
         }
 
