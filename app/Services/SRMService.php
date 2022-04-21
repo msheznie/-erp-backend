@@ -1254,6 +1254,7 @@ class SRMService
             $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
             DB::commit();
+
             $tenderPrebidClarification = TenderBidClarifications::create($data);
             return [
                 'success' => true,
@@ -1318,7 +1319,7 @@ class SRMService
             ->where('employeeSystemID', $employeeId)
             ->first();
         $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
-
+        
         return [
             'success' => true,
             'message' => 'Pre-bid response list successfully get',
