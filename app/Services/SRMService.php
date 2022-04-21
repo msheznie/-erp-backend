@@ -28,6 +28,7 @@ use App\Models\TenderBidClarifications;
 use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderPrebidClarification;
 use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
@@ -1250,10 +1251,12 @@ class SRMService
             $data['supplier_id'] = $supplierRegId;
             $data['is_public'] = $request->input('extra.publish');
             $data['parent_id'] = $request->input('extra.parent_id');
+
             $data['created_by'] = $supplierRegId;
             $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
             DB::commit();
+
             $tenderPrebidClarification = TenderBidClarifications::create($data);
             return [
                 'success' => true,
@@ -1286,6 +1289,7 @@ class SRMService
                     $q->where('parent_id', 0);
                 })->where('id', $tenderId)
                 ->get();
+
 
             return [
                 'success' => true,
