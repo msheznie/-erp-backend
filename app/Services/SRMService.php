@@ -14,6 +14,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
@@ -23,10 +24,10 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Models\TenderBidClarifications;
 use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
-use App\Models\TenderPrebidClarification;
 use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
@@ -1219,7 +1220,7 @@ class SRMService
         $input = $request->all();
         $tenderId = $input['extra'];
         try{
-            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', 1)->get();
 
             return [
                 'success' => true,
@@ -1243,17 +1244,18 @@ class SRMService
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderMasterId;
-            $data['posted_by_type'] = "1";
-            $data['post'] = $request->input('extra.post');
-            $data['user_id'] = $supplierRegId;
+            $data['posted_by_type'] = "0";
+            $data['post'] = $request->input('extra.question');
+            $data['user_id'] = $request->input('extra.user_id');;
             $data['supplier_id'] = $supplierRegId;
-            $data['is_public'] = $supplierRegId;
-            $data['parent_id'] = 1; //$request->input('extra.parentId');
+            $data['is_public'] = $request->input('extra.publish');
+            $data['parent_id'] = $request->input('extra.parent_id');
             $data['created_by'] = $supplierRegId;
             $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
             DB::commit();
-            $tenderPrebidClarification = TenderPrebidClarification::create($data);
+
+            $tenderPrebidClarification = TenderBidClarifications::create($data);
             return [
                 'success' => true,
                 'message' => 'Tender Pre-bid Clarification successfully',
@@ -1273,14 +1275,23 @@ class SRMService
     public function getPrebidClarification(Request $request)
     {
         $input = $request->all();
+        //$companyId = $input['companySystemID'];
         $tenderId = $input['extra'];
+
         try{
-            $query = TenderPrebidClarification::where('tender_master_id', $tenderId)->get();
+            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
+                $q->where('parent_id', 0);
+                $q->with(['supplier']);
+            }])
+                ->whereHas('tenderPreBidClarification', function ($q) {
+                    $q->where('parent_id', 0);
+                })->where('id', $tenderId)
+                ->get();
 
             return [
                 'success' => true,
                 'message' => 'FAQ list successfully get',
-                'data' => $query
+                'data' => $data
             ];
         } catch (\Exception $exception){
             return [
@@ -1289,6 +1300,30 @@ class SRMService
                 'data' => $exception
             ];
         }
+    }
 
+    public function getPreBidClarificationsResponse(Request $request)
+    {
+        $input = $request->all();
+        $id = 1; //$input['Id'];
+        $employeeId = Helper::getEmployeeSystemID();
+
+        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        },'attachment'])
+            ->where('id', '=', $id)
+            ->orWhere('parent_id', '=', $id)
+            ->orderBy('parent_id', 'asc')
+            ->get();
+        /*$profilePic = Employee::with(['profilepic'])
+            ->where('employeeSystemID', $employeeId)
+            ->first();
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+        
+        return [
+            'success' => true,
+            'message' => 'Pre-bid response list successfully get',
+            'data' => $data
+        ];
     }
 }
