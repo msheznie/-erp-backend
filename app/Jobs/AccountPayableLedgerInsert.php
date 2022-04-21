@@ -118,6 +118,8 @@ class AccountPayableLedgerInsert implements ShouldQueue
                         $taxRpt = 0;
                         $taxTrans = 0;
 
+                        $retentionPercentage = ($masterData->retentionPercentage > 0) ? $masterData->retentionPercentage : 0;
+
                         if ($tax) {
                             $taxLocal = $tax->localAmount;
                             $taxRpt = $tax->rptAmount;
@@ -216,7 +218,39 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
                             $data['createdPcID'] = gethostname();
                             $data['timeStamp'] = \Helper::currentDateTime();
+
+                            $retentionTrans = 0;
+                            $retentionLocal = 0;
+                            $retentionInvoiceAmount = 0;
+                            $retentionRpt = 0;
+                            if ($retentionPercentage > 0) {
+                                if ($masterData->documentType != 4) {
+                                    $retentionInvoiceAmount = $data['supplierInvoiceAmount'] * ($retentionPercentage/100);
+                                    $retentionTrans = $data['supplierDefaultAmount'] * ($retentionPercentage/100);
+                                    $retentionLocal = $data['localAmount'] * ($retentionPercentage/100);
+                                    $retentionRpt = $data['comRptAmount'] * ($retentionPercentage/100);
+
+                                    $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] * (1-($retentionPercentage/100));
+                                    $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] * (1-($retentionPercentage/100));
+                                    $data['localAmount'] = $data['localAmount'] * (1-($retentionPercentage/100));
+                                    $data['comRptAmount'] = $data['comRptAmount'] * (1-($retentionPercentage/100));
+                                }
+                            } 
+
                             array_push($finalData, $data);
+
+                            if ($retentionPercentage > 0) {
+                                if ($masterData->documentType != 4) {
+                                    $data['supplierInvoiceAmount'] = $retentionInvoiceAmount;
+                                    $data['supplierDefaultAmount'] = $retentionTrans;
+                                    $data['localAmount'] = $retentionLocal;
+                                    $data['comRptAmount'] = $retentionRpt;
+                                    $data['isRetention'] = 1;
+                                    array_push($finalData, $data);
+                                }
+                            } else {
+                                $data['isRetention'] = 0;
+                            }
                         }
                         break;
                     case 4: // Payment Voucher
