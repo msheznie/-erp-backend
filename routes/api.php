@@ -2584,7 +2584,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval');
         Route::post('approveTender', 'TenderMasterAPIController@approveTender');
         Route::post('rejectTender', 'TenderMasterAPIController@rejectTender');
-
+        Route::post('deletePreTender', 'TenderBidClarificationsAPIController@deletePreTender');
+        Route::post('getPreBidEditData', 'TenderBidClarificationsAPIController@getPreBidEditData');
+        Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid'); 
+        Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

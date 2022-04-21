@@ -292,12 +292,22 @@ class TenderBidClarificationsAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyId = $input['companySystemID'];
-        $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
+        $tenderId = isset($input['tender']) ? $input['tender'] : 0;
+        $isUnasweredYN = isset($input['isUnanswered']) ? $input['isUnanswered'] : false;
+        $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($isUnasweredYN) {
             $q->where('parent_id', 0);
+            $q->when(($isUnasweredYN == true), function ($query) {
+                $query->where('is_answered', 0);
+            });
             $q->with(['supplier']);
         }])
-            ->whereHas('tenderPreBidClarification', function ($q) {
+            ->whereHas('tenderPreBidClarification', function ($q) use ($isUnasweredYN) {
                 $q->where('parent_id', 0);
+                $q->when(($isUnasweredYN == true), function ($query) {
+                    $query->where('is_answered', 0);
+                });
+            })->when(($tenderId > 0), function ($query) use ($tenderId) {
+                $query->where('id', $tenderId);
             })
             ->get();
 
@@ -311,7 +321,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        }, 'attachment'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -344,42 +354,11 @@ class TenderBidClarificationsAPIController extends AppBaseController
             $data['created_by'] = $employeeId;
             $data['company_id'] = $companySystemID;
             $data['document_system_id'] = $documentCode->documentSystemID;
-            $data['document_id'] = $documentCode->documentID; 
-            $result = TenderBidClarifications::create($data); 
+            $data['document_id'] = $documentCode->documentID;
+            $result = TenderBidClarifications::create($data);
             if (isset($input['Attachment']) && !empty($input['Attachment'])) {
                 $attachment = $input['Attachment'];
-                if (!empty($attachment) && isset($attachment['file'])) {
-                    $extension = $attachment['fileType'];
-                    $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
-
-                    if (!in_array(strtolower($extension), $allowExtensions)) {
-                        return $this->sendError('This type of file not allow to upload.', 500);
-                    }
-
-                    if (isset($attachment['size'])) {
-                        if ($attachment['size'] > 2097152) {
-                            return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
-                        }
-                    }
-                    $file = $attachment['file'];
-                    $decodeFile = base64_decode($file);
-                    $attch = time() . '_PreBidClarificationCompany.' . $extension;
-                    $path = $companySystemID . '/PreBidClarification/' . $attch;
-                    Storage::disk(Helper::policyWiseDisk($companySystemID, 'public'))->put($path, $decodeFile);
-
-                    $att['companySystemID'] = $companySystemID;
-                    $att['companyID'] = $company->CompanyID;
-                    $att['documentSystemID'] = $documentCode->documentSystemID;
-                    $att['documentID'] = $documentCode->documentID;
-                    $att['documentSystemCode'] = $result->id;
-                    $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
-                    $att['path'] = $path;
-                    $att['originalFileName'] = $attachment['originalFileName'];
-                    $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
-                    $att['sizeInKbs'] = $attachment['sizeInKbs'];
-                    $att['isUploaded'] = 1;
-                    DocumentAttachments::create($att);
-                }
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
             }
 
             if ($result) {
@@ -389,6 +368,143 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
             }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+    public function deletePreTender(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $companySystemID = $input['companySystemID'];
+        $tenderMasterId = $input['tenderMasterId'];
+        $masterResponseId = $input['masterResponseId'];
+        $tenderPreBidClarification = $this->tenderBidClarificationsRepository->findWithoutFail($id);
+
+        if (empty($tenderPreBidClarification)) {
+            return $this->sendError('Not Found');
+        }
+        $tenderPreBidClarification->delete();
+        DocumentAttachments::where('documentSystemID', 109)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemCode', $id)
+            ->delete();
+
+
+        $isLastSupplierResponse = TenderBidClarifications::select('id')
+            ->where('tender_master_id', $tenderMasterId)
+            ->where('parent_id', $masterResponseId)
+            ->where('posted_by_type', 0)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        $supplierId = ($isLastSupplierResponse['id'] ? $isLastSupplierResponse['id'] : 0);
+
+
+        $isResponseExist = TenderBidClarifications::select('id')
+            ->where('tender_master_id', $tenderMasterId)
+            ->where('parent_id', $masterResponseId)
+            ->where('posted_by_type', 1)
+            ->where('id', '>', $supplierId)
+            ->count();
+
+        if ($isResponseExist == 0) {
+            $updateRec['is_answered'] = 0;
+            TenderBidClarifications::where('id', $masterResponseId)
+                ->update($updateRec);
+        }
+        return $this->sendResponse($id, 'File Deleted');
+    }
+    public function getPreBidEditData(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $tenderId = $input['tenderMasterId'];
+        $data = TenderBidClarifications::with(['attachment'])->where('id', $id)->first();
+        return $data;
+    }
+    public function updatePreBid(Request $request)
+    {
+        $input = $request->all();
+        $companySystemID = $input['companySystemID'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        DB::beginTransaction();
+        try {
+            $data['post'] = $input['post'];
+            $this->tenderBidClarificationsRepository->update($input, $input['id']);
+            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+                ->where('companySystemID', $companySystemID)
+                ->where('documentSystemCode', $input['id'])
+                ->count();
+
+            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+                DocumentAttachments::where('documentSystemID', 109)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemCode', $input['id'])
+                    ->delete();
+            }
+
+            if (isset($input['Attachment']) && !empty($input['Attachment'])) {
+                $attachment = $input['Attachment'];
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated'];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+    public function uploadAttachment($attachment, $companySystemID, $company, $documentCode, $id)
+    {
+        if (!empty($attachment) && isset($attachment['file'])) {
+            $extension = $attachment['fileType'];
+            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+            if (!in_array(strtolower($extension), $allowExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
+            }
+
+            if (isset($attachment['size'])) {
+                if ($attachment['size'] > 2097152) {
+                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                }
+            }
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+            $attch = time() . '_PreBidClarificationCompany.' . $extension;
+            $path = $companySystemID . '/PreBidClarification/' . $attch;
+            Storage::disk(Helper::policyWiseDisk($companySystemID, 'public'))->put($path, $decodeFile);
+
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
+            $att['documentSystemID'] = $documentCode->documentSystemID;
+            $att['documentID'] = $documentCode->documentID;
+            $att['documentSystemCode'] = $id;
+            $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
+            $att['path'] = $path;
+            $att['originalFileName'] = $attachment['originalFileName'];
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['sizeInKbs'] = $attachment['sizeInKbs'];
+            $att['isUploaded'] = 1;
+            DocumentAttachments::create($att);
+        }
+    }
+    public function closeThread(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        DB::beginTransaction();
+        try {
+            $data['is_closed'] = 1;
+            $this->tenderBidClarificationsRepository->update($data, $id);
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully thread closed'];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
