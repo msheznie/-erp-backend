@@ -1249,7 +1249,7 @@ class SRMService
             $data['user_id'] = $request->input('extra.user_id');;
             $data['supplier_id'] = $supplierRegId;
             $data['is_public'] = $request->input('extra.publish');
-            $data['parent_id'] = 1; //$request->input('extra.parentId');
+            $data['parent_id'] = $request->input('extra.parent_id');
             $data['created_by'] = $supplierRegId;
             $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
