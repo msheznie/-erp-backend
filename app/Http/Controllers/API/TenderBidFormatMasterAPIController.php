@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTenderBidFormatMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidFormatMasterAPIRequest;
+use App\Models\PricingScheduleMaster;
 use App\Models\TenderBidFormatDetail;
 use App\Models\TenderBidFormatMaster;
 use App\Models\TenderFieldType;
@@ -364,6 +365,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $data['master'] = TenderBidFormatMaster::where('id',$input['id'])->where('company_id',$input['companySystemID'])->first();
         $data['detail'] = TenderBidFormatDetail::where('tender_id',$input['id'])->get();
         $data['tenderType'] = TenderFieldType::get();
+        $pricebid = self::priceBidExistInTender($input['id']);
+        if(!empty($pricebid)){
+            $data['pricebid'] = 1;
+        }else{
+            $data['pricebid'] = 0;
+        }
 
         return $data;
     }
@@ -479,7 +486,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $data['boq_applicable']=$boq_applicable;
+            $pricebid = self::priceBidExistInTender($input['id']);
+            if(empty($pricebid)) {
+                $data['boq_applicable'] = $boq_applicable;
+            }
             $data['tender_name']=$input['tender_name'];
             $data['updated_by'] = $employee->employeeSystemID;
 
@@ -520,6 +530,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
+            $pricebid = self::priceBidExistInTender($input['id']);
+
+            if(!empty($pricebid)){
+                return ['success' => false, 'message' => 'Price bid format cannot be deleted it has been used in tenders'];
+            }
+
             $data['deleted_by'] = $employee->employeeSystemID;
             $data['deleted_at'] = now();
             $result = TenderBidFormatMaster::where('id',$input['id'])->update($data);
@@ -533,6 +549,14 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    function priceBidExistInTender($id){
+       return PricingScheduleMaster::with(['tender_master' => function($q){
+            $q->where('confirmed_yn',1);
+        }])->whereHas('tender_master' , function($q){
+            $q->where('confirmed_yn',1);
+        })->where('price_bid_format_id',$id)->first();
     }
 
 }
