@@ -7,11 +7,13 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
@@ -35,6 +37,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
@@ -1238,9 +1241,14 @@ class SRMService
     }
 
     public function saveTenderPrebidClarification(Request $request){
+        $attachment = $request->input('extra.attachment');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $tenderMasterId = $request->input('extra.tenderId');
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        $companySystemID = 1; //$input['companySystemID'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderMasterId;
@@ -1251,11 +1259,17 @@ class SRMService
             $data['is_public'] = $request->input('extra.publish');
             $data['parent_id'] = $request->input('extra.parent_id');
             $data['created_by'] = $supplierRegId;
-            $data['company_id'] = 1; //$request->input('extra.companyId');
             $data['created_at'] = $currentDate;
+            $data['document_system_id'] = $documentCode->documentSystemID;
+            $data['document_id'] = $documentCode->documentID;
+            $tenderPrebidClarification = TenderBidClarifications::create($data);
+
+            if (isset($attachment) && !empty($attachment)) {
+                Log::info(['$attachment', $attachment]);
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+            }
             DB::commit();
 
-            $tenderPrebidClarification = TenderBidClarifications::create($data);
             return [
                 'success' => true,
                 'message' => 'Tender Pre-bid Clarification successfully',
@@ -1325,5 +1339,43 @@ class SRMService
             'message' => 'Pre-bid response list successfully get',
             'data' => $data
         ];
+    }
+
+    public function uploadAttachment($attachment, $companySystemID, $company, $documentCode, $id)
+    {
+        if (!empty($attachment) && isset($attachment['file'])) {
+            $extension = $attachment['fileType'];
+            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+            if (!in_array(strtolower($extension), $allowExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
+            }
+
+            if (isset($attachment['size'])) {
+                if ($attachment['size'] > 2097152) {
+                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                }
+            }
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+            $attch = time() . '_PreBidClarificationCompany.' . $extension;
+            $path = $companySystemID . '/PreBidClarification/' . $attch;
+            /*Storage::disk(Helper::policyWiseDisk($companySystemID, 'public'))->put($path, $decodeFile);*/
+
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
+            $att['documentSystemID'] = $documentCode->documentSystemID;
+            $att['documentID'] = $documentCode->documentID;
+            $att['documentSystemCode'] = $id;
+            $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
+            $att['path'] = $path;
+            $att['originalFileName'] = $attachment['originalFileName'];
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['sizeInKbs'] = $attachment['sizeInKbs'];
+            $att['isUploaded'] = 1;
+            DocumentAttachments::create($att);
+        } else {
+            Log::info("NO ATTACHMENT");
+        }
     }
 }
