@@ -323,6 +323,7 @@ class TenderFaqAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyId = $input['companySystemID'];
+        $tenderId = isset($input['tender']) ? $input['tender'] : 0;
         $data['tenderFaqList'] = TenderMaster::with(['tenderFaq' => function ($q) use ($companyId) {
             $q->where('company_id', $companyId);
             $q->with(['employee' => function ($q2) {
@@ -331,6 +332,8 @@ class TenderFaqAPIController extends AppBaseController
         }])->where('company_id', $companyId)
             ->whereHas('tenderFaq', function ($q) use ($companyId) {
                 $q->where('company_id', '=', $companyId);
+            })->when(($tenderId > 0), function ($query) use ($tenderId) {
+                $query->where('id', $tenderId);
             })
             ->get();
         return $data;

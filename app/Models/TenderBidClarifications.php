@@ -116,7 +116,8 @@ class TenderBidClarifications extends Model
         'user_id',
         'posted_by_type', 
         'document_system_id',
-        'document_id' 
+        'document_id',
+        'is_closed'
     ];
 
     /**
@@ -136,7 +137,8 @@ class TenderBidClarifications extends Model
         'tender_master_id' => 'integer',
         'updated_by' => 'integer',
         'user_id' => 'integer',
-        'posted_by_type' => 'integer'
+        'posted_by_type' => 'integer',
+        'is_closed' => 'integer'
     ];
 
     /**
