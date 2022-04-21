@@ -16,6 +16,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\SupplierRegistrationLink;
+use App\Models\TenderMaster;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetVerification;
@@ -462,6 +463,14 @@ class email
                     if (!empty($supplierLink)) {
                         $data['docApprovedYN'] = $supplierLink->approved_yn;
                         $data['docCode'] = $supplierLink->id;
+                    }
+                    break;
+                case 108:
+                    $tender = TenderMaster::find($data['docSystemCode']);
+
+                    if (!empty($tender)) {
+                        $data['docApprovedYN'] = $tender->approved;
+                        $data['docCode'] = $tender->tender_code;
                     }
                     break;
                  case 69:

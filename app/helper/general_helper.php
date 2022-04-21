@@ -59,6 +59,7 @@ use App\Models\SalesReturnDetail;
 use App\Models\SalesReturn;
 use App\Models\DeliveryOrder;
 use App\Models\SupplierMaster;
+use App\Models\TenderMaster;
 use App\Models\User;
 use App\Models\DebitNote;
 use App\Models\PaySupplierInvoiceMaster;
@@ -752,6 +753,17 @@ class Helper
                     $docInforArr["confirmedDate"] = 'confirmed_date';
                     $docInforArr["tableName"] = 'srm_supplier_registration_link';
                     $docInforArr["modelName"] = 'SupplierRegistrationLink';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
+                case 108: //SRM Tender
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     break;
                 case 69:
@@ -1871,6 +1883,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
+                break;
+            case 108: //SRM Tender
+                $docInforArr["tableName"] = 'srm_tender_master';
+                $docInforArr["modelName"] = 'TenderMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
              case 69: // Console Journal Voucher
                 $docInforArr["tableName"] = 'erp_consolejvmaster';
@@ -3102,6 +3126,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 108:
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                  case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
@@ -3131,7 +3161,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107, 69])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 69])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
