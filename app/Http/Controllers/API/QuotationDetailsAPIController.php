@@ -567,7 +567,14 @@ class QuotationDetailsAPIController extends AppBaseController
         $quotationMasterID = $input['quotationMasterID'];
 
         $items = QuotationDetails::join('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
-            ->get();
+              ->skip($input['skip'])->take($input['limit'])->get();
+
+        $index = $input['skip'] + 1;
+        foreach($items as $item) {
+            $item['index'] = $index;
+            $index++;
+        }
+        
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
 

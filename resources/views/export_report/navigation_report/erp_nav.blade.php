@@ -35,7 +35,7 @@
     </thead>
     <tbody>
           @foreach ($mainMenus as $item)
-          <tr style="border: 1px solid !important;">
+          <tr style="">
                 <td >{{$item->description}}<br></td>
                 @isset($item->children)
                 @foreach ($item->children as $nav)
@@ -43,7 +43,7 @@
                 <td colspan="1"> </td>
                 <td >
                     <div>
-                       <b>{{nl2br(e($nav->description)) }}</b> <br />
+                      {{$nav->description}} <br />
                     </div>
                 </td>
 
@@ -114,11 +114,11 @@
 
                             @if($nav3->export == true)
                             <span>
-                            Export
+                            Export to CSV
                             </span>
                             @else
                             <span>
-                             N/A,
+                             N/A
                             </span>
                             @endif
 
@@ -194,11 +194,11 @@
 
                            @if($nav->export == true)
                            <span>
-                            Export
+                           Export to CSV
                            </span>
                            @else
                             <span>
-                             N/A,
+                             N/A
                             </span>
                             @endif
 

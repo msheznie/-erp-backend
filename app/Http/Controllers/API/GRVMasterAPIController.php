@@ -992,15 +992,8 @@ class GRVMasterAPIController extends AppBaseController
         ->exists();
         $projects = [];
         $projectGrvMaster = GRVMaster::find($grvAutoID);
-        if ($projectGrvMaster){
-            $serviceLineSystemID = $projectGrvMaster->serviceLineSystemID;
-            $projects = ErpProjectMaster::where('companySystemID', $companyId)
-                                        ->where('serviceLineSystemID', $serviceLineSystemID)
-                                        ->get();
-        } else {
-            $projects = ErpProjectMaster::where('companySystemID', $companyId)
-                                        ->get();
-        }
+
+        $projects = ErpProjectMaster::all();
 
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
 

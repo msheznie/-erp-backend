@@ -32,6 +32,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
         Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
+        Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
         Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
@@ -2506,6 +2507,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSerialNumbersForReturn', 'ItemSerialAPIController@getSerialNumbersForReturn');
         Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
         Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
+
+        Route::resource('item_batches', 'ItemBatchAPIController');
+        Route::get('getBatchNumbersForOut', 'ItemBatchAPIController@getBatchNumbersForOut');
+        Route::post('updateSoldStatusOfBatch', 'ItemBatchAPIController@updateSoldStatusOfBatch');
+        Route::get('getBatchNumbersForReturn', 'ItemBatchAPIController@getBatchNumbersForReturn');
+        Route::get('getWareHouseDataForItemOut', 'ItemBatchAPIController@getWareHouseDataForItemOut');
+        Route::post('updateReturnStatusOfBatch', 'ItemBatchAPIController@updateReturnStatusOfBatch');
 
         Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 
