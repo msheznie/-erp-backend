@@ -597,7 +597,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
                 ->first();
             if (empty($unitConvention)) {
-                return $this->sendError('Unit Convention not found', 500);
+                return $this->sendError("Unit conversion isn't valid or configured", 500);
             }
 
             if ($unitConvention) {
