@@ -560,6 +560,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
         }
 
+        if (isset($input['retentionDueDate']) && $input['retentionDueDate']) {
+            $input['retentionDueDate'] = new Carbon($input['retentionDueDate']);
+        }
+
         // calculating header total
         $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
