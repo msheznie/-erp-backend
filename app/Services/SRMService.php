@@ -1223,7 +1223,7 @@ class SRMService
         $input = $request->all();
         $tenderId = $input['extra'];
         try{
-            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', 1)->get();
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
 
             return [
                 'success' => true,
@@ -1254,7 +1254,7 @@ class SRMService
             $data['tender_master_id'] = $tenderMasterId;
             $data['posted_by_type'] = "0";
             $data['post'] = $request->input('extra.question');
-            $data['user_id'] = $request->input('extra.user_id');;
+            $data['user_id'] = $request->input('extra.user_id');
             $data['supplier_id'] = $supplierRegId;
             $data['is_public'] = $request->input('extra.publish');
             $data['parent_id'] = $request->input('extra.parent_id');
@@ -1289,7 +1289,6 @@ class SRMService
     public function getPrebidClarification(Request $request)
     {
         $input = $request->all();
-        //$companyId = $input['companySystemID'];
         $tenderId = $input['extra'];
 
         try{
@@ -1304,13 +1303,13 @@ class SRMService
 
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
+                'message' => 'Pre-bid Clarification list successfully get',
                 'data' => $data
             ];
         } catch (\Exception $exception){
             return [
                 'success' => false,
-                'message' => 'FAQ list failed get',
+                'message' => 'Pre-bid Clarification list failed get',
                 'data' => $exception
             ];
         }
@@ -1319,8 +1318,8 @@ class SRMService
     public function getPreBidClarificationsResponse(Request $request)
     {
         $input = $request->all();
-        $id = 1; //$input['Id'];
-        $employeeId = Helper::getEmployeeSystemID();
+        $id = $request->input('extra.prebidId');
+        Log::info(['$id', $id]);
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
@@ -1336,7 +1335,7 @@ class SRMService
         
         return [
             'success' => true,
-            'message' => 'Pre-bid response list successfully get',
+            'message' => 'Pre-bid response successfully get',
             'data' => $data
         ];
     }
