@@ -49,6 +49,7 @@ define('GET_FAQ', 'GET_FAQ');
 define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
 define('ADD_CLARIFICATION', 'ADD_CLARIFICATION');
 define('GET_PRE_BID_CLARIFICATION_RESPONSE', 'GET_PRE_BID_CLARIFICATION_RESPONSE');
+define('ADD_PRE_BID_CLARIFICATION_RESPONSE', 'ADD_PRE_BID_CLARIFICATION_RESPONSE');
 
 class APIController extends Controller
 {
@@ -135,6 +136,8 @@ class APIController extends Controller
                 return $this->SRMService->saveTenderPrebidClarification($request);
             case GET_PRE_BID_CLARIFICATION_RESPONSE :
                 return $this->SRMService->getPreBidClarificationsResponse($request);
+            case ADD_PRE_BID_CLARIFICATION_RESPONSE :
+                return $this->SRMService->createClarificationResponse($request);
 
             default:
                 return [
