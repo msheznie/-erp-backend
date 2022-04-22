@@ -2761,6 +2761,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 	erp_accountspayableledger.supplierDefaultCurrencyER,
 	erp_accountspayableledger.supplierDefaultAmount,
     erp_accountspayableledger.purchaseOrderID,
+    erp_accountspayableledger.isRetention,
     poid.purchaseOrderCode,
 	CurrencyCode,
 	DecimalPlaces,
