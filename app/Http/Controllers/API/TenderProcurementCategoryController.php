@@ -141,7 +141,6 @@ class TenderProcurementCategoryController extends AppBaseController
     {
         $level = 0;
         $parent_id = 0;
-        Log::info($request);
         $input = $request->all();
 
         if(isset($input['restore']) && $input['restore'] == true){
