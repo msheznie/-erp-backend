@@ -1340,6 +1340,47 @@ class SRMService
         ];
     }
 
+    public function createClarificationResponse(Request $request)
+    {
+        $attachment = $request->input('extra.attachment');
+        $employeeId = Helper::getEmployeeSystemID();
+        $response = $request->input('extra.response');
+        $id = $request->input('extra.parent_id');
+        $companySystemID = 1; //$input['companySystemID'];
+        $tenderParentPost = TenderBidClarifications::where('id', $id)->first();
+        $company = ''; //Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+
+        DB::beginTransaction();
+        try {
+            $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
+            $data['posted_by_type'] = 1;
+            $data['post'] = $response;
+            $data['user_id'] = $employeeId;
+            $data['is_public'] = 1; //$tenderParentPost['is_public'];
+            $data['parent_id'] = $id;
+            $data['created_by'] = $employeeId;
+            $data['document_system_id'] = $documentCode->documentSystemID;
+            $data['document_id'] = $documentCode->documentID;
+            $result = TenderBidClarifications::create($data);
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
+            }
+
+            if ($result) {
+                $updateRec['is_answered'] = 1;
+                $result =  TenderBidClarifications::where('id', $id)
+                    ->update($updateRec);
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
     public function uploadAttachment($attachment, $companySystemID, $company, $documentCode, $id)
     {
         if (!empty($attachment) && isset($attachment['file'])) {
