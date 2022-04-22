@@ -186,7 +186,6 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         if (!empty($procurementCodeExist)) {
-            Log::info($procurementCodeExist);
             if(is_null($procurementCodeExist['deleted_at'])) {
                 return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
             } else {
