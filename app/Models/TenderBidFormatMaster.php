@@ -114,5 +114,10 @@ class TenderBidFormatMaster extends Model
         
     ];
 
+    public function tender_bid_format_detail()
+    {
+        return $this->hasMany('App\Models\TenderBidFormatDetail', 'tender_id', 'id');
+    }
+
     
 }

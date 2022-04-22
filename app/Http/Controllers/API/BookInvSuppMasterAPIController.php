@@ -261,6 +261,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierID'] = null;
         }
 
+        if(isset($input['supplierID'])){
+            $supplierId = $request['supplierID'];
+            $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
+                ->first();
+            if($supplier){
+                $input['retentionPercentage'] = $supplier->retentionPercentage;
+            }
+        }
+
 
         // check rcm activation
         if (isset($input['documentType']) && $input['documentType'] == 1 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
@@ -549,6 +558,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if (isset($input['supplierInvoiceDate']) && $input['supplierInvoiceDate']) {
             $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
+        }
+
+        if (isset($input['retentionDueDate']) && $input['retentionDueDate']) {
+            $input['retentionDueDate'] = new Carbon($input['retentionDueDate']);
         }
 
         // calculating header total

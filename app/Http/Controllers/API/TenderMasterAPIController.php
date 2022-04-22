@@ -8,8 +8,11 @@ use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
 use App\Models\EvaluationType;
 use App\Models\ProcumentActivity;
@@ -17,7 +20,9 @@ use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
+use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
+use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -348,12 +353,25 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        if(!empty($tenderMaster['procument_cat_id'])){
+           $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
+        }else{
+            $category['is_active'] = 1;
+        }
+
         $data['tenderType'] = TenderType::get();
+        $data['yesNoSelection'] = YesNoSelection::all();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
-        $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->get();
+        $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
+
+        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
+            $data['procurementCategory'][] = $category;
+        }
 
         return $data;
     }
@@ -426,7 +444,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
-        $data['master'] = TenderMaster::with(['procument_activity'])->where('id',$input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity','confirmed_by'])->where('id',$input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->get();
         $act = array();
         if(!empty($activity)){
@@ -445,7 +463,20 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderSubCategory(Request $request)
     {
         $input = $request->all();
-        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->get();
+
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        if(!empty($tenderMaster['procument_sub_cat_id'])){
+            $category = TenderProcurementCategory::where('id',$tenderMaster['procument_sub_cat_id'])->first();
+        }else{
+            $category['is_active'] = 1;
+        }
+
+        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+
+        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
+            $data['procurementSubCategory'][] = $category;
+        }
 
         return $data;
     }
@@ -531,9 +562,6 @@ class TenderMasterAPIController extends AppBaseController
             $data['site_visit_date']=$site_visit_date;
             $data['bid_submission_opening_date']=$bid_submission_opening_date;
             $data['bid_submission_closing_date']=$bid_submission_closing_date;
-
-
-
             $data['updated_by'] = $employee->employeeSystemID;
 
             $result = TenderMaster::where('id',$input['id'])->update($data);
@@ -591,6 +619,22 @@ class TenderMasterAPIController extends AppBaseController
 
                         $att['budget_document'] = $path;
                         TenderMaster::where('id',$input['id'])->update($att);
+                    }
+                }
+
+                if(isset($input['confirmed_yn'])){
+                    if($input['confirmed_yn'] == 1){
+                        $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                        $confirm = \Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
+                            return ['success' => false, 'message' => $confirm["message"]];
+                        } else {
+                            $dataC['confirmed_yn']=1;
+                            $dataC['confirmed_date']=now();
+                            $dataC['confirmed_by_emp_system_id'] = $employee->employeeSystemID;
+
+                            TenderMaster::where('id',$input['id'])->update($dataC);
+                        }
                     }
                 }
 
@@ -666,6 +710,349 @@ class TenderMasterAPIController extends AppBaseController
         $input = $request->all(); 
         $companyId = $input['companySystemID'];
         $data['tenders'] = TenderMaster::where('company_id',$companyId)->get(); 
+        return $data;
+    }
+
+    public function getTenderMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'srm_tender_master.document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            $query->where('employeesdepartments.documentSystemID', 108)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('srm_tender_master', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('srm_tender_master.company_id', $companyID)
+                ->where('srm_tender_master.approved', 0)
+                ->where('srm_tender_master.confirmed_yn', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'currency_id', '=', 'currencyID')
+            ->join('employees', 'created_by', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 108)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveTender(Request $request)
+    {
+
+        $approve = \Helper::approveDocument($request);
+
+        if (!$approve["success"]) {
+
+            return $this->sendError($approve["message"]);
+        } else {
+
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+    }
+
+    public function rejectTender(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+    }
+
+    public function getTenderMasterFullApproved(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'srm_tender_master.document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.approvedComments',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            $query->where('employeesdepartments.documentSystemID', 108)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('srm_tender_master', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('srm_tender_master.company_id', $companyID)
+                ->where('srm_tender_master.approved', -1)
+                ->where('srm_tender_master.confirmed_yn', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('currencymaster', 'currency_id', '=', 'currencyID')
+            ->join('employees', 'created_by', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.documentSystemID', 108)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function reOpenTender(Request $request)
+    {
+        $input = $request->all();
+
+        $tenderMasterId = $input['tenderMasterId'];
+
+        $tenderMaster = TenderMaster::find($tenderMasterId);
+        $emails = array();
+        if (empty($tenderMaster)) {
+            return $this->sendError('Tender not found');
+        }
+
+        if ($tenderMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Tender it is already partially approved');
+        }
+
+        if ($tenderMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Tender it is already fully approved');
+        }
+
+        if ($tenderMaster->confirmed_yn == 0) {
+            return $this->sendError('You cannot reopen this Tender, it is not confirmed');
+        }
+
+        // updating fields
+
+        $tenderMaster->confirmed_yn = 0;
+        $tenderMaster->confirmed_by_emp_system_id = null;
+        $tenderMaster->confirmed_by_name = null;
+        $tenderMaster->confirmed_date = null;
+        $tenderMaster->RollLevForApp_curr = 1;
+        $tenderMaster->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $tenderMaster->document_system_id)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $tenderMaster->tender_code . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $tenderMaster->tender_code;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $tenderMaster->company_id)
+            ->where('documentSystemCode', $tenderMaster->id)
+            ->where('documentSystemID', $tenderMaster->document_system_id)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $tenderMaster->company_id)
+                    ->where('documentSystemID', $tenderMaster->document_system_id)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array(
+                            'empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode
+                        );
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        DocumentApproved::where('documentSystemCode', $tenderMasterId)
+            ->where('companySystemID', $tenderMaster->company_id)
+            ->where('documentSystemID', $tenderMaster->document_system_id)
+            ->delete();
+
+        /*Audit entry*/
+        AuditTrial::createAuditTrial($tenderMaster->document_system_id, $tenderMasterId, $input['reopenComments'], 'Reopened');
+
+        return $this->sendResponse($tenderMaster->toArray(), 'Tender reopened successfully');
+    }
+
+    public function tenderMasterPublish(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $att['updated_by'] = $employee->employeeSystemID;
+            $att['published_yn'] = 1;
+            $result = TenderMaster::where('id',$input['id'])->update($att);
+
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully Published'];
+            }
+        }catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function loadTenderSubActivity(Request $request)
+    {
+        $input = $request->all();
+
+        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+
+        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+
+        $activity = ProcumentActivity::where('tender_id',$input['tenderMasterId'])->get();
+
+        if($tenderMaster['confirmed_yn'] == 1){
+            if(count($activity)>0){
+                foreach ($activity as $vl){
+                    $category = TenderProcurementCategory::where('id',$vl['category_id'])->first();
+                    if($category['is_active'] == 0){
+                        $data['procurementSubCategory'][] = $category;
+                    }
+                }
+            }
+        }
+
         return $data;
     }
 }
