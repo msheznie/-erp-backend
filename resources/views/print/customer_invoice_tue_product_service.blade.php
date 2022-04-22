@@ -189,7 +189,6 @@
                 </td>
                 <td style="width: 30%; text-align: right;">
                     <div style="display: flex;">
-                        <h3 style="color: #3f67c8; font-size: 15px"><b>شركة الهدف المتحدة للطاقة</b></h3>
                     </div>
                 </td>
             </tr>
