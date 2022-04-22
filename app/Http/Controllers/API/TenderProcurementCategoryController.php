@@ -63,7 +63,7 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        if( $level == 0 ){
+        if( $level == 0 && isset($input['createNewRecord']) && $input['createNewRecord'] == 0){
             $procurementCatCodeExist = TenderProcurementCategory::withTrashed()
                 ->select('id', 'deleted_at')
                 ->where('code', '=', $input['code'])
@@ -83,7 +83,7 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
-        if( $level == 0 ){
+        if( $level == 0 && isset($input['createNewRecord']) && $input['createNewRecord'] == 0){
             $procurementCatDesExist = TenderProcurementCategory::withTrashed()
                 ->select('id', 'deleted_at')
                 ->where('description', '=', $input['description'])
@@ -141,7 +141,6 @@ class TenderProcurementCategoryController extends AppBaseController
     {
         $level = 0;
         $parent_id = 0;
-
         $input = $request->all();
 
         if(isset($input['restore']) && $input['restore'] == true){
@@ -172,7 +171,7 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        if( $level == 0 ){
+        if( $level == 0 && isset($input['createNewRecord']) &&  $input['createNewRecord'] == 0){
             $procurementCodeExist = TenderProcurementCategory::withTrashed()
                 ->select('id', 'deleted_at')
                 ->where('id', '!=', $id)
@@ -194,7 +193,7 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
-        if( $level == 0 ){
+        if( $level == 0 && isset($input['createNewRecord']) &&  $input['createNewRecord'] == 0){
             $procurementDesExist = TenderProcurementCategory::withTrashed()
                 ->select('id', 'deleted_at')
                 ->where('id', '!=', $id)
