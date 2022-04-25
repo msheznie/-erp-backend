@@ -2061,7 +2061,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT'])));
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal'])));
-                                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVAT'])));
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt'])));
                                             
                                             if ($retentionPercentage > 0 && $masterData->documentType != 4) {
                                                 $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage/100));
