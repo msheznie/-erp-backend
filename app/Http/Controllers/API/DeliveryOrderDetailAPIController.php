@@ -32,7 +32,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
 use Illuminate\Support\Facades\Storage;
-
+use Auth;
 /**
  * Class DeliveryOrderDetailController
  * @package App\Http\Controllers\API
@@ -1772,7 +1772,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateItem =  $this->validateItemBeforeUpload($data,$itemDetails,$input['companySystemID']);
 
                     $itemArray = [];
-
+                    $itemArray['deliveryOrderID'] =  $input['requestID'];
                     $itemArray['itemCodeSystem'] = $itemDetails->itemCodeSystem;
                     $itemArray['itemPrimaryCode'] = $itemDetails->primaryCode;
                     $itemArray['itemDescription'] = $itemDetails->itemDescription;
@@ -1812,18 +1812,66 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
                         $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
+                        if($masterData->transactionCurrencyID == $masterData->companyLocalCurrencyID){
+
+                            $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            $itemArray['companyLocalAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+
+                        }elseif ($masterData->transactionCurrencyID == $masterData->companyReportingCurrencyID){
+
+                            $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            $itemArray['companyReportingAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+                        }else{
+
+                            $currencyConversion = Helper::currencyConversion($masterData->companySystemID,$masterData->companyLocalCurrencyID,$masterData->transactionCurrencyID,$itemArray['wacValueLocal']);
+                            if(!empty($currencyConversion)){
+                                $itemArray['unitTransactionAmount'] = $currencyConversion['documentAmount'];
+                            }
+                        }
+
+                        $amounts = $this->updateAmountsByTransactionAmount($itemArray,$masterData);
+                        $itemArray['companyLocalAmount'] = $amounts['companyLocalAmount'];
+                        $itemArray['companyReportingAmount'] = $amounts['companyReportingAmount'];
+
+                        $itemArray['transactionCurrencyID'] = $masterData->transactionCurrencyID;
+                        $itemArray['transactionCurrencyER'] = $masterData->transactionCurrencyER;
+                        $itemArray['companyLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
+                        $itemArray['companyLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
+                        $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
+                        $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
+
+                        $itemArray['discountPercentage'] = 0;
+                        $itemArray['discountAmount'] = 0;
+                        $itemArray['transactionAmount'] = 0;
+                        $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
+
+                        if ($masterData->isVatEligible) {
+                            $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
+                            $itemArray['VATPercentage'] = $vatDetails['percentage'];
+                            $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
+                            $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                            $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                            $itemArray['VATAmount'] = 0;
+                            if (isset($itemArray['unittransactionAmount']) && $itemArray['unittransactionAmount'] > 0) {
+                                $input['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+                            }
+                            $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
+
+                            $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                            $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        }
+
+
                         if($validateItem) {
                             array_push($finalItems,$itemArray);
                         }
 
                     }
 
-
-                    
                 }
 
             }
-
             
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 

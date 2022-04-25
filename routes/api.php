@@ -1999,6 +1999,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
         Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate');
+        Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
 
 
