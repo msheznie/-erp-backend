@@ -893,6 +893,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
         Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
+        Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues');
+
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');

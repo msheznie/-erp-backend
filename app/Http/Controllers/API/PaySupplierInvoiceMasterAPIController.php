@@ -27,6 +27,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\BookInvSuppMaster;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\PdcLog;
 use App\Models\BankLedger;
@@ -1326,6 +1327,24 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
     }
 
+    public function getRetentionValues(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
+        if($details) {
+            $bookinvDetailsArray = [];
+            $details = collect($details)->pluck('bookingInvSystemCode');
+            $bookinvDetails = BookInvSuppMaster::whereIn('bookingSuppMasInvAutoID', $details)->get();
+            foreach ($bookinvDetails as $key => $objects){
+                $bookinvDetailsArray[$key]['bookingSuppMasInvAutoID'] = $objects->bookingSuppMasInvAutoID;
+                $bookinvDetailsArray[$key]['retentionDueDate'] = $objects->retentionDueDate;
+                $bookinvDetailsArray[$key]['retentionAmount'] = $objects->retentionAmount;
+            }
+
+            return $bookinvDetailsArray;
+        }
+    }
+
 
     public function update($id, UpdatePaySupplierInvoiceMasterAPIRequest $request)
     {
@@ -1556,6 +1575,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
                     } 
                 }
+
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
