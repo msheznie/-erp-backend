@@ -764,4 +764,39 @@ class CustomerInvoiceDirect extends Model
     public function segment(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_custinvoicedirectdet','erp_custinvoicedirectdet.custInvoiceDirectID','erp_custinvoicedirect.custInvoiceDirectAutoID');
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_custinvoicedirect.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_custinvoicedirect.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+    public function scopeBankJoin($q,$as = 'erp_bankmaster', $column = 'bankID' , $columnAs = 'bankName')
+    {
+        return $q->leftJoin('erp_bankmaster as '.$as,$as.'.bankmasterAutoID','erp_custinvoicedirect.'.$column)
+        ->addSelect($as.".bankName as ".$columnAs);
+    }
+
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_custinvoicedirect.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_custinvoicedirect.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
 }
