@@ -1290,16 +1290,25 @@ class SRMService
     {
         $input = $request->all();
         $tenderId = $input['extra'];
+        $SearchText = $input['SearchText'];
+        $isMyClarification = $input['isMyClarification'];
 
         try{
             $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
                 $q->where('parent_id', 0);
                 $q->with(['supplier']);
-            }])
-                ->whereHas('tenderPreBidClarification', function ($q) {
+            }]);
+               $data = $data->whereHas('tenderPreBidClarification', function ($q) {
                     $q->where('parent_id', 0);
-                })->where('id', $tenderId)
-                ->get();
+                })->where('id', $tenderId);
+
+            if(!empty($SearchText)){
+                $data = $data->where(function ($query) use ($SearchText) {
+                    $query->where('post', 'LIKE', "%{$SearchText}%");
+                });
+            }
+
+            $data = $data->get();
 
             return [
                 'success' => true,
