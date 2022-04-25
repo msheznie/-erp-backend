@@ -2019,7 +2019,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                             $data['documentTransAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVAT'] + $vatDetails['exemptVAT'])));
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATLocal'] + $vatDetails['exemptVATLocal'])));
-                                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVAT'])));
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS(($vatDetails['totalVATRpt'] + $vatDetails['exemptVATRpt'])));
                                             array_push($finalData, $data);
 
                                             $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -2062,11 +2062,11 @@ class GeneralLedgerInsert implements ShouldQueue
                             } else if ($masterData->documentType == 3 && $masterData->item_details && count($masterData->item_details) > 0 && $masterData->item_details[0]->totalVATAmount > 0 && $directItemVatDetails['masterVATTrans']) {
                                 
                                 Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
+                                $taxData = TaxService::getInputVATGLAccount($masterData->companySystemID);
 
                                 if ($directItemVatDetails['masterVATTrans'] > 0) {
                                     if (!empty($taxData)) {
-                                        $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatTransferGLAccountAutoID)
+                                        $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatGLAccountAutoID)
                                             ->where('companySystemID', $masterData->companySystemID)
                                             ->first();
 
@@ -2083,7 +2083,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                             array_push($finalData, $data);
 
-                                            $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                            $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                                             Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                         } else {
