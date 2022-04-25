@@ -23,6 +23,7 @@ use App\Models\DocumentSubProduct;
 use App\Models\ItemSerial;
 use App\Models\Taxdetail;
 use App\Repositories\DeliveryOrderDetailRepository;
+use App\Jobs\AddMultipleItemsToDeliveryOrder;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class DeliveryOrderDetailController
@@ -408,7 +410,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
             $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
-
 
 
 
@@ -1661,5 +1662,333 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
         }
+    }
+
+    
+    public function uploadItemsDeliveryOrder(Request $request) {
+         DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+            $id = $input['requestID'];
+            $companySystemID = $input['companySystemID'];
+            $masterData = DeliveryOrder::find($input['requestID']);
+
+
+            if (empty($masterData)) {
+                return $this->sendError('Delivery Order not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $validateVat = false;
+            $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+                
+                if (isset($value['sales_price'])) {
+                    $validateHeaderQty = true;
+                }
+
+                if($masterData->isVatEligible) {
+                   if (isset($value['vat'])) {
+                        $validateVat = true;
+                   }
+                }else {
+                    $validateVat = true;
+                }
+
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['sales_price']) && !is_null($value['sales_price'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
+            $uploadSerialNumber = array_filter(collect($record)->toArray());
+
+            if ($masterData->cancelledYN == -1) {
+                return $this->sendError('This Quotation already closed. You can not add.', 500);
+            }
+
+            if ($masterData->approvedYN == 1) {
+                return $this->sendError('This Quotation fully approved. You can not add.', 500);
+            }
+
+            $finalItems = [];
+
+            foreach($record as $item) {
+
+                $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
+                if(isset($itemDetails->itemCodeSystem)) {
+                    $data = [
+                        'deliveryOrderID' => $input['requestID'],
+                        'itemCodeSystem' => $itemDetails->itemCodeSystem
+                    ];
+
+                    $validateItem =  $this->validateItemBeforeUpload($data,$itemDetails,$input['companySystemID']);
+
+                    $itemArray = [];
+
+                    $itemArray['itemCodeSystem'] = $itemDetails->itemCodeSystem;
+                    $itemArray['itemPrimaryCode'] = $itemDetails->primaryCode;
+                    $itemArray['itemDescription'] = $itemDetails->itemDescription;
+                    $itemArray['itemUnitOfMeasure'] = $itemDetails->unit;
+                    $itemArray['unitOfMeasureIssued'] = $itemDetails->unit;
+                    $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
+                    $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
+                    $itemArray['trackingType'] = $itemDetails->trackingType;
+
+                    $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
+
+                    $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                        ->where('mainItemCategoryID', $itemAssigned['financeCategoryMaster'])
+                        ->where('itemCategorySubID', $itemAssigned['financeCategorySub'])
+                        ->first();
+
+                    if (!empty($financeItemCategorySubAssigned)) {
+                        $itemArray['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                        $itemArray['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                        $itemArray['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                        $itemArray['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                        $itemArray['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
+                        $itemArray['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
+
+                        $data = array(
+                        'companySystemID' => $companySystemID,
+                        'itemCodeSystem' => $itemDetails['itemCodeSystem'],
+                        'wareHouseId' => $masterData->wareHouseSystemCode
+                        );
+
+                        $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+
+                        $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+                        $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                        $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+
+                        $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                        $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+                        if($validateItem) {
+                            array_push($finalItems,$itemArray);
+                        }
+
+                    }
+
+
+                    
+                }
+
+            }
+
+            
+            if (count($record) > 0) {
+                $db = isset($input['db']) ? $input['db'] : ""; 
+                AddMultipleItemsToDeliveryOrder::dispatch(array_filter($finalItems),($masterData->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    private function validateItemBeforeUpload($input,$item,$companySystemID) {
+
+        $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
+        if(empty($deliveryOrderMaster)){
+            return $this->sendError('Delivery order not found',500);
+        }
+
+        $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
+            ->whereHas('detail', function ($query) use ($input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->exists();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected item is already added. Please check again", 500);
+        }
+
+        if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
+            return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
+        }
+
+        if($item->financeCategoryMaster==1){
+            // check the item pending pending for approval in other delivery orders
+
+            $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrderMaster->deliveryOrderID)
+                ->where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.deliveryOrderCode'
+                ])
+                ->groupBy(
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.companySystemID'
+                )
+                ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approvedYN', 0)
+                ->first();
+            if (!empty($checkWhether)) {
+                return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+
+            // check the item pending pending for approval in other modules
+            $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
+//            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
+                ->select([
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                ])
+                ->groupBy(
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherItemIssueMaster)) {
+                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+//            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
+                ->select([
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                ])
+                ->groupBy(
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherStockTransfer)) {
+                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                ])
+                ->groupBy(
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.companySystemID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                )
+                ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->where('canceledYN', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherInvoice)) {
+                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            /*Check in purchase return*/
+            $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation',
+                    'erp_purchasereturnmaster.purchaseReturnCode',
+                ])
+                ->groupBy(
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation'
+                )
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCode', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+
+            if (!empty($checkWhetherPR)) {
+                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+        }
+
+        return true;
     }
 }

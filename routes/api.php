@@ -1976,7 +1976,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getCommonFormData','DeliveryOrderAPIController@getCommonFormData');
-
+        Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
+        Route::post('uploadItems','QuotationMasterAPIController@poItemsUpload');
 
         
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
