@@ -143,7 +143,6 @@ class TenderProcurementCategoryController extends AppBaseController
         $level = 0;
         $parent_id = 0;
         $input = $request->all();
-        Log::info(['$input', $input]);
         if(isset($input['restore']) && $input['restore'] == true){
             return $this->restoreDeletedCategory($id, $request);
         }
@@ -302,7 +301,6 @@ class TenderProcurementCategoryController extends AppBaseController
 
     private function restoreDeletedCategory($id, Request $request)
     {
-        Log::info('restoreDeletedCategory');
         $level = 0;
         $input = $request->all();
 
