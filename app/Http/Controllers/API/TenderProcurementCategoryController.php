@@ -11,6 +11,7 @@ use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
+use function Clue\StreamFilter\fun;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
@@ -139,10 +140,12 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function update($id, Request $request)
     {
+        Log::info('update');
+
         $level = 0;
         $parent_id = 0;
         $input = $request->all();
-
+        Log::info(['$input', $input]);
         if(isset($input['restore']) && $input['restore'] == true){
             return $this->restoreDeletedCategory($id, $request);
         }
@@ -239,6 +242,10 @@ class TenderProcurementCategoryController extends AppBaseController
         if (empty($tenderProcurementCategory)) {
             return $this->sendError('Procurement Category not found');
         }
+
+        $categoryUsed = TenderProcurementCategory::with(['tenderMaster'])->get();
+        Log::info($categoryUsed);
+
         $input['deleted_by'] = Helper::getEmployeeSystemID();
         $procurementCategoryDeleted = TenderProcurementCategory::where('id', $id)->update($input);
         
@@ -290,16 +297,12 @@ class TenderProcurementCategoryController extends AppBaseController
 
     private function restoreDeletedCategory($id, Request $request)
     {
+        Log::info('restoreDeletedCategory');
         $level = 0;
-        $parent_id = 0;
         $input = $request->all();
 
         if(isset($input['level'])){
             $level = $input['level'];
-        }
-
-        if(isset($input['parent_id'])){
-            $parent_id = $input['parent_id'];
         }
 
         $procurementCatCodeExist = TenderProcurementCategory::select('id')
@@ -319,10 +322,9 @@ class TenderProcurementCategoryController extends AppBaseController
         }
         
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
-        $input['is_active'] = $request->input('is_active');
 
         if($procurementCategory) {
-            TenderProcurementCategory::where('id', $id)->update($input);
+            TenderProcurementCategory::where('id', $id)->update(['is_active' => $request->input('is_active')]);
         }
 
 
