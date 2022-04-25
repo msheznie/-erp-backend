@@ -290,6 +290,34 @@ class TenderProcurementCategoryController extends AppBaseController
 
     private function restoreDeletedCategory($id, Request $request)
     {
+        $level = 0;
+        $parent_id = 0;
+        $input = $request->all();
+
+        if(isset($input['level'])){
+            $level = $input['level'];
+        }
+
+        if(isset($input['parent_id'])){
+            $parent_id = $input['parent_id'];
+        }
+
+        $procurementCatCodeExist = TenderProcurementCategory::select('id')
+            ->where('code', '=', $input['code'])
+            ->where('level', '=', $level)->first();
+
+        if (!empty($procurementCatCodeExist)) {
+            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+        }
+
+        $procurementCatDesExist = TenderProcurementCategory::select('id')
+            ->where('description', '=', $input['description'])
+            ->where('level', '=', $level)->first();
+
+        if (!empty($procurementCatDesExist)) {
+            return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+        }
+        
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
         $input['is_active'] = $request->input('is_active');
 
