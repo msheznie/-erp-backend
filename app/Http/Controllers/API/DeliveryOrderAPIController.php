@@ -1543,4 +1543,5 @@ WHERE
         return $this->sendResponse(["qnty"=>$qntyCanIssue,"data"=>true], 'Details retrieved successfully');
    
     }
+
 }

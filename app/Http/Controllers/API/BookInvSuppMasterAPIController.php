@@ -560,6 +560,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
         }
 
+        if (isset($input['retentionDueDate']) && $input['retentionDueDate']) {
+            $input['retentionDueDate'] = new Carbon($input['retentionDueDate']);
+        }
+
         // calculating header total
         $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
@@ -745,6 +749,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
                     return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
                 }
+
+
+
+            if ($input['documentType'] == 1) {
+                $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
+                $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
+
+            if ($input['documentType'] == 0) {
+                    $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
+            }
+            if ($input['documentType'] == 3) {
+                    $vatTrans = TaxService::processSupplierInvoiceItemsVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
 
             }
 
