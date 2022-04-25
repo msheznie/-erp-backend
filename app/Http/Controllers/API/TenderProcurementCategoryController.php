@@ -241,12 +241,12 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError('Procurement Category not found');
         }
 
-        $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->get();
+        $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->where('id', $id)->get();
         if(sizeof($categoryHasTenders) != 0){
             return $this->sendError('Procurement category already used');
         }
 
-        $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->get();
+        $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->where('id', $id)->get();
         if(sizeof($categoryHasActivity) != 0){
             return $this->sendError('Procurement category already used');
         }
