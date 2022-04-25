@@ -140,8 +140,6 @@ class TenderProcurementCategoryController extends AppBaseController
      */
     public function update($id, Request $request)
     {
-        Log::info('update');
-
         $level = 0;
         $parent_id = 0;
         $input = $request->all();
@@ -243,8 +241,15 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError('Procurement Category not found');
         }
 
-        $categoryUsed = TenderProcurementCategory::with(['tenderMaster'])->get();
-        Log::info($categoryUsed);
+        $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->get();
+        if(sizeof($categoryHasTenders) != 0){
+            return $this->sendError('Procurement category already used');
+        }
+
+        $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->get();
+        if(sizeof($categoryHasActivity) != 0){
+            return $this->sendError('Procurement category already used');
+        }
 
         $input['deleted_by'] = Helper::getEmployeeSystemID();
         $procurementCategoryDeleted = TenderProcurementCategory::where('id', $id)->update($input);
