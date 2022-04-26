@@ -1760,6 +1760,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             $finalItems = [];
 
+
             foreach($record as $item) {
 
                 $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
@@ -1841,11 +1842,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
                         $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
 
-                        $itemArray['discountPercentage'] = 0;
-                        $itemArray['discountAmount'] = 0;
+
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
-                        $itemArray['discountAmount'] = ($itemArray['transactionAmount'] / 100) * $itemArray['discountPercentage'];
+                        $itemArray['discountAmount'] = $item['discount'];
+                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+
 
                         if ($masterData->isVatEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
