@@ -778,6 +778,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'currency_by','currency_local', 'currency_reporting','local_currency','supplier_country','location','approve_by','modified_by','company','bank'];
                     
                     break;  
+                case 6:  
+                    $masterTable = 'erp_creditnote';
+                    $detailTable = 'erp_creditnotedetails';
+                    $primaryKey  = $masterTable . '.creditNoteAutoID';
+                    $detailPrimaryKey = $detailTable . '.creditNoteDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'CreditNote';
+                    $templateData['tables'] = ['customer','customer_currency','rpt_currency','created_by','modified_by','confirmed_by','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','local_currency','supplier_country','location','approve_by','modified_by','company'];
+                    
+                    break;  
                 default;
                     break;
             }
@@ -1135,6 +1149,53 @@ class CustomUserReportsAPIController extends AppBaseController
                                 else if ($table == 'warehouse') {
                                     $data->wareHouseJoin('warehouse', 'wareHouseSystemCode', 'wareHouseDescription');
                                 } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 6:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'customer_currency') {
+                                    
+                                    $data->currencyJoin('customer_currency', 'customerCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'rpt_currency') {
+                                    
+                                    $data->currencyJoin('rpt_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                }
+                                
+                                else if ($table == 'local_currency') {
+                                    
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                }
+                                
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'approve_by') {
+                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                } 
+                                else if ($table == 'created_by') {
+                                    $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                }  
                                 else if ($table == 'customer') {
                                     $data->customerJoin('customer', 'customerID', 'CustomerName');
                                 } 

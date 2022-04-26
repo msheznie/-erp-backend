@@ -510,4 +510,32 @@ class CreditNote extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'creditNoteAutoID')->where('documentSystemID',19);
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_creditnotedetails','erp_creditnotedetails.creditNoteAutoID','erp_creditnote.creditNoteAutoID');
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_creditnote.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_creditnote.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_creditnote.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_creditnote.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
 }
