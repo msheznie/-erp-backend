@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use function foo\func;
 
 /**
  * Class EvaluationCriteriaDetailsController
@@ -307,7 +308,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }
 
-        if($input['level'] == 1 || $input['level'] == 2){
+        if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {
                 if(!isset($input['weightage']) || empty($input['weightage'])){
                     return ['success' => false, 'message' => 'Weightage is required'];
@@ -319,6 +320,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }
 
+        if($is_final_level == 1){
+            if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
+                return ['success' => false, 'message' => 'Answer Type is required'];
+            }
+        }
+
         DB::beginTransaction();
         try {
             $data['description'] = $input['description'];
@@ -326,7 +333,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $data['parent_id'] = $input['parent_id'];
             $data['level'] = $input['level'];
             $data['critera_type_id'] = $input['critera_type_id'];
-            $data['answer_type_id'] = $input['answer_type_id'];
+            if(isset($input['answer_type_id'])){
+                $data['answer_type_id'] = $input['answer_type_id'];
+            }
             if(!empty($input['weightage'])){
                 $data['weightage'] = $input['weightage'];
             }
@@ -353,7 +362,48 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationCriteriaDetails(Request $request)
     {
         $input = $request->all();
-        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_type','tender_criteria_answer_type'])->where('tender_id',$input['tenderMasterId'])->get();
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
+                                $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                                        $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                                    }]);
+                                }]);
+        }])->where('tender_id',$input['tenderMasterId'])->where('level',1)->get();
         return $data;
+    }
+
+    public function deleteEvaluationCriteria(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = EvaluationCriteriaDetails::where('id',$input['id'])->delete();
+            $levelTwo = EvaluationCriteriaDetails::where('parent_id',$input['id'])->get();
+            if(!empty($levelTwo)){
+                foreach ($levelTwo as $val2){
+                    $levelThree = EvaluationCriteriaDetails::where('parent_id',$val2['id'])->get();
+                    if(!empty($levelThree)){
+                        foreach ($levelThree as $val3){
+                            $levelfour = EvaluationCriteriaDetails::where('parent_id',$val3['id'])->get();
+                            if(!empty($levelfour)){
+                                foreach ($levelfour as $val4){
+                                    EvaluationCriteriaDetails::where('id',$val4['id'])->delete();
+                                }
+                            }
+                            EvaluationCriteriaDetails::where('id',$val3['id'])->delete();
+                        }
+                    }
+                    EvaluationCriteriaDetails::where('id',$val2['id'])->delete();
+                }
+            }
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
     }
 }

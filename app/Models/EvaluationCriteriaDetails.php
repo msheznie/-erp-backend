@@ -165,5 +165,10 @@ class EvaluationCriteriaDetails extends Model
         return $this->belongsTo('App\Models\TenderCriteriaAnswerType', 'answer_type_id', 'id');
     }
 
+    public function child()
+    {
+        return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'parent_id', 'id');
+    }
+
     
 }
