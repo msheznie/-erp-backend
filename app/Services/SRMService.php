@@ -1289,24 +1289,33 @@ class SRMService
     public function getPrebidClarification(Request $request)
     {
         $input = $request->all();
-        $tenderId = $input['extra'];
-        $SearchText = $input['SearchText'];
-        $isMyClarification = $input['isMyClarification'];
+        $extra = $input['extra'];
+        $SearchText = "";
+        if(isset($extra['SearchText'])){
+            $SearchText = $extra['SearchText'];
+        }
+
+        if(isset($extra['isMyClarification'])){
+            $isMyClarification = $input['isMyClarification'];
+        }
 
         try{
-            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
+            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText) {
                 $q->where('parent_id', 0);
+                if(!empty($SearchText)){
+                    $q->where('post', 'LIKE', "%{$SearchText}%");
+                }
                 $q->with(['supplier']);
             }]);
                $data = $data->whereHas('tenderPreBidClarification', function ($q) {
                     $q->where('parent_id', 0);
-                })->where('id', $tenderId);
+                })->where('id', $extra['tenderId']);
 
-            if(!empty($SearchText)){
+            /*if(!empty($SearchText)){
                 $data = $data->where(function ($query) use ($SearchText) {
                     $query->where('post', 'LIKE', "%{$SearchText}%");
                 });
-            }
+            }*/
 
             $data = $data->get();
 
