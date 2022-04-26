@@ -1723,11 +1723,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateHeaderQty = true;
                 }
 
-                
-                if (isset($value['sales_price'])) {
-                    $validateHeaderQty = true;
-                }
-
                 if($masterData->isVatEligible) {
                    if (isset($value['vat'])) {
                         $validateVat = true;
@@ -1736,7 +1731,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateVat = true;
                 }
 
-                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['sales_price']) && !is_null($value['sales_price'])) {
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
@@ -1747,7 +1742,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
+            })->select(array('item_code', 'qty','vat','discount'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if ($masterData->cancelledYN == -1) {
@@ -1759,6 +1754,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
             $finalItems = [];
+
 
             foreach($record as $item) {
 
@@ -1781,6 +1777,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
                     $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
                     $itemArray['trackingType'] = $itemDetails->trackingType;
+                    $itemArray['qtyIssued'] = $item['qty'];
 
                     $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
 
@@ -1841,10 +1838,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
                         $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
 
-                        $itemArray['discountPercentage'] = 0;
-                        $itemArray['discountAmount'] = 0;
+
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
+                        $itemArray['discountAmount'] = $item['discount'];
+                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+
 
                         if ($masterData->isVatEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
@@ -1864,7 +1863,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
                         if($validateItem) {
-                            array_push($finalItems,$itemArray);
+                            if($itemArray['currentWareHouseStockQty'] > 0) {
+                                array_push($finalItems,$itemArray);
+                            }
+                            
                         }
 
                     }
