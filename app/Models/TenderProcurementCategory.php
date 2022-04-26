@@ -50,4 +50,13 @@ class TenderProcurementCategory extends Model
 
     ];
 
+    public function tenderMaster()
+    {
+        return $this->hasMany('App\Models\TenderMaster', 'procument_cat_id', 'id');
+    }
+
+    public function procumentActivity()
+    {
+        return $this->hasMany('App\Models\ProcumentActivity', 'category_id', 'id');
+    }
 }
