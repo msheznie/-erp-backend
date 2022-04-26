@@ -96,6 +96,8 @@ class QuotationAddMultipleItemsService
                 $data['quotationMasterID'] = $quotation['quotationMasterID'];
                 $data['requestedQty'] = $item['qty'];
                 $data['unittransactionAmount'] = $item['sales_price'];
+
+
                 if($item['discount']) {
                     $data['discountPercentage'] = ($item['discount'] * 100)/($item['qty'] * $item['sales_price']);
                     $data['discountAmount'] = $item['discount'];
@@ -103,6 +105,10 @@ class QuotationAddMultipleItemsService
                     $data['discountPercentage'] = 0;
                     $data['discountAmount'] = 0;
                 }
+
+                $totalNetcost = ($data['unittransactionAmount'] - $data['discountAmount']) * $item['qty'];
+
+                $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                 // $item['modifiedUserID'] = $employee->empID;
                 // $item['modifiedUserName'] = $employee->empName;
                 array_push($itemsToUpload,$data);

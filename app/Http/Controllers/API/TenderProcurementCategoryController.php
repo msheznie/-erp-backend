@@ -11,6 +11,7 @@ use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
+use function Clue\StreamFilter\fun;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
@@ -63,10 +64,16 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $procurementCatCodeExist = TenderProcurementCategory::withTrashed()
-            ->select('id', 'deleted_at')
-            ->where('code', '=', $input['code'])
-            ->where('level', '=', $level)->first();
+        if( $level == 0 && isset($input['createNewRecord']) && $input['createNewRecord'] == 0){
+            $procurementCatCodeExist = TenderProcurementCategory::withTrashed()
+                ->select('id', 'deleted_at')
+                ->where('code', '=', $input['code'])
+                ->where('level', '=', $level)->first();
+        } else {
+            $procurementCatCodeExist = TenderProcurementCategory::select('id')
+                ->where('code', '=', $input['code'])
+                ->where('level', '=', $level)->first();
+        }
 
         if (!empty($procurementCatCodeExist)) {
             if(is_null($procurementCatCodeExist['deleted_at'])){
@@ -77,10 +84,17 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
-        $procurementCatDesExist = TenderProcurementCategory::withTrashed()
-            ->select('id', 'deleted_at')
-            ->where('description', '=', $input['description'])
-            ->where('level', '=', $level)->first();
+        if( $level == 0 && isset($input['createNewRecord']) && $input['createNewRecord'] == 0){
+            $procurementCatDesExist = TenderProcurementCategory::withTrashed()
+                ->select('id', 'deleted_at')
+                ->where('description', '=', $input['description'])
+                ->where('level', '=', $level)->first();
+        } else {
+            $procurementCatDesExist = TenderProcurementCategory::select('id')
+                ->where('description', '=', $input['description'])
+                ->where('level', '=', $level)->first();
+        }
+
         if (!empty($procurementCatDesExist)) {
             if(is_null($procurementCatDesExist['deleted_at'])){
                 return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
@@ -91,7 +105,7 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         $input['created_pc'] = gethostname();
-        $input['created_by'] = Helper::getEmployeeID();
+        $input['created_by'] = Helper::getEmployeeSystemID();
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
@@ -128,11 +142,9 @@ class TenderProcurementCategoryController extends AppBaseController
     {
         $level = 0;
         $parent_id = 0;
-
         $input = $request->all();
-
         if(isset($input['restore']) && $input['restore'] == true){
-            return $this->restoreDeletedCategory($id);
+            return $this->restoreDeletedCategory($id, $request);
         }
 
         if(isset($input['level'])){
@@ -159,11 +171,19 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $procurementCodeExist = TenderProcurementCategory::withTrashed()
-            ->select('id', 'deleted_at')
-            ->where('id', '!=', $id)
-            ->where('code', '=', $input['code'])
-            ->where('level', '=', $level)->first();
+        if( $level == 0 && isset($input['createNewRecord']) &&  $input['createNewRecord'] == 0){
+            $procurementCodeExist = TenderProcurementCategory::withTrashed()
+                ->select('id', 'deleted_at')
+                ->where('id', '!=', $id)
+                ->where('code', '=', $input['code'])
+                ->where('level', '=', $level)->first();
+        } else {
+            $procurementCodeExist = TenderProcurementCategory::select('id')
+                ->where('id', '!=', $id)
+                ->where('code', '=', $input['code'])
+                ->where('level', '=', $level)->first();
+        }
+
         if (!empty($procurementCodeExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
                 return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
@@ -173,11 +193,19 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
-        $procurementDesExist = TenderProcurementCategory::withTrashed()
-            ->select('id', 'deleted_at')
-            ->where('id', '!=', $id)
-            ->where('description', '=', $input['description'])
-            ->where('level', '=', $level)->first();
+        if( $level == 0 && isset($input['createNewRecord']) &&  $input['createNewRecord'] == 0){
+            $procurementDesExist = TenderProcurementCategory::withTrashed()
+                ->select('id', 'deleted_at')
+                ->where('id', '!=', $id)
+                ->where('description', '=', $input['description'])
+                ->where('level', '=', $level)->first();
+        } else {
+            $procurementDesExist = TenderProcurementCategory::select('id')
+                ->where('id', '!=', $id)
+                ->where('description', '=', $input['description'])
+                ->where('level', '=', $level)->first();
+        }
+
         if(!empty($procurementDesExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
                 return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
@@ -188,7 +216,7 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         $input['updated_pc'] = gethostname();
-        $input['updated_by'] = Helper::getEmployeeID();
+        $input['updated_by'] = Helper::getEmployeeSystemID();
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
@@ -211,7 +239,18 @@ class TenderProcurementCategoryController extends AppBaseController
         if (empty($tenderProcurementCategory)) {
             return $this->sendError('Procurement Category not found');
         }
-        $input['deleted_by'] = Helper::getEmployeeID();
+
+        $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->where('id', $id)->get();
+        if(sizeof($categoryHasTenders) != 0){
+            return $this->sendError('Procurement category already used');
+        }
+
+        $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->where('id', $id)->get();
+        if(sizeof($categoryHasActivity) != 0){
+            return $this->sendError('Procurement category already used');
+        }
+
+        $input['deleted_by'] = Helper::getEmployeeSystemID();
         $procurementCategoryDeleted = TenderProcurementCategory::where('id', $id)->update($input);
         
         if($procurementCategoryDeleted){
@@ -260,9 +299,37 @@ class TenderProcurementCategoryController extends AppBaseController
             ->make(true);
     }
 
-    private function restoreDeletedCategory($id){
+    private function restoreDeletedCategory($id, Request $request)
+    {
+        $level = 0;
+        $input = $request->all();
 
+        if(isset($input['level'])){
+            $level = $input['level'];
+        }
+
+        $procurementCatCodeExist = TenderProcurementCategory::select('id')
+            ->where('code', '=', $input['code'])
+            ->where('level', '=', $level)->first();
+
+        if (!empty($procurementCatCodeExist)) {
+            return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+        }
+
+        $procurementCatDesExist = TenderProcurementCategory::select('id')
+            ->where('description', '=', $input['description'])
+            ->where('level', '=', $level)->first();
+
+        if (!empty($procurementCatDesExist)) {
+            return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+        }
+        
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
+
+        if($procurementCategory) {
+            TenderProcurementCategory::where('id', $id)->update(['is_active' => $request->input('is_active')]);
+        }
+
 
         return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
     }

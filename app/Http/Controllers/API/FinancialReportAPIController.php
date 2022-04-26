@@ -346,7 +346,7 @@ class FinancialReportAPIController extends AppBaseController
 
     public function generateprojectUtilizationReport(Request $request)
     {
-
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
@@ -360,7 +360,7 @@ class FinancialReportAPIController extends AppBaseController
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
             $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
@@ -369,13 +369,13 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
             ->groupBy('documentSystemCode')
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
@@ -384,7 +384,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
                 $query->whereDate('approvedDate', '<', $fromDate);
             })
@@ -1211,6 +1211,7 @@ class FinancialReportAPIController extends AppBaseController
 
     public function downloadProjectUtilizationReport(Request $request)
     {
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
@@ -1225,7 +1226,7 @@ class FinancialReportAPIController extends AppBaseController
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->where('documentSystemID', 2)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
             $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
@@ -1234,13 +1235,13 @@ class FinancialReportAPIController extends AppBaseController
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
             ->where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
             ->groupBy('documentSystemCode')
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
             })
@@ -1249,7 +1250,7 @@ class FinancialReportAPIController extends AppBaseController
 
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
-            ->where('documentSystemID', 2)
+            ->whereIn('documentSystemID', $documentSystemIDs)
             ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
                 $query->whereDate('approvedDate', '<', $fromDate);
             })

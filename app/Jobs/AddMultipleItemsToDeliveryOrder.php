@@ -14,7 +14,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\ItemMaster;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
-use App\helper\QuotationAddMultipleItemsService;
+use App\helper\DeliveryOrderAddMutipleItemsService;
 
 
 class AddMultipleItemsToDeliveryOrder implements ShouldQueue
@@ -22,7 +22,7 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $record;
-    public $quotation;
+    public $deliveryOrder;
     public $timeout = 500;
     public $db;
     public $authID;
@@ -31,7 +31,7 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($record,$quotation,$db,$authID)
+    public function __construct($record,$deliveryOrder,$db,$authID)
     {
         Log::info('Add Mutiple Items to quotation Started in Constructor - DB'.$db);
 
@@ -42,7 +42,7 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
         }
 
         $this->record = $record;
-        $this->quotation = $quotation;
+        $this->deliveryOrder = $deliveryOrder;
         $this->db = $db;
 
     }
@@ -54,7 +54,7 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
      */
     public function handle()
     {
-        QuotationAddMultipleItemsService::addMultipleItems($this->record,$this->quotation, $this->db,$this->authID);
+        DeliveryOrderAddMutipleItemsService::addMultipleItems($this->record,$this->deliveryOrder, $this->db,$this->authID);
     }
 
 
