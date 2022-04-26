@@ -1290,20 +1290,25 @@ class SRMService
     {
         $input = $request->all();
         $extra = $input['extra'];
+        $supplierRegId =  0;
         $SearchText = "";
         if(isset($extra['SearchText'])){
             $SearchText = $extra['SearchText'];
         }
 
-        if(isset($extra['isMyClarification'])){
-            $isMyClarification = $input['isMyClarification'];
+        if(isset($extra['isMyClarification']) && $extra['isMyClarification'] == true){
+            $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         }
 
         try{
-            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText) {
+            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
                 $q->where('parent_id', 0);
                 if(!empty($SearchText)){
                     $q->where('post', 'LIKE', "%{$SearchText}%");
+                }
+
+                if($supplierRegId != 0){
+                    $q->where('supplier_id', $supplierRegId);
                 }
                 $q->with(['supplier']);
             }]);
