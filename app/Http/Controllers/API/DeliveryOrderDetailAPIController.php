@@ -1782,7 +1782,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
                     $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
                     $itemArray['trackingType'] = $itemDetails->trackingType;
-                    $input['discountPercentage'] = $item['discount'];
+                    $itemArray['qtyIssued'] = $item['qty'];
+
                     $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
 
                     $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
@@ -1867,7 +1868,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
                         if($validateItem) {
-                            array_push($finalItems,$itemArray);
+                            if($itemArray['currentWareHouseStockQty'] > 0) {
+                                array_push($finalItems,$itemArray);
+                            }
+                            
                         }
 
                     }
