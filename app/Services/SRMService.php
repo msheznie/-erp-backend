@@ -1221,7 +1221,7 @@ class SRMService
     public function getFaqList(Request $request)
     {
         $input = $request->all();
-        $tenderId = $input['extra'];
+        $tenderId = $input['extra']['tenderId'];
         try{
             $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
 
@@ -1252,7 +1252,7 @@ class SRMService
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderMasterId;
-            $data['posted_by_type'] = "0";
+            $data['posted_by_type'] = 0;
             $data['post'] = $request->input('extra.question');
             $data['user_id'] = $request->input('extra.user_id');
             $data['supplier_id'] = $supplierRegId;
@@ -1310,12 +1310,6 @@ class SRMService
                $data = $data->whereHas('tenderPreBidClarification', function ($q) {
                     $q->where('parent_id', 0);
                 })->where('id', $extra['tenderId']);
-
-            /*if(!empty($SearchText)){
-                $data = $data->where(function ($query) use ($SearchText) {
-                    $query->where('post', 'LIKE', "%{$SearchText}%");
-                });
-            }*/
 
             $data = $data->get();
 
