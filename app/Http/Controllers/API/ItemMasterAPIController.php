@@ -157,6 +157,7 @@ class ItemMasterAPIController extends AppBaseController
                     $item['documentID'] = $document->documentID;
                 }
 
+                $item['trackingType'] = (is_null($financeCategorySub->trackingType)) ? 0 : $financeCategorySub->trackingType;
                 $item['isActive'] = 1;
                 $input['createdPcID'] = gethostname();
                 $input['createdUserID'] = $employee->empID;

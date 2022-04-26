@@ -1760,6 +1760,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             $finalItems = [];
 
+
             foreach($record as $item) {
 
                 $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
@@ -1781,6 +1782,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
                     $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
                     $itemArray['trackingType'] = $itemDetails->trackingType;
+                    $itemArray['qtyIssued'] = $item['qty'];
 
                     $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
 
@@ -1841,10 +1843,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
                         $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
 
-                        $itemArray['discountPercentage'] = 0;
-                        $itemArray['discountAmount'] = 0;
+
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
+                        $itemArray['discountAmount'] = $item['discount'];
+                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+
 
                         if ($masterData->isVatEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
@@ -1864,7 +1868,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
                         if($validateItem) {
-                            array_push($finalItems,$itemArray);
+                            if($itemArray['currentWareHouseStockQty'] > 0) {
+                                array_push($finalItems,$itemArray);
+                            }
+                            
                         }
 
                     }

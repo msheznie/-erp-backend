@@ -331,6 +331,6 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
 
-        return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
+        return $this->sendResponse($procurementCategory, 'Procurement Category restored successfully');
     }
 }
