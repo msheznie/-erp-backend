@@ -1781,7 +1781,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
                     $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
                     $itemArray['trackingType'] = $itemDetails->trackingType;
-
+                    $input['discountPercentage'] = $item['discount'];
                     $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
 
                     $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
@@ -1845,6 +1845,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['discountAmount'] = 0;
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
+                        $itemArray['discountAmount'] = ($itemArray['transactionAmount'] / 100) * $itemArray['discountPercentage'];
 
                         if ($masterData->isVatEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
