@@ -1417,7 +1417,7 @@ class SRMService
             $decodeFile = base64_decode($file);
             $attch = time() . '_PreBidClarificationCompany.' . $extension;
             $path = $companySystemID . '/PreBidClarification/' . $attch;
-            /*Storage::disk(Helper::policyWiseDisk($companySystemID, 'public'))->put($path, $decodeFile);*/
+            Storage::disk('s3')->put($path, $decodeFile);
 
             $att['companySystemID'] = $companySystemID;
             $att['companyID'] = $company->CompanyID;
