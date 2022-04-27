@@ -1853,7 +1853,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                             $itemArray['VATAmount'] = 0;
                             if (isset($itemArray['unittransactionAmount']) && $itemArray['unittransactionAmount'] > 0) {
-                                $input['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $vatDetails['percentage']);
+                                $itemArray['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $item['vat']);
                             }
                             $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
