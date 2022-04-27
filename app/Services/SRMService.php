@@ -1253,7 +1253,8 @@ class SRMService
             $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
             $tenderMasterId = $request->input('extra.tenderId');
             $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-            $companySystemID = 1;
+            $tenderMaster = TenderMaster::find($tenderMasterId);
+            $companySystemID = $tenderMaster['company_id'];
             $company = Company::where('companySystemID', $companySystemID)->first();
             $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
@@ -1273,7 +1274,6 @@ class SRMService
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
-                    Log::info(['$attachment', $attachment]);
                     $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
                 }
                 DB::commit();
@@ -1391,9 +1391,10 @@ class SRMService
         $employeeId = Helper::getEmployeeSystemID();
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
-        $companySystemID = 1;
         $tenderParentPost = TenderBidClarifications::where('id', $id)->first();
-        $company = '';
+        $companySystemID = 1; // tenderMaser - companyId
+
+        $company = ''; // et the company
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
         DB::beginTransaction();
@@ -1445,17 +1446,17 @@ class SRMService
             $decodeFile = base64_decode($file);
             $attch = time() . '_PreBidClarificationCompany.' . $extension;
             $path = $companySystemID . '/PreBidClarification/' . $attch;
-           // Storage::disk('s3')->put($path, $decodeFile);
+            Storage::disk('s3')->put($path, $decodeFile);
 
-            //$att['companySystemID'] = $companySystemID;
-            //$att['companyID'] = $company->CompanyID;
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
             $att['documentSystemID'] = $documentCode->documentSystemID;
             $att['documentID'] = $documentCode->documentID;
             $att['documentSystemCode'] = $id;
             $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
             $att['path'] = $path;
             $att['originalFileName'] = $attachment['originalFileName'];
-            $att['myFileName'] = "443" . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
             DocumentAttachments::create($att);
@@ -1478,22 +1479,20 @@ class SRMService
            //$data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
 
-            /*$isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
-              //  ->where('companySystemID', $companySystemID)
-                ->where('documentSystemCode', $input['id'])
-                ->count();*/
+            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+                ->where('documentSystemCode', $prebidId)
+                ->count();
 
-            /*if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
                 DocumentAttachments::where('documentSystemID', 109)
-                    ->where('companySystemID', $companySystemID)
-                    ->where('documentSystemCode', $input['id'])
+                    ->where('documentSystemCode', $prebidId)
                     ->delete();
-            }*/
+            }
 
-            /*if (isset($input['Attachment']) && !empty($input['Attachment'])) {
+            if (!empty($attachment) && isset($attachment['file'])) {
                 $attachment = $input['Attachment'];
                 $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
-            }*/
+            }
 
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
