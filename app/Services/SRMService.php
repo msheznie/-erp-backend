@@ -1310,6 +1310,7 @@ class SRMService
 
         try{
             $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
+                $q->with('attachment');
                 $q->where('parent_id', 0);
                 if(!empty($SearchText)){
                     $q->where('post', 'LIKE', "%{$SearchText}%");
