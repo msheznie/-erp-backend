@@ -940,14 +940,16 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         foreach ($items as $item) {
 
-            $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
-
+            $issueUnit = Unit::all();
             $issueUnits = array();
-            foreach ($issueUnit->unitConversion as $unit) {
-                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
-                array_push($issueUnits, $temArray);
-            }
 
+            if ($issueUnit) {
+                foreach ($issueUnit as $unit){
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                    array_push($issueUnits,$temArray);
+                }
+            }
+            
             $item->issueUnits = $issueUnits;
         }
 
