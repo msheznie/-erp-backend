@@ -1286,7 +1286,7 @@ class SRMService
 
     }
 
-    public function getPrebidClarification(Request $request)
+    public function getPrebidClarificationList(Request $request)
     {
         $input = $request->all();
         $extra = $input['extra'];
@@ -1336,7 +1336,6 @@ class SRMService
     {
         $input = $request->all();
         $id = $request->input('extra.prebidId');
-        Log::info(['$id', $id]);
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
@@ -1357,15 +1356,36 @@ class SRMService
         ];
     }
 
+    public function getPreBidClarification(Request $request)
+    {
+        $id = $request->input('extra.prebidId');
+
+        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        },'attachment'])
+            ->where('id', '=', $id)
+            ->first();
+        /*$profilePic = Employee::with(['profilepic'])
+            ->where('employeeSystemID', $employeeId)
+            ->first();
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+
+        return [
+            'success' => true,
+            'message' => 'Pre-bid clarification successfully get',
+            'data' => $data
+        ];
+    }
+
     public function createClarificationResponse(Request $request)
     {
         $attachment = $request->input('extra.attachment');
         $employeeId = Helper::getEmployeeSystemID();
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
-        $companySystemID = 1; //$input['companySystemID'];
+        $companySystemID = 1;
         $tenderParentPost = TenderBidClarifications::where('id', $id)->first();
-        $company = ''; //Company::where('companySystemID', $companySystemID)->first();
+        $company = '';
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
         DB::beginTransaction();
@@ -1374,7 +1394,7 @@ class SRMService
             $data['posted_by_type'] = 1;
             $data['post'] = $response;
             $data['user_id'] = $employeeId;
-            $data['is_public'] = 1; //$tenderParentPost['is_public'];
+            $data['is_public'] = 1;
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
             $data['document_system_id'] = $documentCode->documentSystemID;
@@ -1393,7 +1413,7 @@ class SRMService
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::info($e);
             return ['success' => false, 'message' => $e];
         }
     }
@@ -1417,17 +1437,17 @@ class SRMService
             $decodeFile = base64_decode($file);
             $attch = time() . '_PreBidClarificationCompany.' . $extension;
             $path = $companySystemID . '/PreBidClarification/' . $attch;
-            Storage::disk('s3')->put($path, $decodeFile);
+           // Storage::disk('s3')->put($path, $decodeFile);
 
-            $att['companySystemID'] = $companySystemID;
-            $att['companyID'] = $company->CompanyID;
+            //$att['companySystemID'] = $companySystemID;
+            //$att['companyID'] = $company->CompanyID;
             $att['documentSystemID'] = $documentCode->documentSystemID;
             $att['documentID'] = $documentCode->documentID;
             $att['documentSystemCode'] = $id;
             $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
             $att['path'] = $path;
             $att['originalFileName'] = $attachment['originalFileName'];
-            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['myFileName'] = "443" . '_' . time() . '_PreBidClarification.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
             DocumentAttachments::create($att);
