@@ -1387,11 +1387,11 @@ class ItemMasterAPIController extends AppBaseController
         foreach ($itemSystemCode as $item) {
             $sumWarehouse = null;
             if ($wareHouseSystemCode != null) {
-                $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $item['itemCode'])->where('companySystemID', $companySystemID)->sum('inOutQty');
+                $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $item)->where('companySystemID', $companySystemID)->sum('inOutQty');
             }
-            $sumGlobal = ErpItemLedger::where('itemSystemCode', $item['itemCode'])->where('companySystemID', $companySystemID)->sum('inOutQty');
+            $sumGlobal = ErpItemLedger::where('itemSystemCode', $item)->where('companySystemID', $companySystemID)->sum('inOutQty');
 
-            $sum = array("itemCode" => $item['itemCode'], "sumWarehouse" => $sumWarehouse, "sumGlobal" => $sumGlobal);
+            $sum = array("itemCode" => $item, "sumWarehouse" => $sumWarehouse, "sumGlobal" => $sumGlobal);
             array_push($sumArray, $sum);
         }
 
