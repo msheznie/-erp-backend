@@ -292,7 +292,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError("There is a Materiel return (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
         //}
