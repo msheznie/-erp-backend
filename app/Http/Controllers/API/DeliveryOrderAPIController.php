@@ -1544,4 +1544,14 @@ WHERE
    
     }
 
+    public function downloadQuotationItemUploadTemplate(Request $request) {
+        $input = $request->all();
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('delivery_order_template/delivery_order_template.xlsx ')) {
+            return Storage::disk($disk)->download('delivery_order_template/delivery_order_template.xlsx ', 'delivery_order_template.xlsx ');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
+    }
+
 }
