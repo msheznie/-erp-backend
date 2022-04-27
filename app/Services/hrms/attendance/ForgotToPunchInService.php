@@ -194,7 +194,7 @@ class ForgotToPunchInService{
     }
 
     public function notify($empArr){        
-        foreach ($empArr as $emp) {            
+        foreach ($empArr as $emp) {
             $mail_body = "Dear {$emp->Ename2},<br/>";
             $mail_body .= "You have missed punching in."; 
 
@@ -225,16 +225,12 @@ class ForgotToPunchInService{
         $this->proceedShifts = array_values( array_filter($data) );
 
         $this->insertToLogTb(
-            [ 'proceedShifts'=> $this->proceedShifts ]
+            [ 'processedShifts'=> $this->proceedShifts ]
         );
     }
 
     public function getDayId(){
         $dayName = Carbon::parse($this->date)->format('l');        
-        
-        Log::info( 'dayName : '.$dayName .' | date : '.$this->date.' | time : '.$this->time );
-        $dayName2 = Carbon::parse($this->date);
-        Log::info( 'dayName : '. $dayName2);
         
         $this->dayId = DB::table('srp_weekdays')
             ->select('DayID')

@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
 use App\helper\NotificationService;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\ForgotToPunchInCompany;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,23 +43,19 @@ class ForgotToPunchInTenant implements ShouldQueue
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );
 
-        Log::info("Job initiated on  {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-
         CommonJobService::db_switch( $this->tenantDb );
+          
+        Log::info("Job initiated on {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $setupData = NotificationService::getActiveCompanyByScenario(15);
-
-        if($setupData->count() == 0){
+        if(count( $setupData ) == 0){
             return;
         }
-        
-        $setupData = $setupData->toArray();
 
-        foreach ($setupData as $setup) {
+        foreach ($setupData as $setup) { 
             $companyId = $setup['companyID'];
             $companyName = $setup['company']['CompanyName']; 
 
-            Log::info("Job initiated for  {$companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             ForgotToPunchInCompany::dispatch($this->tenantDb, $companyId, $companyName);
         }
 

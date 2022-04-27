@@ -39,7 +39,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('command:forgotToPunchIn')
             ->timezone('Asia/Muscat')
-            ->everyTenMinutes()
+            ->hourly()
             ->between('8:00', '13:00')
             ->withoutOverlapping();
 

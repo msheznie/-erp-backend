@@ -26,7 +26,7 @@ class ForgotToPunchInCompany implements ShouldQueue
      * @return void
      */
     public function __construct($tenantDb, $companyId, $companyName)
-    {
+    {        
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
@@ -46,16 +46,15 @@ class ForgotToPunchInCompany implements ShouldQueue
     public function handle()
     {
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );
-        
+             
         CommonJobService::db_switch( $this->tenantDb );
 
-        Log::info("Job starting process for {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info("Job process started on {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $now = Carbon::now();
         $date = $now->format('Y-m-d');
-        $time = $now->format('H:i:s');
-        $date = '2022-04-26';$date = '11:00';
-
+        $time = $now->format('H:i:s');        
+        
         $job = new ForgotToPunchInService($this->companyId, $date, $time);
         $job->run();
     }

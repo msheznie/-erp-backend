@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\helper\CommonJobService;
 use App\Jobs\ForgotToPunchInTenant;
+use Illuminate\Support\Facades\Log;
 
 class ForgotToPunchInScheduler extends Command
 {
@@ -39,6 +40,9 @@ class ForgotToPunchInScheduler extends Command
      */
     public function handle()
     { 
+        Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );                    
+
+        Log::info("Job scheduler started  . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
@@ -47,7 +51,7 @@ class ForgotToPunchInScheduler extends Command
 
 
         foreach ($tenants as $tenant){
-            $tenantDb = $tenant->database;            
+            $tenantDb = $tenant->database;
 
             ForgotToPunchInTenant::dispatch($tenantDb);            
         }
