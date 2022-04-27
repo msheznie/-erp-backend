@@ -32,6 +32,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -49,19 +50,22 @@ class SRMService
     private $sharedService = null;
     private $invoiceService = null;
     private $supplierInvoiceItemDetailRepository;
+    private $tenderBidClarificationsRepository;
 
     public function __construct(
         POService $POService,
         SupplierService $supplierService,
         SharedService $sharedService,
         InvoiceService $invoiceService,
-        SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo
+        SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
+        TenderBidClarificationsRepository $tenderBidClarificationsRepo
     ) {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
         $this->invoiceService   = $invoiceService;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
+        $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
     }
 
     /**
@@ -1241,49 +1245,53 @@ class SRMService
     }
 
     public function saveTenderPrebidClarification(Request $request){
-        $attachment = $request->input('extra.attachment');
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tenderMasterId = $request->input('extra.tenderId');
-        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-        $companySystemID = 1; //$input['companySystemID'];
-        $company = Company::where('companySystemID', $companySystemID)->first();
-        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        $prebidId = $request->input('extra.preBidId');
 
-        DB::beginTransaction();
-        try {
-            $data['tender_master_id'] = $tenderMasterId;
-            $data['posted_by_type'] = 0;
-            $data['post'] = $request->input('extra.question');
-            $data['user_id'] = $request->input('extra.user_id');
-            $data['supplier_id'] = $supplierRegId;
-            $data['is_public'] = $request->input('extra.publish');
-            $data['parent_id'] = $request->input('extra.parent_id');
-            $data['created_by'] = $supplierRegId;
-            $data['created_at'] = $currentDate;
-            $data['document_system_id'] = $documentCode->documentSystemID;
-            $data['document_id'] = $documentCode->documentID;
-            $tenderPrebidClarification = TenderBidClarifications::create($data);
+        if($prebidId !== 0){
+           return $this->updatePreBid($request, $prebidId);
+        } else {$attachment = $request->input('extra.attachment');
+            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+            $tenderMasterId = $request->input('extra.tenderId');
+            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+            $companySystemID = 1;
+            $company = Company::where('companySystemID', $companySystemID)->first();
+            $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
 
-            if (isset($attachment) && !empty($attachment)) {
-                Log::info(['$attachment', $attachment]);
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+            DB::beginTransaction();
+            try {
+                $data['tender_master_id'] = $tenderMasterId;
+                $data['posted_by_type'] = 0;
+                $data['post'] = $request->input('extra.question');
+                $data['user_id'] = $request->input('extra.user_id');
+                $data['supplier_id'] = $supplierRegId;
+                $data['is_public'] = $request->input('extra.publish');
+                $data['parent_id'] = $request->input('extra.parent_id');
+                $data['created_by'] = $supplierRegId;
+                $data['created_at'] = $currentDate;
+                $data['document_system_id'] = $documentCode->documentSystemID;
+                $data['document_id'] = $documentCode->documentID;
+                $tenderPrebidClarification = TenderBidClarifications::create($data);
+
+                if (isset($attachment) && !empty($attachment)) {
+                    Log::info(['$attachment', $attachment]);
+                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                }
+                DB::commit();
+
+                return [
+                    'success' => true,
+                    'message' => 'Tender Pre-bid Clarification successfully',
+                    'data' => $tenderPrebidClarification
+                ];
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return [
+                    'success'   => false,
+                    'message'   => 'Tender Pre-bid Clarification failed',
+                    'data'      => $exception->getMessage()
+                ];
             }
-            DB::commit();
-
-            return [
-                'success' => true,
-                'message' => 'Tender Pre-bid Clarification successfully',
-                'data' => $tenderPrebidClarification
-            ];
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return [
-                'success'   => false,
-                'message'   => 'Tender Pre-bid Clarification failed',
-                'data'      => $exception->getMessage()
-            ];
         }
-
     }
 
     public function getPrebidClarificationList(Request $request)
@@ -1453,6 +1461,47 @@ class SRMService
             DocumentAttachments::create($att);
         } else {
             Log::info("NO ATTACHMENT");
+        }
+    }
+
+    public function updatePreBid(Request $request, $prebidId)
+    {
+        $input = $request->all();
+        $question = $request->input('extra.question');
+        $companySystemID = 1;
+        $company = 1;
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        DB::beginTransaction();
+        try {
+            $data['post'] = $question;
+            $data['is_public'] = $request->input('extra.publish');
+           //$data['post'] = $question;
+            $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
+
+            /*$isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+              //  ->where('companySystemID', $companySystemID)
+                ->where('documentSystemCode', $input['id'])
+                ->count();*/
+
+            /*if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+                DocumentAttachments::where('documentSystemID', 109)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemCode', $input['id'])
+                    ->delete();
+            }*/
+
+            /*if (isset($input['Attachment']) && !empty($input['Attachment'])) {
+                $attachment = $input['Attachment'];
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            }*/
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
 }
