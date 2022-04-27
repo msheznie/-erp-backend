@@ -3,11 +3,14 @@ namespace App\Services\hrms\attendance;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\helper\NotificationService;
 
 class ForgotToPunchInService{
     private $companyId;
     private $date;
     private $time;
+
+    private $mailSubject = 'Attendance Notification';
 
     private $dayId;
     private $shiftMasters;
@@ -47,16 +50,31 @@ class ForgotToPunchInService{
         foreach ($this->shiftMasters as $key => $shift) {
             //TODO: validate whether this job processed for this shift master
 
+            $empArr = $this->empAssignedWithShift($shift->shiftID);
+            if(empty($empArr)){
+                continue;
+            }
 
-            $this->empShifts($shift->shiftID);
+            $onLeaveEmp = $this->empOnLeave($empArr);
+            $empArr = array_values( array_diff($empArr, $onLeaveEmp) ); //except on leave employees
+            if(empty($empArr)){
+                continue;
+            }
+
+            $notPunched = $this->empForgotToPunchIn($empArr);
+            if($notPunched->count() == 0){
+                continue;
+            }
+            
+            $this->notify($notPunched);
         }
     }
     
-    public function empShifts($shiftId){
+    public function empAssignedWithShift($shiftId){
         $empArr = DB::table('srp_erp_pay_shiftemployees')
             ->select('empID') 
             ->where('shiftID', $shiftId) 
-            ->whereRaw("('{$this->date}' BETWEEN startDate and endDate )")
+            ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
             ->where('companyID', $this->companyId)
             ->get();
 
@@ -64,18 +82,61 @@ class ForgotToPunchInService{
             return [];
         }
         
-        $empArr = $empArr->pluck('empID')->toArray();
-        //dd($empArr);
+        return $empArr->pluck('empID')->toArray();
     }
-    
-    public function check2(){
-        $q = "SELECT t.autoID, l.empID, t.device_id, t.empMachineID, l.floorID, t.attDate, t.attTime, t.uploadType
-        FROM srp_erp_pay_empattendancetemptable AS t
-        JOIN srp_erp_empattendancelocation AS l ON l.deviceID = t.device_id AND t.empMachineID = l.empMachineID               
-        WHERE t.companyID = {$this->companyId} AND t.attDate = '{$this->date}'          
-        ORDER BY l.empID, t.attTime ASC";
 
-        $this->tempData = DB::select($q);
+    public function empOnLeave($empArr){
+        $onLeaveEmp = DB::table('srp_erp_leavemaster')
+            ->select('empID') 
+            ->where('companyID', $this->companyId)
+            ->where('approvedYN', 1)
+            ->whereIn('empID', $empArr) 
+            ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")            
+            ->get();
+
+        if($onLeaveEmp->count() == 0){
+            return [];
+        }
+        
+        return $onLeaveEmp->pluck('empID')->toArray();
+    }
+
+    public function empForgotToPunchIn($empArr){        
+        $notPunched = DB::table('srp_employeesdetails AS e')
+            ->selectRaw('EIdNo, ECode, Ename2, EEmail')     
+            ->where('e.Erp_companyID', $this->companyId)
+            ->whereIn('e.EIdNo', $empArr)
+            ->whereNotExists(function($q) use ($empArr){
+                $q->select('l.empID')
+                ->from('srp_erp_pay_empattendancetemptable AS t')
+                ->join('srp_erp_empattendancelocation AS l', function($join){
+                    $join->on('l.deviceID', '=', 't.device_id')
+                        ->on('t.empMachineID', '=', 'l.empMachineID');
+                })                
+                ->where('t.companyID', $this->companyId)
+                ->where('t.attDate', $this->date)
+                ->whereIn('l.empID', $empArr)
+                ->whereColumn('e.EIdNo', 'l.empID')
+                ->groupBy('l.empID');
+            })                       
+            ->get(); 
+        
+        return $notPunched;
+    }
+
+    public function notify($empArr){        
+        foreach ($empArr as $emp) {            
+            $mail_body = "Dear {$emp->Ename2},<br/>";
+            $mail_body .= "You have missed punching in"; 
+
+            //echo '<pre>'; print_r($mail_body); echo '</pre>'; exit;
+
+            $empEmail = $emp->EEmail;
+            $empEmail = 'nasik@osos.om';
+            $subject = $this->mailSubject;
+
+            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mail_body);
+        }
     }
 
     public function getDayId(){
@@ -86,8 +147,7 @@ class ForgotToPunchInService{
             ->value('DayID');        
     }
 
-    /* TODO:
-     - check employee shift date and get shift start time
+    /* TODO:     
      - check employee leave ( half day leave concern)
     */
 }
