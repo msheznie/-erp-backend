@@ -1722,6 +1722,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 if (isset($value['qty'])) {
                     $validateHeaderQty = true;
                 }
+                
+                if (isset($value['unit_cost'])) {
+                    $validateHeaderQty = true;
+                }
 
                 if($masterData->isVatEligible) {
                    if (isset($value['vat'])) {
@@ -1731,7 +1735,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateVat = true;
                 }
 
-                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
