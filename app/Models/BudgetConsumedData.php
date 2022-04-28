@@ -220,4 +220,34 @@ class BudgetConsumedData extends Model
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'documentSystemCode', 'purchaseOrderID');
     }
+
+    public function debit_note()
+    {
+        return $this->belongsTo('App\Models\DebitNote', ['documentSystemCode', 'documentSystemID'], ['debitNoteAutoID', 'documentSystemID']);
+    }
+
+    public function debit_note_detail()
+    {
+        return $this->belongsTo('App\Models\DebitNote', 'documentSystemCode', 'debitNoteAutoID');
+    }
+
+    public function credit_note()
+    {
+        return $this->belongsTo('App\Models\CreditNote', ['documentSystemCode', 'documentSystemID'], ['creditNoteAutoID', 'documentSystemiD']);
+    }
+
+    public function credit_note_detail()
+    {
+        return $this->belongsTo('App\Models\CreditNote', 'documentSystemCode', 'creditNoteAutoID');
+    }
+
+    public function direct_payment_voucher()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'documentSystemCode', 'PayMasterAutoId');
+    }
+
+    public function direct_payment_voucher_detail()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', ['documentSystemCode', 'documentSystemID'], ['PayMasterAutoId', 'documentSystemID']);
+    }
 }
