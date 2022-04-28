@@ -820,6 +820,21 @@ class CustomUserReportsAPIController extends AppBaseController
                     'currency_by','currency_local', 'sup_def_currency','local_currency','sup_tra_currency','warehouse','approved_by','bank','bank_currency'];
                     
                     break;  
+
+                case 12:  
+                    $masterTable = 'erp_request';
+                    $detailTable = 'erp_requestdetails';
+                    $primaryKey  = $masterTable . '.RequestID';
+                    $detailPrimaryKey = $detailTable . '.RequestDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'MaterielRequest';
+                    $templateData['tables'] = ['company','customer','priority','created_by','approved_by',
+                    'location_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
                 default;
                     break;
             }
@@ -1345,6 +1360,37 @@ class CustomUserReportsAPIController extends AppBaseController
                                 }
                                 $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                                 break;
+
+                case 12:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'location_by') {
+                                    $data->locationJoin('location_by', 'location', 'locationName');
+                                } 
+                                else if ($table == 'priority') {
+                                    $data->priorityJoin('priority', 'priority', 'priorityDescription');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
                         default:
                     $data = [];
                     break;
