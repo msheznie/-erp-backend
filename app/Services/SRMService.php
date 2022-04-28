@@ -1393,11 +1393,10 @@ class SRMService
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
         $tenderParentPost = TenderBidClarifications::where('id', $id)->first();
-        $companySystemID = 1; // tenderMaser - companyId
-
-        $company = ''; // et the company
+        $tenderMaster = TenderMaster::find($tenderParentPost['tender_master_id']);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
-
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
