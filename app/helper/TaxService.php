@@ -20,6 +20,7 @@ use App\Models\SupplierInvoiceItemDetail;
 use App\Models\PurchaseReturn;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierAssigned;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use Illuminate\Support\Facades\DB;
@@ -1316,5 +1317,26 @@ class TaxService
 
 
         return $vatData;
+    }
+
+    public static function calculateRetentionVatAmount($PayMasterAutoId)
+    {
+        $retentionData = PaySupplierInvoiceDetail::WHERE('PayMasterAutoId', $PayMasterAutoId)
+                                                 ->WHERE('matchingDocID', 0)
+                                                 ->WHERE('isRetention', 1)
+                                                 ->get();
+
+        $totalTransVATAmount = 0;
+        foreach ($retentionData as $key => $value) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
+
+            if ($bookInvSuppMaster) {
+                $vatAmount = ($bookInvSuppMaster->retentionVatAmount / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+            
+                $totalTransVATAmount += $vatAmount;
+            }
+        }
+
+        return $totalTransVATAmount;
     }
 }

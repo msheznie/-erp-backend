@@ -355,6 +355,7 @@ class BookInvSuppMaster extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'retentionVatAmount',
         'retentionPercentage',
         'retentionAmount',
         'retentionDueDate',

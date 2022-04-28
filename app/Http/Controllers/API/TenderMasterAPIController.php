@@ -353,12 +353,14 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+        if(isset($input['tenderMasterId'])){
+            $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
 
-        if(!empty($tenderMaster['procument_cat_id'])){
-           $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
-        }else{
-            $category['is_active'] = 1;
+            if(!empty($tenderMaster['procument_cat_id'])){
+                $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
+            }else{
+                $category['is_active'] = 1;
+            }
         }
 
         $data['tenderType'] = TenderType::get();
@@ -369,8 +371,10 @@ class TenderMasterAPIController extends AppBaseController
         $data['bank'] = BankMaster::get();
         $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
 
-        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
-            $data['procurementCategory'][] = $category;
+        if(isset($input['tenderMasterId'])) {
+            if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
+                $data['procurementCategory'][] = $category;
+            }
         }
 
         return $data;

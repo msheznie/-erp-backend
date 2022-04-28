@@ -238,7 +238,11 @@
                     <table style="width: 100%; !important">
                         @if($request->line_subcontractNo && !empty($request->invoicedetails) )
                             <tr>
-                                <td>{{$request->invoicedetails[0]->clientContractID}}</td>
+                                @if (isset($request->invoicedetails[0]->clientContractID))
+                                    <td>{{$request->invoicedetails[0]->clientContractID}}</td>
+                                @else
+                                    <td></td>
+                                @endif
                             </tr>
                         @endif
                         @if($request->line_customerShortCode)
@@ -348,7 +352,12 @@
                                             class="font-weight-bold">Contract @if($request->line_paymentTerms) Ref
                                         No @endif </span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
+
+                                @if (isset($request->invoicedetails[0]->clientContractID))
+                                    <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
+                                @else
+                                    <td><span></span></td>
+                                @endif
                             </tr>
                         @endif
 
