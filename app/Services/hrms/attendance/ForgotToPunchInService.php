@@ -33,15 +33,17 @@ class ForgotToPunchInService{
         $this->processOverShifts();
     }
 
-    public function getShiftMasters(){ 
-        //TODO:  validate the on duty time with the job processing time
+    public function getShiftMasters(){
+        // we have to check the punch-in status after two hours from on-duty-time 
+        $onDutyTime = Carbon::parse($this->time)->subHours(2)->format('H:i:s');
+
         $this->shiftMasters = DB::table('srp_erp_pay_shiftmaster AS m')
             ->selectRaw("m.shiftID, m.Description, d.dayID, d.onDutyTime, d.offDutyTime, d.dayID")
             ->join('srp_erp_pay_shiftdetails AS d', 'd.shiftID', '=', 'm.shiftID')
             ->where('d.dayID', $this->dayId)
-            //->where('d.onDutyTime', 0)
+            ->where('d.onDutyTime', '<=', $onDutyTime)
             ->where('d.isWeekend', 0)
-            ->where('m.shiftID', 2)
+            //->where('m.shiftID', 2)
             ->where('m.companyID', $this->companyId)
             ->get();
     }
@@ -127,12 +129,9 @@ class ForgotToPunchInService{
     public function notify($empArr){        
         foreach ($empArr as $emp) {            
             $mail_body = "Dear {$emp->Ename2},<br/>";
-            $mail_body .= "You have missed punching in"; 
-
-            //echo '<pre>'; print_r($mail_body); echo '</pre>'; exit;
+            $mail_body .= "You have missed punching in."; 
 
             $empEmail = $emp->EEmail;
-            $empEmail = 'nasik@osos.om';
             $subject = $this->mailSubject;
 
             NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mail_body);
@@ -146,8 +145,4 @@ class ForgotToPunchInService{
             ->where('DayDesc', $dayName)
             ->value('DayID');        
     }
-
-    /* TODO:     
-     - check employee leave ( half day leave concern)
-    */
 }
