@@ -51,6 +51,7 @@ define('ADD_CLARIFICATION', 'ADD_CLARIFICATION');
 define('GET_PRE_BID_CLARIFICATION_RESPONSE', 'GET_PRE_BID_CLARIFICATION_RESPONSE');
 define('ADD_PRE_BID_CLARIFICATION_RESPONSE', 'ADD_PRE_BID_CLARIFICATION_RESPONSE');
 define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
+define('DOWNLOAD_ATTACHMENT', 'DOWNLOAD_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -141,6 +142,8 @@ class APIController extends Controller
                 return $this->SRMService->createClarificationResponse($request);
             case GET_TENDER_PRE_BID_CLARIFICATION :
                 return $this->SRMService->getPrebidClarification($request);
+            case DOWNLOAD_ATTACHMENT :
+                return $this->SRMService->downloadAttachments($request);
 
             default:
                 return [

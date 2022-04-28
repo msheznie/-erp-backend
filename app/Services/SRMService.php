@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\Http\Controllers\API\DocumentAttachmentsAPIController;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
@@ -31,6 +32,7 @@ use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
+use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
@@ -51,6 +53,7 @@ class SRMService
     private $invoiceService = null;
     private $supplierInvoiceItemDetailRepository;
     private $tenderBidClarificationsRepository;
+    private $documentAttachmentsRepo;
 
     public function __construct(
         POService $POService,
@@ -58,7 +61,8 @@ class SRMService
         SharedService $sharedService,
         InvoiceService $invoiceService,
         SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
-        TenderBidClarificationsRepository $tenderBidClarificationsRepo
+        TenderBidClarificationsRepository $tenderBidClarificationsRepo,
+        DocumentAttachmentsRepository $documentAttachmentsRepo
     ) {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
@@ -66,6 +70,7 @@ class SRMService
         $this->invoiceService   = $invoiceService;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
+        $this->documentAttachmentsRepo = $documentAttachmentsRepo;
     }
 
     /**
@@ -1502,5 +1507,15 @@ class SRMService
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+    }
+
+    public function downloadAttachments(Request $request){
+        $path = $request->input('extra.data');
+        Log::info(['$path', $request]);
+        //$this->documentAttachmentsRepo->downloadFile($path);
+         $documentAttachmentsAPIController = new DocumentAttachmentsAPIController($this->documentAttachmentsRepo);
+        $result = $documentAttachmentsAPIController->downloadFile($request);
+
+        return ['success' => true, 'message' => 'Successfully saved', 'data' => '$result'];
     }
 }
