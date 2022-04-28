@@ -91,6 +91,8 @@ class PurchaseOrderDetailsRepository extends BaseRepository
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
+        'vatSubCategoryID',
+        'vatMasterCategoryID',
         'timeStamp',
         'altUnit',
         'altUnitValue'
