@@ -469,6 +469,15 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             // return $this->sendError('Please delete tax details to continue');
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($master->documentSystemiD, $master->companySystemID, $id, $input, $master->customerID, $master->isPerforma);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message']);
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         if ($input['contractID'] != $detail->contractID) {
 
             $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob', 'contractStatus')

@@ -540,6 +540,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Delivery order not found',500);
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message']);
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
 
         if($deliveryOrderDetail->itemFinanceCategoryID == 1){
