@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Jobs;
+
+use Illuminate\Bus\Queueable;
+use App\helper\CommonJobService;
+use App\helper\NotificationService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+
+class ForgotToPunchInTenant implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tenantDb;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($tenantDb)
+    {
+        if(env('IS_MULTI_TENANCY',false)){
+            self::onConnection('database_main');
+        }else{
+            self::onConnection('database');
+        }
+
+        $this->tenantDb = $tenantDb;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );
+
+        Log::info("Job initiated on  {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+
+        CommonJobService::db_switch( $this->tenantDb );
+        
+        $setupData = NotificationService::getActiveCompanyByScenario(15);
+
+        if($setupData->count() == 0){
+            return;
+        }
+        
+        $setupData = $setupData->toArray();
+
+        foreach ($setupData as $setup) {
+            $companyId = $setup['companyID'];
+            $companyName = $setup['company']['CompanyName']; 
+
+            Log::info("Job initiated for  {$companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            ForgotToPunchInCompany::dispatch($this->tenantDb, $companyId, $companyName);
+        }
+
+    }
+}

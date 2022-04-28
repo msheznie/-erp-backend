@@ -37,6 +37,12 @@ class Kernel extends ConsoleKernel
         ->dailyAt('00:30')
         ->withoutOverlapping();
 
+        $schedule->command('command:forgotToPunchIn')
+            ->timezone('Asia/Muscat')
+            ->everyTenMinutes()
+            ->between('8:00', '13:00')
+            ->withoutOverlapping();
+
     }
 
     /**

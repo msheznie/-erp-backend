@@ -322,4 +322,21 @@ class NotificationService
         return $companyScenarioConfiguration;
     }
 
+    public static function getActiveCompanyByScenario($scenarioID)
+    {
+        return NotificationCompanyScenario::select('id', 'scenarioID', 'companyID')
+            ->where('isActive', '=', 1)
+            ->where('scenarioID', $scenarioID)            
+            ->with('company:companySystemID,CompanyID,CompanyName')
+            ->with('user:empID,companyScenarionID,applicableCategoryID')
+            ->has('company')
+            ->whereHas('notification_Scenario', function ($query) {
+                $query->where('isActive', 1);
+            }) 
+            ->whereHas('user', function ($query) {
+                $query->where('isActive', 1);
+            }) 
+            ->get();        
+    }
+
 }
