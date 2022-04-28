@@ -53,8 +53,6 @@ class QuotationAddMultipleItemsService
 
     public static function  addMultipleItems($records,$quotation,$db,$authID) {
 
-        CommonJobService::db_switch($db);
-
         $items = $records;
         $itemsToUpload = array();
         // $employee = \Helper::getEmployeeInfo();
@@ -113,8 +111,6 @@ class QuotationAddMultipleItemsService
                 // $item['modifiedUserName'] = $employee->empName;
                 array_push($itemsToUpload,$data);
 
-            }else {
-                // item not found
             }
            
 
