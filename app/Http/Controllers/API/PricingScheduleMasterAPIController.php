@@ -457,7 +457,7 @@ ORDER BY
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
                     foreach ($input['priceBidFormat'] as $val){
-                        if($val['value']>0){
+                        if(!empty($val['value'])){
                             $data['bid_format_detail_id'] = $val['id'];
                             $data['schedule_id'] = $masterData['schedule_id'];
                             $data['value'] = $val['value'];

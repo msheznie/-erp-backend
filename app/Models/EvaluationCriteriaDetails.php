@@ -120,6 +120,8 @@ class EvaluationCriteriaDetails extends Model
         'is_final_level',
         'weightage',
         'passing_weightage',
+        'min_value',
+        'max_value',
         'sort_order',
         'created_by',
         'updated_by'
@@ -141,6 +143,8 @@ class EvaluationCriteriaDetails extends Model
         'is_final_level' => 'integer',
         'weightage' => 'float',
         'passing_weightage' => 'float',
+        'min_value' => 'float',
+        'max_value' => 'float',
         'sort_order' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'

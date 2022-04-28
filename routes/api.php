@@ -2604,6 +2604,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@addEvaluationCriteria');
         Route::post('getEvaluationCriteriaDetails', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDetails');
         Route::post('deleteEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@deleteEvaluationCriteria');
+        Route::post('getEvaluationDetailById', 'EvaluationCriteriaDetailsAPIController@getEvaluationDetailById');
+        Route::post('editEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@editEvaluationCriteria');
+        Route::post('validateWeightage', 'EvaluationCriteriaDetailsAPIController@validateWeightage');
+        Route::post('validateWeightageEdit', 'EvaluationCriteriaDetailsAPIController@validateWeightageEdit');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2852,3 +2856,6 @@ Route::resource('evaluation_criteria_types', 'EvaluationCriteriaTypeAPIControlle
 
 
 Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
+
+
+Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
