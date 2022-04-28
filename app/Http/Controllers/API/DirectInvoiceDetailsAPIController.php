@@ -327,6 +327,15 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice Master not found');
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($BookInvSuppMaster->documentSystemID, $BookInvSuppMaster->companySystemID, $id, $input, $BookInvSuppMaster->supplierID);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message']);
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         if($BookInvSuppMaster->confirmedYN){
             return $this->sendError('You cannot update detail, this document already confirmed',500);
         }

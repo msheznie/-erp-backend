@@ -1336,7 +1336,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $details = collect($details)->pluck('bookingInvSystemCode');
             $bookinvDetails = BookInvSuppMaster::whereIn('bookingSuppMasInvAutoID', $details)->get();
             foreach ($bookinvDetails as $key => $objects){
-                $bookinvDetailsArray[$key]['bookingSuppMasInvAutoID'] = $objects->bookingSuppMasInvAutoID;
+                $bookinvDetailsArray[$key]['bookingInvCode'] = $objects->bookingInvCode;
                 $bookinvDetailsArray[$key]['retentionDueDate'] = $objects->retentionDueDate;
                 $bookinvDetailsArray[$key]['retentionAmount'] = $objects->retentionAmount;
             }

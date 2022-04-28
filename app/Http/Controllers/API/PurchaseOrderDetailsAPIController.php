@@ -414,6 +414,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['VATAmount'] = 0;
         if ($purchaseOrder->isVatEligible) {
             $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID, $input['itemCode'], $purchaseOrder->supplierID);
+            if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
+            }
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
             $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
@@ -957,6 +960,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $purchaseOrderDetailsData = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
         DB::beginTransaction();
         try {
+            $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($purchaseOrder->documentSystemID, $purchaseOrder->companySystemID, $id, $input);
+
+            if (!$validateVATCategories['status']) {
+                return $this->sendError($validateVATCategories['message']);
+            } else {
+                $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+                $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+            }
+
             if (isset($input['vatSubCategoryID']) && $input['vatSubCategoryID'] > 0) {
                 $subcategoryVAT = TaxVatCategories::find($input['vatSubCategoryID']);
                 $input['exempt_vat_portion'] = (isset($input['exempt_vat_portion']) && $subcategoryVAT && $subcategoryVAT->subCatgeoryType == 1) ? $input['exempt_vat_portion'] : 0;
@@ -1011,6 +1023,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
 
             $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
+            $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($purchaseOrder->documentSystemID, $purchaseOrder->companySystemID, $id, $input);
+
             TaxService::updatePOVAT($input['purchaseOrderMasterID']);
             //calculate tax amount according to the percantage for tax update
 

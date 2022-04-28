@@ -352,6 +352,16 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
+
+            if (!$validateVATCategories['status']) {
+                return $this->sendError($validateVATCategories['message']);
+            } else {
+                $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+                $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+            }
+
+
             if (isset($input['vatSubCategoryID']) && $input['vatSubCategoryID'] > 0) {
                 $subcategoryVAT = TaxVatCategories::find($input['vatSubCategoryID']);
                 $input['exempt_vat_portion'] = (isset($input['exempt_vat_portion']) && $subcategoryVAT && $subcategoryVAT->subCatgeoryType == 1) ? $input['exempt_vat_portion'] : 0;
@@ -395,7 +405,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $updateMarkupBy = isset($input['updateMarkupBy']) ? $input['updateMarkupBy'] : '';
 
             $suppItemDetails = $this->supplierInvoiceDirectItemRepository->update($input, $id);
-            // TaxService::updatePOVAT($input['purchaseOrderMasterID']);
+            $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
 
             DB::commit();
             return $this->sendResponse($suppItemDetails->toArray(), 'Supplier Invoice Details updated successfully');

@@ -15,6 +15,7 @@ use App\Models\ItemMaster;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
 use App\helper\QuotationAddMultipleItemsService;
+use App\helper\CommonJobService;
 
 
 class AddMultipleItemsToQuotation implements ShouldQueue
@@ -54,6 +55,10 @@ class AddMultipleItemsToQuotation implements ShouldQueue
      */
     public function handle()
     {
+        $db = $this->db;
+        Log::info('DB switched'.$db);
+
+        CommonJobService::db_switch($db);
         QuotationAddMultipleItemsService::addMultipleItems($this->record,$this->quotation, $this->db,$this->authID);
     }
 
