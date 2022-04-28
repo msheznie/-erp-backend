@@ -15,6 +15,7 @@ use App\Models\ItemMaster;
 use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
 use App\helper\DeliveryOrderAddMutipleItemsService;
+use App\helper\CommonJobService;
 
 
 class AddMultipleItemsToDeliveryOrder implements ShouldQueue
@@ -54,6 +55,8 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
      */
     public function handle()
     {
+        $db = $this->dispatch_db;
+        CommonJobService::db_switch($db);
         DeliveryOrderAddMutipleItemsService::addMultipleItems($this->record,$this->deliveryOrder, $this->db,$this->authID);
     }
 
