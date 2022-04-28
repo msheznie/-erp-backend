@@ -55,7 +55,7 @@ class AddMultipleItemsToDeliveryOrder implements ShouldQueue
      */
     public function handle()
     {
-        $db = $this->dispatch_db;
+        $db = $this->db;
         CommonJobService::db_switch($db);
         DeliveryOrderAddMutipleItemsService::addMultipleItems($this->record,$this->deliveryOrder, $this->db,$this->authID);
     }

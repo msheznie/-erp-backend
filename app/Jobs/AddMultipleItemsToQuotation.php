@@ -55,7 +55,7 @@ class AddMultipleItemsToQuotation implements ShouldQueue
      */
     public function handle()
     {
-        $db = $this->dispatch_db;
+        $db = $this->db;
         CommonJobService::db_switch($db);
         QuotationAddMultipleItemsService::addMultipleItems($this->record,$this->quotation, $this->db,$this->authID);
     }
