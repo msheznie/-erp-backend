@@ -89,7 +89,15 @@ use Carbon\CarbonPeriod;
               <tbody>
                 @foreach ($detailsPOWise as $item)
                 <?php 
+                if ($item->documentSystemID == 2) {
                   $date = explode(' ',$item->purchase_order_detail->approvedDate);
+                } elseif ($item->documentSystemID == 15) {
+                  $date = explode(' ',$item->debit_note_detail->approvedDate);
+                } elseif ($item->documentSystemID == 19) {
+                  $date = explode(' ',$item->credit_note_detail->approvedDate);
+                } elseif ($item->documentSystemID == 4) {
+                  $date = explode(' ',$item->direct_payment_voucher_detail->approvedDate);
+                }
                   $date = (new Carbon($date[0]))->format('d/m/Y');
                 ?>
                 <tr>

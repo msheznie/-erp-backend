@@ -360,33 +360,81 @@ class FinancialReportAPIController extends AppBaseController
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
-        }])
-            ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'credit_note_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'direct_payment_voucher_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }
+            ])
+
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('debit_note_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('credit_note_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                });
             })
             ->where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
+            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode, timestamp, documentSystemID')
             ->groupBy('documentSystemCode')
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                });
             })
+
             ->sum('consumedRptAmount');
 
 
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereDate('approvedDate', '<', $fromDate);
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                });
             })
             ->sum('consumedRptAmount');
 
@@ -1226,33 +1274,81 @@ class FinancialReportAPIController extends AppBaseController
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
 
         $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
-            $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
-        }])
-            ->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'credit_note_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'direct_payment_voucher_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }
+            ])
+
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('debit_note_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('credit_note_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                });
             })
             ->where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode')
+            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode, timestamp, documentSystemID')
             ->groupBy('documentSystemCode')
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                });
             })
+
             ->sum('consumedRptAmount');
 
 
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
-                $query->whereDate('approvedDate', '<', $fromDate);
+            ->where(function($subQuery) use ($fromDate, $toDate)
+            {   
+                $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('debit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('credit_note', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                });
             })
             ->sum('consumedRptAmount');
 
