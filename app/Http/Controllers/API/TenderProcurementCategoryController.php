@@ -72,6 +72,7 @@ class TenderProcurementCategoryController extends AppBaseController
         } else {
             $procurementCatCodeExist = TenderProcurementCategory::select('id')
                 ->where('code', '=', $input['code'])
+                ->where('parent_id', '=', $parent_id)
                 ->where('level', '=', $level)->first();
         }
 
@@ -92,6 +93,7 @@ class TenderProcurementCategoryController extends AppBaseController
         } else {
             $procurementCatDesExist = TenderProcurementCategory::select('id')
                 ->where('description', '=', $input['description'])
+                ->where('parent_id', '=', $parent_id)
                 ->where('level', '=', $level)->first();
         }
 
@@ -181,6 +183,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $procurementCodeExist = TenderProcurementCategory::select('id')
                 ->where('id', '!=', $id)
                 ->where('code', '=', $input['code'])
+                ->where('parent_id', '=', $parent_id)
                 ->where('level', '=', $level)->first();
         }
 
@@ -203,6 +206,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $procurementDesExist = TenderProcurementCategory::select('id')
                 ->where('id', '!=', $id)
                 ->where('description', '=', $input['description'])
+                ->where('parent_id', '=', $parent_id)
                 ->where('level', '=', $level)->first();
         }
 
