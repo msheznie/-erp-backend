@@ -34,6 +34,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\ItemTracking;
 
 /**
  * Class ItemReturnDetailsController
@@ -562,6 +563,12 @@ class ItemReturnDetailsAPIController extends AppBaseController
                                           ->update(['sold' => 0, 'soldQty' => 0]);
 
                 $subProduct->delete();
+            }
+        } else if ($itemReturnDetails->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingReturnStatus($itemReturn->documentSystemID, $id);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
             }
         }
 

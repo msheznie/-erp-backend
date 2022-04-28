@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\helper\inventory;
+use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateCustomerInvoiceItemDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceItemDetailsAPIRequest;
 use App\Models\CompanyPolicyMaster;
@@ -596,7 +597,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
                 ->first();
             if (empty($unitConvention)) {
-                return $this->sendError('Unit Convention not found', 500);
+                return $this->sendError("Unit conversion isn't valid or configured", 500);
             }
 
             if ($unitConvention) {
@@ -822,6 +823,12 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                                           ->update(['sold' => 0, 'soldQty' => 0]);
 
                 $subProduct->delete();
+            }
+        } else if ($customerInvoiceItemDetails->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($customerInvoice->documentSystemID, $id);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
             }
         }
 

@@ -67,8 +67,10 @@ class ItemSpecificationController extends AppBaseController
     public function show($id)
     {
         $data = ItemSpecification::where('item_id',$id)->first();
-        
-        return $this->sendResponse($data->toArray(), 'Data Reterived Successfully');
+        if(empty($data)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.item_specification')]));
+        }
+        return $this->sendResponse($data->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.item_specification')]));
     }
 
     /**

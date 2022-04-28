@@ -32,6 +32,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
         Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
+        Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
         Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
@@ -892,6 +893,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
         Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
+        Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues');
+
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -1436,7 +1439,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
         Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
-
+        Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         
         Route::resource('pulled-mr-details', 'PulledItemFromMRController');
         Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
@@ -1973,7 +1976,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getCommonFormData','DeliveryOrderAPIController@getCommonFormData');
-
+        Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
+        Route::post('uploadItems','QuotationMasterAPIController@poItemsUpload');
 
         
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
@@ -1995,6 +1999,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
         Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate');
+        Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
 
 
@@ -2506,6 +2511,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSerialNumbersForReturn', 'ItemSerialAPIController@getSerialNumbersForReturn');
         Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial');
         Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial');
+
+        Route::resource('item_batches', 'ItemBatchAPIController');
+        Route::get('getBatchNumbersForOut', 'ItemBatchAPIController@getBatchNumbersForOut');
+        Route::post('updateSoldStatusOfBatch', 'ItemBatchAPIController@updateSoldStatusOfBatch');
+        Route::get('getBatchNumbersForReturn', 'ItemBatchAPIController@getBatchNumbersForReturn');
+        Route::get('getWareHouseDataForItemOut', 'ItemBatchAPIController@getWareHouseDataForItemOut');
+        Route::post('updateReturnStatusOfBatch', 'ItemBatchAPIController@updateReturnStatusOfBatch');
 
         Route::get('getEliminationLedgerReview', 'EliminationLedgerAPIController@getEliminationLedgerReview');
 

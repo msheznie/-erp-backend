@@ -991,16 +991,15 @@ class GRVMasterAPIController extends AppBaseController
         ->where('isYesNO', 1)
         ->exists();
         $projects = [];
-        $projectGrvMaster = GRVMaster::find($grvAutoID);
-        if ($projectGrvMaster){
+
+        if (isset($request['type']) && $request['type'] == 'edit') {
+            $projectGrvMaster = GRVMaster::find($grvAutoID);
             $serviceLineSystemID = $projectGrvMaster->serviceLineSystemID;
-            $projects = ErpProjectMaster::where('companySystemID', $companyId)
-                                        ->where('serviceLineSystemID', $serviceLineSystemID)
-                                        ->get();
+            $projects = ErpProjectMaster::where('serviceLineSystemID', $serviceLineSystemID)->get();
         } else {
-            $projects = ErpProjectMaster::where('companySystemID', $companyId)
-                                        ->get();
+            $projects = ErpProjectMaster::all();
         }
+        
 
         $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($companyId,6);
 

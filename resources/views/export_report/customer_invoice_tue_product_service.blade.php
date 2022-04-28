@@ -5,7 +5,6 @@
         <td colspan="8">    
             <b>TAX INVOICE</b>
         </td>
-        <td colspan="8"><b>شركة الهدف المتحدة للطاقة</b> </td>
 
     <tr>
 
