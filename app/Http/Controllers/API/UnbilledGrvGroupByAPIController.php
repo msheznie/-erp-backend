@@ -506,18 +506,34 @@ HAVING ROUND(
                 
 
 
-
                 $value->balanceAmount = collect($grv_details)->sum('balanceAmount');
                 $value->balanceAmountCheck = collect($grv_details)->sum('balanceAmount');
 
                 $grv_details = collect($grv_details)->where('balanceAmount', '>', 0)->all();
 
-
                 $value->grv_details = $grv_details;
             }
         }
 
-        return $this->sendResponse($unbilledGrvGroupBy, 'Purchase Request Details retrieved successfully');
+
+        $unbilledData = [];
+        foreach ($unbilledGrvGroupBy as $key => $value) {
+            $temp = [];
+            $temp = $value;
+
+            if (isset($value->grv_details)) {
+                $grvDetailsData = [];
+                foreach ($value->grv_details as $key1 => $value1) {
+                    $grvDetailsData[] = $value1;
+                }
+
+                $temp->grv_details = $grvDetailsData;
+            }
+
+            $unbilledData[] = $temp;
+        }
+
+        return $this->sendResponse($unbilledData, 'Purchase Request Details retrieved successfully');
 
     }
 }
