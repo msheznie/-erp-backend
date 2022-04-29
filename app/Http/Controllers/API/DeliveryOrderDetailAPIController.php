@@ -1849,15 +1849,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? (( $itemArray['discountAmount']) / 100) : 0;
 
 
-                        if ($masterData->isVatEligible) {
+                        if ($masterData->customerVATEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
-                            $itemArray['VATPercentage'] = $vatDetails['percentage'];
+                            $itemArray['VATPercentage'] = $item['vat'];
                             $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
                             $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                             $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                             $itemArray['VATAmount'] = 0;
-                            if (isset($itemArray['unittransactionAmount']) && $itemArray['unittransactionAmount'] > 0) {
-                                $itemArray['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $item['vat']);
+                            if (isset($item['vat'])) {
+                                $itemArray['VATAmount'] = ($item['vat'] / 100);
                             }
                             $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
