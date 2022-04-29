@@ -1509,13 +1509,4 @@ class SRMService
         }
     }
 
-    public function downloadAttachments(Request $request){
-        $path = $request->input('extra.data');
-        Log::info(['$path', $request]);
-        //$this->documentAttachmentsRepo->downloadFile($path);
-         $documentAttachmentsAPIController = new DocumentAttachmentsAPIController($this->documentAttachmentsRepo);
-        $result = $documentAttachmentsAPIController->downloadFile($request);
-
-        return ['success' => true, 'message' => 'Successfully saved', 'data' => '$result'];
-    }
 }
