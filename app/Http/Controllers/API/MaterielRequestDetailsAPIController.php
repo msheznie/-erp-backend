@@ -422,7 +422,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                     ->first();
 
                 if (empty($unitConvention)) {
-                    return $this->sendError('Unit Convention not found', 500);
+                    return $this->sendError("Unit conversion isn't valid or configured", 500);
                 }
 
                 if ($unitConvention) {
@@ -534,12 +534,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
         foreach ($items as $item){
 
-            $issueUnit = Unit::where('UnitID',$item['unitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
+            $issueUnit = Unit::all();
             $issueUnits = array();
 
             if ($issueUnit) {
-                foreach ($issueUnit->unitConversion as $unit){
-                    $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
+                foreach ($issueUnit as $unit){
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
                     array_push($issueUnits,$temArray);
                 }
             }

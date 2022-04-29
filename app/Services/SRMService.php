@@ -14,6 +14,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
@@ -23,6 +24,10 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Models\TenderBidClarifications;
+use App\Models\TenderFaq;
+use App\Models\TenderMaster;
+use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Services\Shared\SharedService;
@@ -1113,5 +1118,212 @@ class SRMService
             'data'      => $approveDetails
         ];
 
+    }
+    public function getTenders(Request $request)
+    {
+        $input = $request->all();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }  
+
+        if($request->input('extra.tender_status') == 1){ 
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }); 
+            
+        }else if ($request->input('extra.tender_status') == 2) {  
+            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId);
+            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
+                $q->where('purchased_by','=',$supplierRegId); 
+            });  
+         } 
+        $search = $request->input('search.value');
+        if($search){ 
+             $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%"); 
+            });
+        }
+
+        $data = DataTables::eloquent($query)
+        ->order(function ($query) use ($input) {
+            if (request()->has('order') ) {
+                if($input['order'][0]['column'] == 0)
+                {
+                    $query->orderBy('id', $input['order'][0]['dir']);
+                }
+            }
+        })
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->addColumn('Actions', 'Actions', "Actions") 
+        ->make(true);  
+
+        return [
+            'success' => true,
+            'message' => 'Tender list successfully get',
+            'data' => $data
+        ];
+    }
+    public function saveTenderPurchase(Request $request){ 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderMasterId = $request->input('extra.tenderId');  
+        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        DB::beginTransaction();
+        try { 
+            $data['tender_master_id'] = $tenderMasterId;
+            $data['purchased_date'] = $currentDate;
+            $data['purchased_by'] = $supplierRegId;
+            $data['created_by'] = $supplierRegId;
+            DB::commit();
+            $tenderMasterSupplier = TenderMasterSupplier::create($data);
+            return [
+                'success' => true,
+                'message' => 'Tender Purchase successfully',
+                'data' => $tenderMasterSupplier
+            ];
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return [
+                'success'   => false,
+                'message'   => 'Tender Purchase failed',
+                'data'      => $exception->getMessage()
+            ];
+        }
+ 
+    }
+    public static function getSupplierRegIdByUUID($uuid)
+    {
+
+        if ($uuid) {
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+                ->first();
+
+            if (!empty($supplier)) {
+                return $supplier->id;
+            }
+        } 
+        return 0;
+    }
+
+    public function getFaqList(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $input['extra'];
+        try{
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', 1)->get();
+
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $query
+            ];
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'FAQ list failed get',
+                'data' => $exception
+            ];
+        }
+
+    }
+
+    public function saveTenderPrebidClarification(Request $request){
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderMasterId = $request->input('extra.tenderId');
+        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        DB::beginTransaction();
+        try {
+            $data['tender_master_id'] = $tenderMasterId;
+            $data['posted_by_type'] = "0";
+            $data['post'] = $request->input('extra.question');
+            $data['user_id'] = $request->input('extra.user_id');;
+            $data['supplier_id'] = $supplierRegId;
+            $data['is_public'] = $request->input('extra.publish');
+            $data['parent_id'] = $request->input('extra.parent_id');
+            $data['created_by'] = $supplierRegId;
+            $data['company_id'] = 1; //$request->input('extra.companyId');
+            $data['created_at'] = $currentDate;
+            DB::commit();
+
+            $tenderPrebidClarification = TenderBidClarifications::create($data);
+            return [
+                'success' => true,
+                'message' => 'Tender Pre-bid Clarification successfully',
+                'data' => $tenderPrebidClarification
+            ];
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return [
+                'success'   => false,
+                'message'   => 'Tender Pre-bid Clarification failed',
+                'data'      => $exception->getMessage()
+            ];
+        }
+
+    }
+
+    public function getPrebidClarification(Request $request)
+    {
+        $input = $request->all();
+        //$companyId = $input['companySystemID'];
+        $tenderId = $input['extra'];
+
+        try{
+            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
+                $q->where('parent_id', 0);
+                $q->with(['supplier']);
+            }])
+                ->whereHas('tenderPreBidClarification', function ($q) {
+                    $q->where('parent_id', 0);
+                })->where('id', $tenderId)
+                ->get();
+
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $data
+            ];
+        } catch (\Exception $exception){
+            return [
+                'success' => false,
+                'message' => 'FAQ list failed get',
+                'data' => $exception
+            ];
+        }
+    }
+
+    public function getPreBidClarificationsResponse(Request $request)
+    {
+        $input = $request->all();
+        $id = 1; //$input['Id'];
+        $employeeId = Helper::getEmployeeSystemID();
+
+        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        },'attachment'])
+            ->where('id', '=', $id)
+            ->orWhere('parent_id', '=', $id)
+            ->orderBy('parent_id', 'asc')
+            ->get();
+        /*$profilePic = Employee::with(['profilepic'])
+            ->where('employeeSystemID', $employeeId)
+            ->first();
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+        
+        return [
+            'success' => true,
+            'message' => 'Pre-bid response list successfully get',
+            'data' => $data
+        ];
     }
 }

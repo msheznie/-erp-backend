@@ -42,6 +42,7 @@ use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\MonthlyDeclarationsTypes;
 use App\Models\BookInvSuppMaster;
 use App\Models\BookInvSuppMasterRefferedBack;
+use App\Models\SystemGlCodeScenario;
 use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ExpenseEmployeeAllocation;
@@ -65,6 +66,7 @@ use App\Models\Months;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\ProcumentOrder;
+use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
@@ -259,6 +261,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierID'] = null;
         }
 
+        if(isset($input['supplierID'])){
+            $supplierId = $request['supplierID'];
+            $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
+                ->first();
+            if($supplier){
+                $input['retentionPercentage'] = $supplier->retentionPercentage;
+            }
+        }
+
 
         // check rcm activation
         if (isset($input['documentType']) && $input['documentType'] == 1 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['supplierID'], $input['companySystemID'])) {
@@ -402,7 +413,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage');
+            $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -549,6 +560,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
         }
 
+        if (isset($input['retentionDueDate']) && $input['retentionDueDate']) {
+            $input['retentionDueDate'] = new Carbon($input['retentionDueDate']);
+        }
+
         // calculating header total
         $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
@@ -664,6 +679,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
+
+
+        if(isset($input['retentionPercentage'])){
+            if($input['retentionPercentage'] > 100){
+                return $this->sendError('Retention Percentage cannot be greater than 100%');
+            }
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -719,6 +742,44 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         }
                     }
 
+                }
+            }
+
+            if ($input['documentType'] != 4){
+                if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
+                    return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
+                }
+
+
+
+            if ($input['documentType'] == 1) {
+                $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
+                $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
+
+            if ($input['documentType'] == 0) {
+                    $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
+            }
+            if ($input['documentType'] == 3) {
+                    $vatTrans = TaxService::processSupplierInvoiceItemsVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
+
+            }
+
+            if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
+
+                $isConfigured = SystemGlCodeScenario::find(13);
+                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
+
+                if($isConfigured && $isDetailConfigured) {
+                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
+                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                    }
+                }
+                if(isset($isDetailConfigured->chartOfAccountSystemID) == null){
+                    return $this->sendError('Chart of account is not configured for retention control account', 500);
                 }
             }
 
@@ -1245,7 +1306,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
 //            $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
 //            $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
 //        }
-
 
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
@@ -2073,6 +2133,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     ->where('companyID', $companyId)->where('monthlyDeclarationType', 'D')->where('isPayrollCategory', 1)
                     ->get();
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $projects = [];
+        $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->get();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -2090,7 +2159,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'employeeControlAccount' => $employeeControlAccount,
             'segments' => $segments,
-            'isVATEligible' => $isVATEligible
+            'isVATEligible' => $isVATEligible,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2126,7 +2197,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType', 'projectID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2137,9 +2208,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
 
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
         $search = $request->input('search.value');
         
-        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID);
+        $invMaster = $this->bookInvSuppMasterRepository->bookInvSuppListQuery($request, $input, $search, $supplierID, $projectID);
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")

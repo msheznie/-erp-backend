@@ -46,6 +46,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerMaster;
 use App\Models\Company;
+use App\Models\ErpProjectMaster;
 use App\Models\SegmentMaster;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -350,7 +351,7 @@ class CreditNoteAPIController extends AppBaseController
     public function update($id, UpdateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
@@ -1073,6 +1074,9 @@ class CreditNoteAPIController extends AppBaseController
                     ->groupby('year')
                     ->orderby('year', 'desc')
                     ->get();
+                
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
                 break;
             case 'create':
 
@@ -1086,6 +1090,14 @@ class CreditNoteAPIController extends AppBaseController
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+
+                $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+    
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                                                ->get();
 
                 break;
             case 'getCurrency':
@@ -1116,6 +1128,15 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                
+                $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                ->where('companySystemID', $companySystemID)
+                ->where('isYesNO', 1)
+                ->exists();
+    
+                $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                                                ->get();
+                
                 break;
             case 'editAmend' :
                 $id = $input['id'];
@@ -1150,7 +1171,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'customerID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'customerID', 'projectID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1161,9 +1182,13 @@ class CreditNoteAPIController extends AppBaseController
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
 
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
         $search = $request->input('search.value');
 
-        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search, $customerID);
+        $master = $this->creditNoteRepository->creditNoteListQuery($request, $input, $search, $customerID, $projectID);
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {

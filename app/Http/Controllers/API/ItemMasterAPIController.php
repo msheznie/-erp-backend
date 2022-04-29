@@ -157,6 +157,7 @@ class ItemMasterAPIController extends AppBaseController
                     $item['documentID'] = $document->documentID;
                 }
 
+                $item['trackingType'] = (is_null($financeCategorySub->trackingType)) ? 0 : $financeCategorySub->trackingType;
                 $item['isActive'] = 1;
                 $input['createdPcID'] = gethostname();
                 $input['createdUserID'] = $employee->empID;
@@ -1382,16 +1383,19 @@ class ItemMasterAPIController extends AppBaseController
         $wareHouseSystemCode = $request->wareHouseSystemCode;
         $itemSystemCode = $request->itemSystemCode;
         $companySystemID = $request->companySystemID;
-        $sumWarehouse = null;
-        if($wareHouseSystemCode != null) {
-            $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
+        $sumArray = array();
+        foreach ($itemSystemCode as $item) {
+            $sumWarehouse = null;
+            if ($wareHouseSystemCode != null) {
+                $sumWarehouse = ErpItemLedger::where('wareHouseSystemCode', $wareHouseSystemCode)->where('itemSystemCode', $item)->where('companySystemID', $companySystemID)->sum('inOutQty');
+            }
+            $sumGlobal = ErpItemLedger::where('itemSystemCode', $item)->where('companySystemID', $companySystemID)->sum('inOutQty');
+
+            $sum = array("itemCode" => $item, "sumWarehouse" => $sumWarehouse, "sumGlobal" => $sumGlobal);
+            array_push($sumArray, $sum);
         }
-        $sumGlobal= ErpItemLedger::where('itemSystemCode', $itemSystemCode)->where('companySystemID', $companySystemID)->sum('inOutQty');
 
-        $sum=array("sumWarehouse"=>$sumWarehouse,"sumGlobal"=>$sumGlobal);
-
-
-        return $this->sendResponse($sum, 'Data retrieved successfully');
+        return $this->sendResponse($sumArray, 'Data retrieved successfully');
     }
 
     public function getSupplierByCatalogItemDetail(Request $request) {

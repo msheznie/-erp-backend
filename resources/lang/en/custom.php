@@ -341,5 +341,6 @@ return [
     'no_templates' => 'There is no template assign to this bank',
     'no_bank' => 'There is no bank selected',
     'company_has_default_user_group' => 'The company already have a default user group',
-    'currency_not_configured' => 'Currency not configured'
+    'currency_not_configured' => 'Currency not configured',
+    'item_specification' => 'Item Specification',
 ];

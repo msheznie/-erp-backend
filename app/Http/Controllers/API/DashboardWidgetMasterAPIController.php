@@ -374,6 +374,7 @@ END AS sortDashboard')
     public function getCustomWidgetGraphData(Request $request){
 
         $input = $request->all();
+        $data = [];
 
         $id = isset($input['widgetMasterID']) ? $input['widgetMasterID'] : 0;
         if($id==0){

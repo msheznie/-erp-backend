@@ -54,6 +54,7 @@ class PaySupplierInvoiceDetailRepository extends BaseRepository
         'paymentLocalAmount',
         'paymentComRptAmount',
         'timesReferred',
+        'isRetention',
         'modifiedUserID',
         'modifiedPCID',
         'createdDateTime',

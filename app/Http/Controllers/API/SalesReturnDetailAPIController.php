@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use App\helper\inventory;
 use App\helper\Helper;
 use Illuminate\Support\Facades\DB;
+use App\helper\ItemTracking;
 
 /**
  * Class SalesReturnDetailController
@@ -582,6 +583,12 @@ class SalesReturnDetailAPIController extends AppBaseController
                                           ->update(['sold' => 0, 'soldQty' => 0]);
 
                 $subProduct->delete();
+            }
+        } else if ($salesReturnDetail->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingReturnStatus($salesReturn->documentSystemID, $id);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
             }
         }
 

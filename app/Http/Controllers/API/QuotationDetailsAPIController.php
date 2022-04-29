@@ -379,6 +379,14 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
         $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($quotationMasterData->documentSystemID, $quotationMasterData->companySystemID, $id, $input);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message']);
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
 
         $input['modifiedDateTime'] = Carbon::now();
         $input['modifiedPCID'] = gethostname();
@@ -567,7 +575,14 @@ class QuotationDetailsAPIController extends AppBaseController
         $quotationMasterID = $input['quotationMasterID'];
 
         $items = QuotationDetails::join('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
-            ->get();
+              ->skip($input['skip'])->take($input['limit'])->get();
+
+        $index = $input['skip'] + 1;
+        foreach($items as $item) {
+            $item['index'] = $index;
+            $index++;
+        }
+        
         return $this->sendResponse($items->toArray(), 'Quotation Details retrieved successfully');
     }
 
