@@ -73,6 +73,7 @@ class QuotationAddMultipleItemsService
                     'unitOfMeasureID' => $orgItem->unit,
                     'defaultUOM' => $orgItem->unit,
                     'unitOfMeasure' => ($unit) ? $unit->UnitShortCode : null,
+                    'itemReferenceNo' => $orgItem->secondaryItemCode,
                     'comment' => (isset($item['comments'])) ? $item['comments'] :  '',
                 ];
 
