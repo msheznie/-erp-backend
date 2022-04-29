@@ -98,14 +98,14 @@ class QuotationAddMultipleItemsService
 
 
                 if($item['discount']) {
-                    $data['discountPercentage'] = ($item['discount'] * 100)/($item['qty'] * $item['sales_price']);
+                    $data['discountPercentage'] =  ($item['discount'] / 100);
                     $data['discountAmount'] = $item['discount'];
                 }else {
                     $data['discountPercentage'] = 0;
                     $data['discountAmount'] = 0;
                 }
 
-                $totalNetcost = ($data['unittransactionAmount'] - $data['discountAmount']) * $item['qty'];
+                $totalNetcost = (($data['unittransactionAmount'] * $item['qty']) - $data['discountAmount']);
 
                 $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                 // $item['modifiedUserID'] = $employee->empID;

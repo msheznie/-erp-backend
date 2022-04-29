@@ -1855,7 +1855,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
                         $itemArray['discountAmount'] = $item['discount'];
-                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+                        $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? (( $itemArray['discountAmount']) / 100) : 0;
 
 
                         if ($masterData->isVatEligible) {
