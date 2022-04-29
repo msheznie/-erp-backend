@@ -327,7 +327,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice Master not found');
         }
 
-        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($BookInvSuppMaster->documentSystemID, $BookInvSuppMaster->companySystemID, $id, $input, $BookInvSuppMaster->supplierID);
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($BookInvSuppMaster->documentSystemID, $BookInvSuppMaster->companySystemID, $id, $input, $BookInvSuppMaster->supplierID, $BookInvSuppMaster->documentType);
 
         if (!$validateVATCategories['status']) {
             return $this->sendError($validateVATCategories['message']);
