@@ -355,7 +355,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
 
             if (!$validateVATCategories['status']) {
-                return $this->sendError($validateVATCategories['message']);
+                return $this->sendError($validateVATCategories['message'], 500, array('type' => 'no_qty_issues'));
             } else {
                 $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
                 $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
