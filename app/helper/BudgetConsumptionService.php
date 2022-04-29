@@ -2662,14 +2662,14 @@ class BudgetConsumptionService
 		return $finalData;
 	}
 
-	public static function getCommitedConsumedAmount($detail, $DLBCPolicy)
+	public static function getCommitedConsumedAmount($detail, $DLBCPolicy, $departmentsWiseCheck = false)
     {
         $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) {
                                                 $query->where('grvRecieved', '!=', 2);
                                             }])
                                             ->where('consumeYN', -1)
                                             ->where('companySystemID', $detail->companySystemID)
-                                            ->when($DLBCPolicy, function($query) use ($detail){
+                                            ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail){
                                             	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
                                             })
                                             ->where(function($query) {
@@ -2700,7 +2700,7 @@ class BudgetConsumptionService
                                                     ->where($glColumnName, $detail->chartOfAccountID)
                                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
                                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                    ->when($DLBCPolicy, function($query) use ($detail) {
+                                                    ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
 		                                            	$query->where('segment_allocated_items.serviceLineSystemID', $detail->serviceLineSystemID);
 		                                            })
 		                                            ->whereHas('order', function($query) {
@@ -2727,7 +2727,7 @@ class BudgetConsumptionService
         $actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
 
         $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $detail->companySystemID)
-                                                            ->when($DLBCPolicy, function($query) use ($detail) {
+                                                            ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
 				                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
 				                                            })
                                                             ->where('chartOfAccountSystemID', $detail->chartOfAccountID)
@@ -2740,7 +2740,7 @@ class BudgetConsumptionService
                                                             ->sum('netAmountRpt');
 
         $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $detail->companySystemID)
-                                                ->when($DLBCPolicy, function($query) use ($detail) {
+                                                ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
 	                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
 	                                            })
                                                 ->where('chartOfAccountSystemID', $detail->chartOfAccountID)

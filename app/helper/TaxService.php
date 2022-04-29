@@ -240,7 +240,7 @@ class TaxService
                     $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
                     $vatSubCategoryID = $updateData['vatSubCategoryID'];
                 } else {
-                    if ($documentType == 3 && $documentType == 1) {
+                    if ($documentType == 3 || $documentType == 1 || $documentType == 4) {
                         if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
                             $vatDetails = ($documentType == 3) ?  self::getVATDetailsByItem($companySystemID, $updateData['itemCode']) : self::getDefaultVAT($companySystemID, $supplierID);
 
