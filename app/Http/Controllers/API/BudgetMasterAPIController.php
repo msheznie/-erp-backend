@@ -1083,7 +1083,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                 });
                                         })
                                         ->where('budgetYear', $input['Year'])
-                                        ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
+                                        // ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
                                         ->whereNotNull('financeGLcodePLSystemID')
                                         ->join(DB::raw('(SELECT
                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
@@ -1618,7 +1618,7 @@ class BudgetMasterAPIController extends AppBaseController
                     });
             })
                 ->where('budgetYear', $input['Year'])
-                ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
+                // ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
                 ->whereNotNull('financeGLcodePLSystemID')
                 ->join(DB::raw('(SELECT
                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
