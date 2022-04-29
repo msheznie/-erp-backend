@@ -240,10 +240,10 @@ class TenderProcurementCategoryController extends AppBaseController
 
         // Used for tender creation
         $editCondition = $this->checkEditCondition($id, $request);
-        if($editCondition){
+        if(!$editCondition){
             return $this->sendError('Procurement category is already used in tender creation');
         }
-        Log::info(['$editCondition', $editCondition]);
+       //Log::info(['$editCondition', $editCondition]);
 
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -404,16 +404,28 @@ class TenderProcurementCategoryController extends AppBaseController
         $tenderMasterNotConfirmedCount = TenderMaster::where('procument_cat_id', $id)
         ->where('confirmed_yn', 0)->count();
         if($tenderMasterNotConfirmedCount > 0){
-            $allowToEdit = true;
+            Log::info('One');
+            $allowToEdit = false;
             return $allowToEdit;
         }
 
         $tenderMasterNotApproveCount = TenderMaster::where('procument_cat_id', $id)
-            ->where('confirmed_yn', 0)
-            ->where('approved', '!=', -1)
+            ->where('confirmed_yn', 1)
+            ->where('approved', -1)
             ->count();
-        if($tenderMasterNotApproveCount == 0 && !$isCodeChanged){
+
+        $tenderMasterRecordCount = TenderMaster::where('procument_cat_id', $id)
+            ->count();
+        Log::info([$tenderMasterNotApproveCount, $tenderMasterRecordCount, $isCodeChanged]);
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
+            Log::info('Two');
             $allowToEdit = true;
+            return $allowToEdit;
+        }
+
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged){
+            Log::info('Two-Two');
+            $allowToEdit = false;
             return $allowToEdit;
         }
 
@@ -422,6 +434,7 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('approved', '==', -1)
             ->count();
         if($tenderMasterApproveCount > 0){
+            Log::info('Three');
             $allowToEdit = false;
             return $allowToEdit;
         }
@@ -431,6 +444,7 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('approved', '!=', -1)
             ->count();
         if($isDescriptionChanged &&  $tenderMasterConfirmedNotApproveCount > 0){
+            Log::info('Four');
             $allowToEdit = true;
             return $allowToEdit;
         }
