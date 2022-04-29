@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Models\TenderMaster;
 use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
 use function Clue\StreamFilter\fun;
+use function MongoDB\BSON\toJSON;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
@@ -45,9 +47,18 @@ class TenderProcurementCategoryController extends AppBaseController
         $level = 0;
         $parent_id = 0;
         $input = $request->all();
+        $successMessageContent = 'Procurement Category ';
 
         if(isset($input['level'])){
             $level = $input['level'];
+
+            if($level == 0){
+                $successMessageContent = 'Procurement Category ';
+            } elseif ($level == 1) {
+                $successMessageContent = 'Procurement sub Category ';
+            } elseif ($level == 2){
+                $successMessageContent = 'Procurement activity ';
+            }
         }
 
         if(isset($input['parent_id'])){
@@ -113,7 +124,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = $parent_id;
         $procurementCategories = $this->procurementCategoryRepository->create($input);
 
-        return $this->sendResponse($procurementCategories->toArray(), 'Procurement Category saved successfully');
+        return $this->sendResponse($procurementCategories->toArray(), $successMessageContent . ' saved successfully');
     }
 
     /**
@@ -151,6 +162,14 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if(isset($input['level'])){
             $level = $input['level'];
+
+            if($level == 0){
+                $successMessageContent = 'Procurement Category ';
+            } elseif ($level == 1) {
+                $successMessageContent = 'Procurement sub Category ';
+            } elseif ($level == 2){
+                $successMessageContent = 'Procurement activity ';
+            }
         }
 
         if(isset($input['parent_id'])){
@@ -219,6 +238,13 @@ class TenderProcurementCategoryController extends AppBaseController
             }
         }
 
+        // Used for tender creation
+        $editCondition = $this->checkEditCondition($id, $request);
+        if($editCondition){
+            return $this->sendError('Procurement category is already used in tender creation');
+        }
+        Log::info(['$editCondition', $editCondition]);
+
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
         $input['parent_id'] = 0;
@@ -227,7 +253,7 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $procurementCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
-        return $this->sendResponse($procurementCategory, 'Procurement Category updated successfully');
+        return $this->sendResponse($procurementCategory, $successMessageContent.' updated successfully');
     }
 
     /**
@@ -336,5 +362,78 @@ class TenderProcurementCategoryController extends AppBaseController
 
 
         return $this->sendResponse($procurementCategory, 'Procurement Category restored successfully');
+    }
+
+    private function checkEditCondition($id, $request){
+
+        $input = $request->all();
+        $procurementCategory = TenderProcurementCategory::find($id);
+        $allowToEdit = false;
+
+        // Check Description
+        $description = $input['description'];
+        $p_description = $procurementCategory['description'];
+        if($description != $p_description){
+            $isDescriptionChanged =  'Yes';
+        } else {
+            $isDescriptionChanged =  'No';
+        }
+
+        // Check Code
+        $code = $input['code'];
+        $p_code = $procurementCategory['code'];
+        if($code != $p_code){
+            $isCodeChanged =  'Yes';
+        } else {
+            $isCodeChanged =  'No';
+        }
+
+        // Check Status
+        $is_active = $input['is_active'];
+        if(isset($is_active[0])){
+            $is_active = $is_active[0];
+        }
+
+        $p_is_active = $procurementCategory['is_active'];
+        if($is_active === $p_is_active){
+            $isActiveChanged =  'No';
+        } else {
+            $isActiveChanged =  'Yes';
+        }
+
+        $tenderMasterNotConfirmedCount = TenderMaster::where('procument_cat_id', $id)
+        ->where('confirmed_yn', 0)->count();
+        if($tenderMasterNotConfirmedCount > 0){
+            $allowToEdit = true;
+            return $allowToEdit;
+        }
+
+        $tenderMasterNotApproveCount = TenderMaster::where('procument_cat_id', $id)
+            ->where('confirmed_yn', 0)
+            ->where('approved', '!=', -1)
+            ->count();
+        if($tenderMasterNotApproveCount == 0 && !$isCodeChanged){
+            $allowToEdit = true;
+            return $allowToEdit;
+        }
+
+        $tenderMasterApproveCount = TenderMaster::where('procument_cat_id', $id)
+            ->where('confirmed_yn', 0)
+            ->where('approved', '==', -1)
+            ->count();
+        if($tenderMasterApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+
+        $tenderMasterConfirmedNotApproveCount = TenderMaster::where('procument_cat_id', $id)
+            ->where('confirmed_yn', 1)
+            ->where('approved', '!=', -1)
+            ->count();
+        if($isDescriptionChanged &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = true;
+            return $allowToEdit;
+        }
+
     }
 }
