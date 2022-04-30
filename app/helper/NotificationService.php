@@ -325,7 +325,7 @@ class NotificationService
     public static function getActiveCompanyByScenario($scenarioID)
     {
         return NotificationCompanyScenario::select('id', 'scenarioID', 'companyID')
-            ->where('isActive', '=', 1)
+            ->where('isActive', 1)
             ->where('scenarioID', $scenarioID)            
             ->with('company:companySystemID,CompanyID,CompanyName')
             ->with('user:empID,companyScenarionID,applicableCategoryID')
