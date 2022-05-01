@@ -383,6 +383,42 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                     $datano['created_by'] = $employee->employeeSystemID;
                     EvaluationCriteriaScoreConfig::create($datano);
                 }
+
+                if($is_final_level == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
+                    if(count($input['selectedData'])>0){
+                        $minAns = 0;
+                        $maxAns = 0;
+                        $x=1;
+                        foreach ($input['selectedData'] as $vl){
+                            if($x==1){
+                                $minAns = $vl['drop_value'];
+                            }
+
+                            if($vl['drop_value']>$maxAns){
+                                $maxAns = $vl['drop_value'];
+                            }
+
+                            if($vl['drop_value']<$minAns){
+                                $minAns = $vl['drop_value'];
+                            }
+
+                            $drop['criteria_detail_id'] = $result['id'];
+                            $drop['label'] = $vl['drop_label'];
+                            $drop['score'] = $vl['drop_value'];
+                            $drop['created_by'] = $employee->employeeSystemID;
+                            EvaluationCriteriaScoreConfig::create($drop);
+
+                            $ans['max_value'] = $maxAns;
+                            $ans['min_value'] = $minAns;
+                            EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
+                            $x++;
+                        }
+                    }else{
+                        return ['success' => false, 'message' => 'Attlist one label and one value is required'];
+                    }
+                }
+
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created'];
             }
@@ -448,7 +484,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationDetailById(Request $request)
     {
         $input = $request->all();
-        return EvaluationCriteriaDetails::where('id',$input['evaluationId'])->first();
+        return EvaluationCriteriaDetails::with(['evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
 
     }
 
@@ -483,6 +519,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2  && ($input['answer_type_id'] == 1 || $input['answer_type_id'] == 3)){
+                $data['max_value'] = $input['max_value'];
+            }
+
             $data['description'] = $input['description'];
             if(isset($input['answer_type_id'])){
                 $data['answer_type_id'] = $input['answer_type_id'];

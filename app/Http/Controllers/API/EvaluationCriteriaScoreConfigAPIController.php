@@ -4,10 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEvaluationCriteriaScoreConfigAPIRequest;
 use App\Http\Requests\API\UpdateEvaluationCriteriaScoreConfigAPIRequest;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use App\Repositories\EvaluationCriteriaScoreConfigRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -277,5 +280,90 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
         $evaluationCriteriaScoreConfig->delete();
 
         return $this->sendSuccess('Evaluation Criteria Score Config deleted successfully');
+    }
+
+    public function removeCriteriaConfig(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        $min_value = 0;
+        $max_value = 0;
+        $x=1;
+        DB::beginTransaction();
+        try {
+            $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->delete();
+            if($result) {
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                foreach ($criteriaConfig as $val){
+                    if($x==1){
+                        $min_value = $val['score'];
+                    }
+
+                    if($val['score']>$max_value){
+                        $max_value = $val['score'];
+                    }
+
+                    if($val['score']<$min_value){
+                        $min_value = $val['score'];
+                    }
+
+                    $ans['max_value'] = $max_value;
+                    $ans['min_value'] = $min_value;
+                    EvaluationCriteriaDetails::where('id',$input['criteria_detail_id'])->update($ans);
+                    $x++;
+                }
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function addEvaluationCriteriaConfig(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        $min_value = 0;
+        $max_value = 0;
+        $x=1;
+        DB::beginTransaction();
+        try {
+            $drop['criteria_detail_id'] = $input['criteria_detail_id'];
+            $drop['label'] = $input['label'];
+            $drop['score'] = $input['score'];
+            $drop['created_by'] = $employee->employeeSystemID;
+            $result = EvaluationCriteriaScoreConfig::create($drop);
+            if($result){
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['criteria_detail_id'])->get();
+                foreach ($criteriaConfig as $val){
+                    if($x==1){
+                        $min_value = $val['score'];
+                    }
+
+                    if($val['score']>$max_value){
+                        $max_value = $val['score'];
+                    }
+
+                    if($val['score']<$min_value){
+                        $min_value = $val['score'];
+                    }
+
+                    $ans['max_value'] = $max_value;
+                    $ans['min_value'] = $min_value;
+                    EvaluationCriteriaDetails::where('id',$input['criteria_detail_id'])->update($ans);
+                    $x++;
+                }
+
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
     }
 }

@@ -174,5 +174,10 @@ class EvaluationCriteriaDetails extends Model
         return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'parent_id', 'id');
     }
 
+    public function evaluation_criteria_score_config()
+    {
+        return $this->hasMany('App\Models\EvaluationCriteriaScoreConfig', 'criteria_detail_id', 'id');
+    }
+
     
 }
