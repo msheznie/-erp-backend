@@ -24,6 +24,8 @@
  */
 
 namespace App\Http\Controllers\API;
+use App\helper\Helper;
+use Illuminate\Support\Facades\Storage;
 
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
@@ -69,10 +71,10 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-
+use App\Jobs\AddMultipleItemsToQuotation;
 use Carbon\Carbon;
 use Response;
-
+use Auth;
 /**
  * Class QuotationMasterController
  * @package App\Http\Controllers\API
@@ -1976,6 +1978,134 @@ class QuotationMasterAPIController extends AppBaseController
         }else {
                 return $this->sendResponse(['status' => false , 'data' => $input],'False');
 
+        }
+    }
+
+    public function downloadQuotationItemUploadTemplate(Request $request) {
+        $input = $request->all();
+        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
+            return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
+    }
+
+    public function poItemsUpload(Request $request) {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+
+
+            $masterData = QuotationMaster::find($input['requestID']);
+
+
+            if (empty($masterData)) {
+                return $this->sendError('Quotation not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $validateVat = false;
+            $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            // $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 64)
+            //                                     ->where('companySystemID', $purchaseOrder->companySystemID)
+            //                                     ->first();
+
+            // if ($allowItemToType) {
+            //     if ($allowItemToType->isYesNO) {
+            //         $allowItemToTypePolicy = true;
+            //     }
+            // }.
+           
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+                
+                if (isset($value['sales_price'])) {
+                    $validateHeaderQty = true;
+                }
+
+                if($masterData->isVatEligible) {
+                   if (isset($value['vat'])) {
+                        $validateVat = true;
+                   }
+                }else {
+                    $validateVat = true;
+                }
+
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['sales_price']) && !is_null($value['sales_price'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
+            $uploadSerialNumber = array_filter(collect($record)->toArray());
+
+            if ($masterData->cancelledYN == -1) {
+                return $this->sendError('This Quotation already closed. You can not add.', 500);
+            }
+
+            if ($masterData->approvedYN == 1) {
+                return $this->sendError('This Quotation fully approved. You can not add.', 500);
+            }
+
+
+            if (count($record) > 0) {
+                $db = isset($input['db']) ? $input['db'] : ""; 
+                AddMultipleItemsToQuotation::dispatch(array_filter($record),($masterData->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Items uploaded Successfully!!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
     }
     

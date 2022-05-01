@@ -23,6 +23,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ItemSerial;
+use App\Models\ItemBatch;
 use App\Models\DocumentSubProduct;
 use App\Models\ItemAssigned;
 use App\Models\ItemMaster;
@@ -488,6 +489,27 @@ class GRVDetailsAPIController extends AppBaseController
 
                 if (count($serialIds) > 0) {
                     $deleteSerial = ItemSerial::whereIn('id', $serialIds)
+                                              ->delete();
+
+                    $subProduct->delete();
+                }
+            } else if ($gRVDetails->trackingType == 1) {
+                $validateSubProductSold = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
+                                                             ->where('documentDetailID', $id)
+                                                             ->where('soldQty', '>', 0)
+                                                             ->first();
+
+                if ($validateSubProductSold) {
+                    return $this->sendError('You cannot delete this line item. batch details are sold already.', 422);
+                }
+
+                $subProduct = DocumentSubProduct::where('documentSystemID', $grvMaster->documentSystemID)
+                                                 ->where('documentDetailID', $id);
+
+                $productBatchIDs = ($subProduct->count() > 0) ? $subProduct->get()->pluck('productBatchID')->toArray() : [];
+
+                if (count($productBatchIDs) > 0) {
+                    $deleteBatch = ItemBatch::whereIn('id', $productBatchIDs)
                                               ->delete();
 
                     $subProduct->delete();

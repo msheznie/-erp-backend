@@ -20,6 +20,7 @@ use App\Http\Requests\API\UpdateUnitAPIRequest;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Repositories\UnitRepository;
+use App\Repositories\UnitConversionRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -37,11 +38,13 @@ class UnitAPIController extends AppBaseController
 {
     /** @var  UnitRepository */
     private $unitRepository;
+    private $unitConversionRepository;
 
-    public function __construct(UnitRepository $unitRepo, UserRepository $userRepo)
+    public function __construct(UnitRepository $unitRepo, UserRepository $userRepo, UnitConversionRepository $unitConversionRepository)
     {
         $this->unitRepository = $unitRepo;
         $this->userRepository = $userRepo;
+        $this->unitConversionRepository = $unitConversionRepository;
     }
 
     /**
@@ -92,6 +95,21 @@ class UnitAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
 
         $units = $this->unitRepository->create($input);
+
+        // add conversion to created unit
+
+        if($units) {
+            $unitConversion = [
+                'masterUnitID' => $units->UnitID,
+                'subUnitID' => $units->UnitID,
+                'conversion' => "1"
+            ];
+
+           $this->unitConversionRepository->create($unitConversion);
+
+        }
+
+
 
         return $this->sendResponse($units->toArray(), 'Unit saved successfully');
     }

@@ -998,40 +998,46 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'APSL':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
+
+                $outputArr = array();
+                $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                $invoiceAmount = array_sum($invoiceAmount);
+
+                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                $paidAmount = array_sum($paidAmount);
+
+                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                $balanceAmount = array_sum($balanceAmount);
+
+                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                $decimalPlace = array_unique($decimalPlace);
+
                 if ($output) {
-                    $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = $val->documentSystemCode != '1970-01-01' ? \Helper::dateFormat($val->documentDate) : null;
-                        $data[$x]['Supplier Code'] = $val->SupplierCode;
-                        $data[$x]['Supplier Name'] = $val->suppliername;
-                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
-                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Document Narration'] = $val->documentNarration;
-                        $data[$x]['Currency'] = $val->documentCurrency;
-                        $data[$x]['Document Amount'] = $val->invoiceAmount;
-                        $x++;
+                        $outputArr[$val->SupplierCode . " - " . $val->suppliername][$val->documentCurrency][] = $val;
                     }
-                } else {
-                    $data = array();
                 }
-  
-                $fileName = 'payment_suppliers_by_year';
-                $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                $templateName = "export_report.payment_suppliers";
+
+                $reportData = ['reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
+
+                $fileName = 'supplier_ledger';
+                $path = 'accounts-payable/report/supplier_ledger/excel/';
+                $basePath = CreateExcel::loadView($reportData,$type,$fileName,$path,$templateName);
 
                 if($basePath == '')
                 {
-                     return $this->sendError('Unable to export excel');
+                    return $this->sendError('Unable to export excel');
                 }
                 else
                 {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
                 }
-
 
                 break;
             case 'APSBS':
@@ -1837,6 +1843,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -1864,6 +1871,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -1891,6 +1899,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -1918,6 +1927,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -2887,6 +2897,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -2914,6 +2925,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -2941,6 +2953,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -2968,6 +2981,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3211,6 +3225,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3238,6 +3253,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3265,6 +3281,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3292,6 +3309,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3529,6 +3547,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3556,6 +3575,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3583,6 +3603,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3610,6 +3631,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3848,6 +3870,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3875,6 +3898,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3902,6 +3926,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID = 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_paysupplierinvoicemaster.approved = -1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
@@ -3929,6 +3954,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
                             WHERE
                                 erp_paysupplierinvoicedetail.matchingDocID > 0
+                                AND erp_paysupplierinvoicedetail.isRetention = 0
                                 AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                                 AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')

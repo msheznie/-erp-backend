@@ -146,6 +146,7 @@ class SupplierMaster extends Model
         'vatEligible',
         'vatNumber',
         'vatPercentage',
+        'retentionPercentage',
         'createdUserSystemID',
         'modifiedUserSystemID',
         'supCategoryICVMasterID',

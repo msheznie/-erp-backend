@@ -234,6 +234,7 @@ class AccountsPayableLedger extends Model
         'createdUserID',
         'createdPcID',
         'timeStamp',
+        'isRetention',
         'purchaseOrderID'
     ];
 
@@ -247,6 +248,7 @@ class AccountsPayableLedger extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'documentSystemID' => 'integer',
+        'isRetention' => 'integer',
         'documentID' => 'string',
         'documentSystemCode' => 'integer',
         'documentCode' => 'string',

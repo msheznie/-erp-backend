@@ -195,7 +195,7 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
+    public function grvListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID, $projectID) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
@@ -205,11 +205,18 @@ class GRVMasterRepository extends BaseRepository
         }, 'supplier_by' => function ($query) {
         }, 'currency_by' => function ($query) {
         }, 'grvtype_by' => function ($query) {
+        }, 'project' => function ($query) {
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $grvMaster->whereIn('serviceLineSystemID', $serviceLineSystemID);
+            }
+        }
+
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $grvMaster->whereIn('projectID', $projectID);
             }
         }
 
@@ -278,6 +285,7 @@ class GRVMasterRepository extends BaseRepository
                 'erp_grvmaster.grvLocation',
                 'erp_grvmaster.refferedBackYN',
                 'erp_grvmaster.grvTypeID',
+                'erp_grvmaster.projectID',
                 'erp_grvmaster.companySystemID'
             ]);
             

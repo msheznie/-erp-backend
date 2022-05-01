@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\helper\inventory;
+use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateCustomerInvoiceItemDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceItemDetailsAPIRequest;
 use App\Models\CompanyPolicyMaster;
@@ -591,12 +592,21 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Details not found');
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($customerDirectInvoice->documentSystemiD, $customerDirectInvoice->companySystemID, $id, $input, $customerDirectInvoice->customerID, $customerDirectInvoice->isPerforma);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
                 ->first();
             if (empty($unitConvention)) {
-                return $this->sendError('Unit Convention not found', 500);
+                return $this->sendError("Unit conversion isn't valid or configured", 500);
             }
 
             if ($unitConvention) {
@@ -823,6 +833,12 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
                 $subProduct->delete();
             }
+        } else if ($customerInvoiceItemDetails->trackingType == 1) {
+            $deleteBatch = ItemTracking::revertBatchTrackingSoldStatus($customerInvoice->documentSystemID, $id);
+
+            if (!$deleteBatch['status']) {
+                return $this->sendError($deleteBatch['message'], 422);
+            }
         }
 
 
@@ -933,14 +949,16 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         foreach ($items as $item) {
 
-            $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
-
+            $issueUnit = Unit::all();
             $issueUnits = array();
-            foreach ($issueUnit->unitConversion as $unit) {
-                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
-                array_push($issueUnits, $temArray);
-            }
 
+            if ($issueUnit) {
+                foreach ($issueUnit as $unit){
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                    array_push($issueUnits,$temArray);
+                }
+            }
+            
             $item->issueUnits = $issueUnits;
         }
 
