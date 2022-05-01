@@ -239,11 +239,10 @@ class TenderProcurementCategoryController extends AppBaseController
         }
 
         // Used for tender creation
-        $editCondition = $this->checkEditCondition($id, $request);
-        if(!$editCondition){
-            return $this->sendError('Procurement category is already used in tender creation');
+        $editCondition = $this->checkEditCondition($id, $request, $level);
+        if(isset($editCondition) && !$editCondition){
+            return $this->sendError($successMessageContent .' is already used in tender creation');
         }
-       //Log::info(['$editCondition', $editCondition]);
 
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -270,14 +269,30 @@ class TenderProcurementCategoryController extends AppBaseController
             return $this->sendError('Procurement Category not found');
         }
 
+        $level = $tenderProcurementCategory['level'];
+
+        if($level == 0){
+            $successMessageContent = 'Procurement Category ';
+        } elseif ($level == 1) {
+            $successMessageContent = 'Procurement sub Category ';
+
+            $tenderMasterNotConfirmedCount = TenderMaster::where('procument_sub_cat_id', $tenderProcurementCategory['id'])->count();
+
+            if($tenderMasterNotConfirmedCount > 0){
+                return $this->sendError($successMessageContent. ' is already used');
+            }
+        } elseif ($level == 2){
+            $successMessageContent = 'Procurement activity ';
+        }
+
         $categoryHasTenders = TenderProcurementCategory::has('tenderMaster')->where('id', $id)->get();
         if(sizeof($categoryHasTenders) != 0){
-            return $this->sendError('Procurement category already used');
+            return $this->sendError($successMessageContent. ' is already used');
         }
 
         $categoryHasActivity = TenderProcurementCategory::has('procumentActivity')->where('id', $id)->get();
         if(sizeof($categoryHasActivity) != 0){
-            return $this->sendError('Procurement category already used');
+            return $this->sendError($successMessageContent . ' is already used');
         }
 
         $input['deleted_by'] = Helper::getEmployeeSystemID();
@@ -364,11 +379,10 @@ class TenderProcurementCategoryController extends AppBaseController
         return $this->sendResponse($procurementCategory, 'Procurement Category restored successfully');
     }
 
-    private function checkEditCondition($id, $request){
+    private function checkEditCondition($id, $request, $level){
 
         $input = $request->all();
         $procurementCategory = TenderProcurementCategory::find($id);
-        $allowToEdit = false;
 
         // Check Description
         $description = $input['description'];
@@ -401,10 +415,20 @@ class TenderProcurementCategoryController extends AppBaseController
             $isActiveChanged =  'Yes';
         }
 
+        if($level == 0 ){
+            return $this->validateLevelOneEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id);
+        } elseif ($level == 1){
+            return $this->validateLevelTwoEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id);
+        } elseif ($level == 2){
+            return $this->validateLevelThreeEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id);
+        }
+    }
+
+    public function validateLevelOneEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id)
+    {
         $tenderMasterNotConfirmedCount = TenderMaster::where('procument_cat_id', $id)
-        ->where('confirmed_yn', 0)->count();
+            ->where('confirmed_yn', 0)->count();
         if($tenderMasterNotConfirmedCount > 0){
-            Log::info('One');
             $allowToEdit = false;
             return $allowToEdit;
         }
@@ -416,25 +440,12 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $tenderMasterRecordCount = TenderMaster::where('procument_cat_id', $id)
             ->count();
-        Log::info([$tenderMasterNotApproveCount, $tenderMasterRecordCount, $isCodeChanged]);
         if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
-            Log::info('Two');
             $allowToEdit = true;
             return $allowToEdit;
         }
 
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged){
-            Log::info('Two-Two');
-            $allowToEdit = false;
-            return $allowToEdit;
-        }
-
-        $tenderMasterApproveCount = TenderMaster::where('procument_cat_id', $id)
-            ->where('confirmed_yn', 0)
-            ->where('approved', '==', -1)
-            ->count();
-        if($tenderMasterApproveCount > 0){
-            Log::info('Three');
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
             $allowToEdit = false;
             return $allowToEdit;
         }
@@ -443,11 +454,102 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('confirmed_yn', 1)
             ->where('approved', '!=', -1)
             ->count();
-        if($isDescriptionChanged &&  $tenderMasterConfirmedNotApproveCount > 0){
-            Log::info('Four');
+        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = true;
+            return $allowToEdit;
+        } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        } elseif ($isCodeChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+    }
+
+    public function validateLevelTwoEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id)
+    {
+        $tenderMasterNotConfirmedCount = TenderMaster::where('procument_sub_cat_id', $id)
+            ->where('confirmed_yn', 0)->count();
+        if($tenderMasterNotConfirmedCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+
+        $tenderMasterNotApproveCount = TenderMaster::where('procument_sub_cat_id', $id)
+            ->where('confirmed_yn', 1)
+            ->where('approved', -1)
+            ->count();
+
+        $tenderMasterRecordCount = TenderMaster::where('procument_sub_cat_id', $id)
+            ->count();
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
             $allowToEdit = true;
             return $allowToEdit;
         }
 
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+
+        $tenderMasterConfirmedNotApproveCount = TenderMaster::where('procument_sub_cat_id', $id)
+            ->where('confirmed_yn', 1)
+            ->where('approved', '!=', -1)
+            ->count();
+        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = true;
+            return $allowToEdit;
+        } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        } elseif ($isCodeChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+    }
+
+    public function validateLevelThreeEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id)
+    {
+        $procurementCategoriesParentId = TenderProcurementCategory::select('parent_id')->where('id', $id)->first();
+
+        $tenderMasterNotConfirmedCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
+            ->where('confirmed_yn', 0)->count();
+        if($tenderMasterNotConfirmedCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+
+        $tenderMasterNotApproveCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
+            ->where('confirmed_yn', 1)
+            ->where('approved', -1)
+            ->count();
+
+        $tenderMasterRecordCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
+            ->count();
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
+            $allowToEdit = true;
+            return $allowToEdit;
+        }
+
+        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
+
+        $tenderMasterConfirmedNotApproveCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
+            ->where('confirmed_yn', 1)
+            ->where('approved', '!=', -1)
+            ->count();
+        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = true;
+            return $allowToEdit;
+        } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        } elseif ($isCodeChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            $allowToEdit = false;
+            return $allowToEdit;
+        }
     }
 }
+
