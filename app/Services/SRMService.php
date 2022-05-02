@@ -1276,6 +1276,7 @@ class SRMService
                 $data['created_at'] = $currentDate;
                 $data['document_system_id'] = $documentCode->documentSystemID;
                 $data['document_id'] = $documentCode->documentID;
+                $data['is_anonymous'] = $request->input('extra.postAnonymous');
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
@@ -1481,6 +1482,7 @@ class SRMService
     {
         $input = $request->all();
         $question = $request->input('extra.question');
+        $isDeleted = $request->input('extra.isDeleted');
         $companySystemID = 1;
         $company = 1;
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
@@ -1488,14 +1490,14 @@ class SRMService
         try {
             $data['post'] = $question;
             $data['is_public'] = $request->input('extra.publish');
-           //$data['post'] = $question;
+            $data['is_anonymous'] = $request->input('extra.postAnonymous');
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
 
             $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                 ->where('documentSystemCode', $prebidId)
                 ->count();
 
-            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+            if ($isAttachmentExist > 0 && isset($isDeleted) && $isDeleted == 1) {
                 DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
                     ->delete();
