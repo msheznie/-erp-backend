@@ -15,6 +15,7 @@ class ForgotToPunchInService{
     private $mailSubject = 'Attendance Notification';
 
     private $dayId;
+    private $dayName;
     private $proceedShifts = [];
     private $shiftMasters;
     
@@ -119,7 +120,8 @@ class ForgotToPunchInService{
                 ],
                 'data'
             );
-            $this->notify($notPunched);
+
+            $this->notify($notPunched, $shift);
         }
     }
     
@@ -177,16 +179,43 @@ class ForgotToPunchInService{
         return $notPunched;
     }
 
-    public function notify($empArr){        
+    public function notify($empArr, $shiftDet){
+        $bodyContent = $this->getShiftDetView($shiftDet);
+
         foreach ($empArr as $emp) {
-            $mail_body = "Dear {$emp->Ename2},<br/>";
-            $mail_body .= "You have missed punching in."; 
+            $mailBody = "Dear {$emp->Ename2},<br/>";
+            $mailBody .= "You have missed to clock in today ({$this->date})."; 
+            $mailBody .= $bodyContent;
 
             $empEmail = $emp->EEmail;
             $subject = $this->mailSubject;
 
-            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mail_body);
+            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
         }
+    }
+
+    function getShiftDetView($shiftDet){
+        $body = "<br/><br/><b>Shift Details</b><br/>";
+        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;border: 1px solid black;">Shift</th>
+                        <th style="text-align: center;border: 1px solid black;">Day</th>
+                        <th style="text-align: center;border: 1px solid black;">Clock In</th>
+                        <th style="text-align: center;border: 1px solid black;">Clock Out</th>                                            
+                    </tr>
+                </thead>';
+        $body .= '<tbody>';
+        $body .= '<tr>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->Description.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$this->dayName.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->onDutyTime.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->offDutyTime.'</td>
+                 </tr>
+                 </tbody>
+                 </table>';
+        
+        return $body;
     }
 
     public function loadProceedShifts(){
@@ -214,11 +243,11 @@ class ForgotToPunchInService{
     }
 
     public function getDayId(){
-        $dayName = Carbon::parse($this->date)->format('l');        
+        $this->dayName = Carbon::parse($this->date)->format('l');        
         
         $this->dayId = DB::table('srp_weekdays')
             ->select('DayID')
-            ->where('DayDesc', $dayName)
+            ->where('DayDesc', $this->dayName)
             ->value('DayID');        
     }
 
