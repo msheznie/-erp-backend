@@ -54,8 +54,6 @@ class DeliveryOrderAddMutipleItemsService
 
     public static function  addMultipleItems($records,$deliveryOrder,$db,$authID) {
 
-        CommonJobService::db_switch($db);
-
 
         DeliveryOrderDetail::insert($records);
 

@@ -10,9 +10,23 @@ use App\Jobs\AttendancePullingJob;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\AppBaseController;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
+use App\Services\hrms\attendance\ForgotToPunchInService;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
+    function job_debug(Request $request){
+        $data = [];
+        $scenarioId = $request->input('scenarioId');
+        $companyId = $request->input('companyId');
+        $date = $request->input('date');
+        $time = $request->input('time');
+    
+        $job = new ForgotToPunchInService($companyId, $date, $time);
+        $job->run();
+
+        $msg = "Job debugging";
+        return $this->sendResponse($data, $msg);
+    }
     
     public function attendanceClockIn(Request $request)
     {

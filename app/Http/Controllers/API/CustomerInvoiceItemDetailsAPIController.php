@@ -592,6 +592,15 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Details not found');
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($customerDirectInvoice->documentSystemiD, $customerDirectInvoice->companySystemID, $id, $input, $customerDirectInvoice->customerID, $customerDirectInvoice->isPerforma);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
                 ->where('subUnitID', $input['unitOfMeasureIssued'])

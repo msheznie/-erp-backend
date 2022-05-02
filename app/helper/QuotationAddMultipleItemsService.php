@@ -53,8 +53,6 @@ class QuotationAddMultipleItemsService
 
     public static function  addMultipleItems($records,$quotation,$db,$authID) {
 
-        CommonJobService::db_switch($db);
-
         $items = $records;
         $itemsToUpload = array();
         // $employee = \Helper::getEmployeeInfo();
@@ -75,6 +73,7 @@ class QuotationAddMultipleItemsService
                     'unitOfMeasureID' => $orgItem->unit,
                     'defaultUOM' => $orgItem->unit,
                     'unitOfMeasure' => ($unit) ? $unit->UnitShortCode : null,
+                    'itemReferenceNo' => $orgItem->secondaryItemCode,
                     'comment' => (isset($item['comments'])) ? $item['comments'] :  '',
                 ];
 
@@ -99,22 +98,20 @@ class QuotationAddMultipleItemsService
 
 
                 if($item['discount']) {
-                    $data['discountPercentage'] = ($item['discount'] * 100)/($item['qty'] * $item['sales_price']);
+                    $data['discountPercentage'] =  ($item['discount'] / 100);
                     $data['discountAmount'] = $item['discount'];
                 }else {
                     $data['discountPercentage'] = 0;
                     $data['discountAmount'] = 0;
                 }
 
-                $totalNetcost = ($data['unittransactionAmount'] - $data['discountAmount']) * $item['qty'];
+                $totalNetcost = (($data['unittransactionAmount'] * $item['qty']) - $data['discountAmount']);
 
                 $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                 // $item['modifiedUserID'] = $employee->empID;
                 // $item['modifiedUserName'] = $employee->empName;
                 array_push($itemsToUpload,$data);
 
-            }else {
-                // item not found
             }
            
 

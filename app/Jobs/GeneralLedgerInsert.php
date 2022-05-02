@@ -2782,9 +2782,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                                     $data['documentRptAmount'] = \Helper::roundValue($siApData->rptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
+                                    if ($siApData && $siApData->transAmount > 0) {
+                                        array_push($finalData, $data);
+                                    }
 
-                                    if ($retentionData) {
+                                    if ($retentionData && $retentionData->transAmount > 0) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);

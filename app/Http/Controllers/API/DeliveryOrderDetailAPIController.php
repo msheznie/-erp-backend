@@ -540,6 +540,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError('Delivery order not found',500);
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
 
         if($deliveryOrderDetail->itemFinanceCategoryID == 1){
@@ -1722,6 +1731,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 if (isset($value['qty'])) {
                     $validateHeaderQty = true;
                 }
+                
+                if (isset($value['unit_cost'])) {
+                    $validateHeaderQty = true;
+                }
 
                 if($masterData->isVatEligible) {
                    if (isset($value['vat'])) {
@@ -1731,7 +1744,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateVat = true;
                 }
 
-                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
@@ -1842,18 +1855,18 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $itemArray['transactionAmount'] = 0;
                         $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
                         $itemArray['discountAmount'] = $item['discount'];
-                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+                        $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? (( $itemArray['discountAmount']) / 100) : 0;
 
 
-                        if ($masterData->isVatEligible) {
+                        if ($masterData->customerVATEligible) {
                             $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
-                            $itemArray['VATPercentage'] = $vatDetails['percentage'];
+                            $itemArray['VATPercentage'] = $item['vat'];
                             $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
                             $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                             $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                             $itemArray['VATAmount'] = 0;
-                            if (isset($itemArray['unittransactionAmount']) && $itemArray['unittransactionAmount'] > 0) {
-                                $itemArray['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $item['vat']);
+                            if (isset($item['vat'])) {
+                                $itemArray['VATAmount'] = ($item['vat'] / 100);
                             }
                             $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 

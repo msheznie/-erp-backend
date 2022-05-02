@@ -1330,15 +1330,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getRetentionValues(Request $request){
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
+        $BPVdate = new Carbon($input['BPVdate']);
         $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
         if($details) {
             $bookinvDetailsArray = [];
             $details = collect($details)->pluck('bookingInvSystemCode');
             $bookinvDetails = BookInvSuppMaster::whereIn('bookingSuppMasInvAutoID', $details)->get();
             foreach ($bookinvDetails as $key => $objects){
-                $bookinvDetailsArray[$key]['bookingInvCode'] = $objects->bookingInvCode;
-                $bookinvDetailsArray[$key]['retentionDueDate'] = $objects->retentionDueDate;
-                $bookinvDetailsArray[$key]['retentionAmount'] = $objects->retentionAmount;
+                if($BPVdate < $objects->retentionDueDate) {
+                    $bookinvDetailsArray[$key]['bookingInvCode'] = $objects->bookingInvCode;
+                    $bookinvDetailsArray[$key]['retentionDueDate'] = $objects->retentionDueDate;
+                    $bookinvDetailsArray[$key]['retentionAmount'] = $objects->retentionAmount;
+                }
             }
 
             return $bookinvDetailsArray;
