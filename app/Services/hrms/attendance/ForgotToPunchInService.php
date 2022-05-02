@@ -15,6 +15,7 @@ class ForgotToPunchInService{
     private $mailSubject = 'Attendance Notification';
 
     private $dayId;
+    private $dayName;
     private $proceedShifts = [];
     private $shiftMasters;
     
@@ -34,7 +35,7 @@ class ForgotToPunchInService{
          
         if($this->shiftMasters->count() == 0){
             $this->insertToLogTb(
-                [ 'message'=> 'No data found to proceed'], 'info'
+                [ 'message'=> 'No data found to proceed (punch-in)'], 'info'
             );
             return;
         }
@@ -63,22 +64,6 @@ class ForgotToPunchInService{
         $this->shiftMasters = $data;
     }
 
-    public function insertToLogTb($logData, $logType = 'info'){
-        $logData = json_encode($logData);
-
-        $data = [
-            'company_id'=> $this->companyId,
-            'module'=> 'HRMS',
-            'scenario_id'=> 15,
-            'processed_for'=> $this->processedFor,
-            'logged_at'=> Carbon::now(),
-            'log_type'=> $logType,
-            'log_data'=> $logData,
-        ];
-
-        DB::table('job_logs')->insert($data);
-    }
-
     public function processOverShifts(){
         foreach ($this->shiftMasters as $key => $shift) {
             $shiftID = $shift->shiftID;
@@ -88,7 +73,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'No employee assigned to this shift'
+                        'message'=> 'No employee assigned to this shift (punch-in)'
                     ],
                     'data'
                 );
@@ -108,7 +93,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'Look like all employees are on leave assigned with this shift'
+                        'message'=> 'Looks like all employees are on leave assigned with this shift (punch-in)'
                     ],
                     'data'
                 );
@@ -120,7 +105,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'Look like all employees are punched-in assigned with this shift'
+                        'message'=> 'Looks like all employees are punched-in assigned with this shift'
                     ],
                     'data'
                 );
@@ -135,7 +120,8 @@ class ForgotToPunchInService{
                 ],
                 'data'
             );
-            $this->notify($notPunched);
+
+            $this->notify($notPunched, $shift);
         }
     }
     
@@ -193,16 +179,43 @@ class ForgotToPunchInService{
         return $notPunched;
     }
 
-    public function notify($empArr){        
+    public function notify($empArr, $shiftDet){
+        $bodyContent = $this->getShiftDetView($shiftDet);
+
         foreach ($empArr as $emp) {
-            $mail_body = "Dear {$emp->Ename2},<br/>";
-            $mail_body .= "You have missed punching in."; 
+            $mailBody = "Dear {$emp->Ename2},<br/>";
+            $mailBody .= "You have missed to clock in today ({$this->date})."; 
+            $mailBody .= $bodyContent;
 
             $empEmail = $emp->EEmail;
             $subject = $this->mailSubject;
 
-            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mail_body);
+            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
         }
+    }
+
+    function getShiftDetView($shiftDet){
+        $body = "<br/><br/><b>Shift Details</b><br/>";
+        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;border: 1px solid black;">Shift</th>
+                        <th style="text-align: center;border: 1px solid black;">Day</th>
+                        <th style="text-align: center;border: 1px solid black;">Clock In</th>
+                        <th style="text-align: center;border: 1px solid black;">Clock Out</th>                                            
+                    </tr>
+                </thead>';
+        $body .= '<tbody>';
+        $body .= '<tr>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->Description.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$this->dayName.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->onDutyTime.'</td>
+                    <td style="text-align:left;border: 1px solid black;">'.$shiftDet->offDutyTime.'</td>
+                 </tr>
+                 </tbody>
+                 </table>';
+        
+        return $body;
     }
 
     public function loadProceedShifts(){
@@ -230,11 +243,27 @@ class ForgotToPunchInService{
     }
 
     public function getDayId(){
-        $dayName = Carbon::parse($this->date)->format('l');        
+        $this->dayName = Carbon::parse($this->date)->format('l');        
         
         $this->dayId = DB::table('srp_weekdays')
             ->select('DayID')
-            ->where('DayDesc', $dayName)
+            ->where('DayDesc', $this->dayName)
             ->value('DayID');        
+    }
+
+    public function insertToLogTb($logData, $logType = 'info'){
+        $logData = json_encode($logData);
+
+        $data = [
+            'company_id'=> $this->companyId,
+            'module'=> 'HRMS',
+            'scenario_id'=> 15,
+            'processed_for'=> $this->processedFor,
+            'logged_at'=> Carbon::now(),
+            'log_type'=> $logType,
+            'log_data'=> $logData,
+        ];
+
+        DB::table('job_logs')->insert($data);
     }
 }
