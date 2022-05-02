@@ -879,6 +879,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'warehouse','location_to','location_from','segment'];
                     $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
                     break; 
+                case 16:  
+                    $masterTable = 'erp_stockreceive';
+                    $detailTable = 'erp_stockreceivedetails';
+                    $primaryKey  = $masterTable . '.stockReceiveAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockReceiveDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockReceive';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location_to','location_from','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
                 default;
                     break;
             }
@@ -1503,6 +1517,42 @@ class CustomUserReportsAPIController extends AppBaseController
                         $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                         break;
                 case 15:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location_to') {
+                                    $data->wareHouseJoin('location_to', 'locationTo', 'wareHouseDescription');
+                                }
+                                else if ($table == 'location_from') {
+                                    $data->wareHouseJoin('location_from', 'locationFrom', 'wareHouseDescription');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 16:
                     if ($isDetailExist) {
                         $data->detailJoin();
                         }

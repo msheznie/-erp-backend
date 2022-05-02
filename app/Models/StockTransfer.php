@@ -352,6 +352,11 @@ class StockTransfer extends Model
         return $this->belongsTo('App\Models\Company','companyToSystemID','companySystemID');
     }
 
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_stocktransferdetails','erp_stocktransferdetails.stockTransferAutoID','erp_stocktransfer.stockTransferAutoID');
+    }
+
     public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
         $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_stocktransfer.'.$column)
             ->addSelect($as.".empName as ".$columnAs);
