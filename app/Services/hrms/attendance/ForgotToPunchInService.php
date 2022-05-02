@@ -34,7 +34,7 @@ class ForgotToPunchInService{
          
         if($this->shiftMasters->count() == 0){
             $this->insertToLogTb(
-                [ 'message'=> 'No data found to proceed'], 'info'
+                [ 'message'=> 'No data found to proceed (punch-in)'], 'info'
             );
             return;
         }
@@ -63,22 +63,6 @@ class ForgotToPunchInService{
         $this->shiftMasters = $data;
     }
 
-    public function insertToLogTb($logData, $logType = 'info'){
-        $logData = json_encode($logData);
-
-        $data = [
-            'company_id'=> $this->companyId,
-            'module'=> 'HRMS',
-            'scenario_id'=> 15,
-            'processed_for'=> $this->processedFor,
-            'logged_at'=> Carbon::now(),
-            'log_type'=> $logType,
-            'log_data'=> $logData,
-        ];
-
-        DB::table('job_logs')->insert($data);
-    }
-
     public function processOverShifts(){
         foreach ($this->shiftMasters as $key => $shift) {
             $shiftID = $shift->shiftID;
@@ -88,7 +72,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'No employee assigned to this shift'
+                        'message'=> 'No employee assigned to this shift (punch-in)'
                     ],
                     'data'
                 );
@@ -108,7 +92,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'Look like all employees are on leave assigned with this shift'
+                        'message'=> 'Looks like all employees are on leave assigned with this shift (punch-in)'
                     ],
                     'data'
                 );
@@ -120,7 +104,7 @@ class ForgotToPunchInService{
                 $this->insertToLogTb(
                     [
                         'shiftId'=> $shiftID,
-                        'message'=> 'Look like all employees are punched-in assigned with this shift'
+                        'message'=> 'Looks like all employees are punched-in assigned with this shift'
                     ],
                     'data'
                 );
@@ -236,5 +220,21 @@ class ForgotToPunchInService{
             ->select('DayID')
             ->where('DayDesc', $dayName)
             ->value('DayID');        
+    }
+
+    public function insertToLogTb($logData, $logType = 'info'){
+        $logData = json_encode($logData);
+
+        $data = [
+            'company_id'=> $this->companyId,
+            'module'=> 'HRMS',
+            'scenario_id'=> 15,
+            'processed_for'=> $this->processedFor,
+            'logged_at'=> Carbon::now(),
+            'log_type'=> $logType,
+            'log_data'=> $logData,
+        ];
+
+        DB::table('job_logs')->insert($data);
     }
 }
