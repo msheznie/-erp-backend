@@ -1350,18 +1350,19 @@ class SRMService
     {
         $input = $request->all();
         $id = $request->input('extra.prebidId');
+        $employeeId = Helper::getEmployeeSystemID();
 
-        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+        $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
         },'attachment'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
             ->get();
-        /*$profilePic = Employee::with(['profilepic'])
+        $profilePic = Employee::with(['profilepic'])
             ->where('employeeSystemID', $employeeId)
             ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];
         
         return [
             'success' => true,
@@ -1402,12 +1403,18 @@ class SRMService
         $companySystemID = $tenderMaster['company_id'];
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $updateRecordId = $request->input('extra.updateRecordId');
+        if( $updateRecordId !== 0 ){
+           return $this->updatePreBidResponse($request, $updateRecordId);
+        }
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
             $data['posted_by_type'] = 1;
             $data['post'] = $response;
             $data['user_id'] = $employeeId;
+            $data['supplier_id'] = $supplierRegId;
             $data['is_public'] = 1;
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
@@ -1482,6 +1489,43 @@ class SRMService
             $data['post'] = $question;
             $data['is_public'] = $request->input('extra.publish');
            //$data['post'] = $question;
+            $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
+
+            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+                ->where('documentSystemCode', $prebidId)
+                ->count();
+
+            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+                DocumentAttachments::where('documentSystemID', 109)
+                    ->where('documentSystemCode', $prebidId)
+                    ->delete();
+            }
+
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $attachment = $input['Attachment'];
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            }
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function updatePreBidResponse(Request $request, $prebidId)
+    {
+        $input = $request->all();
+        $question = $request->input('extra.response');
+        $companySystemID = 1;
+        $company = 1;
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        DB::beginTransaction();
+        try {
+            $data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
 
             $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
