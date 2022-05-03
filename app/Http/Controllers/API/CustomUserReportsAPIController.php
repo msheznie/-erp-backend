@@ -893,6 +893,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'warehouse','location_to','location_from','segment'];
                     $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
                     break; 
+                case 17:  
+                    $masterTable = 'erp_stockadjustment';
+                    $detailTable = 'erp_stockadjustmentdetails';
+                    $primaryKey  = $masterTable . '.stockAdjustmentAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockAdjustmentDetailsAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockAdjustment';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location','reason','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
                 default;
                     break;
             }
@@ -1588,7 +1602,42 @@ class CustomUserReportsAPIController extends AppBaseController
                         }
                         $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                         break;
-                        
+                case 17:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->wareHouseJoin('location', 'location', 'wareHouseDescription');
+                                }
+                                else if ($table == 'reason') {
+                                    $data->reasonJoin('reason', 'reason', 'reason');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;   
                         default:
                     $data = [];
                     break;
