@@ -61,56 +61,58 @@ class QuotationAddMultipleItemsService
             $data = array();
 
             $orgItem  = ItemMaster::where('primaryCode', $item['item_code'])->first();
+            if(is_numeric($item['qty'])  &&  is_numeric($item['sales_price']) &&  is_numeric($item['discount'])) {
 
-            if($orgItem) {
-                $unit  = Unit::find($orgItem->unit);
-                $data = [
-                    'itemAutoID' => $orgItem->itemCodeSystem,
-                    'itemSystemCode' => $item['item_code'],
-                    'itemDescription' => $orgItem->itemDescription,
-                    'itemCategory' => $orgItem->financeCategoryMaster,
-                    'defaultUOMID' => $orgItem->unit,
-                    'unitOfMeasureID' => $orgItem->unit,
-                    'defaultUOM' => $orgItem->unit,
-                    'unitOfMeasure' => ($unit) ? $unit->UnitShortCode : null,
-                    'itemReferenceNo' => $orgItem->secondaryItemCode,
-                    'comment' => (isset($item['comments'])) ? $item['comments'] :  '',
-                ];
+                if($orgItem) {
+                    $unit  = Unit::find($orgItem->unit);
+                    $data = [
+                        'itemAutoID' => $orgItem->itemCodeSystem,
+                        'itemSystemCode' => $item['item_code'],
+                        'itemDescription' => $orgItem->itemDescription,
+                        'itemCategory' => $orgItem->financeCategoryMaster,
+                        'defaultUOMID' => $orgItem->unit,
+                        'unitOfMeasureID' => $orgItem->unit,
+                        'defaultUOM' => $orgItem->unit,
+                        'unitOfMeasure' => ($unit) ? $unit->UnitShortCode : null,
+                        'itemReferenceNo' => $orgItem->secondaryItemCode,
+                        'comment' => (isset($item['comments'])) ? $item['comments'] :  '',
+                    ];
 
-                $currencyConversion = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
-                $data['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
-                $data['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                    $currencyConversion = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
+                    $data['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
+                    $data['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
+                    $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
 
-                $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                    $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
 
-                $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
+                    $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
 
-                $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                $data['VATAmount'] = \Helper::roundValue($item['vat']);
-                $data['modifiedDateTime'] = Carbon::now();
-                $data['modifiedPCID'] = gethostname();
-                $data['quotationMasterID'] = $quotation['quotationMasterID'];
-                $data['requestedQty'] = $item['qty'];
-                $data['unittransactionAmount'] = $item['sales_price'];
+                    $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                    $data['VATAmount'] = \Helper::roundValue($item['vat']);
+                    $data['modifiedDateTime'] = Carbon::now();
+                    $data['modifiedPCID'] = gethostname();
+                    $data['quotationMasterID'] = $quotation['quotationMasterID'];
+                    $data['requestedQty'] = $item['qty'];
+                    $data['unittransactionAmount'] = $item['sales_price'];
 
 
-                if($item['discount']) {
-                    $data['discountPercentage'] =  ($item['discount'] / 100);
-                    $data['discountAmount'] = $item['discount'];
-                }else {
-                    $data['discountPercentage'] = 0;
-                    $data['discountAmount'] = 0;
+                    if($item['discount']) {
+                        $data['discountPercentage'] =  ($item['discount'] / 100);
+                        $data['discountAmount'] = $item['discount'];
+                    }else {
+                        $data['discountPercentage'] = 0;
+                        $data['discountAmount'] = 0;
+                    }
+
+                    $totalNetcost = (($data['unittransactionAmount'] * $item['qty']) - $data['discountAmount']);
+
+                    $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
+                    // $item['modifiedUserID'] = $employee->empID;
+                    // $item['modifiedUserName'] = $employee->empName;
+                        array_push($itemsToUpload,$data);
                 }
-
-                $totalNetcost = (($data['unittransactionAmount'] * $item['qty']) - $data['discountAmount']);
-
-                $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
-                // $item['modifiedUserID'] = $employee->empID;
-                // $item['modifiedUserName'] = $employee->empName;
-                array_push($itemsToUpload,$data);
 
             }
            

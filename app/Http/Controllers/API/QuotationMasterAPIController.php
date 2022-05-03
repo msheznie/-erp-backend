@@ -2031,9 +2031,12 @@ class QuotationMasterAPIController extends AppBaseController
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->get()->toArray();
 
+            $totalRecords = count(collect($formatChk)->toArray());
+
             $uniqueData = array_filter(collect($formatChk)->toArray());
             $validateHeaderCode = false;
             $validateHeaderQty = false;
+            $validateHeaderPrice = false;
             $validateVat = false;
             $totalItemCount = 0;
 
@@ -2048,23 +2051,22 @@ class QuotationMasterAPIController extends AppBaseController
             //         $allowItemToTypePolicy = true;
             //     }
             // }.
-           
             foreach ($uniqueData as $key => $value) {
-                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
 
-                if (isset($value['qty'])) {
+                if (isset($value['qty']) && ($value['qty']) ) {
                     $validateHeaderQty = true;
                 }
 
                 
-                if (isset($value['sales_price'])) {
-                    $validateHeaderQty = true;
+                if (isset($value['sales_price']) && is_numeric($value['sales_price'])) {
+                    $validateHeaderPrice = true;
                 }
 
                 if($masterData->isVatEligible) {
-                   if (isset($value['vat'])) {
+                   if (isset($value['vat']) && is_numeric($value['vat'])) {
                         $validateVat = true;
                    }
                 }else {
@@ -2081,6 +2083,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
 
+
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
@@ -2093,16 +2096,26 @@ class QuotationMasterAPIController extends AppBaseController
                 return $this->sendError('This Quotation fully approved. You can not add.', 500);
             }
 
+            $finalArray = [];
+            $count = 0;
+
+            foreach($record as $finalRecords) {
+                 if(is_numeric($finalRecords['qty'])  &&  is_numeric($finalRecords['sales_price']) &&  is_numeric($finalRecords['discount'])) {
+                    $count++;
+                    array_push($finalArray,$finalRecords);
+                }           
+            }
+
 
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 
-                AddMultipleItemsToQuotation::dispatch(array_filter($record),($masterData->toArray()),$db,Auth::id());
+                AddMultipleItemsToQuotation::dispatch(array_filter($finalArray),($masterData->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], 'Out of '.$totalRecords.', '.$count.'Items uploaded Successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
