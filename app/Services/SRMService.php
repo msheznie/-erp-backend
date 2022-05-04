@@ -177,9 +177,10 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
+        $searchText = $request->input('extra.searchText');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
-        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID);
+        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
 
         return [
             'success'   => true,
@@ -870,9 +871,19 @@ class SRMService
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
         $appointmentID = $request->input('extra.appointmentID');
+        $searchText = $request->input('extra.searchText');
 
-        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)
-            ->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID);
+
+        if (!empty($searchText)) {
+            $searchText = str_replace("\\", "\\\\", $searchText);
+            $po = $po->where(function ($query) use ($searchText) {
+                $query->where('itemDescription', 'LIKE', "%{$searchText}%")
+                    ->orWhere('itemPrimaryCode', 'LIKE', "%{$searchText}%");
+            });
+        }
+
+        $po = $po->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
                     $q->where('cancelYN', 0);
