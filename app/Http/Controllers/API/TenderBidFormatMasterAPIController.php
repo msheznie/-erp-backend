@@ -552,11 +552,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     }
 
     function priceBidExistInTender($id){
-       return PricingScheduleMaster::with(['tender_master' => function($q){
-            $q->where('confirmed_yn',1);
-        }])->whereHas('tender_master' , function($q){
-            $q->where('confirmed_yn',1);
-        })->where('price_bid_format_id',$id)->first();
+       return PricingScheduleMaster::with(['tender_master'])->whereHas('tender_master')->where('price_bid_format_id',$id)->first();
     }
 
 }

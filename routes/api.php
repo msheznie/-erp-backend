@@ -2603,6 +2603,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread');
         Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender');
         Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish');
+
+        Route::post('getEvaluationCriteriaDropDowns', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDropDowns');
+        Route::post('addEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@addEvaluationCriteria');
+        Route::post('getEvaluationCriteriaDetails', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDetails');
+        Route::post('deleteEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@deleteEvaluationCriteria');
+        Route::post('getEvaluationDetailById', 'EvaluationCriteriaDetailsAPIController@getEvaluationDetailById');
+        Route::post('editEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@editEvaluationCriteria');
+        Route::post('validateWeightage', 'EvaluationCriteriaDetailsAPIController@validateWeightage');
+        Route::post('validateWeightageEdit', 'EvaluationCriteriaDetailsAPIController@validateWeightageEdit');
+
+        Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
+        Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2843,3 +2855,14 @@ Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 /* Below two request must be always separated from tenant, auth middlewares */
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
+
+Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
+
+Route::resource('evaluation_criteria_types', 'EvaluationCriteriaTypeAPIController');
+
+
+Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
+
+
+Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
