@@ -12,18 +12,20 @@ use Illuminate\Support\Facades\Config;
 class CommonJobService
 {
     public static function db_switch( $db ){
-        Log::info("database Name in common service  start-".$db);
-        if($db)
-        {
-            Log::info("database Name in common service -".$db);
-            Config::set("database.connections.mysql.database", $db);
-            // DB::reconnect('mysql');
-            DB::purge('mysql');
+        
+        if(!$db){ 
+            Log::info("db name is empty");
+            return;
         }
 
-        Log::info("database Name in common service  end-".Config::get("database.connections.mysql.database"));
-
-        return true;
+        Config::set("database.connections.mysql.database", $db);
+        DB::reconnect('mysql');
+        
+        //DB::purge('mysql'); 
+        /*            
+            As discussed with Fayas DB::purge('mysql'); not working properly on ubuntu machine so we have decide 
+            to use the DB::reconnect('mysql');
+        */
     }
 
     public static function get_specific_log_file($service){
@@ -34,6 +36,8 @@ class CommonJobService
             case 'attendance-clockIn':
             case 'attendance-clockOut':
                 return storage_path() . '/logs/attendance_job_service.log';
+            case 'attendance-notification':
+                return storage_path() . '/logs/attendance_notification_service.log';
 
         }
     }

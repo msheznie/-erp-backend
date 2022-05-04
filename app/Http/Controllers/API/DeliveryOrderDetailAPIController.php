@@ -543,7 +543,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
 
         if (!$validateVATCategories['status']) {
-            return $this->sendError($validateVATCategories['message']);
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
         } else {
             $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
             $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
@@ -1714,7 +1714,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->get()->toArray();
 
+            $totalRecords = count(collect($formatChk)->toArray());
             $uniqueData = array_filter(collect($formatChk)->toArray());
+            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $validateVat = false;
@@ -1724,20 +1726,20 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $itemNotound = false;
 
             foreach ($uniqueData as $key => $value) {
-                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
 
-                if (isset($value['qty'])) {
+                if (isset($value['qty']) && is_numeric($value['qty'])) {
                     $validateHeaderQty = true;
                 }
                 
-                if (isset($value['unit_cost'])) {
+                if (isset($value['unit_cost']) && is_numeric($value['unit_cost'])) {
                     $validateHeaderQty = true;
                 }
 
                 if($masterData->isVatEligible) {
-                   if (isset($value['vat'])) {
+                   if (isset($value['vat']) && is_numeric($value['vat'])) {
                         $validateVat = true;
                    }
                 }else {
@@ -1767,126 +1769,205 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
             $finalItems = [];
+            $count = 0;
 
+            $totalVATAmount = 0;
+            $totalAmount = 0;
 
             foreach($record as $item) {
+                if(is_numeric($item['qty'])  && is_numeric($item['vat'])  && is_numeric($item['discount'])) { 
+                    $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
+                    if(isset($itemDetails->itemCodeSystem)) {
+                        $data = [
+                            'deliveryOrderID' => $input['requestID'],
+                            'itemCodeSystem' => $itemDetails->itemCodeSystem
+                        ];
 
-                $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
-                if(isset($itemDetails->itemCodeSystem)) {
-                    $data = [
-                        'deliveryOrderID' => $input['requestID'],
-                        'itemCodeSystem' => $itemDetails->itemCodeSystem
-                    ];
+                        $validateItem =  $this->validateItemBeforeUpload($data,$itemDetails,$input['companySystemID']);
 
-                    $validateItem =  $this->validateItemBeforeUpload($data,$itemDetails,$input['companySystemID']);
+                        $itemArray = [];
+                        $itemArray['deliveryOrderID'] =  $input['requestID'];
+                        $itemArray['itemCodeSystem'] = $itemDetails->itemCodeSystem;
+                        $itemArray['itemPrimaryCode'] = $itemDetails->primaryCode;
+                        $itemArray['itemDescription'] = $itemDetails->itemDescription;
+                        $itemArray['itemUnitOfMeasure'] = $itemDetails->unit;
+                        $itemArray['unitOfMeasureIssued'] = $itemDetails->unit;
+                        $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
+                        $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
+                        $itemArray['trackingType'] = $itemDetails->trackingType;
+                        $itemArray['qtyIssued'] = $item['qty'];
 
-                    $itemArray = [];
-                    $itemArray['deliveryOrderID'] =  $input['requestID'];
-                    $itemArray['itemCodeSystem'] = $itemDetails->itemCodeSystem;
-                    $itemArray['itemPrimaryCode'] = $itemDetails->primaryCode;
-                    $itemArray['itemDescription'] = $itemDetails->itemDescription;
-                    $itemArray['itemUnitOfMeasure'] = $itemDetails->unit;
-                    $itemArray['unitOfMeasureIssued'] = $itemDetails->unit;
-                    $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
-                    $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
-                    $itemArray['trackingType'] = $itemDetails->trackingType;
-                    $itemArray['qtyIssued'] = $item['qty'];
+                        $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
 
-                    $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
+                        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                            ->where('mainItemCategoryID', $itemAssigned['financeCategoryMaster'])
+                            ->where('itemCategorySubID', $itemAssigned['financeCategorySub'])
+                            ->first();
 
-                    $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-                        ->where('mainItemCategoryID', $itemAssigned['financeCategoryMaster'])
-                        ->where('itemCategorySubID', $itemAssigned['financeCategorySub'])
-                        ->first();
+                        if (!empty($financeItemCategorySubAssigned)) {
+                            $itemArray['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                            $itemArray['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                            $itemArray['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                            $itemArray['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                            $itemArray['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
+                            $itemArray['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
 
-                    if (!empty($financeItemCategorySubAssigned)) {
-                        $itemArray['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-                        $itemArray['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-                        $itemArray['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-                        $itemArray['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-                        $itemArray['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
-                        $itemArray['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
+                            $data = array(
+                            'companySystemID' => $companySystemID,
+                            'itemCodeSystem' => $itemDetails['itemCodeSystem'],
+                            'wareHouseId' => $masterData->wareHouseSystemCode
+                            );
 
-                        $data = array(
-                        'companySystemID' => $companySystemID,
-                        'itemCodeSystem' => $itemDetails['itemCodeSystem'],
-                        'wareHouseId' => $masterData->wareHouseSystemCode
-                        );
+                            $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
 
-                        $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+                            $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+                            $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                            $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
-                        $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
-                        $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                        $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                            $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
-                        $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                        $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            if($masterData->transactionCurrencyID == $masterData->companyLocalCurrencyID){
 
-                        if($masterData->transactionCurrencyID == $masterData->companyLocalCurrencyID){
+                                $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+                                $itemArray['companyLocalAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
 
-                            $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
-                            $itemArray['companyLocalAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            }elseif ($masterData->transactionCurrencyID == $masterData->companyReportingCurrencyID){
 
-                        }elseif ($masterData->transactionCurrencyID == $masterData->companyReportingCurrencyID){
+                                $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+                                $itemArray['companyReportingAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
 
-                            $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
-                            $itemArray['companyReportingAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            }else{
 
-                        }else{
-
-                            $currencyConversion = Helper::currencyConversion($masterData->companySystemID,$masterData->companyLocalCurrencyID,$masterData->transactionCurrencyID,$itemArray['wacValueLocal']);
-                            if(!empty($currencyConversion)){
-                                $itemArray['unitTransactionAmount'] = $currencyConversion['documentAmount'];
+                                $currencyConversion = Helper::currencyConversion($masterData->companySystemID,$masterData->companyLocalCurrencyID,$masterData->transactionCurrencyID,$itemArray['wacValueLocal']);
+                                if(!empty($currencyConversion)){
+                                    $itemArray['unitTransactionAmount'] = $currencyConversion['documentAmount'];
+                                }
                             }
-                        }
 
-                        $amounts = $this->updateAmountsByTransactionAmount($itemArray,$masterData);
-                        $itemArray['companyLocalAmount'] = $amounts['companyLocalAmount'];
-                        $itemArray['companyReportingAmount'] = $amounts['companyReportingAmount'];
+                            $amounts = $this->updateAmountsByTransactionAmount($itemArray,$masterData);
+                            $itemArray['companyLocalAmount'] = $amounts['companyLocalAmount'];
+                            $itemArray['companyReportingAmount'] = $amounts['companyReportingAmount'];
 
-                        $itemArray['transactionCurrencyID'] = $masterData->transactionCurrencyID;
-                        $itemArray['transactionCurrencyER'] = $masterData->transactionCurrencyER;
-                        $itemArray['companyLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
-                        $itemArray['companyLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
-                        $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
-                        $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
-
-
-                        $itemArray['transactionAmount'] = 0;
-                        $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
-                        $itemArray['discountAmount'] = $item['discount'];
-                        $itemArray['discountPercentage'] = ($itemArray['transactionAmount'] != 0) ? (( $itemArray['discountAmount']) * 100) /   $itemArray['transactionAmount'] : 0;
+                            $itemArray['transactionCurrencyID'] = $masterData->transactionCurrencyID;
+                            $itemArray['transactionCurrencyER'] = $masterData->transactionCurrencyER;
+                            $itemArray['companyLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
+                            $itemArray['companyLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
+                            $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
+                            $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
 
 
-                        if ($masterData->isVatEligible) {
-                            $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
-                            $itemArray['VATPercentage'] = $vatDetails['percentage'];
-                            $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
-                            $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
-                            $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-                            $itemArray['VATAmount'] = 0;
-                            if (isset($itemArray['unittransactionAmount']) && $itemArray['unittransactionAmount'] > 0) {
-                                $itemArray['VATAmount'] = (($itemArray['unittransactionAmount'] / 100) * $item['vat']);
-                            }
-                            $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
-
-                            $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                            $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        }
-
-
-                        if($validateItem) {
-                            if($itemArray['currentWareHouseStockQty'] > 0) {
-                                array_push($finalItems,$itemArray);
-                            }
+                            $itemArray['transactionAmount'] = 0;
+                            $itemArray['discountAmount'] = $item['discount'];
+                            $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? ((($itemArray['unitTransactionAmount']*$item['qty']) / $itemArray['discountAmount'])) : 0;
+                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount']*$item['qty'] -   $itemArray['discountAmount']) ;
+                            $totalAmount +=  $itemArray['transactionAmount'];
                             
+                            if ($masterData->customerVATEligible) {
+                                $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
+                                $itemArray['VATPercentage'] = $item['vat'];
+                                $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                $itemArray['VATAmount'] = 0;
+                                if (isset($item['vat'])) {
+                                    $itemArray['VATAmount'] = ($item['vat'] / 100);
+                                }
+                                $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
+
+                                $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                            }
+                            $totalVATAmount += $itemArray['VATAmount'];
+
+                            if($validateItem) {
+                                if($itemArray['currentWareHouseStockQty'] > 0) {
+                                    $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
+                                    if(!$exists_item) {
+                                        array_push($finalItems,$itemArray);
+                                    }
+                                }
+                                
+                            }
+
                         }
 
                     }
-
                 }
-
+                
             }
+
+            
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+        }
+            
+        $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
+
+        $_post['taxMasterAutoID'] = 0;
+        $_post['companyID'] = $masterData->companyID;
+        $_post['companySystemID'] = $masterData->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $masterData->documentSystemID;
+        $_post['documentSystemCode'] = $masterData->deliveryOrderID;
+        $_post['documentCode'] = $masterData->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = round($percentage,3); //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $masterData->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $masterData->transactionCurrencyID;
+        $_post['currencyER'] = $masterData->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $masterData->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $masterData->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['localCurrencyID'] = $masterData->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $masterData->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $masterData->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $masterData->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
+
+        $count = count($finalItems);
+        Taxdetail::create($_post);
             
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 
@@ -1896,7 +1977,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], 'Out of '.$totalRecords.' , '.$count.' Items uploaded Successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

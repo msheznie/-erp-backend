@@ -472,7 +472,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($master->documentSystemiD, $master->companySystemID, $id, $input, $master->customerID, $master->isPerforma);
 
         if (!$validateVATCategories['status']) {
-            return $this->sendError($validateVATCategories['message']);
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
         } else {
             $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
             $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        

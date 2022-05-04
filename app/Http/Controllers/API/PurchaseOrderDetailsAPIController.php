@@ -414,9 +414,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['VATAmount'] = 0;
         if ($purchaseOrder->isVatEligible) {
             $vatDetails = TaxService::getVATDetailsByItem($purchaseOrder->companySystemID, $input['itemCode'], $purchaseOrder->supplierID);
-            if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
-                return $this->sendError("Please assign a vat category to this item (or) setup a default vat category");
-            }
             $input['VATPercentage'] = $vatDetails['percentage'];
             $input['VATApplicableOn'] = $vatDetails['applicableOn'];
             $input['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
@@ -963,7 +960,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($purchaseOrder->documentSystemID, $purchaseOrder->companySystemID, $id, $input);
 
             if (!$validateVATCategories['status']) {
-                return $this->sendError($validateVATCategories['message']);
+                return $this->sendError($validateVATCategories['message'], 500,array('type' => 'no_qty_issues'));
             } else {
                 $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
                 $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
