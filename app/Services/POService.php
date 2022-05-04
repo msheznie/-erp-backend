@@ -102,7 +102,8 @@ class POService
             $query->where('goodsRecievedYN', '!=', 2);
         }])->whereHas('detail', function ($q) use($searchText){
             if(!empty($searchText)){
-                $q->where('itemDescription', $searchText);
+                $q->where('itemPrimaryCode', 'LIKE', "%{$searchText}%");
+                $q->orWhere('itemDescription', 'LIKE', "%{$searchText}%");
                 }
             })
             ->select('purchaseOrderID', 'purchaseOrderCode')
