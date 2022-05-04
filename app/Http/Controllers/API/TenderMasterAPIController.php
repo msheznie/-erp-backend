@@ -559,6 +559,8 @@ class TenderMasterAPIController extends AppBaseController
 
             $data['title']=$input['title'];
             $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['description']=$input['description'];
+            $data['description_sec_lang']=$input['description_sec_lang'];
             $data['tender_type_id']=$input['tender_type_id'];
             $data['currency_id']=$input['currency_id'];
             $data['envelop_type_id']=$input['envelop_type_id'];

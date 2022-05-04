@@ -306,6 +306,9 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
+                $query->orWhereHas('tender_bid_format_master', function ($query1) use ($search) {
+                    $query1->where('tender_name', 'LIKE', "%{$search}%");
+                });
                 $query->orWhere('scheduler_name', 'LIKE', "%{$search}%");
             });
         }
@@ -457,7 +460,7 @@ ORDER BY
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
                     foreach ($input['priceBidFormat'] as $val){
-                        if(!empty($val['value'])){
+                        if(!empty($val['value']) || $val['value'] == "0"){
                             $data['bid_format_detail_id'] = $val['id'];
                             $data['schedule_id'] = $masterData['schedule_id'];
                             $data['value'] = $val['value'];
