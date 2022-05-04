@@ -99,7 +99,7 @@ class QuotationAddMultipleItemsService
 
 
                     if($item['discount']) {
-                        $data['discountPercentage'] =  ($item['discount'] / 100);
+                        $data['discountPercentage'] =  (($data['unittransactionAmount'] * $item['qty']) / $item['discount'] );
                         $data['discountAmount'] = $item['discount'];
                     }else {
                         $data['discountPercentage'] = 0;

@@ -549,7 +549,6 @@ class QuotationMasterAPIController extends AppBaseController
                                                      COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
                                                      ")
                                          ->where('quotationMasterID', $id)->first();
-
         $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
         $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
         $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
@@ -2034,6 +2033,7 @@ class QuotationMasterAPIController extends AppBaseController
             $totalRecords = count(collect($formatChk)->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
+            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $validateHeaderPrice = false;
@@ -2087,7 +2087,6 @@ class QuotationMasterAPIController extends AppBaseController
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
-
             if ($masterData->cancelledYN == -1) {
                 return $this->sendError('This Quotation already closed. You can not add.', 500);
             }
@@ -2101,10 +2100,17 @@ class QuotationMasterAPIController extends AppBaseController
 
             foreach($record as $finalRecords) {
                  if(is_numeric($finalRecords['qty'])  &&  is_numeric($finalRecords['sales_price']) &&  is_numeric($finalRecords['discount'])) {
-                    $count++;
+                     $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
+ 
+                     if(!$exists_item) {
+                     $count++;
                     array_push($finalArray,$finalRecords);
+                    }
+
                 }           
             }
+
+            $finalArray =  collect($finalArray)->unique('item_code')->toArray();
 
 
             if (count($record) > 0) {

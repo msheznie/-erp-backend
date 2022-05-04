@@ -1716,6 +1716,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             $totalRecords = count(collect($formatChk)->toArray());
             $uniqueData = array_filter(collect($formatChk)->toArray());
+            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
             $validateVat = false;
@@ -1775,7 +1776,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             foreach($record as $item) {
                 if(is_numeric($item['qty'])  && is_numeric($item['vat'])  && is_numeric($item['discount'])) { 
-                    $count++;
                     $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
                     if(isset($itemDetails->itemCodeSystem)) {
                         $data = [
@@ -1858,9 +1858,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
                             $itemArray['transactionAmount'] = 0;
-                            $itemArray['transactionAmount'] =  $itemArray['unitTransactionAmount']*$item['qty'];
                             $itemArray['discountAmount'] = $item['discount'];
-                            $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? (( $itemArray['discountAmount']) / 100) : 0;
+                            $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? ((($itemArray['unitTransactionAmount']*$item['qty']) / $itemArray['discountAmount'])) : 0;
+                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount']*$item['qty'] -   $itemArray['discountAmount']) ;
                             $totalAmount +=  $itemArray['transactionAmount'];
                             
                             if ($masterData->customerVATEligible) {
@@ -1882,7 +1882,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                             if($validateItem) {
                                 if($itemArray['currentWareHouseStockQty'] > 0) {
-                                    array_push($finalItems,$itemArray);
+                                    $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
+                                    if(!$exists_item) {
+                                        array_push($finalItems,$itemArray);
+                                    }
                                 }
                                 
                             }
@@ -1961,7 +1964,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
-       
+        $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
+
+        $count = count($finalItems);
         Taxdetail::create($_post);
             
             if (count($record) > 0) {
