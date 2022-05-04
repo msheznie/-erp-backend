@@ -907,6 +907,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'warehouse','location','reason','segment'];
                     $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
                     break; 
+                case 18:  
+                    $masterTable = 'erp_purchasereturnmaster';
+                    $detailTable = 'erp_purchasereturndetails';
+                    $primaryKey  = $masterTable . '.purhaseReturnAutoID';
+                    $detailPrimaryKey = $detailTable . '.purhasereturnDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'PurchaseReturn';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location','supplier_default_currency','supplier_tran_currency','company_reporting_currency','local_currency','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
                 default;
                     break;
             }
@@ -1634,6 +1648,51 @@ class CustomUserReportsAPIController extends AppBaseController
                                 else if ($table == 'reason') {
                                     $data->reasonJoin('reason', 'reason', 'reason');
                                 }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;   
+                case 18:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->wareHouseJoin('location', 'purchaseReturnLocation', 'wareHouseDescription');
+                                }
+                                else if ($table == 'supplier_default_currency') {   
+                                    $data->currencyJoin('supplier_default_currency', 'supplierDefaultCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'supplier_tran_currency') { 
+                                    $data->currencyJoin('supplier_tran_currency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'company_reporting_currency') {   
+                                    $data->currencyJoin('company_reporting_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                } 
                             }
                         }
                         $data->whereIn($masterTable . '.companySystemID', $subCompanies);
