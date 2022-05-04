@@ -117,7 +117,8 @@ class TenderBidClarifications extends Model
         'posted_by_type', 
         'document_system_id',
         'document_id',
-        'is_closed'
+        'is_closed',
+        'is_anonymous'
     ];
 
     /**
@@ -138,7 +139,8 @@ class TenderBidClarifications extends Model
         'updated_by' => 'integer',
         'user_id' => 'integer',
         'posted_by_type' => 'integer',
-        'is_closed' => 'integer'
+        'is_closed' => 'integer',
+        'is_anonymous' => 'boolean'
     ];
 
     /**
