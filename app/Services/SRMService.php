@@ -165,9 +165,10 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
+        $searchText = $request->input('extra.searchText');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
-        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID);
+        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
 
         return [
             'success'   => true,
