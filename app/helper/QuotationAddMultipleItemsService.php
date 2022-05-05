@@ -61,7 +61,7 @@ class QuotationAddMultipleItemsService
             $data = array();
 
             $orgItem  = ItemMaster::where('primaryCode', $item['item_code'])->first();
-            if(is_numeric($item['qty'])  &&  is_numeric($item['sales_price']) &&  is_numeric($item['discount'])) {
+            if((is_numeric($item['qty']) && $item['qty'] != 0)  &&  (is_numeric($item['sales_price']) && $item['sales_price'] != 0)  &&  is_numeric($item['discount'])) {
 
                 if($orgItem) {
                     $unit  = Unit::find($orgItem->unit);
@@ -87,10 +87,16 @@ class QuotationAddMultipleItemsService
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
 
                     $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
+                    if($quotation['isVatEligible']) {
+                        $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $data['VATAmount'] = \Helper::roundValue($item['vat']);
+                    }else {
+                        $data['VATAmountLocal'] = 0;
+                        $data['VATAmountRpt']  = 0;
+                        $data['VATAmount'] = 0;
+                    }
 
-                    $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $data['VATAmount'] = \Helper::roundValue($item['vat']);
                     $data['modifiedDateTime'] = Carbon::now();
                     $data['modifiedPCID'] = gethostname();
                     $data['quotationMasterID'] = $quotation['quotationMasterID'];
@@ -99,14 +105,14 @@ class QuotationAddMultipleItemsService
 
 
                     if($item['discount']) {
-                        $data['discountPercentage'] =  (($data['unittransactionAmount'] * $item['qty']) / $item['discount'] );
+                        $data['discountPercentage'] =  number_format((($item['discount']  * 100) / ($data['unittransactionAmount'] * $item['qty'])),3);
                         $data['discountAmount'] = $item['discount'];
                     }else {
                         $data['discountPercentage'] = 0;
                         $data['discountAmount'] = 0;
                     }
 
-                    $totalNetcost = (($data['unittransactionAmount'] * $item['qty']) - $data['discountAmount']);
+                    $totalNetcost = number_format($item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']),3);
 
                     $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                     // $item['modifiedUserID'] = $employee->empID;

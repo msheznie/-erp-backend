@@ -2056,12 +2056,12 @@ class QuotationMasterAPIController extends AppBaseController
                     $validateHeaderCode = true;
                 }
 
-                if (isset($value['qty']) && ($value['qty']) ) {
+                if (isset($value['qty']) && ($value['qty']) && $value['qty'] != 0 ) {
                     $validateHeaderQty = true;
                 }
 
                 
-                if (isset($value['sales_price']) && is_numeric($value['sales_price'])) {
+                if (isset($value['sales_price']) && is_numeric($value['sales_price']) && $value['sales_price'] != 0) {
                     $validateHeaderPrice = true;
                 }
 
@@ -2099,7 +2099,7 @@ class QuotationMasterAPIController extends AppBaseController
             $count = 0;
 
             foreach($record as $finalRecords) {
-                 if(is_numeric($finalRecords['qty'])  &&  is_numeric($finalRecords['sales_price']) &&  is_numeric($finalRecords['discount'])) {
+                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  is_numeric($finalRecords['discount'])) {
                      $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
  
                      if(!$exists_item) {
