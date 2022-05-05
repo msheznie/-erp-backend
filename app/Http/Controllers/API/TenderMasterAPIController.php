@@ -366,12 +366,18 @@ class TenderMasterAPIController extends AppBaseController
             }
         }
 
+        $employee = Helper::getEmployeeInfo();
+        $company = Helper::companyCurrency($employee->empCompanySystemID);
+
+
         $data['tenderType'] = TenderType::get();
         $data['yesNoSelection'] = YesNoSelection::all();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
+        $data['currentDate'] = now();
+        $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
 
         if(isset($input['tenderMasterId'])) {
