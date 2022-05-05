@@ -9,6 +9,7 @@ use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
+use App\Models\ErpItemLedger;
 use App\Models\Company;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -1773,6 +1774,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             $totalVATAmount = 0;
             $totalAmount = 0;
+            $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
 
             foreach($record as $item) {
                 if(is_numeric($item['qty'])  && is_numeric($item['vat'])  && is_numeric($item['discount'])) { 
@@ -1823,7 +1825,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                             $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-
                             $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
                             $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
@@ -1855,14 +1856,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['companyLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
                             $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
-
-
+                            $itemArray['qtyIssuedDefaultMeasure'] = $item['qty'];
                             $itemArray['transactionAmount'] = 0;
                             $itemArray['discountAmount'] = $item['discount'];
-                            $itemArray['discountPercentage'] = ($itemArray['discountAmount'] != 0) ? ((($itemArray['unitTransactionAmount']*$item['qty']) / $itemArray['discountAmount'])) : 0;
-                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount']*$item['qty'] -   $itemArray['discountAmount']) ;
-                            $totalAmount +=  $itemArray['transactionAmount'];
+
+                            $itemArray['discountPercentage'] =  ($itemArray['unitTransactionAmount'] != 0 && $itemArray['discountAmount'] != 0) ?  number_format((($itemArray['discountAmount']  * 100) / ($itemArray['unitTransactionAmount'])),$decimal): 0;
+                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
                             
+                            $totalAmount +=  $itemArray['transactionAmount'];
+
                             if ($masterData->customerVATEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
                                 $itemArray['VATPercentage'] = $item['vat'];
@@ -1870,20 +1872,31 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                 $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                                 $itemArray['VATAmount'] = 0;
+
                                 if (isset($item['vat'])) {
-                                    $itemArray['VATAmount'] = ($item['vat'] / 100);
+                                    $itemArray['VATAmount'] = $itemArray['unitTransactionAmount'] * ($item['vat'] / 100);
                                 }
                                 $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
                                 $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                                 $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                            }
-                            $totalVATAmount += $itemArray['VATAmount'];
+                                $totalVATAmount += $itemArray['VATAmount'];
 
+                            }
+                            
+                            $currentStockQty = ErpItemLedger::where('itemSystemCode', $itemDetails['itemCodeSystem'])
+                            ->where('companySystemID', $masterData->companySystemID)
+                            ->groupBy('itemSystemCode')
+                            ->sum('inOutQty');
                             if($validateItem) {
-                                if($itemArray['currentWareHouseStockQty'] > 0) {
+                                if($currentStockQty > 0 && $item['qty'] <= $currentStockQty) {
                                     $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
-                                    if(!$exists_item) {
+
+                                    $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
+                                            $query->where('itemPrimaryCode', $item['item_code'])
+                                                ->where('confirmedYN', 1)->where('approvedYN', 0);
+                                    })->get();
+                                    if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
                                         array_push($finalItems,$itemArray);
                                     }
                                 }
@@ -1891,18 +1904,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             }
 
                         }
-
                     }
                 }
                 
             }
-
-            
         if ($totalAmount > 0) {
             $percentage = ($totalVATAmount / $totalAmount) * 100;
-        }
-            
-        $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
 
         $_post['taxMasterAutoID'] = 0;
         $_post['companyID'] = $masterData->companyID;
@@ -1966,6 +1973,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
         $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
 
+        if(count($finalItems) == 0) {
+             return $this->sendError('No Records to upload!', 500);
+        }
+
         $count = count($finalItems);
         Taxdetail::create($_post);
             
@@ -1978,6 +1989,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse([], 'Out of '.$totalRecords.' , '.$count.' Items uploaded Successfully!!');
+        }else {
+            return $this->sendError("Unit Transcation amount is zero",500);
+        }
+        
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
