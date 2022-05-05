@@ -43,6 +43,11 @@ class Kernel extends ConsoleKernel
             ->between('8:00', '13:00')
             ->withoutOverlapping();
 
+        $schedule->command('command:forgotToPunchOut')
+            ->timezone('Asia/Muscat')
+            ->dailyAt('07:00')
+            ->withoutOverlapping();
+
     }
 
     /**

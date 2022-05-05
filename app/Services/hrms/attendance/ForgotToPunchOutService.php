@@ -24,7 +24,7 @@ class ForgotToPunchOutService{
     }
 
     public function run(){
-        $this->empForgotToPunchIn();
+        $this->empForgotToPunchOut();
 
         if($this->notPunched->count() == 0){
             $this->insertToLogTb(
@@ -49,7 +49,7 @@ class ForgotToPunchOutService{
         
     }
 
-    public function empForgotToPunchIn(){
+    public function empForgotToPunchOut(){
         $this->notPunched = DB::table('srp_erp_pay_empattendancetemptable AS t')
             ->select('l.empID')
             ->join('srp_erp_empattendancelocation AS l', function($join){
