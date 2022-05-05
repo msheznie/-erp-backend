@@ -114,7 +114,7 @@ class QuotationAddMultipleItemsService
                     }
 
                     $totalNetcost = number_format($item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']),3);
-                    $data['VATPercentage'] = ($item['vat'] * 100) / $totalNetcost ;
+                    $data['VATPercentage'] = ($item['vat'] * 100) / (($data['unittransactionAmount']) - $data['discountAmount']) ;
 
                     $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                     // $item['modifiedUserID'] = $employee->empID;
