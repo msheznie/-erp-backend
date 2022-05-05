@@ -1860,7 +1860,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['transactionAmount'] = 0;
                             $itemArray['discountAmount'] = $item['discount'];
 
-                            $itemArray['discountPercentage'] =  ($itemArray['unitTransactionAmount'] != 0 && $itemArray['discountAmount'] != 0) ?  number_format((($itemArray['discountAmount']  * 100) / ($itemArray['unitTransactionAmount'] * $item['qty'])),$decimal): 0;
+                            $itemArray['discountPercentage'] =  ($itemArray['unitTransactionAmount'] != 0 && $itemArray['discountAmount'] != 0) ?  number_format((($itemArray['discountAmount']  * 100) / ($itemArray['unitTransactionAmount'])),$decimal): 0;
                             $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
                             
                             $totalAmount +=  $itemArray['transactionAmount'];
