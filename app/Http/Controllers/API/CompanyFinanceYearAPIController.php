@@ -396,7 +396,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
-
+        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0]);
         $companyFinanceYear->delete();
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
@@ -422,7 +422,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companyFinancialYears = CompanyFinanceYear::whereIn('companySystemID', $subCompanies);
+        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->whereIn('companySystemID', $subCompanies);
 
         $search = $request->input('search.value');
 
