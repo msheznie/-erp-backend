@@ -1262,6 +1262,10 @@ class SRMService
 
     public function saveTenderPrebidClarification(Request $request){
         $prebidId = $request->input('extra.preBidId');
+        $postAnonymous = $request->input('extra.postAnonymous');
+        if(!isset($postAnonymous)){
+            $postAnonymous = 0;
+        }
 
         if($prebidId !== 0){
            return $this->updatePreBid($request, $prebidId);
@@ -1287,7 +1291,7 @@ class SRMService
                 $data['created_at'] = $currentDate;
                 $data['document_system_id'] = $documentCode->documentSystemID;
                 $data['document_id'] = $documentCode->documentID;
-                $data['is_anonymous'] = $request->input('extra.postAnonymous');
+                $data['is_anonymous'] = $postAnonymous;
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
@@ -1451,42 +1455,45 @@ class SRMService
         }
     }
 
-    public function uploadAttachment($attachment, $companySystemID, $company, $documentCode, $id)
+    public function uploadAttachment($attachments, $companySystemID, $company, $documentCode, $id)
     {
-        if (!empty($attachment) && isset($attachment['file'])) {
-            $extension = $attachment['fileType'];
-            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+        foreach ($attachments as $attachment) {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
 
-            if (!in_array(strtolower($extension), $allowExtensions)) {
-                return $this->sendError('This type of file not allow to upload.', 500);
-            }
-
-            if (isset($attachment['size'])) {
-                if ($attachment['size'] > 2097152) {
-                    return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
                 }
-            }
-            $file = $attachment['file'];
-            $decodeFile = base64_decode($file);
-            $attch = time() . '_PreBidClarificationCompany.' . $extension;
-            $path = $companySystemID . '/PreBidClarification/' . $attch;
-            Storage::disk('s3')->put($path, $decodeFile);
 
-            $att['companySystemID'] = $companySystemID;
-            $att['companyID'] = $company->CompanyID;
-            $att['documentSystemID'] = $documentCode->documentSystemID;
-            $att['documentID'] = $documentCode->documentID;
-            $att['documentSystemCode'] = $id;
-            $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
-            $att['path'] = $path;
-            $att['originalFileName'] = $attachment['originalFileName'];
-            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
-            $att['sizeInKbs'] = $attachment['sizeInKbs'];
-            $att['isUploaded'] = 1;
-            DocumentAttachments::create($att);
-        } else {
-            Log::info("NO ATTACHMENT");
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attch = time() . '_PreBidClarificationCompany.' . $extension;
+                $path = $companySystemID . '/PreBidClarification/' . $attch;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $id;
+                $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                DocumentAttachments::create($att);
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
         }
+
     }
 
     public function updatePreBid(Request $request, $prebidId)
