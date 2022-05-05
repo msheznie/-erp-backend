@@ -85,6 +85,7 @@ class QuotationAddMultipleItemsService
                     $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
 
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+            
 
                     $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
                     if($quotation['isVatEligible']) {
@@ -113,6 +114,7 @@ class QuotationAddMultipleItemsService
                     }
 
                     $totalNetcost = number_format($item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']),3);
+                    $data['VATPercentage'] = ($item['vat'] * 100) / $totalNetcost ;
 
                     $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                     // $item['modifiedUserID'] = $employee->empID;
