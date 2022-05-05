@@ -1427,7 +1427,7 @@ class SRMService
         DB::beginTransaction();
         try {
             $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
-            $data['posted_by_type'] = 1;
+            $data['posted_by_type'] = 0;
             $data['post'] = $response;
             $data['user_id'] = $employeeId;
             $data['supplier_id'] = $supplierRegId;
