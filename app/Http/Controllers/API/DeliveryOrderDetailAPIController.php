@@ -9,6 +9,7 @@ use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
+use App\Models\ErpItemLedger;
 use App\Models\Company;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -1824,7 +1825,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                             $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-
                             $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
                             $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
 
@@ -1857,12 +1857,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
                             $itemArray['qtyIssuedDefaultMeasure'] = $item['qty'];
-
                             $itemArray['transactionAmount'] = 0;
                             $itemArray['discountAmount'] = $item['discount'];
+
                             $itemArray['discountPercentage'] =  ($itemArray['unitTransactionAmount'] != 0 && $itemArray['discountAmount'] != 0) ?  number_format((($itemArray['discountAmount']  * 100) / ($itemArray['unitTransactionAmount'] * $item['qty'])),$decimal): 0;
-                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? number_format($item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']),$decimal) : 0 ;
+                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
+                            
                             $totalAmount +=  $itemArray['transactionAmount'];
+
                             if ($masterData->customerVATEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
                                 $itemArray['VATPercentage'] = $item['vat'];
@@ -1870,6 +1872,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                 $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
                                 $itemArray['VATAmount'] = 0;
+
                                 if (isset($item['vat'])) {
                                     $itemArray['VATAmount'] = $itemArray['transactionAmount'] * ($item['vat'] / 100);
                                 }
@@ -1880,8 +1883,13 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $totalVATAmount += $itemArray['VATAmount'];
 
                             }
+                            
+                            $currentStockQty = ErpItemLedger::where('itemSystemCode', $itemDetails['itemCodeSystem'])
+                            ->where('companySystemID', $masterData->companySystemID)
+                            ->groupBy('itemSystemCode')
+                            ->sum('inOutQty');
                             if($validateItem) {
-                                if($itemArray['currentWareHouseStockQty'] > 0) {
+                                if($currentStockQty > 0 && $item['qty'] <= $currentStockQty) {
                                     $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
 
                                     $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
