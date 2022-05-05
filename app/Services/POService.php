@@ -91,7 +91,7 @@ class POService
         return $data;
     }
 
-    public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID)
+    public function getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText)
     {
         return ProcumentOrder::with(['detail.appointmentDetails' => function ($query) {
             $query->whereHas('appointment', function ($q){
@@ -100,7 +100,12 @@ class POService
             });
         }, 'detail.unit', 'detail' => function ($query) {
             $query->where('goodsRecievedYN', '!=', 2);
-        }])
+        }])->whereHas('detail', function ($q) use($searchText){
+            if(!empty($searchText)){
+                $q->where('itemPrimaryCode', 'LIKE', "%{$searchText}%");
+                $q->orWhere('itemDescription', 'LIKE', "%{$searchText}%");
+                }
+            })
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
             ->where('poConfirmedYN', 1)
