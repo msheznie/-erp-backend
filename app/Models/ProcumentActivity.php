@@ -91,5 +91,11 @@ class ProcumentActivity extends Model
         return $this->hasOne('App\Models\TenderProcurementCategory', 'id', 'category_id');
     }
 
+    public function tender_master()
+    {
+        return $this->hasOne('App\Models\TenderMaster', 'id', 'tender_id');
+    }
+
+
     
 }
