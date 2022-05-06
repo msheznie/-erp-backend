@@ -304,22 +304,29 @@
         <tr style="width:100%">
             <td style="width: 60%">
                 <table>
-                    <tr>
-                        <td width="150px">
-                            <span class="font-weight-bold">Payee Code</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            @if($masterdata->supplier)
-                                {{$masterdata->supplier->primarySupplierCode}}
-                            @endif
-                        </td>
-                    </tr>
+                    @if($masterdata->invoiceType != 6)
+                        <tr>
+                            <td width="150px">
+                                <span class="font-weight-bold">Payee Code</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->supplier)
+                                    {{$masterdata->supplier->primarySupplierCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Payee Name</span>
+                            @if($masterdata->invoiceType == 6)
+                                <span class="font-weight-bold">Employee Name</span>
+                            @endif
+                            @if($masterdata->invoiceType != 6)
+                                <span class="font-weight-bold">Payee Name</span>
+                            @endif
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
@@ -425,7 +432,7 @@
             </td>
         </tr>
     </table>
-    @if($masterdata->invoiceType == 2)
+    @if($masterdata->invoiceType == 2 || $masterdata->invoiceType == 6)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
