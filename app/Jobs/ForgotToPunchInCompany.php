@@ -61,7 +61,6 @@ class ForgotToPunchInCompany implements ShouldQueue
         $time = $now->format('H:i:s');        
         
         if($this->isPunchOut){
-            $date = '2022-04-27';
             $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');
             $job = new ForgotToPunchOutService($this->companyId, $date);
         }
