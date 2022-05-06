@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ProcumentActivity;
 use App\Models\TenderMaster;
 use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
@@ -510,45 +511,64 @@ class TenderProcurementCategoryController extends AppBaseController
 
     public function validateLevelThreeEdit($isDescriptionChanged, $isCodeChanged, $isActiveChanged, $id)
     {
-        $procurementCategoriesParentId = TenderProcurementCategory::select('parent_id')->where('id', $id)->first();
-
-        $tenderMasterNotConfirmedCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
-            ->where('confirmed_yn', 0)->count();
-        if($tenderMasterNotConfirmedCount > 0){
-            $allowToEdit = false;
-            return $allowToEdit;
-        }
-
-        $tenderMasterNotApproveCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
-            ->where('confirmed_yn', 1)
-            ->where('approved', -1)
-            ->count();
-
-        $tenderMasterRecordCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
-            ->count();
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
+        $procurementCategoryActivity = ProcumentActivity::with('tender_procurement_category')->where('category_id', $id)->first();
+        if(empty($procurementCategoryActivity)){
             $allowToEdit = true;
             return $allowToEdit;
-        }
+        } else{
+            $tenderMasterNotConfirmedCount = ProcumentActivity::with(['tender_master'])
+                ->where('category_id', $id)
+                ->whereHas('tender_master', function ($q){
+                    $q->where('confirmed_yn', 0);
+                })
+                ->count();
 
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
-            $allowToEdit = false;
-            return $allowToEdit;
-        }
+            if($tenderMasterNotConfirmedCount > 0){
+                Log::info('first condition');
+                $allowToEdit = false;
+                return $allowToEdit;
+            }
 
-        $tenderMasterConfirmedNotApproveCount = TenderMaster::where('procument_sub_cat_id', $procurementCategoriesParentId['parent_id'])
-            ->where('confirmed_yn', 1)
-            ->where('approved', '!=', -1)
-            ->count();
-        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
-            $allowToEdit = true;
-            return $allowToEdit;
-        } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
-            $allowToEdit = false;
-            return $allowToEdit;
-        } elseif ($isCodeChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
-            $allowToEdit = false;
-            return $allowToEdit;
+            $tenderMasterApproveCount = ProcumentActivity::with(['tender_master'])
+                ->where('category_id', $id)
+                ->whereHas('tender_master', function ($q){
+                    $q->where('confirmed_yn', 1);
+                    $q->where('approved', -1);
+                })
+                ->count();
+
+            $tenderMasterRecordCount = ProcumentActivity::with(['tender_master'])
+                ->where('category_id', $id)
+                ->count();
+
+            if(($tenderMasterApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'No'){
+                $allowToEdit = true;
+                return $allowToEdit;
+            }
+
+            if(($tenderMasterApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
+                $allowToEdit = false;
+                return $allowToEdit;
+            }
+
+            $tenderMasterConfirmedNotApproveCount = ProcumentActivity::with(['tender_master'])
+                ->where('category_id', $id)
+                ->whereHas('tender_master', function ($q){
+                    $q->where('confirmed_yn', 1);
+                    $q->where('approved', '!=', -1);
+                })
+                ->count();
+
+            if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+                $allowToEdit = true;
+                return $allowToEdit;
+            } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+                $allowToEdit = false;
+                return $allowToEdit;
+            } elseif ($isCodeChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+                $allowToEdit = false;
+                return $allowToEdit;
+            }
         }
     }
 }
