@@ -1727,6 +1727,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $itemNotound = false;
 
             foreach ($uniqueData as $key => $value) {
+
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
+
                 if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
@@ -1734,10 +1740,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 if (isset($value['qty']) && is_numeric($value['qty'])) {
                     $validateHeaderQty = true;
                 }
-                
-                if (isset($value['unit_cost']) && is_numeric($value['unit_cost'])) {
-                    $validateHeaderQty = true;
-                }
+
 
                 if($masterData->isVatEligible) {
                    if (isset($value['vat']) && is_numeric($value['vat'])) {
@@ -1747,7 +1750,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateVat = true;
                 }
 
-                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
