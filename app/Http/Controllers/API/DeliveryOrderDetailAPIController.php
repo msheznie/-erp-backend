@@ -1775,7 +1775,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $totalVATAmount = 0;
             $totalAmount = 0;
             $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
-
             foreach($record as $item) {
                 if(is_numeric($item['qty'])  && ($masterData->isVatEligible && isset($item['vat']))  && is_numeric($item['discount'])) { 
                     $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
@@ -1865,7 +1864,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
                             
                             $totalAmount +=  $itemArray['transactionAmount'];
-
                             if ($masterData->customerVATEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
                                 $itemArray['VATPercentage'] = $item['vat'];
@@ -1892,7 +1890,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
                             if($validateItem) {
-                                if($currentStockQty > 0 && ($item['qty'] <= $currentStockQty && $item['qty'] <= $itemArray['currentWareHouseStockQty'])) {
+                                if($currentStockQty > 0 && ($item['qty'] <= $currentStockQty && $item['qty'] <= $itemArray['currentWareHouseStockQty']) && $item['vat'] <= 100) {
                                     $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
 
                                     $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
