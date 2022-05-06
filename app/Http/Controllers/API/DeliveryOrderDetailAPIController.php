@@ -1821,6 +1821,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             );
 
                             $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+                            
 
                             $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -1874,7 +1875,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemArray['VATAmount'] = 0;
 
                                 if (isset($item['vat'])) {
-                                    $itemArray['VATAmount'] = $itemArray['unitTransactionAmount'] * ($item['vat'] / 100);
+                                    $itemArray['VATAmount'] = ($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100);
                                 }
                                 $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
@@ -2147,6 +2148,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
         }
+
+        
 
         return true;
     }
