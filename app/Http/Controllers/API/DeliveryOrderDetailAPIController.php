@@ -1889,8 +1889,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             ->where('companySystemID', $masterData->companySystemID)
                             ->groupBy('itemSystemCode')
                             ->sum('inOutQty');
+
+
                             if($validateItem) {
-                                if($currentStockQty > 0 && $item['qty'] <= $currentStockQty) {
+                                if($currentStockQty > 0 && ($item['qty'] <= $currentStockQty && $item['qty'] <= $itemArray['currentWareHouseStockQty'])) {
                                     $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
 
                                     $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
