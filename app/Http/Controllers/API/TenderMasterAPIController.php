@@ -392,6 +392,7 @@ class TenderMasterAPIController extends AppBaseController
     public function createTender(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currency_id'));
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('title',$input['title'])->where('company_id',$input['companySystemID'])->first();
         if(!empty($exist)){
