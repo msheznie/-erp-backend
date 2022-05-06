@@ -1777,7 +1777,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
 
             foreach($record as $item) {
-                if(is_numeric($item['qty'])  && is_numeric($item['vat'])  && is_numeric($item['discount'])) { 
+                if(is_numeric($item['qty'])  && ($masterData->isVatEligible && isset($item['vat']))  && is_numeric($item['discount'])) { 
                     $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
                     if(isset($itemDetails->itemCodeSystem)) {
                         $data = [
