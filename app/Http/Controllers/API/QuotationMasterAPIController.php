@@ -2098,7 +2098,7 @@ class QuotationMasterAPIController extends AppBaseController
             $finalArray = [];
             $count = 0;
 
-            foreach($record as $finalRecords) {
+            foreach($uniqueData as $finalRecords) {
                  if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  is_numeric($finalRecords['discount'])) {
                      $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
  
