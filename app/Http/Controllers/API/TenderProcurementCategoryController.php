@@ -303,7 +303,7 @@ class TenderProcurementCategoryController extends AppBaseController
             $tenderProcurementCategory->delete();
         }
 
-        return $this->sendResponse($id, 'Procurement category deleted successfully');
+        return $this->sendResponse($id, $successMessageContent . ' deleted successfully');
     }
 
     public function getAllProcurementCategory(Request $request)
