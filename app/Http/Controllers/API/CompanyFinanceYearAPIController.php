@@ -149,18 +149,6 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $toDate = new Carbon($request->endingDate);
         $input['endingDate'] = $toDate->format('Y-m-d');
 
-        $checkLastFinancialYear = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])
-                                                        ->max('endingDate');
-
-        if($checkLastFinancialYear){
-            $lastDate  = new Carbon($checkLastFinancialYear);
-            $lastDate  = $lastDate->format('Y-m-d');
-
-            if($lastDate >= $input['bigginingDate']){
-                return $this->sendError(trans('custom.you_cannot_create_financial_year_please_select_the_beginning_date_after') .' '. (new Carbon($lastDate))->format('d/m/Y'));
-            }
-        }
-
         $diffMonth = (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
 
         if($diffMonth != 11){
@@ -408,7 +396,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
-
+        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0]);
         $companyFinanceYear->delete();
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
@@ -434,7 +422,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companyFinancialYears = CompanyFinanceYear::whereIn('companySystemID', $subCompanies);
+        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->whereIn('companySystemID', $subCompanies);
 
         $search = $request->input('search.value');
 
