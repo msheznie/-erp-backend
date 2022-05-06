@@ -2052,6 +2052,11 @@ class QuotationMasterAPIController extends AppBaseController
             //     }
             // }.
             foreach ($uniqueData as $key => $value) {
+                
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
                 if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
@@ -2068,6 +2073,8 @@ class QuotationMasterAPIController extends AppBaseController
                 if($masterData->isVatEligible) {
                    if (isset($value['vat']) && is_numeric($value['vat'])) {
                         $validateVat = true;
+                   }else {
+                       var_dump(54);
                    }
                 }else {
                     $validateVat = true;
@@ -2081,7 +2088,6 @@ class QuotationMasterAPIController extends AppBaseController
             if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
                 return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
             }
-
 
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
