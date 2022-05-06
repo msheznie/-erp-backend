@@ -2791,7 +2791,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
 
-                            if ($masterData->invoiceType == 2) { //Supplier Payment
+                            if ($masterData->invoiceType == 2 || $masterData->invoiceType == 6) { //Supplier Payment
                                 if ($si) {
                                     $transAmountTotal = 0;
                                     $localAmountTotal = 0;
@@ -4819,6 +4819,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             } else if ($masterModel["documentSystemID"] == 11) {
                                 $suppInvData = BookInvSuppMaster::find($masterModel["autoID"]);
                                 if ($suppInvData->documentType == 4) {
+                                    $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel);
+                                } else {
+                                    $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                                }
+                            } else if ($masterModel["documentSystemID"] == 4) {
+                                $suppInvData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
+                                if ($suppInvData->invoiceType == 6) {
                                     $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel);
                                 } else {
                                     $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
