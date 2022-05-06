@@ -2073,8 +2073,6 @@ class QuotationMasterAPIController extends AppBaseController
                 if($masterData->isVatEligible) {
                    if (isset($value['vat']) && is_numeric($value['vat'])) {
                         $validateVat = true;
-                   }else {
-                       var_dump(54);
                    }
                 }else {
                     $validateVat = true;

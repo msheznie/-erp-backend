@@ -1747,7 +1747,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         $validateVat = true;
                    }
                 }else {
-                    $validateVat = false;
+                    $validateVat = true;
                 }
 
                 if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
