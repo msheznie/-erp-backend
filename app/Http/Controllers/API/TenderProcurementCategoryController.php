@@ -441,12 +441,12 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $tenderMasterRecordCount = TenderMaster::where('procument_cat_id', $id)
             ->count();
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
+        if($tenderMasterRecordCount > 0 && ($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'No'){
             $allowToEdit = true;
             return $allowToEdit;
         }
 
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
+        if($tenderMasterRecordCount > 0 && ($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
             $allowToEdit = false;
             return $allowToEdit;
         }
@@ -483,12 +483,12 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $tenderMasterRecordCount = TenderMaster::where('procument_sub_cat_id', $id)
             ->count();
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && !$isCodeChanged){
+        if($tenderMasterRecordCount > 0 && ($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'No'){
             $allowToEdit = true;
             return $allowToEdit;
         }
 
-        if(($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
+        if($tenderMasterRecordCount > 0 && ($tenderMasterNotApproveCount == $tenderMasterRecordCount) && $isCodeChanged == 'Yes'){
             $allowToEdit = false;
             return $allowToEdit;
         }
