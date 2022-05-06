@@ -250,7 +250,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
-        Log::info($input);
+
         $procurementCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
         return $this->sendResponse($procurementCategory, $successMessageContent.' updated successfully');
@@ -524,7 +524,6 @@ class TenderProcurementCategoryController extends AppBaseController
                 ->count();
 
             if($tenderMasterNotConfirmedCount > 0){
-                Log::info('first condition');
                 $allowToEdit = false;
                 return $allowToEdit;
             }
