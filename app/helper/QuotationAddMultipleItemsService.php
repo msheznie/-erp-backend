@@ -113,7 +113,7 @@ class QuotationAddMultipleItemsService
                         $data['discountAmount'] = 0;
                     }
 
-                    $totalNetcost = number_format($item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']),3);
+                    $totalNetcost = $item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']);
                     $data['VATPercentage'] = ($item['vat'] * 100) / (($data['unittransactionAmount']) - $data['discountAmount']) ;
 
                     $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
