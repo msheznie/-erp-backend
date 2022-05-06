@@ -250,7 +250,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
-
+        Log::info($input);
         $procurementCategory = TenderProcurementCategory::where('id', $id)->update($input);
 
         return $this->sendResponse($procurementCategory, $successMessageContent.' updated successfully');
@@ -455,7 +455,7 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('confirmed_yn', 1)
             ->where('approved', '!=', -1)
             ->count();
-        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+        if($isDescriptionChanged === 'Yes' && $isCodeChanged == 'No' && $isActiveChanged == 'No' &&  $tenderMasterConfirmedNotApproveCount > 0){
             $allowToEdit = true;
             return $allowToEdit;
         } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
@@ -497,7 +497,7 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('confirmed_yn', 1)
             ->where('approved', '!=', -1)
             ->count();
-        if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+        if($isDescriptionChanged === 'Yes' && $isCodeChanged == 'No' && $isActiveChanged == 'No' &&  $tenderMasterConfirmedNotApproveCount > 0){
             $allowToEdit = true;
             return $allowToEdit;
         } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
@@ -559,7 +559,7 @@ class TenderProcurementCategoryController extends AppBaseController
                 })
                 ->count();
 
-            if($isDescriptionChanged === 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
+            if($isDescriptionChanged === 'Yes' && $isCodeChanged == 'No' && $isActiveChanged == 'No' && $tenderMasterConfirmedNotApproveCount > 0){
                 $allowToEdit = true;
                 return $allowToEdit;
             } elseif ($isActiveChanged == 'Yes' &&  $tenderMasterConfirmedNotApproveCount > 0){
