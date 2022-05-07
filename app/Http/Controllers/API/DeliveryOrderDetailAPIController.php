@@ -1876,7 +1876,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemArray['VATAmount'] = 0;
 
                                 if (isset($item['vat'])) {
-                                    $itemArray['VATAmount'] = ($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100);
+                                    $itemArray['VATAmount'] = round(($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100),3);
                                 }
                                 $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
@@ -1900,7 +1900,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                                 ->where('confirmedYN', 1)->where('approvedYN', 0);
                                     })->get();
                                     if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
-                                        $totalVATAmount += $itemArray['VATAmount'];
+                                        $totalVATAmount += ($itemArray['VATAmount'] * $item['qty']) ;
 
                                         array_push($finalItems,$itemArray);
                                     }
