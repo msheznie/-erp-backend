@@ -58,6 +58,7 @@ class AttendanceWeeklySummaryService{
             ")
             ->where('t.companyID', $this->companyId)
             ->where('t.presentTypeID', 1)
+            ->where('t.isNormalDay', 1)
             ->whereBetween('t.attendanceDate', [$this->weekStart, $this->weekEnd])            
             ->whereNotNull('t.onDuty')
             ->whereNotNull('t.offDuty')

@@ -49,6 +49,7 @@ class AttendanceDailySummaryService{
             ->where('t.companyID', $this->companyId)
             ->whereDate('t.attendanceDate', $this->date)
             ->where('t.presentTypeID', 1)
+            ->where('t.isNormalDay', 1)            
             ->whereNotNull('t.onDuty')
             ->whereNotNull('t.offDuty')
             ->whereNotNull('t.checkIn')
