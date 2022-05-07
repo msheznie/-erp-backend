@@ -87,16 +87,7 @@ class QuotationAddMultipleItemsService
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
             
 
-                    $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
-                    if($quotation['isVatEligible']) {
-                        $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        $data['VATAmount'] = \Helper::roundValue($item['vat']);
-                    }else {
-                        $data['VATAmountLocal'] = 0;
-                        $data['VATAmountRpt']  = 0;
-                        $data['VATAmount'] = 0;
-                    }
+
 
                     $data['modifiedDateTime'] = Carbon::now();
                     $data['modifiedPCID'] = gethostname();
@@ -113,8 +104,19 @@ class QuotationAddMultipleItemsService
                         $data['discountAmount'] = 0;
                     }
 
+                    $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
+                    if($quotation['isVatEligible']) {
+                        $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $data['VATAmount'] = \Helper::roundValue((($data['unittransactionAmount']) - $data['discountAmount']) * ($item['vat'] / 100));
+                    }else {
+                        $data['VATAmountLocal'] = 0;
+                        $data['VATAmountRpt']  = 0;
+                        $data['VATAmount'] = 0;
+                    }
+
                     $totalNetcost = $item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']);
-                    $data['VATPercentage'] = ($item['vat'] * 100) / (($data['unittransactionAmount']) - $data['discountAmount']) ;
+                    $data['VATPercentage'] = $item['vat'];
 
                     $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
                     // $item['modifiedUserID'] = $employee->empID;

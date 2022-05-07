@@ -2101,9 +2101,10 @@ class QuotationMasterAPIController extends AppBaseController
 
             $finalArray = [];
             $count = 0;
+            $uniqueData =  collect($uniqueData)->unique('item_code')->toArray();
 
             foreach($uniqueData as $finalRecords) {
-                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  is_numeric($finalRecords['discount'])) {
+                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  (is_numeric($finalRecords['discount']) && $finalRecords['discount'] < $finalRecords['sales_price']) && (is_numeric($finalRecords['vat']) && $finalRecords['vat'] <= 100)) {
                      $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
  
                      if(!$exists_item) {
@@ -2114,7 +2115,6 @@ class QuotationMasterAPIController extends AppBaseController
                 }           
             }
 
-            $finalArray =  collect($finalArray)->unique('item_code')->toArray();
 
 
             if (count($record) > 0) {
