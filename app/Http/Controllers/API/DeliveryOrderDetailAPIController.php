@@ -1882,7 +1882,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                                 $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                                 $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                                $totalVATAmount += $itemArray['VATAmount'];
 
                             }
                             
@@ -1901,6 +1900,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                                 ->where('confirmedYN', 1)->where('approvedYN', 0);
                                     })->get();
                                     if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
+                                        $totalVATAmount += $itemArray['VATAmount'];
+
                                         array_push($finalItems,$itemArray);
                                     }
                                 }
@@ -1912,6 +1913,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
                 
             }
+
+        
         if ($totalAmount > 0) {
             $percentage = ($totalVATAmount / $totalAmount) * 100;
 
@@ -1931,7 +1934,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $_post['amount'] = round($totalVATAmount, $decimal);
         $_post['payeeDefaultCurrencyID'] = $masterData->transactionCurrencyID;
         $_post['payeeDefaultCurrencyER'] = $masterData->transactionCurrencyER;
-        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultAmount'] = $totalVATAmount;
         $_post['localCurrencyID'] = $masterData->companyLocalCurrencyID;
         $_post['localCurrencyER'] = $masterData->companyLocalCurrencyER;
 
