@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
+use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 
 class AttendanceSummaryNotificationCompany implements ShouldQueue
 {
@@ -60,9 +61,7 @@ class AttendanceSummaryNotificationCompany implements ShouldQueue
         $date = $now->format('Y-m-d');    
         
         if(!$this->isDailyBasis){
-            /* $date = '2022-04-27';
-            $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');
-            $job = new ForgotToPunchOutService($this->companyId, $date); */
+            $job = new AttendanceWeeklySummaryService($this->companyId, $date);
         }
         else{            
             $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');

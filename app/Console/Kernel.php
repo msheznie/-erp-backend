@@ -53,6 +53,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('07:00')
             ->withoutOverlapping();
 
+        $schedule->command('command:attendanceWeeklySummary')
+            ->timezone('Asia/Muscat')
+            ->weeklyOn(5, '09:00')
+            ->withoutOverlapping();
+
     }
 
     /**
