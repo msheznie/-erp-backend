@@ -36,6 +36,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
+use App\Models\SegmentMaster;
 use App\Repositories\GeneralLedgerRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\ChartOfAccount;
 /**
  * Class GeneralLedgerController
  * @package App\Http\Controllers\API
@@ -938,5 +939,81 @@ class GeneralLedgerAPIController extends AppBaseController
             return $this->sendError($e->getMessage());
         }
     }
+
+
+    public function generateSegmentGlReport(Request $request)
+    {
+
+        $input = $request->all();
+
+
+        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+
+
+        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->get();
+
+        $data = [];
+        $i = 0;
+        $segment_data = [];
+
+        $segment_data = SegmentMaster::pluck('ServiceLineDes');
+
+        $segment_data->push('Total');
+
+        $segments = SegmentMaster::get();
+
+       
+        foreach($entries as $entry)
+        {
+               
+
+                $data[$i]['glAccountId'] =  $entry->AccountDescription;
+                $j = 0;
+                $tot_credit = 0;
+                $tot_debit = 0;
+                $tot_total = 0;
+                foreach($segments as $segment)
+                {
+
+                  
+                    $segment_id = $segment->serviceLineSystemID;
+                    $segment_name = $segment->ServiceLineDes;
+                   
+                    $data[$i][$j]['segement_id'] =  $segment_name;
+
+                    $general_ledger = DB::table('erp_generalledger')
+                                     ->where('serviceLineSystemID',$segment_id)
+                                     ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
+                                     ->whereBetween('documentDate', [$fromDate, $toDate])
+                                    ->selectRaw("sum(case when documentLocalAmount>0 then documentLocalAmount else 0 end) as credit,
+                                    sum(case when documentLocalAmount<0 then documentLocalAmount else 0 end) as debit")
+                                     ->first();
+                  
+                        $data[$i][$j]['credit'] =  round($general_ledger->credit,2);
+                        $data[$i][$j]['debit'] =  round($general_ledger->debit,2);
+                        $data[$i][$j]['total'] =  round(($general_ledger->debit - $general_ledger->credit),2);
+                        $tot_credit += $general_ledger->credit;
+                        $tot_debit += $general_ledger->debit;
+                        $tot_total += ($general_ledger->debit - $general_ledger->credit);
+                        $j++;   
+                  
+
+                }
+                
+                $data[$i][$j]['segement_id'] =  'Total';
+                $data[$i][$j]['credit'] =  round($tot_credit,2);
+                $data[$i][$j]['debit'] =  round($tot_debit,2);
+                $data[$i][$j]['total'] =  round(($tot_total),2);
+
+                $i++;
+
+        }
+        
+        return $this->sendResponse([$data,$segment_data,$j],'Posting date changed successfully');
+
+        
+    }
+
 
 }
