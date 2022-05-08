@@ -61,6 +61,9 @@ class QuotationAddMultipleItemsService
             $data = array();
 
             $orgItem  = ItemMaster::where('primaryCode', $item['item_code'])->first();
+            $itemAssigned = ItemAssigned::where('itemCodeSystem', $orgItem->itemCodeSystem)
+            ->where('companySystemID', $quotation['companySystemID'])
+            ->first();
             if((is_numeric($item['qty']) && $item['qty'] != 0)  &&  (is_numeric($item['sales_price']) && $item['sales_price'] != 0)  &&  is_numeric($item['discount'])) {
 
                 if($orgItem) {
@@ -85,7 +88,7 @@ class QuotationAddMultipleItemsService
                     $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
 
                     $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
-            
+                    $data['wacValueLocal'] = $itemAssigned->wacValueLocal;
 
 
 
