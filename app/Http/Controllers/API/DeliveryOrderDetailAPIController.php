@@ -1897,7 +1897,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                                     $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
                                             $query->where('itemPrimaryCode', $item['item_code'])
-                                                ->where('confirmedYN', 1)->where('approvedYN', 0);
+                                               ->where('approvedYN', 0);
                                     })->get();
                                     if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
                                         $totalVATAmount += ($itemArray['VATAmount'] * $item['qty']) ;
