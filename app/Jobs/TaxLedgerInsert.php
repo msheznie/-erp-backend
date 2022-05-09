@@ -1013,9 +1013,11 @@ class TaxLedgerInsert implements ShouldQueue
                         $ledgerData['partyID'] = $masterData->supplierID;
                         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
-                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->netAmount);
+                        $netAmount = ($masterData->documentType == 1) ? $masterData->netAmount : $masterData->bookingAmountTrans; 
 
-                        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->netAmount);
+                        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $netAmount);
+
+                        $ledgerData['documentTransAmount'] = \Helper::roundValue($netAmount);
                         $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
                         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
                             
