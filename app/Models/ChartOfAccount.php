@@ -195,6 +195,10 @@ class ChartOfAccount extends Model
         return $this->hasOne('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
+    public function generalLedger(){
+        return $this->hasMany('App\Models\GeneralLedger','chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
     public static function checkAccountCode($AccountCode, $chartOfAccountSystemID)
     {
         $checkAccountCode = ChartOfAccount::where('AccountCode', $AccountCode);
