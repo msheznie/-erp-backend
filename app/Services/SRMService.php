@@ -194,13 +194,14 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
+        $company = Company::where('companySystemID', $slotCompanyId)->first();
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');
         $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
-
+        $attachment = $request->input('extra.attachment');
         $lastSerial = Appointment::orderBy('serial_no', 'desc')
             ->first();
 
@@ -248,6 +249,11 @@ class SRMService
                     $data_details['qty'] = $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
+            }
+
+            // Add Attachments
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $slotCompanyId, $company, $document, $appointment->id);
             }
 
             DB::commit();
