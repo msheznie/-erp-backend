@@ -47,6 +47,8 @@ use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PoAdvancePayment;
@@ -3044,6 +3046,17 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
             //deleting records from accounts payable
             AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            //deleting from tax ledger table
+            TaxLedger::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
