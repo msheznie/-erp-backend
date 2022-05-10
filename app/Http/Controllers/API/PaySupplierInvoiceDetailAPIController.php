@@ -277,7 +277,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
         }
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID', '<>', $id)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when($payMaster->invoiceType == 6, function($query) {
+                                                                                                    $query->whereHas('payment_master', function($query) {
+                                                                                                        $query->where('invoiceType',6);
+                                                                                                    });
+                                                                                                })->where('apAutoID', $input["apAutoID"])
+                                                                                                ->where('payDetailAutoID', '<>', $id)
+                                                                                                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                                                                                                ->first();
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -310,7 +317,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $id);
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when($payMaster->invoiceType == 6, function($query) {
+                                                                                                    $query->whereHas('payment_master', function($query) {
+                                                                                                        $query->where('invoiceType',6);
+                                                                                                    });
+                                                                                                })->where('apAutoID', $input["apAutoID"])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -638,11 +649,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($payMaster->invoiceType == 6) {
             $result = $this->addEmployeePaymentDetail($user, $payMaster, $input);
             if (!$result['status']) {
-                $this->sendError("Error. Please check again.", 500, $result['message']);
+                return $this->sendError("Error. Please check again.", 500, $result['message']);
             } else {
                 return $this->sendResponse('', 'Payment details saved successfully');
             }
         }
+
 
         $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
 
@@ -799,7 +811,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         $error_count++;
                     }
 
+
                     $payDetailExistSameItem = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input["PayMasterAutoId"])
+                        ->whereHas('payment_master', function ($query) {
+                            $query->where('invoiceType', 6);
+                        })
                         ->where('apAutoID', $item['id'])
                         ->first();
 
@@ -810,6 +826,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
                     $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
                         ->where('apAutoID', $item['id'])
+                        ->whereHas('payment_master', function ($query) {
+                            $query->where('invoiceType', 6);
+                        })
                         ->first();
 
                     if ($item['addedDocumentSystemID'] == 11) {
