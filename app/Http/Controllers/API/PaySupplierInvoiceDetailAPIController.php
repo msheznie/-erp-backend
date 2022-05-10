@@ -582,7 +582,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->find($val->payDetailAutoID);
                 $paySupplierInvoiceDetail->delete();
 
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->when($payMaster->invoiceType == 6, function($query) {
+                                                    $query->whereHas('payment_master', function($query) {
+                                                        $query->where('invoiceType',6);
+                                                    });
+                                                })->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
                 $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -593,30 +597,59 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
                 $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-                if ($val->addedDocumentSystemID == 11) {
-                    if ($totalPaidAmount == 0) {
-                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
-                    } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
-                        $updatePayment = AccountsPayableLedger::find($val->apAutoID)
-                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
-                    } else if (($val->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
-                        $updatePayment = AccountsPayableLedger::find($val->apAutoID)
-                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                if ($payMaster->invoiceType == 6) {
+                    if ($val->addedDocumentSystemID == 11) {
+                        if ($totalPaidAmount == 0) {
+                            $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                                ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
+                            $updatePayment = EmployeeLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        } else if (($val->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                            $updatePayment = EmployeeLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                        }
+                    } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
+                        if ($totalPaidAmount == 0) {
+                            $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                                ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
+                            $updatePayment = EmployeeLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount < $totalPaidAmount) {
+                            $updatePayment = EmployeeLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount > $totalPaidAmount) {
+                            $updatePayment = EmployeeLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        }
                     }
-                } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
-                    if ($totalPaidAmount == 0) {
-                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
-                    } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
-                        $updatePayment = AccountsPayableLedger::find($val->apAutoID)
-                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
-                    } else if ($val->supplierInvoiceAmount < $totalPaidAmount) {
-                        $updatePayment = AccountsPayableLedger::find($val->apAutoID)
-                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
-                    } else if ($val->supplierInvoiceAmount > $totalPaidAmount) {
-                        $updatePayment = AccountsPayableLedger::find($val->apAutoID)
-                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                } else {
+                    if ($val->addedDocumentSystemID == 11) {
+                        if ($totalPaidAmount == 0) {
+                            $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                                ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
+                            $updatePayment = AccountsPayableLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        } else if (($val->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                            $updatePayment = AccountsPayableLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                        }
+                    } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
+                        if ($totalPaidAmount == 0) {
+                            $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                                ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
+                            $updatePayment = AccountsPayableLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount < $totalPaidAmount) {
+                            $updatePayment = AccountsPayableLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                        } else if ($val->supplierInvoiceAmount > $totalPaidAmount) {
+                            $updatePayment = AccountsPayableLedger::find($val->apAutoID)
+                                ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                        }
                     }
                 }
             }
