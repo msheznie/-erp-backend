@@ -528,4 +528,14 @@ ORDER BY
         }
 
     }
+
+    public function getNotPulledPriceBidDetails(Request $request)
+    {
+        $input = $request->all();
+        $priceSchedule = PricingScheduleMaster::where('id',$input['schedule_id'])->first();
+        $mainWorks = TenderMainWorks::where('schedule_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])->get();
+        $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
+
+        return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->whereNotIn('id', $bidDetailId)->get();
+    }
 }
