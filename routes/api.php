@@ -2561,6 +2561,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
         Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails');
         Route::post('addPriceBidDetails', 'PricingScheduleMasterAPIController@addPriceBidDetails');
+        Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
 
 
         Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
@@ -2580,6 +2581,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
         Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
         Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+        Route::post('updateWorkOrderDescription', 'TenderMainWorksAPIController@updateWorkOrderDescription');
 
         Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData');
         Route::post('createFaq', 'TenderFaqAPIController@createFaq');
@@ -2617,6 +2619,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
+        Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

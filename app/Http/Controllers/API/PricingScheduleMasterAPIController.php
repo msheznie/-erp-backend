@@ -8,6 +8,7 @@ use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderBidFormatDetail;
 use App\Models\TenderBidFormatMaster;
+use App\Models\TenderMainWorks;
 use App\Repositories\PricingScheduleMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -365,7 +366,9 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
             }
         }
-
+        if(isset($input['id'])) {
+            $schedule = PricingScheduleMaster::where('id', $input['id'])->first();
+        }
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
@@ -380,6 +383,21 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 $data['updated_by'] = $employee->employeeSystemID;
                 $result = PricingScheduleMaster::where('id',$input['id'])->update($data);
                 if($result){
+                    if($schedule['price_bid_format_id'] != $input['price_bid_format_id']){
+                        $master['status']=0;
+                        PricingScheduleMaster::where('id',$input['id'])->update($master);
+                        TenderMainWorks::where('schedule_id',$input['id'])->delete();
+                        $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+                        foreach ($priceBid as $bid){
+                            $dataBid['tender_id']=$input['tenderMasterId'];
+                            $dataBid['schedule_id']=$input['id'];
+                            $dataBid['bid_format_detail_id']=$bid['id'];
+                            $dataBid['item']=$bid['label'];
+                            $dataBid['company_id']=$input['companySystemID'];
+                            $dataBid['created_by']=$employee->employeeSystemID;
+                            TenderMainWorks::create($dataBid);
+                        }
+                    }
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
                 }
@@ -387,6 +405,16 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 $data['created_by'] = $employee->employeeSystemID;
                 $result = PricingScheduleMaster::create($data);
                 if($result){
+                   $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+                    foreach ($priceBid as $bid){
+                        $dataBid['tender_id']=$input['tenderMasterId'];
+                        $dataBid['schedule_id']=$result['id'];
+                        $dataBid['bid_format_detail_id']=$bid['id'];
+                        $dataBid['item']=$bid['label'];
+                        $dataBid['company_id']=$input['companySystemID'];
+                        $dataBid['created_by']=$employee->employeeSystemID;
+                        TenderMainWorks::create($dataBid);
+                    }
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
                 }
@@ -412,6 +440,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
         try {
             $result = PricingScheduleMaster::where('id',$input['id'])->delete();
             if($result){
+                TenderMainWorks::where('schedule_id',$input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -498,5 +527,15 @@ ORDER BY
             return ['success' => false, 'message' => $e];
         }
 
+    }
+
+    public function getNotPulledPriceBidDetails(Request $request)
+    {
+        $input = $request->all();
+        $priceSchedule = PricingScheduleMaster::where('id',$input['schedule_id'])->first();
+        $mainWorks = TenderMainWorks::where('schedule_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])->get();
+        $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
+
+        return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->whereNotIn('id', $bidDetailId)->get();
     }
 }
