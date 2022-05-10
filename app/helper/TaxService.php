@@ -20,6 +20,7 @@ use App\Models\SupplierInvoiceItemDetail;
 use App\Models\PurchaseReturn;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierAssigned;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use Illuminate\Support\Facades\DB;
@@ -169,6 +170,126 @@ class TaxService
         }
 
         return $data;
+    }
+
+    public static function validateVatCategoriesInDocumentDetails($documentSystemID, $companySystemID, $documentDetailID, $updateData, $supplierID = 0, $documentType = 0)
+    {
+        $vatMasterCategoryID = null;
+        $vatSubCategoryID = null;
+        switch ($documentSystemID) {
+            case 2:
+            case 5:
+            case 52:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                        $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCode']);
+
+                        if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                            return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
+                        }
+
+                        $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                        $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                    }
+                }      
+                PurchaseOrderDetails::where('purchaseOrderDetailsID', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
+
+                break;
+            case 68:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                        $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemAutoID']);
+
+                        if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                            return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
+                        }
+
+                        $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                        $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                    }
+                }      
+                break;
+             case 71:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                        $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCodeSystem']);
+
+                        if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                            return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
+                        }
+
+                        $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                        $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                    }
+                }      
+                break;
+            case 11:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($documentType == 3 || $documentType == 1 || $documentType == 4) {
+                        if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                            $vatDetails = ($documentType == 3) ?  self::getVATDetailsByItem($companySystemID, $updateData['itemCode']) : self::getDefaultVAT($companySystemID, $supplierID);
+
+                            if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                                return ['status' => false, 'message' => "Please assign a vat category to this line (or) setup a default vat category"];
+                            }
+
+                            $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                            $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                        }
+                    }
+                }
+
+                if ($documentType == 3) {
+                      SupplierInvoiceDirectItem::where('id', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
+                }      
+                break;
+            case 20:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($documentType == 2 || $documentType == 0) {
+                        if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                            $vatDetails = ($documentType == 2) ?  self::getVATDetailsByItem($companySystemID, $updateData['itemCodeSystem']) : self::getDefaultVAT($companySystemID, $supplierID);
+
+                            if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                                return ['status' => false, 'message' => "Please assign a vat category to this line (or) setup a default vat category"];
+                            }
+
+                            $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                            $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                        }
+                    }
+                }
+
+                // if ($documentType == 2) {
+                //       SupplierInvoiceDirectItem::where('id', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
+                // }      
+                break;
+            default:
+                // code...
+                break;
+        }
+
+        return ['status' => true, 'vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID];
+
     }
 
     public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1)
@@ -1316,5 +1437,65 @@ class TaxService
 
 
         return $vatData;
+    }
+
+    public static function calculateRetentionVatAmount($PayMasterAutoId)
+    {
+        $retentionData = PaySupplierInvoiceDetail::WHERE('PayMasterAutoId', $PayMasterAutoId)
+                                                 ->WHERE('matchingDocID', 0)
+                                                 ->WHERE('isRetention', 1)
+                                                 ->get();
+
+        $totalTransVATAmount = 0;
+        foreach ($retentionData as $key => $value) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
+
+            if ($bookInvSuppMaster) {
+                $vatAmount = ($bookInvSuppMaster->retentionVatAmount / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+            
+                $totalTransVATAmount += $vatAmount;
+            }
+        }
+
+        return $totalTransVATAmount;
+    }
+
+     public static function calculateRCMRetentionVatAmount($PayMasterAutoId)
+    {
+        $retentionData = PaySupplierInvoiceDetail::WHERE('PayMasterAutoId', $PayMasterAutoId)
+                                                 ->WHERE('matchingDocID', 0)
+                                                 ->WHERE('isRetention', 1)
+                                                 ->get();
+
+        $totalTransVATAmount = 0;
+        foreach ($retentionData as $key => $value) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
+
+            if ($bookInvSuppMaster) {
+                if ($bookInvSuppMaster->documentType == 1 && $bookInvSuppMaster->rcmActivated == 1) {
+                    $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                            ->WHERE('documentSystemCode', $value->bookingInvSystemCode)
+                                            ->WHERE('documentSystemID', 11)
+                                            ->groupBy('documentSystemCode')
+                                            ->first();
+
+                    if ($tax) {
+                        $vatAmount = (($tax->transAmount * ($bookInvSuppMaster->retentionPercentage / 100)) / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+
+                        $totalTransVATAmount += $vatAmount;
+                    }
+
+                } else if (($bookInvSuppMaster->documentType == 0 || $bookInvSuppMaster->documentType == 2) && self::isSupplierInvoiceRcmActivated($value->bookingInvSystemCode)) {
+                    $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($value->bookingInvSystemCode);
+
+                    $vatAmount = ((($vatDetails['totalVAT'] + $vatDetails['exemptVAT']) * ($bookInvSuppMaster->retentionPercentage / 100)) / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+
+                    $totalTransVATAmount += $vatAmount;
+                }
+            }
+
+        }
+
+        return $totalTransVATAmount;
     }
 }

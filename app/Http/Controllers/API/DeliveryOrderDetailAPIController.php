@@ -9,6 +9,7 @@ use App\Http\Requests\API\CreateDeliveryOrderDetailAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderDetailAPIRequest;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\DeliveryOrder;
+use App\Models\ErpItemLedger;
 use App\Models\Company;
 use App\Models\DeliveryOrderDetail;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -23,6 +24,7 @@ use App\Models\DocumentSubProduct;
 use App\Models\ItemSerial;
 use App\Models\Taxdetail;
 use App\Repositories\DeliveryOrderDetailRepository;
+use App\Jobs\AddMultipleItemsToDeliveryOrder;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +32,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
-
+use Illuminate\Support\Facades\Storage;
+use Auth;
 /**
  * Class DeliveryOrderDetailController
  * @package App\Http\Controllers\API
@@ -411,7 +414,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
 
 
-
         $deliveryOrderDetail = $this->deliveryOrderDetailRepository->create($input);
 
         $resVat = $this->updateVatFromSalesQuotation($deliveryOrderMaster->deliveryOrderID);
@@ -537,6 +539,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $deliveryOrderMaster = DeliveryOrder::find($deliveryOrderDetail->deliveryOrderID);
         if(empty($deliveryOrderMaster)){
             return $this->sendError('Delivery order not found',500);
+        }
+
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($deliveryOrderMaster->documentSystemID, $deliveryOrderMaster->companySystemID, $id, $input);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
         }
 
         $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
@@ -1661,5 +1672,491 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             DB::rollback();
             return $this->sendError($exception->getMessage(),500);
         }
+    }
+
+    
+    public function uploadItemsDeliveryOrder(Request $request) {
+         DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+            $id = $input['requestID'];
+            $companySystemID = $input['companySystemID'];
+            $masterData = DeliveryOrder::find($input['requestID']);
+
+
+            if (empty($masterData)) {
+                return $this->sendError('Delivery Order not found', 500);
+            }
+
+
+            $allowedExtensions = ['xlsx','xls'];
+
+            if (!in_array($extension, $allowedExtensions))
+            {
+                return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+            }
+
+            if ($size > 20000000) {
+                return $this->sendError('The maximum size allow to upload is 20 MB',500);
+            }
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->get()->toArray();
+
+            $totalRecords = count(collect($formatChk)->toArray());
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
+            $validateHeaderCode = false;
+            $validateHeaderQty = false;
+            $validateVat = false;
+            $totalItemCount = 0;
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+
+            foreach ($uniqueData as $key => $value) {
+
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
+
+                if (isset($value['item_code'])) {
+                    $validateHeaderCode = true;
+                }
+
+                if (isset($value['qty']) && is_numeric($value['qty'])) {
+                    $validateHeaderQty = true;
+                }
+
+
+                if($masterData->isVatEligible) {
+                   if (isset($value['vat']) && is_numeric($value['vat'])) {
+                        $validateVat = true;
+                   }
+                }else {
+                    $validateVat = true;
+                }
+
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
+                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+            }
+
+
+            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('item_code', 'qty','vat','discount'))->get()->toArray();
+            $uploadSerialNumber = array_filter(collect($record)->toArray());
+
+            if ($masterData->cancelledYN == -1) {
+                return $this->sendError('This Quotation already closed. You can not add.', 500);
+            }
+
+            if ($masterData->approvedYN == 1) {
+                return $this->sendError('This Quotation fully approved. You can not add.', 500);
+            }
+
+            $finalItems = [];
+            $count = 0;
+
+            $totalVATAmount = 0;
+            $totalAmount = 0;
+            $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
+            foreach($record as $item) {
+                if(is_numeric($item['qty'])  && ($masterData->isVatEligible && isset($item['vat']))  && is_numeric($item['discount'])) { 
+                    $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
+                    if(isset($itemDetails->itemCodeSystem)) {
+                        $data = [
+                            'deliveryOrderID' => $input['requestID'],
+                            'itemCodeSystem' => $itemDetails->itemCodeSystem
+                        ];
+
+                        $validateItem =  $this->validateItemBeforeUpload($data,$itemDetails,$input['companySystemID']);
+
+                        $itemArray = [];
+                        $itemArray['deliveryOrderID'] =  $input['requestID'];
+                        $itemArray['itemCodeSystem'] = $itemDetails->itemCodeSystem;
+                        $itemArray['itemPrimaryCode'] = $itemDetails->primaryCode;
+                        $itemArray['itemDescription'] = $itemDetails->itemDescription;
+                        $itemArray['itemUnitOfMeasure'] = $itemDetails->unit;
+                        $itemArray['unitOfMeasureIssued'] = $itemDetails->unit;
+                        $itemArray['itemFinanceCategoryID'] = $itemDetails->financeCategoryMaster;
+                        $itemArray['itemFinanceCategorySubID'] = $itemDetails->financeCategorySub;
+                        $itemArray['trackingType'] = $itemDetails->trackingType;
+                        $itemArray['qtyIssued'] = $item['qty'];
+
+                        $itemAssigned = ItemAssigned::where('itemCodeSystem',$itemDetails->itemCodeSystem)->where('companySystemID',$companySystemID)->first();
+
+                        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                            ->where('mainItemCategoryID', $itemAssigned['financeCategoryMaster'])
+                            ->where('itemCategorySubID', $itemAssigned['financeCategorySub'])
+                            ->first();
+
+                        if (!empty($financeItemCategorySubAssigned)) {
+                            $itemArray['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                            $itemArray['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                            $itemArray['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                            $itemArray['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                            $itemArray['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
+                            $itemArray['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
+
+                            $data = array(
+                            'companySystemID' => $companySystemID,
+                            'itemCodeSystem' => $itemDetails['itemCodeSystem'],
+                            'wareHouseId' => $masterData->wareHouseSystemCode
+                            );
+
+                            $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+                            
+
+                            $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+                            $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                            $itemArray['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                            $itemArray['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                            $itemArray['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+                            if($masterData->transactionCurrencyID == $masterData->companyLocalCurrencyID){
+
+                                $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+                                $itemArray['companyLocalAmount'] = $itemCurrentCostAndQty['wacValueLocal'];
+
+                            }elseif ($masterData->transactionCurrencyID == $masterData->companyReportingCurrencyID){
+
+                                $itemArray['unitTransactionAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+                                $itemArray['companyReportingAmount'] = $itemCurrentCostAndQty['wacValueReporting'];
+
+                            }else{
+
+                                $currencyConversion = Helper::currencyConversion($masterData->companySystemID,$masterData->companyLocalCurrencyID,$masterData->transactionCurrencyID,$itemArray['wacValueLocal']);
+                                if(!empty($currencyConversion)){
+                                    $itemArray['unitTransactionAmount'] = $currencyConversion['documentAmount'];
+                                }
+                            }
+
+                            $amounts = $this->updateAmountsByTransactionAmount($itemArray,$masterData);
+                            $itemArray['companyLocalAmount'] = $amounts['companyLocalAmount'];
+                            $itemArray['companyReportingAmount'] = $amounts['companyReportingAmount'];
+
+                            $itemArray['transactionCurrencyID'] = $masterData->transactionCurrencyID;
+                            $itemArray['transactionCurrencyER'] = $masterData->transactionCurrencyER;
+                            $itemArray['companyLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
+                            $itemArray['companyLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
+                            $itemArray['companyReportingCurrencyID'] = $masterData->companyReportingCurrencyID;
+                            $itemArray['companyReportingCurrencyER'] = $masterData->companyReportingCurrencyER;
+                            $itemArray['qtyIssuedDefaultMeasure'] = $item['qty'];
+                            $itemArray['transactionAmount'] = 0;
+                            $itemArray['discountAmount'] = $item['discount'];
+
+                            $itemArray['discountPercentage'] =  ($itemArray['unitTransactionAmount'] != 0 && $itemArray['discountAmount'] != 0) ?  number_format((($itemArray['discountAmount']  * 100) / ($itemArray['unitTransactionAmount'])),$decimal): 0;
+                            $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
+                            
+                            $totalAmount +=  $itemArray['transactionAmount'];
+                            if ($masterData->customerVATEligible) {
+                                $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
+                                $itemArray['VATPercentage'] = $item['vat'];
+                                $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
+                                $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                                $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                                $itemArray['VATAmount'] = 0;
+
+                                if (isset($item['vat'])) {
+                                    $itemArray['VATAmount'] = round(($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100),3);
+                                }
+                                $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
+
+                                $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+                            }
+                            
+                            $currentStockQty = ErpItemLedger::where('itemSystemCode', $itemDetails['itemCodeSystem'])
+                            ->where('companySystemID', $masterData->companySystemID)
+                            ->groupBy('itemSystemCode')
+                            ->sum('inOutQty');
+
+
+                            if($validateItem) {
+                                if($currentStockQty > 0 && ($item['qty'] <= $currentStockQty && $item['qty'] <= $itemArray['currentWareHouseStockQty']) && $item['vat'] <= 100) {
+                                    $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
+
+                                    $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
+                                            $query->where('itemPrimaryCode', $item['item_code'])
+                                               ->where('approvedYN', 0);
+                                    })->get();
+                                    if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
+                                        $totalVATAmount += ($itemArray['VATAmount'] * $item['qty']) ;
+
+                                        array_push($finalItems,$itemArray);
+                                    }
+                                }
+                                
+                            }
+
+                        }
+                    }
+                }
+                
+            }
+
+        
+        if ($totalAmount > 0) {
+            $percentage = ($totalVATAmount / $totalAmount) * 100;
+
+        $_post['taxMasterAutoID'] = 0;
+        $_post['companyID'] = $masterData->companyID;
+        $_post['companySystemID'] = $masterData->companySystemID;
+        $_post['documentID'] = 'DEO';
+        $_post['documentSystemID'] = $masterData->documentSystemID;
+        $_post['documentSystemCode'] = $masterData->deliveryOrderID;
+        $_post['documentCode'] = $masterData->deliveryOrderCode;
+        $_post['taxShortCode'] = ''; //$taxMaster->taxShortCode;
+        $_post['taxDescription'] = ''; //$taxMaster->taxDescription;
+        $_post['taxPercent'] = round($percentage,3); //$taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $masterData->customerID; //$taxMaster->payeeSystemCode;
+        $_post['currency'] = $masterData->transactionCurrencyID;
+        $_post['currencyER'] = $masterData->transactionCurrencyER;
+        $_post['amount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $masterData->transactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] = $masterData->transactionCurrencyER;
+        $_post['payeeDefaultAmount'] = $totalVATAmount;
+        $_post['localCurrencyID'] = $masterData->companyLocalCurrencyID;
+        $_post['localCurrencyER'] = $masterData->companyLocalCurrencyER;
+
+        $_post['rptCurrencyID'] = $masterData->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $masterData->companyReportingCurrencyER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalVATAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalVATAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalVATAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalVATAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalVATAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalVATAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
+
+        if(count($finalItems) == 0) {
+             return $this->sendError('No Records to upload!', 500);
+        }
+
+        $count = count($finalItems);
+        Taxdetail::create($_post);
+            
+            if (count($record) > 0) {
+                $db = isset($input['db']) ? $input['db'] : ""; 
+                AddMultipleItemsToDeliveryOrder::dispatch(array_filter($finalItems),($masterData->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], 'Out of '.$totalRecords.' , '.$count.' Items uploaded Successfully!!');
+        }else {
+            return $this->sendError("Unit Transcation amount is zero",500);
+        }
+        
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    private function validateItemBeforeUpload($input,$item,$companySystemID) {
+
+        $deliveryOrderMaster = DeliveryOrder::find($input['deliveryOrderID']);
+        if(empty($deliveryOrderMaster)){
+            return $this->sendError('Delivery order not found',500);
+        }
+
+        $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
+            ->whereHas('detail', function ($query) use ($input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->exists();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected item is already added. Please check again", 500);
+        }
+
+        if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
+            return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
+        }
+
+        if($item->financeCategoryMaster==1){
+            // check the item pending pending for approval in other delivery orders
+
+            $checkWhether = DeliveryOrder::where('deliveryOrderID', '!=', $deliveryOrderMaster->deliveryOrderID)
+                ->where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.deliveryOrderCode'
+                ])
+                ->groupBy(
+                    'erp_delivery_order.deliveryOrderID',
+                    'erp_delivery_order.companySystemID'
+                )
+                ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approvedYN', 0)
+                ->first();
+            if (!empty($checkWhether)) {
+                return $this->sendError("There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+
+            // check the item pending pending for approval in other modules
+            $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
+//            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
+                ->select([
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                ])
+                ->groupBy(
+                    'erp_itemissuemaster.itemIssueAutoID',
+                    'erp_itemissuemaster.companySystemID',
+                    'erp_itemissuemaster.wareHouseFromCode',
+                    'erp_itemissuemaster.itemIssueCode',
+                    'erp_itemissuemaster.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherItemIssueMaster)) {
+                return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+//            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
+                ->select([
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                ])
+                ->groupBy(
+                    'erp_stocktransfer.stockTransferAutoID',
+                    'erp_stocktransfer.companySystemID',
+                    'erp_stocktransfer.locationFrom',
+                    'erp_stocktransfer.stockTransferCode',
+                    'erp_stocktransfer.approved'
+                )
+                ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherStockTransfer)) {
+                return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                ])
+                ->groupBy(
+                    'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                    'erp_custinvoicedirect.companySystemID',
+                    'erp_custinvoicedirect.bookingInvCode',
+                    'erp_custinvoicedirect.wareHouseSystemCode',
+                    'erp_custinvoicedirect.approved'
+                )
+                ->whereHas('issue_item_details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->where('canceledYN', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhetherInvoice)) {
+                return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+            /*Check in purchase return*/
+            $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
+                ->select([
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation',
+                    'erp_purchasereturnmaster.purchaseReturnCode',
+                ])
+                ->groupBy(
+                    'erp_purchasereturnmaster.purhaseReturnAutoID',
+                    'erp_purchasereturnmaster.companySystemID',
+                    'erp_purchasereturnmaster.purchaseReturnLocation'
+                )
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCode', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+
+            if (!empty($checkWhetherPR)) {
+                return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+        }
+
+        
+
+        return true;
     }
 }

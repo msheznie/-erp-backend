@@ -177,6 +177,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
+
+        Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
+        Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData');
+
         Route::resource('item/assigneds', 'ItemAssignedAPIController');
         Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
         Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
@@ -893,6 +897,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
         Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
+        Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues');
+
 
 
         Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
@@ -1437,7 +1443,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
         Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
         Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
-
+        Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         
         Route::resource('pulled-mr-details', 'PulledItemFromMRController');
         Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
@@ -1894,6 +1900,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
         Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
         Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
+        Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport');
 
         Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
 
@@ -1974,7 +1981,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('delivery_orders', 'DeliveryOrderAPIController');
         Route::post('validateDeliveryOrder','DeliveryOrderAPIController@validateDeliveryOrder');
         Route::post('getCommonFormData','DeliveryOrderAPIController@getCommonFormData');
-
+        Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
+        Route::post('uploadItems','QuotationMasterAPIController@poItemsUpload');
 
         
         Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
@@ -1996,6 +2004,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
         Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier');
         Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate');
+        Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
+        Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
 
 
@@ -2555,6 +2565,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
         Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails');
         Route::post('addPriceBidDetails', 'PricingScheduleMasterAPIController@addPriceBidDetails');
+        Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
 
 
         Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
@@ -2574,6 +2585,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadMainWorksUploadTemplate', 'TenderMainWorksAPIController@downloadMainWorksUploadTemplate');
         Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItemsUpload');
         Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
+        Route::post('updateWorkOrderDescription', 'TenderMainWorksAPIController@updateWorkOrderDescription');
 
         Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData');
         Route::post('createFaq', 'TenderFaqAPIController@createFaq');
@@ -2599,6 +2611,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread');
         Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender');
         Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish');
+
+        Route::post('getEvaluationCriteriaDropDowns', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDropDowns');
+        Route::post('addEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@addEvaluationCriteria');
+        Route::post('getEvaluationCriteriaDetails', 'EvaluationCriteriaDetailsAPIController@getEvaluationCriteriaDetails');
+        Route::post('deleteEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@deleteEvaluationCriteria');
+        Route::post('getEvaluationDetailById', 'EvaluationCriteriaDetailsAPIController@getEvaluationDetailById');
+        Route::post('editEvaluationCriteria', 'EvaluationCriteriaDetailsAPIController@editEvaluationCriteria');
+        Route::post('validateWeightage', 'EvaluationCriteriaDetailsAPIController@validateWeightage');
+        Route::post('validateWeightageEdit', 'EvaluationCriteriaDetailsAPIController@validateWeightageEdit');
+
+        Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
+        Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
+        Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2840,3 +2865,13 @@ Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
+
+Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
+
+Route::resource('evaluation_criteria_types', 'EvaluationCriteriaTypeAPIController');
+
+
+Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
+
+
+Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');

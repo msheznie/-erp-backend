@@ -47,6 +47,8 @@ use App\Models\TaxVatCategories;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PoAdvancePayment;
@@ -749,6 +751,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 if($input['retentionDueDate'] == null && $input['retentionAmount'] > 0){
                     return $this->sendError('Due Date cannot be null as retention amount is greater than zero', 500);
                 }
+
+
+
+            if ($input['documentType'] == 1) {
+                $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
+                $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
+
+            if ($input['documentType'] == 0) {
+                    $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
+            }
+            if ($input['documentType'] == 3) {
+                    $vatTrans = TaxService::processSupplierInvoiceItemsVAT($input['bookingSuppMasInvAutoID']);
+                    $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
+            }
 
             }
 
@@ -3028,6 +3046,17 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
             //deleting records from accounts payable
             AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            //deleting from tax ledger table
+            TaxLedger::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();

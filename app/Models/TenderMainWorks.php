@@ -82,6 +82,7 @@ class TenderMainWorks extends Model
     public $fillable = [
         'tender_id',
         'schedule_id',
+        'bid_format_detail_id',
         'item',
         'description',
         'created_by',
@@ -98,6 +99,7 @@ class TenderMainWorks extends Model
         'id' => 'integer',
         'tender_id' => 'integer',
         'schedule_id' => 'integer',
+        'bid_format_detail_id' => 'integer',
         'item' => 'string',
         'description' => 'string',
         'created_by' => 'integer',

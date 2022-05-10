@@ -14,8 +14,11 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationType;
+use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
+use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
@@ -353,13 +356,19 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+        if(isset($input['tenderMasterId'])){
+            $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
 
-        if(!empty($tenderMaster['procument_cat_id'])){
-           $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
-        }else{
-            $category['is_active'] = 1;
+            if(!empty($tenderMaster['procument_cat_id'])){
+                $category = TenderProcurementCategory::where('id',$tenderMaster['procument_cat_id'])->first();
+            }else{
+                $category['is_active'] = 1;
+            }
         }
+
+        $employee = Helper::getEmployeeInfo();
+        $company = Helper::companyCurrency($employee->empCompanySystemID);
+
 
         $data['tenderType'] = TenderType::get();
         $data['yesNoSelection'] = YesNoSelection::all();
@@ -367,10 +376,14 @@ class TenderMasterAPIController extends AppBaseController
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
+        $data['currentDate'] = now();
+        $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
 
-        if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
-            $data['procurementCategory'][] = $category;
+        if(isset($input['tenderMasterId'])) {
+            if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
+                $data['procurementCategory'][] = $category;
+            }
         }
 
         return $data;
@@ -379,7 +392,12 @@ class TenderMasterAPIController extends AppBaseController
     public function createTender(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currency_id'));
         $employee = \Helper::getEmployeeInfo();
+        $exist = TenderMaster::where('title',$input['title'])->where('company_id',$input['companySystemID'])->first();
+        if(!empty($exist)){
+            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+        }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         $documentMaster = DocumentMaster::where('documentSystemID', 108)->first();
         $lastSerial = TenderMaster::where('company_id', $input['companySystemID'])
@@ -536,6 +554,11 @@ class TenderMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => 'Bid submission opening date cannot be greater than Bid submission closing date'];
         }
 
+        $existTndr = TenderMaster::where('title',$input['title'])->where('id','!=',$input['id'])->where('company_id',$input['companySystemID'])->first();
+        if(!empty($existTndr)){
+            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id',$input['id'])->first();
         DB::beginTransaction();
@@ -543,6 +566,8 @@ class TenderMasterAPIController extends AppBaseController
 
             $data['title']=$input['title'];
             $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['description']=$input['description'];
+            $data['description_sec_lang']=$input['description_sec_lang'];
             $data['tender_type_id']=$input['tender_type_id'];
             $data['currency_id']=$input['currency_id'];
             $data['envelop_type_id']=$input['envelop_type_id'];
@@ -624,6 +649,22 @@ class TenderMasterAPIController extends AppBaseController
 
                 if(isset($input['confirmed_yn'])){
                     if($input['confirmed_yn'] == 1){
+                        $technical = EvaluationCriteriaDetails::where('tender_id',$input['id'])->where('critera_type_id',2)->first();
+                        if(empty($technical)){
+                            return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+                        }
+                        $schedule = PricingScheduleMaster::where('tender_id',$input['id'])->first();
+                        if(empty($schedule)){
+                            return ['success' => false, 'message' => 'At least one work schedule should be added'];
+                        }
+                        $scheduleAll = PricingScheduleMaster::where('tender_id',$input['id'])->get();
+                        foreach ($scheduleAll as $val){
+                            $mainwork = TenderMainWorks::where('tender_id',$input['id'])->where('schedule_id',$val['id'])->first();
+                            if(empty($mainwork)){
+                                return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+                            }
+                        }
+
                         $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {

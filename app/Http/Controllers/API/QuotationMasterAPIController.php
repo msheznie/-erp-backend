@@ -549,7 +549,6 @@ class QuotationMasterAPIController extends AppBaseController
                                                      COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
                                                      ")
                                          ->where('quotationMasterID', $id)->first();
-
         $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
         $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
         $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
@@ -1985,7 +1984,7 @@ class QuotationMasterAPIController extends AppBaseController
         $input = $request->all();
         $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
         if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
-            return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'quotation_template.xlsx');
+            return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
         } else {
             return $this->sendError('Attachments not found', 500);
         }
@@ -2031,9 +2030,13 @@ class QuotationMasterAPIController extends AppBaseController
             $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->get()->toArray();
 
+            $totalRecords = count(collect($formatChk)->toArray());
+
             $uniqueData = array_filter(collect($formatChk)->toArray());
+            $uniqueData = collect($uniqueData)->unique('item_code')->toArray();
             $validateHeaderCode = false;
             $validateHeaderQty = false;
+            $validateHeaderPrice = false;
             $validateVat = false;
             $totalItemCount = 0;
 
@@ -2048,23 +2051,27 @@ class QuotationMasterAPIController extends AppBaseController
             //         $allowItemToTypePolicy = true;
             //     }
             // }.
-           
             foreach ($uniqueData as $key => $value) {
-                if (isset($value['item_code']) ||  $allowItemToTypePolicy) {
+                
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
+                if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
 
-                if (isset($value['qty'])) {
+                if (isset($value['qty']) && ($value['qty']) && $value['qty'] != 0 ) {
                     $validateHeaderQty = true;
                 }
 
                 
-                if (isset($value['sales_price'])) {
-                    $validateHeaderQty = true;
+                if (isset($value['sales_price']) && is_numeric($value['sales_price']) && $value['sales_price'] != 0) {
+                    $validateHeaderPrice = true;
                 }
 
                 if($masterData->isVatEligible) {
-                   if (isset($value['vat'])) {
+                   if (isset($value['vat']) && is_numeric($value['vat'])) {
                         $validateVat = true;
                    }
                 }else {
@@ -2084,7 +2091,6 @@ class QuotationMasterAPIController extends AppBaseController
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
-
             if ($masterData->cancelledYN == -1) {
                 return $this->sendError('This Quotation already closed. You can not add.', 500);
             }
@@ -2093,16 +2099,33 @@ class QuotationMasterAPIController extends AppBaseController
                 return $this->sendError('This Quotation fully approved. You can not add.', 500);
             }
 
+            $finalArray = [];
+            $count = 0;
+            $uniqueData =  collect($uniqueData)->unique('item_code')->toArray();
+
+            foreach($uniqueData as $finalRecords) {
+                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  (is_numeric($finalRecords['discount']) && $finalRecords['discount'] < $finalRecords['sales_price']) && (is_numeric($finalRecords['vat']) && $finalRecords['vat'] <= 100)) {
+                     $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
+ 
+                     if(!$exists_item) {
+                     $count++;
+                    array_push($finalArray,$finalRecords);
+                    }
+
+                }           
+            }
+
+
 
             if (count($record) > 0) {
                 $db = isset($input['db']) ? $input['db'] : ""; 
-                AddMultipleItemsToQuotation::dispatch(array_filter($record),($masterData->toArray()),$db,Auth::id());
+                AddMultipleItemsToQuotation::dispatch(array_filter($finalArray),($masterData->toArray()),$db,Auth::id());
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], 'Out of '.$totalRecords.', '.$count.'Items uploaded Successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

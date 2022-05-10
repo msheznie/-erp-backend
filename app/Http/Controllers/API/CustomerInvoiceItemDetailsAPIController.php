@@ -592,6 +592,15 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Details not found');
         }
 
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($customerDirectInvoice->documentSystemiD, $customerDirectInvoice->companySystemID, $id, $input, $customerDirectInvoice->customerID, $customerDirectInvoice->isPerforma);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+        }
+
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
@@ -940,14 +949,16 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         foreach ($items as $item) {
 
-            $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
-
+            $issueUnit = Unit::all();
             $issueUnits = array();
-            foreach ($issueUnit->unitConversion as $unit) {
-                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
-                array_push($issueUnits, $temArray);
-            }
 
+            if ($issueUnit) {
+                foreach ($issueUnit as $unit){
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                    array_push($issueUnits,$temArray);
+                }
+            }
+            
             $item->issueUnits = $issueUnits;
         }
 

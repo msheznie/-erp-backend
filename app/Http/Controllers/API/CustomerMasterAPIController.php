@@ -2573,6 +2573,7 @@ class CustomerMasterAPIController extends AppBaseController
                                             if($item_categoryID == $financeCategoryMaster->itemCategoryID)
                                             {
                                                 $item_data['financeCategorySub'] = $fina_cate_sub_id;
+                                                $item_data['trackingType'] = (is_null($financeCategorySub->trackingType)) ? 0 : $financeCategorySub->trackingType;
                                             }
                                             else
                                             {
