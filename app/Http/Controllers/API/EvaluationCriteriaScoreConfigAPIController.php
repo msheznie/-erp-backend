@@ -366,4 +366,46 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
     }
+
+    public function updateCriteriaScore(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        $ScoreConfig = EvaluationCriteriaScoreConfig::where('id',$input['id'])->first();
+
+        DB::beginTransaction();
+        try {
+            $data['score']=$input['score'];
+            $data['updated_by'] = $employee->employeeSystemID;
+            $result = EvaluationCriteriaScoreConfig::where('id',$input['id'])->update($data);
+            if($result){
+                $x=1;
+                $min_value = 0;
+                $max_value = 0;
+                $criteriaConfig = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$ScoreConfig['criteria_detail_id'])->get();
+                foreach ($criteriaConfig as $val){
+                    if($x==1){
+                        $min_value = $val['score'];
+                    }
+                    if($val['score']>$max_value){
+                        $max_value = $val['score'];
+                    }
+                    if($val['score']<$min_value){
+                        $min_value = $val['score'];
+                    }
+                    $ans['max_value'] = $max_value;
+                    $ans['min_value'] = $min_value;
+                    EvaluationCriteriaDetails::where('id',$ScoreConfig['criteria_detail_id'])->update($ans);
+                    $x++;
+                }
+
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
 }
