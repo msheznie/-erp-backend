@@ -177,6 +177,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
+
+        Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
+        Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData');
+
         Route::resource('item/assigneds', 'ItemAssignedAPIController');
         Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
         Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
@@ -2867,3 +2871,4 @@ Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPICont
 
 
 Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
+
