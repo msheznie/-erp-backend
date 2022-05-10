@@ -1510,8 +1510,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 $formatChk2 = collect($formatChk)->toArray();
             }
 
+
             if (count($formatChk2) > 0) {
-                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['department']) || !isset($formatChk['client_contract']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
+                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['department']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
                     return $this->sendError('Uploaded data format is invalid', 500);
                 }
             }
@@ -1537,62 +1538,66 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     $debitAmount = 0;
                     $creditAmount = 0;
 
-                    $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
-                        ->where('companySystemID', $jvMasterData->companySystemID)
-                        ->first();
-                    if ($segmentData) {
-                        $serviceLineSystemID = $segmentData['serviceLineSystemID'];
-                        $serviceLineCode = $segmentData['ServiceLineCode'];
-                    }
-                    $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
-                        ->where('companySystemID', $jvMasterData->companySystemID)
-                        ->first();
 
-                    if ($chartOfAccountData) {
-                        $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
-                        $glAccountDescription = $chartOfAccountData->AccountDescription;
-                    }
+                    if (isset($val['gl_account']) && !is_null($val['gl_account'])) {
+                        $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
+                            ->where('companySystemID', $jvMasterData->companySystemID)
+                            ->first();
+                        if ($segmentData) {
+                            $serviceLineSystemID = $segmentData['serviceLineSystemID'];
+                            $serviceLineCode = $segmentData['ServiceLineCode'];
+                        }
+                        $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
+                            ->where('companySystemID', $jvMasterData->companySystemID)
+                            ->first();
 
-                    $contract = Contract::where('ContractNumber', $val['client_contract'])->where('companySystemID', $jvMasterData->companySystemID)->first();
-                    if ($contract) {
-                        $contractUID = $contract->contractUID;
-                    }else if(strtolower($val['client_contract']) == 'x'){
-                        $contractUID =  159;
-                        $val['client_contract'] = strtoupper($val['client_contract']);
-                    }else{
-                        $contractUID =  159;
-                        $val['client_contract'] = 'X';
+                        if ($chartOfAccountData) {
+                            $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
+                            $glAccountDescription = $chartOfAccountData->AccountDescription;
+                        }
+
+                        $client_contract = isset($val['client_contract']) ? $val['client_contract'] : '-';
+                        $contract = Contract::where('ContractNumber', $client_contract)->where('companySystemID', $jvMasterData->companySystemID)->first();
+                        if ($contract) {
+                            $contractUID = $contract->contractUID;
+                        }else if(strtolower($client_contract == 'x')){
+                            $contractUID =  159;
+                            $val['client_contract'] = strtoupper($client_contract);
+                        }else{
+                            $contractUID =  159;
+                            $val['client_contract'] = 'X';
+                        }
+                        if ($val['debit_amount'] != '') {
+                            $debitAmount = $val['debit_amount'];
+                        }
+                        if ($val['credit_amount'] != '') {
+                            $creditAmount = $val['credit_amount'];
+                        }
+                        $data = [];
+                        $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
+                        $data['documentSystemID'] = $jvMasterData->documentSystemID;
+                        $data['documentID'] = $jvMasterData->documentID;
+                        $data['companySystemID'] = $jvMasterData->companySystemID;
+                        $data['companyID'] = $jvMasterData->companyID;
+                        $data['serviceLineSystemID'] = $serviceLineSystemID;
+                        $data['serviceLineCode'] = $serviceLineCode;
+                        $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
+                        $data['glAccount'] = $val['gl_account'];
+                        $data['glAccountDescription'] = $glAccountDescription;
+                        $data['contractUID'] = $contractUID;
+                        $data['clientContractID'] = $val['client_contract'];
+                        $data['comments'] = $val['comments'];
+                        $data['currencyID'] = $jvMasterData->currencyID;
+                        $data['currencyER'] = $jvMasterData->currencyER;
+                        $data['debitAmount'] = $debitAmount;
+                        $data['creditAmount'] = $creditAmount;
+                        $data['createdPcID'] = gethostname();
+                        $data['createdUserID'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdDateTime'] = NOW();
+                        $data['timeStamp'] = NOW();
+                        $finalData[] = $data;
                     }
-                    if ($val['debit_amount'] != '') {
-                        $debitAmount = $val['debit_amount'];
-                    }
-                    if ($val['credit_amount'] != '') {
-                        $creditAmount = $val['credit_amount'];
-                    }
-                    $data = [];
-                    $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
-                    $data['documentSystemID'] = $jvMasterData->documentSystemID;
-                    $data['documentID'] = $jvMasterData->documentID;
-                    $data['companySystemID'] = $jvMasterData->companySystemID;
-                    $data['companyID'] = $jvMasterData->companyID;
-                    $data['serviceLineSystemID'] = $serviceLineSystemID;
-                    $data['serviceLineCode'] = $serviceLineCode;
-                    $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
-                    $data['glAccount'] = $val['gl_account'];
-                    $data['glAccountDescription'] = $glAccountDescription;
-                    $data['contractUID'] = $contractUID;
-                    $data['clientContractID'] = $val['client_contract'];
-                    $data['comments'] = $val['comments'];
-                    $data['currencyID'] = $jvMasterData->currencyID;
-                    $data['currencyER'] = $jvMasterData->currencyER;
-                    $data['debitAmount'] = $debitAmount;
-                    $data['creditAmount'] = $creditAmount;
-                    $data['createdPcID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                    $data['createdDateTime'] = NOW();
-                    $data['timeStamp'] = NOW();
-                    $finalData[] = $data;
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
