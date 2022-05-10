@@ -184,6 +184,7 @@ class AttendanceDataPullingService{
         AND NOT EXISTS (
             SELECT * FROM attendance_temporary_tbl AS att
             WHERE att.company_id = {$this->companyId} AND att.att_date = '{$this->pullingDate}' AND att.emp_id = e.EIdNo
+            AND att.uniqueID = '{$this->uniqueKey}'
         )";
 
         

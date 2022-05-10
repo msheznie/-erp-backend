@@ -1727,6 +1727,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $itemNotound = false;
 
             foreach ($uniqueData as $key => $value) {
+
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
+
                 if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
@@ -1734,10 +1740,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 if (isset($value['qty']) && is_numeric($value['qty'])) {
                     $validateHeaderQty = true;
                 }
-                
-                if (isset($value['unit_cost']) && is_numeric($value['unit_cost'])) {
-                    $validateHeaderQty = true;
-                }
+
 
                 if($masterData->isVatEligible) {
                    if (isset($value['vat']) && is_numeric($value['vat'])) {
@@ -1747,7 +1750,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     $validateVat = true;
                 }
 
-                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
+                if ($masterData->isVatEligible && (isset($value['vat']) && !is_null($value['vat'])) || (isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['qty']) && !is_null($value['qty'])) {
                     $totalItemCount = $totalItemCount + 1;
                 }
             }
@@ -1775,9 +1778,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             $totalVATAmount = 0;
             $totalAmount = 0;
             $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
-
             foreach($record as $item) {
-                if(is_numeric($item['qty'])  && is_numeric($item['vat'])  && is_numeric($item['discount'])) { 
+                if(is_numeric($item['qty'])  && ($masterData->isVatEligible && isset($item['vat']))  && is_numeric($item['discount'])) { 
                     $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
                     if(isset($itemDetails->itemCodeSystem)) {
                         $data = [
@@ -1821,6 +1823,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             );
 
                             $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+                            
 
                             $itemArray['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $itemArray['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -1864,7 +1867,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
                             
                             $totalAmount +=  $itemArray['transactionAmount'];
-
                             if ($masterData->customerVATEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
                                 $itemArray['VATPercentage'] = $item['vat'];
@@ -1874,13 +1876,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemArray['VATAmount'] = 0;
 
                                 if (isset($item['vat'])) {
-                                    $itemArray['VATAmount'] = $itemArray['unitTransactionAmount'] * ($item['vat'] / 100);
+                                    $itemArray['VATAmount'] = round(($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100),3);
                                 }
                                 $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
                                 $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                                 $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                                $totalVATAmount += $itemArray['VATAmount'];
 
                             }
                             
@@ -1888,15 +1889,19 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             ->where('companySystemID', $masterData->companySystemID)
                             ->groupBy('itemSystemCode')
                             ->sum('inOutQty');
+
+
                             if($validateItem) {
-                                if($currentStockQty > 0 && $item['qty'] <= $currentStockQty) {
+                                if($currentStockQty > 0 && ($item['qty'] <= $currentStockQty && $item['qty'] <= $itemArray['currentWareHouseStockQty']) && $item['vat'] <= 100) {
                                     $exists_item = DeliveryOrderDetail::where('deliveryOrderID',$masterData->deliveryOrderID)->where('itemCodeSystem',$item['item_code'])->first();
 
                                     $exists_already_in_delivery_order = DeliveryOrder::where('companySystemID',$companySystemID)->whereHas('detail', function ($query) use ($item) {
                                             $query->where('itemPrimaryCode', $item['item_code'])
-                                                ->where('confirmedYN', 1)->where('approvedYN', 0);
+                                               ->where('approvedYN', 0);
                                     })->get();
                                     if(!$exists_item && count($exists_already_in_delivery_order) == 0) {
+                                        $totalVATAmount += ($itemArray['VATAmount'] * $item['qty']) ;
+
                                         array_push($finalItems,$itemArray);
                                     }
                                 }
@@ -1908,6 +1913,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
                 
             }
+
+        
         if ($totalAmount > 0) {
             $percentage = ($totalVATAmount / $totalAmount) * 100;
 
@@ -1927,7 +1934,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         $_post['amount'] = round($totalVATAmount, $decimal);
         $_post['payeeDefaultCurrencyID'] = $masterData->transactionCurrencyID;
         $_post['payeeDefaultCurrencyER'] = $masterData->transactionCurrencyER;
-        $_post['payeeDefaultAmount'] = round($totalVATAmount, $decimal);
+        $_post['payeeDefaultAmount'] = $totalVATAmount;
         $_post['localCurrencyID'] = $masterData->companyLocalCurrencyID;
         $_post['localCurrencyER'] = $masterData->companyLocalCurrencyER;
 
@@ -2147,6 +2154,8 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
         }
+
+        
 
         return true;
     }

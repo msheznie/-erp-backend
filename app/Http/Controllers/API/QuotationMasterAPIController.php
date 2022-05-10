@@ -2052,6 +2052,11 @@ class QuotationMasterAPIController extends AppBaseController
             //     }
             // }.
             foreach ($uniqueData as $key => $value) {
+                
+                if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
+                     return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
+                }
+
                 if (isset($value['item_code'])) {
                     $validateHeaderCode = true;
                 }
@@ -2083,7 +2088,6 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
 
-
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
             $uploadSerialNumber = array_filter(collect($record)->toArray());
@@ -2097,9 +2101,10 @@ class QuotationMasterAPIController extends AppBaseController
 
             $finalArray = [];
             $count = 0;
+            $uniqueData =  collect($uniqueData)->unique('item_code')->toArray();
 
-            foreach($record as $finalRecords) {
-                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  is_numeric($finalRecords['discount'])) {
+            foreach($uniqueData as $finalRecords) {
+                 if((is_numeric($finalRecords['qty']) && $finalRecords['qty'] != 0)  &&  (is_numeric($finalRecords['sales_price']) && $finalRecords['sales_price'] != 0) &&  (is_numeric($finalRecords['discount']) && $finalRecords['discount'] < $finalRecords['sales_price']) && (is_numeric($finalRecords['vat']) && $finalRecords['vat'] <= 100)) {
                      $exists_item = QuotationDetails::where('quotationMasterID',$masterData->quotationMasterID)->where('itemSystemCode',$finalRecords['item_code'])->first();
  
                      if(!$exists_item) {
@@ -2110,7 +2115,6 @@ class QuotationMasterAPIController extends AppBaseController
                 }           
             }
 
-            $finalArray =  collect($finalArray)->unique('item_code')->toArray();
 
 
             if (count($record) > 0) {

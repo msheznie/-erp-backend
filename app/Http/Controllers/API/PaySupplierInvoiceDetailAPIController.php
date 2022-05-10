@@ -20,6 +20,7 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\EmployeeLedger;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceDetail;
@@ -320,32 +321,62 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
-            if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 2]);
-            } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 1]);
+        if ($payMaster->invoiceType == 6) {
+            if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+                if ($totalPaidAmount == 0) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 0]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 1]);
+                }
+            } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
+                if ($totalPaidAmount == 0) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 0]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 1]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
+                    $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                }
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
-            if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 2]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 1]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 2]);
+        } else {
+            if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+                if ($totalPaidAmount == 0) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 0]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 1]);
+                }
+            } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
+                if ($totalPaidAmount == 0) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 0]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 1]);
+                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
+                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                        ->update(['fullyInvoice' => 2]);
+                }
             }
         }
+
 
         return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
     }
@@ -399,6 +430,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
 
+            $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
+
+            if (empty($payMaster)) {
+                return $this->sendError('Payment voucher not found');
+            }
+
             if ($paySupplierInvoiceDetail->matchingDocID == 0) {
                 if ($paySupplierInvoiceDetail->payment_master && $paySupplierInvoiceDetail->payment_master->confirmedYN) {
                     return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
@@ -439,32 +476,62 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
 
 
-            if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
-                if ($totalPaidAmount == 0) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
-                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
-                } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+            if ($payMaster->invoiceType == 6) {
+                if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+                    if ($totalPaidAmount == 0) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                    }
+                } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
+                    if ($totalPaidAmount == 0) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
+                        $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    }
                 }
-            } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
-                if ($totalPaidAmount == 0) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
-                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
-                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
-                } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
-                    $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+            } else {
+                if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+                    if ($totalPaidAmount == 0) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                    }
+                } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
+                    if ($totalPaidAmount == 0) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
+                    } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
+                        $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                            ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
+                    }
                 }
             }
+
 
             DB::commit();
             return $this->sendResponse($id, 'Pay Supplier Invoice Detail deleted successfully');
@@ -563,10 +630,20 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if (empty($payMaster)) {
             return $this->sendError('Payment voucher not found');
         }
-
+        
         if ($payMaster->confirmedYN) {
             return $this->sendError('You cannot add Supplier PO Payment Detail, this document already confirmed', 500);
         }
+
+        if ($payMaster->invoiceType == 6) {
+            $result = $this->addEmployeePaymentDetail($user, $payMaster, $input);
+            if (!$result['status']) {
+                $this->sendError("Error. Please check again.", 500, $result['message']);
+            } else {
+                return $this->sendResponse('', 'Payment details saved successfully');
+            }
+        }
+
         $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
 
         DB::beginTransaction();
@@ -688,6 +765,104 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
 
+    }
+
+    public function addEmployeePaymentDetail($user, $payMaster, $input)
+    {
+        $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
+
+        DB::beginTransaction();
+        try {
+            $finalError = array(
+                'gl_amount_not_matching' => array(),
+                'already_exist' => array(),
+                'more_booked' => array(),
+            );
+
+            $finalError_ap = array(
+                'advance_payment_paid' => array(),
+            );
+
+            $error_count = 0;
+            $error_count_ap = 0;
+            foreach ($input['detailTable'] as $item) {
+                if ($item['isChecked']) {
+                    $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $item['addedDocumentSystemID'])->where('companySystemID', $item['companySystemID'])->where('documentSystemCode', $item['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+
+                    if ($glCheck) {
+                        if (round($glCheck->SumOfdocumentLocalAmount) != 0 || round($glCheck->SumOfdocumentRptAmount) != 0) {
+                            array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                            $error_count++;
+                        }
+                    } else {
+                        array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                        $error_count++;
+                    }
+
+                    $payDetailExistSameItem = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input["PayMasterAutoId"])
+                        ->where('apAutoID', $item['id'])
+                        ->first();
+
+                    if ($payDetailExistSameItem) {
+                        array_push($finalError['already_exist'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                        $error_count++;
+                    }
+
+                    $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                        ->where('apAutoID', $item['id'])
+                        ->first();
+
+                    if ($item['addedDocumentSystemID'] == 11) {
+                        //supplier invoice
+                        if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+                            array_push($finalError['more_booked'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                            $error_count++;
+                        }
+                    } else if ($item['addedDocumentSystemID'] == 15) {
+                        //debit note
+                        if ($payDetailMoreBooked->supplierPaymentAmount < $item['supplierInvoiceAmount']) {
+                            array_push($finalError['more_booked'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                            $error_count++;
+                        }
+                    }
+                }
+            }
+
+            $confirm_error = array('type' => 'gl_amount_not_matching', 'data' => $finalError);
+            if ($error_count > 0) {
+                return ['status' => false, 'message' => $confirm_error];
+            }
+
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+                    $tempArray = $new;
+                    $tempArray["apAutoID"] = $new["id"];
+                    $tempArray["supplierPaymentCurrencyID"] = $payMaster["BPVbankCurrency"];
+                    $tempArray["supplierPaymentER"] = $payMaster["BPVbankCurrencyER"];
+                    $tempArray["paymentSupplierDefaultAmount"] = 0;
+                    $tempArray["paymentLocalAmount"] = 0;
+                    $tempArray["paymentComRptAmount"] = 0;
+                    $tempArray["supplierPaymentAmount"] = 0;
+                    $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
+                    $tempArray['createdPcID'] = gethostname();
+                    $tempArray['createdUserID'] = $user->employee['empID'];
+                    $tempArray['createdUserSystemID'] = $user->employee['employeeSystemID'];
+                    unset($tempArray['isChecked']);
+                    unset($tempArray['DecimalPlaces']);
+                    unset($tempArray['CurrencyCode']);
+                    if ($tempArray) {
+                        $paySupplierInvoiceDetails = $this->paySupplierInvoiceDetailRepository->create($tempArray);
+                        $updatePayment = EmployeeLedger::find($new['id'])
+                            ->update(['selectedToPaymentInv' => -1]);
+                    }
+                }
+            }
+            DB::commit();
+            return ['status' => true]; 
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return ['status' => false, 'message' => $exception->getMessage()]; 
+        }
     }
 
     function getPOPaymentDetails(Request $request)
