@@ -414,7 +414,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                             $x++;
                         }
                     }else{
-                        return ['success' => false, 'message' => 'Attlist one label and one value is required'];
+                        return ['success' => false, 'message' => 'At least one score configuration is required'];
                     }
                 }
 
@@ -538,6 +538,18 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $result = EvaluationCriteriaDetails::where('id',$input['id'])->update($data);
 
             if($result){
+
+
+
+
+                if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
+                    $config = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->first();
+                    if(empty($config)){
+                        return ['success' => false, 'message' => 'At least one score configuration is required'];
+                    }
+                }
+
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated'];
             }
