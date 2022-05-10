@@ -847,7 +847,7 @@ class SRMService
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
             }]);
-        }])->get()
+        }, 'appointment.attachment'])->get()
             ->transform(function ($data){
                 return $this->appointmentDetailFormat($data);
             });
@@ -952,8 +952,7 @@ class SRMService
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
             'item_id' => $data['item_id'],
-
-
+            'attachment' => $data['appointment']['attachment']
         ];
     }
 
