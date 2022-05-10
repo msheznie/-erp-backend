@@ -1512,7 +1512,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
 
             if (count($formatChk2) > 0) {
-                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['department']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
+                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
                     return $this->sendError('Uploaded data format is invalid', 500);
                 }
             }
@@ -1540,7 +1540,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
 
                     if (isset($val['gl_account']) && !is_null($val['gl_account'])) {
-                        $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
+                        $department = isset($val['department']) ? $val['department'] : '-';
+                        $segmentData = SegmentMaster::where('ServiceLineDes', $department)
                             ->where('companySystemID', $jvMasterData->companySystemID)
                             ->first();
                         if ($segmentData) {
