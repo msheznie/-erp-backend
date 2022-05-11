@@ -16,7 +16,7 @@ class SupplierInvoice
         // update master table
         $bookInvSuppMaster = BookInvSuppMaster::with(['supplier'])->find($id);
 
-        if(!empty($bookInvSuppMaster) && $bookInvSuppMaster->documentType == 1) {
+        if(!empty($bookInvSuppMaster) && ($bookInvSuppMaster->documentType == 1 || $bookInvSuppMaster->documentType == 4)) {
 
             $total = DirectInvoiceDetails::where('directInvoiceAutoID', $bookInvSuppMaster->bookingSuppMasInvAutoID)
                 ->selectRaw("SUM(DIAmount) as DIAmount,
