@@ -424,6 +424,7 @@ class SupplierMasterRefferedBack extends Model
         'isCriticalYN',
         'companyLinkedToSystemID',
         'companyLinkedTo',
+        'linkCustomerID',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',

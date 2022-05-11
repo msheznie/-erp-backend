@@ -315,6 +315,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers');
+        Route::get('getLinkedSupplier', 'CustomerMasterAPIController@getLinkedSupplier');
         Route::get('getChartOfAccountsByCompanyForCustomer', 'CustomerMasterAPIController@getChartOfAccountsByCompanyForCustomer');
         Route::get('getCustomerCatgeoryByCompany', 'CustomerMasterAPIController@getCustomerCatgeoryByCompany');
         Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
