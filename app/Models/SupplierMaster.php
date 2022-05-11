@@ -129,6 +129,8 @@ class SupplierMaster extends Model
         'isCriticalYN',
         'companyLinkedToSystemID',
         'companyLinkedTo',
+        'linkCustomerID',
+        'linkCustomerYN',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
