@@ -1527,7 +1527,7 @@ class SRMService
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
                 $attachmentNameWithExtension = time() . '_DeliveryAppointment.' . $extension;
-                $path = $company->CompanyID . '/PO/' . $appointmentID . $attachmentNameWithExtension;
+                $path = $company->CompanyID . '/PO/' . $appointmentID . '/' . $attachmentNameWithExtension;
                 Storage::disk('s3')->put($path, $decodeFile);
 
                 $att['companySystemID'] = $companySystemID;
