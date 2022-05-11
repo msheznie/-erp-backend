@@ -98,13 +98,20 @@ class POService
                 $q->where('refferedBackYN', '!=', -1);
                 $q->where('confirmed_yn', 1);
             });
-        }, 'detail.unit', 'detail' => function ($query) {
+        }, 'detail.unit', 'detail' => function ($query) use($searchText){
             $query->where('goodsRecievedYN', '!=', 2);
+            $query->when(!empty($searchText), function ($query) use($searchText){
+                $searchText = str_replace("\\", "\\\\", $searchText);
+                $query->where('itemPrimaryCode', 'LIKE', "%{$searchText}%");
+                $query->orWhere('itemDescription', 'LIKE', "%{$searchText}%");
+            });
         }])->whereHas('detail', function ($q) use($searchText){
-            if(!empty($searchText)){
+            $q->where('goodsRecievedYN', '!=', 2);
+            $q->when(!empty($searchText), function ($q) use($searchText){
+                $searchText = str_replace("\\", "\\\\", $searchText);
                 $q->where('itemPrimaryCode', 'LIKE', "%{$searchText}%");
                 $q->orWhere('itemDescription', 'LIKE', "%{$searchText}%");
-                }
+            });
             })
             ->select('purchaseOrderID', 'purchaseOrderCode')
             ->where('approved', -1)
