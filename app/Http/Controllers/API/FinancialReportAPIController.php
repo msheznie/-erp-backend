@@ -1971,8 +1971,8 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'trial_balance_details';
-                $path = 'general-ledger/report/trial_balance_details/excel/';
+                $fileName = 'tax_details';
+                $path = 'general-ledger/report/tax_details/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
                 if($basePath == '')
