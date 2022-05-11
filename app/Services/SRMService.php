@@ -1510,7 +1510,6 @@ class SRMService
         $description = $request->input('extra.description');
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 106)->first();
-        Log::info($request);
         try {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
@@ -1527,8 +1526,8 @@ class SRMService
                 }
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
-                $attchNameWithExtenstion = time() . '_DeliveryAppointment.' . $extension;
-                $path = $companySystemID . '/DeliveryAppointment/' . $attchNameWithExtenstion;
+                $attachmentNameWithExtension = time() . '_DeliveryAppointment.' . $extension;
+                $path = $company->CompanyID . '/PO/' . $appointmentID . $attachmentNameWithExtension;
                 Storage::disk('s3')->put($path, $decodeFile);
 
                 $att['companySystemID'] = $companySystemID;
@@ -1539,7 +1538,8 @@ class SRMService
                 $att['attachmentDescription'] = $description;
                 $att['path'] = $path;
                 $att['originalFileName'] = $attachment['originalFileName'];
-                $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_DeliveryAppointment.' . $extension;
+                $att['attachmentType'] = $extension;
                 $att['sizeInKbs'] = $attachment['sizeInKbs'];
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
