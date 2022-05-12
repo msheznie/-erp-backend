@@ -11,7 +11,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\hrms\attendance\ForgotToPunchInService;
-use App\Services\hrms\attendance\ForgotToPunchOutService;
 
 class ForgotToPunchInCompany implements ShouldQueue
 {
@@ -20,14 +19,13 @@ class ForgotToPunchInCompany implements ShouldQueue
     public $tenantDb;
     public $companyId;
     public $companyName;
-    public $isPunchOut;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($tenantDb, $companyId, $companyName, $isPunchOut=false)
+    public function __construct($tenantDb, $companyId, $companyName)
     {        
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -38,7 +36,6 @@ class ForgotToPunchInCompany implements ShouldQueue
         $this->tenantDb = $tenantDb;
         $this->companyId = $companyId;
         $this->companyName = $companyName;
-        $this->isPunchOut = $isPunchOut;
     }
 
     /**
@@ -52,22 +49,13 @@ class ForgotToPunchInCompany implements ShouldQueue
              
         CommonJobService::db_switch( $this->tenantDb );
 
-        $logSlug = ($this->isPunchOut)? "punch out": "";
-
-        Log::info("{$logSlug} job process started on {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info("Job process started on {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $now = Carbon::now();
         $date = $now->format('Y-m-d');
         $time = $now->format('H:i:s');        
         
-        if($this->isPunchOut){
-            $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');
-            $job = new ForgotToPunchOutService($this->companyId, $date);
-        }
-        else{
-            $job = new ForgotToPunchInService($this->companyId, $date, $time);
-        }
-        
+        $job = new ForgotToPunchInService($this->companyId, $date, $time);
         $job->run();
     }
 }
