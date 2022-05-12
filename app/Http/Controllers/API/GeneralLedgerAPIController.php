@@ -1012,7 +1012,7 @@ class GeneralLedgerAPIController extends AppBaseController
                   
                         $data[$i][$j]['credit'] =  round($general_ledger->credit,$general_ledger->DecimalPlaces)*-1;
                         $data[$i][$j]['debit'] =  round($general_ledger->debit,$general_ledger->DecimalPlaces);
-                        $data[$i][$j]['total'] =  round(($general_ledger->debit - $general_ledger->credit),$general_ledger->DecimalPlaces);
+                        $data[$i][$j]['total'] =  round(($general_ledger->debit - ($general_ledger->credit*-1)),$general_ledger->DecimalPlaces);
                         $data[$i][$j]['decimal'] =  ($general_ledger->DecimalPlaces);
                         $tot_credit += $general_ledger->credit;
                         $tot_debit += $general_ledger->debit;
