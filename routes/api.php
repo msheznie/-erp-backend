@@ -2598,6 +2598,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('loadTenderBoqItems', 'TenderBoqItemsAPIController@loadTenderBoqItems');
         Route::post('addTenderBoqItems', 'TenderBoqItemsAPIController@addTenderBoqItems');
         Route::post('updateTenderBoqItem', 'TenderBoqItemsAPIController@updateTenderBoqItem');
+        Route::get('downloadTenderBoqItemUploadTemplate', 'TenderBoqItemsAPIController@downloadTenderBoqItemUploadTemplate');
         Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem');
         Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload');
         Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications');
