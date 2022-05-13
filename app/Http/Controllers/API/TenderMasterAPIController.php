@@ -706,6 +706,7 @@ class TenderMasterAPIController extends AppBaseController
             'tender_type_id.required' => 'Type is required.',
             'currency_id.required' => 'Currency is required.',
             'envelop_type_id.required' => 'Envelop Type is required.',
+            'evaluation_type_id.required' => 'Evaluation Type is required.',
             'estimated_value.required' => 'Estimated Value is required.',
             'allocated_budget.required' => 'Allocated Budget is required.',
             'tender_document_fee.required' => 'Tender Document Fee is required.',
@@ -726,6 +727,7 @@ class TenderMasterAPIController extends AppBaseController
             'tender_type_id' => 'required',
             'currency_id' => 'required',
             'envelop_type_id' => 'required',
+            'evaluation_type_id' => 'required',
             'estimated_value' => 'required',
             'allocated_budget' => 'required',
             'tender_document_fee' => 'required',
@@ -743,6 +745,10 @@ class TenderMasterAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages()];
+        }
+
+        if($input['evaluation_type_id'] == 0){
+            return ['status' => false, 'message' => 'Evaluation Type is required.'];
         }
 
         return ['status' => true, 'message' => "success"];
