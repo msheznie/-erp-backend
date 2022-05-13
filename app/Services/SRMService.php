@@ -1544,7 +1544,7 @@ class SRMService
                 $att['isUploaded'] = 1;
                 $result = DocumentAttachments::create($att);
                 if ($result) {
-                    return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
                 }
             } else {
                 Log::info("NO ATTACHMENT");
@@ -1659,7 +1659,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Delivery Appointment successfully deleted',
+            'message' => 'Attachment successfully deleted',
             'data' => $data
         ];
     }
