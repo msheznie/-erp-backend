@@ -1903,6 +1903,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
         Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
         Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport');
+        Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generateSegmentGlReportExcel');
 
         Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
 
