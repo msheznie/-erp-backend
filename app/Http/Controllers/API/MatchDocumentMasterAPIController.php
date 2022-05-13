@@ -351,6 +351,86 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['approved'] = $debitNoteMaster->approved;
                 $input['approvedDate'] = $debitNoteMaster->approvedDate;
             }
+            if ($input['matchType'] == 3) {
+
+                $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
+
+                if (empty($paySupplierInvoiceMaster)) {
+                    return $this->sendError('Pay Supplier Invoice Master not found');
+                }
+
+                $existCheck = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('matchingConfirmedYN', 0)
+                    ->where('documentSystemID',$paySupplierInvoiceMaster->documentSystemID)
+                    ->first();
+
+                if($existCheck){
+                    return $this->sendError('A matching document for the selected advanced payment is created and not confirmed. Please confirm the previously created document and try again.', 500);
+                }
+
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+
+                if ($glCheck) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
+                        return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                    }
+                } else {
+                    return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
+                }
+
+                //when adding a new matching, checking whether advance payment more than the document value
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                $machAmount = 0;
+                if ($matchedAmount) {
+                    $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                }
+
+                if ($paySupplierInvoiceMaster->payAmountSuppTrans == $machAmount || $machAmount > $paySupplierInvoiceMaster->payAmountSuppTrans) {
+                    return $this->sendError('Advance payment amount is more than document value, please check again', 500);
+                }
+
+                $input['matchingType'] = 'DP';
+                $input['PayMasterAutoId'] = $input['paymentAutoID'];
+                $input['documentSystemID'] = $paySupplierInvoiceMaster->documentSystemID;
+                $input['documentID'] = $paySupplierInvoiceMaster->documentID;
+                $input['BPVcode'] = $paySupplierInvoiceMaster->BPVcode;
+                $input['BPVdate'] = $paySupplierInvoiceMaster->BPVdate;
+                $input['BPVNarration'] = $paySupplierInvoiceMaster->BPVNarration;
+                $input['directPaymentPayeeSelectEmp'] = $paySupplierInvoiceMaster->directPaymentPayeeSelectEmp;
+                $input['directPaymentPayee'] = $paySupplierInvoiceMaster->directPaymentPayee;
+                $input['directPayeeCurrency'] = $paySupplierInvoiceMaster->directPayeeCurrency;
+                $input['BPVsupplierID'] = $paySupplierInvoiceMaster->BPVsupplierID;
+                $input['supplierGLCodeSystemID'] = $paySupplierInvoiceMaster->supplierGLCodeSystemID;
+                $input['supplierGLCode'] = $paySupplierInvoiceMaster->supplierGLCode;
+                $input['supplierTransCurrencyID'] = $paySupplierInvoiceMaster->supplierTransCurrencyID;
+                $input['supplierTransCurrencyER'] = $paySupplierInvoiceMaster->supplierTransCurrencyER;
+                $input['supplierDefCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
+                $input['supplierDefCurrencyER'] = $paySupplierInvoiceMaster->supplierDefCurrencyER;
+                $input['localCurrencyID'] = $paySupplierInvoiceMaster->localCurrencyID;
+                $input['localCurrencyER'] = $paySupplierInvoiceMaster->localCurrencyER;
+                $input['companyRptCurrencyID'] = $paySupplierInvoiceMaster->companyRptCurrencyID;
+                $input['companyRptCurrencyER'] = $paySupplierInvoiceMaster->companyRptCurrencyER;
+                $input['payAmountBank'] = $paySupplierInvoiceMaster->payAmountBank;
+                $input['payAmountSuppTrans'] = $paySupplierInvoiceMaster->payAmountSuppTrans;
+                $input['payAmountSuppDef'] = $paySupplierInvoiceMaster->payAmountSuppDef;
+                $input['suppAmountDocTotal'] = $paySupplierInvoiceMaster->suppAmountDocTotal;
+                $input['payAmountCompLocal'] = $paySupplierInvoiceMaster->payAmountCompLocal;
+                $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
+                $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
+                $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
+                $input['matchingAmount'] = 0;
+
+                $input['confirmedYN'] = $paySupplierInvoiceMaster->confirmedYN;
+                $input['confirmedByEmpID'] = $paySupplierInvoiceMaster->confirmedByEmpID;
+                $input['confirmedByEmpSystemID'] = $paySupplierInvoiceMaster->confirmedByEmpSystemID;
+                $input['confirmedByName'] = $paySupplierInvoiceMaster->confirmedByName;
+                $input['confirmedDate'] = $paySupplierInvoiceMaster->confirmedDate;
+                $input['approved'] = $paySupplierInvoiceMaster->approved;
+                $input['approvedDate'] = $paySupplierInvoiceMaster->approvedDate;
+
+            }
         }
         elseif ($input['tempType'] == 'RVM') {
 
