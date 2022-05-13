@@ -36,6 +36,7 @@ use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
+use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -194,13 +195,14 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
+        $company = Company::where('companySystemID', $slotCompanyId)->first();
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');
         $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
-
+        $attachment = $request->input('extra.attachment');
         $lastSerial = Appointment::orderBy('serial_no', 'desc')
             ->first();
 
@@ -248,6 +250,11 @@ class SRMService
                     $data_details['qty'] = $val['qty'];
                     AppointmentDetails::create($data_details);
                 }
+            }
+
+            // Add Attachments
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $slotCompanyId, $company, $document, $appointment->id);
             }
 
             DB::commit();
@@ -841,7 +848,7 @@ class SRMService
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
             }]);
-        }])->get()
+        }, 'appointment.attachment'])->get()
             ->transform(function ($data){
                 return $this->appointmentDetailFormat($data);
             });
@@ -946,8 +953,7 @@ class SRMService
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
             'item_id' => $data['item_id'],
-
-
+            'attachment' => $data['appointment']['attachment']
         ];
     }
 
@@ -1496,6 +1502,62 @@ class SRMService
 
     }
 
+    public function uploadAppointmentAttachment($request)
+    {
+        $attachment = $request->input('extra.attachment');
+        $companySystemID = $request->input('extra.slotCompanyId');
+        $appointmentID = $request->input('extra.appointmentID');
+        $description = $request->input('extra.description');
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 106)->first();
+        try {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attachmentNameWithExtension = time() . '_DeliveryAppointment.' . $extension;
+                $path = $company->CompanyID . '/PO/' . $appointmentID . '/' . $attachmentNameWithExtension;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $appointmentID;
+                $att['attachmentDescription'] = $description;
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_DeliveryAppointment.' . $extension;
+                $att['attachmentType'] = $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                $result = DocumentAttachments::create($att);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                }
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        }catch (\Exception $e){
+            return [
+                'success'   => false,
+                'message'   => $e,
+                'data'      => ''
+            ];
+        }
+    }
+
     public function updatePreBid(Request $request, $prebidId)
     {
         $input = $request->all();
@@ -1571,6 +1633,35 @@ class SRMService
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+    }
+
+    public function getDeliveryAppointmentAttachment($request)
+    {
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $data = DocumentAttachments::where('documentSystemID', 106)
+            ->where('documentSystemCode', $appointmentID)
+            ->get();
+
+        return [
+            'success' => true,
+            'message' => 'Delivery Appointment successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function removeDeliveryAppointmentAttachment($request)
+    {
+        $attachmentID = $request->input('extra.attachmentID');
+
+        $data = DocumentAttachments::where('attachmentID', $attachmentID)
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment successfully deleted',
+            'data' => $data
+        ];
     }
 
 }
