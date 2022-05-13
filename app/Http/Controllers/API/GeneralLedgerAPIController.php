@@ -946,11 +946,24 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $input = $request->all();
 
-
-        $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $type = $request->currency;
+        if(is_array($type))
+        {
+            $type = $type[0];
+        }
 
-
+        if($type == 1)
+        {
+            $cur = 'documentLocalCurrencyID';
+            $amount = 'documentLocalAmount';
+        }
+        else
+        {   
+            $amount = 'documentRptAmount';
+            $cur = 'documentRptCurrencyID';
+        }
         $entries = ChartOfAccount::where('controlAccountsSystemID',2)->get();
 
         $data = [];
@@ -963,41 +976,77 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $segments = SegmentMaster::get();
 
+
+
+        $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
+        $seg_info = SegmentMaster::pluck('serviceLineSystemID');
+
+
+        $collection =  DB::table('erp_generalledger')
+        ->whereIn('serviceLineSystemID',$seg_info)
+        ->whereIn('chartOfAccountSystemID',$char_ac)
+        ->whereBetween('documentDate', [$fromDate, $toDate])
+         ->get();
+
        
+
         foreach($entries as $entry)
         {
-               
 
-                $data[$i]['glAccountId'] =  $entry->AccountDescription;
+           
+
+
+                $data[$i]['glAccountId'] =  $entry->AccountDescription.' - '.$entry->AccountCode;
                 $j = 0;
                 $tot_credit = 0;
                 $tot_debit = 0;
                 $tot_total = 0;
                 foreach($segments as $segment)
                 {
-
+                    
                   
                     $segment_id = $segment->serviceLineSystemID;
                     $segment_name = $segment->ServiceLineDes;
                    
                     $data[$i][$j]['segement_id'] =  $segment_name;
 
-                    $general_ledger = DB::table('erp_generalledger')
-                                     ->where('serviceLineSystemID',$segment_id)
-                                     ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
-                                     ->whereBetween('documentDate', [$fromDate, $toDate])
-                                    ->selectRaw("sum(case when documentLocalAmount>0 then documentLocalAmount else 0 end) as credit,
-                                    sum(case when documentLocalAmount<0 then documentLocalAmount else 0 end) as debit")
-                                     ->first();
-                  
-                        $data[$i][$j]['credit'] =  round($general_ledger->credit,2);
-                        $data[$i][$j]['debit'] =  round($general_ledger->debit,2);
-                        $data[$i][$j]['total'] =  round(($general_ledger->debit - $general_ledger->credit),2);
-                        $tot_credit += $general_ledger->credit;
-                        $tot_debit += $general_ledger->debit;
-                        $tot_total += ($general_ledger->debit - $general_ledger->credit);
+
+                    if($collection->contains('serviceLineSystemID',$segment_id) && $collection->contains('chartOfAccountSystemID',$entry->chartOfAccountSystemID))
+                        {
+
+                            $general_ledger = DB::table('erp_generalledger')
+                            ->join('currencymaster', $cur, '=', 'currencyID')
+                            ->where('serviceLineSystemID',$segment_id)
+                            ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
+                            ->whereBetween('documentDate', [$fromDate, $toDate])
+                            ->selectRaw("sum(case when $amount<0 then $amount else 0 end) as credit,
+                            sum(case when $amount>0 then $amount else 0 end) as debit, DecimalPlaces")
+                             ->first();
+
+                             $credit = round($general_ledger->credit,$general_ledger->DecimalPlaces)*-1;
+                             $debit = round($general_ledger->debit,$general_ledger->DecimalPlaces);
+                             $total = round(($general_ledger->debit - ($general_ledger->credit*-1)),$general_ledger->DecimalPlaces);
+                             $decimal = ($general_ledger->DecimalPlaces);
+
+
+                        }
+                    else
+                        {
+                            $credit = 0;
+                            $debit = 0;
+                            $total = 0;
+                            $decimal = 0;
+                        }
+
+
+                        $data[$i][$j]['credit'] =  $credit;
+                        $data[$i][$j]['debit'] =  $debit;
+                        $data[$i][$j]['total'] =  $total;
+                        $data[$i][$j]['decimal'] =  $decimal;
+                        $tot_credit += $credit;
+                        $tot_debit += $debit;
+                        $tot_total += ($debit - $credit);
                         $j++;   
-                  
 
                 }
                 

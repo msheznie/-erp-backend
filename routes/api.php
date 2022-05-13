@@ -177,6 +177,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
         Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
+
+        Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
+        Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData');
+
         Route::resource('item/assigneds', 'ItemAssignedAPIController');
         Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
         Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
@@ -315,6 +319,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier');
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+        Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers');
+        Route::get('getLinkedSupplier', 'CustomerMasterAPIController@getLinkedSupplier');
         Route::get('getChartOfAccountsByCompanyForCustomer', 'CustomerMasterAPIController@getChartOfAccountsByCompanyForCustomer');
         Route::get('getCustomerCatgeoryByCompany', 'CustomerMasterAPIController@getCustomerCatgeoryByCompany');
         Route::get('getSelectedCompanyReportingCurrencyData', 'CustomerMasterAPIController@getSelectedCompanyReportingCurrencyData');
@@ -2861,7 +2867,7 @@ Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 /* Below two request must be always separated from tenant, auth middlewares */
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-
+Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
 
 Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
 

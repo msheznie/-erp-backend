@@ -7,27 +7,77 @@ use App\Models\CompanyJobs;
 use Illuminate\Http\Request;
 use App\helper\CommonJobService;
 use App\Jobs\AttendancePullingJob;
+use Illuminate\Support\Facades\DB;
+use App\helper\NotificationService;
+use App\Jobs\ForgotToPunchInTenant;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\AppBaseController;
-use App\Services\hrms\attendance\AttendanceDataPullingService;
+use App\Console\Commands\ForgotToPunchInScheduler;
 use App\Services\hrms\attendance\ForgotToPunchInService;
+use App\Services\hrms\attendance\ForgotToPunchOutService;
+use App\Services\hrms\attendance\AttendanceDataPullingService;
+use App\Services\hrms\attendance\AttendanceDailySummaryService;
+use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
+use Exception;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
-    function job_debug(Request $request){
+
+    function attendance_notification_debug(Request $request){
         $data = [];
+
+        $tenantId = $request->input('tenantId');
         $scenarioId = $request->input('scenarioId');
         $companyId = $request->input('companyId');
         $date = $request->input('date');
         $time = $request->input('time');
-    
-        $job = new ForgotToPunchInService($companyId, $date, $time);
+
+        $this->loadTenantDb($tenantId);
+
+        $job = null;
+        switch($scenarioId){
+            case 15:                
+                $job = new ForgotToPunchInService($companyId, $date, $time);
+            break;
+
+            case 15.1:
+                $date = Carbon::parse($date)->subDay()->format('Y-m-d');
+                $job = new ForgotToPunchOutService($companyId, $date);
+            break;
+
+            case 16:
+                $date = Carbon::parse($date)->subDay()->format('Y-m-d');
+                $job = new AttendanceDailySummaryService($companyId, $date);
+            break;
+
+            case 17:
+                $job = new AttendanceWeeklySummaryService($companyId, $date);
+            break;
+                throw new Exception("scenario id is not valid");
+            default:
+                
+        } 
+       
         $job->run();
 
-        $msg = "Job debugging";
+        $msg = "Service started";
         return $this->sendResponse($data, $msg);
     }
     
+    function loadTenantDb($id){
+        if(empty($id)){
+            throw new Exception("tenant id is required");
+        }
+
+        $db = CommonJobService::get_tenant_db($id);
+        
+        if(empty($db)){
+            throw new Exception("database not found");
+        }
+
+        CommonJobService::db_switch($db);
+    }
+
     public function attendanceClockIn(Request $request)
     {
         

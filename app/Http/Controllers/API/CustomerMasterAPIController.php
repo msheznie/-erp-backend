@@ -309,6 +309,22 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getApprovedCustomers(Request $request){
+
+        $customers = CustomerMaster::where('primaryCompanySystemID', $request['companySystemID'])->where('approvedYN',1)->get();
+
+        return $this->sendResponse($customers, 'Record retrieved successfully');
+
+    }
+
+    public function getLinkedSupplier(Request $request){
+
+        $supplier = SupplierMaster::where('primaryCompanySystemID', $request['selectedCompanyId'])->where('linkCustomerID',$request['customerID'])->where('linkCustomerYN',1)->first();
+
+        return $this->sendResponse($supplier, 'Record retrieved successfully');
+
+    }
+
     public function getChartOfAccountsByCompanyForCustomer(Request $request)
     {
         $input = $request->all();

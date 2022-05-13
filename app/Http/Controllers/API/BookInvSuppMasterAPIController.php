@@ -754,7 +754,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
 
 
-            if ($input['documentType'] == 1) {
+            if ($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $vatTrans = TaxService::processDirectSupplierInvoiceVAT($input['bookingSuppMasInvAutoID'], $input['documentSystemID']);
                 $input['retentionVatAmount'] = $vatTrans['masterVATTrans'] *  $input['retentionPercentage'] / 100;
             }
@@ -786,7 +786,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             $checkItems = 0;
-            if ($input['documentType'] == 1) {
+            if ($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
                 if ($checkItems == 0) {
