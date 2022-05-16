@@ -419,6 +419,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['payAmountCompLocal'] = $paySupplierInvoiceMaster->payAmountCompLocal;
                 $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
                 $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
+                $input['matchingOption'] = $input['matchingOptionID'];
                 $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
                 $input['matchingAmount'] = 0;
 

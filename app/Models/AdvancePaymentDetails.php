@@ -156,6 +156,7 @@ class AdvancePaymentDetails extends Model
     public $fillable = [
         'PayMasterAutoId',
         'poAdvPaymentID',
+        'matchingDocID',
         'companySystemID',
         'companyID',
         'purchaseOrderID',

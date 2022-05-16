@@ -13,6 +13,7 @@ use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Repositories\AdvancePaymentDetailsRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -31,12 +32,14 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     /** @var  AdvancePaymentDetailsRepository */
     private $advancePaymentDetailsRepository;
     private $paySupplierInvoiceMasterRepository;
+    private $matchDocumentMasterRepository;
     private $userRepository;
 
-    public function __construct(AdvancePaymentDetailsRepository $advancePaymentDetailsRepo, UserRepository $userRepo, PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
+    public function __construct(AdvancePaymentDetailsRepository $advancePaymentDetailsRepo, UserRepository $userRepo, PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, MatchDocumentMasterRepository $matchDocumentMasterRepository)
     {
         $this->advancePaymentDetailsRepository = $advancePaymentDetailsRepo;
         $this->userRepository = $userRepo;
+        $this->matchDocumentMasterRepository = $matchDocumentMasterRepository;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
     }
 
@@ -473,6 +476,13 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         return $this->sendResponse($advancePaymentDetails, trans('custom.save', ['attribute' => trans('custom.payment_details')]));
     }
 
+    public function getMatchingADVPaymentDetails(Request $request)
+    {
+        $advancePaymentDetails = $this->advancePaymentDetailsRepository->with('purchaseorder_by')->findWhere(['matchingDocID' => $request->matchingDocID]);
+        return $this->sendResponse($advancePaymentDetails, trans('custom.save', ['attribute' => trans('custom.payment_details')]));
+    }
+
+
     public function addADVPaymentDetail(Request $request)
     {
         $input = $request->all();
@@ -593,6 +603,143 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
                         if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
                              PoAdvancePayment::find($new['poAdvPaymentID'])
+                                ->update(['fullyPaid' => 0, 'selectedToPayment' => -1]);
+                        }
+
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function addADVPaymentDetailForDirectPay(Request $request)
+    {
+        $input = $request->all();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $documentMaster = $this->matchDocumentMasterRepository->findWithoutFail($request["matchDocumentMasterAutoID"]);
+
+        $payMaster = PaySupplierInvoiceMaster::find($documentMaster->PayMasterAutoId);
+
+        if (empty($payMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
+        }
+
+//        if($payMaster->confirmedYN){
+//            return $this->sendError(trans('custom.you_cannot_add_advance_payment_detail_this_document_already_confirmed'),500);
+//        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+
+                    $finalError = array(
+                        'po_amount_not_matching' => array(),
+                        'adv_payment_already_exist' => array(),
+                    );
+
+                    $error_count = 0;
+
+                    $totalPOAmount = $new['poTotalSupplierTransactionCurrency'];
+                    $advancePaymentAmount = 0;
+                    $supplierInvoAmount = 0;
+
+                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster', function ($query) use ($payMaster) {
+                        $query->where('isAdvancePaymentYN', 0)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('purchaseOrderID', $new["purchaseOrderID"])->first();
+
+                    if ($advancePayment) {
+                        $advancePaymentAmount = $advancePayment->paymentAmount;
+                    }
+
+                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster', function ($query) use ($payMaster) {
+                        $query->whereHas('paysuppdetail')->where('approved', -1)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('companySystemID', $payMaster->companySystemID)->where('purchaseOrderID', $new["purchaseOrderID"])->first();
+
+                    if ($bookInvDet) {
+                        $supplierInvoAmount = $bookInvDet->supplierInvoAmount;
+                    }
+
+                    $balanceAmount = $totalPOAmount - ($advancePaymentAmount + $supplierInvoAmount);
+
+                    if ($balanceAmount < 0) {
+                        array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+
+                    $alreadyExistChk = AdvancePaymentDetails::where('PayMasterAutoId', $documentMaster->PayMasterAutoId)->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
+                    if ($alreadyExistChk) {
+                        array_push($finalError['adv_payment_already_exist'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+
+                    $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError(trans('custom.selected_order_has_been_already_paid_more_than_the_order_amount_please_check_the_payment_status_for_this_order'), 500, $confirm_error);
+                    }
+
+                    $tempArray = $new;
+                    $tempArray["PayMasterAutoId"] = $documentMaster->PayMasterAutoId;
+                    $tempArray["matchingDocID"] = $documentMaster->matchDocumentMasterAutoID;
+                    $tempArray["paymentAmount"] = $new["BalanceAmount"];
+                    $tempArray["supplierTransAmount"] = $tempArray["paymentAmount"];
+                    $tempArray["supplierTransCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierTransER"] = 1;
+                    $tempArray["supplierDefaultCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierDefaultCurrencyER"] = 1;
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], 0);
+
+                    $company = Company::where('companySystemID', $new['companySystemID'])->first();
+
+                    $tempArray["localCurrencyID"] = $company->localCurrencyID;
+                    $tempArray["localER"] = $companyCurrencyConversion['trasToLocER'];
+
+                    $tempArray["comRptCurrencyID"] = $company->reportingCurrency;
+                    $tempArray["comRptER"] = $companyCurrencyConversion['trasToRptER'];
+
+                    unset($tempArray['isChecked']);
+                    unset($tempArray['DecimalPlaces']);
+                    unset($tempArray['CurrencyCode']);
+                    unset($tempArray['currencyID']);
+                    unset($tempArray['supplierID']);
+                    unset($tempArray['reqAmount']);
+                    unset($tempArray['BalanceAmount']);
+                    unset($tempArray['poTotalSupplierTransactionCurrency']);
+
+                    if ($tempArray) {
+                        $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
+                        $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $new["BalanceAmount"]);
+                        AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+
+                        $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
+
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                            ->where('companySystemID', $advancePayment->companySystemID)
+                            ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                            ->where('purchaseOrderID', $advancePayment->poID)
+                            ->first();
+
+                        if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                            PoAdvancePayment::find($new['poAdvPaymentID'])
+                                ->update(['fullyPaid' => 2, 'selectedToPayment' => -1]);
+                        }
+
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                            PoAdvancePayment::find($new['poAdvPaymentID'])
+                                ->update(['fullyPaid' => 1, 'selectedToPayment' => -1]);
+                        }
+
+                        if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                            PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 0, 'selectedToPayment' => -1]);
                         }
 
