@@ -238,4 +238,9 @@ class AdvancePaymentDetails extends Model
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
     }
 
+    public function document_matching()
+    {
+        return $this->belongsTo('App\Models\MatchDocumentMaster', 'matchingDocID', 'matchDocumentMasterAutoID');
+    }
+
 }

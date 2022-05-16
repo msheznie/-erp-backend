@@ -8,6 +8,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
 use App\Models\Company;
+use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -399,6 +400,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
 
+
     public function deleteAllADVPaymentDetail(Request $request)
     {
         $payMasterAutoId = $request->PayMasterAutoId;
@@ -463,6 +465,118 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($payMasterAutoId, trans('custom.delete', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError(trans('custom.error_occurred'));
+        }
+    }
+    public function deleteMatchingADVPaymentItem(Request $request)
+    {
+        $advancePaymentDetailAutoID = $request->advancePaymentDetailAutoID;
+
+        DB::beginTransaction();
+        try {
+
+            /** @var AdvancePaymentDetails $advancePaymentDetails */
+            $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($advancePaymentDetailAutoID);
+            $advancePaymentDetails2 = $this->advancePaymentDetailsRepository->findWithoutFail($advancePaymentDetailAutoID);
+            if (empty($advancePaymentDetails)) {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_details')]));
+            }
+
+            if($advancePaymentDetails->pay_invoice && $advancePaymentDetails->document_matching->matchingConfirmedYN){
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
+            }
+
+
+            $advancePaymentDetails->delete();
+
+            $advancePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID);
+
+            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                ->where('companySystemID', $advancePayment->companySystemID)
+                ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                ->where('purchaseOrderID', $advancePayment->poID)
+                ->first();
+
+            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                    ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
+            }
+
+            if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                    ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
+            }
+
+            if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                    ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
+            }
+
+            DB::commit();
+            return $this->sendResponse($advancePaymentDetailAutoID, trans('custom.delete', ['attribute' => trans('custom.advance_payment_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError(trans('custom.error_occurred'));
+        }
+    }
+
+    public function deleteMatchingAllADVPaymentDetail(Request $request)
+    {
+        $matchDocumentMasterAutoID = $request->matchDocumentMasterAutoID;
+
+        DB::beginTransaction();
+        try {
+
+            $payMaster = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+            if (empty($payMaster)) {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
+            }
+
+            if($payMaster->matchingConfirmedYN){
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
+            }
+
+            /** @var AdvancePaymentDetails $advancePaymentDetails */
+            $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['matchingDocID' => $matchDocumentMasterAutoID]);
+
+            if (empty($advancePaymentDetails)) {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
+            }
+
+            foreach ($advancePaymentDetails as $val) {
+
+                $advancePaymentDetail = $this->advancePaymentDetailsRepository->find($val->advancePaymentDetailAutoID);
+                $advancePaymentDetail->delete();
+
+                $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
+
+                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                    ->where('companySystemID', $advancePayment->companySystemID)
+                    ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                    ->where('purchaseOrderID', $advancePayment->poID)
+                    ->first();
+
+                if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                    PoAdvancePayment::find($val->poAdvPaymentID)
+                        ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
+                }
+
+                if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                    PoAdvancePayment::find($val->poAdvPaymentID)
+                        ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
+                }
+
+                if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                    PoAdvancePayment::find($val->poAdvPaymentID)
+                        ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse($matchDocumentMasterAutoID, trans('custom.delete', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError(trans('custom.error_occurred'));
