@@ -69,6 +69,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -89,12 +90,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 {
     /** @var  PaySupplierInvoiceMasterRepository */
     private $paySupplierInvoiceMasterRepository;
+    private $matchDocumentMasterRepository;
     private $expenseAssetAllocationRepository;
 
 
-    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo)
+    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo, MatchDocumentMasterRepository $matchDocumentMasterRepository)
     {
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
+        $this->matchDocumentMasterRepository = $matchDocumentMasterRepository;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
     }
 
@@ -3064,11 +3067,74 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getADVPaymentForMatchingDocument(Request $request)
+    {
+        $documentMaster = $this->matchDocumentMasterRepository->findWithoutFail($request["matchDocumentMasterAutoID"]);
+
+        $output = DB::select('SELECT
+	erp_purchaseorderadvpayment.poAdvPaymentID,
+	erp_purchaseorderadvpayment.companyID,
+	erp_purchaseorderadvpayment.companySystemID,
+	erp_purchaseorderadvpayment.poID as purchaseOrderID,
+	erp_purchaseorderadvpayment.poCode as purchaseOrderCode,
+	erp_purchaseorderadvpayment.supplierID,
+	erp_purchaseorderadvpayment.narration as comments,
+	erp_purchaseorderadvpayment.currencyID,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+	IFNULL( erp_purchaseorderadvpayment.reqAmount, 0 ) AS reqAmount,
+	( IFNULL( erp_purchaseorderadvpayment.reqAmount, 0 ) - IFNULL( advd.SumOfpaymentAmount, 0 ) ) AS BalanceAmount,
+	erp_purchaseordermaster.supplierTransactionCurrencyID as supplierTransCurrencyID,
+	erp_purchaseordermaster.supplierTransactionER as supplierTransER,
+	erp_purchaseordermaster.supplierDefaultCurrencyID,
+	erp_purchaseordermaster.supplierDefaultER as supplierDefaultCurrencyER, 
+	erp_purchaseordermaster.localCurrencyID,
+	erp_purchaseordermaster.localCurrencyER as localER,
+	erp_purchaseordermaster.companyReportingCurrencyID as comRptCurrencyID,
+	erp_purchaseordermaster.companyReportingER as comRptER,
+	erp_purchaseordermaster.poTotalSupplierTransactionCurrency as poTotalSupplierTransactionCurrency,
+	false as isChecked  
+FROM
+	( ( erp_purchaseorderadvpayment LEFT JOIN currencymaster ON erp_purchaseorderadvpayment.currencyID = currencymaster.currencyID ) INNER JOIN erp_purchaseordermaster ON erp_purchaseorderadvpayment.poID = erp_purchaseordermaster.purchaseOrderID )
+	LEFT JOIN (
+SELECT
+	erp_advancepaymentdetails.poAdvPaymentID,
+	erp_advancepaymentdetails.companyID,
+	erp_advancepaymentdetails.companySystemID,
+	erp_advancepaymentdetails.purchaseOrderID,
+	IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount 
+FROM
+	erp_advancepaymentdetails 
+GROUP BY
+	erp_advancepaymentdetails.poAdvPaymentID,
+	erp_advancepaymentdetails.companySystemID,
+	erp_advancepaymentdetails.purchaseOrderID 
+HAVING
+	( ( ( erp_advancepaymentdetails.purchaseOrderID ) IS NOT NULL ) ) 
+	) AS advd ON ( erp_purchaseorderadvpayment.poID = advd.purchaseOrderID ) 
+	AND ( erp_purchaseorderadvpayment.poAdvPaymentID = advd.poAdvPaymentID ) 
+	AND ( erp_purchaseorderadvpayment.companySystemID = advd.companySystemID ) 
+WHERE
+	(
+	( ( erp_purchaseorderadvpayment.companySystemID ) = ' . $documentMaster->companySystemID . ' ) 
+	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $documentMaster->BPVsupplierID . ' ) 
+	AND ( ( erp_purchaseorderadvpayment.currencyID ) = ' . $documentMaster->supplierTransCurrencyID . ' )
+	AND ( ( erp_purchaseorderadvpayment.selectedToPayment ) = 0 ) 
+    AND ( ( erp_purchaseorderadvpayment.cancelledYN ) = 0 ) 
+	AND ( ( erp_purchaseordermaster.poCancelledYN ) = 0 ) 
+	AND ( ( erp_purchaseordermaster.poConfirmedYN ) = 1 ) 
+	AND ( ( erp_purchaseordermaster.approved ) =- 1 ) 
+	AND ( ( erp_purchaseordermaster.WO_confirmedYN ) = 1 ) 
+	AND ( ( erp_purchaseorderadvpayment.fullyPaid ) <> 2 )
+	);');
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
     public function getPaymentVoucherMatchItems(Request $request)
     {
         $input = $request->all();
 
-        if (!isset($input['BPVsupplierID'])) {
+        if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
             return $this->sendError('Please select a supplier');
         }
 
@@ -3183,6 +3249,48 @@ HAVING
 			currency.DecimalPlaces
 		) > 0
 	)');
+        }
+        elseif ($input['matchType'] == 3) {
+            $invoiceMaster = DB::select('SELECT
+	MASTER.PayMasterAutoId as masterAutoID,
+	MASTER.BPVcode as documentCode,
+	MASTER.BPVdate as docDate,
+	MASTER.payAmountSuppTrans as transAmount,
+	MASTER.BPVsupplierID,
+	currency.CurrencyCode,
+	currency.DecimalPlaces,
+	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+	(
+		MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+	) AS BalanceAmt
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.companySystemID,
+		erp_matchdocumentmaster.BPVcode,
+		COALESCE (
+			SUM(
+				erp_matchdocumentmaster.matchingAmount
+			),
+			0
+		) AS SumOfmatchingAmount
+	FROM
+		erp_matchdocumentmaster
+	GROUP BY
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID
+) AS advd ON (
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+)
+WHERE
+	approved = - 1
+AND invoiceType = 3    
+AND matchInvoice <> 2
+AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
