@@ -166,4 +166,9 @@ class TenderBidClarifications extends Model
     {
         return $this->hasOne('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
     }
+
+    public function attachments()
+    {
+        return $this->hasMany('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+    }
 }
