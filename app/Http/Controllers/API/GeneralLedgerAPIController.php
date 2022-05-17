@@ -46,6 +46,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ChartOfAccount;
+use App\helper\CreateExcel;
 /**
  * Class GeneralLedgerController
  * @package App\Http\Controllers\API
@@ -949,6 +950,51 @@ class GeneralLedgerAPIController extends AppBaseController
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
         $type = $request->currency;
+
+        $details = $this->generateGLReport($fromDate,$toDate,$type);
+
+        return $this->sendResponse($details,'Posting date changed successfully');
+
+        
+    }
+
+    public function generateSegmentGlReportExcel(Request $request)
+    {
+
+        $input = $request->all();
+
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $type = $request->currency;
+        $file_type = $request->type;
+
+        $reportData = $this->generateGLReport($fromDate,$toDate,$type);
+        $deb_cred = array("Debit","Credit","Total");
+        $reportData['deb_cred'] = $deb_cred;
+        $reportData['length'] = ($reportData['j']*3)+3;
+
+        
+        
+        $templateName = "export_report.segment-wise-gL-report";
+        $fileName = 'gl_segment_report';
+        $path = 'general-ledger/report/segment-wise-gL-report/excel/';
+        $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+    }
+
+    public function generateGLReport($fromDate,$toDate,$type)
+    {
+
+
         if(is_array($type))
         {
             $type = $type[0];
@@ -986,9 +1032,10 @@ class GeneralLedgerAPIController extends AppBaseController
         ->whereIn('serviceLineSystemID',$seg_info)
         ->whereIn('chartOfAccountSystemID',$char_ac)
         ->whereBetween('documentDate', [$fromDate, $toDate])
+        ->groupBy(['serviceLineSystemID','chartOfAccountSystemID'])
          ->get();
 
-       
+
 
         foreach($entries as $entry)
         {
@@ -1059,9 +1106,22 @@ class GeneralLedgerAPIController extends AppBaseController
 
         }
         
-        return $this->sendResponse([$data,$segment_data,$j],'Posting date changed successfully');
+        
+        $details['data'] = $data;
+        $details['segment'] = $segment_data;
+        $details['j'] = $j;
+
+        return $details;
+    }
+
+    public static function getToal($data,$index,$column){
+        $sum = 0;
 
         
+        for ($i = 0; $i < count($data); $i++) {
+          $sum += $data[$i][$index][$column];
+        }
+        return $sum;
     }
 
 
