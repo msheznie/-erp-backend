@@ -1399,13 +1399,9 @@ class SRMService
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->first();
-        /*$profilePic = Employee::with(['profilepic'])
-            ->where('employeeSystemID', $employeeId)
-            ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
 
         return [
             'success' => true,
