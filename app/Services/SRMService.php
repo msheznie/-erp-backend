@@ -248,13 +248,13 @@ class SRMService
                     $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = $val['item_id'];
                     $data_details['qty'] = $val['qty'];
-                    $data_details['foc_qty'] = $val['foc_qty'];
-                    //$data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
-                    $data_details['expiry_date'] = $val['expiry_date'];
-                    $data_details['batch_no'] = $val['batch_no'];
-                    $data_details['manufacturer'] = $val['manufacturer'];
-                    $data_details['brand'] = $val['brand'];
-                    $data_details['remarks'] = $val['remarks'];
+                    $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
+                    $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
+                    $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
+                    $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
+                    $data_details['remarks'] = isset($val['remarks']) ? $val['remarks'] : null;
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -934,6 +934,7 @@ class SRMService
             'itemDescription' => $data['itemDescription'],
             'UnitShortCode' => $data['unit']['UnitShortCode'],
             'noQty' => $data['noQty'],
+            'unitCost' => $data['unitCost'],
             'receivedQty' => $data['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => 0,
