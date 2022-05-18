@@ -1570,6 +1570,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
                         $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
                             ->where('companySystemID', $jvMasterData->companySystemID)
+                            ->where('isAssigned', -1)
                             ->first();
 
                             
