@@ -49,6 +49,7 @@ use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PoAdvancePayment;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
@@ -854,6 +855,30 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['matchedAmount'] = $detailAmountTotTran;
             $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
             $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+            $details = AdvancePaymentDetails::where('matchingDocID', $id)->get();
+
+            foreach ($details as $val) {
+                $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
+
+                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                    ->where('companySystemID', $advancePayment->companySystemID)
+                    ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                    ->where('purchaseOrderID', $advancePayment->poID)
+                    ->first();
+
+                if (($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                    $advancePayment->selectedToPayment = -1;
+                    $advancePayment->fullyPaid = 2;
+                    $advancePayment->save();
+                } else {
+                    $advancePayment->selectedToPayment = 0;
+                    $advancePayment->fullyPaid = 1;
+                    $advancePayment->save();
+                }
+
+
+            }
+
         }
 
         //checking below posted data
