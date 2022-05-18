@@ -960,6 +960,7 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'unitCost' => $data['getPoDetails']['unitCost'],
             'foc_qty' => $data['foc_qty'],
             'total_amount_after_foc' => $data['total_amount_after_foc'],
             'expiry_date' => $data['expiry_date'],
