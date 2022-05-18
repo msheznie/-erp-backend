@@ -248,6 +248,13 @@ class SRMService
                     $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = $val['item_id'];
                     $data_details['qty'] = $val['qty'];
+                    $data_details['foc_qty'] = $val['foc_qty'];
+                    //$data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
+                    $data_details['expiry_date'] = $val['expiry_date'];
+                    $data_details['batch_no'] = $val['batch_no'];
+                    $data_details['manufacturer'] = $val['manufacturer'];
+                    $data_details['brand'] = $val['brand'];
+                    $data_details['remarks'] = $val['remarks'];
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -952,6 +959,13 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'foc_qty' => $data['foc_qty'],
+            'total_amount_after_foc' => $data['total_amount_after_foc'],
+            'expiry_date' => $data['expiry_date'],
+            'batch_no' => $data['batch_no'],
+            'manufacturer' => $data['manufacturer'],
+            'brand' => $data['brand'],
+            'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
             'attachment' => $data['appointment']['attachment']
         ];
