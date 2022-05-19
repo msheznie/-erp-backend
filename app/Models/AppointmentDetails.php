@@ -75,7 +75,14 @@ class AppointmentDetails extends Model
         'item_id',
         'po_master_id',
         'qty',
-        'po_detail_id'
+        'po_detail_id',
+        'foc_qty',
+        'total_amount_after_foc',
+        'expiry_date',
+        'batch_no',
+        'manufacturer',
+        'brand',
+        'remarks'
     ];
 
     /**

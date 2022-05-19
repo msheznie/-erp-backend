@@ -248,6 +248,13 @@ class SRMService
                     $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = $val['item_id'];
                     $data_details['qty'] = $val['qty'];
+                    $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
+                    $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
+                    $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
+                    $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
+                    $data_details['remarks'] = isset($val['remarks']) ? $val['remarks'] : null;
                     AppointmentDetails::create($data_details);
                 }
             }
@@ -836,7 +843,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
             $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
@@ -900,7 +907,7 @@ class SRMService
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }])->get()
+            },'order.transactioncurrency'])->get()
             ->transform(function ($data){
                 return $this->poDetailFormat($data);
             });
@@ -927,11 +934,12 @@ class SRMService
             'itemDescription' => $data['itemDescription'],
             'UnitShortCode' => $data['unit']['UnitShortCode'],
             'noQty' => $data['noQty'],
+            'unitCost' => $data['unitCost'],
             'receivedQty' => $data['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => 0,
             'item_id' => $data['itemCode'],
-
+            'transactioncurrency' => $data['order']['transactioncurrency'],
         ];
     }
 
@@ -952,8 +960,17 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'unitCost' => $data['getPoDetails']['unitCost'],
+            'foc_qty' => $data['foc_qty'],
+            'total_amount_after_foc' => $data['total_amount_after_foc'],
+            'expiry_date' => $data['expiry_date'],
+            'batch_no' => $data['batch_no'],
+            'manufacturer' => $data['manufacturer'],
+            'brand' => $data['brand'],
+            'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
-            'attachment' => $data['appointment']['attachment']
+            'attachment' => $data['appointment']['attachment'],
+            'transactioncurrency' => $data['getPoMaster']['transactioncurrency'],
         ];
     }
 
@@ -1163,14 +1180,16 @@ class SRMService
                 $q->where('purchased_by','=',$supplierRegId); 
             }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
-            }); 
+            })
+            ->where('published_yn',1); 
             
         }else if ($request->input('extra.tender_status') == 2) {  
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId); 
-            });  
+            })
+            ->where('published_yn',1);  
          } 
         $search = $request->input('search.value');
         if($search){ 
@@ -1399,13 +1418,9 @@ class SRMService
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->first();
-        /*$profilePic = Employee::with(['profilepic'])
-            ->where('employeeSystemID', $employeeId)
-            ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
 
         return [
             'success' => true,
