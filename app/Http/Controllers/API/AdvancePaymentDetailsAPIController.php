@@ -789,7 +789,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                         $error_count++;
                     }
 
-                    $alreadyExistChk = AdvancePaymentDetails::where('PayMasterAutoId', $documentMaster->PayMasterAutoId)->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
+                    $alreadyExistChk = AdvancePaymentDetails::where('matchingDocID', $documentMaster->matchDocumentMasterAutoID)->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
                     if ($alreadyExistChk) {
                         array_push($finalError['adv_payment_already_exist'], 'PO' . ' | ' . $new['purchaseOrderCode']);
                         $error_count++;
