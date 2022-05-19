@@ -6,15 +6,12 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ProcumentActivity;
 use App\Models\TenderMaster;
-use App\Scopes\ActiveScope;
 use App\Models\TenderProcurementCategory;
 use Illuminate\Http\Request;
 use App\Repositories\ProcurementCategoryRepository;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Prettus\Validator\Exceptions\ValidatorException;
-use function Clue\StreamFilter\fun;
-use function MongoDB\BSON\toJSON;
 
 class TenderProcurementCategoryController extends AppBaseController
 {
@@ -70,6 +67,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
             'description' => 'required',
+            'descriptionSecondary' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -123,6 +121,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
+        $input['description_in_secondary'] = $input['descriptionSecondary'];
         $procurementCategories = $this->procurementCategoryRepository->create($input);
 
         return $this->sendResponse($procurementCategories->toArray(), $successMessageContent . ' saved successfully');
