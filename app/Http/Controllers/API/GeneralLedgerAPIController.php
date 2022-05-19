@@ -36,6 +36,7 @@ use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
+use App\Models\SegmentMaster;
 use App\Repositories\GeneralLedgerRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,7 +45,8 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\ChartOfAccount;
+use App\helper\CreateExcel;
 /**
  * Class GeneralLedgerController
  * @package App\Http\Controllers\API
@@ -938,5 +940,189 @@ class GeneralLedgerAPIController extends AppBaseController
             return $this->sendError($e->getMessage());
         }
     }
+
+
+    public function generateSegmentGlReport(Request $request)
+    {
+
+        $input = $request->all();
+
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $type = $request->currency;
+
+        $details = $this->generateGLReport($fromDate,$toDate,$type);
+
+        return $this->sendResponse($details,'Posting date changed successfully');
+
+        
+    }
+
+    public function generateSegmentGlReportExcel(Request $request)
+    {
+
+        $input = $request->all();
+
+        $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $type = $request->currency;
+        $file_type = $request->type;
+
+        $reportData = $this->generateGLReport($fromDate,$toDate,$type);
+        $deb_cred = array("Debit","Credit","Total");
+        $reportData['deb_cred'] = $deb_cred;
+        $reportData['length'] = ($reportData['j']*3)+3;
+
+        
+        
+        $templateName = "export_report.segment-wise-gL-report";
+        $fileName = 'gl_segment_report';
+        $path = 'general-ledger/report/segment-wise-gL-report/excel/';
+        $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+    }
+
+    public function generateGLReport($fromDate,$toDate,$type)
+    {
+
+
+        if(is_array($type))
+        {
+            $type = $type[0];
+        }
+
+        if($type == 1)
+        {
+            $cur = 'documentLocalCurrencyID';
+            $amount = 'documentLocalAmount';
+        }
+        else
+        {   
+            $amount = 'documentRptAmount';
+            $cur = 'documentRptCurrencyID';
+        }
+        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->get();
+
+        $data = [];
+        $i = 0;
+        $segment_data = [];
+
+        $segment_data = SegmentMaster::pluck('ServiceLineDes');
+
+        $segment_data->push('Total');
+
+        $segments = SegmentMaster::get();
+
+
+
+        $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
+        $seg_info = SegmentMaster::pluck('serviceLineSystemID');
+
+
+        $collection =  DB::table('erp_generalledger')
+        ->whereIn('serviceLineSystemID',$seg_info)
+        ->whereIn('chartOfAccountSystemID',$char_ac)
+        ->whereBetween('documentDate', [$fromDate, $toDate])
+        ->groupBy(['serviceLineSystemID','chartOfAccountSystemID'])
+         ->get();
+
+
+
+        foreach($entries as $entry)
+        {
+
+           
+
+
+                $data[$i]['glAccountId'] =  $entry->AccountDescription.' - '.$entry->AccountCode;
+                $j = 0;
+                $tot_credit = 0;
+                $tot_debit = 0;
+                $tot_total = 0;
+                foreach($segments as $segment)
+                {
+                    
+                  
+                    $segment_id = $segment->serviceLineSystemID;
+                    $segment_name = $segment->ServiceLineDes;
+                   
+                    $data[$i][$j]['segement_id'] =  $segment_name;
+
+
+                    if($collection->contains('serviceLineSystemID',$segment_id) && $collection->contains('chartOfAccountSystemID',$entry->chartOfAccountSystemID))
+                        {
+
+                            $general_ledger = DB::table('erp_generalledger')
+                            ->join('currencymaster', $cur, '=', 'currencyID')
+                            ->where('serviceLineSystemID',$segment_id)
+                            ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
+                            ->whereBetween('documentDate', [$fromDate, $toDate])
+                            ->selectRaw("sum(case when $amount<0 then $amount else 0 end) as credit,
+                            sum(case when $amount>0 then $amount else 0 end) as debit, DecimalPlaces")
+                             ->first();
+
+                             $credit = round($general_ledger->credit,$general_ledger->DecimalPlaces)*-1;
+                             $debit = round($general_ledger->debit,$general_ledger->DecimalPlaces);
+                             $total = round(($general_ledger->debit - ($general_ledger->credit*-1)),$general_ledger->DecimalPlaces);
+                             $decimal = ($general_ledger->DecimalPlaces);
+
+
+                        }
+                    else
+                        {
+                            $credit = 0;
+                            $debit = 0;
+                            $total = 0;
+                            $decimal = 0;
+                        }
+
+
+                        $data[$i][$j]['credit'] =  $credit;
+                        $data[$i][$j]['debit'] =  $debit;
+                        $data[$i][$j]['total'] =  $total;
+                        $data[$i][$j]['decimal'] =  $decimal;
+                        $tot_credit += $credit;
+                        $tot_debit += $debit;
+                        $tot_total += ($debit - $credit);
+                        $j++;   
+
+                }
+                
+                $data[$i][$j]['segement_id'] =  'Total';
+                $data[$i][$j]['credit'] =  round($tot_credit,2);
+                $data[$i][$j]['debit'] =  round($tot_debit,2);
+                $data[$i][$j]['total'] =  round(($tot_total),2);
+
+                $i++;
+
+        }
+        
+        
+        $details['data'] = $data;
+        $details['segment'] = $segment_data;
+        $details['j'] = $j;
+
+        return $details;
+    }
+
+    public static function getToal($data,$index,$column){
+        $sum = 0;
+
+        
+        for ($i = 0; $i < count($data); $i++) {
+          $sum += $data[$i][$index][$column];
+        }
+        return $sum;
+    }
+
 
 }

@@ -30,6 +30,7 @@ use App\Http\Requests\API\CreateJvMasterAPIRequest;
 use App\Http\Requests\API\UpdateJvMasterAPIRequest;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -1499,6 +1500,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
             Storage::disk('local')->put($originalFileName, $decodeFile);
 
+           
+
             $finalData = [];
             $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
             })->first();
@@ -1520,6 +1523,10 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
             })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
 
+
+            $count = 0;
+            $valid = 0;
+            $failed_gl = [];
             if (count($record) > 0) {
 
                 $jvMasterData = JvMaster::find($input['jvMasterAutoId']);
@@ -1527,7 +1534,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 if (empty($jvMasterData)) {
                     return $this->sendError('Journal Voucher not found');
                 }
-
+                $line_nu = 1;
                 foreach ($record as $val) {
 
                     $serviceLineSystemID = null;
@@ -1537,9 +1544,10 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     $contractUID = null;
                     $debitAmount = 0;
                     $creditAmount = 0;
-
-
+                    $is_failed = false;
+                    $line_nu++;
                     if (isset($val['gl_account']) && !is_null($val['gl_account'])) {
+                        $count ++;
                         $department = isset($val['department']) ? $val['department'] : '-';
                         $segmentData = SegmentMaster::where('ServiceLineDes', $department)
                             ->where('companySystemID', $jvMasterData->companySystemID)
@@ -1548,14 +1556,34 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $serviceLineSystemID = $segmentData['serviceLineSystemID'];
                             $serviceLineCode = $segmentData['ServiceLineCode'];
                         }
+
+                        
+                      
+
+                        $is_char_acc_exist = ChartOfAccount::where('AccountCode', $val['gl_account'])
+                                ->first();
+                        if(!isset($is_char_acc_exist))
+                        {
+                            $is_failed = true;
+                        }
+                                
+
                         $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
                             ->where('companySystemID', $jvMasterData->companySystemID)
+                            ->where('isAssigned', -1)
                             ->first();
+
+                            
 
                         if ($chartOfAccountData) {
                             $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
                             $glAccountDescription = $chartOfAccountData->AccountDescription;
                         }
+                        else
+                        {
+                            $is_failed = true;
+                        }
+
 
                         $client_contract = isset($val['client_contract']) ? $val['client_contract'] : '-';
                         $contract = Contract::where('ContractNumber', $client_contract)->where('companySystemID', $jvMasterData->companySystemID)->first();
@@ -1568,50 +1596,85 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $contractUID =  159;
                             $val['client_contract'] = 'X';
                         }
-                        if ($val['debit_amount'] != '') {
+                        if (isset($val['debit_amount']) && $val['debit_amount'] != '') {
                             $debitAmount = $val['debit_amount'];
                         }
                         if ($val['credit_amount'] != '') {
                             $creditAmount = $val['credit_amount'];
                         }
-                        $data = [];
-                        $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
-                        $data['documentSystemID'] = $jvMasterData->documentSystemID;
-                        $data['documentID'] = $jvMasterData->documentID;
-                        $data['companySystemID'] = $jvMasterData->companySystemID;
-                        $data['companyID'] = $jvMasterData->companyID;
-                        $data['serviceLineSystemID'] = $serviceLineSystemID;
-                        $data['serviceLineCode'] = $serviceLineCode;
-                        $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
-                        $data['glAccount'] = $val['gl_account'];
-                        $data['glAccountDescription'] = $glAccountDescription;
-                        $data['contractUID'] = $contractUID;
-                        $data['clientContractID'] = $val['client_contract'];
-                        $data['comments'] = $val['comments'];
-                        $data['currencyID'] = $jvMasterData->currencyID;
-                        $data['currencyER'] = $jvMasterData->currencyER;
-                        $data['debitAmount'] = $debitAmount;
-                        $data['creditAmount'] = $creditAmount;
-                        $data['createdPcID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['createdDateTime'] = NOW();
-                        $data['timeStamp'] = NOW();
-                        $finalData[] = $data;
+
+                        if(!$is_failed)
+                        {
+                            $valid++;
+                            $data = [];
+                            $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
+                            $data['documentSystemID'] = $jvMasterData->documentSystemID;
+                            $data['documentID'] = $jvMasterData->documentID;
+                            $data['companySystemID'] = $jvMasterData->companySystemID;
+                            $data['companyID'] = $jvMasterData->companyID;
+                            $data['serviceLineSystemID'] = $serviceLineSystemID;
+                            $data['serviceLineCode'] = $serviceLineCode;
+                            $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
+                            $data['glAccount'] = $val['gl_account'];
+                            $data['glAccountDescription'] = $glAccountDescription;
+                            $data['contractUID'] = $contractUID;
+                            $data['clientContractID'] = $val['client_contract'];
+                            $data['comments'] = $val['comments'];
+                            $data['currencyID'] = $jvMasterData->currencyID;
+                            $data['currencyER'] = $jvMasterData->currencyER;
+                            $data['debitAmount'] = $debitAmount;
+                            $data['creditAmount'] = $creditAmount;
+                            $data['createdPcID'] = gethostname();
+                            $data['createdUserID'] = \Helper::getEmployeeID();
+                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['createdDateTime'] = NOW();
+                            $data['timeStamp'] = NOW();
+                            $finalData[] = $data;
+                        }
+                        else
+                        {
+                            $info['line'] = $line_nu;
+                            $info['gl'] = $val['gl_account'];
+                            array_push($failed_gl,$info);
+                        }
+
                     }
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
             }
-
+            
             if (count($finalData) > 0) {
                 foreach (array_chunk($finalData, 500) as $t) {
                     JvDetail::insert($t);
                 }
             }
+
+            
             Storage::disk('local')->delete($originalFileName);
             DB::commit();
-            return $this->sendResponse([], 'JV Details uploaded successfully');
+            if($count == $valid)
+            {
+                $details['detail'] = $failed_gl;
+                $details['valid'] = true;
+                return $this->sendResponse($details, 'All JV Details uploaded successfully');
+            }
+            else if($count > 0)
+            {
+                if($valid == 0)
+                {
+                    $details['detail'] = $failed_gl;
+                    $details['valid'] = false;
+                    return $this->sendResponse($details, 'Out Of '.$count.' All JV Details fail to upload ');
+                }
+                else
+                {
+                    $details['detail'] = $failed_gl;
+                    $details['valid'] = true;
+                    return $this->sendResponse($details, 'Out Of '.$count.' JV Details '.$valid.' JV Details uploaded successfully');
+                }
+            }
+            
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

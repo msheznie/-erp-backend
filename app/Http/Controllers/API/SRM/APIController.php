@@ -46,9 +46,15 @@ define('GET_APPROVED_DETAILS', 'GET_APPROVED_DETAILS');
 define('GET_TENDERS', 'GET_TENDERS');
 define('SAVE_TENDER_PURCHASE', 'SAVE_TENDER_PURCHASE');
 define('GET_FAQ', 'GET_FAQ');
-define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
+define('GET_TENDER_PRE_BID_CLARIFICATION_LIST', 'GET_TENDER_PRE_BID_CLARIFICATION_LIST');
 define('ADD_CLARIFICATION', 'ADD_CLARIFICATION');
-define('GET_PRE_BID_CLARIFICATION', 'GET_PRE_BID_CLARIFICATION');
+define('GET_PRE_BID_CLARIFICATION_RESPONSE', 'GET_PRE_BID_CLARIFICATION_RESPONSE');
+define('ADD_PRE_BID_CLARIFICATION_RESPONSE', 'ADD_PRE_BID_CLARIFICATION_RESPONSE');
+define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
+define('ADD_APPOINTMENT_ATTACHMENT', 'ADD_APPOINTMENT_ATTACHMENT');
+define('GET_APPOINTMENT_ATTACHMENT', 'GET_APPOINTMENT_ATTACHMENT');
+define('REMOVE_APPOINTMENT_ATTACHMENT', 'REMOVE_APPOINTMENT_ATTACHMENT');
+define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -129,12 +135,24 @@ class APIController extends Controller
                 return $this->SRMService->saveTenderPurchase($request);
             case GET_FAQ :
                 return $this->SRMService->getFaqList($request);
-            case GET_TENDER_PRE_BID_CLARIFICATION :
-                return $this->SRMService->getPrebidClarification($request);
+            case GET_TENDER_PRE_BID_CLARIFICATION_LIST :
+                return $this->SRMService->getPrebidClarificationList($request);
             case ADD_CLARIFICATION :
                 return $this->SRMService->saveTenderPrebidClarification($request);
-            case GET_PRE_BID_CLARIFICATION :
+            case GET_PRE_BID_CLARIFICATION_RESPONSE :
                 return $this->SRMService->getPreBidClarificationsResponse($request);
+            case ADD_PRE_BID_CLARIFICATION_RESPONSE :
+                return $this->SRMService->createClarificationResponse($request);
+            case GET_TENDER_PRE_BID_CLARIFICATION :
+                return $this->SRMService->getPrebidClarification($request);
+            case ADD_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->uploadAppointmentAttachment($request);
+            case GET_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->getDeliveryAppointmentAttachment($request);
+            case REMOVE_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
+            case REMOVE_CLARIFICATION_ATTACHMENT :
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
 
             default:
                 return [

@@ -1459,4 +1459,43 @@ class TaxService
 
         return $totalTransVATAmount;
     }
+
+     public static function calculateRCMRetentionVatAmount($PayMasterAutoId)
+    {
+        $retentionData = PaySupplierInvoiceDetail::WHERE('PayMasterAutoId', $PayMasterAutoId)
+                                                 ->WHERE('matchingDocID', 0)
+                                                 ->WHERE('isRetention', 1)
+                                                 ->get();
+
+        $totalTransVATAmount = 0;
+        foreach ($retentionData as $key => $value) {
+            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
+
+            if ($bookInvSuppMaster) {
+                if ($bookInvSuppMaster->documentType == 1 && $bookInvSuppMaster->rcmActivated == 1) {
+                    $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                            ->WHERE('documentSystemCode', $value->bookingInvSystemCode)
+                                            ->WHERE('documentSystemID', 11)
+                                            ->groupBy('documentSystemCode')
+                                            ->first();
+
+                    if ($tax) {
+                        $vatAmount = (($tax->transAmount * ($bookInvSuppMaster->retentionPercentage / 100)) / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+
+                        $totalTransVATAmount += $vatAmount;
+                    }
+
+                } else if (($bookInvSuppMaster->documentType == 0 || $bookInvSuppMaster->documentType == 2) && self::isSupplierInvoiceRcmActivated($value->bookingInvSystemCode)) {
+                    $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($value->bookingInvSystemCode);
+
+                    $vatAmount = ((($vatDetails['totalVAT'] + $vatDetails['exemptVAT']) * ($bookInvSuppMaster->retentionPercentage / 100)) / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+
+                    $totalTransVATAmount += $vatAmount;
+                }
+            }
+
+        }
+
+        return $totalTransVATAmount;
+    }
 }

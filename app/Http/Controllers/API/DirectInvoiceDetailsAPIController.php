@@ -181,7 +181,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             ->first();
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+        if(($BookInvSuppMaster->documentType == 1 || $BookInvSuppMaster->documentType == 4) && $policy == true){
             $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
             $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
         }
@@ -375,7 +375,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
 
-        if($BookInvSuppMaster->documentType == 1 && $policy == true){
+        if(($BookInvSuppMaster->documentType == 1 || $BookInvSuppMaster->documentType == 4) && $policy == true){
             $input['localAmount' ]        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->localCurrencyER);
             $input['comRptAmount']        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->companyReportingER);
             $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;

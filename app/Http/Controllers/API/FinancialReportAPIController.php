@@ -1971,8 +1971,8 @@ class FinancialReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'trial_balance_details';
-                $path = 'general-ledger/report/trial_balance_details/excel/';
+                $fileName = 'tax_details';
+                $path = 'general-ledger/report/tax_details/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
                 if($basePath == '')
@@ -3469,7 +3469,7 @@ LEFT JOIN (
 ) tax ON tax.documentSystemID = MASTER .documentSystemID
 AND tax.companySystemID = MASTER .companySystemID
 AND tax.documentSystemCode = MASTER .bookingSuppMasInvAutoID
-WHERE DATE(master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+WHERE DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
 	MASTER.companySystemID IN (' . join(',', $companyID) . ')
 AND MASTER.approved = - 1
 AND MASTER.cancelYN = 0';
@@ -3513,7 +3513,7 @@ LEFT JOIN (
 AND tax.companySystemID = MASTER .companySystemID
 AND tax.documentSystemCode = MASTER .custInvoiceDirectAutoID
 WHERE
-	DATE(master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
 AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
 AND MASTER .approved = - 1
 AND MASTER .canceledYN = 0';
