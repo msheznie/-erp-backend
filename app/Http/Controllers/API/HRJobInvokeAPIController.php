@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use Exception;
 use Carbon\Carbon;
 use App\Models\CompanyJobs;
 use Illuminate\Http\Request;
@@ -77,7 +78,7 @@ class HRJobInvokeAPIController extends AppBaseController
 
         CommonJobService::db_switch($db);
     }
-
+  
     public function attendanceClockIn(Request $request)
     {
         

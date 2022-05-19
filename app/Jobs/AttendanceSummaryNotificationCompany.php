@@ -10,24 +10,24 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\hrms\attendance\ForgotToPunchInService;
-use App\Services\hrms\attendance\ForgotToPunchOutService;
+use App\Services\hrms\attendance\AttendanceDailySummaryService;
+use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 
-class ForgotToPunchInCompany implements ShouldQueue
+class AttendanceSummaryNotificationCompany implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tenantDb;
     public $companyId;
     public $companyName;
-    public $isPunchOut;
-
+    public $isDailyBasis;
+    
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($tenantDb, $companyId, $companyName, $isPunchOut=false)
+    public function __construct($tenantDb, $companyId, $companyName, $isDailyBasis)
     {        
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -38,7 +38,7 @@ class ForgotToPunchInCompany implements ShouldQueue
         $this->tenantDb = $tenantDb;
         $this->companyId = $companyId;
         $this->companyName = $companyName;
-        $this->isPunchOut = $isPunchOut;
+        $this->isDailyBasis = $isDailyBasis;
     }
 
     /**
@@ -52,20 +52,20 @@ class ForgotToPunchInCompany implements ShouldQueue
              
         CommonJobService::db_switch( $this->tenantDb );
 
-        $logSlug = ($this->isPunchOut)? "punch out": "";
+        $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-        Log::info("{$logSlug} job process started on {$this->companyName} . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info("{$logSlug} basis work hour shortage job process started on {$this->companyName} . \t on file: "
+             . __CLASS__ ." \tline no :".__LINE__);
         
         $now = Carbon::now();
-        $date = $now->format('Y-m-d');
-        $time = $now->format('H:i:s');        
+        $date = $now->format('Y-m-d');    
         
-        if($this->isPunchOut){
-            $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');
-            $job = new ForgotToPunchOutService($this->companyId, $date);
+        if(!$this->isDailyBasis){
+            $job = new AttendanceWeeklySummaryService($this->companyId, $date);
         }
-        else{
-            $job = new ForgotToPunchInService($this->companyId, $date, $time);
+        else{            
+            $date = Carbon::parse($date)->subDay(1)->format('Y-m-d');
+            $job = new AttendanceDailySummaryService($this->companyId, $date);
         }
         
         $job->run();
