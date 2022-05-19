@@ -67,7 +67,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
             'description' => 'required',
-            'descriptionSecondary' => 'required',
+            'description_in_secondary' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -121,7 +121,6 @@ class TenderProcurementCategoryController extends AppBaseController
         $input['parent_id'] = 0;
         $input['level'] = $level;
         $input['parent_id'] = $parent_id;
-        $input['description_in_secondary'] = $input['descriptionSecondary'];
         $procurementCategories = $this->procurementCategoryRepository->create($input);
 
         return $this->sendResponse($procurementCategories->toArray(), $successMessageContent . ' saved successfully');
