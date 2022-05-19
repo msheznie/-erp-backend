@@ -843,7 +843,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
             $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
@@ -907,7 +907,7 @@ class SRMService
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }])->get()
+            },'order.transactioncurrency'])->get()
             ->transform(function ($data){
                 return $this->poDetailFormat($data);
             });
@@ -939,7 +939,7 @@ class SRMService
             'sumQty' => $sumQty,
             'qty' => 0,
             'item_id' => $data['itemCode'],
-
+            'transactioncurrency' => $data['order']['transactioncurrency'],
         ];
     }
 
@@ -969,7 +969,8 @@ class SRMService
             'brand' => $data['brand'],
             'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
-            'attachment' => $data['appointment']['attachment']
+            'attachment' => $data['appointment']['attachment'],
+            'transactioncurrency' => $data['getPoMaster']['transactioncurrency'],
         ];
     }
 
