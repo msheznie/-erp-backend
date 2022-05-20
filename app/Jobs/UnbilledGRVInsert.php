@@ -63,7 +63,7 @@ class UnbilledGRVInsert implements ShouldQueue
                     DB::rollback();
                     Log::error($res['error']['message']);
 
-                    JobErrorLogService::storeError($masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
+                    JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                 } else {
                     DB::commit();
                 }
@@ -72,7 +72,7 @@ class UnbilledGRVInsert implements ShouldQueue
                 DB::rollback();
                 Log::info($e->getMessage());
                 Log::error('Error occurred when updating to unbilled grv table' . date('H:i:s'));
-                JobErrorLogService::storeError($masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $e->getMessage(), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $e->getMessage(), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         }
     }

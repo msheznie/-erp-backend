@@ -65,7 +65,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     Log::error('Error');
                     Log::error($res['error']['message']);
 
-                    JobErrorLogService::storeError($masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
+                    JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                 } else {
                     $checkBalance = GeneralLedgerService::validateDebitCredit($masterModel['documentSystemID'], $masterModel['autoID']);
 
@@ -73,7 +73,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         DB::rollback();
                         Log::error($checkBalance['error']['message']);
 
-                        JobErrorLogService::storeError($masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $checkBalance['error']['message']);
+                        JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $checkBalance['error']['message']);
                     } else {
                         DB::commit();
                     }
@@ -81,7 +81,7 @@ class GeneralLedgerInsert implements ShouldQueue
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
-                JobErrorLogService::storeError($masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
                 Log::info('Error Line No: ' . $e->getLine());
                 Log::info('Error Line No: ' . $e->getFile());
                 Log::info($e->getMessage());

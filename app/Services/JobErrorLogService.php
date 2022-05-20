@@ -7,7 +7,7 @@ use App\Jobs\JobErrorLogInsert;
 
 class JobErrorLogService
 {
-	public static function storeError($documentSystemID, $documentSystemCode, $tag, $errorType = 2, $errorMessage, $line = null)
+	public static function storeError($dataBase, $documentSystemID, $documentSystemCode, $tag, $errorType = 2, $errorMessage, $line = null)
 	{
         $errorData = [
             'documentSystemID' => $documentSystemID,
@@ -18,7 +18,7 @@ class JobErrorLogService
             'error' => $line
         ];
 
-        JobErrorLog::create($errorData);
-        // JobErrorLogInsert::dispatch($errorData);
+        // JobErrorLog::create($errorData);
+        JobErrorLogInsert::dispatch($errorData, $dataBase);
 	}
 }
