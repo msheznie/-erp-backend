@@ -343,4 +343,5 @@ return [
     'company_has_default_user_group' => 'The company already have a default user group',
     'currency_not_configured' => 'Currency not configured',
     'item_specification' => 'Item Specification',
+    'already_finance_year_has_been_created_for_this_date_range' => 'Already Finance Year has been created for this date range'
 ];
