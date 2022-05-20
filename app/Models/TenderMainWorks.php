@@ -119,5 +119,9 @@ class TenderMainWorks extends Model
     public function tender_boq_items(){
         return $this->hasMany('App\Models\TenderBoqItems', 'main_work_id', 'id');
     }
+
+    public function tender_bid_format_detail(){
+        return $this->hasOne('App\Models\TenderBidFormatDetail', 'id', 'bid_format_detail_id');
+    }
   
 }
