@@ -3276,6 +3276,29 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 })->download('csv');
             }
         
+        } else if ($printTemplate['printTemplateID'] == 11) {
+            if($type == 1)
+            {
+                $html = view('print.chromite_customer_invoice', $array);
+                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+    
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('csv');
+            }
+        
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
           
             if($type == 1)
