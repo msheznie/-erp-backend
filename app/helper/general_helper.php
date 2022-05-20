@@ -1349,6 +1349,8 @@ class Helper
     {
         
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
+
+        $dataBase = (isset($input['db'])) ? $input['db'] : "";
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
                 $docInforArr["tableName"] = 'itemmaster';
@@ -2226,14 +2228,14 @@ class Helper
 
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else if ($input['documentSystemID'] == 11) {
                                     if ($sourceModel->documentType == 3) {
-                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                    $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                 }
                             }
 
@@ -2253,20 +2255,20 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else if ($input['documentSystemID'] == 17) {
                                     if ($sourceModel->jvType != 9) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                 }
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
                                     $masterData['supplierID'] = $sourceData->supplierID;
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
-                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData, $dataBase);
+                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"], $dataBase);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
@@ -2331,7 +2333,7 @@ class Helper
                                 }
                             }
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
-                                $jobCI = CreateStockReceive::dispatch($sourceModel);
+                                $jobCI = CreateStockReceive::dispatch($sourceModel, $dataBase);
                             }
                             if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
                                 $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
@@ -2408,7 +2410,7 @@ class Helper
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
-                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
+                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {

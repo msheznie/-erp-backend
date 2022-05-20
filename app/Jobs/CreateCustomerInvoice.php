@@ -27,15 +27,17 @@ class CreateCustomerInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $disposalMaster;
+    protected $dataBase;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($disposalMaster)
+    public function __construct($disposalMaster, $dataBase)
     {
         $this->disposalMaster = $disposalMaster;
+        $this->dataBase = $dataBase;
     }
 
     /**
@@ -252,7 +254,7 @@ class CreateCustomerInvoice implements ShouldQueue
                     }
 
                     $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
-                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
+                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
 
 
                     $dpMaster2['invoiceCode'] = $bookingInvCode;

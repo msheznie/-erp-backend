@@ -874,6 +874,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
+        Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument');
 
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
@@ -2875,3 +2876,6 @@ Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPICont
 
 
 Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
+
+
+Route::resource('job_error_logs', 'JobErrorLogAPIController');

@@ -13,7 +13,7 @@ class CommonJobService
 {
     public static function db_switch( $db ){
         
-        if(!$db){ 
+        if(!$db || $db == ''){ 
             Log::info("db name is empty");
             return;
         }
