@@ -76,7 +76,7 @@ class ProjectGlDetail extends Model
     const UPDATED_AT = 'updated_at';
     protected $primaryKey = 'ID';
 
-    protected $appends = ['consumed_amount'];
+    protected $appends = ['consumed_amount','consumed_amount_project'];
 
     public $fillable = [
         'projectID',
@@ -128,6 +128,24 @@ class ProjectGlDetail extends Model
         return $consumedAmount;
 
     }
+
+    public function getConsumedAmountProjectAttribute(){
+        $consumedAmountRpt = BudgetConsumedData::where('projectID', $this->projectID)
+            ->sum('consumedRptAmount');
+
+        $projectMaster = ErpProjectMaster::with(['company'])->find($this->projectID);
+        $consumedAmount = 0;
+        if ($projectMaster) {
+            $convertAmount = \Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
+
+            $consumedAmount = $convertAmount['documentAmount'];
+        }
+
+        return $consumedAmount;
+    }
+
+
+
 
     public function chartofaccounts(){
         return $this->belongsTo('App\Models\ChartOfAccountsAssigned','chartOfAccountSystemID','chartOfAccountSystemID');

@@ -36,6 +36,7 @@ use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
+use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -194,13 +195,14 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
+        $company = Company::where('companySystemID', $slotCompanyId)->first();
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');
         $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
-
+        $attachment = $request->input('extra.attachment');
         $lastSerial = Appointment::orderBy('serial_no', 'desc')
             ->first();
 
@@ -246,8 +248,20 @@ class SRMService
                     $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = $val['item_id'];
                     $data_details['qty'] = $val['qty'];
+                    $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
+                    $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
+                    $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
+                    $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
+                    $data_details['remarks'] = isset($val['remarks']) ? $val['remarks'] : null;
                     AppointmentDetails::create($data_details);
                 }
+            }
+
+            // Add Attachments
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $slotCompanyId, $company, $document, $appointment->id);
             }
 
             DB::commit();
@@ -829,7 +843,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
             $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
@@ -841,7 +855,7 @@ class SRMService
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
             }]);
-        }])->get()
+        }, 'appointment.attachment'])->get()
             ->transform(function ($data){
                 return $this->appointmentDetailFormat($data);
             });
@@ -893,7 +907,7 @@ class SRMService
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }])->get()
+            },'order.transactioncurrency'])->get()
             ->transform(function ($data){
                 return $this->poDetailFormat($data);
             });
@@ -920,11 +934,12 @@ class SRMService
             'itemDescription' => $data['itemDescription'],
             'UnitShortCode' => $data['unit']['UnitShortCode'],
             'noQty' => $data['noQty'],
+            'unitCost' => $data['unitCost'],
             'receivedQty' => $data['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => 0,
             'item_id' => $data['itemCode'],
-
+            'transactioncurrency' => $data['order']['transactioncurrency'],
         ];
     }
 
@@ -945,9 +960,17 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'unitCost' => $data['getPoDetails']['unitCost'],
+            'foc_qty' => $data['foc_qty'],
+            'total_amount_after_foc' => $data['total_amount_after_foc'],
+            'expiry_date' => $data['expiry_date'],
+            'batch_no' => $data['batch_no'],
+            'manufacturer' => $data['manufacturer'],
+            'brand' => $data['brand'],
+            'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
-
-
+            'attachment' => $data['appointment']['attachment'],
+            'transactioncurrency' => $data['getPoMaster']['transactioncurrency'],
         ];
     }
 
@@ -1157,14 +1180,16 @@ class SRMService
                 $q->where('purchased_by','=',$supplierRegId); 
             }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
-            }); 
+            })
+            ->where('published_yn',1); 
             
         }else if ($request->input('extra.tender_status') == 2) {  
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId); 
-            });  
+            })
+            ->where('published_yn',1);  
          } 
         $search = $request->input('search.value');
         if($search){ 
@@ -1393,13 +1418,9 @@ class SRMService
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->first();
-        /*$profilePic = Employee::with(['profilepic'])
-            ->where('employeeSystemID', $employeeId)
-            ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
 
         return [
             'success' => true,
@@ -1496,6 +1517,62 @@ class SRMService
 
     }
 
+    public function uploadAppointmentAttachment($request)
+    {
+        $attachment = $request->input('extra.attachment');
+        $companySystemID = $request->input('extra.slotCompanyId');
+        $appointmentID = $request->input('extra.appointmentID');
+        $description = $request->input('extra.description');
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 106)->first();
+        try {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attachmentNameWithExtension = time() . '_DeliveryAppointment.' . $extension;
+                $path = $company->CompanyID . '/PO/' . $appointmentID . '/' . $attachmentNameWithExtension;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $appointmentID;
+                $att['attachmentDescription'] = $description;
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_DeliveryAppointment.' . $extension;
+                $att['attachmentType'] = $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                $result = DocumentAttachments::create($att);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                }
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        }catch (\Exception $e){
+            return [
+                'success'   => false,
+                'message'   => $e,
+                'data'      => ''
+            ];
+        }
+    }
+
     public function updatePreBid(Request $request, $prebidId)
     {
         $input = $request->all();
@@ -1571,6 +1648,35 @@ class SRMService
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+    }
+
+    public function getDeliveryAppointmentAttachment($request)
+    {
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $data = DocumentAttachments::where('documentSystemID', 106)
+            ->where('documentSystemCode', $appointmentID)
+            ->get();
+
+        return [
+            'success' => true,
+            'message' => 'Delivery Appointment successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function removeDeliveryAppointmentAttachment($request)
+    {
+        $attachmentID = $request->input('extra.attachmentID');
+
+        $data = DocumentAttachments::where('attachmentID', $attachmentID)
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment successfully deleted',
+            'data' => $data
+        ];
     }
 
 }

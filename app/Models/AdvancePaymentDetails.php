@@ -156,6 +156,7 @@ class AdvancePaymentDetails extends Model
     public $fillable = [
         'PayMasterAutoId',
         'poAdvPaymentID',
+        'matchingDocID',
         'companySystemID',
         'companyID',
         'purchaseOrderID',
@@ -235,6 +236,11 @@ class AdvancePaymentDetails extends Model
     public function pay_invoice()
     {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function document_matching()
+    {
+        return $this->belongsTo('App\Models\MatchDocumentMaster', 'matchingDocID', 'matchDocumentMasterAutoID');
     }
 
 }

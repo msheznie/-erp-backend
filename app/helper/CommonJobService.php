@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Config;
 class CommonJobService
 {
     public static function db_switch( $db ){
-        
         if(!$db || $db == ''){ 
             Log::info("db name is empty");
             return;
@@ -25,7 +24,9 @@ class CommonJobService
         /*            
             As discussed with Fayas DB::purge('mysql'); not working properly on ubuntu machine so we have decide 
             to use the DB::reconnect('mysql');
-        */
+        */ 
+
+        return true;
     }
 
     public static function get_specific_log_file($service){

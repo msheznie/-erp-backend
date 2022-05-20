@@ -122,9 +122,13 @@ class ErpProjectMasterAPIController extends AppBaseController
                             }
                         })
                         ->addColumn('totalConsumedAmount', function ($project) {
-                            $projectDetails = ProjectGlDetail::where('projectID', $project->id)->get();
-
-                            return collect($projectDetails)->sum('consumed_amount');
+                            $projectDetails = ProjectGlDetail::where('projectID', $project->id)->first();
+                            if($projectDetails) {
+                                return $projectDetails->consumed_amount_project;
+                            }
+                            else{
+                                return 0;
+                            }
                         })
                         ->with('orderCondition', $sort)
                         ->make(true);

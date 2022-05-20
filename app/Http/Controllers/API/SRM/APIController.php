@@ -51,6 +51,10 @@ define('ADD_CLARIFICATION', 'ADD_CLARIFICATION');
 define('GET_PRE_BID_CLARIFICATION_RESPONSE', 'GET_PRE_BID_CLARIFICATION_RESPONSE');
 define('ADD_PRE_BID_CLARIFICATION_RESPONSE', 'ADD_PRE_BID_CLARIFICATION_RESPONSE');
 define('GET_TENDER_PRE_BID_CLARIFICATION', 'GET_TENDER_PRE_BID_CLARIFICATION');
+define('ADD_APPOINTMENT_ATTACHMENT', 'ADD_APPOINTMENT_ATTACHMENT');
+define('GET_APPOINTMENT_ATTACHMENT', 'GET_APPOINTMENT_ATTACHMENT');
+define('REMOVE_APPOINTMENT_ATTACHMENT', 'REMOVE_APPOINTMENT_ATTACHMENT');
+define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -141,6 +145,14 @@ class APIController extends Controller
                 return $this->SRMService->createClarificationResponse($request);
             case GET_TENDER_PRE_BID_CLARIFICATION :
                 return $this->SRMService->getPrebidClarification($request);
+            case ADD_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->uploadAppointmentAttachment($request);
+            case GET_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->getDeliveryAppointmentAttachment($request);
+            case REMOVE_APPOINTMENT_ATTACHMENT :
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
+            case REMOVE_CLARIFICATION_ATTACHMENT :
+                return $this->SRMService->removeDeliveryAppointmentAttachment($request);
 
             default:
                 return [

@@ -15,6 +15,7 @@ class TenderProcurementCategory extends Model
 
     public $fillable = [
         'description',
+        'description_in_secondary',
         'code',
         'parent_id',
         'level',
