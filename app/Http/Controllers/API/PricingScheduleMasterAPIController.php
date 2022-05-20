@@ -387,7 +387,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         $master['status']=0;
                         PricingScheduleMaster::where('id',$input['id'])->update($master);
                         TenderMainWorks::where('schedule_id',$input['id'])->delete();
-                        $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+                        $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->where('is_disabled',0)->get();
                         foreach ($priceBid as $bid){
                             $dataBid['tender_id']=$input['tenderMasterId'];
                             $dataBid['schedule_id']=$input['id'];
@@ -405,7 +405,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 $data['created_by'] = $employee->employeeSystemID;
                 $result = PricingScheduleMaster::create($data);
                 if($result){
-                   $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+                    $priceBid = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->where('is_disabled',0)->get();
                     foreach ($priceBid as $bid){
                         $dataBid['tender_id']=$input['tenderMasterId'];
                         $dataBid['schedule_id']=$result['id'];
@@ -536,6 +536,6 @@ ORDER BY
         $mainWorks = TenderMainWorks::where('schedule_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])->get();
         $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
 
-        return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->whereNotIn('id', $bidDetailId)->get();
+        return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->where('is_disabled',0)->whereNotIn('id', $bidDetailId)->get();
     }
 }
