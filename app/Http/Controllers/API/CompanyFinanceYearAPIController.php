@@ -155,6 +155,14 @@ class CompanyFinanceYearAPIController extends AppBaseController
             return  $this->sendError(trans('custom.financial_year_must_contain_12_months'));
         }
 
+        $CheckBeginDate = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])->where('bigginingDate', ">=", $input['bigginingDate'])->where('bigginingDate', "<=", $input['endingDate'])->first();
+
+        $CheckEndDate = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])->where('endingDate', ">=", $input['bigginingDate'])->where('endingDate', "<=", $input['endingDate'])->first();
+
+        if($CheckBeginDate || $CheckEndDate){
+            return  $this->sendError(trans('custom.already_finance_year_has_been_created_for_this_date_range'));
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
