@@ -1359,6 +1359,7 @@ class SRMService
                 $q->with('attachment');
                 $q->where('parent_id', 0);
                 if(!empty($SearchText)){
+                    $searchText = str_replace("\\", "\\\\", $SearchText);
                     $q->where('post', 'LIKE', "%{$SearchText}%");
                 }
 
