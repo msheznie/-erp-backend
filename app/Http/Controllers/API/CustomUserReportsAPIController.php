@@ -617,7 +617,7 @@ class CustomUserReportsAPIController extends AppBaseController
             $output['message'] = 'Report not found';
             return $output;
         }
-        
+       
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -975,6 +975,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['model'] = 'QuotationMaster';
                     $templateData['tables'] = ['company','created_by','sales_person',
                     'segment'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 23:  
+                    $masterTable = 'erp_delivery_order';
+                    $detailTable = 'erp_delivery_order_detail';
+                    $primaryKey  = $masterTable . '.deliveryOrderID';
+                    $detailPrimaryKey = $detailTable . '.deliveryOrderDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'DeliveryOrder';
+                    $templateData['tables'] = ['company','created_by','sales_person',
+                    'segment','customer','tran_currency','tran_currency_er','local_currency','local_currency_ET','reporting_currency','reporting_currency_ET','wareHouse'];
                     $templateData['statusColumns'] = ['approvedYN'];
                     break; 
                 default;
@@ -1880,6 +1894,61 @@ class CustomUserReportsAPIController extends AppBaseController
                         $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                         $data->where($masterTable . '.documentSystemID', 68);
                         break;  
+                case 23:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'sales_person') {
+                                    $data->salesPersonJoin('sales_person', 'salesPersonID', 'SalesPersonName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                else if ($table == 'wareHouse') {
+                                    $data->wareHouseJoin('wareHouse', 'wareHouseSystemCode', 'wareHouseDescription');
+                                }
+                                else if ($table == 'tran_currency') {   
+                                    $data->currencyJoin('tran_currency', 'transactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'tran_currency_er') {   
+                                    $data->currencyJoin('tran_currency_er', 'transactionCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'companyLocalCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency_ET') {   
+                                    $data->currencyJoin('local_currency_ET', 'companyLocalCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'reporting_currency') {   
+                                    $data->currencyJoin('reporting_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'reporting_currency_ET') {   
+                                    $data->currencyJoin('reporting_currency_ET', 'companyReportingCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;  
                         default:
                     $data = [];
                     break;
@@ -1905,8 +1974,10 @@ class CustomUserReportsAPIController extends AppBaseController
             */
 
             // filter
+           
             if (isset($report['filter_columns']) && count($report['filter_columns']) > 0) {
                 $filterColumns = $this->getFilterColumns($report['filter_columns']);
+                
                 foreach ($filterColumns as $column) {
                     $operator = $column['operator'];
 
