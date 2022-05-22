@@ -1444,7 +1444,7 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
         if( $updateRecordId !== 0 ){
-           return $this->updatePreBidResponse($request, $updateRecordId);
+           return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
         }
         DB::beginTransaction();
         try {
@@ -1456,6 +1456,7 @@ class SRMService
             $data['is_public'] = 1;
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
+            $data['company_id'] = $company->companySystemID;
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
             $result = TenderBidClarifications::create($data);
@@ -1614,12 +1615,10 @@ class SRMService
         }
     }
 
-    public function updatePreBidResponse(Request $request, $prebidId)
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
     {
         $input = $request->all();
         $question = $request->input('extra.response');
-        $companySystemID = 1;
-        $company = 1;
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
