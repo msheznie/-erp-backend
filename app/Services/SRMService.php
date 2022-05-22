@@ -1680,4 +1680,21 @@ class SRMService
         ];
     }
 
+    public function removePreBidClarificationResponse($request)
+    {
+        $id = $request->input('extra.id');
+        DB::beginTransaction();
+        try{
+            $status = TenderBidClarifications::where('id', $id)
+                ->delete();
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully deleted'];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
 }
