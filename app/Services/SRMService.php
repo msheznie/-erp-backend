@@ -1465,7 +1465,7 @@ class SRMService
             }
 
             if ($result) {
-                $updateRec['is_answered'] = 1;
+                $updateRec['is_answered'] = 0;
                 $result =  TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
