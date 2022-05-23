@@ -282,4 +282,25 @@ class ErpBudgetAddition extends Model
     }
 
 
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_budgetaddition.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_budgetaddition.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_budgetadditiondetail','erp_budgetadditiondetail.id','erp_budgetaddition.id');
+    }
+
+    public function scopeTemplateJoin($q,$as = 'erp_companyreporttemplate' ,$column = 'templateMasterID',$columnAs = 'reportName'){
+        $q->leftJoin('erp_companyreporttemplate as '. $as, $as.'.companyReportTemplateID', '=', 'erp_budgetaddition.'.$column)
+            ->addSelect($as.".reportName as ".$columnAs);
+    }
+
 }
