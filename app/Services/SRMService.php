@@ -1390,7 +1390,6 @@ class SRMService
 
     public function getPreBidClarificationsResponse(Request $request)
     {
-        $input = $request->all();
         $id = $request->input('extra.prebidId');
         $employeeId = Helper::getEmployeeSystemID();
 
