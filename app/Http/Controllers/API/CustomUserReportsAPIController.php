@@ -1047,6 +1047,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'approved_by','template'];
                     $templateData['statusColumns'] = ['approvedYN'];
                     break; 
+                case 28:  
+                    $masterTable = 'erp_consolejvmaster';
+                    $detailTable = 'erp_consolejvdetail';
+                    $primaryKey  = $masterTable . '.consoleJvMasterAutoId';
+                    $detailPrimaryKey = $detailTable . '.consoleJvDetailAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ConsoleJVMaster';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','currency','local_currency','rpt_currency'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
                 default;
                     break;
             }
@@ -2123,6 +2137,44 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->templateJoin('template', 'templatesMasterAutoID', 'reportName');
                                 } 
                                
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 28:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'currency') {   
+                                    $data->currencyJoin('currency', 'currencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'rpt_currency') {   
+                                    $data->currencyJoin('rpt_currency', 'rptCurrencyID', 'CurrencyName');
+                                } 
+                                
                                 else if ($table == 'approved_by') {   
                                     $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
                                 } 
