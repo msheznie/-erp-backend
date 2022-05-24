@@ -242,4 +242,21 @@ class AssetVerification extends Model
         return $this->hasMany(AssetVerificationDetail::class, 'verification_id', 'id');
     }
 
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_asset_verification.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_asset_verification.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_fa_asset_verificationdetails','erp_fa_asset_verificationdetails.verification_id','erp_fa_asset_verification.id');
+    }
 }

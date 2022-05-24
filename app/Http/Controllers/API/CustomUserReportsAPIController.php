@@ -1123,6 +1123,20 @@ class CustomUserReportsAPIController extends AppBaseController
                     'approved_by','chart_acc','created_by','modified_by','confirmed_by'];
                     $templateData['statusColumns'] = ['approved'];
                     break; 
+                case 34:  
+                    $masterTable = 'erp_fa_asset_verification';
+                    $detailTable = 'erp_fa_asset_verificationdetails';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetVerification';
+                    $templateData['tables'] = ['company',
+                    'approved_by','created_by','modified_by','confirmed_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
                 default;
                     break;
             }
@@ -2473,6 +2487,39 @@ class CustomUserReportsAPIController extends AppBaseController
                                 } 
                                 else if ($table == 'asset') {
                                     $data->assetJoin('asset', 'faID', 'assetDescription');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 34:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                 } 
                             }
                         }
