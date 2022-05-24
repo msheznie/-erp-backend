@@ -55,6 +55,7 @@ define('ADD_APPOINTMENT_ATTACHMENT', 'ADD_APPOINTMENT_ATTACHMENT');
 define('GET_APPOINTMENT_ATTACHMENT', 'GET_APPOINTMENT_ATTACHMENT');
 define('REMOVE_APPOINTMENT_ATTACHMENT', 'REMOVE_APPOINTMENT_ATTACHMENT');
 define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
+define('REMOVE_PRE_BID_CLARIFICATION_RESPONSE', 'REMOVE_PRE_BID_CLARIFICATION_RESPONSE');
 
 class APIController extends Controller
 {
@@ -153,6 +154,8 @@ class APIController extends Controller
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
             case REMOVE_CLARIFICATION_ATTACHMENT :
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
+            case REMOVE_PRE_BID_CLARIFICATION_RESPONSE :
+                return $this->SRMService->removePreBidClarificationResponse($request);
 
             default:
                 return [
