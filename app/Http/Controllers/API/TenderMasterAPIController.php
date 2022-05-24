@@ -504,7 +504,11 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderBankAccount(Request $request)
     {
         $input = $request->all();
-        $data['bankAccountDrop'] = BankAccount::where('bankmasterAutoID',$input['bank_id'])->where('companySystemID',$input['companySystemID'])->get();
+        $data['bankAccountDrop'] = array();
+        if(!empty($input['bank_id'])){
+            $data['bankAccountDrop'] = BankAccount::where('bankmasterAutoID',$input['bank_id'])->where('companySystemID',$input['companySystemID'])->get();
+        }
+
 
         return $data;
     }
