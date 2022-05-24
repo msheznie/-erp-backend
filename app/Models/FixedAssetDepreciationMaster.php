@@ -264,4 +264,22 @@ class FixedAssetDepreciationMaster extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_depmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_fa_depmaster.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_depmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
 }
