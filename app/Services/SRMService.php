@@ -1395,7 +1395,7 @@ class SRMService
 
         $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -1628,7 +1628,7 @@ class SRMService
                 ->where('documentSystemCode', $prebidId)
                 ->count();
 
-            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
                 DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
                     ->delete();
