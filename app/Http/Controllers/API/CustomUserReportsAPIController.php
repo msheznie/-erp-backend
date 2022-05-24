@@ -1073,6 +1073,18 @@ class CustomUserReportsAPIController extends AppBaseController
                     'approved_by','currency','confirmed_by','segment','modified_by','template'];
                     $templateData['statusColumns'] = ['approvedYN'];
                     break; 
+                case 30:  
+                    $masterTable = 'erp_fa_asset_master';
+                    $primaryKey  = $masterTable . '.faID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'FixedAssetMaster';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','doc_origin_detail','confirmed_by','segment','modified_by','depratment','fa_cat','fa_cat_sub','fa_cat_sub_2','fa_cat_sub_3','finance_cat','location','asset_type'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
                 default;
                     break;
             }
@@ -2237,6 +2249,71 @@ class CustomUserReportsAPIController extends AppBaseController
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
                                 }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 30:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                else if ($table == 'depratment') {
+                                    $data->departmentJoin('depratment', 'departmentSystemID', 'DepartmentDescription');
+                                }
+                                else if ($table == 'asset_type') {
+                                    $data->assetTypeJoin('asset_type', 'assetType', 'typeDes');
+                                }
+                                else if ($table == 'fa_cat') {
+                                    $data->faCatTypeJoin('fa_cat', 'faCatID', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub', 'faSubCatID', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub_2') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub_2', 'faSubCatID2', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub_3') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub_3', 'faSubCatID3', 'catDescription');
+                                }
+                                else if ($table == 'doc_origin_detail') {
+                                    $data->docIdJoin('doc_origin_detail', 'docOriginDetailID', 'itemDescription');
+                                }
+                                else if ($table == 'location') {
+                                    $data->locationJoin('location', 'LOCATION', 'locationName');
+                                }
+                                else if ($table == 'finance_cat') {
+                                    $data->financeCatJoin('finance_cat', 'AUDITCATOGARY', 'financeCatDescription');
+                                }
+                                
                                 
                             }
                         }
