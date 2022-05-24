@@ -290,4 +290,21 @@ class ERPAssetTransfer extends Model
         return $this->belongsTo('App\Models\Employee', 'updated_user_id', 'employeeSystemID');
     }
 
+    public function scopeLocationJoin($q,$as = 'erp_location', $column = 'LOCATION' , $columnAs = 'locationName')
+    {
+        return $q->leftJoin('erp_location as '.$as,$as.'.locationID','erp_fa_fa_asset_transfer.'.$column)
+        ->addSelect($as.".locationName as ".$columnAs);
+    }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_fa_asset_transfer.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_fa_fa_asset_transfer_details','erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_transfer_id','erp_fa_fa_asset_transfer.id');
+    }
+
+
 }
