@@ -495,7 +495,8 @@ class QuotationMaster extends Model
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
         'manuallyClosedComment',
-        'is_return'
+        'is_return',
+        'leadTime'
     ];
 
     /**
@@ -593,7 +594,8 @@ class QuotationMaster extends Model
         'deliveryTerms'  => 'string',
         'panaltyTerms'  => 'string',
         'sent_to_customer' => 'integer',
-        'is_return' => 'boolean'
+        'is_return' => 'boolean',
+        'leadTime' => 'integer'
     ];
 
     /**
