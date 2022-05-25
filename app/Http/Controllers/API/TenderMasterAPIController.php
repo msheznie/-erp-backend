@@ -547,6 +547,11 @@ class TenderMasterAPIController extends AppBaseController
             $site_visit_date = $site_visit_date->format('Y-m-d');
         }
 
+        if($input['site_visit_end_date']){
+            $site_visit_end_date = new Carbon($input['site_visit_end_date']);
+            $site_visit_end_date = $site_visit_end_date->format('Y-m-d');
+        }
+
 
         if($document_sales_start_date>$document_sales_end_date){
             return ['success' => false, 'message' => 'Document sales start date cannot be greater than Document sales end date'];
@@ -591,6 +596,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['pre_bid_clarification_end_date']=$pre_bid_clarification_end_date;
             $data['pre_bid_clarification_method']=$input['pre_bid_clarification_method'];
             $data['site_visit_date']=$site_visit_date;
+            $data['site_visit_end_date']=$site_visit_end_date;
             $data['bid_submission_opening_date']=$bid_submission_opening_date;
             $data['bid_submission_closing_date']=$bid_submission_closing_date;
             $data['updated_by'] = $employee->employeeSystemID;
