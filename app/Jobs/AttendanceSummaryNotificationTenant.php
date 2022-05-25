@@ -6,25 +6,24 @@ use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
 use App\helper\NotificationService;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\ForgotToPunchInCompany;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class ForgotToPunchInTenant implements ShouldQueue
+class AttendanceSummaryNotificationTenant implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tenantDb;
-    public $isPunchOut;
+    public $isDailyBasis;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($tenantDb, $isPunchOut=false)
+    public function __construct($tenantDb, $isDailyBasis)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -33,7 +32,7 @@ class ForgotToPunchInTenant implements ShouldQueue
         }
 
         $this->tenantDb = $tenantDb;
-        $this->isPunchOut = $isPunchOut;
+        $this->isDailyBasis = $isDailyBasis;
     }
 
     /**
@@ -47,11 +46,13 @@ class ForgotToPunchInTenant implements ShouldQueue
 
         CommonJobService::db_switch( $this->tenantDb );
         
-        $logSlug = ($this->isPunchOut)? "punch out": "";
+        $logSlug = ($this->isDailyBasis)? "Daily": "Weekly";
 
-        Log::info("{$logSlug} job initiated on {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        Log::info("{$logSlug} basis work hour shortage job initiated on {$this->tenantDb} DB. \t on file: "
+             . __CLASS__ ." \tline no :".__LINE__);
         
-        $setupData = NotificationService::getActiveCompanyByScenario(15);
+        $scenarioId = ($this->isDailyBasis)? 16: 17;
+        $setupData = NotificationService::getActiveCompanyByScenario($scenarioId);
         if(count( $setupData ) == 0){
             return;
         }
@@ -60,8 +61,7 @@ class ForgotToPunchInTenant implements ShouldQueue
             $companyId = $setup['companyID'];
             $companyName = $setup['company']['CompanyName']; 
 
-            ForgotToPunchInCompany::dispatch($this->tenantDb, $companyId, $companyName, $this->isPunchOut);
+            AttendanceSummaryNotificationCompany::dispatch($this->tenantDb, $companyId, $companyName, $this->isDailyBasis);
         }
-
     }
 }

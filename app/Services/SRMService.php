@@ -1367,6 +1367,7 @@ class SRMService
                 $q->with('attachment');
                 $q->where('parent_id', 0);
                 if(!empty($SearchText)){
+                    $SearchText = str_replace("\\", "\\\\", $SearchText);
                     $q->where('post', 'LIKE', "%{$SearchText}%");
                 }
 
@@ -1380,6 +1381,11 @@ class SRMService
                 })->where('id', $extra['tenderId']);
 
             $data = $data->get();
+
+            $data =  [
+                'data' => $data,
+                'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
+            ];
 
             return [
                 'success' => true,
@@ -1397,13 +1403,12 @@ class SRMService
 
     public function getPreBidClarificationsResponse(Request $request)
     {
-        $input = $request->all();
         $id = $request->input('extra.prebidId');
         $employeeId = Helper::getEmployeeSystemID();
 
         $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -1451,7 +1456,7 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
         if( $updateRecordId !== 0 ){
-           return $this->updatePreBidResponse($request, $updateRecordId);
+           return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
         }
         DB::beginTransaction();
         try {
@@ -1463,6 +1468,7 @@ class SRMService
             $data['is_public'] = 1;
             $data['parent_id'] = $id;
             $data['created_by'] = $employeeId;
+            $data['company_id'] = $company->companySystemID;
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
             $result = TenderBidClarifications::create($data);
@@ -1471,7 +1477,7 @@ class SRMService
             }
 
             if ($result) {
-                $updateRec['is_answered'] = 1;
+                $updateRec['is_answered'] = 0;
                 $result =  TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
@@ -1621,12 +1627,10 @@ class SRMService
         }
     }
 
-    public function updatePreBidResponse(Request $request, $prebidId)
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
     {
         $input = $request->all();
         $question = $request->input('extra.response');
-        $companySystemID = 1;
-        $company = 1;
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
@@ -1637,7 +1641,7 @@ class SRMService
                 ->where('documentSystemCode', $prebidId)
                 ->count();
 
-            if ($isAttachmentExist > 0 && $input['isDeleted'] == 1) {
+            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
                 DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
                     ->delete();
@@ -1698,6 +1702,23 @@ class SRMService
             }
         } 
         return 0;
+    }
+
+    public function removePreBidClarificationResponse($request)
+    {
+        $id = $request->input('extra.id');
+        DB::beginTransaction();
+        try{
+            $status = TenderBidClarifications::where('id', $id)
+                ->delete();
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully deleted'];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
     }
 
 }

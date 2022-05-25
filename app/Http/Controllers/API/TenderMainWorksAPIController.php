@@ -317,6 +317,7 @@ class TenderMainWorksAPIController extends AppBaseController
                     }
                 }
             })
+            ->rawColumns(['description'])
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
