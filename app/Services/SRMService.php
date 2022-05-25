@@ -1167,8 +1167,10 @@ class SRMService
     }
     public function getTenders(Request $request)
     {
+    
         $input = $request->all();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $supplierData =  self::getSupplierData($request->input('supplier_uuid')); 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1181,7 +1183,10 @@ class SRMService
             }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
             })
-            ->where('published_yn',1); 
+            ->where('published_yn',1)
+            ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
+                $q1->where('tender_type_id','!=',2);
+            });
             
         }else if ($request->input('extra.tender_status') == 2) {  
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
@@ -1189,7 +1194,10 @@ class SRMService
             }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId); 
             })
-            ->where('published_yn',1);  
+            ->where('published_yn',1)
+            ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
+                $q1->where('tender_type_id','!=',2);
+            });  
          } 
         $search = $request->input('search.value');
         if($search){ 
@@ -1681,6 +1689,19 @@ class SRMService
             'message' => 'Attachment successfully deleted',
             'data' => $data
         ];
+    }
+    public static function getSupplierData($uuid)
+    {
+
+        if ($uuid) {
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+                ->first();
+
+            if (!empty($supplier)) {
+                return $supplier;
+            }
+        } 
+        return 0;
     }
 
     public function removePreBidClarificationResponse($request)
