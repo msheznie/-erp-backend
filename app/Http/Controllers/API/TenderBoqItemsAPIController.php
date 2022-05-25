@@ -508,13 +508,6 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (count($record) > 0) {
                 foreach ($record as $vl){
-                    /*$unit = Unit::where('UnitShortCode','=',$vl['uom'])->first();
-
-
-                    if(empty($unit)) {
-                        return $this->sendError('Uom '.$vl['uom'].' can not be found in unit of measure master', 500);
-                    }*/
-
                     $exist = TenderBoqItems::where('item_name',$vl['item'])
                         ->where('main_work_id',$input['main_work_id'])->first();
 
@@ -524,26 +517,35 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
                 $employee = \Helper::getEmployeeInfo();
                 foreach ($record as $vl){
-                    $units = Unit::where('UnitShortCode',$vl['uom'])->first();
-                    $data['main_work_id']=$input['main_work_id'];
-                    $data['item_name']=$vl['item'];
-                    if(isset($vl['description'])){
-                        $data['description']=$vl['description'];
+                    $exist = TenderBoqItems::where('item_name',$vl['item'])
+                        ->where('main_work_id',$input['main_work_id'])->first();
+
+                    if(empty($exist)){
+                        $units = Unit::where('UnitShortCode',$vl['uom'])->first();
+                        $data['main_work_id']=$input['main_work_id'];
+                        $data['item_name']=$vl['item'];
+                        if(isset($vl['description'])){
+                            $data['description']=$vl['description'];
+                        }else{
+                            $data['description']= '';
+                        }
+                        if(!empty($units)){
+                            $data['uom']=$units['UnitID'];
+                        }else{
+                            $data['uom']= '';
+                        }
+                        $data['qty']=$vl['qty'];
+                        $data['company_id']=$input['companySystemID'];
+                        $data['created_by'] = $employee->employeeSystemID;
+                        $result = TenderBoqItems::create($data);
                     }
-                    if(!empty($units)){
-                        $data['uom']=$units['UnitID'];
-                    }
-                    $data['qty']=$vl['qty'];
-                    $data['company_id']=$input['companySystemID'];
-                    $data['created_by'] = $employee->employeeSystemID;
-                    $result = TenderBoqItems::create($data);
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            return $this->sendResponse([], 'Items uploaded successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
