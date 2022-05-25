@@ -1183,13 +1183,6 @@ class GRVDetailsAPIController extends AppBaseController
                 $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
                 $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
                 $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
-            } else if ( ($itemAssign->financeCategoryMaster == 2 || $itemAssign->financeCategoryMaster == 4) && WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation)) //non inventory and manufacturing
-            {
-            
-                $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
-                $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
-                $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
-                $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
             } else {
           
                 $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
