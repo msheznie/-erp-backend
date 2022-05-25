@@ -1176,7 +1176,6 @@ class GRVDetailsAPIController extends AppBaseController
             //return WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation);
 
         
-
             if ($itemAssign->financeCategoryMaster == 1 && WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation)) // check inventory and manufacturing
             {
                 $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
