@@ -1867,14 +1867,14 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $itemArray['transactionAmount'] =  ($itemArray['unitTransactionAmount'] != 0) ? $item['qty'] * ($itemArray['unitTransactionAmount'] - $itemArray['discountAmount']) : 0 ;
                             
                             $totalAmount +=  $itemArray['transactionAmount'];
+                             $itemArray['VATAmount'] = 0;
                             if ($masterData->customerVATEligible) {
                                 $vatDetails = TaxService::getVATDetailsByItem($masterData->companySystemID, $itemArray['itemCodeSystem'], $masterData->customerID,0);
                                 $itemArray['VATPercentage'] = $item['vat'];
                                 $itemArray['VATApplicableOn'] = $vatDetails['applicableOn'];
                                 $itemArray['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
                                 $itemArray['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-                                $itemArray['VATAmount'] = 0;
-
+                               
                                 if (isset($item['vat'])) {
                                     $itemArray['VATAmount'] = round(($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100),3);
                                 }
