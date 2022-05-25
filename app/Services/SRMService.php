@@ -1359,7 +1359,7 @@ class SRMService
                 $q->with('attachment');
                 $q->where('parent_id', 0);
                 if(!empty($SearchText)){
-                    $searchText = str_replace("\\", "\\\\", $SearchText);
+                    $SearchText = str_replace("\\", "\\\\", $SearchText);
                     $q->where('post', 'LIKE', "%{$SearchText}%");
                 }
 
@@ -1373,6 +1373,11 @@ class SRMService
                 })->where('id', $extra['tenderId']);
 
             $data = $data->get();
+
+            $data =  [
+                'data' => $data,
+                'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
+            ];
 
             return [
                 'success' => true,
