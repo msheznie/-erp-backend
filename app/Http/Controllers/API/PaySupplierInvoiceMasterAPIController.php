@@ -239,6 +239,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError('Payment voucher date is not within financial period!', 500);
             }
 
+            if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                if (!empty($company) && $company->vatRegisteredYN == 1) {
+                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
+                }
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
