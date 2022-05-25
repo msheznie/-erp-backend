@@ -557,12 +557,14 @@ class CustomUserReportsAPIController extends AppBaseController
         // return date("Y");
         DB::enableQueryLog();
         $result = $this->getCustomReportQry($request);
+       
 
         if (!$result['success']) {
             return $this->sendError($result['message'], 500);
         }
        
         $data = $result['data'];
+
         if($data){
             $data = $data->paginate($limit);
         }
@@ -1149,6 +1151,19 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['model'] = 'ERPAssetTransfer';
                     $templateData['tables'] = ['location',
                     'approved_by','created_by','modified_by','confirmed_by'];
+                    $templateData['statusColumns'] = ['approved_yn'];
+                    break; 
+                case 36:  
+                    $masterTable = 'erp_fa_fa_asset_request';
+                    $detailTable = 'erp_fa_fa_asset_request_details';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmed_yn';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved_yn';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetRequest';
+                    $templateData['tables'] = [''];
                     $templateData['statusColumns'] = ['approved_yn'];
                     break; 
                 default;
@@ -2567,7 +2582,23 @@ class CustomUserReportsAPIController extends AppBaseController
                                 }  
                             }
                         }
+                       
                         $data->whereIn($masterTable . '.company_id', $subCompanies);
+                        break;
+                case 36:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                       
+                     
+                        $data->whereIn($masterTable . '.company_id', $subCompanies);
+                       
                         break;
                 default:
                     $data = [];
