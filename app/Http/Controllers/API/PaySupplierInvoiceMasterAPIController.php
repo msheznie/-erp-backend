@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -287,6 +288,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($supDetail) {
                     $input['supplierGLCode'] = $supDetail->liabilityAccount;
                     $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                    $input['VATPercentage'] = $supDetail->vatPercentage;
+
                 }
                 $input['supplierTransCurrencyER'] = 1;
                 if ($supCurrency) {
@@ -2738,7 +2741,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->exists();
 
             $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
-         
+
+            $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -2764,7 +2769,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'deduction_type_drop' => $monthly_declarations_drop,
                 'paymentMode' => $paymentMode,
                 'isProjectBase' => $isProject_base,
-                'projects' => $projects,
+                'isVATEligible' => $isVATEligible,
+                'projects' => $projects
             );
         }
 

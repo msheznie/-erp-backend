@@ -640,6 +640,13 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
+        'rcmActivated',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
         'bankAccountBalance',
         'payment_mode'
     ];
