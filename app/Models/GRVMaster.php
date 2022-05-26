@@ -375,4 +375,45 @@ class GRVMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'grvAutoID')->where('documentSystemID',3);
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_grvdetails','erp_grvdetails.grvAutoID','erp_grvmaster.grvAutoID');
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_grvmaster.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_grvmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_grvmaster.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_grvmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_grvmaster.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+    
+    public function scopeSupplierJoin($q,$as = 'supplier', $column = 'supplierID' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_grvmaster.'.$column)
+        ->addSelect($as.".supplierName as ".$columnAs);
+    }
 }

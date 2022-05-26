@@ -334,4 +334,27 @@ class InventoryReclassification extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'inventoryreclassificationID')->where('documentSystemID',61);
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_inventoryreclassificationdetail','erp_inventoryreclassificationdetail.inventoryreclassificationID','erp_inventoryreclassification.inventoryreclassificationID');
+    }
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_inventoryreclassification.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_inventoryreclassification.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_inventoryreclassification.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
 }

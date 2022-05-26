@@ -717,4 +717,33 @@ class CustomerReceivePayment extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'custReceivePaymentAutoID')->where('documentSystemID',21);
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_custreceivepaymentdet','erp_custreceivepaymentdet.custReceivePaymentAutoID','erp_customerreceivepayment.custReceivePaymentAutoID');
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'currency',$columnAs = 'currencyByName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_customerreceivepayment.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_customerreceivepayment.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_customerreceivepayment.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    public function scopeBankJoin($q,$as = 'erp_bankmaster', $column = 'BPVbank' , $columnAs = 'bankName')
+    {
+        return $q->leftJoin('erp_bankmaster as '.$as,$as.'.bankmasterAutoID','erp_customerreceivepayment.'.$column)
+        ->addSelect($as.".bankName as ".$columnAs);
+    }
+
 }
