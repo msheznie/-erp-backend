@@ -38,6 +38,7 @@ use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
 use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1332,20 +1333,32 @@ class SRMService
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
-                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    try {
+                        $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    } catch (Exception $exception){
+                            if($exception->getCode() == 500){
+                                DB::rollBack();
+                                return [
+                                    'success'   => false,
+                                    'message'   => $exception->getMessage(),
+                                    'data'      => $exception->getMessage()
+                                ];
+                            }
+                    }
+
                 }
                 DB::commit();
 
                 return [
                     'success' => true,
-                    'message' => 'Tender Pre-bid Clarification successfully',
+                    'message' => 'Pre-bid Clarification created successfully',
                     'data' => $tenderPrebidClarification
                 ];
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return [
                     'success'   => false,
-                    'message'   => 'Tender Pre-bid Clarification failed',
+                    'message'   => 'Pre-bid clarification failed',
                     'data'      => $exception->getMessage()
                 ];
             }
@@ -1502,14 +1515,15 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    throw new Exception("This type of file not allow to upload.", 500);
                 }
 
                 if (isset($attachment['size'])) {
                     if ($attachment['size'] > 2097152) {
-                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                        throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
                     }
                 }
+
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
                 $attch = time() . '_PreBidClarificationCompany.' . $extension;
