@@ -262,4 +262,21 @@ class BudgetTransferForm extends Model
     {
         return $this->hasMany('App\Models\BudgetReviewTransferAddition', 'budgetTransferAdditionID', 'budgetTransferFormAutoID')->where('budgetTransferType',1);
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_budgettransferform.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_budgettransferform.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_budgettransferformdetail','erp_budgettransferformdetail.budgetTransferFormAutoID','erp_budgettransferform.budgetTransferFormAutoID');
+    }
+
 }
