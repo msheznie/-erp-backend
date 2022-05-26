@@ -1510,6 +1510,7 @@ class SRMService
     public function uploadAttachment($attachments, $companySystemID, $company, $documentCode, $id)
     {
         foreach ($attachments as $attachment) {
+            Log::info(['Attachments', $attachments]);
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
@@ -1647,6 +1648,7 @@ class SRMService
     {
         $input = $request->all();
         $question = $request->input('extra.response');
+        $attachment = $request->input('extra.attachment');
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
@@ -1656,16 +1658,15 @@ class SRMService
             $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                 ->where('documentSystemCode', $prebidId)
                 ->count();
-
-            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
+            
+            if ($isAttachmentExist > 0) {
                 DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
                     ->delete();
             }
 
-            if (!empty($attachment) && isset($attachment['file'])) {
-                $attachment = $input['Attachment'];
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            if (!empty($attachment) && isset($attachment[0]['file'])) {
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
             }
 
             DB::commit();
