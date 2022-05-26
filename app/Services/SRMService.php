@@ -1351,7 +1351,7 @@ class SRMService
 
                 return [
                     'success' => true,
-                    'message' => 'Pre-bid Clarification created successfully',
+                    'message' => 'Pre-bid clarification created successfully',
                     'data' => $tenderPrebidClarification
                 ];
             } catch (\Exception $exception) {
