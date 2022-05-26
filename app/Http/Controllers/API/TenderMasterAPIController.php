@@ -768,7 +768,11 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all(); 
         $companyId = $input['companySystemID'];
-        $data['tenders'] = TenderMaster::where('company_id',$companyId)->get(); 
+        $data['tenders'] = TenderMaster::where('company_id',$companyId)
+        ->where('published_yn',1)
+        ->where('pre_bid_clarification_method','!=',0)
+        ->where('closed_yn','!=',1)
+        ->get(); 
         return $data;
     }
 
