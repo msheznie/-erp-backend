@@ -464,7 +464,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
     {
         if (!empty($attachment) && isset($attachment['file'])) {
             $extension = $attachment['fileType'];
-            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx','docx'];
 
             if (!in_array(strtolower($extension), $allowExtensions)) {
                 return $this->sendError('This type of file not allow to upload.', 500);

@@ -358,7 +358,7 @@ class SRMService
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] = date("h:i A",strtotime($slotDetail->start_date)). '-'.date("h:i A",strtotime($slotDetail->end_date)). ' '.$row->ware_house->wareHouseDescription;
+                    $arr[$x]['title'] = date("h:i A", strtotime($slotDetail->start_date)) . '-' . date("h:i A", strtotime($slotDetail->end_date)) . ' ' . $row->ware_house->wareHouseDescription;
                     $arr[$x]['warehouse'] = $row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
@@ -401,13 +401,13 @@ class SRMService
         $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails' =>function($query){
-                $query->with(['unit','appointmentDetails' => function($q){
-                    $q->whereHas('appointment', function ($q){
+            $query->with(['getPoMaster', 'getPoDetails' => function ($query) {
+                $query->with(['unit', 'appointmentDetails' => function ($q) {
+                    $q->whereHas('appointment', function ($q) {
                         $q->where('refferedBackYN', '!=', -1);
                         /*$q->where('confirmed_yn', 1);*/
                     })->groupBy('po_detail_id')
-                        ->select('id', 'appointment_id','qty','po_detail_id')
+                        ->select('id', 'appointment_id', 'qty', 'po_detail_id')
                         ->selectRaw('sum(qty) as qty');
                 }]);
             }]);
@@ -627,7 +627,8 @@ class SRMService
     private function amendPoAppointment($appointmentID, $slotCompanyId)
     {
         $amendedAppointment = Appointment::where('id', $appointmentID)
-            ->select('appointment.id AS appointment_id',
+            ->select(
+                'appointment.id AS appointment_id',
                 'appointment.supplier_id',
                 'appointment.document_system_id',
                 'appointment.serial_no',
@@ -658,7 +659,8 @@ class SRMService
         $insertAppointment = AppointmentRefferedBack::insert($amendedAppointment);
 
         $amendedAppointmentDetails = AppointmentDetails::where('appointment_id', $appointmentID)
-            ->select('appointment_details.id AS appointment_details_id',
+            ->select(
+                'appointment_details.id AS appointment_details_id',
                 'appointment_details.appointment_id',
                 'appointment_details.po_master_id',
                 'appointment_details.po_detail_id',
@@ -672,7 +674,7 @@ class SRMService
             ->get()->toArray();
         $insertAppointmentDetails = AppointmentDetailsRefferedBack::insert($amendedAppointmentDetails);
 
-        if($insertAppointment && $insertAppointmentDetails){
+        if ($insertAppointment && $insertAppointmentDetails) {
 
             $statusChange = Appointment::where('id', $appointmentID)
                 ->update([
@@ -681,7 +683,7 @@ class SRMService
                     'refferedBackYN' => 0
                 ]);
 
-            if($statusChange){
+            if ($statusChange) {
                 self::poAppointmentReferback($appointmentID, $slotCompanyId);
 
                 return [
@@ -766,18 +768,19 @@ class SRMService
             'data'      => $kycFormDetails
         ];
     }
-    public function getERPFormData(Request $request){
-        $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
-        $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
-        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get(); 
-        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','supMasterCategoryID','subCategoryCode','categoryDescription')->get();
+    public function getERPFormData(Request $request)
+    {
+        $currencyMaster = CurrencyMaster::select('currencyID', 'CurrencyName', 'CurrencyCode')->get();
+        $countryMaster = CountryMaster::select('countryID', 'countryCode', 'countryName')->get();
+        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryDescription')->get();
+        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryDescription')->get();
         $formData =  array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
             'supplierCategorySubMaster' => $supplierCategorySubMaster,
         );
-        
+
         return [
             'success'   => true,
             'message'   => 'ERP Form Data Retrieved',
@@ -789,47 +792,47 @@ class SRMService
     {
         $slotDetailID = $request->input('extra.slotDetailID');
 
-        $detail = SlotDetails::where('id',$slotDetailID)->first();
+        $detail = SlotDetails::where('id', $slotDetailID)->first();
 
         $appointments = $this->getAppointmentDeliveries($request);
         $appointment = 0;
-        if(count($appointments['data']['data'])>0){
+        if (count($appointments['data']['data']) > 0) {
             $appointment = 1;
         }
 
-        if(!empty($detail)){//start_date
+        if (!empty($detail)) { //start_date
             $endDate = Carbon::parse($detail['end_date'])->format('Y-m-d H:i:s');
             $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-            $result['currentDate']=$currentDate;
-            $result['endDate']=$endDate;
+            $result['currentDate'] = $currentDate;
+            $result['endDate'] = $endDate;
 
             $start_date = Carbon::parse($detail['start_date'])->format('Y-m-d');
             $current = Carbon::parse(now())->format('Y-m-d');
             $canCancel = 0;
-            if($start_date>$current){
+            if ($start_date > $current) {
                 $canCancel = 1;
             }
 
-            if($endDate > $currentDate){
-                $result['canCreate']=1;
-                $result['canCancel']=$canCancel;
-                $result['appointments']=$appointment;
+            if ($endDate > $currentDate) {
+                $result['canCreate'] = 1;
+                $result['canCancel'] = $canCancel;
+                $result['appointments'] = $appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointment Can Be Created',
                     'data'      => $result
                 ];
-            }else{
-                $result['canCreate']=0;
-                $result['canCancel']=$canCancel;
-                $result['appointments']=$appointment;
+            } else {
+                $result['canCreate'] = 0;
+                $result['canCancel'] = $canCancel;
+                $result['appointments'] = $appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointments can not be created for past dates',
                     'data'      => $result
                 ];
             }
-        }else{
+        } else {
             return [
                 'success'   => false,
                 'message'   => 'Slot Detail Not Available',
@@ -842,37 +845,37 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
-            $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
-                $q->whereHas('appointment', function ($q) use($appointmentID){
-                    $q->where('refferedBackYN', '!=', -1);
-                    $q->where('cancelYN', 0);
-                    if(isset($appointmentID)){
-                        $q->where('id','!=', $appointmentID);
-                    }
-                })->groupBy('po_detail_id')
-                    ->select('id', 'appointment_id','qty','po_detail_id')
-                    ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }]);
-        }, 'appointment.attachment'])->get()
-            ->transform(function ($data){
+        $detail = AppointmentDetails::where('appointment_id', $appointmentID)
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' => function ($query) use ($appointmentID) {
+                $query->with(['unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+                    $q->whereHas('appointment', function ($q) use ($appointmentID) {
+                        $q->where('refferedBackYN', '!=', -1);
+                        $q->where('cancelYN', 0);
+                        if (isset($appointmentID)) {
+                            $q->where('id', '!=', $appointmentID);
+                        }
+                    })->groupBy('po_detail_id')
+                        ->select('id', 'appointment_id', 'qty', 'po_detail_id')
+                        ->selectRaw('IFNULL(sum(qty),0) as qty');
+                }]);
+            }, 'appointment.attachment'])->get()
+            ->transform(function ($data) {
                 return $this->appointmentDetailFormat($data);
             });
-        $result['detail']=$detail;
-        $result['purchaseOrderCode']='';
-        if(count($detail) > 0){
-            $result['exist']=1;
-            if(!empty($detail[0]['getPoMaster'])){
-                $result['purchaseOrderCode']=$detail[0]['getPoMaster']['purchaseOrderCode'];
+        $result['detail'] = $detail;
+        $result['purchaseOrderCode'] = '';
+        if (count($detail) > 0) {
+            $result['exist'] = 1;
+            if (!empty($detail[0]['getPoMaster'])) {
+                $result['purchaseOrderCode'] = $detail[0]['getPoMaster']['purchaseOrderCode'];
             }
             return [
                 'success'   => true,
                 'message'   => 'Appointment Details Available',
                 'data'      => $result
             ];
-        }else{
-            $result['exist']=0;
+        } else {
+            $result['exist'] = 0;
             return [
                 'success'   => false,
                 'message'   => 'Appointment Details Not Available',
@@ -887,7 +890,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
         $searchText = $request->input('extra.searchText');
 
-        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID);
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID);
 
         if (!empty($searchText)) {
             $searchText = str_replace("\\", "\\\\", $searchText);
@@ -897,22 +900,22 @@ class SRMService
             });
         }
 
-        $po = $po->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
-                $q->whereHas('appointment', function ($q) use($appointmentID){
-                    $q->where('refferedBackYN', '!=', -1);
-                    $q->where('cancelYN', 0);
-                    if(isset($appointmentID)){
-                        $q->where('id','!=', $appointmentID);
-                    }
-                })->groupBy('po_detail_id')
-                    ->select('id', 'appointment_id','qty','po_detail_id')
-                    ->selectRaw('IFNULL(sum(qty),0) as qty');
-            },'order.transactioncurrency'])->get()
-            ->transform(function ($data){
+        $po = $po->with(['order', 'unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+            $q->whereHas('appointment', function ($q) use ($appointmentID) {
+                $q->where('refferedBackYN', '!=', -1);
+                $q->where('cancelYN', 0);
+                if (isset($appointmentID)) {
+                    $q->where('id', '!=', $appointmentID);
+                }
+            })->groupBy('po_detail_id')
+                ->select('id', 'appointment_id', 'qty', 'po_detail_id')
+                ->selectRaw('IFNULL(sum(qty),0) as qty');
+        }, 'order.transactioncurrency'])->get()
+            ->transform(function ($data) {
                 return $this->poDetailFormat($data);
             });
 
-        $result['poDetail']=$po;
+        $result['poDetail'] = $po;
         return [
             'success'   => true,
             'message'   => 'Po Details Retrieved',
@@ -920,10 +923,11 @@ class SRMService
         ];
     }
 
-    public function poDetailFormat($data){
-        if(count($data['appointmentDetails'])>0){
+    public function poDetailFormat($data)
+    {
+        if (count($data['appointmentDetails']) > 0) {
             $sumQty = $data['appointmentDetails'][0]['qty'];
-        }else{
+        } else {
             $sumQty = 0;
         }
         return [
@@ -943,10 +947,11 @@ class SRMService
         ];
     }
 
-    public function appointmentDetailFormat($data){
-        if(count($data['getPoDetails']['appointmentDetails'])>0){
+    public function appointmentDetailFormat($data)
+    {
+        if (count($data['getPoDetails']['appointmentDetails']) > 0) {
             $sumQty = $data['getPoDetails']['appointmentDetails'][0]['qty'];
-        }else{
+        } else {
             $sumQty = 0;
         }
         return [
@@ -983,8 +988,8 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = DB::table('appointment')
-            ->select('*', 'appointment.id as appointmentId','appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
-            ->join('slot_details', function($query) {
+            ->select('*', 'appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
+            ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
             ->where('appointment.supplier_id', $supplierID)
@@ -1003,12 +1008,13 @@ class SRMService
             });
         }
 
-        if(isset($warehouseId) && $warehouseId !== 0) {
+
+        if ($warehouseId != 0 &&  !(is_null($warehouseId))) {
             $query->where('wareHouseSystemCode', $warehouseId);
         }
 
-        if(!(is_null($appointDate)) && isset($appointDate)) {
-           $query->whereDate('start_date', $appointDate);
+        if (!(is_null($appointDate)) && isset($appointDate)) {
+            $query->whereDate('start_date', Carbon::parse($appointDate)->format('Y-m-d'));
         }
 
         $data = DataTables::of($query)
@@ -1032,10 +1038,10 @@ class SRMService
 
     public function getWarehouse(Request $request)
     {
-        try{
+        try {
             $warehouse = WarehouseMaster::where('isActive', 1)->get();
             $message = 'Warehouse list load successfully';
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $message = $e;
         }
 
@@ -1049,7 +1055,7 @@ class SRMService
     public function getRemainingSlotCount(Request $request)
     {
         $remainingAppointments = 0;
-        try{
+        try {
             $slotDetailID = $request->input('extra.slotDetailID');
             $slotMasterID = $request->input('extra.slotMasterID');
 
@@ -1068,7 +1074,7 @@ class SRMService
             $message = "Success";
 
             $remainingAppointments = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - $appointmentCount));
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $message = $e;
         }
 
@@ -1081,7 +1087,7 @@ class SRMService
 
     public function cancelAppointments(Request $request)
     {
-        try{
+        try {
             $id = $request->input('extra.appointmentID');
             $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
 
@@ -1095,9 +1101,9 @@ class SRMService
             $Data['canceledByName'] = $supplier['supplierName'];
             $result = Appointment::where('id', $id)->update($Data);
 
-            $message ='Appointment canceled successfully';
+            $message = 'Appointment canceled successfully';
             $success = true;
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $success = false;
             $message = $e;
             $result = 0;
@@ -1149,8 +1155,8 @@ class SRMService
                 }
 
                 $approvalList = $approvalList->with(['employee'])
-                    ->whereHas('employee', function($q) {
-                        $q->where('discharegedYN',0);
+                    ->whereHas('employee', function ($q) {
+                        $q->where('discharegedYN', 0);
                     })
                     ->groupBy('employeeSystemID')
                     ->get();
@@ -1163,66 +1169,63 @@ class SRMService
             'message'   => 'Record retrieved successfully',
             'data'      => $approveDetails
         ];
-
     }
     public function getTenders(Request $request)
     {
-    
+
         $input = $request->all();
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
-        $supplierData =  self::getSupplierData($request->input('supplier_uuid')); 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
-        }  
+        }
 
-        if($request->input('extra.tender_status') == 1){ 
-            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId); 
-            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId);
+        if ($request->input('extra.tender_status') == 1) {
+            $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
+            }])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
             })
-            ->where('published_yn',1)
-            ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
-                $q1->where('tender_type_id','!=',2);
-            });
-            
-        }else if ($request->input('extra.tender_status') == 2) {  
-            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId);
-            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId); 
+                ->where('published_yn', 1)
+                ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
+                    $q1->where('tender_type_id', '!=', 2);
+                });
+        } else if ($request->input('extra.tender_status') == 2) {
+            $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
+            }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
             })
-            ->where('published_yn',1)
-            ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
-                $q1->where('tender_type_id','!=',2);
-            });  
-         } 
+                ->where('published_yn', 1)
+                ->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
+                    $q1->where('tender_type_id', '!=', 2);
+                });
+        }
         $search = $request->input('search.value');
-        if($search){ 
-             $search = str_replace("\\", "\\\\", $search);
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->where('description', 'LIKE', "%{$search}%");
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
-                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%"); 
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
         }
 
         $data = DataTables::eloquent($query)
-        ->order(function ($query) use ($input) {
-            if (request()->has('order') ) {
-                if($input['order'][0]['column'] == 0)
-                {
-                    $query->orderBy('id', $input['order'][0]['dir']);
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
                 }
-            }
-        })
-        ->addIndexColumn()
-        ->with('orderCondition', $sort)
-        ->addColumn('Actions', 'Actions', "Actions") 
-        ->make(true);  
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
 
         return [
             'success' => true,
@@ -1230,12 +1233,13 @@ class SRMService
             'data' => $data
         ];
     }
-    public function saveTenderPurchase(Request $request){ 
+    public function saveTenderPurchase(Request $request)
+    {
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tenderMasterId = $request->input('extra.tenderId');  
+        $tenderMasterId = $request->input('extra.tenderId');
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
         DB::beginTransaction();
-        try { 
+        try {
             $data['tender_master_id'] = $tenderMasterId;
             $data['purchased_date'] = $currentDate;
             $data['purchased_by'] = $supplierRegId;
@@ -1255,19 +1259,18 @@ class SRMService
                 'data'      => $exception->getMessage()
             ];
         }
- 
     }
     public static function getSupplierRegIdByUUID($uuid)
     {
 
         if ($uuid) {
-            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
                 ->first();
 
             if (!empty($supplier)) {
                 return $supplier->id;
             }
-        } 
+        }
         return 0;
     }
 
@@ -1275,34 +1278,35 @@ class SRMService
     {
         $input = $request->all();
         $tenderId = $input['extra']['tenderId'];
-        try{
-            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
+        try {
+            $query = TenderFaq::select('id', 'question', 'answer')->where('tender_master_id', $tenderId)->get();
 
             return [
                 'success' => true,
                 'message' => 'FAQ list successfully get',
                 'data' => $query
             ];
-        } catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return [
                 'success' => false,
                 'message' => 'FAQ list failed get',
                 'data' => $exception
             ];
         }
-
     }
 
-    public function saveTenderPrebidClarification(Request $request){
+    public function saveTenderPrebidClarification(Request $request)
+    {
         $prebidId = $request->input('extra.preBidId');
         $postAnonymous = $request->input('extra.postAnonymous');
-        if(!isset($postAnonymous)){
+        if (!isset($postAnonymous)) {
             $postAnonymous = 0;
         }
 
-        if($prebidId !== 0){
-           return $this->updatePreBid($request, $prebidId);
-        } else {$attachment = $request->input('extra.attachment');
+        if ($prebidId !== 0) {
+            return $this->updatePreBid($request, $prebidId);
+        } else {
+            $attachment = $request->input('extra.attachment');
             $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
             $tenderMasterId = $request->input('extra.tenderId');
             $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
@@ -1354,31 +1358,31 @@ class SRMService
         $extra = $input['extra'];
         $supplierRegId =  0;
         $SearchText = "";
-        if(isset($extra['SearchText'])){
+        if (isset($extra['SearchText'])) {
             $SearchText = $extra['SearchText'];
         }
 
-        if(isset($extra['isMyClarification']) && $extra['isMyClarification'] == true){
+        if (isset($extra['isMyClarification']) && $extra['isMyClarification'] == true) {
             $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         }
 
-        try{
+        try {
             $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
                 $q->with('attachment');
                 $q->where('parent_id', 0);
-                if(!empty($SearchText)){
+                if (!empty($SearchText)) {
                     $SearchText = str_replace("\\", "\\\\", $SearchText);
                     $q->where('post', 'LIKE', "%{$SearchText}%");
                 }
 
-                if($supplierRegId != 0){
+                if ($supplierRegId != 0) {
                     $q->where('supplier_id', $supplierRegId);
                 }
                 $q->with(['supplier']);
             }]);
-               $data = $data->whereHas('tenderPreBidClarification', function ($q) {
-                    $q->where('parent_id', 0);
-                })->where('id', $extra['tenderId']);
+            $data = $data->whereHas('tenderPreBidClarification', function ($q) {
+                $q->where('parent_id', 0);
+            })->where('id', $extra['tenderId']);
 
             $data = $data->get();
 
@@ -1392,7 +1396,7 @@ class SRMService
                 'message' => 'Pre-bid Clarification list successfully get',
                 'data' => $data
             ];
-        } catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return [
                 'success' => false,
                 'message' => 'Pre-bid Clarification list failed get',
@@ -1408,7 +1412,7 @@ class SRMService
 
         $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachments'])
+        }, 'attachments'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -1417,7 +1421,7 @@ class SRMService
             ->where('employeeSystemID', $employeeId)
             ->first();
         $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];
-        
+
         return [
             'success' => true,
             'message' => 'Pre-bid response successfully get',
@@ -1431,7 +1435,7 @@ class SRMService
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachments'])
+        }, 'attachments'])
             ->where('id', '=', $id)
             ->first();
 
@@ -1455,8 +1459,8 @@ class SRMService
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
-        if( $updateRecordId !== 0 ){
-           return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
+        if ($updateRecordId !== 0) {
+            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
         }
         DB::beginTransaction();
         try {
@@ -1528,7 +1532,6 @@ class SRMService
                 Log::info("NO ATTACHMENT");
             }
         }
-
     }
 
     public function uploadAppointmentAttachment($request)
@@ -1578,7 +1581,7 @@ class SRMService
             } else {
                 Log::info("NO ATTACHMENT");
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             return [
                 'success'   => false,
                 'message'   => $e,
@@ -1619,7 +1622,6 @@ class SRMService
 
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
@@ -1654,7 +1656,6 @@ class SRMService
 
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
@@ -1694,13 +1695,13 @@ class SRMService
     {
 
         if ($uuid) {
-            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
                 ->first();
 
             if (!empty($supplier)) {
                 return $supplier;
             }
-        } 
+        }
         return 0;
     }
 
@@ -1708,7 +1709,7 @@ class SRMService
     {
         $id = $request->input('extra.id');
         DB::beginTransaction();
-        try{
+        try {
             $status = TenderBidClarifications::where('id', $id)
                 ->delete();
 
@@ -1720,5 +1721,4 @@ class SRMService
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
-
 }
