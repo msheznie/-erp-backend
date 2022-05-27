@@ -492,14 +492,12 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
 
 
-                if ((isset($value['item']) && !is_null($value['item'])) || isset($value['uom']) && !is_null($value['uom']) || isset($value['qty']) && !is_null($value['qty'])) {
-                    $totalItemCount = $totalItemCount + 1;
+                if (!$validateItem || !$validateQty) {
+                    return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
                 }
             }
 
-            if (!$validateItem || !$validateQty) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
-            }
+
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item', 'description', 'uom', 'qty'))->get()->toArray();
@@ -507,14 +505,16 @@ class TenderBoqItemsAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if (count($record) > 0) {
-                foreach ($record as $vl){
+                /*foreach ($record as $vl){
                     $exist = TenderBoqItems::where('item_name',$vl['item'])
                         ->where('main_work_id',$input['main_work_id'])->first();
 
                     if(!empty($exist)){
                         return $this->sendError('Item can not be duplicated', 500);
                     }
-                }
+                }*/
+                $duplicateEntries = [];
+                $skipRecords = [];
                 $employee = \Helper::getEmployeeInfo();
                 foreach ($record as $vl){
                     $exist = TenderBoqItems::where('item_name',$vl['item'])
@@ -538,13 +538,25 @@ class TenderBoqItemsAPIController extends AppBaseController
                         $data['company_id']=$input['companySystemID'];
                         $data['created_by'] = $employee->employeeSystemID;
                         $result = TenderBoqItems::create($data);
+                    }else{
+                        array_push($duplicateEntries,$vl);
                     }
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
+            if (!empty($duplicateEntries)) {
+                foreach ($duplicateEntries as $key => $dupl) {
+                    $data = 'Item ' . $dupl['item'] . ' duplicated and has been skipped';
+                    array_push($skipRecords, $data);
+                }
+            }
             DB::commit();
+            if (!empty($skipRecords)) {
+                return $this->sendError($skipRecords, 200);
+            }
+
             return $this->sendResponse([], 'Items uploaded successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();

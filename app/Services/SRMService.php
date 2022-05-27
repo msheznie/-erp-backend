@@ -38,6 +38,7 @@ use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
 use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1332,20 +1333,32 @@ class SRMService
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
-                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    try {
+                        $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    } catch (Exception $exception){
+                            if($exception->getCode() == 500){
+                                DB::rollBack();
+                                return [
+                                    'success'   => false,
+                                    'message'   => $exception->getMessage(),
+                                    'data'      => $exception->getMessage()
+                                ];
+                            }
+                    }
+
                 }
                 DB::commit();
 
                 return [
                     'success' => true,
-                    'message' => 'Tender Pre-bid Clarification successfully',
+                    'message' => 'Pre-bid clarification created successfully',
                     'data' => $tenderPrebidClarification
                 ];
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return [
                     'success'   => false,
-                    'message'   => 'Tender Pre-bid Clarification failed',
+                    'message'   => 'Pre-bid clarification failed',
                     'data'      => $exception->getMessage()
                 ];
             }
@@ -1449,6 +1462,7 @@ class SRMService
     public function createClarificationResponse(Request $request)
     {
         $attachment = $request->input('extra.attachment');
+        $newAttachment = $request->input('extra.addAttachment');
         $employeeId = Helper::getEmployeeSystemID();
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
@@ -1460,7 +1474,7 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
         if ($updateRecordId !== 0) {
-            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
+            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company, $newAttachment);
         }
         DB::beginTransaction();
         try {
@@ -1476,7 +1490,7 @@ class SRMService
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
             $result = TenderBidClarifications::create($data);
-            if (isset($attachment) && !empty($attachment)) {
+            if (isset($attachment) && !empty($attachment) && $newAttachment) {
                 $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
             }
 
@@ -1499,17 +1513,18 @@ class SRMService
         foreach ($attachments as $attachment) {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
-                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    throw new Exception("This type of file not allow to upload.", 500);
                 }
 
                 if (isset($attachment['size'])) {
                     if ($attachment['size'] > 2097152) {
-                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                        throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
                     }
                 }
+
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
                 $attch = time() . '_PreBidClarificationCompany.' . $extension;
@@ -1629,29 +1644,30 @@ class SRMService
         }
     }
 
-    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company, $newAttachment)
     {
         $input = $request->all();
         $question = $request->input('extra.response');
+        $attachment = $request->input('extra.attachment');
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
             $data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
-
-            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
-                ->where('documentSystemCode', $prebidId)
-                ->count();
-
-            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
-                DocumentAttachments::where('documentSystemID', 109)
+            if($newAttachment){
+                $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
-                    ->delete();
-            }
+                    ->count();
 
-            if (!empty($attachment) && isset($attachment['file'])) {
-                $attachment = $input['Attachment'];
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+                if ($isAttachmentExist > 0) {
+                    DocumentAttachments::where('documentSystemID', 109)
+                        ->where('documentSystemCode', $prebidId)
+                        ->delete();
+                }
+
+                if (!empty($attachment) && isset($attachment[0]['file'])) {
+                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
+                }
             }
 
             DB::commit();
