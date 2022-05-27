@@ -1392,6 +1392,7 @@ class SRMService
                     $q->where('supplier_id', $supplierRegId);
                 }
                 $q->with(['supplier']);
+                $q->with(['replies']);
             }]);
             $data = $data->whereHas('tenderPreBidClarification', function ($q) {
                 $q->where('parent_id', 0);
