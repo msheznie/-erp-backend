@@ -1513,7 +1513,7 @@ class SRMService
         foreach ($attachments as $attachment) {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
-                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
                     throw new Exception("This type of file not allow to upload.", 500);
