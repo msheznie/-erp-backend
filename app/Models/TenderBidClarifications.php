@@ -171,4 +171,9 @@ class TenderBidClarifications extends Model
     {
         return $this->hasMany('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
     }
+
+    public function replies()
+    {
+        return $this->hasMany('App\Models\TenderBidClarifications','parent_id', 'id')->with('replies');
+    }
 }
