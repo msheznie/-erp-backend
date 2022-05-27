@@ -3883,18 +3883,18 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if($accumulate_Dep->postToGLYN)
                             {
-                                $finalData1 = [1,2,3];
+                                $finalData1 = [1,2];
                                 foreach ($finalData1 as $da) {
                                     
                                     if($da == 1)
                                     {
-                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->costglCodeSystemID;
-                                        $gl_data['glCode'] = $accumulate_Dep->COSTGLCODE;
+                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->postToGLCodeSystemID;
+                                        $gl_data['glCode'] = $accumulate_Dep->postToGLCode;
                                         $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
                                         $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
-    
-                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT * -1;
-                                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt * -1;
+        
+                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl;
+                                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt;
                                     }
                                     else if($da == 2)
                                     {
@@ -3902,22 +3902,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $gl_data['glCode'] = $accumulate_Dep->ACCDEPGLCODE;
                                         $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
                                         $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
-    
-                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl;
-                                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt;
+        
+                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl*-1;
+                                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt*-1;
                                     }
                                     
-                                    else if($da == 3)
-                                    {
-                                        
-                                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->postToGLCodeSystemID;
-                                        $gl_data['glCode'] = $accumulate_Dep->postToGLCode;
-                                        $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
-                                        $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
-    
-                                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT - $accumulate_Dep->accumulated_depreciation_amount_lcl;
-                                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt - $accumulate_Dep->accumulated_depreciation_amount_rpt;
-                                    }
                                     array_push($finalData, $gl_data);
                                    
                                 }
