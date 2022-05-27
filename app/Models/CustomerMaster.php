@@ -135,7 +135,8 @@ class CustomerMaster extends Model
         'addressTwoSecondLanguage',
         'consignee_name',
         'consignee_address',
-        'payment_terms'
+        'payment_terms',
+        'consignee_contact_no'
     ];
 
     /**
@@ -199,7 +200,8 @@ class CustomerMaster extends Model
         'addressTwoSecondLanguage' => 'string',
         'consignee_name' => 'string',
         'consignee_address' => 'string',
-        'payment_terms' => 'string'
+        'payment_terms' => 'string',
+        'consignee_contact_no' => 'string'
     ];
 
     /**
