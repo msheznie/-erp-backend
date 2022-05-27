@@ -323,4 +323,34 @@ class ContingencyBudgetPlan extends Model
     {
         return $this->hasMany(BudgetTransferFormDetail::class, 'contingencyBudgetID', 'ID');
     }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_budget_contingency.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_budget_contingency.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+
+    public function scopeTemplateJoin($q,$as = 'erp_companyreporttemplate' ,$column = 'templateMasterID',$columnAs = 'reportName'){
+        $q->leftJoin('erp_companyreporttemplate as '. $as, $as.'.companyReportTemplateID', '=', 'erp_budget_contingency.'.$column)
+            ->addSelect($as.".reportName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_budget_contingency.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_budget_contingency.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
 }

@@ -891,4 +891,66 @@ class FixedAssetMaster extends Model
         return '';
     }
 
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_asset_master.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    
+    public function scopeDepartmentJoin($q,$as = 'departmentmaster', $column = 'departmentSystemID' , $columnAs = 'DepartmentDescription')
+    {
+        return $q->leftJoin('departmentmaster as '.$as,$as.'.departmentSystemID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".DepartmentDescription as ".$columnAs);
+    }
+
+    public function scopeAssetTypeJoin($q,$as = 'erp_fa_assettype', $column = 'assetType' , $columnAs = 'typeDes')
+    {
+        return $q->leftJoin('erp_fa_assettype as '.$as,$as.'.typeID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".typeDes as ".$columnAs);
+    }
+
+    public function scopeFaCatTypeJoin($q,$as = 'erp_fa_category', $column = 'faCatID' , $columnAs = 'catDescription')
+    {
+        return $q->leftJoin('erp_fa_category as '.$as,$as.'.faCatID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".catDescription as ".$columnAs);
+    }
+
+
+    public function scopeFaCatSubTypeJoin($q,$as = 'erp_fa_categorysub', $column = 'faCatSubID' , $columnAs = 'catDescription')
+    {
+        return $q->leftJoin('erp_fa_categorysub as '.$as,$as.'.faCatSubID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".catDescription as ".$columnAs);
+    }
+
+    public function scopeDocIdJoin($q,$as = 'erp_grvdetails', $column = 'docOriginDetailID' , $columnAs = 'itemDescription')
+    {
+        return $q->leftJoin('erp_grvdetails as '.$as,$as.'.grvDetailsID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".itemDescription as ".$columnAs);
+    }
+
+    public function scopeLocationJoin($q,$as = 'erp_location', $column = 'LOCATION' , $columnAs = 'locationName')
+    {
+        return $q->leftJoin('erp_location as '.$as,$as.'.locationID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".locationName as ".$columnAs);
+    }
+
+    
+    public function scopeFinanceCatJoin($q,$as = 'erp_fa_financecategory', $column = 'LOCATION' , $columnAs = 'financeCatDescription')
+    {
+        return $q->leftJoin('erp_fa_financecategory as '.$as,$as.'.faFinanceCatID','erp_fa_asset_master.'.$column)
+        ->addSelect($as.".financeCatDescription as ".$columnAs);
+    }
+
 }
