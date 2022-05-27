@@ -575,10 +575,9 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
 
+        // update master table
         PaySupplier::updateMaster($input['directPaymentAutoID']);
 
-        // update master table
-        PaySupplierInvoiceMaster::with(['supplier'])->find($input['directPaymentAutoID']);
 
      return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
     }
