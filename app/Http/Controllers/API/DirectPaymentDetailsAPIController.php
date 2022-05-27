@@ -434,32 +434,41 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input['localAmount'] = \Helper::roundValue($conversionAmount['localAmount']);
         $input['comRptAmount'] = \Helper::roundValue($conversionAmount['reportingAmount']);
         $input['bankAmount'] = \Helper::roundValue($conversionAmount['defaultAmount']);
-        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyPolicyCategoryID', 67)
-            ->where('isYesNO', 1)
-            ->first();
-        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID,$payMaster->supplierTransCurrencyID, $input['vatAmount']);
-        if($policy == true) {
-            $input['VATAmountLocal'] = \Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
-            $input['VATAmountRpt'] = \Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
-        }  if($policy == false) {
-        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-    }
-        $input['vatAmount'] = \Helper::roundValue($input['vatAmount']);
 
-        $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
-        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
+        $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
+        if($payMaster->invoiceType == 3) {
+            if ($isVATEligible) {
+                $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+                $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-        if($policy == true) {
-            $input['netAmountLocal'] = \Helper::roundValue( $input['netAmount']/ $payMaster->localCurrencyER);
-            $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
-        } if($policy == false) {
-        $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
-        $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
-    }
+                $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['vatAmount']);
+                if ($policy == true) {
+                    $input['VATAmountLocal'] = \Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
+                    $input['VATAmountRpt'] = \Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
+                }
+                if ($policy == false) {
+                    $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                }
+                $input['vatAmount'] = \Helper::roundValue($input['vatAmount']);
+
+                $input['netAmount'] = isset($input['netAmount']) ? \Helper::stringToFloat($input['netAmount']) : 0;
+                $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
+
+                if ($policy == true) {
+                    $input['netAmountLocal'] = \Helper::roundValue($input['netAmount'] / $payMaster->localCurrencyER);
+                    $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
+                }
+                if ($policy == false) {
+                    $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
+                    $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
+                }
+            }
+        }
 
         if ($directPaymentDetails->glCodeIsBank) {
             $trasToDefaultER = $input["bankCurrencyER"];

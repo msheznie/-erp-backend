@@ -3167,6 +3167,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                                 $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount);
                                                 $data['timestamp'] = \Helper::currentDateTime();
                                                 array_push($finalData, $data);
+
+                                                $taxLedgerData['inputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+
                                             }
 
                                         }
@@ -3220,6 +3223,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                                 $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount);
                                                 $data['timestamp'] = \Helper::currentDateTime();
                                                 array_push($finalData, $data);
+                                                $taxLedgerData['inputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+
                                             }
 
                                         }
@@ -3250,6 +3255,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                                 $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount) * -1;
                                                 $data['timestamp'] = \Helper::currentDateTime();
                                                 array_push($finalData, $data);
+                                                $taxLedgerData['outputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+
                                             }
 
                                         }
