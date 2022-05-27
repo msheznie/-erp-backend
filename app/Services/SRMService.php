@@ -1462,6 +1462,7 @@ class SRMService
     public function createClarificationResponse(Request $request)
     {
         $attachment = $request->input('extra.attachment');
+        $newAttachment = $request->input('extra.addAttachment');
         $employeeId = Helper::getEmployeeSystemID();
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
@@ -1473,7 +1474,7 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
         if ($updateRecordId !== 0) {
-            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
+            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company, $newAttachment);
         }
         DB::beginTransaction();
         try {
@@ -1489,7 +1490,7 @@ class SRMService
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
             $result = TenderBidClarifications::create($data);
-            if (isset($attachment) && !empty($attachment)) {
+            if (isset($attachment) && !empty($attachment) && $newAttachment) {
                 $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
             }
 
@@ -1510,7 +1511,6 @@ class SRMService
     public function uploadAttachment($attachments, $companySystemID, $company, $documentCode, $id)
     {
         foreach ($attachments as $attachment) {
-            Log::info(['Attachments', $attachments]);
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
@@ -1644,7 +1644,7 @@ class SRMService
         }
     }
 
-    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company, $newAttachment)
     {
         $input = $request->all();
         $question = $request->input('extra.response');
@@ -1654,19 +1654,20 @@ class SRMService
         try {
             $data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
-
-            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
-                ->where('documentSystemCode', $prebidId)
-                ->count();
-            
-            if ($isAttachmentExist > 0) {
-                DocumentAttachments::where('documentSystemID', 109)
+            if($newAttachment){
+                $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
-                    ->delete();
-            }
+                    ->count();
 
-            if (!empty($attachment) && isset($attachment[0]['file'])) {
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
+                if ($isAttachmentExist > 0) {
+                    DocumentAttachments::where('documentSystemID', 109)
+                        ->where('documentSystemCode', $prebidId)
+                        ->delete();
+                }
+
+                if (!empty($attachment) && isset($attachment[0]['file'])) {
+                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
+                }
             }
 
             DB::commit();
