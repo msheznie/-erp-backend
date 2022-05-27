@@ -548,16 +548,15 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (!empty($duplicateEntries)) {
                 foreach ($duplicateEntries as $key => $dupl) {
-                    $data['msg'] = 'Item' . $dupl->item . ' duplicated and has been skipped';
+                    $data = 'Item ' . $dupl['item'] . ' duplicated and has been skipped';
                     array_push($skipRecords, $data);
                 }
             }
-
+            DB::commit();
             if (!empty($skipRecords)) {
-                return $this->sendError($skipRecords, 500);
+                return $this->sendError($skipRecords, 200);
             }
 
-            DB::commit();
             return $this->sendResponse([], 'Items uploaded successfully!!');
         } catch (\Exception $exception) {
             DB::rollBack();
