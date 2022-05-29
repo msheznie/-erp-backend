@@ -1280,16 +1280,28 @@ class SRMService
         $input = $request->all();
         $tenderId = $input['extra']['tenderId'];
         try {
-            $query = TenderFaq::select('id', 'question', 'answer')->where('tender_master_id', $tenderId)->get();
+            $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
+            if(sizeof($queryRecordsCount)){
+                $result = TenderFaq::select('id', 'question', 'answer')
+               ->where('tender_master_id', $tenderId)
+               ->get();
 
+                return [
+                    'success' => true,
+                    'message' => 'FAQ list successfully get',
+                    'data' => $result
+                ];
+
+            } else {
+                return [
+                    'success' => true,
+                    'message' => 'No records found',
+                    'data' => ''
+                ];
+            }
+        } catch (\RuntimeException $exception){
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
-                'data' => $query
-            ];
-        } catch (\Exception $exception) {
-            return [
-                'success' => false,
                 'message' => 'FAQ list failed get',
                 'data' => $exception
             ];
