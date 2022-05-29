@@ -3659,7 +3659,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
 
 
-                            if($exemptVatTotal->vatAmount) {
+                            if($exemptVatTotal) {
                                 $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
                                 $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
                                 $diffRpt = $convertedRpt - $masterRpt - $exemptVatTotal->VATAmountRpt;
