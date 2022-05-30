@@ -265,6 +265,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
                 //cost
 
+
                 }
 
                 Log::info('job is End..');
