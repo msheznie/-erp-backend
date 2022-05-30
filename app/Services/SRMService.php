@@ -1712,7 +1712,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Attachment successfully deleted',
+            'message' => 'Attachment deleted successfully ',
             'data' => $data
         ];
     }
