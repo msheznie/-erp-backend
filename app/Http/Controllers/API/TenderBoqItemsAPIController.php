@@ -514,6 +514,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                 }*/
                 $duplicateEntries = [];
+                $success = 0;
                 $skipRecords = [];
                 $employee = \Helper::getEmployeeInfo();
                 foreach ($record as $vl){
@@ -538,6 +539,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                         $data['company_id']=$input['companySystemID'];
                         $data['created_by'] = $employee->employeeSystemID;
                         $result = TenderBoqItems::create($data);
+                        $success +=1;
                     }else{
                         array_push($duplicateEntries,$vl);
                     }
@@ -548,12 +550,16 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (!empty($duplicateEntries)) {
                 foreach ($duplicateEntries as $key => $dupl) {
-                    $data = 'Item ' . $dupl['item'] . ' duplicated and has been skipped';
-                    array_push($skipRecords, $data);
+                    $dataItm['err'] = 'Item ' . $dupl['item'] . ' duplicated and has been skipped';
+                    $dataItm['type'] = 'error';
+                    array_push($skipRecords, $dataItm);
                 }
             }
             DB::commit();
             if (!empty($skipRecords)) {
+                $dataItm['err'] = $success.' Items successfully uploaded';
+                $dataItm['type'] = 'success';
+                array_push($skipRecords, $dataItm);
                 return $this->sendError($skipRecords, 200);
             }
 
