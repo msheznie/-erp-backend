@@ -1312,22 +1312,21 @@ class SRMService
     {
         $prebidId = $request->input('extra.preBidId');
         $postAnonymous = $request->input('extra.postAnonymous');
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderMasterId = $request->input('extra.tenderId');
+        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        $tenderMaster = TenderMaster::find($tenderMasterId);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
         if (!isset($postAnonymous)) {
             $postAnonymous = 0;
         }
 
         if ($prebidId !== 0) {
-            return $this->updatePreBid($request, $prebidId);
+            return $this->updatePreBid($request, $prebidId, $company, $companySystemID);
         } else {
             $attachment = $request->input('extra.attachment');
-            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-            $tenderMasterId = $request->input('extra.tenderId');
-            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-            $tenderMaster = TenderMaster::find($tenderMasterId);
-            $companySystemID = $tenderMaster['company_id'];
-            $company = Company::where('companySystemID', $companySystemID)->first();
             $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
-
             DB::beginTransaction();
             try {
                 $data['tender_master_id'] = $tenderMasterId;
@@ -1618,13 +1617,11 @@ class SRMService
         }
     }
 
-    public function updatePreBid(Request $request, $prebidId)
+    public function updatePreBid(Request $request, $prebidId, $company, $companySystemID)
     {
-        $input = $request->all();
         $question = $request->input('extra.question');
         $isDeleted = $request->input('extra.isDeleted');
-        $companySystemID = 1;
-        $company = 1;
+        $attachment = $request->input('extra.attachment');
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
@@ -1643,9 +1640,8 @@ class SRMService
                     ->delete();
             }
 
-            if (!empty($attachment) && isset($attachment['file'])) {
-                $attachment = $input['Attachment'];
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            if (!empty($attachment)) {
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
             }
 
             DB::commit();
