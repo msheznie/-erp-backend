@@ -474,6 +474,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             $validateUom = false;
             $validateQty = false;
             $totalItemCount = 0;
+            $existData = [];
 
             $allowItemToTypePolicy = false;
             $itemNotound = false;
@@ -505,19 +506,19 @@ class TenderBoqItemsAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if (count($record) > 0) {
-                /*foreach ($record as $vl){
-                    $exist = TenderBoqItems::where('item_name',$vl['item'])
-                        ->where('main_work_id',$input['main_work_id'])->first();
+                $dataToUpload = array_unique(array_column($record, 'item'));
 
-                    if(!empty($exist)){
-                        return $this->sendError('Item can not be duplicated', 500);
-                    }
-                }*/
+                $excelUploadDataN = (array_intersect_key($record, $dataToUpload));
+
+                $diff = array_diff(array_map('json_encode', $record), array_map('json_encode', $excelUploadDataN));
+
+                $duplicates = array_map('json_decode', $diff);
+
                 $duplicateEntries = [];
                 $success = 0;
                 $skipRecords = [];
                 $employee = \Helper::getEmployeeInfo();
-                foreach ($record as $vl){
+                foreach ($excelUploadDataN as $vl){
                     $exist = TenderBoqItems::where('item_name',$vl['item'])
                         ->where('main_work_id',$input['main_work_id'])->first();
 
@@ -550,20 +551,28 @@ class TenderBoqItemsAPIController extends AppBaseController
 
             if (!empty($duplicateEntries)) {
                 foreach ($duplicateEntries as $key => $dupl) {
-                    $dataItm['err'] = 'Item ' . $dupl['item'] . ' duplicated and has been skipped';
+                    $dataItm['err'] = 'Item ' . $dupl['item'] . ' already exist and has been skipped';
+                    $dataItm['type'] = 'error';
+                    array_push($skipRecords, $dataItm);
+                }
+            }
+
+            if (!empty($duplicates)) {
+                foreach ($duplicates as $duple) {
+                    $dataItm['err'] = 'Item ' . $duple->item . ' duplicated and has been skipped';
                     $dataItm['type'] = 'error';
                     array_push($skipRecords, $dataItm);
                 }
             }
             DB::commit();
             if (!empty($skipRecords)) {
-                $dataItm['err'] = $success.' Items successfully uploaded';
+                $dataItm['err'] = $success.' Items successfully uploaded out of '.count($record);
                 $dataItm['type'] = 'success';
                 array_push($skipRecords, $dataItm);
                 return $this->sendError($skipRecords, 200);
             }
 
-            return $this->sendResponse([], 'Items uploaded successfully!!');
+            return $this->sendResponse([], 'Items uploaded successfully!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
