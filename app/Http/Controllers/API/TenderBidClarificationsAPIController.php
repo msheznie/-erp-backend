@@ -385,7 +385,17 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         if (empty($tenderPreBidClarification)) {
             return $this->sendError('Not Found');
-        }
+        } 
+
+        $isLastSupplierResponse = TenderBidClarifications::select('id')
+            ->where('tender_master_id', $tenderMasterId)
+            ->where('parent_id', $masterResponseId) 
+            ->where('posted_by_type', 0) 
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $supplierId = ($isLastSupplierResponse['id'] ? $isLastSupplierResponse['id'] : 0);
+
         $tenderPreBidClarification->delete();
         DocumentAttachments::where('documentSystemID', 109)
             ->where('companySystemID', $companySystemID)
@@ -393,17 +403,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             ->delete();
 
 
-        $isLastSupplierResponse = TenderBidClarifications::select('id')
-            ->where('tender_master_id', $tenderMasterId)
-            ->where('parent_id', $masterResponseId)
-            ->where('posted_by_type', 0)
-            ->orderBy('id', 'asc')
-            ->first();
-
-        $supplierId = ($isLastSupplierResponse['id'] ? $isLastSupplierResponse['id'] : 0);
-
-
-        $isResponseExist = TenderBidClarifications::select('id')
+        $isResponseExist = TenderBidClarifications::select('ids')
             ->where('tender_master_id', $tenderMasterId)
             ->where('parent_id', $masterResponseId)
             ->where('posted_by_type', 1)
@@ -415,6 +415,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             TenderBidClarifications::where('id', $masterResponseId)
                 ->update($updateRec);
         }
+
         return $this->sendResponse($id, 'File Deleted');
     }
     public function getPreBidEditData(Request $request)
