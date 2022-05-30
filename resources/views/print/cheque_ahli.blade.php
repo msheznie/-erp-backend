@@ -109,6 +109,10 @@
     <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
         {{$entity->nameOnCheque}}
     </div>
+    <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
+        {{$entity->BPVcode}}
+    </div>
+    
     <div style="font-size: 16px !important;" class="header-part" id="top_date_div">
             {{ \App\helper\Helper::dateFormat($date)}}
     </div>
