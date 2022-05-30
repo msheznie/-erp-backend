@@ -1619,7 +1619,6 @@ class SRMService
 
     public function updatePreBid(Request $request, $prebidId, $company, $companySystemID)
     {
-        Log::info(['$input update', $company]);
         $question = $request->input('extra.question');
         $isDeleted = $request->input('extra.isDeleted');
         $attachment = $request->input('extra.attachment');
@@ -1641,8 +1640,7 @@ class SRMService
                     ->delete();
             }
 
-            if (!empty($attachment) && isset($attachment[0]['file'])) {
-                Log::info(['$attachment for update', $attachment]);
+            if (!empty($attachment)) {
                 $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
             }
 
