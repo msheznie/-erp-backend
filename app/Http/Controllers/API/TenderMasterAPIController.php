@@ -553,15 +553,15 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
-        if($document_sales_start_date>$document_sales_end_date){
+        if($document_sales_start_date > $document_sales_end_date){
             return ['success' => false, 'message' => 'Document sales from date cannot be greater than Document sales to date'];
         }
 
-        if($pre_bid_clarification_start_date>$pre_bid_clarification_end_date){
+        if($pre_bid_clarification_start_date > $pre_bid_clarification_end_date){
             return ['success' => false, 'message' => 'Pre-bid clarification from date cannot be greater than Pre-bid clarification to date'];
         }
 
-        if($bid_submission_opening_date>$bid_submission_closing_date){
+        if($bid_submission_opening_date > $bid_submission_closing_date){
             return ['success' => false, 'message' => 'Bid submission from date cannot be greater than Bid submission to date'];
         }
 
@@ -726,13 +726,15 @@ class TenderMasterAPIController extends AppBaseController
             'tender_document_fee.required' => 'Tender Document Fee is required.',
             'bank_id.required' => 'Bank is required.',
             'bank_account_id.required' => 'Bank Account is required.',
-            'document_sales_start_date.required' => 'Document Sales Start Date is required.',
-            'document_sales_end_date.required' => 'Document Sales End Date is required.',
-            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification Start Date.',
-            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification End Date.',
+            'document_sales_start_date.required' => 'Document Sales From Date is required.',
+            'document_sales_end_date.required' => 'Document Sales To Date is required.',
+            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
+            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
             'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-            'bid_submission_opening_date.required' => 'Bid Submission Opening Date.',
-            'bid_submission_closing_date.required' => 'Bid Submission Closing Date.',
+            'bid_submission_opening_date.required' => 'Bid Submission From Date.',
+            'bid_submission_closing_date.required' => 'Bid Submission To Date.',
+            'site_visit_date.required' => 'Site Visit From Date.',
+            'site_visit_end_date.required' => 'Site Visit To Date.'
 
         ];
 
@@ -754,6 +756,8 @@ class TenderMasterAPIController extends AppBaseController
             'pre_bid_clarification_method' => 'required',
             'bid_submission_opening_date' => 'required',
             'bid_submission_closing_date' => 'required',
+            'site_visit_date' => 'required',
+            'site_visit_end_date' => 'required',
 
         ], $messages);
 
