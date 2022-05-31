@@ -18,6 +18,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
+        Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
+
         Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
         Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
         Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
