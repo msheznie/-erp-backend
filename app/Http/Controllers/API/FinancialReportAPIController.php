@@ -472,6 +472,55 @@ class FinancialReportAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function generateEmployeeLedgerReport(Request $request)
+    {
+        $data = DB::select("SELECT * FROM (SELECT
+	erp_bookinvsuppmaster.bookingDate AS documentDate,
+	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+	erp_bookinvsuppmaster.comments AS description,
+	erp_bookinvsuppmaster.employeeID AS employeeID
+FROM
+	erp_bookinvsuppmaster
+WHERE
+    erp_bookinvsuppmaster.documentType = 4
+    UNION ALL
+    SELECT
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID
+FROM
+	erp_paysupplierinvoicemaster
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6
+    ) AS t");
+
+
+        $employees = DB::select("SELECT * FROM (SELECT
+	
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName
+FROM
+	erp_bookinvsuppmaster
+LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    erp_bookinvsuppmaster.documentType = 4
+    UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6
+    ) t GROUP BY t.employeeID");
+
+
+        return $this->sendResponse([$data,$employees], 'Record retrieved successfully');
+
+    }
+
     /*generate report according to each report id*/
     public function generateFRReport(Request $request)
     {
