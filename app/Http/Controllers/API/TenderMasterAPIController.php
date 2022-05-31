@@ -554,11 +554,15 @@ class TenderMasterAPIController extends AppBaseController
 
 
         if($document_sales_start_date>$document_sales_end_date){
-            return ['success' => false, 'message' => 'Document sales start date cannot be greater than Document sales end date'];
+            return ['success' => false, 'message' => 'Document sales from date cannot be greater than Document sales to date'];
         }
 
         if($pre_bid_clarification_start_date>$pre_bid_clarification_end_date){
-            return ['success' => false, 'message' => 'Pre-bid clarification end date cannot be greater than Pre-bid clarification start date'];
+            return ['success' => false, 'message' => 'Pre-bid clarification to date cannot be greater than Pre-bid clarification from date'];
+        }
+
+        if($site_visit_date > $site_visit_end_date){
+            return ['success' => false, 'message' => 'Site Visit to date cannot be greater than Site Visit from date'];
         }
 
         if($bid_submission_opening_date>$bid_submission_closing_date){
