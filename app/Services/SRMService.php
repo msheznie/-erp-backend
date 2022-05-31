@@ -1742,9 +1742,8 @@ class SRMService
                 ->get();
             $status = TenderBidClarifications::where('id', $id)
                 ->delete();
-            Log::info($parentIdList);
+
             if($status && !empty($parentId)){
-                Log::info(['in side :',sizeof($parentIdList)]);
                 if(empty($parentIdList[1]['supplier_id']) && sizeof($parentIdList) != 1){
                     $data['is_answered'] = 1;
                     $this->tenderBidClarificationsRepository->update($data, $parentId['parent_id']);
