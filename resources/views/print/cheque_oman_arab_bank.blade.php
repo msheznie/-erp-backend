@@ -127,6 +127,10 @@
                 <td style="width: 10%"><b>Currency </b></td>
                 <td style="width: 15%"><b>@if($entity->bankcurrency){{$entity->bankcurrency->CurrencyName}}@endif</b></td>
             </tr>
+            <tr>
+                <td style="width: 15%"><b>BPV Code</b></td>
+                <td style="width: 60%"><b>@if($entity->BPVcode){{$entity->BPVcode}}@endif</b></td>
+            </tr>
         </table>
     </div>
 

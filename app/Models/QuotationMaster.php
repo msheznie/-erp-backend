@@ -595,7 +595,7 @@ class QuotationMaster extends Model
         'panaltyTerms'  => 'string',
         'sent_to_customer' => 'integer',
         'is_return' => 'boolean',
-        'leadTime' => 'integer'
+        'leadTime' => 'float'
     ];
 
     /**

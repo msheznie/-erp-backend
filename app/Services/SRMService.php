@@ -1712,7 +1712,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Attachment successfully deleted',
+            'message' => 'Attachment deleted successfully ',
             'data' => $data
         ];
     }
@@ -1735,9 +1735,20 @@ class SRMService
         $id = $request->input('extra.id');
         DB::beginTransaction();
         try {
+            $parentId = TenderBidClarifications::select('parent_id')->where('id', $id)->first();
+            $parentIdList = TenderBidClarifications::select('id', 'parent_id', 'post', 'supplier_id')
+                ->where('parent_id', $parentId['parent_id'])
+                ->orderBy('id', 'desc')
+                ->get();
             $status = TenderBidClarifications::where('id', $id)
                 ->delete();
 
+            if($status && !empty($parentId)){
+                if(empty($parentIdList[1]['supplier_id']) && sizeof($parentIdList) != 1){
+                    $data['is_answered'] = 1;
+                    $this->tenderBidClarificationsRepository->update($data, $parentId['parent_id']);
+                }
+            }
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully deleted'];
         } catch (\Exception $e) {
