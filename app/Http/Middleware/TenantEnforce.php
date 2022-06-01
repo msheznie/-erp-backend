@@ -37,7 +37,7 @@ class TenantEnforce
             'api/v1/approveJournalVoucher',
             'api/v1/updateGLEntries',
             'api/v1suppliers/registration/approvals/status',
-            'api/v1/approvalDocument',
+            'api/v1/approveDocument',
             'api/v1/uploadItems'
         ];
 
