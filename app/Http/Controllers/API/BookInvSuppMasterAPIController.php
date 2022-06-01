@@ -2184,9 +2184,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $employeeData = [];
         $currencies = [];
         if (isset($request['invoiceType']) && $request['invoiceType'] == 4) {
-            $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')
-                                    ->where('discharegedYN', 0)
-                                    ->get();
+            $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')->where('discharegedYN','<>', 2);
+            if(Helper::checkHrmsIntergrated($companyId)){
+                $employeeData = $employeeData->whereHas('hr_emp', function($q){
+                    $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+                });
+            }
+            $employeeData = $employeeData->get();
 
             $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
                                         ->get();
