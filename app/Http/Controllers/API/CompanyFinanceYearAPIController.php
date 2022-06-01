@@ -430,7 +430,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->whereIn('companySystemID', $subCompanies);
+        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->where('isDeleted',0)->whereIn('companySystemID', $subCompanies);
 
         $search = $request->input('search.value');
 
