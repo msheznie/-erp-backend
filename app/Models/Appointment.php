@@ -170,4 +170,9 @@ class Appointment extends Model
     {
         return $this->hasOne('App\Models\SupplierMaster', 'supplierCodeSystem', 'supplier_id');
     }
+
+    public function attachment()
+    {
+        return $this->hasMany('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+    }
 }

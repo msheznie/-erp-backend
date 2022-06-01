@@ -14,8 +14,11 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationType;
+use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
+use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
@@ -363,12 +366,18 @@ class TenderMasterAPIController extends AppBaseController
             }
         }
 
+        $employee = Helper::getEmployeeInfo();
+        $company = Helper::companyCurrency($employee->empCompanySystemID);
+
+
         $data['tenderType'] = TenderType::get();
         $data['yesNoSelection'] = YesNoSelection::all();
         $data['envelopType'] = EnvelopType::get();
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
+        $data['currentDate'] = now();
+        $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level',0)->where('is_active',1)->get();
 
         if(isset($input['tenderMasterId'])) {
@@ -383,7 +392,12 @@ class TenderMasterAPIController extends AppBaseController
     public function createTender(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('currency_id'));
         $employee = \Helper::getEmployeeInfo();
+        $exist = TenderMaster::where('title',$input['title'])->where('company_id',$input['companySystemID'])->first();
+        if(!empty($exist)){
+            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+        }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         $documentMaster = DocumentMaster::where('documentSystemID', 108)->first();
         $lastSerial = TenderMaster::where('company_id', $input['companySystemID'])
@@ -399,11 +413,9 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $data['currency_id']= isset($input['currency_id'])?$input['currency_id'] : null;
             $data['description']= isset($input['description'])?$input['description'] : null;
-            $data['description_sec_lang']=isset($input['description_sec_lang'])?$input['description_sec_lang'] : null;
             $data['envelop_type_id']=$input['envelop_type_id'];
             $data['tender_type_id']=$input['tender_type_id'];
             $data['title']=$input['title'];
-            $data['title_sec_lang']=$input['title_sec_lang'];
             $data['document_system_id']=108;
             $data['document_id']= $documentMaster['documentID'];
             $data['company_id']=$input['companySystemID'];
@@ -467,7 +479,7 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderSubCategory(Request $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($request->all(), array('procument_cat_id'));
         $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
 
         if(!empty($tenderMaster['procument_sub_cat_id'])){
@@ -475,8 +487,12 @@ class TenderMasterAPIController extends AppBaseController
         }else{
             $category['is_active'] = 1;
         }
+        if($input['procument_cat_id'] > 0){
+            $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+        }else{
+            $data['procurementSubCategory'] = array();
+        }
 
-        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
 
         if($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0){
             $data['procurementSubCategory'][] = $category;
@@ -488,7 +504,11 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderBankAccount(Request $request)
     {
         $input = $request->all();
-        $data['bankAccountDrop'] = BankAccount::where('bankmasterAutoID',$input['bank_id'])->where('companySystemID',$input['companySystemID'])->get();
+        $data['bankAccountDrop'] = array();
+        if(!empty($input['bank_id'])){
+            $data['bankAccountDrop'] = BankAccount::where('bankmasterAutoID',$input['bank_id'])->where('companySystemID',$input['companySystemID'])->get();
+        }
+
 
         return $data;
     }
@@ -540,6 +560,11 @@ class TenderMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => 'Bid submission opening date cannot be greater than Bid submission closing date'];
         }
 
+        $existTndr = TenderMaster::where('title',$input['title'])->where('id','!=',$input['id'])->where('company_id',$input['companySystemID'])->first();
+        if(!empty($existTndr)){
+            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id',$input['id'])->first();
         DB::beginTransaction();
@@ -547,6 +572,8 @@ class TenderMasterAPIController extends AppBaseController
 
             $data['title']=$input['title'];
             $data['title_sec_lang']=$input['title_sec_lang'];
+            $data['description']=$input['description'];
+            $data['description_sec_lang']=$input['description_sec_lang'];
             $data['tender_type_id']=$input['tender_type_id'];
             $data['currency_id']=$input['currency_id'];
             $data['envelop_type_id']=$input['envelop_type_id'];
@@ -582,7 +609,11 @@ class TenderMasterAPIController extends AppBaseController
 
                             ProcumentActivity::create($activity);
                         }
+                    }else{
+                        ProcumentActivity::where('tender_id',$input['id'])->where('company_id',$input['company_id'])->delete();
                     }
+                }else{
+                    ProcumentActivity::where('tender_id',$input['id'])->where('company_id',$input['company_id'])->delete();
                 }
 
                 if($exist['site_visit_date'] != $site_visit_date){
@@ -628,6 +659,22 @@ class TenderMasterAPIController extends AppBaseController
 
                 if(isset($input['confirmed_yn'])){
                     if($input['confirmed_yn'] == 1){
+                        $technical = EvaluationCriteriaDetails::where('tender_id',$input['id'])->where('critera_type_id',2)->first();
+                        if(empty($technical)){
+                            return ['success' => false, 'message' => 'At least one technical criteria should be added'];
+                        }
+                        $schedule = PricingScheduleMaster::where('tender_id',$input['id'])->first();
+                        if(empty($schedule)){
+                            return ['success' => false, 'message' => 'At least one work schedule should be added'];
+                        }
+                        $scheduleAll = PricingScheduleMaster::where('tender_id',$input['id'])->get();
+                        foreach ($scheduleAll as $val){
+                            $mainwork = TenderMainWorks::where('tender_id',$input['id'])->where('schedule_id',$val['id'])->first();
+                            if(empty($mainwork)){
+                                return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+                            }
+                        }
+
                         $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
@@ -660,11 +707,10 @@ class TenderMasterAPIController extends AppBaseController
     {
         $messages = [
             'title.required' => 'Title is required.',
-            'title_sec_lang.required' => 'Title In Arabic is required.',
             'tender_type_id.required' => 'Type is required.',
+            'currency_id.required' => 'Currency is required.',
             'envelop_type_id.required' => 'Envelop Type is required.',
-            'procument_cat_id.required' => 'Procurement Category is required.',
-            'procument_sub_cat_id.required' => 'Procurement Sub Category is required.',
+            'evaluation_type_id.required' => 'Evaluation Type is required.',
             'estimated_value.required' => 'Estimated Value is required.',
             'allocated_budget.required' => 'Allocated Budget is required.',
             'tender_document_fee.required' => 'Tender Document Fee is required.',
@@ -682,11 +728,10 @@ class TenderMasterAPIController extends AppBaseController
 
         $validator = \Validator::make($input, [
             'title' => 'required',
-            'title_sec_lang' => 'required',
             'tender_type_id' => 'required',
+            'currency_id' => 'required',
             'envelop_type_id' => 'required',
-            'procument_cat_id' => 'required',
-            'procument_sub_cat_id' => 'required',
+            'evaluation_type_id' => 'required',
             'estimated_value' => 'required',
             'allocated_budget' => 'required',
             'tender_document_fee' => 'required',
@@ -704,6 +749,10 @@ class TenderMasterAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages()];
+        }
+
+        if($input['evaluation_type_id'] == 0){
+            return ['status' => false, 'message' => 'Evaluation Type is required.'];
         }
 
         return ['status' => true, 'message' => "success"];
@@ -1039,10 +1088,14 @@ class TenderMasterAPIController extends AppBaseController
     public function loadTenderSubActivity(Request $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($request->all(), array('procument_cat_id'));
         $tenderMaster = TenderMaster::where('id',$input['tenderMasterId'])->first();
+        if($input['procument_cat_id'] > 0){
+            $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
+        }else{
+            $data['procurementSubCategory'] = array();
+        }
 
-        $data['procurementSubCategory'] = TenderProcurementCategory::where('parent_id',$input['procument_cat_id'])->where('is_active',1)->get();
 
         $activity = ProcumentActivity::where('tender_id',$input['tenderMasterId'])->get();
 

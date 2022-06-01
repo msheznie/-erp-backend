@@ -541,6 +541,13 @@ class SupplierMasterAPIController extends AppBaseController
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
 
+        if (isset($input['linkCustomerYN']) && isset($input['linkCustomerID']) && $input['linkCustomerYN'] == 1) {
+            $checkLinkCustomer = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])->where('linkCustomerID',$input['linkCustomerID'])->where('linkCustomerYN',1)->first();
+                if ($checkLinkCustomer) {
+                    return $this->sendError('The selected customer is already assigned');
+                }
+        }
+
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
                 return $this->sendError('Linked company is required',500);
@@ -643,6 +650,22 @@ class SupplierMasterAPIController extends AppBaseController
             $input['countryID'] = $input['supplierCountryID'];
         }
 
+        if (isset($input['linkCustomerYN']) && isset($input['linkCustomerID']) && $input['linkCustomerYN'] == 1) {
+            $checkLinkCustomer = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])->where('linkCustomerID',$input['linkCustomerID'])->where('linkCustomerYN',1)->first();
+            $alreadyLinkedCustomer = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])->where('supplierCodeSystem',$input['supplierCodeSystem'])->where('linkCustomerYN',1)->first();
+            if($alreadyLinkedCustomer) {
+                if (isset($alreadyLinkedCustomer->linkCustomerID)) {
+                    if ($checkLinkCustomer && $alreadyLinkedCustomer->linkCustomerID != $input['linkCustomerID']) {
+                        return $this->sendError('The selected customer is already assigned');
+                    }
+                }
+            }
+            else{
+                if ($checkLinkCustomer) {
+                    return $this->sendError('The selected customer is already assigned');
+                }
+            }
+        }
         if (isset($input['interCompanyYN']) && $input['interCompanyYN']) {
             if (!isset($input['companyLinkedToSystemID'])) {
                 return $this->sendError('Linked company is required',500);

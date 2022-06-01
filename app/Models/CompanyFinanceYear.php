@@ -12,6 +12,7 @@
 namespace App\Models;
 use Carbon\Carbon;
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @SWG\Definition(
@@ -102,7 +103,6 @@ use Eloquent as Model;
  */
 class CompanyFinanceYear extends Model
 {
-
     public $table = 'companyfinanceyear';
     
     const CREATED_AT = 'createdDateTime';
@@ -118,6 +118,8 @@ class CompanyFinanceYear extends Model
         'isActive',
         'isCurrent',
         'isClosed',
+        'isDeleted',
+        'deletedBy',
         'closedByEmpSystemID',
         'closedByEmpID',
         'closedByEmpName',
@@ -130,6 +132,7 @@ class CompanyFinanceYear extends Model
         'modifiedUser',
         'modifiedPc',
         'timeStamp',
+        'deleted_at',
         'generateStatus'
     ];
 
@@ -164,6 +167,17 @@ class CompanyFinanceYear extends Model
      * @param mixed $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
+
+
+    public function created_employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserID', 'empID');
+    }
+
+    public function modified_employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUser', 'empID');
+    }
 
     public function scopeOfCompany($query, $type)
     {

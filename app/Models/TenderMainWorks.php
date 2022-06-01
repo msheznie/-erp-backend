@@ -82,6 +82,7 @@ class TenderMainWorks extends Model
     public $fillable = [
         'tender_id',
         'schedule_id',
+        'bid_format_detail_id',
         'item',
         'description',
         'created_by',
@@ -98,6 +99,7 @@ class TenderMainWorks extends Model
         'id' => 'integer',
         'tender_id' => 'integer',
         'schedule_id' => 'integer',
+        'bid_format_detail_id' => 'integer',
         'item' => 'string',
         'description' => 'string',
         'created_by' => 'integer',
@@ -114,8 +116,13 @@ class TenderMainWorks extends Model
         
     ];
 
+
     public function tender_boq_items(){
         return $this->hasMany('App\Models\TenderBoqItems', 'main_work_id', 'id');
+    }
+
+    public function tender_bid_format_detail(){
+        return $this->hasOne('App\Models\TenderBidFormatDetail', 'id', 'bid_format_detail_id');
     }
   
 }

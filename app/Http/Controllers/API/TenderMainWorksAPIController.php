@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderMainWorksAPIRequest;
 use App\Http\Requests\API\UpdateTenderMainWorksAPIRequest;
+use App\Models\TenderBidFormatDetail;
 use App\Models\TenderMainWorks;
 use App\Repositories\TenderMainWorksRepository;
 use Illuminate\Http\Request;
@@ -298,7 +299,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $tender_id = $input['tender_id'];
         $schedule_id = $input['schedule_id'];
 
-        $mainWorks = TenderMainWorks::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
+        $mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -316,6 +317,7 @@ class TenderMainWorksAPIController extends AppBaseController
                     }
                 }
             })
+            ->rawColumns(['description'])
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
@@ -324,44 +326,23 @@ class TenderMainWorksAPIController extends AppBaseController
     public function addMainWorks(Request $request)
     {
         $input = $request->all();
-
-        if(isset($input['id'])) {
-            $exist = TenderMainWorks::where('id','!=',$input['id'])->where('item', $input['item'])->first();
-
-            if(!empty($exist)){
-                return ['success' => false, 'message' => 'Item can not be duplicated'];
-            }
-        }else{
-            $exist = TenderMainWorks::where('item', $input['item'])->where('tender_id', $input['tender_id'])->where('schedule_id', $input['schedule_id'])->where('company_id', $input['companySystemID'])->first();
-
-            if(!empty($exist)){
-                return ['success' => false, 'message' => 'Item can not be duplicated'];
-            }
-        }
-
+        $input = $this->convertArrayToSelectedValue($request->all(), array('item'));
         $employee = \Helper::getEmployeeInfo();
+        $priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();
         DB::beginTransaction();
         try {
             $data['tender_id']=$input['tender_id'];
             $data['schedule_id']=$input['schedule_id'];
-            $data['item']=$input['item'];
+            $data['bid_format_detail_id']=$input['item'];
+            $data['item']=$priceBidDetail['label'];
             $data['description']=$input['description'];
             $data['company_id']=$input['companySystemID'];
+            $data['created_by'] = $employee->employeeSystemID;
 
-            if(isset($input['id'])){
-                $data['updated_by'] = $employee->employeeSystemID;
-                $result = TenderMainWorks::where('id',$input['id'])->update($data);
-                if($result){
-                    DB::commit();
-                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
-                }
-            }else{
-                $data['created_by'] = $employee->employeeSystemID;
-                $result = TenderMainWorks::create($data);
-                if($result){
-                    DB::commit();
-                    return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
-                }
+            $result = TenderMainWorks::create($data);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -496,6 +477,25 @@ class TenderMainWorksAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
 
+    public function updateWorkOrderDescription(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $data['description']=$input['description'];
+            $data['updated_by'] = $employee->employeeSystemID;
+            $result = TenderMainWorks::where('id',$input['id'])->update($data);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
     }
 }

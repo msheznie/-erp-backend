@@ -325,10 +325,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     {
        $input = $request->all();
        $employee = \Helper::getEmployeeInfo();
-       $boq_applicable = 0;
+       /*$boq_applicable = 0;
        if(isset($input['boq_applicable']) && $input['boq_applicable']){
            $boq_applicable = 1;
-       }
+       }*/
 
        $exist = TenderBidFormatMaster::where('tender_name',$input['tender_name'])
            ->where('company_id',$input['companySystemID'])->first();
@@ -339,7 +339,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-           $data['boq_applicable']=$boq_applicable;
+           // $data['boq_applicable']=$boq_applicable;
            $data['tender_name']=$input['tender_name'];
            $data['company_id']=$input['companySystemID'];
            $data['created_by'] = $employee->employeeSystemID;
@@ -380,6 +380,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
+        $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
             return ['success' => false, 'message' => 'Label is required'];
         }
@@ -392,6 +393,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             $is_disabled = 1;
         }
 
+        if(isset($input['boq_applicable']) && $input['boq_applicable']){
+            $boq_applicable = 1;
+        }
+
         $exist = TenderBidFormatDetail::where('label',$input['label'])
             ->where('tender_id',$input['tender_id'])->first();
 
@@ -402,6 +407,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $data['is_disabled']=$is_disabled;
+            $data['boq_applicable']=$boq_applicable;
             $data['tender_id']=$input['tender_id'];
             $data['label']=$input['label'];
             $data['field_type']=$input['field_type'];
@@ -426,6 +432,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('field_type'));
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
+        $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
             return ['success' => false, 'message' => 'Label is required'];
         }
@@ -438,6 +445,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             $is_disabled = 1;
         }
 
+        if(isset($input['boq_applicable']) && $input['boq_applicable']){
+            $boq_applicable = 1;
+        }
+
         $exist = TenderBidFormatDetail::where('label',$input['label'])
             ->where('tender_id',$input['tender_id'])->where('id','!=',$input['id'])->first();
 
@@ -448,6 +459,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $data['is_disabled']=$is_disabled;
+            $data['boq_applicable']=$boq_applicable;
             $data['label']=$input['label'];
             $data['field_type']=$input['field_type'];
             $data['updated_by'] = $employee->employeeSystemID;
@@ -471,10 +483,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $employee = \Helper::getEmployeeInfo();
-        $boq_applicable = 0;
+        /*$boq_applicable = 0;
         if(isset($input['boq_applicable']) && $input['boq_applicable']){
             $boq_applicable = 1;
-        }
+        }*/
 
         $exist = TenderBidFormatMaster::where('tender_name',$input['tender_name'])
             ->where('id','!=',$input['id'])
@@ -486,10 +498,10 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $pricebid = self::priceBidExistInTender($input['id']);
-            if(empty($pricebid)) {
+           // $pricebid = self::priceBidExistInTender($input['id']);
+            /*if(empty($pricebid)) {
                 $data['boq_applicable'] = $boq_applicable;
-            }
+            }*/
             $data['tender_name']=$input['tender_name'];
             $data['updated_by'] = $employee->employeeSystemID;
 
@@ -552,11 +564,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     }
 
     function priceBidExistInTender($id){
-       return PricingScheduleMaster::with(['tender_master' => function($q){
-            $q->where('confirmed_yn',1);
-        }])->whereHas('tender_master' , function($q){
-            $q->where('confirmed_yn',1);
-        })->where('price_bid_format_id',$id)->first();
+       return PricingScheduleMaster::with(['tender_master'])->whereHas('tender_master')->where('price_bid_format_id',$id)->first();
     }
 
 }

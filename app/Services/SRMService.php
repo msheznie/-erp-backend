@@ -3,15 +3,18 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\Http\Controllers\API\DocumentAttachmentsAPIController;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
@@ -29,12 +32,16 @@ use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
+use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
+use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
@@ -46,19 +53,25 @@ class SRMService
     private $sharedService = null;
     private $invoiceService = null;
     private $supplierInvoiceItemDetailRepository;
+    private $tenderBidClarificationsRepository;
+    private $documentAttachmentsRepo;
 
     public function __construct(
         POService $POService,
         SupplierService $supplierService,
         SharedService $sharedService,
         InvoiceService $invoiceService,
-        SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo
+        SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
+        TenderBidClarificationsRepository $tenderBidClarificationsRepo,
+        DocumentAttachmentsRepository $documentAttachmentsRepo
     ) {
         $this->POService        = $POService;
         $this->supplierService  = $supplierService;
         $this->sharedService    = $sharedService;
         $this->invoiceService   = $invoiceService;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
+        $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
+        $this->documentAttachmentsRepo = $documentAttachmentsRepo;
     }
 
     /**
@@ -165,9 +178,10 @@ class SRMService
     {
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
+        $searchText = $request->input('extra.searchText');
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
-        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID);
+        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
 
         return [
             'success'   => true,
@@ -181,13 +195,14 @@ class SRMService
         $data = $request->input('extra.purchaseOrders');
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
+        $company = Company::where('companySystemID', $slotCompanyId)->first();
         $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');
         $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
             ->where('documentSystemID', 106)
             ->first();
-
+        $attachment = $request->input('extra.attachment');
         $lastSerial = Appointment::orderBy('serial_no', 'desc')
             ->first();
 
@@ -233,8 +248,20 @@ class SRMService
                     $data_details['po_detail_id'] = $val['purchaseOrderDetailID'];
                     $data_details['item_id'] = $val['item_id'];
                     $data_details['qty'] = $val['qty'];
+                    $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
+                    $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
+                    $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
+                    $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
+                    $data_details['remarks'] = isset($val['remarks']) ? $val['remarks'] : null;
                     AppointmentDetails::create($data_details);
                 }
+            }
+
+            // Add Attachments
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $slotCompanyId, $company, $document, $appointment->id);
             }
 
             DB::commit();
@@ -816,7 +843,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoDetails' =>function($query) use($appointmentID){
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
             $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
@@ -828,7 +855,7 @@ class SRMService
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
             }]);
-        }])->get()
+        }, 'appointment.attachment'])->get()
             ->transform(function ($data){
                 return $this->appointmentDetailFormat($data);
             });
@@ -858,9 +885,19 @@ class SRMService
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
         $appointmentID = $request->input('extra.appointmentID');
+        $searchText = $request->input('extra.searchText');
 
-        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID)
-            ->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID);
+
+        if (!empty($searchText)) {
+            $searchText = str_replace("\\", "\\\\", $searchText);
+            $po = $po->where(function ($query) use ($searchText) {
+                $query->where('itemDescription', 'LIKE', "%{$searchText}%")
+                    ->orWhere('itemPrimaryCode', 'LIKE', "%{$searchText}%");
+            });
+        }
+
+        $po = $po->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
                 $q->whereHas('appointment', function ($q) use($appointmentID){
                     $q->where('refferedBackYN', '!=', -1);
                     $q->where('cancelYN', 0);
@@ -870,7 +907,7 @@ class SRMService
                 })->groupBy('po_detail_id')
                     ->select('id', 'appointment_id','qty','po_detail_id')
                     ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }])->get()
+            },'order.transactioncurrency'])->get()
             ->transform(function ($data){
                 return $this->poDetailFormat($data);
             });
@@ -897,11 +934,12 @@ class SRMService
             'itemDescription' => $data['itemDescription'],
             'UnitShortCode' => $data['unit']['UnitShortCode'],
             'noQty' => $data['noQty'],
+            'unitCost' => $data['unitCost'],
             'receivedQty' => $data['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => 0,
             'item_id' => $data['itemCode'],
-
+            'transactioncurrency' => $data['order']['transactioncurrency'],
         ];
     }
 
@@ -922,9 +960,17 @@ class SRMService
             'receivedQty' => $data['getPoDetails']['receivedQty'],
             'sumQty' => $sumQty,
             'qty' => $data['qty'],
+            'unitCost' => $data['getPoDetails']['unitCost'],
+            'foc_qty' => $data['foc_qty'],
+            'total_amount_after_foc' => $data['total_amount_after_foc'],
+            'expiry_date' => $data['expiry_date'],
+            'batch_no' => $data['batch_no'],
+            'manufacturer' => $data['manufacturer'],
+            'brand' => $data['brand'],
+            'remarks' => $data['remarks'],
             'item_id' => $data['item_id'],
-
-
+            'attachment' => $data['appointment']['attachment'],
+            'transactioncurrency' => $data['getPoMaster']['transactioncurrency'],
         ];
     }
 
@@ -1134,14 +1180,16 @@ class SRMService
                 $q->where('purchased_by','=',$supplierRegId); 
             }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
-            }); 
+            })
+            ->where('published_yn',1); 
             
         }else if ($request->input('extra.tender_status') == 2) {  
             $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
                 $q->where('purchased_by','=',$supplierRegId); 
-            });  
+            })
+            ->where('published_yn',1);  
          } 
         $search = $request->input('search.value');
         if($search){ 
@@ -1218,9 +1266,9 @@ class SRMService
     public function getFaqList(Request $request)
     {
         $input = $request->all();
-        $tenderId = $input['extra'];
+        $tenderId = $input['extra']['tenderId'];
         try{
-            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', 1)->get();
+            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
 
             return [
                 'success' => true,
@@ -1238,65 +1286,103 @@ class SRMService
     }
 
     public function saveTenderPrebidClarification(Request $request){
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tenderMasterId = $request->input('extra.tenderId');
-        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-        DB::beginTransaction();
-        try {
-            $data['tender_master_id'] = $tenderMasterId;
-            $data['posted_by_type'] = "0";
-            $data['post'] = $request->input('extra.question');
-            $data['user_id'] = $request->input('extra.user_id');;
-            $data['supplier_id'] = $supplierRegId;
-            $data['is_public'] = $request->input('extra.publish');
-            $data['parent_id'] = $request->input('extra.parent_id');
-            $data['created_by'] = $supplierRegId;
-            $data['company_id'] = 1; //$request->input('extra.companyId');
-            $data['created_at'] = $currentDate;
-            DB::commit();
-
-            $tenderPrebidClarification = TenderBidClarifications::create($data);
-            return [
-                'success' => true,
-                'message' => 'Tender Pre-bid Clarification successfully',
-                'data' => $tenderPrebidClarification
-            ];
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return [
-                'success'   => false,
-                'message'   => 'Tender Pre-bid Clarification failed',
-                'data'      => $exception->getMessage()
-            ];
+        $prebidId = $request->input('extra.preBidId');
+        $postAnonymous = $request->input('extra.postAnonymous');
+        if(!isset($postAnonymous)){
+            $postAnonymous = 0;
         }
 
+        if($prebidId !== 0){
+           return $this->updatePreBid($request, $prebidId);
+        } else {$attachment = $request->input('extra.attachment');
+            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+            $tenderMasterId = $request->input('extra.tenderId');
+            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+            $tenderMaster = TenderMaster::find($tenderMasterId);
+            $companySystemID = $tenderMaster['company_id'];
+            $company = Company::where('companySystemID', $companySystemID)->first();
+            $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+
+            DB::beginTransaction();
+            try {
+                $data['tender_master_id'] = $tenderMasterId;
+                $data['posted_by_type'] = 0;
+                $data['post'] = $request->input('extra.question');
+                $data['user_id'] = $request->input('extra.user_id');
+                $data['supplier_id'] = $supplierRegId;
+                $data['is_public'] = $request->input('extra.publish');
+                $data['parent_id'] = $request->input('extra.parent_id');
+                $data['created_by'] = $supplierRegId;
+                $data['created_at'] = $currentDate;
+                $data['document_system_id'] = $documentCode->documentSystemID;
+                $data['document_id'] = $documentCode->documentID;
+                $data['is_anonymous'] = $postAnonymous;
+                $tenderPrebidClarification = TenderBidClarifications::create($data);
+
+                if (isset($attachment) && !empty($attachment)) {
+                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                }
+                DB::commit();
+
+                return [
+                    'success' => true,
+                    'message' => 'Tender Pre-bid Clarification successfully',
+                    'data' => $tenderPrebidClarification
+                ];
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return [
+                    'success'   => false,
+                    'message'   => 'Tender Pre-bid Clarification failed',
+                    'data'      => $exception->getMessage()
+                ];
+            }
+        }
     }
 
-    public function getPrebidClarification(Request $request)
+    public function getPrebidClarificationList(Request $request)
     {
         $input = $request->all();
-        //$companyId = $input['companySystemID'];
-        $tenderId = $input['extra'];
+        $extra = $input['extra'];
+        $supplierRegId =  0;
+        $SearchText = "";
+        if(isset($extra['SearchText'])){
+            $SearchText = $extra['SearchText'];
+        }
+
+        if(isset($extra['isMyClarification']) && $extra['isMyClarification'] == true){
+            $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        }
 
         try{
-            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) {
+            $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
+                $q->with('attachment');
                 $q->where('parent_id', 0);
+                if(!empty($SearchText)){
+                    $searchText = str_replace("\\", "\\\\", $SearchText);
+                    $q->where('post', 'LIKE', "%{$SearchText}%");
+                }
+
+                if($supplierRegId != 0){
+                    $q->where('supplier_id', $supplierRegId);
+                }
                 $q->with(['supplier']);
-            }])
-                ->whereHas('tenderPreBidClarification', function ($q) {
+            }]);
+               $data = $data->whereHas('tenderPreBidClarification', function ($q) {
                     $q->where('parent_id', 0);
-                })->where('id', $tenderId)
-                ->get();
+                })->where('id', $extra['tenderId']);
+
+            $data = $data->get();
 
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
+                'message' => 'Pre-bid Clarification list successfully get',
                 'data' => $data
             ];
         } catch (\Exception $exception){
             return [
                 'success' => false,
-                'message' => 'FAQ list failed get',
+                'message' => 'Pre-bid Clarification list failed get',
                 'data' => $exception
             ];
         }
@@ -1304,26 +1390,309 @@ class SRMService
 
     public function getPreBidClarificationsResponse(Request $request)
     {
-        $input = $request->all();
-        $id = 1; //$input['Id'];
+        $id = $request->input('extra.prebidId');
         $employeeId = Helper::getEmployeeSystemID();
 
-        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+        $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachment'])
+        },'attachments'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
             ->get();
-        /*$profilePic = Employee::with(['profilepic'])
+        $profilePic = Employee::with(['profilepic'])
             ->where('employeeSystemID', $employeeId)
             ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];*/
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];
         
         return [
             'success' => true,
-            'message' => 'Pre-bid response list successfully get',
+            'message' => 'Pre-bid response successfully get',
             'data' => $data
         ];
     }
+
+    public function getPreBidClarification(Request $request)
+    {
+        $id = $request->input('extra.prebidId');
+
+        $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
+            $q->with(['profilepic']);
+        },'attachments'])
+            ->where('id', '=', $id)
+            ->first();
+
+        return [
+            'success' => true,
+            'message' => 'Pre-bid clarification successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function createClarificationResponse(Request $request)
+    {
+        $attachment = $request->input('extra.attachment');
+        $employeeId = Helper::getEmployeeSystemID();
+        $response = $request->input('extra.response');
+        $id = $request->input('extra.parent_id');
+        $tenderParentPost = TenderBidClarifications::where('id', $id)->first();
+        $tenderMaster = TenderMaster::find($tenderParentPost['tender_master_id']);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $updateRecordId = $request->input('extra.updateRecordId');
+        if( $updateRecordId !== 0 ){
+           return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
+        }
+        DB::beginTransaction();
+        try {
+            $data['tender_master_id'] = $tenderParentPost['tender_master_id'];
+            $data['posted_by_type'] = 0;
+            $data['post'] = $response;
+            $data['user_id'] = $employeeId;
+            $data['supplier_id'] = $supplierRegId;
+            $data['is_public'] = 1;
+            $data['parent_id'] = $id;
+            $data['created_by'] = $employeeId;
+            $data['company_id'] = $company->companySystemID;
+            $data['document_system_id'] = $documentCode->documentSystemID;
+            $data['document_id'] = $documentCode->documentID;
+            $result = TenderBidClarifications::create($data);
+            if (isset($attachment) && !empty($attachment)) {
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
+            }
+
+            if ($result) {
+                $updateRec['is_answered'] = 0;
+                $result =  TenderBidClarifications::where('id', $id)
+                    ->update($updateRec);
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::info($e);
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function uploadAttachment($attachments, $companySystemID, $company, $documentCode, $id)
+    {
+        foreach ($attachments as $attachment) {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attch = time() . '_PreBidClarificationCompany.' . $extension;
+                $path = $companySystemID . '/PreBidClarification/' . $attch;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $id;
+                $att['attachmentDescription'] = 'Pre-Bid Clarification ' . time();
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                DocumentAttachments::create($att);
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        }
+
+    }
+
+    public function uploadAppointmentAttachment($request)
+    {
+        $attachment = $request->input('extra.attachment');
+        $companySystemID = $request->input('extra.slotCompanyId');
+        $appointmentID = $request->input('extra.appointmentID');
+        $description = $request->input('extra.description');
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 106)->first();
+        try {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attachmentNameWithExtension = time() . '_DeliveryAppointment.' . $extension;
+                $path = $company->CompanyID . '/PO/' . $appointmentID . '/' . $attachmentNameWithExtension;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $appointmentID;
+                $att['attachmentDescription'] = $description;
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_DeliveryAppointment.' . $extension;
+                $att['attachmentType'] = $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                $result = DocumentAttachments::create($att);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                }
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        }catch (\Exception $e){
+            return [
+                'success'   => false,
+                'message'   => $e,
+                'data'      => ''
+            ];
+        }
+    }
+
+    public function updatePreBid(Request $request, $prebidId)
+    {
+        $input = $request->all();
+        $question = $request->input('extra.question');
+        $isDeleted = $request->input('extra.isDeleted');
+        $companySystemID = 1;
+        $company = 1;
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        DB::beginTransaction();
+        try {
+            $data['post'] = $question;
+            $data['is_public'] = $request->input('extra.publish');
+            $data['is_anonymous'] = $request->input('extra.postAnonymous');
+            $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
+
+            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+                ->where('documentSystemCode', $prebidId)
+                ->count();
+
+            if ($isAttachmentExist > 0 && isset($isDeleted) && $isDeleted == 1) {
+                DocumentAttachments::where('documentSystemID', 109)
+                    ->where('documentSystemCode', $prebidId)
+                    ->delete();
+            }
+
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $attachment = $input['Attachment'];
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            }
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
+    {
+        $input = $request->all();
+        $question = $request->input('extra.response');
+        $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
+        DB::beginTransaction();
+        try {
+            $data['post'] = $question;
+            $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
+
+            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
+                ->where('documentSystemCode', $prebidId)
+                ->count();
+
+            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
+                DocumentAttachments::where('documentSystemID', 109)
+                    ->where('documentSystemCode', $prebidId)
+                    ->delete();
+            }
+
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $attachment = $input['Attachment'];
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            }
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getDeliveryAppointmentAttachment($request)
+    {
+        $appointmentID = $request->input('extra.appointmentID');
+
+        $data = DocumentAttachments::where('documentSystemID', 106)
+            ->where('documentSystemCode', $appointmentID)
+            ->get();
+
+        return [
+            'success' => true,
+            'message' => 'Delivery Appointment successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function removeDeliveryAppointmentAttachment($request)
+    {
+        $attachmentID = $request->input('extra.attachmentID');
+
+        $data = DocumentAttachments::where('attachmentID', $attachmentID)
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment successfully deleted',
+            'data' => $data
+        ];
+    }
+
+    public function removePreBidClarificationResponse($request)
+    {
+        $id = $request->input('extra.id');
+        DB::beginTransaction();
+        try{
+            $status = TenderBidClarifications::where('id', $id)
+                ->delete();
+
+            DB::commit();
+            return ['success' => true, 'data' => $status, 'message' => 'Successfully deleted'];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
 }

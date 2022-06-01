@@ -8,16 +8,22 @@ use App\Models\CompanyJobs;
 use Illuminate\Http\Request;
 use App\helper\CommonJobService;
 use App\Jobs\AttendancePullingJob;
+use Illuminate\Support\Facades\DB;
+use App\helper\NotificationService;
+use App\Jobs\ForgotToPunchInTenant;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\AppBaseController;
+use App\Console\Commands\ForgotToPunchInScheduler;
 use App\Services\hrms\attendance\ForgotToPunchInService;
 use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
+use Exception;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
+
     function attendance_notification_debug(Request $request){
         $data = [];
 
@@ -72,7 +78,7 @@ class HRJobInvokeAPIController extends AppBaseController
 
         CommonJobService::db_switch($db);
     }
-    
+  
     public function attendanceClockIn(Request $request)
     {
         

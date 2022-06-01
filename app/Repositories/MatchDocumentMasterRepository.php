@@ -70,6 +70,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         'matchLocalAmount',
         'matchRptAmount',
         'matchingType',
+        'matchingOption',
         'isExchangematch',
         'createdUserGroup',
         'createdUserID',
