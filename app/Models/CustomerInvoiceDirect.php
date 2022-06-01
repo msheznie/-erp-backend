@@ -636,6 +636,11 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
+    public function logistic()
+    {
+        return $this->belongsTo('App\Models\CustomerInvoiceLogistic', 'custInvoiceDirectAutoID', 'custInvoiceDirectAutoID');
+    }
+
     public function secondarycompany()
     {
         return $this->belongsTo('App\Models\SecondaryCompany', 'companySystemID', 'companySystemID');
