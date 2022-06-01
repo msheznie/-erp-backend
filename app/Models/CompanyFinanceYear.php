@@ -132,6 +132,7 @@ class CompanyFinanceYear extends Model
         'modifiedUser',
         'modifiedPc',
         'timeStamp',
+        'deleted_at',
         'generateStatus'
     ];
 
