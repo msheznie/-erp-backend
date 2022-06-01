@@ -478,9 +478,14 @@ class FinancialReportAPIController extends AppBaseController
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
-	erp_bookinvsuppmaster.employeeID AS employeeID
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+	erp_bookinvsuppmaster.netAmount AS amount,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID
 FROM
 	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
 WHERE
     erp_bookinvsuppmaster.documentType = 4
     UNION ALL
@@ -488,12 +493,62 @@ WHERE
     erp_paysupplierinvoicemaster.BPVdate AS documentDate,
 	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
 	erp_paysupplierinvoicemaster.BPVNarration AS description,
-	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    erp_paysupplierinvoicemaster.netAmount AS amount,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID
 FROM
 	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 6
-    ) AS t");
+    UNION ALL 
+    SELECT
+     srp_erp_iouvouchers.voucherDate AS documentDate,
+	srp_erp_iouvouchers.iouCode AS documentCode,
+	srp_erp_iouvouchers.narration AS description,
+	srp_erp_iouvouchers.empID AS employeeID,
+    srp_erp_iouvouchers.transactionAmount AS amount,
+    srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
+    0 AS referenceDocDate,
+    0 AS masterID
+FROM
+	srp_erp_iouvouchers
+    LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
+    ) AS t1");
+
+        $refAmounts = DB::select("SELECT * FROM (SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    SUM(srp_erp_pay_monthlydeductiondetail.transactionAmount) as referenceAmount
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+WHERE
+    erp_bookinvsuppmaster.documentType = 4
+    UNION ALL
+    SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    SUM(srp_erp_pay_monthlydeductiondetail.transactionAmount) as referenceAmount
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6
+    
+  
+    
+    ) AS t1");
+
+        foreach ($data as $da){
+            foreach($refAmounts as $amount) {
+                if($da->masterID == $amount->masterID) {
+                    $da->referenceAmount = $amount->referenceAmount;
+                }
+            }
+        }
 
 
         $employees = DB::select("SELECT * FROM (SELECT
