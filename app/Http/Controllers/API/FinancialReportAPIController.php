@@ -482,7 +482,8 @@ class FinancialReportAPIController extends AppBaseController
 	erp_bookinvsuppmaster.netAmount AS amount,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    1 AS documentType
 FROM
 	erp_bookinvsuppmaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -497,7 +498,8 @@ WHERE
     erp_paysupplierinvoicemaster.netAmount AS amount,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
-    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    2 AS documentType
 FROM
 	erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -511,8 +513,9 @@ WHERE
 	srp_erp_iouvouchers.empID AS employeeID,
     srp_erp_iouvouchers.transactionAmount AS amount,
     srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
-    0 AS referenceDocDate,
-    0 AS masterID
+    srp_erp_ioubookingmaster.bookingDate AS referenceDocDate,
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID,
+    3 AS documentType
 FROM
 	srp_erp_iouvouchers
     LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
@@ -537,15 +540,28 @@ FROM
     LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 6
-    
-  
-    
-    ) AS t1");
+   ) AS t1");
+
+
+        $refIouAmounts = DB::select("SELECT * FROM (SELECT
+    srp_erp_ioubookingmaster.transactionAmount AS referenceAmount,
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID  
+FROM
+	srp_erp_ioubookingmaster 
+WHERE 
+srp_erp_ioubookingmaster.approvedYN = 1
+    )As t2");
 
         foreach ($data as $da){
+            $da->referenceAmount = 0;
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID) {
+                if($da->masterID == $amount->masterID && $da->documentType == 1 || $da->documentType == 2) {
                     $da->referenceAmount = $amount->referenceAmount;
+                }
+            }
+            foreach ($refIouAmounts as $iouAmount){
+                if($da->masterID == $amount->masterID && $da->documentType == 3) {
+                    $da->referenceAmount = $iouAmount->referenceAmount;
                 }
             }
         }
