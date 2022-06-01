@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -239,6 +240,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError('Payment voucher date is not within financial period!', 500);
             }
 
+            if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                if (!empty($company) && $company->vatRegisteredYN == 1) {
+                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
+                }
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
@@ -280,6 +288,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($supDetail) {
                     $input['supplierGLCode'] = $supDetail->liabilityAccount;
                     $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                    $input['VATPercentage'] = $supDetail->vatPercentage;
+
                 }
                 $input['supplierTransCurrencyER'] = 1;
                 if ($supCurrency) {
@@ -2731,7 +2741,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->exists();
 
             $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
-         
+
+            $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -2757,7 +2769,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'deduction_type_drop' => $monthly_declarations_drop,
                 'paymentMode' => $paymentMode,
                 'isProjectBase' => $isProject_base,
-                'projects' => $projects,
+                'isVATEligible' => $isVATEligible,
+                'projects' => $projects
             );
         }
 
