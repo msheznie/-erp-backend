@@ -462,8 +462,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $paySupplierInvoiceDetailDelete->delete();
 
             $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                       Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-                ->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
+                       Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when($payMaster->invoiceType == 6, function($query) {
+                $query->whereHas('payment_master', function($query) {
+                    $query->where('invoiceType',6);
+                });
+            })->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
                 ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
                 ->first();
 
