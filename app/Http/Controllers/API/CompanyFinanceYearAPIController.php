@@ -400,12 +400,12 @@ class CompanyFinanceYearAPIController extends AppBaseController
     {
         /** @var CompanyFinanceYear $companyFinanceYear */
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
+        $employee = \Helper::getEmployeeInfo();
 
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
-        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0]);
-        $companyFinanceYear->delete();
+        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0, 'deleted_at'=>date("Y-m-d H:i:s"), 'isDeleted'=>1,'deletedBy'=>$employee->empName]);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
     }
