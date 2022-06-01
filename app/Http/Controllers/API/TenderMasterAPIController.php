@@ -18,6 +18,8 @@ use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationType;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
+use App\Models\ScheduleBidFormatDetails;
+use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
@@ -680,8 +682,22 @@ class TenderMasterAPIController extends AppBaseController
                         $scheduleAll = PricingScheduleMaster::where('tender_id',$input['id'])->get();
                         foreach ($scheduleAll as $val){
                             $mainwork = TenderMainWorks::where('tender_id',$input['id'])->where('schedule_id',$val['id'])->first();
+                            $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id',$val['id'])->first();
+                            if(empty($scheduleDetail)){
+                                return ['success' => false, 'message' => 'All work schedule should be completed'];
+                            }
                             if(empty($mainwork)){
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+                            }
+                        }
+
+                        $mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id',$input['id'])->get();
+                        foreach ($mainWorkBoqApp as $vals){
+                            if($vals['tender_bid_format_detail']['boq_applicable'] == 1){
+                                $boqItems = TenderBoqItems::where('main_work_id',$vals['id'])->first();
+                                if(empty($boqItems)){
+                                    return ['success' => false, 'message' => 'Boq enabled main works should have attest one boq item'];
+                                }
                             }
                         }
 
