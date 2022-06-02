@@ -2643,6 +2643,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
         Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
+
+        Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
+        Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
+        Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
+       
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2723,6 +2728,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM'); 
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
+    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 });
 
 
@@ -2894,4 +2900,5 @@ Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPICont
 
 
 Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
+
 
