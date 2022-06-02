@@ -1372,6 +1372,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
 
         Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates');
+        Route::get('getInvoiceLogistic', 'CustomerInvoiceLogisticAPIController@getInvoiceLogistic');
 
         Route::resource('budjetdetails', 'BudjetdetailsAPIController');
         Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
@@ -1616,6 +1617,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
         Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
         Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
+
+        Route::resource('customer_invoice_logistics', 'CustomerInvoiceLogisticAPIController');
+        Route::post('addNote', 'CustomerInvoiceLogisticAPIController@addNote');
 
         Route::resource('customer_refer_back', 'CustomerMasterRefferedBackAPIController');
         Route::post('referBackHistoryByCustomerMaster', 'CustomerMasterRefferedBackAPIController@referBackHistoryByCustomerMaster');
@@ -1934,6 +1938,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
 
         Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail');
+        Route::get('getDeliveryTerms', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTerms');
+        Route::post('getDeliveryTermsFormData', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTermsFormData');
 
         Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
         Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');

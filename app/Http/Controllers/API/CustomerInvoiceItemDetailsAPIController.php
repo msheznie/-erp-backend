@@ -32,6 +32,8 @@ use App\Models\UnitConversion;
 use App\Repositories\CustomerInvoiceItemDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CustomerInvoiceLogistic;
+use App\Models\DeliveryTermsMaster;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -963,6 +965,23 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($items->toArray(), 'Item Details retrieved successfully');
+    }
+
+    public function getDeliveryTerms(Request $request)
+    {
+        $items = DeliveryTermsMaster::where('is_deleted', 0)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Delivery Terms retrieved successfully');
+    }
+
+    public function getDeliveryTermsFormData(Request $request)
+    {
+        $input = $request->all();
+        $id = $input[0];
+        $items = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID', $id)->first();
+
+        return $this->sendResponse($items, 'Delivery Terms retrieved successfully');
     }
 
     private function updateCostBySellingCost($input,$customerDirectInvoice){

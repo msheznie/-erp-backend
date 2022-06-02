@@ -18,6 +18,8 @@ use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationType;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
+use App\Models\ScheduleBidFormatDetails;
+use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
@@ -521,7 +523,7 @@ class TenderMasterAPIController extends AppBaseController
         $resValidate = $this->validateTenderHeader($input);
 
         if (!$resValidate['status']) {
-            return $resValidate;
+            return $this->sendError($resValidate['message'], 422);
         }
 
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
@@ -553,16 +555,20 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
-        if($document_sales_start_date>$document_sales_end_date){
-            return ['success' => false, 'message' => 'Document sales start date cannot be greater than Document sales end date'];
+        if($document_sales_start_date > $document_sales_end_date){
+            return ['success' => false, 'message' => 'Document sales from date cannot be greater than Document sales to date'];
         }
 
-        if($pre_bid_clarification_start_date>$pre_bid_clarification_end_date){
-            return ['success' => false, 'message' => 'Pre-bid clarification end date cannot be greater than Pre-bid clarification start date'];
+        if($pre_bid_clarification_start_date > $pre_bid_clarification_end_date){
+            return ['success' => false, 'message' => 'Pre-bid clarification from date cannot be greater than Pre-bid clarification to date'];
         }
 
-        if($bid_submission_opening_date>$bid_submission_closing_date){
-            return ['success' => false, 'message' => 'Bid submission opening date cannot be greater than Bid submission closing date'];
+        if($bid_submission_opening_date > $bid_submission_closing_date){
+            return ['success' => false, 'message' => 'Bid submission from date cannot be greater than Bid submission to date'];
+        }
+
+        if($site_visit_date > $site_visit_end_date){
+            return ['success' => false, 'message' => 'Site Visit from date cannot be greater than Site Visit to date'];
         }
 
         $existTndr = TenderMaster::where('title',$input['title'])->where('id','!=',$input['id'])->where('company_id',$input['companySystemID'])->first();
@@ -676,8 +682,22 @@ class TenderMasterAPIController extends AppBaseController
                         $scheduleAll = PricingScheduleMaster::where('tender_id',$input['id'])->get();
                         foreach ($scheduleAll as $val){
                             $mainwork = TenderMainWorks::where('tender_id',$input['id'])->where('schedule_id',$val['id'])->first();
+                            $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id',$val['id'])->first();
+                            if(empty($scheduleDetail)){
+                                return ['success' => false, 'message' => 'All work schedule should be completed'];
+                            }
                             if(empty($mainwork)){
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+                            }
+                        }
+
+                        $mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id',$input['id'])->get();
+                        foreach ($mainWorkBoqApp as $vals){
+                            if($vals['tender_bid_format_detail']['boq_applicable'] == 1){
+                                $boqItems = TenderBoqItems::where('main_work_id',$vals['id'])->first();
+                                if(empty($boqItems)){
+                                    return ['success' => false, 'message' => 'Boq enabled main works should have attest one boq item'];
+                                }
                             }
                         }
 
@@ -722,13 +742,15 @@ class TenderMasterAPIController extends AppBaseController
             'tender_document_fee.required' => 'Tender Document Fee is required.',
             'bank_id.required' => 'Bank is required.',
             'bank_account_id.required' => 'Bank Account is required.',
-            'document_sales_start_date.required' => 'Document Sales Start Date is required.',
-            'document_sales_end_date.required' => 'Document Sales End Date is required.',
-            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification Start Date.',
-            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification End Date.',
+            'document_sales_start_date.required' => 'Document Sales From Date is required.',
+            'document_sales_end_date.required' => 'Document Sales To Date is required.',
+            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
+            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
             'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-            'bid_submission_opening_date.required' => 'Bid Submission Opening Date.',
-            'bid_submission_closing_date.required' => 'Bid Submission Closing Date.',
+            'bid_submission_opening_date.required' => 'Bid Submission From Date.',
+            'bid_submission_closing_date.required' => 'Bid Submission To Date.',
+            'site_visit_date.required' => 'Site Visit From Date.',
+            'site_visit_end_date.required' => 'Site Visit To Date.'
 
         ];
 
@@ -750,6 +772,8 @@ class TenderMasterAPIController extends AppBaseController
             'pre_bid_clarification_method' => 'required',
             'bid_submission_opening_date' => 'required',
             'bid_submission_closing_date' => 'required',
+            'site_visit_date' => 'required',
+            'site_visit_end_date' => 'required',
 
         ], $messages);
 
