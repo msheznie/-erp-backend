@@ -35,7 +35,9 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailForQueuing;
+use App\Repositories\SupplierRegistrationLinkRepository;
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -45,10 +47,11 @@ class TenderMasterAPIController extends AppBaseController
 {
     /** @var  TenderMasterRepository */
     private $tenderMasterRepository;
-
-    public function __construct(TenderMasterRepository $tenderMasterRepo)
+    private $registrationLinkRepository;
+    public function __construct(TenderMasterRepository $tenderMasterRepo,SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
+        $this->registrationLinkRepository = $registrationLinkRepository;
     }
 
     /**
@@ -1129,5 +1132,22 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         return $data;
+    }
+    public function sendSupplierInvitation(Request $request){ 
+        $companyName = "";
+        $company = Company::find($request->input('company_id'));
+        if(isset($company->CompanyName)){
+           $companyName =  $company->CompanyName;
+        } 
+        $token = md5(Carbon::now()->format('YmdHisu'));
+        $apiKey = $request->input('api_key'); 
+        $isCreated = $this->registrationLinkRepository->save($request, $token);
+        $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
+        if($isCreated){
+            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>")); 
+            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+        }else{
+            return $this->sendError('Supplier Registration Link Generation Failed',500);
+        }
     }
 }
