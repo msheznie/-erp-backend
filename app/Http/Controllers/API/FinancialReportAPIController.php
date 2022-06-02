@@ -507,11 +507,14 @@ class FinancialReportAPIController extends AppBaseController
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
     1 AS documentType
 FROM
 	erp_bookinvsuppmaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
-    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
 WHERE
     erp_bookinvsuppmaster.documentType = 4 AND 
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
@@ -529,11 +532,14 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
     2 AS documentType
 FROM
 	erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
-    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.supplierTransCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
@@ -551,6 +557,8 @@ WHERE
     srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
     srp_erp_ioubookingmaster.bookingDate AS referenceDocDate,
     srp_erp_ioubookingmaster.bookingMasterID AS masterID,
+    srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
+    srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
     3 AS documentType
 FROM
 	srp_erp_iouvouchers
@@ -564,17 +572,23 @@ WHERE
 
         $refAmounts = DB::select("SELECT * FROM (SELECT
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-    SUM(srp_erp_pay_monthlydeductiondetail.transactionAmount) as referenceAmount
+    SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
+    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt
 FROM
 	erp_bookinvsuppmaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
     LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+    LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
+    LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
 WHERE
-    erp_bookinvsuppmaster.documentType = 4
+    erp_bookinvsuppmaster.documentType = 4 AND
+    srp_erp_payrolldetail.fromTB = 'MD' AND
+    srp_erp_payrollmaster.approvedYN = 1
     UNION ALL
     SELECT
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-    SUM(srp_erp_payrolldetail.transactionAmount) as referenceAmount
+    SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
+    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt
 FROM
 	erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -582,14 +596,15 @@ FROM
     LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
     LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
 WHERE
-    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
     srp_erp_payrollmaster.approvedYN = 1
    ) AS t1");
 
 
         $refIouAmounts = DB::select("SELECT * FROM (SELECT
-    srp_erp_ioubookingmaster.transactionAmount AS referenceAmount,
+    srp_erp_ioubookingmaster.companyLocalAmount AS referenceAmountLocal,
+    srp_erp_ioubookingmaster.companyReportingAmount AS referenceAmountRpt,
     srp_erp_ioubookingmaster.bookingMasterID AS masterID  
 FROM
 	srp_erp_ioubookingmaster 
@@ -600,13 +615,15 @@ srp_erp_ioubookingmaster.approvedYN = 1
         foreach ($data as $da){
             $da->referenceAmount = 0;
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID && $da->documentType == 1 || $da->documentType == 2) {
-                    $da->referenceAmount = $amount->referenceAmount;
+                if($da->masterID == $amount->masterID && ($da->documentType == 1 || $da->documentType == 2)) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
                 }
             }
             foreach ($refIouAmounts as $iouAmount){
                 if($da->masterID == $amount->masterID && $da->documentType == 3) {
-                    $da->referenceAmount = $iouAmount->referenceAmount;
+                    $da->referenceAmountLocal = $iouAmount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $iouAmount->referenceAmountRpt;
                 }
             }
         }
