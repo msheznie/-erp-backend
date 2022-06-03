@@ -14,7 +14,7 @@ use Response;
 use App\helper\Helper;
 use App\Scopes\ActiveScope;
 use App\Models\Company;
-include_once(app_path().'/lib/barcode/fpdfBarcode.php') ;
+include_once(app_path().'/libraries/barcode/fpdfBarcode.php') ;
 //require_once('../../../../lib/fpdfBarcode.php');
 use DNS1D;
 use App\Models\FixedAssetMaster;
