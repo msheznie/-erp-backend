@@ -17,13 +17,14 @@ class ForgotToPunchInTenant implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tenantDb;
+    public $isPunchOut;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($tenantDb)
+    public function __construct($tenantDb, $isPunchOut=false)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -32,6 +33,7 @@ class ForgotToPunchInTenant implements ShouldQueue
         }
 
         $this->tenantDb = $tenantDb;
+        $this->isPunchOut = $isPunchOut;
     }
 
     /**
@@ -44,8 +46,10 @@ class ForgotToPunchInTenant implements ShouldQueue
         Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );
 
         CommonJobService::db_switch( $this->tenantDb );
-          
-        Log::info("Job initiated on {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        
+        $logSlug = ($this->isPunchOut)? "punch out": "";
+
+        Log::info("{$logSlug} job initiated on {$this->tenantDb} DB. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         
         $setupData = NotificationService::getActiveCompanyByScenario(15);
         if(count( $setupData ) == 0){
@@ -56,7 +60,7 @@ class ForgotToPunchInTenant implements ShouldQueue
             $companyId = $setup['companyID'];
             $companyName = $setup['company']['CompanyName']; 
 
-            ForgotToPunchInCompany::dispatch($this->tenantDb, $companyId, $companyName);
+            ForgotToPunchInCompany::dispatch($this->tenantDb, $companyId, $companyName, $this->isPunchOut);
         }
 
     }

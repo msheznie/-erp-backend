@@ -92,7 +92,8 @@ class QuotationMasterRepository extends BaseRepository
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'leadTime'
     ];
 
     /**

@@ -30,6 +30,7 @@ $factory->define(TenderMaster::class, function (Faker $faker) {
         'pre_bid_clarification_end_date' => $faker->date('Y-m-d H:i:s'),
         'pre_bid_clarification_method' => $faker->randomDigitNotNull,
         'site_visit_date' => $faker->date('Y-m-d H:i:s'),
+        'site_visit_end_date' => $faker->date('Y-m-d H:i:s'),
         'bid_submission_opening_date' => $faker->date('Y-m-d H:i:s'),
         'bid_submission_closing_date' => $faker->date('Y-m-d H:i:s'),
         'created_at' => $faker->date('Y-m-d H:i:s'),

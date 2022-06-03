@@ -299,7 +299,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $tender_id = $input['tender_id'];
         $schedule_id = $input['schedule_id'];
 
-        $mainWorks = TenderMainWorks::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
+        $mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -317,6 +317,7 @@ class TenderMainWorksAPIController extends AppBaseController
                     }
                 }
             })
+            ->rawColumns(['description'])
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);

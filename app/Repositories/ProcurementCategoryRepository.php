@@ -16,6 +16,7 @@ class ProcurementCategoryRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'description',
+        'description_in_secondary',
         'is_active',
         'created_pc',
         'created_by',
