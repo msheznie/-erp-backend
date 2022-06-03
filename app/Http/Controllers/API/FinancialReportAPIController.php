@@ -566,7 +566,8 @@ FROM
 WHERE
     DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
     3 IN (' . join(',', json_decode($typeID)) . ') AND
-    srp_erp_iouvouchers.companyID = "'.$companyID.'"
+    srp_erp_iouvouchers.companyID = "'.$companyID.'" AND
+    srp_erp_iouvouchers.approvedYN = 1
     ) AS t1');
 
 
@@ -603,11 +604,12 @@ WHERE
 
 
         $refIouAmounts = DB::select("SELECT * FROM (SELECT
-    srp_erp_ioubookingmaster.companyLocalAmount AS referenceAmountLocal,
-    srp_erp_ioubookingmaster.companyReportingAmount AS referenceAmountRpt,
-    srp_erp_ioubookingmaster.bookingMasterID AS masterID  
+   SUM(srp_erp_ioubookingdetails.companyLocalAmount) as referenceAmountLocal,
+    SUM(srp_erp_ioubookingdetails.companyReportingAmount) as referenceAmountRpt,
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID
 FROM
 	srp_erp_ioubookingmaster 
+    LEFT JOIN srp_erp_ioubookingdetails ON srp_erp_ioubookingmaster.bookingMasterID = srp_erp_ioubookingdetails.bookingMasterID
 WHERE 
 srp_erp_ioubookingmaster.approvedYN = 1
     )As t2");
