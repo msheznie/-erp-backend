@@ -652,7 +652,5 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
       
 
-      
-
     }
 }
