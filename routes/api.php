@@ -2649,8 +2649,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
         Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
-
-         
         Route::post('getSupplierList', 'TenderMasterAPIController@getSupplierList');
         Route::post('saveSupplierAssigned', 'TenderMasterAPIController@saveSupplierAssigned');
         Route::post('getSupplierAssignedList', 'TenderMasterAPIController@getSupplierAssignedList');
@@ -2914,8 +2912,5 @@ Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreCon
 
 
 
-<<<<<<< HEAD
 Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
-=======
 Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
->>>>>>> a89878ef4430f727ff9d02e720fd37fd567dc1b9
