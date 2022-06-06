@@ -182,8 +182,7 @@ return [
         Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
 
-        Barryvdh\Debugbar\ServiceProvider::class,
-        Milon\Barcode\BarcodeServiceProvider::class,
+        Barryvdh\Debugbar\ServiceProvider::class
     ],
 
     /*
@@ -244,9 +243,7 @@ return [
         //'PDF' => Barryvdh\DomPDF\Facade::class,
         'PDF' => Seguce92\DomPDF\Facade::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
-        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
-        'DNS1D' => Milon\Barcode\Facades\DNS1DFacade::class,
-        'DNS2D' => Milon\Barcode\Facades\DNS2DFacade::class,
+        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class
     ],
 
 ];
