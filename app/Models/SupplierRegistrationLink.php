@@ -35,7 +35,8 @@ class SupplierRegistrationLink extends Model
         'timesReferred',
         'confirmed_yn',
         'refferedBackYN',
-        'is_bid_tender'
+        'is_bid_tender',
+        'created_via'
     ];
 
     protected $appends = ['appointment_date_expired'];
