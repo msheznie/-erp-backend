@@ -103,7 +103,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class CompanyFinanceYear extends Model
 {
-    use SoftDeletes;
     public $table = 'companyfinanceyear';
     
     const CREATED_AT = 'createdDateTime';
@@ -119,6 +118,8 @@ class CompanyFinanceYear extends Model
         'isActive',
         'isCurrent',
         'isClosed',
+        'isDeleted',
+        'deletedBy',
         'closedByEmpSystemID',
         'closedByEmpID',
         'closedByEmpName',
@@ -131,6 +132,7 @@ class CompanyFinanceYear extends Model
         'modifiedUser',
         'modifiedPc',
         'timeStamp',
+        'deleted_at',
         'generateStatus'
     ];
 
