@@ -2654,6 +2654,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
         Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
 
+        Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
+        Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
+        Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
+       
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
     });
 
@@ -2735,6 +2739,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM'); 
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
+    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 });
 
 
