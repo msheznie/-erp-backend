@@ -282,6 +282,6 @@ class TenderDocumentTypesAPIController extends AppBaseController
     public function getTenderAttachmentType(Request $request)
     {
         $input = $request->all();
-        return TenderDocumentTypes::where('company_id',$input['companySystemID'])->get();
+        return TenderDocumentTypes::where('company_id',$input['companySystemID'])->orWhere('company_id',null)->get();
     }
 }
