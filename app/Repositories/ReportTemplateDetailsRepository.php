@@ -27,6 +27,7 @@ class ReportTemplateDetailsRepository extends BaseRepository
         'masterID',
         'accountType',
         'companySystemID',
+        'netProfitStatus',
         'companyID',
         'createdPCID',
         'createdUserSystemID',

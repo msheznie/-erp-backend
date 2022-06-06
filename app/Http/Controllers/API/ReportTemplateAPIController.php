@@ -208,6 +208,57 @@ class ReportTemplateAPIController extends AppBaseController
                 }
 
             }
+
+            if ($input['reportID'] == 2 && (isset($input['isConsolidation']) && $input['isConsolidation'])) {
+                $data5['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data5['description'] = 'Share of Associates Profit/Loss';
+                $data5['itemType'] = 5;
+                $data5['sortOrder'] = 1;
+                $data5['companySystemID'] = $input['companySystemID'];
+                $data5['companyID'] = $input['companyID'];
+                $data5['createdPCID'] = gethostname();
+                $data5['createdUserID'] = \Helper::getEmployeeID();
+                $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails1 = ReportTemplateDetails::create($data5);
+
+
+                $data6['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data6['description'] = 'Share of Profit Attributable To';
+                $data6['itemType'] = 6;
+                $data6['sortOrder'] = 2;
+                $data6['companySystemID'] = $input['companySystemID'];
+                $data6['companyID'] = $input['companyID'];
+                $data6['createdPCID'] = gethostname();
+                $data6['createdUserID'] = \Helper::getEmployeeID();
+                $data6['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails2 = ReportTemplateDetails::create($data6);
+
+
+                $data7['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data7['description'] = 'Share Holder';
+                $data7['itemType'] = 7;
+                $data7['sortOrder'] = 1;
+                $data7['masterID'] = $reportTemplateDetails2->detID;
+                $data7['companySystemID'] = $input['companySystemID'];
+                $data7['companyID'] = $input['companyID'];
+                $data7['createdPCID'] = gethostname();
+                $data7['createdUserID'] = \Helper::getEmployeeID();
+                $data7['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails3 = ReportTemplateDetails::create($data7);
+
+                $data8['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
+                $data8['description'] = 'NCI';
+                $data8['itemType'] = 8;
+                $data8['sortOrder'] = 2;
+                $data8['masterID'] = $reportTemplateDetails2->detID;
+                $data8['companySystemID'] = $input['companySystemID'];
+                $data8['companyID'] = $input['companyID'];
+                $data8['createdPCID'] = gethostname();
+                $data8['createdUserID'] = \Helper::getEmployeeID();
+                $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $reportTemplateDetails4 = ReportTemplateDetails::create($data8);
+            }
+
             DB::commit();
             return $this->sendResponse($reportTemplates->toArray(), 'Report Template saved successfully');
         } catch (\Exception $exception) {

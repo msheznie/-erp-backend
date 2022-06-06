@@ -135,6 +135,7 @@ class ReportTemplate extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'columnTemplateID',
+        'isConsolidation',
         'showZeroGlYN',
         'timestamp'
     ];
@@ -159,6 +160,7 @@ class ReportTemplate extends Model
         'isAssignToGroup' => 'integer',
         'presentationType' => 'integer',
         'isDefault' => 'integer',
+        'isConsolidation' => 'integer',
         'drillDownType' => 'integer',
         'preDefinedTemplateYN' => 'integer',
         'preDefinedReportTemplateID' => 'integer',
