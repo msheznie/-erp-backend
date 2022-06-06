@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SupplierGroup;
+use App\Models\SupplierMaster;
 
 class SupplierGroupConfigurationController extends AppBaseController
 {
@@ -126,6 +127,18 @@ class SupplierGroupConfigurationController extends AppBaseController
 
     public function deleteGroup(Request $request) {
         $input = $request->all();
+
+        $id = $input['id'];
+
+        $is_exit = SupplierMaster::where('supplier_group_id',$id)->first();
+
+        if(isset($is_exit))
+        {
+            return $this->sendError("Cannot delete,this group already assigned to one of the supplier");
+        }
+      
+
+      
         $user = User::with(['employee'])->where('id', Auth::user()->id)->first();
         $data = SupplierGroup::find($input['id']);
         if($data) {
