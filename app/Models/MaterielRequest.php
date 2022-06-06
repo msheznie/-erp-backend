@@ -434,4 +434,36 @@ class MaterielRequest extends Model
             }
         }
     }
+
+
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_requestdetails','erp_requestdetails.RequestID','erp_request.RequestID');
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_grvmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_request.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeLocationJoin($q,$as = 'erp_location', $column = 'location' , $columnAs = 'locationName')
+    {
+        return $q->leftJoin('erp_location as '.$as,$as.'.locationID','erp_request.'.$column)
+        ->addSelect($as.".locationName as ".$columnAs);
+    }
+
+    public function scopePriorityJoin($q,$as = 'erp_priority', $column = 'priority' , $columnAs = 'priorityDescription')
+    {
+        return $q->leftJoin('erp_priority as '.$as,$as.'.priorityID','erp_request.'.$column)
+        ->addSelect($as.".priorityDescription as ".$columnAs);
+    }
+
 }

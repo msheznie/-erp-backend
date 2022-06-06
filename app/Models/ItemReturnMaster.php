@@ -366,4 +366,33 @@ class ItemReturnMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'itemReturnAutoID')->where('documentSystemID',12);
     }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_itemreturndetails','erp_itemreturndetails.itemReturnAutoID','erp_itemreturnmaster.itemReturnAutoID');
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_itemreturnmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_itemreturnmaster.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_itemreturnmaster.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+       
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_itemreturnmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
 }

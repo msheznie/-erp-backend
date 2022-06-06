@@ -85,6 +85,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Models\DeliveryTermsMaster;
+use App\Models\PortMaster;
 use Exception;
 use PHPExcel_Worksheet_Drawing;
 /**
@@ -1952,7 +1954,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $createdDateAndTime = ($cusBasicData) ? Carbon::parse($cusBasicData->createdDateAndTime) : null;
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company','logistic', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
                 $query->whereDate('cutOffDate', '<=', $createdDateAndTime);
         }, 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
@@ -2105,6 +2107,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!$bankID && $id) {
             $bankID = $master->bankID;
         }
+
+        $output['portMasters'] = PortMaster::where('is_deleted', 0)->get();
+        $output['deliveryTermsMasters'] = DeliveryTermsMaster::where('is_deleted', 0)->get();
 
         $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,creditDays"))
             ->where('companySystemID', $companyId)

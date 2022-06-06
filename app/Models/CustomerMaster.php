@@ -132,7 +132,11 @@ class CustomerMaster extends Model
         'customerSecondLanguage',
         'reportTitleSecondLanguage',
         'addressOneSecondLanguage',
-        'addressTwoSecondLanguage'
+        'addressTwoSecondLanguage',
+        'consignee_name',
+        'consignee_address',
+        'payment_terms',
+        'consignee_contact_no'
     ];
 
     /**
@@ -193,7 +197,11 @@ class CustomerMaster extends Model
         'customerSecondLanguage' => 'string',
         'reportTitleSecondLanguage' => 'string',
         'addressOneSecondLanguage' => 'string',
-        'addressTwoSecondLanguage' => 'string'
+        'addressTwoSecondLanguage' => 'string',
+        'consignee_name' => 'string',
+        'consignee_address' => 'string',
+        'payment_terms' => 'string',
+        'consignee_contact_no' => 'string'
     ];
 
     /**
