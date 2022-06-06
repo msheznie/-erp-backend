@@ -206,6 +206,13 @@ class EmployeeAPIController extends AppBaseController
         return $this->sendResponse($id, 'Employee deleted successfully');
     }
 
+    public function getAllEmployees(Request $request){
+        $input = $request->all();
+        $employees = Employee::where('empCompanySystemID', $input['selectedCompanyId'])->where('discharegedYN', 0)->get();
+
+        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
+    }
+
 
     public function getTypeheadEmployees(Request $request)
     {

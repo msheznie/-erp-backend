@@ -18,6 +18,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
+        Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
+
         Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
         Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
         Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
@@ -746,6 +748,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
         Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
         Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
+
+        Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
 
         Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
@@ -2654,6 +2658,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
         Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
        
+        Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2908,3 +2913,6 @@ Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPICont
 Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
 
 
+
+
+Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');

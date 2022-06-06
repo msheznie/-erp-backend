@@ -429,7 +429,7 @@ class SRMService
 
         $data = Appointment::with(['detail' => function ($q) {
             $q->with(['getPoDetails' => function ($q1) {
-                $q1->with(['order', 'unit']);
+                $q1->with(['order', 'unit', 'order.transactioncurrency']);
             }]);
         }])
             ->where('id', $appointmentID)->first();
@@ -1572,7 +1572,7 @@ class SRMService
         try {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
-                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
                     return $this->sendError('This type of file not allow to upload.', 500);
@@ -1692,15 +1692,28 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $data = DocumentAttachments::where('documentSystemID', 106)
+        $queryRecordsCount = DocumentAttachments::where('documentSystemID', 106)
             ->where('documentSystemCode', $appointmentID)
-            ->get();
+            ->firstOrFail()->toArray();
+        
+        if(sizeof($queryRecordsCount)){
+            $result = DocumentAttachments::where('documentSystemID', 106)
+                ->where('documentSystemCode', $appointmentID)
+                ->get();
 
-        return [
-            'success' => true,
-            'message' => 'Delivery Appointment successfully get',
-            'data' => $data
-        ];
+            return [
+                'success' => true,
+                'message' => 'FAQ list successfully get',
+                'data' => $result
+            ];
+
+        } else {
+            return [
+                'success' => true,
+                'message' => 'No records found',
+                'data' => ''
+            ];
+        }
     }
 
     public function removeDeliveryAppointmentAttachment($request)
