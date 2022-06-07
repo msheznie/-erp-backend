@@ -1797,6 +1797,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
         Route::resource('procurement_categories', 'TenderProcurementCategoryController');
+        Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
+        Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
+        Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
 
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
