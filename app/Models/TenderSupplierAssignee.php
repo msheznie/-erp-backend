@@ -125,7 +125,7 @@ class TenderSupplierAssignee extends Model
     ];
  
     public function supplierAssigned(){ 
-        return $this->hasOne('App\Models\supplierassigned', 'supplierAssignedID','supplier_assigned_id');
+        return $this->hasOne('App\Models\SupplierAssigned', 'supplierAssignedID','supplier_assigned_id');
         
     }
 }
