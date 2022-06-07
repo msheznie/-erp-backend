@@ -8559,7 +8559,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function downloadPoItemUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID']);
         if ($exists = Storage::disk($disk)->exists('procument_order_item_upload_template/procument_order_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('procument_order_item_upload_template/procument_order_item_upload_template.xlsx', 'procument_order_item_upload_template.xlsx');
         } else {
