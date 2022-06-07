@@ -1004,7 +1004,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $document_id = $input['document_id'];
-        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
 
         if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
             return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
