@@ -5438,16 +5438,16 @@ class Helper
     public static function policyWiseDisk($companySystemID, $currentDisk = null)
     {
         $awsPolicy = self::checkPolicy($companySystemID, 50);
-
-        if ($awsPolicy) {
-            return 's3';
-        } else {
-            if (is_null($currentDisk)) {
-                return 'public';
-            } else {
-                return $currentDisk;
-            }
-        }
+        return 's3';
+        // if ($awsPolicy) {
+        //     return 's3';
+        // } else {
+        //     if (is_null($currentDisk)) {
+        //         return 'public';
+        //     } else {
+        //         return $currentDisk;
+        //     }
+        // }
     }
 
     static function isArray($value, $default = 0)
