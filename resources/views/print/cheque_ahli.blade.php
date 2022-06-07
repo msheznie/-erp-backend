@@ -27,7 +27,7 @@
         #bpv_code_div {
             position: absolute;
             top: 5.5cm;
-            left: 22.5cm;
+            left: 27.5cm;
         }
 
         #top_supplier_div {
