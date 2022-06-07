@@ -97,6 +97,10 @@ class TenderDocumentTypes extends Model
         
     ];
 
+    public function attachments()
+    {
+        return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
+    }
 
-    
+
 }
