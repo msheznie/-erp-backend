@@ -14,6 +14,10 @@
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
+    Route::group(['middleware' => ['pos_api']], function (){
+        Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
+    });
+
     Route::group(['middleware' => 'auth:api'], function () {
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
@@ -2836,9 +2840,6 @@ Route::group(['prefix' => 'external'], function (){
  * End external related routes
  */
 
-Route::group(['middleware' => ['pos_api']], function (){
-    Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
-});
 
 
 Route::get('cache-clear', function () {
