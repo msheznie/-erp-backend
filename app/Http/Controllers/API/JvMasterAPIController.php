@@ -915,7 +915,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function exportStandardJVFormat(Request $request)
     {
         $input = $request->all();
-        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public'; 
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
             return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
         } else {

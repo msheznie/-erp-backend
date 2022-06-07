@@ -1546,7 +1546,7 @@ WHERE
 
     public function downloadQuotationItemUploadTemplate(Request $request) {
         $input = $request->all();
-        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('delivery_order_template/delivery_order_template.xlsx')) {
             return Storage::disk($disk)->download('delivery_order_template/delivery_order_template.xlsx', 'delivery_order_template.xlsx');
         } else {

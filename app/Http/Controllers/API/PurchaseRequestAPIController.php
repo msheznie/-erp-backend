@@ -2964,7 +2964,7 @@ class PurchaseRequestAPIController extends AppBaseController
      public function downloadPrItemUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $disk =Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('purchase_request_item_upload_template/purchase_request_item_upload_template.xlsx', 'purchase_request_item_upload_template.xlsx');
         } else {

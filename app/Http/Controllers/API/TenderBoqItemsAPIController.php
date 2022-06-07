@@ -427,7 +427,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function downloadTenderBoqItemUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx', 'tender_boq_item_upload_template.xlsx');
         } else {
