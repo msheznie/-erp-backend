@@ -548,8 +548,8 @@ class CustomerMasterAPIController extends AppBaseController
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']), $customerId);
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage']));
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']), $customerId);
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage']));
                     // user activity log table
                     if($customerMasters){
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
