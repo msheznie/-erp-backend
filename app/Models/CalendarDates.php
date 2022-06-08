@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="TenderDocumentTypes",
+ *      definition="CalendarDates",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,15 +15,9 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="document_type",
- *          description="document_type",
+ *          property="calendar_date",
+ *          description="calendar_date",
  *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="srm_action",
- *          description="srm_action",
- *          type="integer",
- *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="created_at",
@@ -57,18 +51,19 @@ use Eloquent as Model;
  *      )
  * )
  */
-class TenderDocumentTypes extends Model
+class CalendarDates extends Model
 {
 
-    public $table = 'srm_tender_document_types';
+    public $table = 'srm_calendar_dates';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
 
+
+
     public $fillable = [
-        'document_type',
-        'srm_action',
+        'calendar_date',
         'created_by',
         'updated_by',
         'company_id'
@@ -81,8 +76,7 @@ class TenderDocumentTypes extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'document_type' => 'string',
-        'srm_action' => 'integer',
+        'calendar_date' => 'string',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'company_id' => 'integer'
@@ -97,10 +91,10 @@ class TenderDocumentTypes extends Model
         
     ];
 
-    public function attachments()
+    public function calendar_dates_detail()
     {
-        return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
+        return $this->hasOne('App\Models\CalendarDatesDetail', 'calendar_date_id', 'id');
     }
 
-
+    
 }

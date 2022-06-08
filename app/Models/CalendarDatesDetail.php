@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="TenderDocumentTypes",
+ *      definition="CalendarDatesDetail",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,15 +15,28 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="document_type",
- *          description="document_type",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="srm_action",
- *          description="srm_action",
+ *          property="tender_id",
+ *          description="tender_id",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="calendar_date_id",
+ *          description="calendar_date_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="from_date",
+ *          description="from_date",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="to_date",
+ *          description="to_date",
+ *          type="string",
+ *          format="date-time"
  *      ),
  *      @SWG\Property(
  *          property="created_at",
@@ -57,18 +70,22 @@ use Eloquent as Model;
  *      )
  * )
  */
-class TenderDocumentTypes extends Model
+class CalendarDatesDetail extends Model
 {
 
-    public $table = 'srm_tender_document_types';
+    public $table = 'srm_calendar_dates_detail';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
 
+
+
     public $fillable = [
-        'document_type',
-        'srm_action',
+        'tender_id',
+        'calendar_date_id',
+        'from_date',
+        'to_date',
         'created_by',
         'updated_by',
         'company_id'
@@ -81,8 +98,10 @@ class TenderDocumentTypes extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'document_type' => 'string',
-        'srm_action' => 'integer',
+        'tender_id' => 'integer',
+        'calendar_date_id' => 'integer',
+        'from_date' => 'datetime',
+        'to_date' => 'datetime',
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'company_id' => 'integer'
@@ -97,10 +116,5 @@ class TenderDocumentTypes extends Model
         
     ];
 
-    public function attachments()
-    {
-        return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
-    }
-
-
+    
 }
