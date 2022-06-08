@@ -3305,6 +3305,49 @@ AND invoiceType = 3
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
+        elseif ($input['matchType'] == 4) {
+            $invoiceMaster = DB::select('SELECT
+	MASTER.PayMasterAutoId as masterAutoID,
+	MASTER.BPVcode as documentCode,
+	MASTER.BPVdate as docDate,
+	MASTER.payAmountSuppTrans as transAmount,
+	MASTER.BPVsupplierID,
+	currency.CurrencyCode,
+	currency.DecimalPlaces,
+	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+	(
+		MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+	) AS BalanceAmt
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.companySystemID,
+		erp_matchdocumentmaster.BPVcode,
+		COALESCE (
+			SUM(
+				erp_matchdocumentmaster.matchingAmount
+			),
+			0
+		) AS SumOfmatchingAmount
+	FROM
+		erp_matchdocumentmaster
+	GROUP BY
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID
+) AS advd ON (
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+)
+WHERE
+	approved = - 1
+AND invoiceType = 5   
+AND advancePaymentTypeID = 1    
+AND matchInvoice <> 2
+AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
+        }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
     }
