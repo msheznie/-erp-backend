@@ -1703,7 +1703,7 @@ class SRMService
 
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
+                'message' => 'Delivery Appointment successfully get',
                 'data' => $result
             ];
 
