@@ -7,6 +7,8 @@ use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
+use App\Models\CalendarDates;
+use App\Models\CalendarDatesDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
@@ -468,6 +470,8 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
@@ -479,6 +483,22 @@ class TenderMasterAPIController extends AppBaseController
             }
         }
         $data['activity'] = $act;
+
+        $qry="SELECT
+	srm_calendar_dates.id as id,
+	srm_calendar_dates.calendar_date as calendar_date,
+	srm_calendar_dates.company_id as company_id,
+	srm_calendar_dates_detail.from_date as from_date,
+	srm_calendar_dates_detail.to_date as to_date
+FROM
+	srm_calendar_dates 
+	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+WHERE
+	srm_calendar_dates.company_id = $companySystemID";
+
+
+        $data['calendarDates'] = DB::select($qry);
+
         return $data;
     }
 
@@ -529,7 +549,6 @@ class TenderMasterAPIController extends AppBaseController
         if (!$resValidate['status']) {
             return $this->sendError($resValidate['message'], 422);
         }
-
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
         $document_sales_start_date = $document_sales_start_date->format('Y-m-d');
 
@@ -631,6 +650,53 @@ class TenderMasterAPIController extends AppBaseController
                 } else {
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
+                if (isset($input['calendarDates'])) {
+                    if (count($input['calendarDates']) > 0) {
+                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        foreach ($input['calendarDates'] as $calDate) {
+                            if (!empty($calDate['from_date'])) {
+                                $frm_date = new Carbon($calDate['from_date']);
+                                $frm_date = $frm_date->format('Y-m-d');
+                            }else{
+                                $frm_date = null;
+                            }
+                            if (!empty($calDate['to_date'])) {
+                                $to_date = new Carbon($calDate['to_date']);
+                                $to_date = $to_date->format('Y-m-d');
+                            }else{
+                                $to_date = null;
+                            }
+                            if(!empty($to_date) && empty($frm_date)){
+                                return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be empty'];
+                            }
+                            if(!empty($frm_date) && empty($to_date)){
+                                return ['success' => false, 'message' => $calDate['calendar_date'].' To cannot be empty'];
+                            }
+
+                            if(!empty($frm_date) && !empty($to_date)){
+                                if($frm_date>$to_date){
+                                    return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be greater than To'];
+                                }
+                            }
+                            if(!empty($to_date) || !empty($frm_date)){
+                                $calDt['tender_id'] = $input['id'];
+                                $calDt['calendar_date_id'] = $calDate['id'];
+                                $calDt['from_date'] = $frm_date;
+                                $calDt['to_date'] = $to_date;
+                                $calDt['company_id'] = $input['company_id'];
+                                $calDt['created_by'] = $employee->employeeSystemID;
+
+                                CalendarDatesDetail::create($calDt);
+                            }
+
+                        }
+                    }else {
+                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    }
+                }else {
+                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                }
+
 
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
@@ -687,7 +753,7 @@ class TenderMasterAPIController extends AppBaseController
                             $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
                             $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
                             if (empty($scheduleDetail)) {
-                                return ['success' => false, 'message' => 'All work schedule should be completed'];
+                                return ['success' => false, 'message' => 'All work schedules should be completed'];
                             }
                             if (empty($mainwork)) {
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
@@ -699,7 +765,7 @@ class TenderMasterAPIController extends AppBaseController
                             if ($vals['tender_bid_format_detail']['boq_applicable'] == 1) {
                                 $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
                                 if (empty($boqItems)) {
-                                    return ['success' => false, 'message' => 'Boq enabled main works should have attest one boq item'];
+                                    return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
                                 }
                             }
                         }
@@ -1257,7 +1323,7 @@ class TenderMasterAPIController extends AppBaseController
             $insertSupplierAssignee = TenderSupplierAssignee::insert($data);
         }
         if ($insertSupplierAssignee) {
-            return $this->sendResponse([], 'New Supplier(s) Added');
+            return $this->sendResponse([], 'New supplier(s) added');
         } else {
             return $this->sendError('Insertion faild', 422);
         }

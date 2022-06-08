@@ -345,7 +345,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $companyId = $input['companySystemId'];
 
         $companyName = "";
-        $company = Company::find($request->input('company_id'));
+        $company = Company::find($companyId);
         if (isset($company->CompanyName)) {
             $companyName =  $company->CompanyName;
         }
@@ -386,7 +386,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $companySystemId = $input['companySystemId'];
         $tenderAssigneeId = $input['tenderAssigneeId'];
         $companyName = "";
-        $company = Company::find($request->input('company_id'));
+        $company = Company::find($companySystemId);
         if (isset($company->CompanyName)) {
             $companyName =  $company->CompanyName;
         }
@@ -433,7 +433,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         ->first();
 
         Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
-        You are invited to participate in new tender, ".$tenderMaster['title'].".
+        You are invited to participate in a new tender, ".$tenderMaster['title'].".
         Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
     }
 }
