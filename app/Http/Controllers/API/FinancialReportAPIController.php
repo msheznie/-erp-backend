@@ -501,24 +501,25 @@ class FinancialReportAPIController extends AppBaseController
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
-	erp_bookinvsuppmaster.employeeID AS employeeID,
-	erp_bookinvsuppmaster.netAmountLocal AS amountLocal,
-	erp_bookinvsuppmaster.netAmountRpt AS amountRpt,
+	expense_employee_allocation.employeeSystemID AS employeeID,
+	expense_employee_allocation.amountLocal AS amountLocal,
+	expense_employee_allocation.amountRpt AS amountRpt,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     currencymaster.DecimalPlaces AS localCurrencyDecimals,
     currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-    1 AS documentType
+    1 AS type
 FROM
 	erp_bookinvsuppmaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+	LEFT JOIN expense_employee_allocation ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = expense_employee_allocation.documentSystemCode
     LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
     LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
 WHERE
-    erp_bookinvsuppmaster.documentType = 4 AND 
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    expense_employee_allocation.documentSystemID = 11 AND
     1 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
     UNION ALL
@@ -527,14 +528,14 @@ WHERE
 	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
 	erp_paysupplierinvoicemaster.BPVNarration AS description,
 	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-    erp_paysupplierinvoicemaster.netAmountLocal AS amountLocal,
-    erp_paysupplierinvoicemaster.netAmountRpt AS amountRpt,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
     srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     currencymaster.DecimalPlaces AS localCurrencyDecimals,
     currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-    2 AS documentType
+    2 AS type
 FROM
 	erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -559,7 +560,7 @@ WHERE
     srp_erp_ioubookingmaster.bookingMasterID AS masterID,
     srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
     srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
-    3 AS documentType
+    3 AS type
 FROM
 	srp_erp_iouvouchers
     LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
@@ -604,12 +605,11 @@ WHERE
 
 
         $refIouAmounts = DB::select("SELECT * FROM (SELECT
-   SUM(srp_erp_ioubookingdetails.companyLocalAmount) as referenceAmountLocal,
-    SUM(srp_erp_ioubookingdetails.companyReportingAmount) as referenceAmountRpt,
+    srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
+    srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
     srp_erp_ioubookingmaster.bookingMasterID AS masterID
 FROM
 	srp_erp_ioubookingmaster 
-    LEFT JOIN srp_erp_ioubookingdetails ON srp_erp_ioubookingmaster.bookingMasterID = srp_erp_ioubookingdetails.bookingMasterID
 WHERE 
 srp_erp_ioubookingmaster.approvedYN = 1
     )As t2");
@@ -617,13 +617,13 @@ srp_erp_ioubookingmaster.approvedYN = 1
         foreach ($data as $da){
             $da->referenceAmount = 0;
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID && ($da->documentType == 1 || $da->documentType == 2)) {
+                if($da->masterID == $amount->masterID && ($da->type == 1 || $da->type == 2)) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
                 }
             }
             foreach ($refIouAmounts as $iouAmount){
-                if($da->masterID == $amount->masterID && $da->documentType == 3) {
+                if($da->masterID == $iouAmount->masterID && $da->type == 3) {
                     $da->referenceAmountLocal = $iouAmount->referenceAmountLocal;
                     $da->referenceAmountRpt = $iouAmount->referenceAmountRpt;
                 }
@@ -633,16 +633,17 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $employees = DB::select('SELECT * FROM (SELECT
 	
-	erp_bookinvsuppmaster.employeeID AS employeeID,
+	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName
 FROM
-	erp_bookinvsuppmaster
-LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+	expense_employee_allocation
+LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
+LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
 WHERE
-  erp_bookinvsuppmaster.documentType = 4 AND 
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    expense_employee_allocation.documentSystemID = 11 AND
     erp_bookinvsuppmaster.approved = -1 AND
-    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    expense_employee_allocation.employeeSystemID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     1 IN (' . join(',', json_decode($typeID)) . ')  
     UNION ALL
     SELECT
@@ -652,7 +653,7 @@ FROM
 	erp_paysupplierinvoicemaster
 LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
 WHERE
-    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
@@ -671,7 +672,7 @@ WHERE
     ) t GROUP BY t.employeeID');
 
 
-        return $this->sendResponse([$data,$employees], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$refIouAmounts], 'Record retrieved successfully');
 
     }
 
