@@ -666,6 +666,18 @@ WHERE
                             }else{
                                 $to_date = null;
                             }
+                            if(!empty($to_date) && empty($frm_date)){
+                                return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be empty'];
+                            }
+                            if(!empty($frm_date) && empty($to_date)){
+                                return ['success' => false, 'message' => $calDate['calendar_date'].' To cannot be empty'];
+                            }
+
+                            if(!empty($frm_date) && !empty($to_date)){
+                                if($frm_date>$to_date){
+                                    return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be greater than To'];
+                                }
+                            }
                             $calDt['tender_id'] = $input['id'];
                             $calDt['calendar_date_id'] = $calDate['id'];
                             $calDt['from_date'] = $frm_date;
