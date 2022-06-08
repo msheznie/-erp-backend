@@ -2657,6 +2657,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
         Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
         Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
+        Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
     });
