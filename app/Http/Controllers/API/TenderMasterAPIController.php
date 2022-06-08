@@ -483,9 +483,6 @@ class TenderMasterAPIController extends AppBaseController
             }
         }
         $data['activity'] = $act;
-        /*$data['calendarDates'] = CalendarDates::with(['calendar_dates_detail' => function($q) use($tenderMasterId){
-                                                    $q->where('tender_id',$tenderMasterId);
-                                                }])->where('company_id', $input['companySystemID'])->get();*/
 
         $qry="SELECT
 	srm_calendar_dates.id as id,
@@ -552,7 +549,6 @@ WHERE
         if (!$resValidate['status']) {
             return $this->sendError($resValidate['message'], 422);
         }
-
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
         $document_sales_start_date = $document_sales_start_date->format('Y-m-d');
 
@@ -654,6 +650,38 @@ WHERE
                 } else {
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
+                if (isset($input['calendarDates'])) {
+                    if (count($input['calendarDates']) > 0) {
+                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        foreach ($input['calendarDates'] as $calDate) {
+                            if (!empty($calDate['from_date'])) {
+                                $frm_date = new Carbon($calDate['from_date']);
+                                $frm_date = $frm_date->format('Y-m-d');
+                            }else{
+                                $frm_date = null;
+                            }
+                            if (!empty($calDate['to_date'])) {
+                                $to_date = new Carbon($calDate['to_date']);
+                                $to_date = $to_date->format('Y-m-d');
+                            }else{
+                                $to_date = null;
+                            }
+                            $calDt['tender_id'] = $input['id'];
+                            $calDt['calendar_date_id'] = $calDate['id'];
+                            $calDt['from_date'] = $frm_date;
+                            $calDt['to_date'] = $to_date;
+                            $calDt['company_id'] = $input['company_id'];
+                            $calDt['created_by'] = $employee->employeeSystemID;
+
+                            CalendarDatesDetail::create($calDt);
+                        }
+                    }else {
+                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    }
+                }else {
+                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                }
+
 
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
@@ -710,7 +738,7 @@ WHERE
                             $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
                             $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
                             if (empty($scheduleDetail)) {
-                                return ['success' => false, 'message' => 'All work schedule should be completed'];
+                                return ['success' => false, 'message' => 'All work schedules should be completed'];
                             }
                             if (empty($mainwork)) {
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
@@ -722,7 +750,7 @@ WHERE
                             if ($vals['tender_bid_format_detail']['boq_applicable'] == 1) {
                                 $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
                                 if (empty($boqItems)) {
-                                    return ['success' => false, 'message' => 'Boq enabled main works should have attest one boq item'];
+                                    return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
                                 }
                             }
                         }
