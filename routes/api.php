@@ -445,7 +445,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
 
-
         Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
         Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
@@ -1800,6 +1799,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
         Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
         Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
+        Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates');
+        Route::resource('calendar_date', 'TenderCalendarDatesController');
 
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
