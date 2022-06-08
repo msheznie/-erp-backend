@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\helper\Helper;
+use App\Http\Controllers\AppBaseController;
+use App\Models\DocumentAttachments;
+use App\Models\TenderDocumentTypes;
+use App\Repositories\TenderDocumentTypesRepository;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+class DocumentAttachmentTypeController extends AppBaseController
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return Response
+     */
+    private $tenderDocumentTypesRepository;
+
+    public function __construct(TenderDocumentTypesRepository $tenderDocumentTypesRepo)
+    {
+        $this->tenderDocumentTypesRepository = $tenderDocumentTypesRepo;
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        //
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     * @throws \Prettus\Validator\Exceptions\ValidatorException
+     */
+    public function store(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $companySystemID = $request->input('companySystemID');
+        $validator = \Validator::make($input, [
+            'srm_action' => 'required|numeric|min:0',
+            'document_type' => 'required'
+        ]);
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $attachmentTypeExist = TenderDocumentTypes::select('id', 'document_type')
+                ->where('document_type', '=', $input['document_type'])->first();
+
+        if (!empty($attachmentTypeExist)) {
+            return $this->sendError('Attachment Type ' . $input['document_type'] . ' already exists');
+        }
+
+        $input['created_by'] = Helper::getEmployeeSystemID();
+        $input['company_id'] = $companySystemID;
+        $attachmentType = $this->tenderDocumentTypesRepository->create($input);
+        return $this->sendResponse($attachmentType->toArray(), 'Attachment Type saved successfully');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $attachmentType = TenderDocumentTypes::find($id);
+
+        if (empty($attachmentType)) {
+            return $this->sendError('Attachment Type not found');
+        }
+
+        return $this->sendResponse($attachmentType->toArray(), 'Attachment Type retrieved successfully');
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        $input = $request->all();
+        $attachmentType = TenderDocumentTypes::find($id);
+
+        if (empty($attachmentType)) {
+            return $this->sendError('Attachment Type not found');
+        }
+
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'srm_action' => 'required|numeric|min:0',
+            'document_type' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $attachmentTypeExist = TenderDocumentTypes::select('id', 'document_type')
+            ->where('document_type', '=', $input['document_type'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if (!empty($attachmentTypeExist)) {
+            return $this->sendError('Attachment Type ' . $input['document_type'] . ' already exists');
+        }
+
+        $input['updated_by'] = Helper::getEmployeeSystemID();
+
+        $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
+
+        return $this->sendResponse($attachmentType, 'Attachment Type updated successfully');
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        //
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function removeDocumentAttachmentType(Request $request)
+    {
+        $attachmentType = TenderDocumentTypes::find($request[0]);
+
+        if (empty($attachmentType)) {
+            return $this->sendError('Attachment Type not found');
+        }
+
+        $attachmentType->delete();
+
+        return $this->sendResponse($request[0], 'Attachment Type deleted successfully');
+    }
+
+    public function getAllDocumentAttachmentTypes(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $attachmentTypes = TenderDocumentTypes::with(['attachments'])->orderBy('id', 'asc');
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $attachmentTypes = $attachmentTypes->where(function ($query) use ($search) {
+                $query->where('document_type', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($attachmentTypes)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addIndexColumn()
+            ->make(true);
+    }
+}

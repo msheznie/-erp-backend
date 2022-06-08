@@ -14,6 +14,10 @@
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
+    Route::group(['middleware' => ['pos_api']], function (){
+        Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
+    });
+
     Route::group(['middleware' => 'auth:api'], function () {
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
@@ -1793,6 +1797,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
         Route::resource('procurement_categories', 'TenderProcurementCategoryController');
+        Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
+        Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
+        Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
 
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
@@ -2841,6 +2848,7 @@ Route::group(['prefix' => 'external'], function (){
 /*
  * End external related routes
  */
+
 
 
 Route::get('cache-clear', function () {

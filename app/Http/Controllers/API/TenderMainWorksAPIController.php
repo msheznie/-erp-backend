@@ -354,7 +354,7 @@ class TenderMainWorksAPIController extends AppBaseController
     public function downloadMainWorksUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID']);
         if ($exists = Storage::disk($disk)->exists('main_works_item_upload_template/main_works_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('main_works_item_upload_template/main_works_item_upload_template.xlsx', 'main_works_item_upload_template.xlsx');
         } else {
