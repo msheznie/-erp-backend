@@ -2576,9 +2576,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
 
 
-        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-
 
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2827,8 +2824,7 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
 
 
 
@@ -2874,6 +2870,7 @@ Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
+/* end of separated from tenant, auth middlewares */
 
 Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
 
