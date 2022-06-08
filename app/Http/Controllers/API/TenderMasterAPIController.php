@@ -7,6 +7,8 @@ use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
+use App\Models\CalendarDates;
+use App\Models\CalendarDatesDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
@@ -468,6 +470,8 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterData(Request $request)
     {
         $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
@@ -479,6 +483,25 @@ class TenderMasterAPIController extends AppBaseController
             }
         }
         $data['activity'] = $act;
+        /*$data['calendarDates'] = CalendarDates::with(['calendar_dates_detail' => function($q) use($tenderMasterId){
+                                                    $q->where('tender_id',$tenderMasterId);
+                                                }])->where('company_id', $input['companySystemID'])->get();*/
+
+        $qry="SELECT
+	srm_calendar_dates.id as id,
+	srm_calendar_dates.calendar_date as calendar_date,
+	srm_calendar_dates.company_id as company_id,
+	srm_calendar_dates_detail.from_date as from_date,
+	srm_calendar_dates_detail.to_date as to_date
+FROM
+	srm_calendar_dates 
+	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+WHERE
+	srm_calendar_dates.company_id = $companySystemID";
+
+
+        $data['calendarDates'] = DB::select($qry);
+
         return $data;
     }
 

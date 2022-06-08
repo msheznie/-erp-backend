@@ -2923,3 +2923,8 @@ Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreCon
 
 Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
 Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
+
+
+Route::resource('calendar_dates', 'CalendarDatesAPIController');
+
+Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
