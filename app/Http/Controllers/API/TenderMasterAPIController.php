@@ -738,7 +738,7 @@ WHERE
                             $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
                             $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
                             if (empty($scheduleDetail)) {
-                                return ['success' => false, 'message' => 'All work schedule should be completed'];
+                                return ['success' => false, 'message' => 'All work schedules should be completed'];
                             }
                             if (empty($mainwork)) {
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
@@ -750,7 +750,7 @@ WHERE
                             if ($vals['tender_bid_format_detail']['boq_applicable'] == 1) {
                                 $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
                                 if (empty($boqItems)) {
-                                    return ['success' => false, 'message' => 'Boq enabled main works should have attest one boq item'];
+                                    return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
                                 }
                             }
                         }
