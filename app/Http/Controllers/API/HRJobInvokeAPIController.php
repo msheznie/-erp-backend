@@ -19,10 +19,27 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
-use Exception;
+
 
 class HRJobInvokeAPIController extends AppBaseController
 {
+    public function attendanceClockIn(Request $request)
+    {        
+        
+        $tenantId = $request->input('tenantId'); 
+        $companyId = $request->input('companyId'); 
+        $pullingDate = $request->input('attendanceDate');
+        $isClockOutPulling = false;
+        
+        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
+            //->delay(now()->addSeconds(10));
+
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
+        ];
+
+        return $this->sendResponse($data, 'clock in pulling job added to queue');
+    }
 
     function attendance_notification_debug(Request $request){
         $data = [];
@@ -77,24 +94,6 @@ class HRJobInvokeAPIController extends AppBaseController
         }
 
         CommonJobService::db_switch($db);
-    }
-  
-    public function attendanceClockIn(Request $request)
-    {
-        
-        $tenantId = $request->input('tenantId'); 
-        $companyId = $request->input('companyId'); 
-        $pullingDate = $request->input('attendanceDate');
-        $isClockOutPulling = false;
-        
-        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
-            //->delay(now()->addSeconds(10));
-
-        $data = [
-            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
-        ];
-
-        return $this->sendResponse($data, 'clock in pulling job added to queue');
     }
 
     function test2(Request $request){
