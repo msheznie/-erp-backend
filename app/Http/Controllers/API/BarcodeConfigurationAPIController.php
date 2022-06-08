@@ -418,7 +418,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $pageWidth = 50;
             if($type == 1)
             {
-                $assets = FixedAssetMaster::pluck('faCode');
+                $assets = FixedAssetMaster::orderBy('faID', 'desc')->pluck('faCode');
             }
             else
             {   
@@ -477,7 +477,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 }
         
                
-                $assets = $assetCositng->pluck('faCode');
+                $assets = $assetCositng->orderBy('faID', 'desc')->pluck('faCode');
     
             }
        
