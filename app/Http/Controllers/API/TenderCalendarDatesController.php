@@ -67,8 +67,8 @@ class TenderCalendarDatesController extends AppBaseController
 
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
-        $attachmentType = $this->calendarDatesRepository->create($input);
-        return $this->sendResponse($attachmentType->toArray(), 'Calendar date saved successfully');
+        $calendarDate = $this->calendarDatesRepository->create($input);
+        return $this->sendResponse($calendarDate->toArray(), 'Calendar date saved successfully');
     }
 
     /**
@@ -79,13 +79,13 @@ class TenderCalendarDatesController extends AppBaseController
      */
     public function show($id)
     {
-        $calendarDates = CalendarDates::find($id);
+        $calendarDate = CalendarDates::find($id);
 
-        if (empty($calendarDates)) {
-            return $this->sendError('Calendar Date not found');
+        if (empty($calendarDate)) {
+            return $this->sendError('Calendar date not found');
         }
 
-        return $this->sendResponse($calendarDates->toArray(), 'Calendar date retrieved successfully');
+        return $this->sendResponse($calendarDate->toArray(), 'Calendar date retrieved successfully');
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderCalendarDatesController extends AppBaseController
         $calendarDate = CalendarDates::find($id);
 
         if (empty($calendarDate)) {
-            return $this->sendError('Calendar Date not found');
+            return $this->sendError('Calendar date not found');
         }
 
         $input = $this->convertArrayToValue($input);
@@ -130,7 +130,7 @@ class TenderCalendarDatesController extends AppBaseController
             ->first();
 
         if (!empty($calendarDateExist)) {
-            return $this->sendError('Calendar Date ' . $input['calendar_date'] . ' already exists');
+            return $this->sendError('Calendar date ' . $input['calendar_date'] . ' already exists');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -148,13 +148,13 @@ class TenderCalendarDatesController extends AppBaseController
      */
     public function destroy($id)
     {
-        $tenderProcurementCategory = CalendarDates::find($id);
+        $calendarDate = CalendarDates::find($id);
 
-        if (empty($tenderProcurementCategory)) {
-            return $this->sendError('Calendar Date not found');
+        if (empty($calendarDate)) {
+            return $this->sendError('Calendar date not found');
         }
 
-        $tenderProcurementCategory->delete();
+        $calendarDate->delete();
 
         return $this->sendResponse($id, 'Calendar date deleted successfully');
     }
@@ -163,12 +163,11 @@ class TenderCalendarDatesController extends AppBaseController
     {
         $input = $request->all();
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
             $sort = 'desc';
+        } else {
+            $sort = 'asc';
         }
-        // $attachmentTypes = CalendarDates::with(['attachments'])->orderBy('id', 'asc');
-        $calendarDates = CalendarDates::orderBy('id', 'asc');
+        $calendarDates = CalendarDates::with(['calendar_dates_detail'])->orderBy('id', $sort);
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
