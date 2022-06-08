@@ -53,6 +53,8 @@ ini_set('max_execution_time', 500);
 class FinancialReportAPIController extends AppBaseController
 {
     protected $globalFormula; //keep whole formula ro replace
+    protected $subsidiaryComanies = []; //keep whole formula ro replace
+    protected $accJvCompanies = []; //keep whole formula ro replace
 
     public function getFRFilterData(Request $request)
     {
@@ -101,9 +103,13 @@ class FinancialReportAPIController extends AppBaseController
         }
         $financePeriod = $financePeriod->groupBy('dateFrom')->get();
 
-        if ($forConsolidation && $isGroup) {
-            
-        }
+        $groupCompanies = Company::where(function($query) use ($selectedCompanyId){
+                                        $query->where('masterCompanySystemIDReorting', $selectedCompanyId)
+                                              ->orWhere('companySystemID', $selectedCompanyId);
+                                    })
+                                    ->whereHas('subsidiary_companies')
+                                    ->get();
+
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
@@ -112,6 +118,7 @@ class FinancialReportAPIController extends AppBaseController
             'contracts' => $contracts,
             'accountType' => $accountType,
             'templateType' => $templateType,
+            'groupCompanies' => $groupCompanies,
             'segment' => $departments,
             'company' => $company,
             'financePeriod' => $financePeriod,
@@ -120,6 +127,63 @@ class FinancialReportAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getSubsidiaryCompanies(Request $request)
+    {
+        $input = $request->all();
+
+        $companies = Company::where('companySystemID', $input['companySystemID'])->with(['subsidiary_companies'])->first();
+
+        if ($companies && count($companies->subsidiary_companies) > 0) {
+            $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
+        }
+
+        $companiesData = Company::whereIn('companySystemID', $this->subsidiaryComanies)->get();
+        return $this->sendResponse($companiesData, "companies retrived successfully");        
+    }
+
+    public function getSubSubsidiaryCompanies($subsidiary_companies)
+    {
+        foreach ($subsidiary_companies as $key => $value) {
+            $this->subsidiaryComanies[] = $value->companySystemID;
+
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['subsidiary_companies'])->whereHas('subsidiary_companies')->first();
+
+            if ($companies && count($companies->subsidiary_companies) > 0) {
+                $this->getSubSubsidiaryCompanies($companies->subsidiary_companies);
+            } 
+        }
+    }
+
+    public function getAssociateJvCompanies($groupCompanySystemID)
+    {
+        $input = count($groupCompanySystemID) > 0 ? $groupCompanySystemID[0] : [];
+        $companiesData = [];
+        if (isset($input['companySystemID'])) {
+            $companies = Company::where('companySystemID', $input['companySystemID'])->with(['accosiate_jv_companies'])->first();
+
+            if ($companies && count($companies->accosiate_jv_companies) > 0) {
+                $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            }
+
+            $companiesData = Company::whereIn('companySystemID', $this->accJvCompanies)->get();
+        }
+
+        return $companiesData;        
+    }
+
+    public function getSubAssociateJvCompanies($accosiate_jv_companies)
+    {
+        foreach ($accosiate_jv_companies as $key => $value) {
+            $this->accJvCompanies[] = $value->companySystemID;
+
+            $companies = Company::where('companySystemID', $value->companySystemID)->with(['accosiate_jv_companies'])->whereHas('accosiate_jv_companies')->first();
+
+            if ($companies && count($companies->accosiate_jv_companies) > 0) {
+                $this->getSubAssociateJvCompanies($companies->accosiate_jv_companies);
+            } 
+        }
     }
 
     public function getAFRFilterChartOfAccounts(Request $request)
@@ -1076,6 +1140,30 @@ class FinancialReportAPIController extends AppBaseController
                 if ($request->type == 2) {
                     $reportData = $response['reportData'];
 
+
+                    //company wise cyttd
+                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
+                    $companyWiseNetProfiData = collect($companyWiseDataArray['reportData'])->where('netProfitStatus', 1)->first();
+
+                    $netProfitColumnData = $companyWiseNetProfiData['columnData'];
+
+                    $shareHolderCYTDAmount = 0;
+                    $NCICYTDAmount = 0;
+
+                    foreach ($netProfitColumnData as $key => $value) {
+                        $company = Company::where('CompanyID', $key)->first();
+                        $CYTTDAmount = isset($value[$companyWiseDataArray['CYYTDColumnKey']]) ? $value[$companyWiseDataArray['CYYTDColumnKey']] : 0;
+
+                        if ($company) {
+                            $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
+                            $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
+                        }
+                    }
+
+                    if (isset($request->groupCompanySystemID)) {
+                        $request->companySystemID = $this->getAssociateJvCompanies($request->groupCompanySystemID);
+                    }
+
                     $shareOfAccosicateDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
                 
                     $shareOfAccosicateData = collect($shareOfAccosicateDataArray['reportData'])->where('netProfitStatus', 1)->first();
@@ -1090,26 +1178,6 @@ class FinancialReportAPIController extends AppBaseController
 
                         if ($company) {
                             $shareOfAccosicateAmount += $CYTTDAmount * ($company->holding_percentage / 100);
-                        }
-                    }
-
-
-                    //company wise cyttd
-                    $companyWiseDataArray = $this->generateCustomizedFRReport($request, $showZeroGL, $consolidationStatus, true);
-                    $companyWiseNetProfiData = collect($companyWiseDataArray['reportData'])->where('netProfitStatus', 1)->first();
-
-                    $netProfitColumnData = $companyWiseNetProfiData['columnData'];
-
-                    $shareHolderCYTDAmount = 0;
-                    $NCICYTDAmount = 0;
-
-                    foreach ($netProfitColumnData as $key => $value) {
-                        $company = Company::where('CompanyID', $key)->first();
-                        $CYTTDAmount = isset($value[$shareOfAccosicateDataArray['CYYTDColumnKey']]) ? $value[$shareOfAccosicateDataArray['CYYTDColumnKey']] : 0;
-
-                        if ($company) {
-                            $shareHolderCYTDAmount += $CYTTDAmount * ($company->holding_percentage / 100);
-                            $NCICYTDAmount += $CYTTDAmount * (1 - ($company->holding_percentage / 100));
                         }
                     }
 

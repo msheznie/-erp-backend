@@ -188,6 +188,8 @@ class Company extends Model
         'qhseApiKey',
         'taxCardNo',
         'timeStamp',
+        'group_two',
+        'group_type',
         'helpDeskApiKey'
     ];
 
@@ -265,6 +267,8 @@ class Company extends Model
         'itemCodeMustInPR' => 'integer',
         'op_OnOpenPopUpYN' => 'integer',
         'showInNewRILRQHSE' => 'integer',
+        'group_two' => 'integer',
+        'group_type' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
@@ -375,5 +379,15 @@ class Company extends Model
     public function customerCategoryAssigned()
     {
         return $this->hasMany('App\Models\CustomerMasterCategoryAssigned', 'companySystemID','companySystemID');
+    }
+
+    public function subsidiary_companies()
+    {
+        return $this->hasMany('App\Models\Company', 'group_two','companySystemID')->where('group_type', 1);
+    }
+
+    public function accosiate_jv_companies()
+    {
+        return $this->hasMany('App\Models\Company', 'group_two','companySystemID')->whereIn('group_type', [2,3]);
     }
 }
