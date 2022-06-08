@@ -1308,7 +1308,7 @@ WHERE
             $insertSupplierAssignee = TenderSupplierAssignee::insert($data);
         }
         if ($insertSupplierAssignee) {
-            return $this->sendResponse([], 'New Supplier(s) Added');
+            return $this->sendResponse([], 'New supplier(s) added');
         } else {
             return $this->sendError('Insertion faild', 422);
         }
