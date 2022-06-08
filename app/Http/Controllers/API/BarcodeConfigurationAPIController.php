@@ -653,4 +653,22 @@ class BarcodeConfigurationAPIController extends AppBaseController
       
 
     }
+
+    public function checkConfigurationExit(Request $request)
+    {
+        $input = $request->all();
+        $com_id = $input['companyId'];
+        $configuration = BarcodeConfiguration::where('companySystemID',$com_id)->first();
+        if(isset($configuration))
+        {
+
+        return $this->sendResponse(true, 'Record retrieved successfully');
+        }
+        else
+        {
+            return $this->sendError('Barcode Configuration not found');
+        }
+
+       
+    }
 }
