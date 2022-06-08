@@ -706,6 +706,8 @@ class GRVDetailsAPIController extends AppBaseController
         $input = $request->all();
         $GRVDetail_arr = array();
 
+    
+
         $grvAutoID = $input['grvAutoID'];
 
         $id = Auth::id();
@@ -852,8 +854,23 @@ class GRVDetailsAPIController extends AppBaseController
                             $warehouseItem = $warehouseItemTemp;
                         }
                     }
+                    $financeCategorySub = FinanceItemCategorySub::find($new['itemFinanceCategorySubID']);
+                    if(isset($financeCategorySub))
+                    {
+                        $financeGLcodePL = $financeCategorySub->financeGLcodePL;
+                        $financeGLcodePLSystemID = $financeCategorySub->financeGLcodePLSystemID;
+                        $financeGLcodebBS = $financeCategorySub->financeGLcodebBS;
+                        $financeGLcodebBSSystemID = $financeCategorySub->financeGLcodebBSSystemID;
+                    }
+                    else
+                    {
+                        $financeGLcodePL = null;
+                        $financeGLcodePLSystemID = null;
+                        $financeGLcodebBS = null;
+                        $financeGLcodebBSSystemID = null;
+                    }
 
-
+                  
                     // checking the qty request is matching with sum total
                     if ($new['poQty'] >= $new['noQty']) {
                         $GRVDetail_arr['grvAutoID'] = $grvAutoID;
@@ -866,20 +883,28 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                         $GRVDetail_arr['itemDescription'] = $new['itemDescription'];
                         if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
-                            $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                            $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                            $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
-                            $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
-                        } else if ( ($new['itemFinanceCategoryID'] == 2 || $new['itemFinanceCategoryID'] == 4) && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
-                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
-                            $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
-                            $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                            $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                        } else {
-                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
-                            $GRVDetail_arr['financeGLcodebBS'] = $new['financeGLcodebBS'];
-                            $GRVDetail_arr['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
-                            $GRVDetail_arr['financeGLcodePL'] = $new['financeGLcodePL'];
+
+                            if($financeCategorySub->includePLForGRVYN == -1)
+                            {
+                                $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
+                                $GRVDetail_arr['financeGLcodebBS'] = null;
+                                $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                                $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                            }
+                            else
+                            {
+                                $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                                $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                                $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
+                            }
+
+                        
+                        }  else {
+                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
+                            $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
+                            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                            $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
                         }
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                         $GRVDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
@@ -1095,7 +1120,7 @@ class GRVDetailsAPIController extends AppBaseController
         else {
             return $this->sendError('Please select a warehouse.', 500);
         }
-
+        
         DB::beginTransaction();
         try {
             $itemAssign = ItemAssigned::with(['item_master'])->find($input['itemCode']);
@@ -1126,7 +1151,7 @@ class GRVDetailsAPIController extends AppBaseController
             }
             
             $user = \Helper::getEmployeeInfo();
-
+            
             $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
                 ->where('companySystemID', $companySystemID)
                 ->first();
@@ -1153,7 +1178,7 @@ class GRVDetailsAPIController extends AppBaseController
                 $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
             $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
-    
+            
             // checking the qty request is matching with sum total
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
             $GRVDetail_arr['companySystemID'] = $grvMaster->companySystemID;
@@ -1175,13 +1200,25 @@ class GRVDetailsAPIController extends AppBaseController
 
             //return WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation);
 
-        
+           
             if ($itemAssign->financeCategoryMaster == 1 && WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation)) // check inventory and manufacturing
             {
-                $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
-                $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
-                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
-                $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+                if($financeCategorySub->includePLForGRVYN == -1)
+                {
+                    $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
+                    $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
+                    $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
+                    $GRVDetail_arr['financeGLcodebBS'] = null;
+                }
+                else
+                {
+                    $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
+                    $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
+                    $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+                    $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+                }
+                
+    
             } else {
           
                 $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;

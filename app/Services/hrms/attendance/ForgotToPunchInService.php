@@ -131,6 +131,7 @@ class ForgotToPunchInService{
             ->where('shiftID', $shiftId) 
             ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
             ->where('companyID', $this->companyId)
+            ->where('isActive', 1)
             ->get();
 
         if($empArr->count() == 0){

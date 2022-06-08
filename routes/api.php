@@ -14,6 +14,10 @@
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
+    Route::group(['middleware' => ['pos_api']], function (){
+        Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
+    });
+
     Route::group(['middleware' => 'auth:api'], function () {
 
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
@@ -440,7 +444,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
-
 
         Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
         Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
@@ -1793,6 +1796,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
         Route::resource('procurement_categories', 'TenderProcurementCategoryController');
+        Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
+        Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
+        Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
+        Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates');
+        Route::resource('calendar_date', 'TenderCalendarDatesController');
 
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
@@ -2596,9 +2604,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
 
 
-        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-
 
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2654,6 +2659,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
         Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
 
+        Route::post('getSupplierList', 'TenderMasterAPIController@getSupplierList');
+        Route::post('saveSupplierAssigned', 'TenderMasterAPIController@saveSupplierAssigned');
+        Route::post('getSupplierAssignedList', 'TenderMasterAPIController@getSupplierAssignedList');
+        Route::post('deleteSupplierAssign', 'TenderSupplierAssigneeAPIController@deleteSupplierAssign');
+        Route::post('supplierAssignCRUD', 'TenderSupplierAssigneeAPIController@supplierAssignCRUD');
+        Route::post('sendSupplierInvitation', 'TenderSupplierAssigneeAPIController@sendSupplierInvitation');
+        Route::post('reSendInvitaitonLink', 'TenderSupplierAssigneeAPIController@reSendInvitaitonLink');
         Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
         Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
         Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
@@ -2838,6 +2850,7 @@ Route::group(['prefix' => 'external'], function (){
  */
 
 
+
 Route::get('cache-clear', function () {
     Artisan::call('cache:clear');
     Artisan::call('config:clear');
@@ -2855,8 +2868,7 @@ Route::get('runCronJob/{cron}', function ($cron) {
     return 'CRON Job run successfully';
 });
 
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+
 
 
 
@@ -2902,6 +2914,7 @@ Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
+/* end of separated from tenant, auth middlewares */
 
 Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
 
@@ -2916,4 +2929,10 @@ Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreCon
 
 
 
+Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
 Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
+
+
+Route::resource('calendar_dates', 'CalendarDatesAPIController');
+
+Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');

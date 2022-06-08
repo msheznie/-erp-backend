@@ -251,7 +251,7 @@ class SRMService
                     $data_details['qty'] = $val['qty'];
                     $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
                     $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
-                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? (new Carbon($val['expiry_date']))->format('Y-m-d') : null;
                     $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
                     $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
                     $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
@@ -1703,7 +1703,7 @@ class SRMService
 
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
+                'message' => 'Delivery Appointment successfully get',
                 'data' => $result
             ];
 

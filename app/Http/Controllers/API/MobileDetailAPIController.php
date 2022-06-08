@@ -327,7 +327,7 @@ class MobileDetailAPIController extends AppBaseController
     public function downloadDetailTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'local_public') : 'local_public';v
+        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'local_public') : 'local_public';
         if (Storage::disk($disk)->exists('mobile_bill_templates/detail_template.xlsx')) {
             return Storage::disk($disk)->download('mobile_bill_templates/detail_template.xlsx', 'detail_template.xlsx');
         } else {

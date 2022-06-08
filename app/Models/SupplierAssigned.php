@@ -13,7 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Awobaz\Compoships\Compoships;
 /**
  * Class SupplierAssigned
  * @package App\Models
@@ -58,7 +58,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class SupplierAssigned extends Model
 {
     //use SoftDeletes;
-
+    use Compoships;
     public $table = 'supplierassigned';
     
     const CREATED_AT = 'timestamp';
@@ -230,5 +230,9 @@ class SupplierAssigned extends Model
     public function master()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierCodeSytem','supplierCodeSystem');
+    }
+    public function tenderSupplierAssigned(){ 
+        return $this->hasOne('App\Models\TenderSupplierAssignee', 'supplier_assigned_id','supplierAssignedID');
+        
     }
 }
