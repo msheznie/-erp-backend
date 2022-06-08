@@ -640,6 +640,13 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
+        'rcmActivated',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
         'bankAccountBalance',
         'payment_mode'
     ];
@@ -919,5 +926,40 @@ class PaySupplierInvoiceMaster extends Model
 
     public function company_to(){
         return $this->belongsTo('App\Models\Company','interCompanyToSystemID','companySystemID');
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_paysupplierinvoicemaster.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeSupplierJoin($q,$as = 'supplier', $column = 'BPVsupplierID' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_paysupplierinvoicemaster.'.$column)
+        ->addSelect($as.".supplierName as ".$columnAs);
+    }
+
+        public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_paysupplierinvoicemaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_paysupplierinvoicedetail','erp_paysupplierinvoicedetail.PayMasterAutoId','erp_paysupplierinvoicemaster.PayMasterAutoId');
+    }
+
+    public function scopeBankJoin($q,$as = 'erp_bankmaster', $column = 'BPVbank' , $columnAs = 'bankName')
+    {
+        return $q->leftJoin('erp_bankmaster as '.$as,$as.'.bankmasterAutoID','erp_paysupplierinvoicemaster.'.$column)
+        ->addSelect($as.".bankName as ".$columnAs);
     }
 }

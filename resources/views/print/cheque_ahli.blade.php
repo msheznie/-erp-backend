@@ -26,8 +26,8 @@
 
         #bpv_code_div {
             position: absolute;
-            top: 5.5cm;
-            left: 22.5cm;
+            top: 4.9cm;
+            left: 20.1cm;
         }
 
         #top_supplier_div {
@@ -109,6 +109,10 @@
     <div style="font-size: 16px !important;" class="header-part" id="top_supplier_div">
         {{$entity->nameOnCheque}}
     </div>
+    <div style="font-size: 16px !important;" class="header-part" id="bpv_code_div">
+        {{$entity->BPVcode}}
+    </div>
+    
     <div style="font-size: 16px !important;" class="header-part" id="top_date_div">
             {{ \App\helper\Helper::dateFormat($date)}}
     </div>

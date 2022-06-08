@@ -1,0 +1,1 @@
+<img src="data:image/png;base64,{{DNS1D::getBarcodePNG('77777', 'C39+',3,50)}}" alt="barcode" /><br><br>

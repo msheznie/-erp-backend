@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SupplierGroup;
+use App\Models\SupplierMaster;
 
 class SupplierCategoryConfigurationController extends AppBaseController
 {
@@ -145,6 +146,18 @@ class SupplierCategoryConfigurationController extends AppBaseController
 
     public function deleteCategory(Request $request) {
         $input = $request->all();
+
+        $id = $input['id'];
+
+        $is_exit = SupplierMaster::where('supplier_category_id',$id)->first();
+
+        if(isset($is_exit))
+        {
+            return $this->sendError("Cannot delete,this category already assigned to one of the supplier");
+        }
+      
+
+
         $user = User::with(['employee'])->where('id', Auth::user()->id)->first();
         $data = SupplierCategory::find($input['id']);
         if($data) {

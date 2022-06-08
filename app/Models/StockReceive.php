@@ -398,4 +398,33 @@ class StockReceive extends Model
         return $this->belongsTo('App\Models\Company','companyToSystemID','companySystemID');
     }
 
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_stockreceivedetails','erp_stockreceivedetails.stockReceiveAutoID','erp_stockreceive.stockReceiveAutoID');
+    }
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_stockreceive.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_stockreceive.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_stockreceive.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
+    
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_stockreceive.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
 }

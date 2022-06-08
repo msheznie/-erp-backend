@@ -237,6 +237,20 @@ class AssetRequest extends Model
         return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'approved_by_emp_id');
     }
 
-
     
+    public function scopeEmployeeJoin($q,$as = 'srp_employeesdetails' ,$column = 'confirmed_by_emp_id',$columnAs = 'Ename2'){
+        $q->leftJoin('srp_employeesdetails as '. $as, $as.'.EIdNo', '=', 'erp_fa_fa_asset_transfer.'.$column)
+            ->addSelect($as.".Ename2 as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_fa_fa_asset_request_details','erp_fa_fa_asset_request_details.erp_fa_fa_asset_request_id','erp_fa_fa_asset_request.id');
+    }
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_fa_asset_transfer.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
 }
