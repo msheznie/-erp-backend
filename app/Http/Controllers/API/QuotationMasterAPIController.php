@@ -1982,7 +1982,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function downloadQuotationItemUploadTemplate(Request $request) {
         $input = $request->all();
-        $disk = Helper::policyWiseDisk($input['companySystemID']);
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
             return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
         } else {
