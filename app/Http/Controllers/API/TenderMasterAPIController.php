@@ -678,14 +678,17 @@ WHERE
                                     return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be greater than To'];
                                 }
                             }
-                            $calDt['tender_id'] = $input['id'];
-                            $calDt['calendar_date_id'] = $calDate['id'];
-                            $calDt['from_date'] = $frm_date;
-                            $calDt['to_date'] = $to_date;
-                            $calDt['company_id'] = $input['company_id'];
-                            $calDt['created_by'] = $employee->employeeSystemID;
+                            if(!empty($to_date) || !empty($frm_date)){
+                                $calDt['tender_id'] = $input['id'];
+                                $calDt['calendar_date_id'] = $calDate['id'];
+                                $calDt['from_date'] = $frm_date;
+                                $calDt['to_date'] = $to_date;
+                                $calDt['company_id'] = $input['company_id'];
+                                $calDt['created_by'] = $employee->employeeSystemID;
 
-                            CalendarDatesDetail::create($calDt);
+                                CalendarDatesDetail::create($calDt);
+                            }
+
                         }
                     }else {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
