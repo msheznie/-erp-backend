@@ -574,23 +574,27 @@ WHERE
 
         $refAmounts = DB::select("SELECT * FROM (SELECT
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-    SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
-    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt
+    srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
+    srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
+    srp_erp_payrolldetail.empID as employeeID
 FROM
-	erp_bookinvsuppmaster
-    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+	expense_employee_allocation
+    LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
+    LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+	    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
     LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
     LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
     LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
 WHERE
-    erp_bookinvsuppmaster.documentType = 4 AND
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 AND
+    expense_employee_allocation.documentSystemID = 11
     UNION ALL
     SELECT
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
-    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt
+    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt,
+    0 as employeeID
 FROM
 	erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -617,7 +621,11 @@ srp_erp_ioubookingmaster.approvedYN = 1
         foreach ($data as $da){
             $da->referenceAmount = 0;
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID && ($da->type == 1 || $da->type == 2)) {
+                if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                }
+                if($da->masterID == $amount->masterID && $da->type == 2) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
                 }
@@ -672,7 +680,7 @@ WHERE
     ) t GROUP BY t.employeeID');
 
 
-        return $this->sendResponse([$data,$employees,$refIouAmounts], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$refAmounts], 'Record retrieved successfully');
 
     }
 
