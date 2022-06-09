@@ -1403,24 +1403,17 @@ WHERE
                                     $data[$x]['doc_no'] = $val->documentCode;
                                     $data[$x]['data'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['doc_narration'] = $val->documentNarration;
+                                    $data[$x]['documentSystemCode'] = $val->documentSystemCode;
+                                    $data[$x]['documentSystemID'] = $val->documentSystemID;
+                                    $data[$x]['documentCode'] = $val->documentCode;
                                     $data[$x]['severice_line'] = $val->serviceLineCode;
                                     $data[$x]['contract'] = $val->clientContractID;
-
-                                    if (in_array('confi_name', $extraColumns)) {
                                         $data[$x]['confirmed_by'] = $val->confirmedBy;
-                                    }
-
-                                    if (in_array('confi_date', $extraColumns)) {
                                         $data[$x]['confirmed_date'] = \Helper::dateFormat($val->documentConfirmedDate);
-                                    }
-
-                                    if (in_array('app_name', $extraColumns)) {
                                         $data[$x]['approved_by'] = $val->approvedBy;
-                                    }
-
-                                    if (in_array('app_date', $extraColumns)) {
                                         $data[$x]['approved_date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
-                                    }
+
+
                                     $data[$x]['Supplier/Customer'] = $val->isCustomer;
                                     if ($checkIsGroup->isGroup == 0) {
                                         $data[$x]['debit_local'] = round($val->localDebit, $decimalPlaceLocal);
