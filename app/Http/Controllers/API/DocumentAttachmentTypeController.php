@@ -9,6 +9,7 @@ use App\Models\TenderDocumentTypes;
 use App\Repositories\TenderDocumentTypesRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class DocumentAttachmentTypeController extends AppBaseController
 {
@@ -184,7 +185,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $attachmentTypes = TenderDocumentTypes::with(['attachments'])->orderBy('id', 'asc');
+        $attachmentTypes = TenderDocumentTypes::with(['attachments' => function ($q) use($input){
+            $q->where('documentSystemID', 108);
+            $q->where('companySystemID', $input['companyId']);
+        }])->orderBy('id', 'asc');
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
