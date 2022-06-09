@@ -499,6 +499,8 @@ WHERE
 
         $data['calendarDates'] = DB::select($qry);
 
+        $data['test'] = $this->getData();
+
         return $data;
     }
 
@@ -1362,5 +1364,40 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+    public function getData(){ 
+        $data = [];
+        $tenderMaster = TenderMaster::select('document_sales_start_date','document_sales_end_date','pre_bid_clarification_start_date',
+        'pre_bid_clarification_end_date','site_visit_date','site_visit_end_date','bid_submission_opening_date','bid_submission_closing_date')
+        ->where('id',12)
+        ->first(); 
+        if(!empty($tenderMaster)){ 
+            $data = array(
+                [
+                    'calendar_date' => 'Document Sale',
+                    'from_date' => Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d'),
+                    'to_date'=>Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d')
+                ],
+                [
+                    'calendar_date' => 'Pre-bid Clarification',
+                    'from_date' => Carbon::parse($tenderMaster['pre_bid_clarification_start_date'])->format('Y-m-d'),
+                    'to_date'=>Carbon::parse($tenderMaster['pre_bid_clarification_end_date'])->format('Y-m-d')
+                ],
+                [
+                    'calendar_date' => 'Site Visit',
+                    'from_date' => Carbon::parse($tenderMaster['site_visit_date'])->format('Y-m-d'),
+                    'to_date'=>Carbon::parse($tenderMaster['site_visit_end_date'])->format('Y-m-d')
+                ],
+                [
+                    'calendar_date' => 'Bid Submission Date',
+                    'from_date' => Carbon::parse($tenderMaster['bid_submission_opening_date'])->format('Y-m-d'),
+                    'to_date'=>Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d')
+                ] 
+            );
+        }
+
+
+
+        return $data;
     }
 }
