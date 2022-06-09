@@ -474,7 +474,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         if ($type == 1) {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
-            Please login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Please find the below link to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         } else {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
