@@ -2672,6 +2672,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
+        Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
