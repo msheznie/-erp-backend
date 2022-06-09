@@ -52,7 +52,6 @@ class PosAPIController extends AppBaseController
         return $this->sendError($exception->getMessage());
     }
 
-
  }
 
 }
