@@ -6,6 +6,8 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerMasterCategory;
 use App\models\ErpLocation;
 use Illuminate\Support\Facades\DB;
+use App\Models\SegmentMaster;
+
 class PosAPIController extends AppBaseController
 {
  function pullCustomerCategory(){
@@ -34,4 +36,23 @@ class PosAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
    }
+ public function pullSegment()
+ {
+    DB::beginTransaction();
+    try {
+        $segments = SegmentMaster::selectRaw('serviceLineSystemID As id,ServiceLineCode As segment_code ,ServiceLineDes as description,isActive as status')
+        ->where('ServiceLineCode','!=','')
+        ->where('ServiceLineDes','!=','')
+        ->get();
+  
+        DB::commit();
+        return $this->sendResponse($segments, 'Data Retrieved successfully');
+    } catch (\Exception $exception) {
+        DB::rollBack();
+        return $this->sendError($exception->getMessage());
+    }
+
+
+ }
+
 }
