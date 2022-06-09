@@ -4,7 +4,8 @@ namespace App\Http\Controllers\API\POS;
 
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerMasterCategory;
-
+use App\models\ErpLocation;
+use Illuminate\Support\Facades\DB;
 class PosAPIController extends AppBaseController
 {
  function pullCustomerCategory(){
@@ -17,4 +18,20 @@ class PosAPIController extends AppBaseController
      }
      return response($customerCategoryArray,200);
  }
+
+   public function pullLocation()
+   {
+       
+        DB::beginTransaction();
+        try {
+            $location = ErpLocation::selectRaw('locationID as id,locationName as description')
+            ->where('locationName','!=','')
+            ->get();
+             DB::commit();
+            return $this->sendResponse($location, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+   }
 }
