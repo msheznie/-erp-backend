@@ -486,6 +486,8 @@
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
                     <th class="text-center">Segment</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">VAT</th>
                     <th class="text-center">Payment Amount</th>
                     <th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
@@ -502,6 +504,11 @@
                 </tr>
                 </thead>
                 <tbody>
+                @php
+                    $tot= 0;
+                    $totLocal= 0;
+                    $totRpt = 0;
+                @endphp
                 @foreach ($masterdata->directdetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
@@ -512,15 +519,26 @@
                             @endif
                         </td>
                         <td class="text-right">{{number_format($item->DPAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->vatAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
+                        @php
+                            $tot += $item->DPAmount + $item->vatAmount;
+                            $totLocal += $item->localAmount + $item->VATAmountLocal;
+                            $totRpt += $item->comRptAmount + $item->VATAmountRpt;
+                        @endphp
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
-                        style="background-color: rgb(215,215,215)">{{number_format($directDetailTotTra, $transDecimal)}}</td>
+                        style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
+                    <td class="text-right"
+                        style="background-color: rgb(215,215,215)">{{number_format($totLocal, $transDecimal)}}</td>
+                    <td class="text-right"
+                        style="background-color: rgb(215,215,215)">{{number_format($totRpt, $transDecimal)}}</td>
                     <td class="text-right border-bottom-remov"></td>
                     <td class="text-right border-bottom-remov"></td>
                 </tr>
