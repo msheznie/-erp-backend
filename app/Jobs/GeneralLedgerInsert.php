@@ -1780,9 +1780,25 @@ class GeneralLedgerInsert implements ShouldQueue
                             $retentionRpt = 0;
                             if ($retentionPercentage > 0) {
                                 if ($masterData->documentType != 4) {
-                                    $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage/100);
-                                    $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage/100);
-                                    $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage/100);
+
+
+                                    if ($masterData->documentType == 0) {
+                                        $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
+                                        $totalVATAmount = $vatDetails['totalVAT'];
+                                        $totalExemptVAT = $vatDetails['exemptVAT'];
+                                        $totalVATAmountLocal = $vatDetails['totalVATLocal'];
+                                        $totalVATAmountRpt = $vatDetails['totalVATRpt'];
+                                        if ($totalVATAmount > 0) {
+                                            $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
+                                            $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
+                                            $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
+                                        }
+                                    }
+                                    else{
+                                        $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage/100);
+                                        $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage/100);
+                                        $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage/100);
+                                    }
 
                                     $data['documentTransAmount'] = $data['documentTransAmount'] * (1-($retentionPercentage/100));
                                     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1-($retentionPercentage/100));
@@ -1807,9 +1823,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransAmount'] = $retentionTrans;
-                                    $data['documentLocalAmount'] = $retentionLocal;
-                                    $data['documentRptAmount'] = $retentionRpt;
+                                    if ($masterData->documentType == 0) {
+                                        $data['documentTransAmount'] = $retentionTransWithoutVat;
+                                        $data['documentLocalAmount'] = $retentionLocalWithoutVat;
+                                        $data['documentRptAmount'] = $retentionRptWithoutVat;
+                                    }
+                                    else{
+                                        $data['documentTransAmount'] = $retentionTrans;
+                                        $data['documentLocalAmount'] = $retentionLocal;
+                                        $data['documentRptAmount'] = $retentionRpt;
+                                    }
                                     array_push($finalData, $data);
                                 }
                             }
@@ -2027,11 +2050,6 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($totalVATAmountLocal)) * -1;
                                             $data['documentRptAmount'] = \Helper::roundValue(ABS($totalVATAmountRpt)) * -1;
 
-                                            if ($retentionPercentage > 0 && $masterData->documentType != 4) {
-                                                $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage/100));
-                                                $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage/100));
-                                                $data['documentRptAmount'] = $data['documentRptAmount'] * (1 - ($retentionPercentage/100));
-                                            }
 
                                             array_push($finalData, $data);
 
@@ -2290,7 +2308,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                                 $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans)) * -1;
                                                 $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
                                                 $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
-                                                
+
                                                 if ($retentionPercentage > 0 && $masterData->documentType != 4) {
                                                     $data['documentTransAmount'] = $data['documentTransAmount'] * (1 - ($retentionPercentage/100));
                                                     $data['documentLocalAmount'] = $data['documentLocalAmount'] * (1 - ($retentionPercentage/100));
