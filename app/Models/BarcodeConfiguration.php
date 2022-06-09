@@ -61,7 +61,7 @@ use Eloquent as Model;
 class BarcodeConfiguration extends Model
 {
 
-    public $table = 'srp_erp_barcode_configuration';
+    public $table = 'erp_barcode_configuration';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';

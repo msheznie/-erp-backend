@@ -418,7 +418,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $pageWidth = 50;
             if($type == 1)
             {
-                $assets = FixedAssetMaster::pluck('faCode');
+                $assets = FixedAssetMaster::orderBy('faID', 'desc')->pluck('faCode');
             }
             else
             {   
@@ -477,7 +477,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 }
         
                
-                $assets = $assetCositng->pluck('faCode');
+                $assets = $assetCositng->orderBy('faID', 'desc')->pluck('faCode');
     
             }
        
@@ -652,5 +652,23 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
       
 
+    }
+
+    public function checkConfigurationExit(Request $request)
+    {
+        $input = $request->all();
+        $com_id = $input['companyId'];
+        $configuration = BarcodeConfiguration::where('companySystemID',$com_id)->first();
+        if(isset($configuration))
+        {
+
+        return $this->sendResponse(true, 'Record retrieved successfully');
+        }
+        else
+        {
+            return $this->sendError('Barcode Configuration not found');
+        }
+
+       
     }
 }
