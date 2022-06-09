@@ -539,8 +539,7 @@
                         style="background-color: rgb(215,215,215)">{{number_format($totLocal, $transDecimal)}}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($totRpt, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
+                   
                 </tr>
                 </tbody>
             </table>
