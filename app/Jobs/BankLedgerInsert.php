@@ -98,10 +98,10 @@ class BankLedgerInsert implements ShouldQueue
                         $data['localCurrencyER'] = $masterData->localCurrencyER;
                         $data['companyRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['companyRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountBank * -1 : $masterData->payAmountBank;
-                        $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 : $masterData->payAmountSuppTrans;
-                        $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 : $masterData->payAmountCompLocal;
-                        $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 : $masterData->payAmountCompRpt;
+                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountBank * -1 + $masterData->VATAmount * -1 : $masterData->payAmountBank + $masterData->VATAmount;
+                        $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 + $masterData->VATAmount * -1 : $masterData->payAmountSuppTrans + $masterData->VATAmount;
+                        $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 + $masterData->VATAmountLocal * -1: $masterData->payAmountCompLocal + $masterData->VATAmountLocal;
+                        $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 + $masterData->VATAmountRpt * -1 : $masterData->payAmountCompRpt + $masterData->VATAmountRpt;
 
                         if ($masterData->chequePaymentYN == 0) {
                             $data['chequePaymentYN'] = -1;
