@@ -956,6 +956,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
         Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
         Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
+        Route::post('addADVPaymentDetailNotLinkPo', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailNotLinkPo');
+
 
         Route::resource('performa_details', 'PerformaDetailsAPIController');
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
