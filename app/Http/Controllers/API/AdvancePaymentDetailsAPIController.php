@@ -431,7 +431,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             if($payMaster->confirmedYN){
                 return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
-
+           
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
@@ -446,7 +446,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
                 $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
 
-                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                if(isset($advancePayment)){
+                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                     ->where('companySystemID', $advancePayment->companySystemID)
                     ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                     ->where('purchaseOrderID', $advancePayment->poID)
@@ -466,6 +467,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                      PoAdvancePayment::find($val->poAdvPaymentID)
                         ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
                 }
+                }
+          
             }
 
             $input['payAmountBank'] = 0;
