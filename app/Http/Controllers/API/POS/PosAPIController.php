@@ -12,18 +12,25 @@ class PosAPIController extends AppBaseController
 {
  function pullCustomerCategory(){
 
+     DB::beginTransaction();
+     try {
      $customerCategories = CustomerMasterCategory::all();
      $customerCategoryArray = array();
      foreach($customerCategories as $item){
          $data = array('id'=>$item->categoryID, 'party_type'=>1, 'description'=>$item->categoryDescription);
          array_push($customerCategoryArray,$data);
      }
-     return response($customerCategoryArray,200);
+
+         DB::commit();
+         return $this->sendResponse($customerCategoryArray, 'Data Retrieved successfully');
+     } catch (\Exception $exception) {
+         DB::rollBack();
+         return $this->sendError($exception->getMessage());
+     }
  }
 
    public function pullLocation()
    {
-       
         DB::beginTransaction();
         try {
             $location = ErpLocation::selectRaw('locationID as id,locationName as description')
@@ -44,7 +51,6 @@ class PosAPIController extends AppBaseController
         ->where('ServiceLineCode','!=','')
         ->where('ServiceLineDes','!=','')
         ->get();
-  
         DB::commit();
         return $this->sendResponse($segments, 'Data Retrieved successfully');
     } catch (\Exception $exception) {
