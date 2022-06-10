@@ -18,6 +18,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
+        Route::post('pull_chart_of_account', 'POS\PosAPIController@pullChartOfAccount');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
