@@ -3269,7 +3269,7 @@ HAVING
 		) > 0
 	)');
         }
-        elseif ($input['matchType'] == 3) {
+        elseif ($input['matchType'] == 4) {
             $invoiceMaster = DB::select('SELECT
 	MASTER.PayMasterAutoId as masterAutoID,
 	MASTER.BPVcode as documentCode,
@@ -3311,7 +3311,7 @@ AND invoiceType = 3
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
-        elseif ($input['matchType'] == 4) {
+        elseif ($input['matchType'] == 3) {
             $invoiceMaster = DB::select('SELECT
 	MASTER.PayMasterAutoId as masterAutoID,
 	MASTER.BPVcode as documentCode,
