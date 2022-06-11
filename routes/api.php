@@ -2911,7 +2911,7 @@ Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 /* Below two request must be always separated from tenant, auth middlewares */
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
 /* end of separated from tenant, auth middlewares */
