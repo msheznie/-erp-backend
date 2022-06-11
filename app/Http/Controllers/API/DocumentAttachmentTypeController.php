@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
-use App\Models\DocumentAttachments;
 use App\Models\TenderDocumentTypes;
 use App\Repositories\TenderDocumentTypesRepository;
 use Illuminate\Http\Request;
@@ -67,13 +66,13 @@ class DocumentAttachmentTypeController extends AppBaseController
                 ->where('document_type', '=', $input['document_type'])->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Attachment Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
         }
 
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $attachmentType = $this->tenderDocumentTypesRepository->create($input);
-        return $this->sendResponse($attachmentType->toArray(), 'Attachment Type saved successfully');
+        return $this->sendResponse($attachmentType->toArray(), 'Document Type saved successfully');
     }
 
     /**
@@ -87,10 +86,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($id);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Attachment Type not found');
+            return $this->sendError('Document Type not found');
         }
 
-        return $this->sendResponse($attachmentType->toArray(), 'Attachment Type retrieved successfully');
+        return $this->sendResponse($attachmentType->toArray(), 'Document Type retrieved successfully');
     }
 
     /**
@@ -117,7 +116,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($id);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Attachment Type not found');
+            return $this->sendError('Document Type not found');
         }
 
         $input = $this->convertArrayToValue($input);
@@ -136,14 +135,14 @@ class DocumentAttachmentTypeController extends AppBaseController
             ->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Attachment Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
 
         $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
 
-        return $this->sendResponse($attachmentType, 'Attachment Type updated successfully');
+        return $this->sendResponse($attachmentType, 'Document Type updated successfully');
 
     }
 
@@ -168,12 +167,12 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentType = TenderDocumentTypes::find($request[0]);
 
         if (empty($attachmentType)) {
-            return $this->sendError('Attachment Type not found');
+            return $this->sendError('Document Type not found');
         }
 
         $attachmentType->delete();
 
-        return $this->sendResponse($request[0], 'Attachment Type deleted successfully');
+        return $this->sendResponse($request[0], 'Document Type deleted successfully');
     }
 
     public function getAllDocumentAttachmentTypes(Request $request)
@@ -184,7 +183,10 @@ class DocumentAttachmentTypeController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $attachmentTypes = TenderDocumentTypes::with(['attachments'])->orderBy('id', 'asc');
+        $attachmentTypes = TenderDocumentTypes::with(['attachments' => function ($q) use($input){
+            $q->where('documentSystemID', 108);
+            $q->where('companySystemID', $input['companyId']);
+        }])->orderBy('id', 'asc');
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

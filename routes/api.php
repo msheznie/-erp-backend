@@ -16,6 +16,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => ['pos_api']], function (){
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
+        Route::post('pull_location', 'POS\PosAPIController@pullLocation');
+        Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -954,6 +956,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
         Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
         Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
+        Route::post('addADVPaymentDetailNotLinkPo', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailNotLinkPo');
+
 
         Route::resource('performa_details', 'PerformaDetailsAPIController');
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
@@ -2672,6 +2676,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
+        Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

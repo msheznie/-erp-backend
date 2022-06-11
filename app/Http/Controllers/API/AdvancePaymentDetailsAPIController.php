@@ -240,7 +240,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             if (empty($advancePaymentDetails)) {
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.advance_payment_details')]));
             }
-
+           
             $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
             $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
@@ -254,26 +254,29 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             if (empty($bankAccount)) {
                 return $this->sendError(trans('custom.is_not_active', ['attribute' => trans('custom.selected_bank_account')]), 500, ['type' => 'amountmismatch']);
             }
-
+            
             $advancePayment = PoAdvancePayment::find($input['poAdvPaymentID']);
 
             if (!$input["paymentAmount"]) {
                 $input["paymentAmount"] = 0;
             }
-
-            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL(Sum(erp_advancepaymentdetails.paymentAmount),0) AS SumOfpaymentAmount ')
-                ->where('companySystemID', $advancePayment->companySystemID)
-                ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
-                ->where('purchaseOrderID', $advancePayment->poID)
-                ->where('advancePaymentDetailAutoID', '<>', $id)
-                ->first();
-
-            $balanceAmount = $advancePayment->reqAmount - $advancePaymentDetailsSum->SumOfpaymentAmount;
-
-            if ($input["paymentAmount"] > $balanceAmount) {
-                return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
+            if(isset($advancePayment))
+            {
+                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL(Sum(erp_advancepaymentdetails.paymentAmount),0) AS SumOfpaymentAmount ')
+                    ->where('companySystemID', $advancePayment->companySystemID)
+                    ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                    ->where('purchaseOrderID', $advancePayment->poID)
+                    ->where('advancePaymentDetailAutoID', '<>', $id)
+                    ->first();
+                
+                $balanceAmount = $advancePayment->reqAmount - $advancePaymentDetailsSum->SumOfpaymentAmount;
+                
+                if ($input["paymentAmount"] > $balanceAmount) {
+                    return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
+                }
             }
-
+      
+           
             $conversion = \Helper::convertAmountToLocalRpt(201, $id, $input["paymentAmount"]);
             $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
             $input['localAmount'] = $conversion['localAmount'];
@@ -282,26 +285,32 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
 
-            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+            if(isset($advancePayment))
+            {
+                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                 ->where('companySystemID', $advancePayment->companySystemID)
                 ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                 ->where('purchaseOrderID', $advancePayment->poID)
                 ->first();
 
-            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                PoAdvancePayment::find($input['poAdvPaymentID'])
-                    ->update(['fullyPaid' => 2]);
+                if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                    PoAdvancePayment::find($input['poAdvPaymentID'])
+                        ->update(['fullyPaid' => 2]);
+                }
+
+                if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                    PoAdvancePayment::find($input['poAdvPaymentID'])
+                        ->update(['fullyPaid' => 1]);
+                }
+
+                if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                    PoAdvancePayment::find($input['poAdvPaymentID'])
+                        ->update(['fullyPaid' => 0]);
+                }
             }
 
-            if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                 PoAdvancePayment::find($input['poAdvPaymentID'])
-                    ->update(['fullyPaid' => 1]);
-            }
-
-            if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                 PoAdvancePayment::find($input['poAdvPaymentID'])
-                    ->update(['fullyPaid' => 0]);
-            }
+            
+   
 
             DB::commit();
 
@@ -370,26 +379,31 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             $advancePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID);
 
-            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+            if(isset($advancePayment))
+            {
+                
+                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                 ->where('companySystemID', $advancePayment->companySystemID)
                 ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                 ->where('purchaseOrderID', $advancePayment->poID)
                 ->first();
 
-            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
-               PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
-                    ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
-            }
-
-            if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
                 PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
-                    ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
+                        ->update(['fullyPaid' => 2, 'selectedToPayment' => 0]);
+                }
+
+                if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                    PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                        ->update(['fullyPaid' => 1, 'selectedToPayment' => 0]);
+                }
+
+                if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                    PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
+                        ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
+                }
             }
 
-            if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
-                 PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID)
-                    ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
-            }
 
             DB::commit();
             return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.advance_payment_details')]));
@@ -417,7 +431,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             if($payMaster->confirmedYN){
                 return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
-
+           
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $payMasterAutoId]);
 
@@ -432,7 +446,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
                 $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
 
-                $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                if(isset($advancePayment)){
+                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                     ->where('companySystemID', $advancePayment->companySystemID)
                     ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                     ->where('purchaseOrderID', $advancePayment->poID)
@@ -452,6 +467,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                      PoAdvancePayment::find($val->poAdvPaymentID)
                         ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
                 }
+                }
+          
             }
 
             $input['payAmountBank'] = 0;
@@ -723,6 +740,48 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     }
                 }
             }
+
+            DB::commit();
+            return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function addADVPaymentDetailNotLinkPo(Request $request)
+    {
+        
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $paysupplierMaster = PaySupplierInvoiceMaster::find($input['PayMasterAutoId']);
+
+           
+
+
+
+            $tempArray['PayMasterAutoId'] = $input['PayMasterAutoId'];
+            $tempArray['comments'] = $input['comment'];
+            $tempArray['paymentAmount'] = $input['paymentAmount'];
+            $tempArray['localAmount'] = $input['paymentAmount'];
+            $tempArray['companySystemID'] = $input['companySystemID'];
+            $tempArray['companyID'] = $paysupplierMaster->CompanyID;
+            $tempArray['supplierTransCurrencyID'] = $paysupplierMaster->supplierTransCurrencyID;
+            $tempArray['supplierTransER'] = $paysupplierMaster->supplierTransCurrencyER;
+            $tempArray['supplierDefaultCurrencyID'] = $paysupplierMaster->supplierDefCurrencyID;
+            $tempArray['supplierDefaultCurrencyER'] = $paysupplierMaster->supplierDefCurrencyER;
+            $tempArray['localCurrencyID'] = $paysupplierMaster->localCurrencyID;
+            $tempArray['localER'] = $paysupplierMaster->localCurrencyER;
+            $tempArray['comRptCurrencyID'] = $paysupplierMaster->companyRptCurrencyID;
+            $tempArray['comRptER'] = $paysupplierMaster->companyRptCurrencyER;
+            $tempArray['supplierDefaultAmount'] = $paysupplierMaster->payAmountSuppDef;
+            $tempArray['supplierTransAmount'] = $paysupplierMaster->payAmountSuppTrans;
+            $tempArray['comRptAmount'] = $paysupplierMaster->payAmountCompRpt;
+
+
+        
+            $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));

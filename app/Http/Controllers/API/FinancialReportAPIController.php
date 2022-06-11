@@ -485,6 +485,13 @@ class FinancialReportAPIController extends AppBaseController
 
             $companyID = $request->comapnyID;
 
+            $companyCurrency = \Helper::companyCurrency($companyID);
+
+            $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
+            $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
+
+
+
 
         $input = $request->all();
         if (array_key_exists('employeeID', $input)) {
@@ -642,7 +649,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $employees = DB::select('SELECT * FROM (SELECT
 	
 	expense_employee_allocation.employeeSystemID AS employeeID,
-    employees.empName AS employeeName
+    employees.empName AS employeeName,
+    employees.empID AS empID
 FROM
 	expense_employee_allocation
 LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
@@ -656,7 +664,8 @@ WHERE
     UNION ALL
     SELECT
 	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
-    employees.empName AS employeeName
+    employees.empName AS employeeName,
+    employees.empID AS empID
 FROM
 	erp_paysupplierinvoicemaster
 LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
@@ -669,9 +678,11 @@ WHERE
     UNION ALL 
     SELECT
 	srp_erp_iouvouchers.empID AS employeeID,
-    srp_erp_iouvouchers.empName AS employeeName
+    srp_erp_iouvouchers.empName AS employeeName,
+    employees.empID AS empID
 FROM
 	srp_erp_iouvouchers
+LEFT JOIN employees ON srp_erp_iouvouchers.empID = employees.employeeSystemID
 WHERE
     DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
     srp_erp_iouvouchers.empID IN (' . join(',', json_decode($employeeDatas)) . ') AND
@@ -680,7 +691,7 @@ WHERE
     ) t GROUP BY t.employeeID');
 
 
-        return $this->sendResponse([$data,$employees,$refAmounts], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
 
     }
 
@@ -1403,24 +1414,17 @@ WHERE
                                     $data[$x]['doc_no'] = $val->documentCode;
                                     $data[$x]['data'] = \Helper::dateFormat($val->documentDate);
                                     $data[$x]['doc_narration'] = $val->documentNarration;
+                                    $data[$x]['documentSystemCode'] = $val->documentSystemCode;
+                                    $data[$x]['documentSystemID'] = $val->documentSystemID;
+                                    $data[$x]['documentCode'] = $val->documentCode;
                                     $data[$x]['severice_line'] = $val->serviceLineCode;
                                     $data[$x]['contract'] = $val->clientContractID;
-
-                                    if (in_array('confi_name', $extraColumns)) {
                                         $data[$x]['confirmed_by'] = $val->confirmedBy;
-                                    }
-
-                                    if (in_array('confi_date', $extraColumns)) {
                                         $data[$x]['confirmed_date'] = \Helper::dateFormat($val->documentConfirmedDate);
-                                    }
-
-                                    if (in_array('app_name', $extraColumns)) {
                                         $data[$x]['approved_by'] = $val->approvedBy;
-                                    }
-
-                                    if (in_array('app_date', $extraColumns)) {
                                         $data[$x]['approved_date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
-                                    }
+
+
                                     $data[$x]['Supplier/Customer'] = $val->isCustomer;
                                     if ($checkIsGroup->isGroup == 0) {
                                         $data[$x]['debit_local'] = round($val->localDebit, $decimalPlaceLocal);
