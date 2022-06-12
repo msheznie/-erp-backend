@@ -775,8 +775,8 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $tempArray['localER'] = $paysupplierMaster->localCurrencyER;
             $tempArray['comRptCurrencyID'] = $paysupplierMaster->companyRptCurrencyID;
             $tempArray['comRptER'] = $paysupplierMaster->companyRptCurrencyER;
-            $tempArray['supplierDefaultAmount'] = $paysupplierMaster->payAmountSuppDef;
-            $tempArray['supplierTransAmount'] = $paysupplierMaster->payAmountSuppTrans;
+            $tempArray['supplierDefaultAmount'] = $input['paymentAmount'];
+            $tempArray['supplierTransAmount'] = $input['paymentAmount'];
             $tempArray['comRptAmount'] = $paysupplierMaster->payAmountCompRpt;
 
 
