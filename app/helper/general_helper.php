@@ -2343,7 +2343,13 @@ class Helper
                                     if (!$jobPV["success"]) {
                                         return ['success' => false, 'message' => $jobPV["message"]];
                                     }
-                                } else {
+                                } else if($sourceModel->invoiceType == 2){
+                                    $jobPV = self::generatePaymentVoucher($sourceModel);
+                                    if (!$jobPV["success"]) {
+                                        return ['success' => false, 'message' => $jobPV["message"]];
+                                    }
+                                }
+                                else {
                                     if ($sourceModel->pdcChequeYN == 0) {
                                         $bankLedger = BankLedgerInsert::dispatch($masterData);
                                     }
@@ -4221,6 +4227,16 @@ class Helper
 
             $storeJvDetail = Models\JvDetail::insert($jvDetailArray);
         }
+    }
+
+    public static function generatePaymentVoucher($pvMaster)
+    {
+        $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+        if ($pvMaster->pdcChequeYN == 0) {
+            $jobPV = BankLedgerInsert::dispatch($masterData);
+        }
+        return ['success' => true, 'message' => "Payment voucher created successfully"];
+
     }
 
     public static function generateCustomerReceiptVoucher($pvMaster)
