@@ -3350,7 +3350,7 @@ LEFT JOIN (
 WHERE
 	approved = - 1
 AND invoiceType = 5   
-AND advancePaymentTypeID = 1    
+AND advancePaymentTypeID = 0    
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
