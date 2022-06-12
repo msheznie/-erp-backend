@@ -2907,20 +2907,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                                     if ($retentionData && $retentionData->transAmount > 0) {
 
-                                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
 
-                                        if ($retationVATAmount > 0) {
-                                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
-
-                                            $retentionTransAmount = $retentionData->transAmount - $retationVATAmount;
-                                            $retentionLocalAmount = $retentionData->localAmount - $currencyConvertionRetention['localAmount'];
-                                            $retentionRptAmount = $retentionData->rptAmount - $currencyConvertionRetention['reportingAmount'];
-                                        }
-                                        else{
                                             $retentionTransAmount = $retentionData->transAmount;
                                             $retentionLocalAmount = $retentionData->localAmount;
                                             $retentionRptAmount = $retentionData->rptAmount;
-                                        }
+
 
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
@@ -2937,6 +2928,20 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $localAmountTotal = $si->localAmount;
                                         $rptAmountTotal = $si->rptAmount;
 
+                                        $retationVATAmount = 0;
+                                        $retentionLocalVatAmount = 0;
+                                        $retentionRptVatAmount = 0;
+                                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                                        if ($retationVATAmount > 0) {
+                                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                                            $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                                            $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                                        }
+
+
+
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
                                         $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
@@ -2945,13 +2950,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount + $retentionLocalVatAmount) * -1;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
-                                        $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount + $retentionRptVatAmount) * -1;
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     } else {
@@ -2962,6 +2967,20 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $localAmountTotal = $convertAmount["localAmount"];
                                         $rptAmountTotal = $convertAmount["reportingAmount"];
 
+
+                                        $retationVATAmount = 0;
+                                        $retentionLocalVatAmount = 0;
+                                        $retentionRptVatAmount = 0;
+                                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                                        if ($retationVATAmount > 0) {
+                                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                                            $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                                            $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                                        }
+
+
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
                                         $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
@@ -2970,13 +2989,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                        $data['documentLocalAmount'] = $convertAmount["localAmount"] * -1;
+                                        $data['documentLocalAmount'] = ($convertAmount["localAmount"] + $retentionLocalVatAmount) * -1;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                        $data['documentRptAmount'] = $convertAmount["reportingAmount"] * -1;
+                                        $data['documentRptAmount'] = ($convertAmount["reportingAmount"] + $retentionRptVatAmount) * -1;
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
