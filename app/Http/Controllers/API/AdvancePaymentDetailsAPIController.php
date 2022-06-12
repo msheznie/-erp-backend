@@ -782,6 +782,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         
             $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
+            $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $input["paymentAmount"]);
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
