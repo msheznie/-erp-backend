@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CalendarDates;
 use App\Repositories\CalendarDatesRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -65,6 +66,7 @@ class TenderCalendarDatesController extends AppBaseController
             return $this->sendError('Calendar Date ' . $input['calendar_date'] . ' already exists');
         }
 
+        $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $calendarDate = $this->calendarDatesRepository->create($input);
@@ -134,6 +136,7 @@ class TenderCalendarDatesController extends AppBaseController
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
+        $input['updated_at'] = Carbon::now();
 
         $calendarDates = CalendarDates::where('id', $id)->update($input);
 
