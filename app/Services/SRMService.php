@@ -1188,14 +1188,10 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }, 'tenderSupplierAssignee'  => function ($q) use ($supplierData) {
                 $q->where('registration_link_id', '=', $supplierData['id']);
-                $q->count();
             }])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             })
                 ->where('published_yn', 1);
-                /*->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
-                    $q1->where('tender_type_id', '!=', 2);
-                });*/
         } else if ($request->input('extra.tender_status') == 2) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
@@ -1203,9 +1199,6 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })
                 ->where('published_yn', 1);
-                /*->when(($supplierData['is_bid_tender'] == 1), function ($q1) {
-                    $q1->where('tender_type_id', '!=', 2);
-                });*/
         }
         $search = $request->input('search.value');
         if ($search) {
