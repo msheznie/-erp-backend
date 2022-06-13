@@ -28,6 +28,7 @@ use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
+use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
@@ -1832,10 +1833,24 @@ class SRMService
             return  $data;
         });
 
+        
         $data['currentSequence'] = $currentSequence->filter()->last();
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
-        $data['sequenceDate'] = $calendarDateMerge;
+        $data['sequenceDate'] = $calendarDateMerge; 
+        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
+            $q->where('documentSystemCode',$tenderMasterId);
+            $q->where('documentSystemID',108);
+        }])
+        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+            $q1->where('documentSystemCode',$tenderMasterId)
+            ->where('documentSystemID',108);
+        }) 
+        ->get();
+        /*  DocumentAttachments::where('documentSystemID',108) 
+        ->where('documentSystemCode',$tenderMasterId)
+        ->get()
+        ->toArray(); */
 
         return [
             'success' => true,
