@@ -158,6 +158,21 @@
         color: black;
     }
 
+    .thicker {
+        font-weight: bold;
+        font-size:11px;
+    }
+
+    .thick {
+        font-weight: bold;
+        font-size:9px;
+    }
+
+    .normal {
+        font-weight: normal;
+        font-size:10px;
+    }
+
 
 </style>
 
@@ -166,14 +181,14 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    @if($request->logoExists)
+                    {{-- @if($request->logoExists)
                           @if($type == 1)
                             <img src="{{$request->companyLogo}}"
                                 width="180px" height="60px">
                           @else
                             image not found
                           @endif
-                    @endif
+                    @endif --}}
                 </td>
 
 
@@ -202,176 +217,122 @@
 
     <div class="row">
         <table border="1" width="100%">
-            <tr> 
-                <td colspan="2" ></td>
+            <tr > 
+                <td colspan="2" class="thicker">Seller</td>
                 <td colspan="1" style="border-bottom: none;" ></td>
-                <td rowspan="2" ></td> 
-                <td rowspan="2" colspan="2" >Bob</td> 
-                <td rowspan="2" colspan="2" >Alice</td> 
+                <td colspan="1" class="thicker">Sales Order No.</td>
+                <td colspan="1" class="thicker" style="text-align: center;">INVOICE NO: &nbsp;&nbsp;&nbsp;   {{$request->bookingInvCode}}</td>
+                <td colspan="1" class="thicker">INVOICE DATE :&nbsp;&nbsp;&nbsp; @if(!empty($request->bookingDate))
+                                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                                    @endif
+                </td>
             </tr> 
             <tr> 
-                <td colspan="3" rowspan="5" style=" border-top: none;">Favorite</td> 
-            </tr> 
-            <tr> 
-                <td rowspan="3">Flavor</td> 
-                <td colspan="2" rowspan="3">Banana</td> 
-                <td colspan="2" rowspan="3">Chocolate</td> 
-            </tr> 
-        </table>
-    </div>
-    <div>
-        <br>
-    </div>
-    <div class="row">
-        <table border="1" width="100%">
-            <tr> 
-                <td colspan="2" ></td>
-                <td colspan="2" style="border-bottom: none;" >aa</td>
-                <td colspan="2" ></td>
-                <td colspan="2" style="border-bottom: none;" >aa</td>
-            </tr> 
-            <tr> 
-                <td colspan="4" rowspan="3" style=" border-top: none;">Favorite1</td> 
-                <td colspan="4" rowspan="3" style=" border-top: none;">Favorite2</td> 
-            </tr> 
-        </table>
-    </div>
-    <div>
-        <br>
-    </div>
-    <div class="row">
-        <table border="1" width="100%">
- 
-            <tr> 
-                <td colspan="1" rowspan="3">Favorite</td> 
-                <td colspan="4" rowspan="3">Favorite</td> 
-            </tr> 
-            <tr> 
-                <td rowspan="5" colspan="5">Flavor</td>
-            </tr>
-            <tr> 
-                <td colspan="1" >aaaaa</td>
-                <td colspan="2">aaa</td>
-                <td colspan="2">aaaaaaa</td>
-            </tr>
- 
-        </table>
-    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <br>
-    <br>
-    <br>
-    <div class="row">
-        <table style="width: 100%">
-            <tr>
-                <td style="width: 50%; text-align: left;">
+                <td colspan="3"rowspan= "8"  style=" border-top: none;" class="thicker">
+                    {{$request->CompanyName}}<br>
                     {{$request->CompanyAddress}}<br>
-                    <!-- {{$request->CompanyCountry}}<br> -->
                     Tel: {{$request->CompanyTelephone}}<br>
                     Fax: {{$request->CompanyFax}}<br>
-                    <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
+                </td> 
+                <td colspan="1" class="thicker">---</td>
+                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
+                                                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
+                                                                @endif
                 </td>
-                <td style="width: 50%; text-align: right;direction: rtl;">
-                    {{$request->CompanyAddressSecondaryLanguage}}<br>
-                    <!-- سلطنة عمان<br> -->
-                    هاتف : {{$request->CompanyTelephone}}<br>
-                          فاكس : {{$request->CompanyFax}}<br>
-                   <b>الرقم الضريبي : {{$request->vatRegistratonNumber}}</b>
-                </td>
+                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp; ----</td>
+
             </tr>
         </table>
     </div>
-
-    <div class="row">
+    <div>
         <br>
     </div>
-
     <div class="row">
-        <table style="width:100%">
-            <tr>
-                <td style="width: 50%; text-align:left;">
-                    <b>INVOICE NO : {{$request->bookingInvCode}}</b><br>
-                    <b>INVOICE DATE : @if(!empty($request->bookingDate))
-                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                                @endif</b><br>
+        <table border="1" width="100%">
+            <tr> 
+                <td colspan="2" class="thicker">Buyer</td>
+                <td colspan="2" style="border-bottom: none;" ></td>
+                <td colspan="2" class="thicker">Consignee:</td>
+                <td colspan="2" style="border-bottom: none;" ></td>
+            </tr> 
+            <tr> 
+                <td colspan="4"  style=" border-top: none;" class="thicker">
+                    @if(!empty($request->customer) )
+                        {{isset($request->customer->ReportTitle)?$request->customer->ReportTitle:'-'}}<br>
+                        {{isset($request->customer->customerAddress1)?$request->customer->customerAddress1:'-'}}<br>
+                    @endif
+
+                    @if(!empty($request->CustomerContactDetails) )
+                        TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
+                        FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
+                    @endif
                     
-                        <b>Contract / PO No : 
-                             @if(!empty($request->invoicedetails) )
-                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                            @endif
-                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                {{$request->PONumber}}
-                            @endif
-                        </b>
-                </td>
-                <td style="width: 50%; text-align:right; direction: rtl;">
-                    <b>رقم الفاتورة : {{$request->bookingInvCode}}</b><br>
-                    <b>تاريخ الفاتورة : @if(!empty($request->bookingDate))
-                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
-                                @endif</b><br>
-                        <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                            @endif
-                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                {{$request->PONumber}}
-                            @endif
 
-                        </b>
-
-                </td>
-            </tr>
+                </td> 
+                <td colspan="4"  style=" border-top: none;" class="thicker">
+                    @if(!empty($request->customerInvoiceLogistic) )
+                            {{isset($request->customerInvoiceLogistic['consignee_name'])?$request->customerInvoiceLogistic['consignee_name']:'-'}}<br>
+                            {{isset($request->customerInvoiceLogistic['consignee_address'])?$request->customerInvoiceLogistic['consignee_address']:'-'}}<br>
+                            {{isset($request->customerInvoiceLogistic['consignee_contact_no'])?$request->customerInvoiceLogistic['consignee_contact_no']:'-'}}<br>
+                    @endif
+                </td> 
+            </tr> 
         </table>
-    </div>
-    <div class="row">
-        <br>
-    </div>
+        <table border="1" width="100%">
+            <tr> 
+                <td colspan="2" style="text-align: center" class="thicker">COUNTRY OF ORIGIN</td>
+                <td colspan="4" style="text-align: center" class="thicker">SULTANATE OF OMAN</td>
+                <td colspan="8" rowspan="10"><span class="thicker"> Terms Of Payment: </span><br> 
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['payment_terms'])?$request->customerInvoiceLogistic['payment_terms']:'-'}}</span>
+                </td>
+            </tr> 
+            <tr> 
 
-    <div class="row">
-        <br>
-    </div>
-    <div class="row">
-        <table style="width:100%">
+                <td colspan="2" style="text-align: center"><span class="thick"> Vessel Name</span> <br>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['vessel_no'])?$request->customerInvoiceLogistic['vessel_no']:'-'}}</span>
+                </td> 
+                <td colspan="2" style="text-align: center"><span class="thick"> Port Of Loading</span> <br> 
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_loading']['port_name'])?$request->customerInvoiceLogistic['port_of_loading']['port_name']:'-'}}</span>
+                </td> 
+                <td colspan="2" style="text-align: center"><span class="thick"> Delivery Term</span> <br>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['delivery_payment'])?$request->customerInvoiceLogistic['delivery_payment']:'-'}}</span>
+                </td> 
+            </tr> 
+        </table>
+        <table border="1" width="100%">
             <tr>
-                <td style="width: 50%; text-align: left">
-                    <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b><br>
-                    <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
-                    <b>VAT NO : {{$request->vatNumber}}</b>
+                <td colspan="1" rowspan="4" style="text-align: center" class="thick">B/Lading No <br> 
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['b_ladding_no'])?$request->customerInvoiceLogistic['b_ladding_no']:'-'}}</span>
                 </td>
-                <td style="width: 50%; text-align: right;direction: rtl;">
-                    <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>
-                    <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b><br>
-                    <b>الرقم الضريبي : {{$request->vatNumber}}</b>
+                <td colspan="1" rowspan="4" style="text-align: center" class="thick">Port of Discharge <br>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_discharge']['port_name'])?$request->customerInvoiceLogistic['port_of_discharge']['port_name']:'-'}}</span>
                 </td>
+                <td colspan="1"  style="text-align: center" class="thicker">No of Containers</td>
+                <td colspan="4" class="thicker">Packing</td>
+                <td colspan="4" >BULKS</td>
+            </tr>
+            <tr>
+
+                <td colspan="1" style="text-align: center">
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['no_of_container'])?$request->customerInvoiceLogistic['no_of_container']:'-'}}</span>
+                </td>
+                <td colspan="4" class="thicker">Currency</td>
+                <td colspan="4" >{{isset($request->currency->CurrencyName)?$request->currency->CurrencyName:''}}</td>
             </tr>
         </table>
-    </div>
-    <br>
-    <div class="row">
-        @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
+
+        @if (isset($request->item_invoice) && $request->item_invoice)
+
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
-                    <th style="width:6%;">Item<br>رقم المنتج</th>
-                    <th style="width:25%; text-align: center">Description<br>الوصف</th>
-                    <th style="width:6%;text-align: center">QTY<br>الكمية</th>
-                    <th style="width:10%;text-align: center">Days(OP)<br>الايام عمل</th>
-                    <th style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
-                    <th style="width:10%;text-align: center">Days(STB)<br>الايام الانتظار</th>
-                    <th style="width:10%;text-align: center">Price(STB)<br>سعر الانتظار</th>
-                    <th style="width:13%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                    <th style="width:10%;">Item</th>
+                    <th style="width:25%;">Content</th>
+                    <th style="width:10%;text-align: center">UOM</th>
+                    <th style="width:10%;text-align: center">Quantity</th>
+                    <th style="width:15%;text-align: center">Rate</th>
+                    <th style="width:10%;text-align: center">VAT</th>
+                    <th style="width:15%;text-align: center">Total Amount</th>
                 </tr>
                 </thead>
 
@@ -381,209 +342,67 @@
                 {{$directTraSubTotal=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
 
-                @foreach ($request->profomaDetailData as $item)
-                    @if ($item->total != 0)
-                        {{$directTraSubTotal +=$item->total}}
-                        <tr style="border: 1px solid !important;">
-                            <td>{{$x}}</td>
-                            <td style="word-wrap:break-word;">{{$item->description}}</td>
-                            <td style="text-align: right;">{{$item->Qty}}</td>
-                            <td style="text-align: right;">{{$item->Days_OP}}</td>
-                            <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
-                            <td style="text-align: right;">{{$item->Days_STB}}</td>
-                            <td style="text-align: right;">{{number_format($item->Price_STB,$numberFormatting)}}</td>
-                            <td class="text-right">{{number_format($item->total,$numberFormatting)}}</td>
-                        </tr>
-                        {{ $x++ }}
-                    @endif
-                @endforeach
-                </tbody>
+                @if(!empty($request->issue_item_details))
+                    @foreach ($request->issue_item_details as $item)
 
-                <tbody>
-                    <tr>
-                        <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">@if ($request->invoicedetails)
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
-                    @endif</td>
-                    </tr>
-                    {{$directTraSubTotal+= ($request->tax) ? $request->tax->amount : 0}}
-                    {{$taxAmount = ($request->tax) ? $request->tax->amount : 0}}
-                    {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
-                    <tr>
-                        <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td colspan="5" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
-                    </tr>
+                        @if ($item->sellingTotal != 0)
+                            {{$directTraSubTotal +=$item->sellingTotal}}
+
+                            <tr style="border: 1px solid !important;">
+                                <td style="text-align: center;">{{$item->itemPrimaryCode}}</td>
+                                <td style="word-wrap:break-word;">{{$item->itemDescription}}</td>
+                                <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                <td style="text-align: center;">{{$item->qtyIssued}}</td>
+                                <td style="text-align: center;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-center">{{number_format($item->sellingTotal+$item->VATAmountLocal,$numberFormatting)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                        @endif
+                    @endforeach
+                @endif
+
                 </tbody>
                 <tbody>
-                    <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
-                    </tr>
-                </tbody>
-                
-            </table>
-        @endif
-
-         @if ($request->template <> 1 && !$request->line_invoiceDetails && !$request->item_invoice)
-            <table class="table" style="width: 100%;">
-                <thead>
-                <tr style="background-color: #6798da">
-                    <th style="width:6%">Item<br>رقم المنتج</th>
-                    <th style="width:10%; text-align: center">GL Code<br>رمز جل</th>
-                    <th style="width:35%; text-align: center">Description<br>الوصف</th>
-                    <th style="width:5%;text-align: center">QTY<br>الكمية</th>
-                    <th style="width:10%;text-align: center">Unit Rate<br> سعر الوحده</th>
-                    <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
+                <tr>
+                    <td colspan="2"></td>
+                    <td colspan="2" style="text-align: left; border-right: none !important;"><b>Total Taxable Value</b></td>
+                    <td colspan="3" class="text-right">@if ($request->invoicedetails)
+                            {{number_format($directTraSubTotal, $numberFormatting)}}
+                        @endif</td>
                 </tr>
-                </thead>
-
-                <tbody>
-                {{$decimal = 2}}
-                {{$x=1}}
-                {{$directTraSubTotal=0}}
-                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-                @foreach ($request->invoicedetails as $item)
-                    {{$directTraSubTotal +=$item->invoiceAmount}}
-                    <tr style="border: 1px solid !important;">
-                        <td>{{$x}}</td>
-                        <td>{{$item->glCode}}</td>
-                        <td>{{$item->glCodeDes}}</td>
-                        <td style="text-align: right;">{{number_format($item->invoiceQty,2)}}</td>
-                        <td style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
-                    </tr>
-                    {{ $x++ }}
-                @endforeach
-                </tbody>
-
-                <tbody>
+                @if ($request->isVATEligible)
+                    {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                    {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
-                        <td></td>
-                        <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">@if ($request->invoicedetails)
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
-                    @endif</td>
+                        <td colspan="2"></td>
+                        <td colspan="2" style="text-align: left; border-right: none !important;"><b>VAT @ {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}%</b></td>
+                        <td colspan="3" class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                     </tr>
-                    @if ($request->tax)
-                    {{$directTraSubTotal+=$request->tax->amount}}
-                        <tr>
-                            <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
-                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                            <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
-                        </tr>
 
                     <tr>
-                        <td></td>
-                        <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                        <td colspan="2"></td>
+                        <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable</b></td>
+                        <td colspan="3" class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
-                    @endif
-                </tbody>
-                <tbody>
+
                     <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="2"></td>
+                        <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
+                        <td colspan="3" class="text-right">{{$request->amountInWordsEnglish}}</td>
                     </tr>
+                @endif
                 </tbody>
-                
             </table>
-        @endif
-
-        @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
-
-                <table class="table">
-                    <thead>
-                    <tr style="background-color: #6798da;">
-                        <th style="width:5%;"></th>
-                        <th style="width:40%;">Item<br>رقم المنتج</th>
-                        <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
-                        <th style="width:15%;text-align: center">QTY<br>الكمية</th>
-                        <th style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
-                        <th style="width:15%;text-align: center">Total Amount<br>القيمة الكلية</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    {{$decimal = 2}}
-                    {{$x=1}}
-                    {{$directTraSubTotal=0}}
-                    {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-
-                    @if(!empty($request->issue_item_details))
-                        @foreach ($request->issue_item_details as $item)
-
-                            @if ($item->sellingTotal != 0)
-                                {{$directTraSubTotal +=$item->sellingTotal}}
-
-                                <tr style="border: 1px solid !important;">
-                                    <td>{{$x}}</td>
-                                    <td style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
-                                    <td style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
-                                    <td style="text-align: right;">{{$item->qtyIssued}}</td>
-                                    <td style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                    <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
-                                </tr>
-                                {{ $x++ }}
-                            @endif
-                        @endforeach
-                    @endif
-
-                    </tbody>
-                    <tbody>
+            
+            <table class="table">
+                <tbody>
                     <tr>
-                        <td></td>
-                        <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
-                        <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">@if ($request->invoicedetails)
-                                {{number_format($directTraSubTotal, $numberFormatting)}}
-                            @endif</td>
+                        <td colspan="8">we certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
                     </tr>
-                    @if ($request->isVATEligible)
-                        {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
-                        {{$directTraSubTotal+=$totalVATAmount}}
-                        <tr>
-                            <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% (ضريبة القيمة المضافة )</b></td>
-                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                            <td class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
-                        </tr>
-
-                        <tr>
-                            <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
-                            <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                            <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
-                        </tr>
-                    @endif
-                    </tbody>
-                    <tbody>
-                    <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
-                    </tr>
-                    </tbody>
-                </table>
-
+                </tbody>
+            </table>
         @endif
     </div>
-</div>
-
-
-
-
-
-
-
-
-
+  
 

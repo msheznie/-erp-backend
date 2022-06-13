@@ -85,6 +85,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Models\CustomerContactDetails;
+use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
 use App\Models\PortMaster;
 use Exception;
@@ -3250,7 +3252,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        $customerID = $customerInvoice->customerID;
+        $CustomerContactDetails = CustomerContactDetails::where('customerID', $customerID)->where('isDefault', -1)->first();
+        if($CustomerContactDetails){
+            $customerInvoice['CustomerContactDetails'] = $CustomerContactDetails;
+        }
+       
+        $customerInvoiceLogistic = CustomerInvoiceLogistic::with('port_of_loading','port_of_discharge')
+                                                            ->where('custInvoiceDirectAutoID', $id)
+                                                            ->first()
+                                                            ->toArray();
         
+        if(count($customerInvoiceLogistic) > 0){
+            $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
+        }
+
+
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
@@ -3285,12 +3302,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if($type == 1)
             {
                 $html = view('print.chromite_customer_invoice', $array);
-                $htmlFooter = view('print.customer_invoice_tue_footer', $array);
                 $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
-                $mpdf->SetHTMLFooter($htmlFooter);
-    
                 $mpdf->WriteHTML($html);
                 return $mpdf->Output($fileName, 'I');
             }
