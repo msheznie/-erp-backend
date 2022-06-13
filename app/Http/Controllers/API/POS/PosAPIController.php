@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\POS;
 
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerMasterCategory;
-use App\models\ErpLocation;
+use App\Models\ErpLocation;
 use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccount;
@@ -59,7 +59,18 @@ class PosAPIController extends AppBaseController
 
     public function pullChartOfAccount()
     {
-        # code...
+        DB::beginTransaction();
+        try {
+            $chartOfAccount = ChartOfAccount::selectRaw('chartOfAccountSystemID As id,AccountCode As system_code')
+            ->where('AccountCode','!=','')
+            ->get();
+    
+            DB::commit();
+            return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }
