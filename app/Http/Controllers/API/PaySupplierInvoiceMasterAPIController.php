@@ -3179,6 +3179,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3189,9 +3190,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption = 1
 )
 WHERE
 	approved = - 1
@@ -3220,6 +3222,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3230,11 +3233,13 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
 	MASTER .debitNoteAutoID = advd.PayMasterAutoId
 	AND MASTER .documentSystemID = advd.documentSystemID
 	AND MASTER .companySystemID = advd.companySystemID
+    AND advd.matchingOption = 2
 )
 LEFT JOIN (
 	SELECT
@@ -3333,6 +3338,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3343,9 +3349,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption = 3
 )
 WHERE
 	approved = - 1
