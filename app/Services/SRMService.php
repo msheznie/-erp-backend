@@ -2454,8 +2454,8 @@ class SRMService
         $documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
         }])
-            ->whereDoesntHave('document_attachments', function ($q) use ($tenderId) {
-                $q->where('documentSystemCode', $tenderId);
+            ->whereDoesntHave('document_attachments', function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
                 $q->where('documentSystemID', 108);
             })
             ->where('documentSystemCode', $tenderId)
@@ -2464,7 +2464,7 @@ class SRMService
             ->whereHas('tender_document_types', function ($q) {
                 $q->where('srm_action', 1);
             })
-            ->count();
+            ->count(); 
 
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
             $q2->where('bid_master_id', $bidMasterId);
