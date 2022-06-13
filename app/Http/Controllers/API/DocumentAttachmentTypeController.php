@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderDocumentTypes;
 use App\Repositories\TenderDocumentTypesRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -139,6 +140,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
+        $input['updated_at'] = Carbon::now();
 
         $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
 
