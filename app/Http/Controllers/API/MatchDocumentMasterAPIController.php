@@ -256,7 +256,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
                 $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
                 $input['matchingAmount'] = 0;
-
+                $input['matchingOption'] = 1;//$input['matchingOptionID'];
                 $input['confirmedYN'] = $paySupplierInvoiceMaster->confirmedYN;
                 $input['confirmedByEmpID'] = $paySupplierInvoiceMaster->confirmedByEmpID;
                 $input['confirmedByEmpSystemID'] = $paySupplierInvoiceMaster->confirmedByEmpSystemID;
@@ -316,7 +316,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Debit note amount is more than document value, please check again', 500);
                 }
 
-                $input['matchingType'] = 'AP';
+                $input['matchingType'] = 'DN';
                 $input['PayMasterAutoId'] = $input['paymentAutoID'];
                 $input['documentSystemID'] = $debitNoteMaster->documentSystemID;
                 $input['documentID'] = $debitNoteMaster->documentID;
@@ -345,6 +345,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['payAmountCompRpt'] = $debitNoteMaster->debitAmountRpt;
                 $input['invoiceType'] = $debitNoteMaster->documentType;
                 $input['matchingAmount'] = 0;
+                $input['matchingOption'] = 2;//$input['matchingOptionID'];
                 $input['confirmedYN'] = $debitNoteMaster->confirmedYN;
                 $input['confirmedByEmpID'] = $debitNoteMaster->confirmedByEmpID;
                 $input['confirmedByEmpSystemID'] = $debitNoteMaster->confirmedByEmpSystemID;
@@ -393,7 +394,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Advance payment amount is more than document value, please check again', 500);
                 }
 
-                $input['matchingType'] = 'AP';
+                $input['matchingType'] = 'AR';
                 $input['PayMasterAutoId'] = $input['paymentAutoID'];
                 $input['documentSystemID'] = $paySupplierInvoiceMaster->documentSystemID;
                 $input['documentID'] = $paySupplierInvoiceMaster->documentID;
@@ -421,7 +422,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['payAmountCompLocal'] = $paySupplierInvoiceMaster->payAmountCompLocal;
                 $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
                 $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
-                $input['matchingOption'] = 1;//$input['matchingOptionID'];
+                $input['matchingOption'] = 3;//$input['matchingOptionID'];
                 $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
                 $input['matchingAmount'] = 0;
 
