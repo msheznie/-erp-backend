@@ -3350,7 +3350,7 @@ LEFT JOIN (
 WHERE
 	approved = - 1
 AND invoiceType = 5   
-AND advancePaymentTypeID = 1    
+AND advancePaymentTypeID = 0    
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
@@ -3512,17 +3512,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
                 foreach ($advancePaymentDetails as $val) {
                     $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
-
-                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                    if(isset($advancePayment))
+                    {
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                         ->where('companySystemID', $advancePayment->companySystemID)
                         ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                         ->where('purchaseOrderID', $advancePayment->poID)
                         ->first();
 
-                    if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                        $advancePayment->selectedToPayment = 1;
-                        $advancePayment->save();
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                            $advancePayment->selectedToPayment = 1;
+                            $advancePayment->save();
+                        }
                     }
+
+          
                 }
             }
 

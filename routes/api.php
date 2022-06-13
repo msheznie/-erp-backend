@@ -18,6 +18,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
+        Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
+        Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -2916,7 +2918,7 @@ Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 /* Below two request must be always separated from tenant, auth middlewares */
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
 /* end of separated from tenant, auth middlewares */
