@@ -1281,17 +1281,16 @@ class SRMService
         $tenderId = $input['extra']['tenderId'];
         try {
             $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
-            if(sizeof($queryRecordsCount)){
+            if (sizeof($queryRecordsCount)) {
                 $result = TenderFaq::select('id', 'question', 'answer')
-               ->where('tender_master_id', $tenderId)
-               ->get();
+                    ->where('tender_master_id', $tenderId)
+                    ->get();
 
                 return [
                     'success' => true,
                     'message' => 'FAQ list successfully get',
                     'data' => $result
                 ];
-
             } else {
                 return [
                     'success' => true,
@@ -1299,7 +1298,7 @@ class SRMService
                     'data' => ''
                 ];
             }
-        } catch (\RuntimeException $exception){
+        } catch (\RuntimeException $exception) {
             return [
                 'success' => true,
                 'message' => 'FAQ list failed get',
@@ -1346,17 +1345,16 @@ class SRMService
                 if (isset($attachment) && !empty($attachment)) {
                     try {
                         $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
-                    } catch (Exception $exception){
-                            if($exception->getCode() == 500){
-                                DB::rollBack();
-                                return [
-                                    'success'   => false,
-                                    'message'   => $exception->getMessage(),
-                                    'data'      => $exception->getMessage()
-                                ];
-                            }
+                    } catch (Exception $exception) {
+                        if ($exception->getCode() == 500) {
+                            DB::rollBack();
+                            return [
+                                'success'   => false,
+                                'message'   => $exception->getMessage(),
+                                'data'      => $exception->getMessage()
+                            ];
+                        }
                     }
-
                 }
                 DB::commit();
 
@@ -1663,7 +1661,7 @@ class SRMService
         try {
             $data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
-            if($newAttachment){
+            if ($newAttachment) {
                 $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
                     ->count();
@@ -1695,8 +1693,8 @@ class SRMService
         $queryRecordsCount = DocumentAttachments::where('documentSystemID', 106)
             ->where('documentSystemCode', $appointmentID)
             ->firstOrFail()->toArray();
-        
-        if(sizeof($queryRecordsCount)){
+
+        if (sizeof($queryRecordsCount)) {
             $result = DocumentAttachments::where('documentSystemID', 106)
                 ->where('documentSystemCode', $appointmentID)
                 ->get();
@@ -1706,7 +1704,6 @@ class SRMService
                 'message' => 'Delivery Appointment successfully get',
                 'data' => $result
             ];
-
         } else {
             return [
                 'success' => true,
@@ -1756,8 +1753,8 @@ class SRMService
             $status = TenderBidClarifications::where('id', $id)
                 ->delete();
 
-            if($status && !empty($parentId)){
-                if(empty($parentIdList[1]['supplier_id']) && sizeof($parentIdList) != 1){
+            if ($status && !empty($parentId)) {
+                if (empty($parentIdList[1]['supplier_id']) && sizeof($parentIdList) != 1) {
                     $data['is_answered'] = 1;
                     $this->tenderBidClarificationsRepository->update($data, $parentId['parent_id']);
                 }
@@ -1769,5 +1766,85 @@ class SRMService
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+    }
+    public function getConsolidatedData($request)
+    {
+        $tenderMasterId = $request->input('extra.tenderId');
+        $tenderDates = [];
+
+        $tenderMaster = TenderMaster::select(
+            'title',
+            'tender_code',
+            'document_sales_start_date',
+            'document_sales_end_date',
+            'pre_bid_clarification_start_date',
+            'pre_bid_clarification_end_date',
+            'site_visit_date',
+            'site_visit_end_date',
+            'bid_submission_opening_date',
+            'bid_submission_closing_date'
+        )
+            ->where('id', $tenderMasterId)
+            ->first();
+
+        $ClanderDetails = DB::table('srm_calendar_dates_detail')->selectRaw(
+            'srm_calendar_dates.calendar_date, 
+            DATE(srm_calendar_dates_detail.from_date) as from_date,
+            DATE(srm_calendar_dates_detail.to_date) as to_date'
+        )->join('srm_calendar_dates', function ($query) {
+            $query->on('srm_calendar_dates_detail.calendar_date_id', '=', 'srm_calendar_dates.id');
+        })
+            ->where('tender_id', $tenderMasterId)
+            ->get();
+        
+        $ClanderDetailsArrayData = array_map(function ($query) {
+            return (array)$query;
+        }, $ClanderDetails->toArray());
+
+        if (!empty($tenderMaster)) {
+            $tenderDates = array(
+                [
+                    'calendar_date' => 'Document Sale',
+                    'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
+                    'to_date' =>  (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d'): null
+                ],
+                [
+                    'calendar_date' => 'Pre-bid Clarification',
+                    'from_date' => (!is_null($tenderMaster['pre_bid_clarification_start_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_start_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['pre_bid_clarification_end_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_end_date'])->format('Y-m-d'): null
+                ],
+                [
+                    'calendar_date' => 'Site Visit',
+                    'from_date' => (!is_null($tenderMaster['site_visit_date'])) ? Carbon::parse($tenderMaster['site_visit_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['site_visit_end_date'])) ? Carbon::parse($tenderMaster['site_visit_end_date'])->format('Y-m-d') : null
+                ],
+                [
+                    'calendar_date' => 'Bid Submission Date',
+                    'from_date' => (!is_null($tenderMaster['bid_submission_opening_date'])) ? Carbon::parse($tenderMaster['bid_submission_opening_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['bid_submission_closing_date'])) ? Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d'): null
+                ]
+            );
+        }
+
+        $calendarDateMerge = collect($tenderDates)->merge($ClanderDetailsArrayData);
+        
+        $currentSequence = collect($calendarDateMerge)->map(function ($group) {
+            $data = null;
+            if ($group['from_date']  <= Carbon::now()->format("Y-m-d") && $group['to_date']  >= Carbon::now()->format("Y-m-d")) {
+                $data = $group['calendar_date'];
+            }
+            return  $data;
+        });
+
+        $data['currentSequence'] = $currentSequence->filter()->last();
+        $data['title'] = $tenderMaster['title'];
+        $data['tender_code'] = $tenderMaster['tender_code'];
+        $data['sequenceDate'] = $calendarDateMerge;
+
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' =>  $data
+        ];
     }
 }
