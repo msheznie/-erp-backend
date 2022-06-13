@@ -69,7 +69,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         if (!empty($attachmentTypeExist)) {
             return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
         }
-
+        $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $attachmentType = $this->tenderDocumentTypesRepository->create($input);
