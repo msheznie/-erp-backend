@@ -1413,7 +1413,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
             $input['companySystemID'] = $companySystemID;
 
-
+         
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
@@ -1458,7 +1458,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
-
+            
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
@@ -1496,7 +1496,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVbankCurrency'] = 0;
                 $input['BPVbankCurrencyER'] = 0;
             }
-
+            
             $companyCurrency = \Helper::companyCurrency($companySystemID);
             if ($companyCurrency) {
                 $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -1548,7 +1548,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayeeEmpID'] = null;
                 }
             }
-
+            
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             if (isset($input['chequePaymentYN'])) {
@@ -1578,7 +1578,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
-
+            
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
@@ -1652,7 +1652,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                     $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
                 }
-
+                
                 unset($inputParam);
                 $validator = \Validator::make($input, [
                     'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -1691,7 +1691,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         'directPaymentPayeeEmpID' => 'required|numeric|min:1'
                     ]);
                 }
-
+                
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422, ['type' => 'confirm']);
                 }
@@ -1713,6 +1713,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
                 }
 
+              
                 $overPaymentErrorMessage = [];
                 // po payment
                 if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
@@ -1723,7 +1724,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     if (empty($pvDetailExist)) {
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
-
+                    
                     $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')
                         ->where('PayMasterAutoId', $id)
                         ->first();
@@ -1891,22 +1892,27 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     foreach ($advancePaymentDetails as $val) {
                         $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
 
-                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                        if(isset($advancePayment))
+                        {
+                            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                             ->where('companySystemID', $advancePayment->companySystemID)
                             ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                             ->where('purchaseOrderID', $advancePayment->poID)
                             ->first();
 
-                        if (($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                            $advancePayment->selectedToPayment = -1;
-                            $advancePayment->fullyPaid = 2;
-                            $advancePayment->save();
-                        } else {
-                            $advancePayment->selectedToPayment = 0;
-                            $advancePayment->fullyPaid = 1;
-                            $advancePayment->save();
+                            if (($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                                $advancePayment->selectedToPayment = -1;
+                                $advancePayment->fullyPaid = 2;
+                                $advancePayment->save();
+                            } else {
+                                $advancePayment->selectedToPayment = 0;
+                                $advancePayment->fullyPaid = 1;
+                                $advancePayment->save();
+                            }
+
                         }
 
+                  
                         $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($val->purchaseOrderID, $id);
 
                         if (!$resValidate['status']) {
@@ -1915,7 +1921,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     }
 
                 }
-
+             
                 if (count($overPaymentErrorMessage) > 0) {
                     $confirmErrorOverPay = array('type' => 'confirm_error_over_payment', 'data' => $overPaymentErrorMessage);
                     return $this->sendError("You cannot confirm this document.", 500, $confirmErrorOverPay);
@@ -3173,6 +3179,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3183,9 +3190,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption IS NULL
 )
 WHERE
 	approved = - 1
@@ -3194,74 +3202,119 @@ AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
-	MASTER.debitNoteAutoID as masterAutoID,
-	MASTER.debitNoteCode as documentCode,
-	MASTER.debitNoteDate as docDate,
-	MASTER.debitAmountTrans as transAmount,
-	MASTER.supplierID,
-	currency.CurrencyCode,
-	currency.DecimalPlaces,
-	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
-	(MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
-	) AS BalanceAmt
-FROM
-	erp_debitnote AS MASTER
-INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
-LEFT JOIN (
-	SELECT
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID,
-		erp_matchdocumentmaster.companySystemID,
-		erp_matchdocumentmaster.BPVcode,
-		COALESCE (
-			SUM(
-				erp_matchdocumentmaster.matchingAmount
-			),
-			0
-		) AS SumOfmatchingAmount
-	FROM
-		erp_matchdocumentmaster
-	GROUP BY
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
-) AS advd ON (
-	MASTER .debitNoteAutoID = advd.PayMasterAutoId
-	AND MASTER .documentSystemID = advd.documentSystemID
-	AND MASTER .companySystemID = advd.companySystemID
-)
-LEFT JOIN (
-	SELECT
-		erp_paysupplierinvoicedetail.PayMasterAutoId,
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode,
-		erp_paysupplierinvoicedetail.bookingInvDocCode,
-		erp_paysupplierinvoicedetail.companySystemID,
-		Sum(
-			erp_paysupplierinvoicedetail.supplierPaymentAmount
-		) AS SumOfsupplierPaymentAmount
-	FROM
-		erp_paysupplierinvoicedetail
-	GROUP BY
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode
-) AS payInvoice ON (
-	MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
-	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
-	AND MASTER.companySystemID = payInvoice.companySystemID
-)
-WHERE
-	approved = - 1
-AND matchInvoice <> 2
-AND MASTER.companySystemID = ' . $input['companySystemID'] . '
-AND supplierID = ' . $input['BPVsupplierID'] . '
-HAVING
-	(
-		ROUND(
-			BalanceAmt,
-			currency.DecimalPlaces
-		) > 0
-	)');
+                MASTER.debitNoteAutoID as masterAutoID,
+                MASTER.debitNoteCode as documentCode,
+                MASTER.debitNoteDate as docDate,
+                MASTER.debitAmountTrans as transAmount,
+                MASTER.supplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
+                IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
+                (MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+                ) AS BalanceAmt
+            FROM
+                erp_debitnote AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    erp_matchdocumentmaster.matchingOption,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.matchingOption
+            ) AS advd ON (
+                MASTER .debitNoteAutoID = advd.PayMasterAutoId
+                AND MASTER .documentSystemID = advd.documentSystemID
+                AND MASTER .companySystemID = advd.companySystemID
+                AND advd.matchingOption IS NULL
+            )
+            LEFT JOIN (
+                SELECT
+                    erp_paysupplierinvoicedetail.PayMasterAutoId,
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                    erp_paysupplierinvoicedetail.bookingInvDocCode,
+                    erp_paysupplierinvoicedetail.companySystemID,
+                    Sum(
+                        erp_paysupplierinvoicedetail.supplierPaymentAmount
+                    ) AS SumOfsupplierPaymentAmount
+                FROM
+                    erp_paysupplierinvoicedetail
+                GROUP BY
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode
+            ) AS payInvoice ON (
+                MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
+                AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
+                AND MASTER.companySystemID = payInvoice.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND matchInvoice <> 2
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . '
+            AND supplierID = ' . $input['BPVsupplierID'] . '
+            HAVING
+                (
+                    ROUND(
+                        BalanceAmt,
+                        currency.DecimalPlaces
+                    ) > 0
+                )');
+        }
+        elseif ($input['matchType'] == 4) {
+            $invoiceMaster = DB::select('SELECT
+                MASTER.PayMasterAutoId as masterAutoID,
+                MASTER.BPVcode as documentCode,
+                MASTER.BPVdate as docDate,
+                MASTER.payAmountSuppTrans as transAmount,
+                MASTER.BPVsupplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+                (
+                    MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+                ) AS BalanceAmt
+            FROM
+                erp_paysupplierinvoicemaster AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID
+            ) AS advd ON (
+                MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND invoiceType = 3    
+            AND matchInvoice <> 2
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
         elseif ($input['matchType'] == 3) {
             $invoiceMaster = DB::select('SELECT
@@ -3285,6 +3338,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3295,13 +3349,15 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption = 1
 )
 WHERE
 	approved = - 1
-AND invoiceType = 3    
+AND invoiceType = 5   
+AND advancePaymentTypeID = 0    
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
@@ -3463,17 +3519,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
                 foreach ($advancePaymentDetails as $val) {
                     $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
-
-                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                    if(isset($advancePayment))
+                    {
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                         ->where('companySystemID', $advancePayment->companySystemID)
                         ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                         ->where('purchaseOrderID', $advancePayment->poID)
                         ->first();
 
-                    if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                        $advancePayment->selectedToPayment = 1;
-                        $advancePayment->save();
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                            $advancePayment->selectedToPayment = 1;
+                            $advancePayment->save();
+                        }
                     }
+
+          
                 }
             }
 

@@ -1094,6 +1094,10 @@ class TaxLedgerInsert implements ShouldQueue
                                 $ledgerDetailsData['taxableAmountReporting'] = $value->netAmountRpt - $value->VATAmountRpt;
                                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
                                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
+                                $taxConfigData = TaxService::getInputVATGLAccount($masterData->companySystemID);
+                                if (!empty($taxConfigData)) {
+                                    $ledgerDetailsData['inputVATGlAccountID'] = $taxConfigData->inputVatGLAccountAutoID;
+                                }
                                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrency;
                                 $ledgerDetailsData['rptCurrencyID'] = $value->comRptCurrency;
 
