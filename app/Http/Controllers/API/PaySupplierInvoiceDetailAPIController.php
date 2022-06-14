@@ -20,6 +20,7 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppMaster;
 use App\Models\EmployeeLedger;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
@@ -304,6 +305,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+            }
+        }
+
+        if($input["isRetention"] == 1 && $input["bookingInvSystemCode"]){
+            $bookInvMaster = BookInvSuppMaster::find($input["bookingInvSystemCode"]);
+            if($bookInvMaster && $bookInvMaster->retentionAmount != 0){
+                $input["retentionVatAmount"] = ($input["supplierPaymentAmount"]/($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
             }
         }
 

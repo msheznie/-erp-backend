@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\TaxService;
 use App\Models\BankLedger;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
@@ -64,6 +65,17 @@ class BankLedgerInsert implements ShouldQueue
                             $masterData->payAmountCompLocal = $currencyConvertionData['localAmount'];
                             $masterData->payAmountCompRpt = $currencyConvertionData['reportingAmount'];
                         }
+                        $retationVATAmount = 0;
+                        $retentionLocalVatAmount = 0;
+                        $retentionRptVatAmount = 0;
+                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                        if ($retationVATAmount > 0) {
+                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                            $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                            $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                        }
 
                        
                         $data['companySystemID'] = $masterData->companySystemID;
@@ -98,10 +110,12 @@ class BankLedgerInsert implements ShouldQueue
                         $data['localCurrencyER'] = $masterData->localCurrencyER;
                         $data['companyRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['companyRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountBank * -1 + $masterData->VATAmount * -1 : $masterData->payAmountBank + $masterData->VATAmount;
-                        $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?$masterData->payAmountSuppTrans * -1 + $masterData->VATAmount * -1 : $masterData->payAmountSuppTrans + $masterData->VATAmount;
-                        $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompLocal * -1 + $masterData->VATAmountLocal * -1: $masterData->payAmountCompLocal + $masterData->VATAmountLocal;
-                        $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? $masterData->payAmountCompRpt * -1 + $masterData->VATAmountRpt * -1 : $masterData->payAmountCompRpt + $masterData->VATAmountRpt;
+
+                        $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + $masterData->VATAmount) * -1 : $masterData->payAmountBank + $retationVATAmount + $masterData->VATAmount;
+                        $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?($masterData->payAmountSuppTrans + $retationVATAmount + $masterData->VATAmount) * -1 : $masterData->payAmountSuppTrans + $retationVATAmount + $masterData->VATAmount;
+                        $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + $masterData->VATAmountLocal) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + $masterData->VATAmountLocal;
+                        $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + $masterData->VATAmountRpt) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + $masterData->VATAmountRpt;
+
 
                         if ($masterData->chequePaymentYN == 0) {
                             $data['chequePaymentYN'] = -1;
