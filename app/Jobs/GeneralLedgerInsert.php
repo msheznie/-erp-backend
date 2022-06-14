@@ -1790,15 +1790,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
                                         $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                                         $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
-                                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {                        $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
+
+                                            $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
                                             $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
                                             $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
-                                        }
-                                        else{
-                                            $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage/100);
-                                            $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage/100);
-                                            $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage/100);
-                                        }
+
                                     }
 
 
@@ -1811,7 +1807,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
                                         $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                                         $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
-                                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {                        $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
+                                        if($masterData->rcmActivated != 1){
+                                            $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
                                             $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
                                             $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
                                         }
@@ -1870,7 +1867,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    if ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 3) {
+                                    if ($masterData->documentType == 0) {
                                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
 
                                             $data['documentTransAmount'] = $retentionTransWithoutVat;
@@ -1882,6 +1879,24 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentLocalAmount'] = $retentionLocal;
                                             $data['documentRptAmount'] = $retentionRpt;
                                         }
+                                    }
+                                    else if($masterData->documentType == 1){
+                                        if($masterData->rcmActivated != 1){
+                                            $data['documentTransAmount'] = $retentionTransWithoutVat;
+                                            $data['documentLocalAmount'] = $retentionLocalWithoutVat;
+                                            $data['documentRptAmount'] = $retentionRptWithoutVat;
+                                        }
+                                        else{
+                                            $data['documentTransAmount'] = $retentionTrans;
+                                            $data['documentLocalAmount'] = $retentionLocal;
+                                            $data['documentRptAmount'] = $retentionRpt;
+                                        }
+
+                                    }
+                                    else if($masterData->documentType == 3){
+                                        $data['documentTransAmount'] = $retentionTransWithoutVat;
+                                        $data['documentLocalAmount'] = $retentionLocalWithoutVat;
+                                        $data['documentRptAmount'] = $retentionRptWithoutVat;
                                     }
                                     else{
                                         $data['documentTransAmount'] = $retentionTrans;
@@ -2461,40 +2476,6 @@ class GeneralLedgerInsert implements ShouldQueue
                                         Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                                     }
 
-
-                                    if ($retentionPercentage > 0 && $masterData->documentType == 1) {
-                                        $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
-                                        if (!empty($taxConfigData)) {
-                                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatTransferGLAccountAutoID)
-                                                ->where('companySystemID', $masterData->companySystemID)
-                                                ->first();
-
-                                            if (!empty($chartOfAccountData)) {
-                                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                                $data['glCode'] = $chartOfAccountData->AccountCode;
-                                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                                $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans)) * -1;
-                                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
-                                                $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
-                                                
-                                                if ($retentionPercentage > 0 && $masterData->documentType == 1) {
-                                                    $data['documentTransAmount'] = $data['documentTransAmount'] * (($retentionPercentage/100));
-                                                    $data['documentLocalAmount'] = $data['documentLocalAmount'] * (($retentionPercentage/100));
-                                                    $data['documentRptAmount'] = $data['documentRptAmount'] * (($retentionPercentage/100));
-                                                }
-                                                array_push($finalData, $data);
-
-                                                $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                            } else {
-                                                Log::info('Supplier Invoice VAT Transfer GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                                Log::info('Output Vat Transfer GL Account not assigned to company' . date('H:i:s'));
-                                            }
-                                        } else {
-                                            Log::info('Supplier Invoice VAT Transfer GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                            Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
-                                        }
-                                    }
                                 }
                             }
                         }
