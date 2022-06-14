@@ -1790,16 +1790,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
                                         $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
                                         $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
-                                        if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
+
                                             $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
                                             $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
                                             $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
-                                        }
-                                        else{
-                                            $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage/100);
-                                            $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage/100);
-                                            $retentionRpt = $data['documentRptAmount'] * ($retentionPercentage/100);
-                                        }
+
                                     }
 
 
@@ -1872,7 +1867,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    if ($masterData->documentType == 0 || $masterData->documentType == 3) {
+                                    if ($masterData->documentType == 0) {
                                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
 
                                             $data['documentTransAmount'] = $retentionTransWithoutVat;
@@ -1897,6 +1892,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptAmount'] = $retentionRpt;
                                         }
 
+                                    }
+                                    else if($masterData->documentType == 3){
+                                        $data['documentTransAmount'] = $retentionTransWithoutVat;
+                                        $data['documentLocalAmount'] = $retentionLocalWithoutVat;
+                                        $data['documentRptAmount'] = $retentionRptWithoutVat;
                                     }
                                     else{
                                         $data['documentTransAmount'] = $retentionTrans;
