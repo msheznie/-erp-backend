@@ -224,7 +224,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $retentionInvoiceAmount = 0;
                             $retentionRpt = 0;
                             if ($retentionPercentage > 0) {
-                                if ($masterData->documentType != 4) {
+                                if ($masterData->documentType != 4 && $masterData->documentType != 1) {
                                     if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
                                         if ($masterData->documentType == 0) {
                                             $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($masterModel["autoID"]);
@@ -234,27 +234,6 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                             $totalVATAmount = $vatDetails['totalVAT'];
                                             $totalVATAmountLocal = $vatDetails['totalVATLocal'];
                                             $totalVATAmountRpt = $vatDetails['totalVATRpt'];
-
-                                            $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
-                                            $retentionTrans = ($data['supplierDefaultAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
-                                            $retentionLocal = ($data['localAmount'] - $totalVATAmountLocal) * ($retentionPercentage / 100);
-                                            $retentionRpt = ($data['comRptAmount'] - $totalVATAmountRpt) * ($retentionPercentage / 100);
-
-
-                                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] * (1 - ($retentionPercentage / 100));
-                                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] * (1 - ($retentionPercentage / 100));
-                                            $data['localAmount'] = $data['localAmount'] * (1 - ($retentionPercentage / 100));
-                                            $data['comRptAmount'] = $data['comRptAmount'] * (1 - ($retentionPercentage / 100));
-                                        }
-                                        else if ($masterData->documentType == 1) {
-                                            $directVATDetails = TaxService::processDirectSupplierInvoiceVAT($masterModel["autoID"],
-                                                $masterModel["documentSystemID"]);
-                                            $totalVATAmount = 0;
-                                            $totalVATAmountLocal = 0;
-                                            $totalVATAmountRpt = 0;
-                                            $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
-                                            $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
-                                            $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
                                             $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
                                             $retentionTrans = ($data['supplierDefaultAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
@@ -311,6 +290,34 @@ class AccountPayableLedgerInsert implements ShouldQueue
                                         $data['localAmount'] = $data['localAmount'] * (1-($retentionPercentage/100));
                                         $data['comRptAmount'] = $data['comRptAmount'] * (1-($retentionPercentage/100));
                                     }
+                                }
+                                else if ($masterData->documentType == 1) {
+                                    $directVATDetails = TaxService::processDirectSupplierInvoiceVAT($masterModel["autoID"],
+                                        $masterModel["documentSystemID"]);
+                                    $totalVATAmount = 0;
+                                    $totalVATAmountLocal = 0;
+                                    $totalVATAmountRpt = 0;
+                                    $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
+                                    $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
+                                    $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
+                                    if($masterData->rcmActivated != 1) {
+                                        $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
+                                        $retentionTrans = ($data['supplierDefaultAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
+                                        $retentionLocal = ($data['localAmount'] - $totalVATAmountLocal) * ($retentionPercentage / 100);
+                                        $retentionRpt = ($data['comRptAmount'] - $totalVATAmountRpt) * ($retentionPercentage / 100);
+                                    }
+                                    else{
+                                        $retentionInvoiceAmount = $data['supplierInvoiceAmount'] * ($retentionPercentage / 100);
+                                        $retentionTrans = $data['supplierDefaultAmount'] * ($retentionPercentage / 100);
+                                        $retentionLocal = $data['localAmount'] * ($retentionPercentage / 100);
+                                        $retentionRpt = $data['comRptAmount'] * ($retentionPercentage / 100);
+                                    }
+
+
+                                    $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] * (1 - ($retentionPercentage / 100));
+                                    $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] * (1 - ($retentionPercentage / 100));
+                                    $data['localAmount'] = $data['localAmount'] * (1 - ($retentionPercentage / 100));
+                                    $data['comRptAmount'] = $data['comRptAmount'] * (1 - ($retentionPercentage / 100));
                                 }
                             } 
 
