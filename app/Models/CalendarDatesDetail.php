@@ -116,5 +116,8 @@ class CalendarDatesDetail extends Model
         
     ];
 
+    public function calendarDates(){ 
+        return $this->hasOne('App\Models\CalendarDates', 'id', 'calendar_date_id');
+    }
     
 }

@@ -18,6 +18,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
+        Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
+        Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -956,6 +958,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
         Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
         Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
+        Route::post('addADVPaymentDetailNotLinkPo', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailNotLinkPo');
+
 
         Route::resource('performa_details', 'PerformaDetailsAPIController');
         Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
@@ -2674,6 +2678,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
+        Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2913,7 +2918,7 @@ Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 /* Below two request must be always separated from tenant, auth middlewares */
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@test');
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
 /* end of separated from tenant, auth middlewares */

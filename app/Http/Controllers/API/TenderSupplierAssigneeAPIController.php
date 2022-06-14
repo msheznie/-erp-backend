@@ -474,11 +474,22 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         if ($type == 1) {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
-            Please login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         } else {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
             Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         }
+    }
+    public function getNotSentEmail(Request $request){ 
+        $input = $request->all();
+        $tenderId = $input['tenderId'];
+        $companySystemId = $input['companyId'];
+        $data = TenderSupplierAssignee::with(['supplierAssigned'])
+        ->where('tender_master_id', $tenderId)
+        ->where('company_id', $companySystemId)
+        ->where('mail_sent', 0)
+        ->get();
+        return $data;
     }
 }
