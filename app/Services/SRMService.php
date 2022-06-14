@@ -19,6 +19,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
@@ -1857,5 +1858,26 @@ class SRMService
             'message' => 'Consolidated view data Successfully get',
             'data' =>  $data
         ];
+    }
+
+    public function getGoNoGoBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $critera_type_id = $request->input('extra.critera_type_id');
+
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
+            $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                }]);
+            }]);
+        }])->where('tender_id',$tenderId)->where('level',1)->where('critera_type_id',$critera_type_id)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Go No Go Bid Submission Successfully get',
+            'data' =>  $data
+        ];
+
     }
 }
