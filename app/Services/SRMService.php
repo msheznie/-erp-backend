@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidSubmissionMaster;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -19,6 +20,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\EvaluationCriteriaDetails;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
@@ -47,6 +49,7 @@ use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
+use Illuminate\Support\Str;
 
 class SRMService
 {
@@ -1888,5 +1891,42 @@ class SRMService
             'message' => 'Consolidated view data Successfully get',
             'data' =>  $data
         ];
+    }
+
+    public function getGoNoGoBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $critera_type_id = $request->input('extra.critera_type_id');
+
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
+            $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                }]);
+            }]);
+        }])->where('tender_id',$tenderId)->where('level',1)->where('critera_type_id',$critera_type_id)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Go No Go Bid Submission Successfully get',
+            'data' =>  $data
+        ];
+    }
+
+    public function checkBidSubmitted($request)
+    {
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tender_id =  $request->input('tenderId');
+        $bidSubmitted = BidSubmissionMaster::where('tender_id',$tender_id)->where('supplier_registration_id',$supplierRegId)->first();
+        if(!empty($bidSubmitted)){
+            $bidMasterId = $bidSubmitted['id'];
+        }else{
+            $att['tender_id'] = $tender_id;
+            $att['supplier_registration_id'] = $supplierRegId;
+            //$att['uuid'] =  Str::uuid()->toString();
+            $att['bid_sequence'] = 1;
+            $att['created_by'] = Helper::getEmployeeSystemID();
+            $result = BidSubmissionMaster::create($att);
+        }
     }
 }
