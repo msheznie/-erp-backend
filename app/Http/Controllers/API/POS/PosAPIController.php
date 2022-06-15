@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
+use App\Models\WarehouseMaster;
+use App\Models\WarehouseItems;
+use App\Models\WarehouseBinLocation;
 
 class PosAPIController extends AppBaseController
 {
@@ -88,6 +91,66 @@ class PosAPIController extends AppBaseController
             ->get();
             DB::commit();
             return $this->sendResponse($unitConvertion, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    
+    public function pullWarehouse()
+    {
+        DB::beginTransaction();
+        try {
+            $warehouse = WarehouseMaster::selectRaw('wareHouseSystemCode As id,wareHouseCode As system_code ,wareHouseDescription as description,wareHouseLocation as location_id,
+                erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
+                "" as phone_number,isActive as is_active,"" as warehouse_image,
+                "" as footer_note')
+            ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
+            ->where('wareHouseCode','!=','')
+            ->where('wareHouseDescription','!=','')
+            ->where('wareHouseLocation','!=','')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($warehouse, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullWarehouseItem()
+    {
+        DB::beginTransaction();
+        try {
+            $warehouseItems = WarehouseItems::selectRaw('warehouseItemsID As id,warehouseitems.warehouseSystemCode As warehouse_id ,
+             erp_location.locationName as location,erp_location.locationName as description,itemmaster.itemCodeSystem as item_id,itemmaster.primaryCode as item_code,
+             itemmaster.itemDescription as item_description,"" as is_active,"" as sales_price,unitOfMeasure as unit_id')
+            ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehouseitems.warehouseSystemCode')
+            ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
+            ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'warehouseitems.itemSystemCode')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($warehouseItems, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullWarehouseBinLocation()
+    {
+        DB::beginTransaction();
+        try {
+            $warehousebin = WarehouseBinLocation::selectRaw('binLocationID As binLocationID,warehousemaster.wareHouseSystemCode As warehouseAutoID,binLocationDes As Description')
+            ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehousebinlocationmaster.warehouseSystemCode')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
