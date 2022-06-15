@@ -47,9 +47,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
-use Illuminate\Support\Str;
 
 class SRMService
 {
@@ -1885,17 +1885,25 @@ class SRMService
     public function checkBidSubmitted($request)
     {
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tender_id =  $request->input('tenderId');
+        $tender_id =  $request->input('extra.tenderId');
         $bidSubmitted = BidSubmissionMaster::where('tender_id',$tender_id)->where('supplier_registration_id',$supplierRegId)->first();
         if(!empty($bidSubmitted)){
             $bidMasterId = $bidSubmitted['id'];
         }else{
             $att['tender_id'] = $tender_id;
             $att['supplier_registration_id'] = $supplierRegId;
-            //$att['uuid'] =  Str::uuid()->toString();
+            $att['uuid'] =  Uuid::generate()->string;
             $att['bid_sequence'] = 1;
-            $att['created_by'] = Helper::getEmployeeSystemID();
+            $att['created_by'] = $supplierRegId;
             $result = BidSubmissionMaster::create($att);
+
+            $bidMasterId = $result['id'];
         }
+
+        return [
+            'success' => true,
+            'message' => 'Retrieved Bid Submission id',
+            'data' =>  $bidMasterId
+        ];
     }
 }
