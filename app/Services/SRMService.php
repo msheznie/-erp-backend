@@ -1841,7 +1841,7 @@ class SRMService
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
         $data['sequenceDate'] = $calendarDateMerge; 
-        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
+        $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
         }])
@@ -1849,12 +1849,43 @@ class SRMService
             $q1->where('documentSystemCode',$tenderMasterId)
             ->where('documentSystemID',108);
         }) 
-        ->get();
+        ->get();  
+        if(!empty($attachments)){ 
+            foreach($attachments as $val){  
+                foreach($val['attachments'] as $val2){ 
+                    $val2->attPath =  Helper::getFileUrlFromS3($val2['path']);
+                }
+            }
+        }
+
+
+        $data['attachments'] = $attachments;
+        
+ 
+        
         /*  DocumentAttachments::where('documentSystemID',108) 
         ->where('documentSystemCode',$tenderMasterId)
         ->get()
         ->toArray(); */
 
+
+
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' =>  $data
+        ];
+    }
+    public function getConsolidatedDataAttachment( $request){  
+        $tenderMasterId = $request->input('extra.tenderId');
+        $attachmentId = $request->input('extra.attachmentId');
+
+        $attachment = DocumentAttachments::where('attachmentID',$attachmentId)
+        ->where('documentSystemID',108)
+        ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] =strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));  
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
