@@ -3103,34 +3103,6 @@ class GeneralLedgerInsert implements ShouldQueue
                                         if ($retationRcmVATAmount > 0) {
                                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationRcmVATAmount);
 
-                                            $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
-                                            if (!empty($taxConfigData)) {
-                                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatTransferGLAccountAutoID)
-                                                    ->where('companySystemID', $masterData->companySystemID)
-                                                    ->first();
-
-                                                if (!empty($chartOfAccountData)) {
-                                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                                    $data['glCode'] = $chartOfAccountData->AccountCode;
-                                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationRcmVATAmount));
-                                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']));
-                                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']));
-
-//                                                    array_push($finalData, $data);
-
-                                                    $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-
-                                                } else {
-                                                    Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                                    Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
-                                                }
-                                            } else {
-                                                Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
-                                            }
-
                                             $taxConfigData2 = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                                             if (!empty($taxConfigData2)) {
                                                 $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData2->outputVatGLAccountAutoID)
