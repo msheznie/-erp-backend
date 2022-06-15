@@ -41,13 +41,13 @@ class PosApi
             }
             else
             {
-                return errorMsgs("third party system not found",401);
+                return errorMsgs("Invalid API key",401);
             }
            
         }
         else
         {
-            return errorMsgs("Invlaid Token",401);
+            return errorMsgs("Invalid API key",401);
         }
        
         return $next($request);
