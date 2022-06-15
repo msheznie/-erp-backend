@@ -2943,3 +2943,8 @@ Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 Route::resource('calendar_dates', 'CalendarDatesAPIController');
 
 Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
+
+
+Route::resource('bid_submission_masters', 'BidSubmissionMasterAPIController');
+
+Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');

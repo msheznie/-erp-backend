@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidSubmissionMaster;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -48,6 +49,7 @@ use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
+use Illuminate\Support\Str;
 
 class SRMService
 {
@@ -1878,6 +1880,22 @@ class SRMService
             'message' => 'Go No Go Bid Submission Successfully get',
             'data' =>  $data
         ];
+    }
 
+    public function checkBidSubmitted($request)
+    {
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tender_id =  $request->input('tenderId');
+        $bidSubmitted = BidSubmissionMaster::where('tender_id',$tender_id)->where('supplier_registration_id',$supplierRegId)->first();
+        if(!empty($bidSubmitted)){
+            $bidMasterId = $bidSubmitted['id'];
+        }else{
+            $att['tender_id'] = $tender_id;
+            $att['supplier_registration_id'] = $supplierRegId;
+            //$att['uuid'] =  Str::uuid()->toString();
+            $att['bid_sequence'] = 1;
+            $att['created_by'] = Helper::getEmployeeSystemID();
+            $result = BidSubmissionMaster::create($att);
+        }
     }
 }

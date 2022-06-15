@@ -58,6 +58,7 @@ define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
 define('REMOVE_PRE_BID_CLARIFICATION_RESPONSE', 'REMOVE_PRE_BID_CLARIFICATION_RESPONSE');
 define('GET_CONSOLIDATED_DATA', 'GET_CONSOLIDATED_DATA');
 define('GET_GO_NO_GO_BID_SUBMISSION', 'GET_GO_NO_GO_BID_SUBMISSION');
+define('CHECK_BID_SUBMITTED', 'CHECK_BID_SUBMITTED');
 
 class APIController extends Controller
 {
@@ -162,6 +163,8 @@ class APIController extends Controller
                 return $this->SRMService->getConsolidatedData($request);
             case GET_GO_NO_GO_BID_SUBMISSION :
                 return $this->SRMService->getGoNoGoBidSubmissionData($request);
+            case CHECK_BID_SUBMITTED :
+                return $this->SRMService->checkBidSubmitted($request);
             default:
                 return [
                     'success'   => false,
