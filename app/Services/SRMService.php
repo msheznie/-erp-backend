@@ -28,6 +28,7 @@ use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
+use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
@@ -38,6 +39,7 @@ use App\Repositories\TenderBidClarificationsRepository;
 use App\Services\Shared\SharedService;
 use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -250,7 +252,7 @@ class SRMService
                     $data_details['qty'] = $val['qty'];
                     $data_details['foc_qty'] = isset($val['foc_qty']) ? $val['foc_qty'] : null;
                     $data_details['total_amount_after_foc'] = $val['total_amount_after_foc'];
-                    $data_details['expiry_date'] = isset($val['expiry_date']) ? $val['expiry_date'] : null;
+                    $data_details['expiry_date'] = isset($val['expiry_date']) ? (new Carbon($val['expiry_date']))->format('Y-m-d') : null;
                     $data_details['batch_no'] = isset($val['batch_no']) ? $val['batch_no'] : null;
                     $data_details['manufacturer'] = isset($val['manufacturer']) ? $val['manufacturer'] : null;
                     $data_details['brand'] = isset($val['brand']) ? $val['brand'] : null;
@@ -358,7 +360,7 @@ class SRMService
                     }
                     $arr[$x]['id'] = $slotDetail->id;
                     $arr[$x]['slot_master_id'] = $row->id;
-                    $arr[$x]['title'] = date("h:i A",strtotime($slotDetail->start_date)). '-'.date("h:i A",strtotime($slotDetail->end_date)). ' '.$row->ware_house->wareHouseDescription;
+                    $arr[$x]['title'] = date("h:i A", strtotime($slotDetail->start_date)) . '-' . date("h:i A", strtotime($slotDetail->end_date)) . ' ' . $row->ware_house->wareHouseDescription;
                     $arr[$x]['warehouse'] = $row->ware_house->wareHouseDescription;
                     $arr[$x]['start'] = $slotDetail->start_date;
                     $arr[$x]['end'] = $slotDetail->end_date;
@@ -401,13 +403,13 @@ class SRMService
         $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
 
         $data = Appointment::with(['detail' => function ($query) {
-            $query->with(['getPoMaster', 'getPoDetails' =>function($query){
-                $query->with(['unit','appointmentDetails' => function($q){
-                    $q->whereHas('appointment', function ($q){
+            $query->with(['getPoMaster', 'getPoDetails' => function ($query) {
+                $query->with(['unit', 'appointmentDetails' => function ($q) {
+                    $q->whereHas('appointment', function ($q) {
                         $q->where('refferedBackYN', '!=', -1);
                         /*$q->where('confirmed_yn', 1);*/
                     })->groupBy('po_detail_id')
-                        ->select('id', 'appointment_id','qty','po_detail_id')
+                        ->select('id', 'appointment_id', 'qty', 'po_detail_id')
                         ->selectRaw('sum(qty) as qty');
                 }]);
             }]);
@@ -428,7 +430,7 @@ class SRMService
 
         $data = Appointment::with(['detail' => function ($q) {
             $q->with(['getPoDetails' => function ($q1) {
-                $q1->with(['order', 'unit']);
+                $q1->with(['order', 'unit', 'order.transactioncurrency']);
             }]);
         }])
             ->where('id', $appointmentID)->first();
@@ -627,7 +629,8 @@ class SRMService
     private function amendPoAppointment($appointmentID, $slotCompanyId)
     {
         $amendedAppointment = Appointment::where('id', $appointmentID)
-            ->select('appointment.id AS appointment_id',
+            ->select(
+                'appointment.id AS appointment_id',
                 'appointment.supplier_id',
                 'appointment.document_system_id',
                 'appointment.serial_no',
@@ -658,7 +661,8 @@ class SRMService
         $insertAppointment = AppointmentRefferedBack::insert($amendedAppointment);
 
         $amendedAppointmentDetails = AppointmentDetails::where('appointment_id', $appointmentID)
-            ->select('appointment_details.id AS appointment_details_id',
+            ->select(
+                'appointment_details.id AS appointment_details_id',
                 'appointment_details.appointment_id',
                 'appointment_details.po_master_id',
                 'appointment_details.po_detail_id',
@@ -672,7 +676,7 @@ class SRMService
             ->get()->toArray();
         $insertAppointmentDetails = AppointmentDetailsRefferedBack::insert($amendedAppointmentDetails);
 
-        if($insertAppointment && $insertAppointmentDetails){
+        if ($insertAppointment && $insertAppointmentDetails) {
 
             $statusChange = Appointment::where('id', $appointmentID)
                 ->update([
@@ -681,7 +685,7 @@ class SRMService
                     'refferedBackYN' => 0
                 ]);
 
-            if($statusChange){
+            if ($statusChange) {
                 self::poAppointmentReferback($appointmentID, $slotCompanyId);
 
                 return [
@@ -766,18 +770,19 @@ class SRMService
             'data'      => $kycFormDetails
         ];
     }
-    public function getERPFormData(Request $request){
-        $currencyMaster = CurrencyMaster::select('currencyID','CurrencyName','CurrencyCode')->get();
-        $countryMaster = CountryMaster::select('countryID','countryCode','countryName')->get();
-        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID','categoryCode','categoryDescription')->get(); 
-        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID','supMasterCategoryID','subCategoryCode','categoryDescription')->get();
+    public function getERPFormData(Request $request)
+    {
+        $currencyMaster = CurrencyMaster::select('currencyID', 'CurrencyName', 'CurrencyCode')->get();
+        $countryMaster = CountryMaster::select('countryID', 'countryCode', 'countryName')->get();
+        $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryDescription')->get();
+        $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryDescription')->get();
         $formData =  array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
             'supplierCategorySubMaster' => $supplierCategorySubMaster,
         );
-        
+
         return [
             'success'   => true,
             'message'   => 'ERP Form Data Retrieved',
@@ -789,47 +794,47 @@ class SRMService
     {
         $slotDetailID = $request->input('extra.slotDetailID');
 
-        $detail = SlotDetails::where('id',$slotDetailID)->first();
+        $detail = SlotDetails::where('id', $slotDetailID)->first();
 
         $appointments = $this->getAppointmentDeliveries($request);
         $appointment = 0;
-        if(count($appointments['data']['data'])>0){
+        if (count($appointments['data']['data']) > 0) {
             $appointment = 1;
         }
 
-        if(!empty($detail)){//start_date
+        if (!empty($detail)) { //start_date
             $endDate = Carbon::parse($detail['end_date'])->format('Y-m-d H:i:s');
             $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-            $result['currentDate']=$currentDate;
-            $result['endDate']=$endDate;
+            $result['currentDate'] = $currentDate;
+            $result['endDate'] = $endDate;
 
             $start_date = Carbon::parse($detail['start_date'])->format('Y-m-d');
             $current = Carbon::parse(now())->format('Y-m-d');
             $canCancel = 0;
-            if($start_date>$current){
+            if ($start_date > $current) {
                 $canCancel = 1;
             }
 
-            if($endDate > $currentDate){
-                $result['canCreate']=1;
-                $result['canCancel']=$canCancel;
-                $result['appointments']=$appointment;
+            if ($endDate > $currentDate) {
+                $result['canCreate'] = 1;
+                $result['canCancel'] = $canCancel;
+                $result['appointments'] = $appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointment Can Be Created',
                     'data'      => $result
                 ];
-            }else{
-                $result['canCreate']=0;
-                $result['canCancel']=$canCancel;
-                $result['appointments']=$appointment;
+            } else {
+                $result['canCreate'] = 0;
+                $result['canCancel'] = $canCancel;
+                $result['appointments'] = $appointment;
                 return [
                     'success'   => true,
                     'message'   => 'Appointments can not be created for past dates',
                     'data'      => $result
                 ];
             }
-        }else{
+        } else {
             return [
                 'success'   => false,
                 'message'   => 'Slot Detail Not Available',
@@ -842,37 +847,37 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $detail = AppointmentDetails::where('appointment_id',$appointmentID)
-            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' =>function($query) use($appointmentID){
-            $query->with(['unit','appointmentDetails' => function($q) use($appointmentID){
-                $q->whereHas('appointment', function ($q) use($appointmentID){
-                    $q->where('refferedBackYN', '!=', -1);
-                    $q->where('cancelYN', 0);
-                    if(isset($appointmentID)){
-                        $q->where('id','!=', $appointmentID);
-                    }
-                })->groupBy('po_detail_id')
-                    ->select('id', 'appointment_id','qty','po_detail_id')
-                    ->selectRaw('IFNULL(sum(qty),0) as qty');
-            }]);
-        }, 'appointment.attachment'])->get()
-            ->transform(function ($data){
+        $detail = AppointmentDetails::where('appointment_id', $appointmentID)
+            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' => function ($query) use ($appointmentID) {
+                $query->with(['unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+                    $q->whereHas('appointment', function ($q) use ($appointmentID) {
+                        $q->where('refferedBackYN', '!=', -1);
+                        $q->where('cancelYN', 0);
+                        if (isset($appointmentID)) {
+                            $q->where('id', '!=', $appointmentID);
+                        }
+                    })->groupBy('po_detail_id')
+                        ->select('id', 'appointment_id', 'qty', 'po_detail_id')
+                        ->selectRaw('IFNULL(sum(qty),0) as qty');
+                }]);
+            }, 'appointment.attachment'])->get()
+            ->transform(function ($data) {
                 return $this->appointmentDetailFormat($data);
             });
-        $result['detail']=$detail;
-        $result['purchaseOrderCode']='';
-        if(count($detail) > 0){
-            $result['exist']=1;
-            if(!empty($detail[0]['getPoMaster'])){
-                $result['purchaseOrderCode']=$detail[0]['getPoMaster']['purchaseOrderCode'];
+        $result['detail'] = $detail;
+        $result['purchaseOrderCode'] = '';
+        if (count($detail) > 0) {
+            $result['exist'] = 1;
+            if (!empty($detail[0]['getPoMaster'])) {
+                $result['purchaseOrderCode'] = $detail[0]['getPoMaster']['purchaseOrderCode'];
             }
             return [
                 'success'   => true,
                 'message'   => 'Appointment Details Available',
                 'data'      => $result
             ];
-        }else{
-            $result['exist']=0;
+        } else {
+            $result['exist'] = 0;
             return [
                 'success'   => false,
                 'message'   => 'Appointment Details Not Available',
@@ -887,7 +892,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
         $searchText = $request->input('extra.searchText');
 
-        $po = PurchaseOrderDetails::where('purchaseOrderMasterID',$purchaseOrderID);
+        $po = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID);
 
         if (!empty($searchText)) {
             $searchText = str_replace("\\", "\\\\", $searchText);
@@ -897,22 +902,22 @@ class SRMService
             });
         }
 
-        $po = $po->with(['order','unit','appointmentDetails' => function($q) use($appointmentID){
-                $q->whereHas('appointment', function ($q) use($appointmentID){
-                    $q->where('refferedBackYN', '!=', -1);
-                    $q->where('cancelYN', 0);
-                    if(isset($appointmentID)){
-                        $q->where('id','!=', $appointmentID);
-                    }
-                })->groupBy('po_detail_id')
-                    ->select('id', 'appointment_id','qty','po_detail_id')
-                    ->selectRaw('IFNULL(sum(qty),0) as qty');
-            },'order.transactioncurrency'])->get()
-            ->transform(function ($data){
+        $po = $po->with(['order', 'unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
+            $q->whereHas('appointment', function ($q) use ($appointmentID) {
+                $q->where('refferedBackYN', '!=', -1);
+                $q->where('cancelYN', 0);
+                if (isset($appointmentID)) {
+                    $q->where('id', '!=', $appointmentID);
+                }
+            })->groupBy('po_detail_id')
+                ->select('id', 'appointment_id', 'qty', 'po_detail_id')
+                ->selectRaw('IFNULL(sum(qty),0) as qty');
+        }, 'order.transactioncurrency'])->get()
+            ->transform(function ($data) {
                 return $this->poDetailFormat($data);
             });
 
-        $result['poDetail']=$po;
+        $result['poDetail'] = $po;
         return [
             'success'   => true,
             'message'   => 'Po Details Retrieved',
@@ -920,10 +925,11 @@ class SRMService
         ];
     }
 
-    public function poDetailFormat($data){
-        if(count($data['appointmentDetails'])>0){
+    public function poDetailFormat($data)
+    {
+        if (count($data['appointmentDetails']) > 0) {
             $sumQty = $data['appointmentDetails'][0]['qty'];
-        }else{
+        } else {
             $sumQty = 0;
         }
         return [
@@ -943,10 +949,11 @@ class SRMService
         ];
     }
 
-    public function appointmentDetailFormat($data){
-        if(count($data['getPoDetails']['appointmentDetails'])>0){
+    public function appointmentDetailFormat($data)
+    {
+        if (count($data['getPoDetails']['appointmentDetails']) > 0) {
             $sumQty = $data['getPoDetails']['appointmentDetails'][0]['qty'];
-        }else{
+        } else {
             $sumQty = 0;
         }
         return [
@@ -983,8 +990,8 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = DB::table('appointment')
-            ->select('*', 'appointment.id as appointmentId','appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
-            ->join('slot_details', function($query) {
+            ->select('*', 'appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN', 'appointment.created_at as appointmentCreatedDate', 'suppliermaster.supplierName as appointmentCreatedBy')
+            ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
             ->where('appointment.supplier_id', $supplierID)
@@ -1003,12 +1010,13 @@ class SRMService
             });
         }
 
-        if(isset($warehouseId) && $warehouseId !== 0) {
+
+        if ($warehouseId != 0 &&  !(is_null($warehouseId))) {
             $query->where('wareHouseSystemCode', $warehouseId);
         }
 
-        if(!(is_null($appointDate)) && isset($appointDate)) {
-           $query->whereDate('start_date', $appointDate);
+        if (!(is_null($appointDate)) && isset($appointDate)) {
+            $query->whereDate('start_date', Carbon::parse($appointDate)->format('Y-m-d'));
         }
 
         $data = DataTables::of($query)
@@ -1032,10 +1040,10 @@ class SRMService
 
     public function getWarehouse(Request $request)
     {
-        try{
+        try {
             $warehouse = WarehouseMaster::where('isActive', 1)->get();
             $message = 'Warehouse list load successfully';
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $message = $e;
         }
 
@@ -1049,7 +1057,7 @@ class SRMService
     public function getRemainingSlotCount(Request $request)
     {
         $remainingAppointments = 0;
-        try{
+        try {
             $slotDetailID = $request->input('extra.slotDetailID');
             $slotMasterID = $request->input('extra.slotMasterID');
 
@@ -1068,7 +1076,7 @@ class SRMService
             $message = "Success";
 
             $remainingAppointments = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - $appointmentCount));
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $message = $e;
         }
 
@@ -1081,7 +1089,7 @@ class SRMService
 
     public function cancelAppointments(Request $request)
     {
-        try{
+        try {
             $id = $request->input('extra.appointmentID');
             $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
 
@@ -1095,9 +1103,9 @@ class SRMService
             $Data['canceledByName'] = $supplier['supplierName'];
             $result = Appointment::where('id', $id)->update($Data);
 
-            $message ='Appointment canceled successfully';
+            $message = 'Appointment canceled successfully';
             $success = true;
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             $success = false;
             $message = $e;
             $result = 0;
@@ -1149,8 +1157,8 @@ class SRMService
                 }
 
                 $approvalList = $approvalList->with(['employee'])
-                    ->whereHas('employee', function($q) {
-                        $q->where('discharegedYN',0);
+                    ->whereHas('employee', function ($q) {
+                        $q->where('discharegedYN', 0);
                     })
                     ->groupBy('employeeSystemID')
                     ->get();
@@ -1163,58 +1171,59 @@ class SRMService
             'message'   => 'Record retrieved successfully',
             'data'      => $approveDetails
         ];
-
     }
     public function getTenders(Request $request)
     {
+
         $input = $request->all();
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
-        }  
+        }
 
-        if($request->input('extra.tender_status') == 1){ 
-            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId); 
-            }])->whereDoesntHave('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId);
+        if ($request->input('extra.tender_status') == 1) {
+            $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
+            }, 'tenderSupplierAssignee'  => function ($q) use ($supplierData) {
+                $q->where('registration_link_id', '=', $supplierData['id']);
+            }])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
             })
-            ->where('published_yn',1); 
-            
-        }else if ($request->input('extra.tender_status') == 2) {  
-            $query = TenderMaster::with(['currency','srmTenderMasterSupplier'=> function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId);
-            }])->whereHas('srmTenderMasterSupplier', function($q) use ($supplierRegId){ 
-                $q->where('purchased_by','=',$supplierRegId); 
+                ->where('published_yn', 1);
+        } else if ($request->input('extra.tender_status') == 2) {
+            $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
+            }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+                $q->where('purchased_by', '=', $supplierRegId);
             })
-            ->where('published_yn',1);  
-         } 
+                ->where('published_yn', 1);
+        }
         $search = $request->input('search.value');
-        if($search){ 
-             $search = str_replace("\\", "\\\\", $search);
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->where('description', 'LIKE', "%{$search}%");
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
-                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%"); 
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
         }
 
         $data = DataTables::eloquent($query)
-        ->order(function ($query) use ($input) {
-            if (request()->has('order') ) {
-                if($input['order'][0]['column'] == 0)
-                {
-                    $query->orderBy('id', $input['order'][0]['dir']);
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
                 }
-            }
-        })
-        ->addIndexColumn()
-        ->with('orderCondition', $sort)
-        ->addColumn('Actions', 'Actions', "Actions") 
-        ->make(true);  
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
 
         return [
             'success' => true,
@@ -1222,12 +1231,13 @@ class SRMService
             'data' => $data
         ];
     }
-    public function saveTenderPurchase(Request $request){ 
+    public function saveTenderPurchase(Request $request)
+    {
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $tenderMasterId = $request->input('extra.tenderId');  
+        $tenderMasterId = $request->input('extra.tenderId');
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
         DB::beginTransaction();
-        try { 
+        try {
             $data['tender_master_id'] = $tenderMasterId;
             $data['purchased_date'] = $currentDate;
             $data['purchased_by'] = $supplierRegId;
@@ -1247,19 +1257,18 @@ class SRMService
                 'data'      => $exception->getMessage()
             ];
         }
- 
     }
     public static function getSupplierRegIdByUUID($uuid)
     {
 
         if ($uuid) {
-            $supplier = SupplierRegistrationLink::where('uuid', $uuid) 
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
                 ->first();
 
             if (!empty($supplier)) {
                 return $supplier->id;
             }
-        } 
+        }
         return 0;
     }
 
@@ -1267,42 +1276,53 @@ class SRMService
     {
         $input = $request->all();
         $tenderId = $input['extra']['tenderId'];
-        try{
-            $query = TenderFaq::select('id','question','answer')->where('tender_master_id', $tenderId)->get();
+        try {
+            $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
+            if (sizeof($queryRecordsCount)) {
+                $result = TenderFaq::select('id', 'question', 'answer')
+                    ->where('tender_master_id', $tenderId)
+                    ->get();
 
+                return [
+                    'success' => true,
+                    'message' => 'FAQ list successfully get',
+                    'data' => $result
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'message' => 'No records found',
+                    'data' => ''
+                ];
+            }
+        } catch (\RuntimeException $exception) {
             return [
                 'success' => true,
-                'message' => 'FAQ list successfully get',
-                'data' => $query
-            ];
-        } catch (\Exception $exception){
-            return [
-                'success' => false,
                 'message' => 'FAQ list failed get',
                 'data' => $exception
             ];
         }
-
     }
 
-    public function saveTenderPrebidClarification(Request $request){
+    public function saveTenderPrebidClarification(Request $request)
+    {
         $prebidId = $request->input('extra.preBidId');
         $postAnonymous = $request->input('extra.postAnonymous');
-        if(!isset($postAnonymous)){
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderMasterId = $request->input('extra.tenderId');
+        $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
+        $tenderMaster = TenderMaster::find($tenderMasterId);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        if (!isset($postAnonymous)) {
             $postAnonymous = 0;
         }
 
-        if($prebidId !== 0){
-           return $this->updatePreBid($request, $prebidId);
-        } else {$attachment = $request->input('extra.attachment');
-            $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-            $tenderMasterId = $request->input('extra.tenderId');
-            $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
-            $tenderMaster = TenderMaster::find($tenderMasterId);
-            $companySystemID = $tenderMaster['company_id'];
-            $company = Company::where('companySystemID', $companySystemID)->first();
+        if ($prebidId !== 0) {
+            return $this->updatePreBid($request, $prebidId, $company, $companySystemID);
+        } else {
+            $attachment = $request->input('extra.attachment');
             $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
-
             DB::beginTransaction();
             try {
                 $data['tender_master_id'] = $tenderMasterId;
@@ -1320,20 +1340,31 @@ class SRMService
                 $tenderPrebidClarification = TenderBidClarifications::create($data);
 
                 if (isset($attachment) && !empty($attachment)) {
-                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    try {
+                        $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $tenderPrebidClarification->id);
+                    } catch (Exception $exception) {
+                        if ($exception->getCode() == 500) {
+                            DB::rollBack();
+                            return [
+                                'success'   => false,
+                                'message'   => $exception->getMessage(),
+                                'data'      => $exception->getMessage()
+                            ];
+                        }
+                    }
                 }
                 DB::commit();
 
                 return [
                     'success' => true,
-                    'message' => 'Tender Pre-bid Clarification successfully',
+                    'message' => 'Pre-bid clarification created successfully',
                     'data' => $tenderPrebidClarification
                 ];
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return [
                     'success'   => false,
-                    'message'   => 'Tender Pre-bid Clarification failed',
+                    'message'   => 'Pre-bid clarification failed',
                     'data'      => $exception->getMessage()
                 ];
             }
@@ -1346,40 +1377,46 @@ class SRMService
         $extra = $input['extra'];
         $supplierRegId =  0;
         $SearchText = "";
-        if(isset($extra['SearchText'])){
+        if (isset($extra['SearchText'])) {
             $SearchText = $extra['SearchText'];
         }
 
-        if(isset($extra['isMyClarification']) && $extra['isMyClarification'] == true){
+        if (isset($extra['isMyClarification']) && $extra['isMyClarification'] == true) {
             $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         }
 
-        try{
+        try {
             $data = TenderMaster::with(['tenderPreBidClarification' => function ($q) use ($SearchText, $supplierRegId) {
                 $q->with('attachment');
                 $q->where('parent_id', 0);
-                if(!empty($SearchText)){
-                    $searchText = str_replace("\\", "\\\\", $SearchText);
+                if (!empty($SearchText)) {
+                    $SearchText = str_replace("\\", "\\\\", $SearchText);
                     $q->where('post', 'LIKE', "%{$SearchText}%");
                 }
 
-                if($supplierRegId != 0){
+                if ($supplierRegId != 0) {
                     $q->where('supplier_id', $supplierRegId);
                 }
                 $q->with(['supplier']);
+                $q->with(['replies']);
             }]);
-               $data = $data->whereHas('tenderPreBidClarification', function ($q) {
-                    $q->where('parent_id', 0);
-                })->where('id', $extra['tenderId']);
+            $data = $data->whereHas('tenderPreBidClarification', function ($q) {
+                $q->where('parent_id', 0);
+            })->where('id', $extra['tenderId']);
 
             $data = $data->get();
+
+            $data =  [
+                'data' => $data,
+                'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
+            ];
 
             return [
                 'success' => true,
                 'message' => 'Pre-bid Clarification list successfully get',
                 'data' => $data
             ];
-        } catch (\Exception $exception){
+        } catch (\Exception $exception) {
             return [
                 'success' => false,
                 'message' => 'Pre-bid Clarification list failed get',
@@ -1395,7 +1432,7 @@ class SRMService
 
         $data['response'] = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachments'])
+        }, 'attachments'])
             ->where('id', '=', $id)
             ->orWhere('parent_id', '=', $id)
             ->orderBy('parent_id', 'asc')
@@ -1404,7 +1441,7 @@ class SRMService
             ->where('employeeSystemID', $employeeId)
             ->first();
         $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];
-        
+
         return [
             'success' => true,
             'message' => 'Pre-bid response successfully get',
@@ -1418,7 +1455,7 @@ class SRMService
 
         $data = TenderBidClarifications::with(['supplier', 'employee' => function ($q) {
             $q->with(['profilepic']);
-        },'attachments'])
+        }, 'attachments'])
             ->where('id', '=', $id)
             ->first();
 
@@ -1432,6 +1469,7 @@ class SRMService
     public function createClarificationResponse(Request $request)
     {
         $attachment = $request->input('extra.attachment');
+        $newAttachment = $request->input('extra.addAttachment');
         $employeeId = Helper::getEmployeeSystemID();
         $response = $request->input('extra.response');
         $id = $request->input('extra.parent_id');
@@ -1442,8 +1480,8 @@ class SRMService
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
-        if( $updateRecordId !== 0 ){
-           return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company);
+        if ($updateRecordId !== 0) {
+            return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company, $newAttachment);
         }
         DB::beginTransaction();
         try {
@@ -1459,7 +1497,7 @@ class SRMService
             $data['document_system_id'] = $documentCode->documentSystemID;
             $data['document_id'] = $documentCode->documentID;
             $result = TenderBidClarifications::create($data);
-            if (isset($attachment) && !empty($attachment)) {
+            if (isset($attachment) && !empty($attachment) && $newAttachment) {
                 $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $result->id);
             }
 
@@ -1482,17 +1520,18 @@ class SRMService
         foreach ($attachments as $attachment) {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
-                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    throw new Exception("This type of file not allow to upload.", 500);
                 }
 
                 if (isset($attachment['size'])) {
                     if ($attachment['size'] > 2097152) {
-                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                        throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
                     }
                 }
+
                 $file = $attachment['file'];
                 $decodeFile = base64_decode($file);
                 $attch = time() . '_PreBidClarificationCompany.' . $extension;
@@ -1515,7 +1554,6 @@ class SRMService
                 Log::info("NO ATTACHMENT");
             }
         }
-
     }
 
     public function uploadAppointmentAttachment($request)
@@ -1529,7 +1567,7 @@ class SRMService
         try {
             if (!empty($attachment) && isset($attachment['file'])) {
                 $extension = $attachment['fileType'];
-                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
                     return $this->sendError('This type of file not allow to upload.', 500);
@@ -1565,7 +1603,7 @@ class SRMService
             } else {
                 Log::info("NO ATTACHMENT");
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             return [
                 'success'   => false,
                 'message'   => $e,
@@ -1574,13 +1612,11 @@ class SRMService
         }
     }
 
-    public function updatePreBid(Request $request, $prebidId)
+    public function updatePreBid(Request $request, $prebidId, $company, $companySystemID)
     {
-        $input = $request->all();
         $question = $request->input('extra.question');
         $isDeleted = $request->input('extra.isDeleted');
-        $companySystemID = 1;
-        $company = 1;
+        $attachment = $request->input('extra.attachment');
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
@@ -1599,14 +1635,12 @@ class SRMService
                     ->delete();
             }
 
-            if (!empty($attachment) && isset($attachment['file'])) {
-                $attachment = $input['Attachment'];
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+            if (!empty($attachment)) {
+                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
             }
 
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
@@ -1614,34 +1648,34 @@ class SRMService
         }
     }
 
-    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company)
+    public function updatePreBidResponse(Request $request, $prebidId, $companySystemID, $company, $newAttachment)
     {
         $input = $request->all();
         $question = $request->input('extra.response');
+        $attachment = $request->input('extra.attachment');
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
         DB::beginTransaction();
         try {
             $data['post'] = $question;
             $status = $this->tenderBidClarificationsRepository->update($data, $prebidId);
-
-            $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
-                ->where('documentSystemCode', $prebidId)
-                ->count();
-
-            if ($isAttachmentExist > 0 && isset($input['isDeleted']) && $input['isDeleted'] == 1) {
-                DocumentAttachments::where('documentSystemID', 109)
+            if ($newAttachment) {
+                $isAttachmentExist = DocumentAttachments::where('documentSystemID', 109)
                     ->where('documentSystemCode', $prebidId)
-                    ->delete();
-            }
+                    ->count();
 
-            if (!empty($attachment) && isset($attachment['file'])) {
-                $attachment = $input['Attachment'];
-                $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $input['id']);
+                if ($isAttachmentExist > 0) {
+                    DocumentAttachments::where('documentSystemID', 109)
+                        ->where('documentSystemCode', $prebidId)
+                        ->delete();
+                }
+
+                if (!empty($attachment) && isset($attachment[0]['file'])) {
+                    $this->uploadAttachment($attachment, $companySystemID, $company, $documentCode, $prebidId);
+                }
             }
 
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully updated'];
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
@@ -1653,15 +1687,27 @@ class SRMService
     {
         $appointmentID = $request->input('extra.appointmentID');
 
-        $data = DocumentAttachments::where('documentSystemID', 106)
+        $queryRecordsCount = DocumentAttachments::where('documentSystemID', 106)
             ->where('documentSystemCode', $appointmentID)
-            ->get();
+            ->firstOrFail()->toArray();
 
-        return [
-            'success' => true,
-            'message' => 'Delivery Appointment successfully get',
-            'data' => $data
-        ];
+        if (sizeof($queryRecordsCount)) {
+            $result = DocumentAttachments::where('documentSystemID', 106)
+                ->where('documentSystemCode', $appointmentID)
+                ->get();
+
+            return [
+                'success' => true,
+                'message' => 'Delivery Appointment successfully get',
+                'data' => $result
+            ];
+        } else {
+            return [
+                'success' => true,
+                'message' => 'No records found',
+                'data' => ''
+            ];
+        }
     }
 
     public function removeDeliveryAppointmentAttachment($request)
@@ -1673,19 +1719,43 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Attachment successfully deleted',
+            'message' => 'Attachment deleted successfully ',
             'data' => $data
         ];
+    }
+    public static function getSupplierData($uuid)
+    {
+
+        if ($uuid) {
+            $supplier = SupplierRegistrationLink::where('uuid', $uuid)
+                ->first();
+
+            if (!empty($supplier)) {
+                return $supplier;
+            }
+        }
+        return 0;
     }
 
     public function removePreBidClarificationResponse($request)
     {
         $id = $request->input('extra.id');
         DB::beginTransaction();
-        try{
+        try {
+            $parentId = TenderBidClarifications::select('parent_id')->where('id', $id)->first();
+            $parentIdList = TenderBidClarifications::select('id', 'parent_id', 'post', 'supplier_id')
+                ->where('parent_id', $parentId['parent_id'])
+                ->orderBy('id', 'desc')
+                ->get();
             $status = TenderBidClarifications::where('id', $id)
                 ->delete();
 
+            if ($status && !empty($parentId)) {
+                if (empty($parentIdList[1]['supplier_id']) && sizeof($parentIdList) != 1) {
+                    $data['is_answered'] = 1;
+                    $this->tenderBidClarificationsRepository->update($data, $parentId['parent_id']);
+                }
+            }
             DB::commit();
             return ['success' => true, 'data' => $status, 'message' => 'Successfully deleted'];
         } catch (\Exception $e) {
@@ -1694,5 +1764,98 @@ class SRMService
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
+    public function getConsolidatedData($request)
+    {
+        $tenderMasterId = $request->input('extra.tenderId');
+        $tenderDates = [];
 
+        $tenderMaster = TenderMaster::select(
+            'title',
+            'tender_code',
+            'document_sales_start_date',
+            'document_sales_end_date',
+            'pre_bid_clarification_start_date',
+            'pre_bid_clarification_end_date',
+            'site_visit_date',
+            'site_visit_end_date',
+            'bid_submission_opening_date',
+            'bid_submission_closing_date'
+        )
+            ->where('id', $tenderMasterId)
+            ->first();
+
+        $ClanderDetails = DB::table('srm_calendar_dates_detail')->selectRaw(
+            'srm_calendar_dates.calendar_date, 
+            DATE(srm_calendar_dates_detail.from_date) as from_date,
+            DATE(srm_calendar_dates_detail.to_date) as to_date'
+        )->join('srm_calendar_dates', function ($query) {
+            $query->on('srm_calendar_dates_detail.calendar_date_id', '=', 'srm_calendar_dates.id');
+        })
+            ->where('tender_id', $tenderMasterId)
+            ->get();
+        
+        $ClanderDetailsArrayData = array_map(function ($query) {
+            return (array)$query;
+        }, $ClanderDetails->toArray());
+
+        if (!empty($tenderMaster)) {
+            $tenderDates = array(
+                [
+                    'calendar_date' => 'Document Sale',
+                    'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
+                    'to_date' =>  (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d'): null
+                ],
+                [
+                    'calendar_date' => 'Pre-bid Clarification',
+                    'from_date' => (!is_null($tenderMaster['pre_bid_clarification_start_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_start_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['pre_bid_clarification_end_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_end_date'])->format('Y-m-d'): null
+                ],
+                [
+                    'calendar_date' => 'Site Visit',
+                    'from_date' => (!is_null($tenderMaster['site_visit_date'])) ? Carbon::parse($tenderMaster['site_visit_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['site_visit_end_date'])) ? Carbon::parse($tenderMaster['site_visit_end_date'])->format('Y-m-d') : null
+                ],
+                [
+                    'calendar_date' => 'Bid Submission Date',
+                    'from_date' => (!is_null($tenderMaster['bid_submission_opening_date'])) ? Carbon::parse($tenderMaster['bid_submission_opening_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['bid_submission_closing_date'])) ? Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d'): null
+                ]
+            );
+        }
+
+        $calendarDateMerge = collect($tenderDates)->merge($ClanderDetailsArrayData);
+        
+        $currentSequence = collect($calendarDateMerge)->map(function ($group) {
+            $data = null;
+            if ($group['from_date']  <= Carbon::now()->format("Y-m-d") && $group['to_date']  >= Carbon::now()->format("Y-m-d")) {
+                $data = $group['calendar_date'];
+            }
+            return  $data;
+        });
+
+        
+        $data['currentSequence'] = $currentSequence->filter()->last();
+        $data['title'] = $tenderMaster['title'];
+        $data['tender_code'] = $tenderMaster['tender_code'];
+        $data['sequenceDate'] = $calendarDateMerge; 
+        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
+            $q->where('documentSystemCode',$tenderMasterId);
+            $q->where('documentSystemID',108);
+        }])
+        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+            $q1->where('documentSystemCode',$tenderMasterId)
+            ->where('documentSystemID',108);
+        }) 
+        ->get();
+        /*  DocumentAttachments::where('documentSystemID',108) 
+        ->where('documentSystemCode',$tenderMasterId)
+        ->get()
+        ->toArray(); */
+
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' =>  $data
+        ];
+    }
 }

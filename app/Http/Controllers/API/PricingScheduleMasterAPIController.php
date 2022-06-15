@@ -441,6 +441,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
             $result = PricingScheduleMaster::where('id',$input['id'])->delete();
             if($result){
                 TenderMainWorks::where('schedule_id',$input['id'])->delete();
+                ScheduleBidFormatDetails::where('schedule_id',$input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }

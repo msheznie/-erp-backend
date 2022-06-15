@@ -299,4 +299,28 @@ class AssetDisposalMaster extends Model
         return $this->belongsTo('App\Models\CustomerInvoiceDirect','customerInvoiceNo','disposalDocumentCode');
     }
 
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_asset_disposalmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_asset_disposalmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_fa_asset_disposalmaster.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    public function scopeDisposTypeJoin($q,$as = 'erp_fa_asset_disposaltypes', $column = 'disposalType' , $columnAs = 'typeDescription')
+    {
+        return $q->leftJoin('erp_fa_asset_disposaltypes as '.$as,$as.'.disposalTypesID','erp_fa_asset_disposalmaster.'.$column)
+        ->addSelect($as.".typeDescription as ".$columnAs);
+    }
+
+
 }

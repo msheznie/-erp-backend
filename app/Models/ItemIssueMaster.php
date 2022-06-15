@@ -502,4 +502,35 @@ class ItemIssueMaster extends Model
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'itemIssueAutoID')->where('documentSystemID',8);
     }
+
+    
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_itemissuedetails','erp_itemissuedetails.itemIssueAutoID','erp_itemissuemaster.itemIssueAutoID');
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_itemissuemaster.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_itemissuemaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_itemissuemaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+        
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_itemissuemaster.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
 }

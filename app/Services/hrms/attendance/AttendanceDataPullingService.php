@@ -236,6 +236,7 @@ class AttendanceDataPullingService{
         LEFT JOIN (
         	SELECT * FROM srp_erp_pay_shiftemployees
         	WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate )
+            AND srp_erp_pay_shiftemployees.isActive = 1
         ) AS she ON she.empID = e.EIdNo
         LEFT JOIN (
             SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 

@@ -495,7 +495,8 @@ class QuotationMaster extends Model
         'manuallyClosedByEmpName',
         'manuallyClosedDate',
         'manuallyClosedComment',
-        'is_return'
+        'is_return',
+        'leadTime'
     ];
 
     /**
@@ -593,7 +594,8 @@ class QuotationMaster extends Model
         'deliveryTerms'  => 'string',
         'panaltyTerms'  => 'string',
         'sent_to_customer' => 'integer',
-        'is_return' => 'boolean'
+        'is_return' => 'boolean',
+        'leadTime' => 'float'
     ];
 
     /**
@@ -677,5 +679,34 @@ class QuotationMaster extends Model
     public function paymentTerms_by()
     {
         return $this->hasMany('\App\Models\SoPaymentTerms','soID','quotationMasterID');
+    }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_quotationmaster.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_quotationmaster.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_quotationmaster.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    public function scopeSalesPersonJoin($q,$as = 'erp_salespersonmaster', $column = 'salesPersonID' , $columnAs = 'SalesPersonName')
+    {
+        return $q->leftJoin('erp_salespersonmaster as '.$as,$as.'.salesPersonID','erp_quotationmaster.'.$column)
+        ->addSelect($as.".SalesPersonName as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_quotationdetails','erp_quotationdetails.quotationMasterID','erp_quotationmaster.quotationMasterID');
     }
 }

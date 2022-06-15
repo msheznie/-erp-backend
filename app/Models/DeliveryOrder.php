@@ -621,4 +621,53 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_delivery_order.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_delivery_order.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_delivery_order.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_delivery_order.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
+
+    public function scopeCustomerJoin($q,$as = 'customermaster', $column = 'customerID' , $columnAs = 'CustomerName')
+    {
+        return $q->leftJoin('customermaster as '.$as,$as.'.customerCodeSystem','erp_delivery_order.'.$column)
+        ->addSelect($as.".CustomerName as ".$columnAs);
+    }
+
+    public function scopeSalesPersonJoin($q,$as = 'erp_salespersonmaster', $column = 'salesPersonID' , $columnAs = 'SalesPersonName')
+    {
+        return $q->leftJoin('erp_salespersonmaster as '.$as,$as.'.salesPersonID','erp_delivery_order.'.$column)
+        ->addSelect($as.".SalesPersonName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_delivery_order.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_delivery_order_detail','erp_delivery_order_detail.deliveryOrderID','erp_delivery_order.deliveryOrderID');
+    }
+
 }
