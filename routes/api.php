@@ -2946,3 +2946,8 @@ Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 Route::resource('calendar_dates', 'CalendarDatesAPIController');
 
 Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
+
+
+Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
+
+Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');

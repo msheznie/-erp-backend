@@ -12,10 +12,11 @@ use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseBinLocation;
+use Illuminate\Http\Request;
 
 class PosAPIController extends AppBaseController
 {
- function pullCustomerCategory(){
+ function pullCustomerCategory(Request $request){
 
      DB::beginTransaction();
      try {
@@ -34,7 +35,7 @@ class PosAPIController extends AppBaseController
      }
  }
 
-   public function pullLocation()
+   public function pullLocation(Request $request)
    {
         DB::beginTransaction();
         try {
@@ -48,7 +49,7 @@ class PosAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
    }
-    public function pullSegment()
+    public function pullSegment(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -65,7 +66,7 @@ class PosAPIController extends AppBaseController
 
     }
 
-    public function pullUnitOfMeasure()
+    public function pullUnitOfMeasure(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -80,7 +81,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullUnitConversion()
+    public function pullUnitConversion(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -99,10 +100,11 @@ class PosAPIController extends AppBaseController
 
 
     
-    public function pullWarehouse()
+    public function pullWarehouse(Request $request)
     {
         DB::beginTransaction();
         try {
+
             $warehouse = WarehouseMaster::selectRaw('wareHouseSystemCode As id,wareHouseCode As system_code ,wareHouseDescription as description,wareHouseLocation as location_id,
                 erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
                 "" as phone_number,isActive as is_active,"" as warehouse_image,
@@ -121,7 +123,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullWarehouseItem()
+    public function pullWarehouseItem(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -141,7 +143,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullWarehouseBinLocation()
+    public function pullWarehouseBinLocation(Request $request)
     {
         DB::beginTransaction();
         try {
