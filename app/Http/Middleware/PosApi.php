@@ -24,18 +24,18 @@ class PosApi
             $key = $params[0];
             $value = $params[1];
             $is_key_valid = ThirdPartySystems::where('description','=',$key)->first();
-            if(isset($is_key_valid))
+            if(!empty($is_key_valid))
             {
                 
                 $system_id = $is_key_valid->id;
                 $third_party_key = ThirdPartyIntegrationKeys::where('third_party_system_id','=',$system_id)->where('api_key','=',$value)->first();
-                if(isset($third_party_key))
+                if(!empty($third_party_key))
                 {
                     $request->request->add(['company_id' => $third_party_key->company_id]);
                 }
                 else
                 {
-                    return errorMsgs("third party key not valid",401);
+                    return errorMsgs("Invalid API key",401);
                 }
                
             }
