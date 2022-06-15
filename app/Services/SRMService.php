@@ -1845,31 +1845,14 @@ class SRMService
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
         }])
+        
         ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
             $q1->where('documentSystemCode',$tenderMasterId)
             ->where('documentSystemID',108);
         }) 
         ->get();  
-        if(!empty($attachments)){ 
-            foreach($attachments as $val){  
-                foreach($val['attachments'] as $val2){ 
-                    $val2->attPath =  Helper::getFileUrlFromS3($val2['path']);
-                }
-            }
-        }
-
 
         $data['attachments'] = $attachments;
-        
- 
-        
-        /*  DocumentAttachments::where('documentSystemID',108) 
-        ->where('documentSystemCode',$tenderMasterId)
-        ->get()
-        ->toArray(); */
-
-
-
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
