@@ -1841,20 +1841,34 @@ class SRMService
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
         $data['sequenceDate'] = $calendarDateMerge; 
-        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
+        $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
         }])
+        
         ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
             $q1->where('documentSystemCode',$tenderMasterId)
             ->where('documentSystemID',108);
         }) 
-        ->get();
-        /*  DocumentAttachments::where('documentSystemID',108) 
-        ->where('documentSystemCode',$tenderMasterId)
-        ->get()
-        ->toArray(); */
+        ->get();  
 
+        $data['attachments'] = $attachments;
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' =>  $data
+        ];
+    }
+    public function getConsolidatedDataAttachment( $request){  
+        $tenderMasterId = $request->input('extra.tenderId');
+        $attachmentId = $request->input('extra.attachmentId');
+
+        $attachment = DocumentAttachments::where('attachmentID',$attachmentId)
+        ->where('documentSystemID',108)
+        ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] =strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));  
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
