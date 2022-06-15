@@ -104,7 +104,6 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-            return $this->sendResponse($request->get('company_id'), 'Data Retrieved successfully');
 
             $warehouse = WarehouseMaster::selectRaw('wareHouseSystemCode As id,wareHouseCode As system_code ,wareHouseDescription as description,wareHouseLocation as location_id,
                 erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
