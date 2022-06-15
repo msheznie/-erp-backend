@@ -20,6 +20,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
         Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
         Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
+        Route::post('pull_warehouse', 'POS\PosAPIController@pullWarehouse');
+        Route::post('pull_warehouse_item', 'POS\PosAPIController@pullWarehouseItem');
+        Route::post('srp_erp_warehousebinlocation', 'POS\PosAPIController@pullWarehouseBinLocation');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
