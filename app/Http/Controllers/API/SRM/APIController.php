@@ -57,6 +57,7 @@ define('REMOVE_APPOINTMENT_ATTACHMENT', 'REMOVE_APPOINTMENT_ATTACHMENT');
 define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
 define('REMOVE_PRE_BID_CLARIFICATION_RESPONSE', 'REMOVE_PRE_BID_CLARIFICATION_RESPONSE');
 define('GET_CONSOLIDATED_DATA', 'GET_CONSOLIDATED_DATA');
+define('GET_CONSOLIDATED_DATA_ATTACHMENT', 'GET_CONSOLIDATED_DATA_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -133,32 +134,34 @@ class APIController extends Controller
                 return $this->SRMService->getSrmApprovedDetails($request);
             case GET_TENDERS:
                 return $this->SRMService->getTenders($request);
-            case SAVE_TENDER_PURCHASE :
+            case SAVE_TENDER_PURCHASE:
                 return $this->SRMService->saveTenderPurchase($request);
-            case GET_FAQ :
+            case GET_FAQ:
                 return $this->SRMService->getFaqList($request);
-            case GET_TENDER_PRE_BID_CLARIFICATION_LIST :
+            case GET_TENDER_PRE_BID_CLARIFICATION_LIST:
                 return $this->SRMService->getPrebidClarificationList($request);
-            case ADD_CLARIFICATION :
+            case ADD_CLARIFICATION:
                 return $this->SRMService->saveTenderPrebidClarification($request);
-            case GET_PRE_BID_CLARIFICATION_RESPONSE :
+            case GET_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->getPreBidClarificationsResponse($request);
-            case ADD_PRE_BID_CLARIFICATION_RESPONSE :
+            case ADD_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->createClarificationResponse($request);
-            case GET_TENDER_PRE_BID_CLARIFICATION :
+            case GET_TENDER_PRE_BID_CLARIFICATION:
                 return $this->SRMService->getPrebidClarification($request);
-            case ADD_APPOINTMENT_ATTACHMENT :
+            case ADD_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->uploadAppointmentAttachment($request);
-            case GET_APPOINTMENT_ATTACHMENT :
+            case GET_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->getDeliveryAppointmentAttachment($request);
-            case REMOVE_APPOINTMENT_ATTACHMENT :
+            case REMOVE_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
-            case REMOVE_CLARIFICATION_ATTACHMENT :
+            case REMOVE_CLARIFICATION_ATTACHMENT:
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
-            case REMOVE_PRE_BID_CLARIFICATION_RESPONSE :
+            case REMOVE_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->removePreBidClarificationResponse($request);
-            case GET_CONSOLIDATED_DATA :
+            case GET_CONSOLIDATED_DATA:
                 return $this->SRMService->getConsolidatedData($request);
+            case GET_CONSOLIDATED_DATA_ATTACHMENT:
+                return $this->SRMService->getConsolidatedDataAttachment($request);
             default:
                 return [
                     'success'   => false,
@@ -190,7 +193,7 @@ class APIController extends Controller
             ]);
 
             if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
-                if($response->data ){ 
+                if ($response->data) {
                     foreach ($response->data  as $key1 => $data1) {
                         foreach ($data1->groups as $val2) {
                             foreach ($val2->controls as $val3) {
@@ -221,7 +224,6 @@ class APIController extends Controller
                         }
                     }
                 }
-               
             }
 
             return response()->json($response);
