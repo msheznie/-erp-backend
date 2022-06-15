@@ -2931,6 +2931,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+
+
                                         $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
@@ -2938,6 +2940,17 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
                                         $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount + $retentionRptVatAmount) * -1;
+
+                                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
+                                        if ($retationRcmVATAmount > 0) {
+                                            $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
+                                            $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount) * -1;
+                                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
+                                            $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount) * -1;
+                                        }
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     } else {
@@ -2977,6 +2990,17 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                                         $data['documentRptAmount'] = ($convertAmount["reportingAmount"] + $retentionRptVatAmount) * -1;
+                                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
+
+                                        if ($retationRcmVATAmount > 0) {
+                                            $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                            $data['documentLocalAmount'] = ($convertAmount["localAmount"]) * -1;
+                                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                            $data['documentRptAmount'] = ($convertAmount["reportingAmount"]) * -1;
+                                        }
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
@@ -3094,7 +3118,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']));
                                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']));
 
-                                                    array_push($finalData, $data);
+//                                                    array_push($finalData, $data);
 
                                                     $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
@@ -3114,13 +3138,25 @@ class GeneralLedgerInsert implements ShouldQueue
                                                     ->first();
 
                                                 if (!empty($chartOfAccountData)) {
+                                                    $retationVATAmount = 0;
+                                                    $retentionLocalVatAmount = 0;
+                                                    $retentionRptVatAmount = 0;
+                                                    $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                                                    if ($retationVATAmount > 0) {
+                                                        $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                                                        $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                                                        $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                                                    }
+
                                                     $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
                                                     $data['glCode'] = $chartOfAccountData->AccountCode;
                                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationRcmVATAmount) * -1);
-                                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']) * -1);
-                                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']) * -1);
+                                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationVATAmount) * -1);
+                                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($retentionLocalVatAmount) * -1);
+                                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($retentionRptVatAmount) * -1);
 
                                                     array_push($finalData, $data);
 
@@ -3134,7 +3170,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                                 Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                                 Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                                             }
-                                        }                                
+                                        }
                                     }
                                 }
                             }
