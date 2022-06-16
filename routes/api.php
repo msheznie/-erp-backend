@@ -23,6 +23,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_warehouse', 'POS\PosAPIController@pullWarehouse');
         Route::post('pull_warehouse_item', 'POS\PosAPIController@pullWarehouseItem');
         Route::post('srp_erp_warehousebinlocation', 'POS\PosAPIController@pullWarehouseBinLocation');
+        Route::post('pull_item', 'POS\PosAPIController@pullItem');
+        Route::post('pull_item_bin_location', 'POS\PosAPIController@pullItemBinLocation');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
