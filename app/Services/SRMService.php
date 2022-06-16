@@ -1846,11 +1846,11 @@ class SRMService
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
         }])
-        
-        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+         ->where('srm_action','!=',2) 
+         ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
             $q1->where('documentSystemCode',$tenderMasterId)
             ->where('documentSystemID',108);
-        }) 
+        })
         ->get();  
 
         $data['attachments'] = $attachments;
