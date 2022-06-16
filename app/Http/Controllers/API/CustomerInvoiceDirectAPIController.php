@@ -3260,10 +3260,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
        
         $customerInvoiceLogistic = CustomerInvoiceLogistic::with('port_of_loading','port_of_discharge')
                                                             ->where('custInvoiceDirectAutoID', $id)
-                                                            ->first()
-                                                            ->toArray();
+                                                            ->first();
         
-        if(count($customerInvoiceLogistic) > 0){
+        if($customerInvoiceLogistic){
+            $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
             $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
         }
 
