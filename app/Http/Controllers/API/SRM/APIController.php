@@ -60,6 +60,9 @@ define('GET_CONSOLIDATED_DATA', 'GET_CONSOLIDATED_DATA');
 define('GET_CONSOLIDATED_DATA_ATTACHMENT', 'GET_CONSOLIDATED_DATA_ATTACHMENT');
 define('GET_GO_NO_GO_BID_SUBMISSION', 'GET_GO_NO_GO_BID_SUBMISSION');
 define('CHECK_BID_SUBMITTED', 'CHECK_BID_SUBMITTED');
+define('SAVE_TECHNICAL_BID_SUBMISSION', 'SAVE_TECHNICAL_BID_SUBMISSION');
+define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
+define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
 
 class APIController extends Controller
 {
@@ -168,6 +171,12 @@ class APIController extends Controller
                 return $this->SRMService->getGoNoGoBidSubmissionData($request);
             case CHECK_BID_SUBMITTED :
                 return $this->SRMService->checkBidSubmitted($request);
+            case SAVE_TECHNICAL_BID_SUBMISSION :
+                return $this->SRMService->saveTechnicalBidSubmission($request);
+            case SAVE_TECHNICAL_BID_LINE :
+                return $this->SRMService->saveTechnicalBidSubmissionLine($request);
+            case SAVE_GO_NO_GO_BID_LINE :
+                return $this->SRMService->saveGoNoGoBidSubmissionLine($request);
             default:
                 return [
                     'success'   => false,
