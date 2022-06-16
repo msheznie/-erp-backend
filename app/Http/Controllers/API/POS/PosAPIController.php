@@ -185,4 +185,19 @@ class PosAPIController extends AppBaseController
         }
     }
 
+
+    public function pullItemBinLocation()
+    {
+        DB::beginTransaction();
+        try {
+            
+
+            DB::commit();
+            return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 }
