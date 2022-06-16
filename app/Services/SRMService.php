@@ -1834,13 +1834,12 @@ class SRMService
                 $data = $group['calendar_date'];
             }
             return  $data;
-        });
-
-        
+        });  
         $data['currentSequence'] = $currentSequence->filter()->last();
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
         $data['sequenceDate'] = $calendarDateMerge; 
+        $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date'?1:0);
         $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
