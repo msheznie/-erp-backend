@@ -407,6 +407,9 @@ class ChartOfAccountAPIController extends AppBaseController
                 $input['createdPcID'] = gethostname();
                 $input['createdUserID'] = $empId;
 
+                return $this->sendResponse($input, 'Chart Of Account saved successfully');
+                die();
+
                 $chartOfAccount = $this->chartOfAccountRepository->create($input);
 
                 DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);

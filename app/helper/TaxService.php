@@ -1448,10 +1448,9 @@ class TaxService
 
         $totalTransVATAmount = 0;
         foreach ($retentionData as $key => $value) {
-            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
 
-            if ($bookInvSuppMaster) {
-                $vatAmount = ($bookInvSuppMaster->retentionVatAmount / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+            if ($retentionData) {
+                $vatAmount = $value->retentionVatAmount;
             
                 $totalTransVATAmount += $vatAmount;
             }

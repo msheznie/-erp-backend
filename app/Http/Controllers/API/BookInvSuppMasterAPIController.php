@@ -776,13 +776,26 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
 
                 if($isConfigured && $isDetailConfigured) {
-                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
+                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
+                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                    }
+                    $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->first();
+                    if($isChartOfAccountConfigured){
+                        if ($isChartOfAccountConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0 || $isDetailConfigured->companySystemID == 0 || $isDetailConfigured->companySystemID == null) {
+                            return $this->sendError('Chart of account is not configured for retention control account', 500);
+                        }
+                    }
+                    else{
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
                     }
                 }
-                if(isset($isDetailConfigured->chartOfAccountSystemID) == null){
+                else{
                     return $this->sendError('Chart of account is not configured for retention control account', 500);
                 }
+                if(isset($isDetailConfigured->chartOfAccountSystemID) == null || isset($isDetailConfigured->chartOfAccountSystemID) == 0 || isset($isDetailConfigured->companySystemID) == null || isset($isDetailConfigured->companySystemID) == 0){
+                    return $this->sendError('Chart of account is not configured for retention control account', 500);
+                }
+
             }
 
             $checkItems = 0;

@@ -280,6 +280,7 @@ class PaySupplierInvoiceDetail extends Model
         'paymentSupplierDefaultAmount',
         'paymentLocalAmount',
         'paymentComRptAmount',
+        'retentionVatAmount',
         'timesReferred',
         'isRetention',
         'modifiedUserID',
