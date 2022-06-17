@@ -353,8 +353,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
 
-            if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
+            if (isset($input['paymentMode'])) {
+                if ($input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
