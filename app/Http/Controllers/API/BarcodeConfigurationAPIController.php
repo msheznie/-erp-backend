@@ -367,9 +367,9 @@ class BarcodeConfigurationAPIController extends AppBaseController
         ->with(['company'])
             ->orderBy('id', $sort);
 
-        if (isset($input['isAll']) && !$input['isAll']) {
+        //if (isset($input['isAll']) && !$input['isAll']) {
             $barcode = $barcode->whereIn('companySystemID', $subCompanies);
-        }
+        //}
 
         $search = $request->input('search.value');
 
