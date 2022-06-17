@@ -63,6 +63,7 @@ define('CHECK_BID_SUBMITTED', 'CHECK_BID_SUBMITTED');
 define('SAVE_TECHNICAL_BID_SUBMISSION', 'SAVE_TECHNICAL_BID_SUBMISSION');
 define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
 define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
+define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -177,6 +178,8 @@ class APIController extends Controller
                 return $this->SRMService->saveTechnicalBidSubmissionLine($request);
             case SAVE_GO_NO_GO_BID_LINE :
                 return $this->SRMService->saveGoNoGoBidSubmissionLine($request);
+            case GET_TENDER_ATTACHMENT :
+                return $this->SRMService->getTenderAttachment($request);
             default:
                 return [
                     'success'   => false,

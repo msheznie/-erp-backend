@@ -2230,4 +2230,17 @@ class SRMService
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
+
+    public function getTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $attachments = DocumentAttachments::with(['tender_document_types'])->where('documentSystemCode',$tenderId)->where('documentSystemID',108)->where('attachmentType',1)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $attachments
+        ];
+    }
 }
