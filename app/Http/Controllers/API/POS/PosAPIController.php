@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\POS;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerMasterCategory;
 use App\Models\ErpLocation;
+use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccount;
@@ -196,6 +197,48 @@ class PosAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($financeItemCategorySub, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullItem(){
+        DB::beginTransaction();
+        try {
+            $items = ItemMaster::selectRaw('itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
+             secondaryItemCode as secondary_code, "" as image, itemShortDescription as name, itemDescription as description,
+            financeCategoryMaster as category_id, "" as category_description, "" as sub_category_id, "" as sub_sub_category_id, barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
+            rev.AccountCode as revenue_gl,rev.AccountDescription as revenue_description,
+            cost.AccountCode as cost_gl,cost.AccountDescription as cost_description,"" as asset_gl,"" as asset_description,"" as sales_tax_id, "" as purchase_tax_id,
+            vatSubCategory as vat_sub_category_id,itemmaster.isActive as active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
+            "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
+            "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time')
+                ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
+                ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
+                ->join('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
+                ->join('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+                ->get();
+
+            DB::commit();
+            return $this->sendResponse($items, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    public function pullItemBinLocation()
+    {
+        DB::beginTransaction();
+        try {
+            
+
+            DB::commit();
+            return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
