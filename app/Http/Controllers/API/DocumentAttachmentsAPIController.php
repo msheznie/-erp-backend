@@ -986,7 +986,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         ->where('attachmentDescription',$attachmentDescription)
         ->count(); 
         if($isExist >= 1){ 
-           return ['status' => false, 'message' => 'Description already exist'];  
+           return ['status' => false, 'message' => 'Description already exists'];  
         }else { 
             return self::store($request);
         } 
