@@ -371,6 +371,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Direct not found');
         }
 
+         
+        $customerInvoiceLogisticData = [
+            'consignee_address'=>$customerInvoiceDirect->customer->consignee_address, 
+            'consignee_contact_no'=>$customerInvoiceDirect->customer->consignee_contact_no, 
+            'consignee_name'=>$customerInvoiceDirect->customer->consignee_name, 
+            'payment_terms'=>$customerInvoiceDirect->customer->payment_terms,
+            'custInvoiceDirectAutoID'=>$id
+        ];
+
+        $invoiceLogistic = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID',$id)->first();
+        if($invoiceLogistic){
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::where('id', $invoiceLogistic['id'])->update($customerInvoiceLogisticData);
+        } else {
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::create($customerInvoiceLogisticData);
+        }
+
+
 
         return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct retrieved successfully');
     }
@@ -3260,10 +3277,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
        
         $customerInvoiceLogistic = CustomerInvoiceLogistic::with('port_of_loading','port_of_discharge')
                                                             ->where('custInvoiceDirectAutoID', $id)
-                                                            ->first()
-                                                            ->toArray();
+                                                            ->first();
         
-        if(count($customerInvoiceLogistic) > 0){
+        if($customerInvoiceLogistic){
+            $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
             $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
         }
 
