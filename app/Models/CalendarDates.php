@@ -59,14 +59,15 @@ class CalendarDates extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'calendar_date',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'created_at',
+        'updated_at'
     ];
 
     /**

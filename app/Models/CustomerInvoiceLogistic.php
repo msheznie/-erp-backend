@@ -163,5 +163,15 @@ class CustomerInvoiceLogistic extends Model
         'custInvoiceDirectAutoID' => 'required',
     ];
 
+    public function port_of_loading()
+    {
+        return $this->belongsTo('App\Models\PortMaster', 'port_of_loading', 'id');
+    }
+
+    public function port_of_discharge()
+    {
+        return $this->belongsTo('App\Models\PortMaster', 'port_of_discharge', 'id');
+    }
+
     
 }

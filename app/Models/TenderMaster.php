@@ -364,4 +364,9 @@ class TenderMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by_emp_system_id', 'employeeSystemID');
     }
+
+    public function tenderSupplierAssignee()
+    {
+        return $this->hasMany('App\Models\TenderSupplierAssignee', 'tender_master_id', 'id');
+    }
 }

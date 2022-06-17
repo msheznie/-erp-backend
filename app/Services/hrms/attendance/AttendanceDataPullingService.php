@@ -20,6 +20,8 @@ class AttendanceDataPullingService{
     private $allEmpArr = [];
     private $multipleOccurrence = [];
     private $data = [];
+    private $dateTime;
+    private $pulledVia;
 
 
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
@@ -29,12 +31,16 @@ class AttendanceDataPullingService{
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
         $this->isClockOutPulling = $isClockOutPulling;
+        $this->dateTime = Carbon::now()->format('Y-m-d H:i:s');
+        $this->pulledVia = ($isClockOutPulling)? 1: 2;
 
         $this->uniqueKey = "{$this->companyId}" . rand(2, 500) . '' . Carbon::now()->timestamp;        
     }
 
     function execute(){
         
+        $this->insertToLogTb('execution started');
+
         DB::beginTransaction();
 
         try{
@@ -86,7 +92,9 @@ class AttendanceDataPullingService{
             ->whereDate('attDate', $this->pullingDate)
             ->value('pendingCount');       
             
-        if($pending == 0){            
+        if($pending == 0){
+            $this->insertToLogTb('nothing to pull');
+
             Log::error('No records found for pulling'.$this->log_suffix(__LINE__));
             return false;
         }  
@@ -170,7 +178,12 @@ class AttendanceDataPullingService{
         
         unset($temp);
         DB::table('attendance_temporary_tbl')->insert($data);
-        DB::table('srp_erp_pay_empattendancetemptable')->whereIn('autoID', $autoIdArr)->update(['isUpdated'=> 1]);
+
+        DB::table('srp_erp_pay_empattendancetemptable')
+            ->whereIn('autoID', $autoIdArr)
+            ->update([
+                'isUpdated'=> 1, 'timestamp'=> $this->dateTime
+            ]);
     }
 
     function step2(){
@@ -223,7 +236,7 @@ class AttendanceDataPullingService{
         LEFT JOIN (
         	SELECT * FROM srp_erp_pay_shiftemployees
         	WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate )
-            AND srp_erp_pay_shiftemployees.isActive = 1
+           -- AND srp_erp_pay_shiftemployees.isActive = 1
         ) AS she ON she.empID = e.EIdNo
         LEFT JOIN (
             SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
@@ -245,6 +258,7 @@ class AttendanceDataPullingService{
         $this->attData = DB::select($q);
 
         if(empty($this->attData)){
+            $this->insertToLogTb('No records found for pulling step-3');
             Log::error('No records found for pulling step-3'.$this->log_suffix(__LINE__));
             return false;
         }
@@ -291,10 +305,15 @@ class AttendanceDataPullingService{
                 'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
                 'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
                 'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
+                'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia
             ];  
             
             $obj = null;
         }
+
+        $this->insertToLogTb([
+            'about to insert'=> array_column($this->data, 'empID')
+        ]);
 
         Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
 
@@ -370,5 +389,24 @@ class AttendanceDataPullingService{
 
     function log_suffix($line_no) : string{
         return " | companyId: $this->companyId \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
+    }
+
+    public function insertToLogTb($logData, $logType = 'info'){
+        $logData = json_encode($logData);
+
+        $description = ($this->isClockOutPulling)? 'attendance-clock-out-job': 'attendance-real-time-sync';
+
+        $data = [
+            'company_id'=> $this->companyId,
+            'module'=> 'HRMS',
+            'description'=> $description,
+            'scenario_id'=> 0,
+            'processed_for'=> $this->pullingDate,
+            'logged_at'=> $this->dateTime,
+            'log_type'=> $logType,
+            'log_data'=> $logData,
+        ];
+
+        DB::table('job_logs')->insert($data);
     }
 }
