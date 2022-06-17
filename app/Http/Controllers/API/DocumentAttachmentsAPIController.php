@@ -971,4 +971,25 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Attachment is not attached', 404);
         }
     }
+    public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){ 
+        $input = $request->all();
+        $attachmentType = $input['attachmentType'];
+        $attachmentDescription = $input['attachmentDescription'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+
+        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+        ->where('documentSystemID',$documentSystemID)
+        ->where('attachmentType',$attachmentType)
+        ->where('documentSystemCode',$documentSystemCode)
+        ->where('attachmentDescription',$attachmentDescription)
+        ->count(); 
+        if($isExist >= 1){ 
+           return ['status' => false, 'message' => 'Description already exist'];  
+        }else { 
+            return self::store($request);
+        } 
+      
+    }
 }
