@@ -67,7 +67,7 @@ class DocumentAttachmentTypeController extends AppBaseController
                 ->where('document_type', '=', $input['document_type'])->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type \'' . $input['document_type'] . '\' already exists');
         }
         $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
@@ -136,7 +136,7 @@ class DocumentAttachmentTypeController extends AppBaseController
             ->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type \'' . $input['document_type'] . '\' already exists');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
