@@ -412,26 +412,30 @@ class BarcodeConfigurationAPIController extends AppBaseController
             }
     
           
+            $selectedCompanyId = $request['companyID'];
+            $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
     
-    
+            if ($isGroup) {
+                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            } else {
+                $subCompanies = [$selectedCompanyId];
+            }
+            
+
+            
+
             $pageHeight = 20;
             $pageWidth = 50;
             if($type == 1)
             {
-                $assets = FixedAssetMaster::orderBy('faID', 'desc')->pluck('faCode');
+                $assets = FixedAssetMaster::orderBy('faID', 'desc')->ofCompany($subCompanies)->pluck('faCode');
+
             }
             else
             {   
                 $input = $this->convertArrayToValue($input);
     
-                $selectedCompanyId = $request['companyID'];
-                $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-        
-                if ($isGroup) {
-                    $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-                } else {
-                    $subCompanies = [$selectedCompanyId];
-                }
+            
                 $search = $request->get('search_val');
     
                 $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
