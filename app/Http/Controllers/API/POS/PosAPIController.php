@@ -16,6 +16,7 @@ use App\Models\WarehouseItems;
 use App\Models\WarehouseBinLocation;
 use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
+use App\Models\Employee;
 
 class PosAPIController extends AppBaseController
 {
@@ -239,6 +240,23 @@ class PosAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    public function pullUser(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $employee = Employee::selectRaw('empName As Name,empUserName As username,empEmail As email ,
+            empActive as active')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($employee, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
