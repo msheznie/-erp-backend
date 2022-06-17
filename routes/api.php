@@ -18,6 +18,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
+        Route::post('pull_chart_of_account', 'POS\PosAPIController@pullChartOfAccount');
         Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
         Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
         Route::post('pull_warehouse', 'POS\PosAPIController@pullWarehouse');
@@ -25,6 +26,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('srp_erp_warehousebinlocation', 'POS\PosAPIController@pullWarehouseBinLocation');
         Route::post('pull_item', 'POS\PosAPIController@pullItem');
         Route::post('pull_item_bin_location', 'POS\PosAPIController@pullItemBinLocation');
+        Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -2948,3 +2950,8 @@ Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 Route::resource('calendar_dates', 'CalendarDatesAPIController');
 
 Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
+
+
+Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
+
+Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');

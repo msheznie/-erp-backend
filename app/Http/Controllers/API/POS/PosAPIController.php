@@ -8,15 +8,18 @@ use App\Models\ErpLocation;
 use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
+use App\Models\ChartOfAccount;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseBinLocation;
+use Illuminate\Http\Request;
+use App\Models\FinanceItemCategorySub;
 
 class PosAPIController extends AppBaseController
 {
- function pullCustomerCategory(){
+ function pullCustomerCategory(Request $request){
 
      DB::beginTransaction();
      try {
@@ -35,20 +38,22 @@ class PosAPIController extends AppBaseController
      }
  }
 
-   public function pullLocation()
-   {
-        DB::beginTransaction();
-        try {
-            $location = ErpLocation::selectRaw('locationID as id,locationName as description')
-            ->where('locationName','!=','')
-            ->get();
-             DB::commit();
-            return $this->sendResponse($location, 'Data Retrieved successfully');
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return $this->sendError($exception->getMessage());
-        }
-   }
+    public function pullLocation()
+    {
+        
+            DB::beginTransaction();
+            try {
+                $location = ErpLocation::selectRaw('locationID as id,locationName as description')
+                ->where('locationName','!=','')
+                ->get();
+                DB::commit();
+                return $this->sendResponse($location, 'Data Retrieved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage());
+            }
+    }
+
     public function pullSegment()
     {
         DB::beginTransaction();
@@ -57,16 +62,38 @@ class PosAPIController extends AppBaseController
             ->where('ServiceLineCode','!=','')
             ->where('ServiceLineDes','!=','')
             ->get();
+    
             DB::commit();
             return $this->sendResponse($segments, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+   }
 
-    }
-
-    public function pullUnitOfMeasure()
+   public function pullChartOfAccount()
+   {
+       DB::beginTransaction();
+       try {
+           $chartOfAccount = ChartOfAccount::selectRaw('chartOfAccountSystemID As id,AccountCode As system_code,AccountCode As secondary_code,AccountDescription as description,
+           isMasterAccount as is_master_account,masterAccount as master_account_id , "" as master_system_code,catogaryBLorPL as master_category,
+           "" as category_id,"" as category_description,"" as sub_category,controllAccountYN as is_control_account,isActive as is_active,"" as default_type,
+           "" as is_auto,"" as is_card,isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
+           "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
+           confirmedYN as confirmedYN,"" as confirmedDate,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmedbyName,isApproved as approvedYN,approvedDate as approvedDate,
+           approvedBySystemID as approvedbyEmpID,approvedBy as approvedbyEmpName,approvedComment as approvedComment')
+           ->where('AccountCode','!=','')
+           ->get();
+   
+           DB::commit();
+           return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+       } catch (\Exception $exception) {
+           DB::rollBack();
+           return $this->sendError($exception->getMessage());
+       }
+   }
+   
+    public function pullUnitOfMeasure(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -81,7 +108,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullUnitConversion()
+    public function pullUnitConversion(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -100,10 +127,11 @@ class PosAPIController extends AppBaseController
 
 
     
-    public function pullWarehouse()
+    public function pullWarehouse(Request $request)
     {
         DB::beginTransaction();
         try {
+
             $warehouse = WarehouseMaster::selectRaw('wareHouseSystemCode As id,wareHouseCode As system_code ,wareHouseDescription as description,wareHouseLocation as location_id,
                 erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
                 "" as phone_number,isActive as is_active,"" as warehouse_image,
@@ -122,7 +150,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullWarehouseItem()
+    public function pullWarehouseItem(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -142,7 +170,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullWarehouseBinLocation()
+    public function pullWarehouseBinLocation(Request $request)
     {
         DB::beginTransaction();
         try {
@@ -152,6 +180,23 @@ class PosAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    
+    public function pullItemSubCategory(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $financeItemCategorySub = FinanceItemCategorySub::selectRaw('itemCategorySubID As id,categoryDescription As description,itemCategoryID As master_id ,
+            financeGLcodeRevenue as revenue_gl,financeGLcodePL as cost_gl')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($financeItemCategorySub, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
