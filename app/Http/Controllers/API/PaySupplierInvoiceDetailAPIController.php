@@ -14,12 +14,14 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceDetailAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceDetailAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppMaster;
 use App\Models\EmployeeLedger;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
@@ -304,6 +306,28 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+            }
+        }
+
+        if($input["isRetention"] == 1 && $input["bookingInvSystemCode"]){
+            $bookInvMaster = BookInvSuppMaster::find($input["bookingInvSystemCode"]);
+            if($bookInvMaster && $bookInvMaster->retentionAmount != 0){
+                if($bookInvMaster->documentType == 1) {
+
+                        $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+
+                }
+                else if($bookInvMaster->documentType == 0) {
+                    if (TaxService::isSupplierInvoiceRcmActivated($bookInvMaster->bookingSuppMasInvAutoID)) {
+                        $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / $bookInvMaster->retentionAmount) * $bookInvMaster->retentionVatAmount;
+                    } else {
+                        $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                    }
+
+                }
+                else{
+                    $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / ($bookInvMaster->retentionAmount - $bookInvMaster->retentionVatAmount)) * $bookInvMaster->retentionVatAmount;
+                }
             }
         }
 
