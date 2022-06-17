@@ -14,6 +14,7 @@ use App\Models\WarehouseMaster;
 use App\Models\WarehouseItems;
 use App\Models\WarehouseBinLocation;
 use Illuminate\Http\Request;
+use App\Models\FinanceItemCategorySub;
 
 class PosAPIController extends AppBaseController
 {
@@ -178,6 +179,23 @@ class PosAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    
+    public function pullItemSubCategory(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $financeItemCategorySub = FinanceItemCategorySub::selectRaw('itemCategorySubID As id,categoryDescription As description,itemCategoryID As master_id ,
+            financeGLcodeRevenue as revenue_gl,financeGLcodePL as cost_gl')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($financeItemCategorySub, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
