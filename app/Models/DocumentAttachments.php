@@ -423,6 +423,11 @@ class DocumentAttachments extends Model
         return $this->hasOne('App\Models\TenderDocumentTypes', 'id', 'attachmentType');
     }
 
+    public function document_attachments()
+    {
+        return $this->hasOne('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
+    }
+
 
     
 }
