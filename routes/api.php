@@ -450,9 +450,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
         Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');      
+        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');   
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
+        Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
@@ -2952,6 +2953,11 @@ Route::resource('calendar_dates', 'CalendarDatesAPIController');
 
 Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
 
+
+
+Route::resource('bid_submission_masters', 'BidSubmissionMasterAPIController');
+
+Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');
 
 Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
 

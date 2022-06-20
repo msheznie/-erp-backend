@@ -335,6 +335,17 @@ class TenderBidClarificationsAPIController extends AppBaseController
     public function createResponse(Request $request)
     {
         $input = $request->all();
+        $messages = [
+            'comments.required' => 'Comment field is required.'
+        ];
+        $validator = \Validator::make($input, [
+            'comments' => 'required'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        } 
+        
         $employeeId = Helper::getEmployeeSystemID();
         $response = $input['comments'];
         $id = $input['id'];

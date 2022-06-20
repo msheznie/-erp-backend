@@ -8,6 +8,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidSubmissionDetail;
+use App\Models\BidSubmissionMaster;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -19,6 +21,8 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\EvaluationCriteriaDetails;
+use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\ProcumentOrder;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
@@ -45,6 +49,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 
@@ -1831,31 +1836,476 @@ class SRMService
                 $data = $group['calendar_date'];
             }
             return  $data;
-        });
-
-        
+        });  
         $data['currentSequence'] = $currentSequence->filter()->last();
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
         $data['sequenceDate'] = $calendarDateMerge; 
-        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
+        $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date'?1:0);
+        $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
             $q->where('documentSystemCode',$tenderMasterId);
             $q->where('documentSystemID',108);
         }])
-        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+         ->where('srm_action','!=',2) 
+         ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
             $q1->where('documentSystemCode',$tenderMasterId)
             ->where('documentSystemID',108);
-        }) 
-        ->get();
-        /*  DocumentAttachments::where('documentSystemID',108) 
-        ->where('documentSystemCode',$tenderMasterId)
-        ->get()
-        ->toArray(); */
+        })
+        ->get();  
 
+        $data['attachments'] = $attachments;
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
             'data' =>  $data
         ];
+    }
+    public function getConsolidatedDataAttachment( $request){  
+        $tenderMasterId = $request->input('extra.tenderId');
+        $attachmentId = $request->input('extra.attachmentId');
+
+        $attachment = DocumentAttachments::where('attachmentID',$attachmentId)
+        ->where('documentSystemID',108)
+        ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] =strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));  
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' =>  $data
+        ];
+    }
+
+    public function getGoNoGoBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $critera_type_id = $request->input('extra.critera_type_id');
+        $bidMasterId = $request->input('extra.bidMasterId');
+
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','bid_submission_detail'=> function($q) use($bidMasterId){
+                            $q->where('bid_master_id',$bidMasterId);
+                            },'child'=> function($q) use($bidMasterId){
+                                $q->with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','bid_submission_detail'=> function($q) use($bidMasterId){
+                                    $q->where('bid_master_id',$bidMasterId);
+                                },'child' => function($q) use($bidMasterId){
+                                    $q->with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','bid_submission_detail'=> function($q) use($bidMasterId){
+                                        $q->where('bid_master_id',$bidMasterId);
+                                    },'child' => function($q) use($bidMasterId){
+                                        $q->with(['evaluation_criteria_score_config','evaluation_criteria_type','tender_criteria_answer_type','bid_submission_detail'=> function($q) use($bidMasterId){
+                                            $q->where('bid_master_id',$bidMasterId);
+                                        }]);
+                                    }]);
+                                }]);
+                            }])->where('tender_id',$tenderId)->where('level',1)->where('critera_type_id',$critera_type_id)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Go No Go Bid Submission Successfully get',
+            'data' =>  $data
+        ];
+    }
+
+    public function checkBidSubmitted($request)
+    {
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tender_id =  $request->input('extra.tenderId');
+        $bidSubmitted = BidSubmissionMaster::where('tender_id',$tender_id)->where('supplier_registration_id',$supplierRegId)->first();
+        if(!empty($bidSubmitted)){
+            $bidMasterId = $bidSubmitted['id'];
+        }else{
+            $att['tender_id'] = $tender_id;
+            $att['supplier_registration_id'] = $supplierRegId;
+            $att['uuid'] =  Uuid::generate()->string;
+            $att['bid_sequence'] = 1;
+            $att['created_by'] = $supplierRegId;
+            $result = BidSubmissionMaster::create($att);
+
+            $bidMasterId = $result['id'];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Retrieved Bid Submission id',
+            'data' =>  $bidMasterId
+        ];
+    }
+
+    public function saveTechnicalBidSubmission($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $details = array();
+
+        if(count($criteriaDetail)>0){
+            BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->delete();
+            foreach ($criteriaDetail as $val){
+                if($val['is_final_level'] == 1){
+                    if($val['bid_submission_detail']['score_id'] > 0 && $val['bid_submission_detail']['score_id'] != null){
+                        if($val['answer_type_id'] == 4 || $val['answer_type_id'] == 2){
+                            $score = EvaluationCriteriaScoreConfig::where('id',$val['bid_submission_detail']['score_id'])->first();
+                            $push['bid_master_id'] = $bidMasterId;
+                            $push['tender_id'] = $tenderId;
+                            $push['evaluation_detail_id'] = $val['id'];
+                            $push['score_id'] = $val['bid_submission_detail']['score_id'];
+                            $push['score'] = $score['score'];
+                            $push['created_by'] = $supplierRegId;
+                            array_push($details,$push);
+                        }
+                    }
+                    if($val['bid_submission_detail']['score'] != null){
+                        if($val['answer_type_id'] == 1 || $val['answer_type_id'] == 3){
+                            $push['bid_master_id'] = $bidMasterId;
+                            $push['tender_id'] = $tenderId;
+                            $push['evaluation_detail_id'] = $val['id'];
+                            $push['score_id'] = null;
+                            $push['score'] = $val['bid_submission_detail']['score'];
+                            $push['created_by'] = $supplierRegId;
+                            array_push($details,$push);
+                        }
+                    }
+                }
+
+                foreach ($val['child'] as $val2){
+                    if($val2['is_final_level'] == 1){
+                        if($val2['bid_submission_detail']['score_id'] > 0 && $val2['bid_submission_detail']['score_id'] != null){
+                            if($val2['answer_type_id'] == 4 || $val2['answer_type_id'] == 2){
+                                $score = EvaluationCriteriaScoreConfig::where('id',$val2['bid_submission_detail']['score_id'])->first();
+                                $push['bid_master_id'] = $bidMasterId;
+                                $push['tender_id'] = $tenderId;
+                                $push['evaluation_detail_id'] = $val2['id'];
+                                $push['score_id'] = $val2['bid_submission_detail']['score_id'];
+                                $push['score'] = $score['score'];
+                                $push['created_by'] = $supplierRegId;
+                                array_push($details,$push);
+                            }
+                        }
+                        if($val2['bid_submission_detail']['score'] != null){
+                            if($val2['answer_type_id'] == 1 || $val2['answer_type_id'] == 3){
+                                $push['bid_master_id'] = $bidMasterId;
+                                $push['tender_id'] = $tenderId;
+                                $push['evaluation_detail_id'] = $val2['id'];
+                                $push['score_id'] = null;
+                                $push['score'] = $val2['bid_submission_detail']['score'];
+                                $push['created_by'] = $supplierRegId;
+                                array_push($details,$push);
+                            }
+                        }
+                    }
+
+                    foreach ($val2['child'] as $val3){
+                        if($val3['is_final_level'] == 1){
+                            if($val3['bid_submission_detail']['score_id'] > 0 && $val3['bid_submission_detail']['score_id'] != null){
+                                if($val3['answer_type_id'] == 4 || $val3['answer_type_id'] == 2){
+                                    $score = EvaluationCriteriaScoreConfig::where('id',$val3['bid_submission_detail']['score_id'])->first();
+                                    $push['bid_master_id'] = $bidMasterId;
+                                    $push['tender_id'] = $tenderId;
+                                    $push['evaluation_detail_id'] = $val3['id'];
+                                    $push['score_id'] = $val3['bid_submission_detail']['score_id'];
+                                    $push['score'] = $score['score'];
+                                    $push['created_by'] = $supplierRegId;
+                                    array_push($details,$push);
+                                }
+                            }
+                            if($val3['bid_submission_detail']['score'] != null){
+                                if($val3['answer_type_id'] == 1 || $val3['answer_type_id'] == 3){
+                                    $push['bid_master_id'] = $bidMasterId;
+                                    $push['tender_id'] = $tenderId;
+                                    $push['evaluation_detail_id'] = $val3['id'];
+                                    $push['score_id'] = null;
+                                    $push['score'] = $val3['bid_submission_detail']['score'];
+                                    $push['created_by'] = $supplierRegId;
+                                    array_push($details,$push);
+                                }
+                            }
+                        }
+
+                        foreach ($val3['child'] as $val4){
+                            if($val4['is_final_level'] == 1){
+                                if($val4['bid_submission_detail']['score_id'] > 0 && $val4['bid_submission_detail']['score_id'] != null){
+                                    if($val4['answer_type_id'] == 4 || $val4['answer_type_id'] == 2){
+                                        $score = EvaluationCriteriaScoreConfig::where('id',$val4['bid_submission_detail']['score_id'])->first();
+                                        $push['bid_master_id'] = $bidMasterId;
+                                        $push['tender_id'] = $tenderId;
+                                        $push['evaluation_detail_id'] = $val4['id'];
+                                        $push['score_id'] = $val4['bid_submission_detail']['score_id'];
+                                        $push['score'] = $score['score'];
+                                        $push['created_by'] = $supplierRegId;
+                                        array_push($details,$push);
+                                    }
+                                }
+                                if($val4['bid_submission_detail']['score'] != null){
+                                    if($val4['answer_type_id'] == 1 || $val4['answer_type_id'] == 3){
+                                        $push['bid_master_id'] = $bidMasterId;
+                                        $push['tender_id'] = $tenderId;
+                                        $push['evaluation_detail_id'] = $val4['id'];
+                                        $push['score_id'] = null;
+                                        $push['score'] = $val4['bid_submission_detail']['score'];
+                                        $push['created_by'] = $supplierRegId;
+                                        array_push($details,$push);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }else{
+            return ['success' => false, 'data' => '', 'message' => 'No Record Found'];
+        }
+
+        DB::beginTransaction();
+        try {
+            if(count($details)>0){
+                foreach ($details as $dt){
+                    $att['bid_master_id'] = $dt['bid_master_id'];
+                    $att['created_by'] = $dt['created_by'];
+                    $att['evaluation_detail_id'] = $dt['evaluation_detail_id'];
+                    $att['score'] = $dt['score'];
+                    $att['score_id'] = $dt['score_id'];
+                    $att['tender_id'] = $dt['tender_id'];
+                    $result = BidSubmissionDetail::create($att);
+                }
+            }
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $details
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function saveTechnicalBidSubmissionLine($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            if($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2){
+                if($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null){
+                    $score = EvaluationCriteriaScoreConfig::where('id',$criteriaDetail['bid_submission_detail']['score_id'])->first();
+                    $push['bid_master_id'] = $bidMasterId;
+                    $push['tender_id'] = $tenderId;
+                    $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                    $push['score_id'] = $criteriaDetail['bid_submission_detail']['score_id'];
+                    $push['score'] = $score['score'];
+                    $push['created_by'] = $supplierRegId;
+
+                    if(isset($criteriaDetail['bid_submission_detail']['id'])){
+                        $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                    }else{
+                        $push['id'] = 0;
+                    }
+                }else{
+                    $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                    DB::commit();
+                    return [
+                        'success' => true,
+                        'message' => 'Successfully Saved',
+                        'data' =>  $result
+                    ];
+                }
+            }
+
+            if($criteriaDetail['answer_type_id'] == 1 || $criteriaDetail['answer_type_id'] == 3){
+                if($criteriaDetail['bid_submission_detail']['score'] != null){
+                    $push['bid_master_id'] = $bidMasterId;
+                    $push['tender_id'] = $tenderId;
+                    $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                    $push['score_id'] = null;
+                    $push['score'] = $criteriaDetail['bid_submission_detail']['score'];
+                    $push['created_by'] = $supplierRegId;
+                    if(isset($criteriaDetail['bid_submission_detail']['id'])){
+                        $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                    }else{
+                        $push['id'] = 0;
+                    }
+                }else{
+                    $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                    DB::commit();
+                    return [
+                        'success' => true,
+                        'message' => 'Successfully Saved',
+                        'data' =>  $result
+                    ];
+                }
+            }
+
+            $att['bid_master_id'] = $push['bid_master_id'];
+            $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
+            $att['score'] = $push['score'];
+            $att['score_id'] = $push['score_id'];
+            $att['tender_id'] = $push['tender_id'];
+            if($push['id'] ==0){
+                $att['created_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::create($att);
+            }else{
+                $att['updated_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $push
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function saveGoNoGoBidSubmissionLine($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            if($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null){
+                $score = EvaluationCriteriaScoreConfig::where('id',$criteriaDetail['bid_submission_detail']['score_id'])->first();
+                $push['bid_master_id'] = $bidMasterId;
+                $push['tender_id'] = $tenderId;
+                $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                $push['score_id'] = $criteriaDetail['bid_submission_detail']['score_id'];
+                if($criteriaDetail['bid_submission_detail']['score_id'] == 1){
+                    $push['score'] = 0;
+                }else{
+                    $push['score'] = 1;
+                }
+                $push['created_by'] = $supplierRegId;
+
+                if(isset($criteriaDetail['bid_submission_detail']['id'])){
+                    $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                }else{
+                    $push['id'] = 0;
+                }
+            }else{
+                $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                DB::commit();
+                return [
+                    'success' => true,
+                    'message' => 'Successfully Saved',
+                    'data' =>  $result
+                ];
+            }
+
+            $att['bid_master_id'] = $push['bid_master_id'];
+            $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
+            $att['score'] = $push['score'];
+            $att['score_id'] = $push['score_id'];
+            $att['tender_id'] = $push['tender_id'];
+            if($push['id'] ==0){
+                $att['created_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::create($att);
+            }else{
+                $att['updated_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $push
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $attachments = DocumentAttachments::with(['tender_document_types','document_attachments'])->where('documentSystemCode',$tenderId)->where('documentSystemID',108)->where('parent_id',null)->where('attachmentType',1)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $attachments
+        ];
+    }
+
+    public function reUploadTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $parentId = $request->input('extra.masterId');
+        $attachment = $request->input('extra.attachment');
+        /*return [
+            'success' => true,
+            'message' => 'Attached Successfully',
+            'data' =>  $request->input('extra')
+        ];*/
+        $tenderMaster = TenderMaster::find($tenderId);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $extension = $attachment['fileType'];
+        $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+
+        if (!in_array(strtolower($extension), $allowExtensions)) {
+            throw new Exception("This type of file not allow to upload.", 500);
+        }
+
+        if (isset($attachment['size'])) {
+            if ($attachment['size'] > 2097152) {
+                throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+            $attch = time() . '_BidSubmission.' . $extension;
+            $path = $companySystemID . '/BidSubmission/' . $attch;
+            Storage::disk('s3')->put($path, $decodeFile);
+
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
+            $att['documentSystemID'] = $documentCode->documentSystemID;
+            $att['documentID'] = $documentCode->documentID;
+            $att['documentSystemCode'] = $tenderId;
+            $att['attachmentDescription'] = 'Bid Submission ' . time();
+            $att['path'] = $path;
+            $att['parent_id'] = $parentId;
+            $att['attachmentType'] = 0;
+            $att['originalFileName'] = $attachment['originalFileName'];
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['sizeInKbs'] = $attachment['sizeInKbs'];
+            $att['isUploaded'] = 1;
+            DocumentAttachments::create($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Attached Successfully',
+                'data' =>  $att
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
     }
 }
