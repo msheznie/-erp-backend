@@ -643,8 +643,51 @@ srp_erp_ioubookingmaster.approvedYN = 1
                     $da->referenceAmountRpt = $iouAmount->referenceAmountRpt;
                 }
             }
+
+        }
+        $dataArray = array();
+        $i = 0;
+        foreach ($data as $dt){
+            if($dt->type == 3){
+                $dataArray[$i]['documentCode'] = $dt->documentCode;
+                $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
+                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
+                $dataArray[$i]['index'] = $i;
+
+            }
+            $i++;
         }
 
+        $arrayTemp = array();
+
+        foreach($dataArray as $val)
+        {
+            if (!in_array($val['documentCode'], $arrayTemp))
+            {
+                $arrayTemp[] = $val['documentCode'];
+            }
+            else
+            {
+                unset($data[$val['index']]);
+                $documentCode = $val['documentCode'];
+                $referenceDoc = $val['referenceDoc'];
+                $referenceDocDate = $val['referenceDocDate'];
+                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyLocalAmount;
+                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyReportingAmount;
+
+                foreach ($data as $da) {
+                    if ($da->documentCode == $documentCode) {
+                        $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
+                        $da->referenceDocDate = $da->referenceDocDate . ', ' . $referenceDocDate;
+                        $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
+                        $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
+                    }
+                }
+
+            }
+        }
+
+        $data = array_values($data);
 
         $employees = DB::select('SELECT * FROM (SELECT
 	
@@ -691,7 +734,7 @@ WHERE
     ) t GROUP BY t.employeeID');
 
 
-        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$refLocalAmount], 'Record retrieved successfully');
 
     }
 
