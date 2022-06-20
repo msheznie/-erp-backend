@@ -251,8 +251,9 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-            $employee = Employee::selectRaw('empName As name,empUserName As user_name,empEmail As email ,
+            $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
             empActive as is_active')
+            ->where('discharegedYN', 0)
             ->get();
 
             DB::commit();
