@@ -17,6 +17,7 @@ use App\Models\WarehouseBinLocation;
 use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
+use App\Models\FinanceItemCategoryMaster;
 
 class PosAPIController extends AppBaseController
 {
@@ -251,12 +252,28 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-            $employee = Employee::selectRaw('empName As name,empUserName As user_name,empEmail As email ,
+            $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
             empActive as is_active')
+            ->where('discharegedYN', 0)
             ->get();
 
             DB::commit();
             return $this->sendResponse($employee, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullItemCategory(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $financeItemCategory = FinanceItemCategoryMaster::selectRaw('itemCategoryID As id,categoryDescription As description,itemCodeDef As item_code ')
+            ->get();
+
+            DB::commit();
+            return $this->sendResponse($financeItemCategory, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
