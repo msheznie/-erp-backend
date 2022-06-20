@@ -353,8 +353,14 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
 
-        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+        if (WarehouseMaster::checkManuefactoringWareHouse($stockTransferMaster->locationFrom)) {
+            $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($stockTransferMaster->locationFrom);
+            $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($stockTransferMaster->locationFrom);
+        } else {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+        }
+
 
         $data = array('companySystemID' => $stockTransferMaster->companySystemID,
             'itemCodeSystem' => $input['itemCode'],
