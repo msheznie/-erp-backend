@@ -1086,12 +1086,12 @@ class MaterielRequestAPIController extends AppBaseController
                     $input['quantityOnOrder'] = $quantityOnOrder;
                     $input['quantityInHand'] = $quantityInHand;
 
-                    if ($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']) {
-                        $errors[$i]= $input['itemCode']." - No stock Qty. Please check again";
+                    // if ($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']) {
+                    //     $errors[$i]= $input['itemCode']." - No stock Qty. Please check again";
 
-                        continue;
+                    //     continue;
 
-                    }
+                    // }
                 } else {
                     $input['RequestID'] = $materielRequest['RequestID'];
                     $input['itemDescription'] = $input['itemCode'];
