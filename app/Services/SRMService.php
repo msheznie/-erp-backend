@@ -2234,12 +2234,78 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $attachments = DocumentAttachments::with(['tender_document_types'])->where('documentSystemCode',$tenderId)->where('documentSystemID',108)->where('attachmentType',1)->get();
+        $attachments = DocumentAttachments::with(['tender_document_types','document_attachments'])->where('documentSystemCode',$tenderId)->where('documentSystemID',108)->where('parent_id',null)->where('attachmentType',1)->get();
 
         return [
             'success' => true,
             'message' => 'Successfully Received',
             'data' =>  $attachments
         ];
+    }
+
+    public function reUploadTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $parentId = $request->input('extra.masterId');
+        $attachment = $request->input('extra.attachment');
+        /*return [
+            'success' => true,
+            'message' => 'Attached Successfully',
+            'data' =>  $request->input('extra')
+        ];*/
+        $tenderMaster = TenderMaster::find($tenderId);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $extension = $attachment['fileType'];
+        $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+
+        if (!in_array(strtolower($extension), $allowExtensions)) {
+            throw new Exception("This type of file not allow to upload.", 500);
+        }
+
+        if (isset($attachment['size'])) {
+            if ($attachment['size'] > 2097152) {
+                throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+            $attch = time() . '_BidSubmission.' . $extension;
+            $path = $companySystemID . '/BidSubmission/' . $attch;
+            Storage::disk('s3')->put($path, $decodeFile);
+
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
+            $att['documentSystemID'] = $documentCode->documentSystemID;
+            $att['documentID'] = $documentCode->documentID;
+            $att['documentSystemCode'] = $tenderId;
+            $att['attachmentDescription'] = 'Bid Submission ' . time();
+            $att['path'] = $path;
+            $att['parent_id'] = $parentId;
+            $att['attachmentType'] = 0;
+            $att['originalFileName'] = $attachment['originalFileName'];
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['sizeInKbs'] = $attachment['sizeInKbs'];
+            $att['isUploaded'] = 1;
+            DocumentAttachments::create($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Attached Successfully',
+                'data' =>  $att
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
     }
 }
