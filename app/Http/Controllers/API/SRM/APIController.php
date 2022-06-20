@@ -65,6 +65,7 @@ define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
 define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
 define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
 define('RE_UPLOAD_TENDER_ATTACHMENT', 'RE_UPLOAD_TENDER_ATTACHMENT');
+define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
 
 class APIController extends Controller
 {
@@ -183,6 +184,8 @@ class APIController extends Controller
                 return $this->SRMService->getTenderAttachment($request);
             case RE_UPLOAD_TENDER_ATTACHMENT :
                 return $this->SRMService->reUploadTenderAttachment($request);
+            case DELETE_TENDER_ATTACHMENT :
+                return $this->SRMService->deleteBidSubmissionAttachment($request);
             default:
                 return [
                     'success'   => false,

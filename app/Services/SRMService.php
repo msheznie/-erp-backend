@@ -2308,4 +2308,17 @@ class SRMService
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
+
+    public function deleteBidSubmissionAttachment($request) {
+        $attachment = $request->input('extra.attachment');
+
+        $data = DocumentAttachments::where('attachmentID', $attachment['attachmentID'])
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment deleted successfully ',
+            'data' => $data
+        ];
+    }
 }
