@@ -325,7 +325,7 @@ class PortMasterAPIController extends AppBaseController
                 })->first();
 
         if($customerInvoiceLogistic){
-            return $this->sendError('This port already used in customer invoice');
+            return $this->sendError('This port is already used in customer invoice');
         }
         $deleteData = ['is_deleted'=>1];
         $PortMaster = PortMaster::where('id',$portID )->update($deleteData);
