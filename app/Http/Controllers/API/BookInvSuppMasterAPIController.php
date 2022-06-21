@@ -781,7 +781,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                     $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->first();
                     if($isChartOfAccountConfigured){
-                        if ($isChartOfAccountConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0 || $isDetailConfigured->companySystemID == 0 || $isDetailConfigured->companySystemID == null) {
+                        if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
                             return $this->sendError('Chart of account is not configured for retention control account', 500);
                         }
                     }
