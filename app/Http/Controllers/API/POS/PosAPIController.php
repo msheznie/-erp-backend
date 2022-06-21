@@ -25,7 +25,8 @@ class PosAPIController extends AppBaseController
 
      DB::beginTransaction();
      try {
-     $customerCategories = CustomerMasterCategory::all();
+     $company_id = $request->get('company_id');
+     $customerCategories = CustomerMasterCategory::where('companySystemID','=',$company_id)->get();
      $customerCategoryArray = array();
      foreach($customerCategories as $item){
          $data = array('id'=>$item->categoryID, 'party_type'=>1, 'description'=>$item->categoryDescription);
@@ -40,11 +41,12 @@ class PosAPIController extends AppBaseController
      }
  }
 
-    public function pullLocation()
+    public function pullLocation(Request $request)
     {
         
             DB::beginTransaction();
             try {
+                $company_id = $request->get('company_id');
                 $location = ErpLocation::selectRaw('locationID as id,locationName as description')
                 ->where('locationName','!=','')
                 ->get();
@@ -56,12 +58,14 @@ class PosAPIController extends AppBaseController
             }
     }
 
-    public function pullSegment()
+    public function pullSegment(Request $request)
     {
         DB::beginTransaction();
         try {
+            $company_id = $request->get('company_id');
             $segments = SegmentMaster::selectRaw('serviceLineSystemID As id,ServiceLineCode As segment_code ,ServiceLineDes as description,isActive as status')
             ->where('ServiceLineCode','!=','')
+            ->where('companySystemID','=',$company_id)
             ->where('ServiceLineDes','!=','')
             ->get();
     
@@ -73,18 +77,21 @@ class PosAPIController extends AppBaseController
         }
    }
 
-   public function pullChartOfAccount()
+   public function pullChartOfAccount(Request $request)
    {
        DB::beginTransaction();
        try {
-           $chartOfAccount = ChartOfAccount::selectRaw('chartOfAccountSystemID As id,AccountCode As system_code,AccountCode As secondary_code,AccountDescription as description,
-           isMasterAccount as is_master_account,masterAccount as master_account_id , "" as master_system_code,catogaryBLorPL as master_category,
-           "" as category_id,"" as category_description,"" as sub_category,controllAccountYN as is_control_account,isActive as is_active,"" as default_type,
-           "" as is_auto,"" as is_card,isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
+           $company_id = $request->get('company_id');
+           $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,chartofaccounts.AccountCode As system_code,chartofaccounts.AccountCode As secondary_code,chartofaccounts.AccountDescription as description,
+           isMasterAccount as is_master_account,chartofaccounts.masterAccount as master_account_id , "" as master_system_code,chartofaccounts.catogaryBLorPL as master_category,
+           "" as category_id,"" as category_description,"" as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
+           "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
            confirmedYN as confirmedYN,"" as confirmedDate,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmedbyName,isApproved as approvedYN,approvedDate as approvedDate,
            approvedBySystemID as approvedbyEmpID,approvedBy as approvedbyEmpName,approvedComment as approvedComment')
-           ->where('AccountCode','!=','')
+           ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+           ->where('chartofaccountsassigned.companySystemID','=',$company_id)
+           ->where('chartofaccounts.AccountCode','!=','')
            ->get();
    
            DB::commit();
@@ -133,7 +140,7 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-
+            $company_id = $request->get('company_id');
             $warehouse = WarehouseMaster::selectRaw('wareHouseSystemCode As id,wareHouseCode As system_code ,wareHouseDescription as description,wareHouseLocation as location_id,
                 erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
                 "" as phone_number,isActive as is_active,"" as warehouse_image,
@@ -142,6 +149,7 @@ class PosAPIController extends AppBaseController
             ->where('wareHouseCode','!=','')
             ->where('wareHouseDescription','!=','')
             ->where('wareHouseLocation','!=','')
+            ->where('companySystemID','=',$company_id)
             ->get();
 
             DB::commit();
@@ -156,6 +164,7 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
+            $company_id = $request->get('company_id');
             $warehouseItems = WarehouseItems::selectRaw('warehouseItemsID As id,warehouseitems.warehouseSystemCode As warehouse_id ,
              erp_location.locationName as location,erp_location.locationName as description,itemmaster.itemCodeSystem as item_id,itemmaster.primaryCode as item_code,
              itemmaster.itemDescription as item_description,"" as is_active,"" as sales_price,unitOfMeasure as unit_id')
@@ -166,6 +175,7 @@ class PosAPIController extends AppBaseController
             ->where('erp_location.locationName','!=','')
             ->where('itemmaster.primaryCode','!=','')
             ->where('itemmaster.itemDescription','!=','')
+            ->where('warehouseitems.companySystemID','=',$company_id)
             ->get();
 
             DB::commit();
@@ -180,11 +190,13 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
+            $company_id = $request->get('company_id');
             $warehousebin = WarehouseBinLocation::selectRaw('binLocationID As binLocationID,warehousemaster.wareHouseSystemCode As warehouseAutoID,binLocationDes As Description')
             ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehousebinlocationmaster.warehouseSystemCode')
             ->where('binLocationID','!=','')
             ->where('warehousemaster.wareHouseSystemCode','!=','')
             ->where('binLocationDes','!=','')
+            ->where('warehousebinlocationmaster.companySystemID','=',$company_id)
             ->get();
 
             DB::commit();
@@ -200,10 +212,13 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-            $financeItemCategorySub = FinanceItemCategorySub::selectRaw('itemCategorySubID As id,categoryDescription As description,itemCategoryID As master_id ,
-            financeGLcodeRevenue as revenue_gl,financeGLcodePL as cost_gl')
-            ->where('itemCategorySubID','!=','')
-            ->where('categoryDescription','!=','')
+            $company_id = $request->get('company_id');
+            $financeItemCategorySub = FinanceItemCategorySub::selectRaw('financeitemcategorysub.itemCategorySubID As id,financeitemcategorysub.categoryDescription As description,itemCategoryID As master_id ,
+            financeitemcategorysub.financeGLcodeRevenue as revenue_gl,financeitemcategorysub.financeGLcodePL as cost_gl')
+            ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
+            ->where('financeitemcategorysub.itemCategorySubID','!=','')
+            ->where('financeitemcategorysub.categoryDescription','!=','')
+            ->where('financeitemcategorysubassigned.companySystemID','=',$company_id)
             ->get();
 
             DB::commit();
@@ -214,15 +229,19 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullItem(){
+    public function pullItem(Request $request){
         DB::beginTransaction();
         try {
-            $items = ItemMaster::selectRaw('itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
-             secondaryItemCode as secondary_code, "" as image, itemShortDescription as name, itemDescription as description,
-            financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, financeCategorySub as sub_category_id, "" as sub_sub_category_id, barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
+
+            $company_id = $request->get('company_id');
+
+
+            $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
+            itemmaster.secondaryItemCode as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
+            itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
             rev.AccountCode as revenue_gl,rev.AccountDescription as revenue_description,
             cost.AccountCode as cost_gl,cost.AccountDescription as cost_description,"" as asset_gl,"" as asset_description,"" as sales_tax_id, "" as purchase_tax_id,
-            vatSubCategory as vat_sub_category_id,itemmaster.isActive as active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
+            vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
             "" as is_deleted,"" as deleted_by,"" as deleted_date_time')
@@ -231,13 +250,14 @@ class PosAPIController extends AppBaseController
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
                 ->join('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
                 ->join('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+                ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                ->where('itemassigned.companySystemID','=',$company_id)
                 ->where('primaryCode','!=','')
                 ->where('itemmaster.documentID','!=','')
-                ->where('secondaryItemCode','!=','')
-                ->where('itemShortDescription','!=','')
-                ->where('financeCategoryMaster','!=','')
-                ->where('financeCategorySub','!=','')
-                ->where('itemDescription','!=','')
+                ->where('itemmaster.secondaryItemCode','!=','')
+                ->where('itemmaster.financeCategoryMaster','!=','')
+                ->where('itemmaster.financeCategorySub','!=','')
+                ->where('itemmaster.itemDescription','!=','')
                 ->where('financeitemcategorymaster.categoryDescription','!=','')
                 ->where('units.UnitShortCode','!=','')
                 ->get();
@@ -270,9 +290,11 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
+            $company_id = $request->get('company_id');
             $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
             empActive as is_active')
             ->where('discharegedYN', 0)
+            ->where('empCompanySystemID','=',$company_id)
             ->get();
 
             DB::commit();
