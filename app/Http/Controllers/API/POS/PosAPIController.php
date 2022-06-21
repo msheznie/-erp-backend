@@ -162,6 +162,10 @@ class PosAPIController extends AppBaseController
             ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehouseitems.warehouseSystemCode')
             ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
             ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'warehouseitems.itemSystemCode')
+            ->where('warehouseitems.warehouseSystemCode','!=','')
+            ->where('erp_location.locationName','!=','')
+            ->where('itemmaster.primaryCode','!=','')
+            ->where('itemmaster.itemDescription','!=','')
             ->get();
 
             DB::commit();
@@ -178,6 +182,9 @@ class PosAPIController extends AppBaseController
         try {
             $warehousebin = WarehouseBinLocation::selectRaw('binLocationID As binLocationID,warehousemaster.wareHouseSystemCode As warehouseAutoID,binLocationDes As Description')
             ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehousebinlocationmaster.warehouseSystemCode')
+            ->where('binLocationID','!=','')
+            ->where('warehousemaster.wareHouseSystemCode','!=','')
+            ->where('binLocationDes','!=','')
             ->get();
 
             DB::commit();
@@ -195,6 +202,8 @@ class PosAPIController extends AppBaseController
         try {
             $financeItemCategorySub = FinanceItemCategorySub::selectRaw('itemCategorySubID As id,categoryDescription As description,itemCategoryID As master_id ,
             financeGLcodeRevenue as revenue_gl,financeGLcodePL as cost_gl')
+            ->where('itemCategorySubID','!=','')
+            ->where('categoryDescription','!=','')
             ->get();
 
             DB::commit();
@@ -210,7 +219,7 @@ class PosAPIController extends AppBaseController
         try {
             $items = ItemMaster::selectRaw('itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
              secondaryItemCode as secondary_code, "" as image, itemShortDescription as name, itemDescription as description,
-            financeCategoryMaster as category_id, "" as category_description, "" as sub_category_id, "" as sub_sub_category_id, barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
+            financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, financeCategorySub as sub_category_id, "" as sub_sub_category_id, barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
             rev.AccountCode as revenue_gl,rev.AccountDescription as revenue_description,
             cost.AccountCode as cost_gl,cost.AccountDescription as cost_description,"" as asset_gl,"" as asset_description,"" as sales_tax_id, "" as purchase_tax_id,
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
@@ -222,6 +231,13 @@ class PosAPIController extends AppBaseController
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
                 ->join('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
                 ->join('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+                ->where('primaryCode','!=','')
+                ->where('itemmaster.documentID','!=','')
+                ->where('secondaryItemCode','!=','')
+                ->where('itemShortDescription','!=','')
+                ->where('itemDescription','!=','')
+                ->where('financeitemcategorymaster.categoryDescription','!=','')
+                ->where('units.UnitShortCode','!=','')
                 ->get();
 
             DB::commit();
@@ -270,6 +286,9 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $financeItemCategory = FinanceItemCategoryMaster::selectRaw('itemCategoryID As id,categoryDescription As description,itemCodeDef As item_code ')
+            ->where('itemCategoryID','!=','')
+            ->where('categoryDescription','!=','')
+            ->where('itemCodeDef','!=','')
             ->get();
 
             DB::commit();
