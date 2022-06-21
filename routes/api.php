@@ -2963,3 +2963,14 @@ Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');
 Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
 
 Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');
+
+
+
+
+
+
+
+
+Route::resource('bid_schedules', 'BidScheduleAPIController');
+
+Route::resource('bid_main_works', 'BidMainWorkAPIController');

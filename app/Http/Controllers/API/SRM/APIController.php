@@ -65,6 +65,10 @@ define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
 define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
 define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
 define('RE_UPLOAD_TENDER_ATTACHMENT', 'RE_UPLOAD_TENDER_ATTACHMENT');
+define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
+define('GET_COMMERCIAL_BID_SUBMISSION', 'GET_COMMERCIAL_BID_SUBMISSION');
+define('SAVE_BID_SCHEDULE', 'SAVE_BID_SCHEDULE');
+define('GET_MAIN_ENVELOP_DATA', 'GET_MAIN_ENVELOP_DATA');
 
 class APIController extends Controller
 {
@@ -183,6 +187,14 @@ class APIController extends Controller
                 return $this->SRMService->getTenderAttachment($request);
             case RE_UPLOAD_TENDER_ATTACHMENT :
                 return $this->SRMService->reUploadTenderAttachment($request);
+            case DELETE_TENDER_ATTACHMENT :
+                return $this->SRMService->deleteBidSubmissionAttachment($request);
+            case GET_COMMERCIAL_BID_SUBMISSION :
+                return $this->SRMService->getCommercialBidSubmissionData($request);
+            case SAVE_BID_SCHEDULE :
+                return $this->SRMService->saveBidSchedule($request);
+            case GET_MAIN_ENVELOP_DATA :
+                return $this->SRMService->getMainEnvelopData($request);
             default:
                 return [
                     'success'   => false,

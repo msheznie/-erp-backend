@@ -6,11 +6,23 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="PricingScheduleMaster",
+ *      definition="BidMainWork",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
  *          description="id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="main_works_id",
+ *          description="main_works_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="bid_master_id",
+ *          description="bid_master_id",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -21,31 +33,31 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="scheduler_name",
- *          description="scheduler_name",
+ *          property="bid_format_detail_id",
+ *          description="bid_format_detail_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="qty",
+ *          description="qty",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="amount",
+ *          description="amount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="remarks",
+ *          description="remarks",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="price_bid_format_id",
- *          description="price_bid_format_id",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="schedule_mandatory",
- *          description="schedule_mandatory",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="items_mandatory",
- *          description="items_mandatory",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="status",
- *          description="if 1 Complete if 0 Pending",
+ *          property="supplier_registration_id",
+ *          description="supplier_registration_id",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -72,19 +84,13 @@ use Eloquent as Model;
  *          description="updated_by",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="company_id",
- *          description="company_id",
- *          type="integer",
- *          format="int32"
  *      )
  * )
  */
-class PricingScheduleMaster extends Model
+class BidMainWork extends Model
 {
 
-    public $table = 'srm_pricing_schedule_master';
+    public $table = 'srm_bid_main_work';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -93,15 +99,17 @@ class PricingScheduleMaster extends Model
 
 
     public $fillable = [
+        'main_works_id',
+        'bid_master_id',
         'tender_id',
-        'scheduler_name',
-        'price_bid_format_id',
-        'schedule_mandatory',
-        'items_mandatory',
-        'status',
+        'bid_format_detail_id',
+        'qty',
+        'amount',
+        'total_amount',
+        'remarks',
+        'supplier_registration_id',
         'created_by',
-        'updated_by',
-        'company_id'
+        'updated_by'
     ];
 
     /**
@@ -111,15 +119,17 @@ class PricingScheduleMaster extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'main_works_id' => 'integer',
+        'bid_master_id' => 'integer',
         'tender_id' => 'integer',
-        'scheduler_name' => 'string',
-        'price_bid_format_id' => 'integer',
-        'schedule_mandatory' => 'integer',
-        'items_mandatory' => 'integer',
-        'status' => 'integer',
+        'bid_format_detail_id' => 'integer',
+        'qty' => 'integer',
+        'amount' => 'float',
+        'total_amount' => 'float',
+        'remarks' => 'string',
+        'supplier_registration_id' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'company_id' => 'integer'
+        'updated_by' => 'integer'
     ];
 
     /**
@@ -130,26 +140,6 @@ class PricingScheduleMaster extends Model
     public static $rules = [
         
     ];
-
-    public function tender_master()
-    {
-        return $this->hasOne('App\Models\TenderMaster', 'id', 'tender_id');
-    }
-
-    public function tender_bid_format_master()
-    {
-        return $this->hasOne('App\Models\TenderBidFormatMaster', 'id', 'price_bid_format_id');
-    }
-
-    public function bid_schedule()
-    {
-        return $this->hasOne('App\Models\BidSchedule', 'schedule_id', 'id');
-    }
-
-    public function tender_main_works()
-    {
-        return $this->hasMany('App\Models\TenderMainWorks', 'schedule_id', 'id');
-    }
 
     
 }
