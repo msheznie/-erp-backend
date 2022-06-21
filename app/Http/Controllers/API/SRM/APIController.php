@@ -66,6 +66,8 @@ define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
 define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
 define('RE_UPLOAD_TENDER_ATTACHMENT', 'RE_UPLOAD_TENDER_ATTACHMENT');
 define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
+define('GET_COMMERCIAL_BID_SUBMISSION', 'GET_COMMERCIAL_BID_SUBMISSION');
+define('SAVE_BID_SCHEDULE', 'SAVE_BID_SCHEDULE');
 
 class APIController extends Controller
 {
@@ -186,6 +188,10 @@ class APIController extends Controller
                 return $this->SRMService->reUploadTenderAttachment($request);
             case DELETE_TENDER_ATTACHMENT :
                 return $this->SRMService->deleteBidSubmissionAttachment($request);
+            case GET_COMMERCIAL_BID_SUBMISSION :
+                return $this->SRMService->getCommercialBidSubmissionData($request);
+            case SAVE_BID_SCHEDULE :
+                return $this->SRMService->saveBidSchedule($request);
             default:
                 return [
                     'success'   => false,

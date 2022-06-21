@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidSchedule;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
 use App\Models\Company;
@@ -23,7 +24,9 @@ use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentOrder;
+use App\Models\ScheduleBidSubmission;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
@@ -34,6 +37,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
+use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\WarehouseMaster;
@@ -2319,6 +2323,51 @@ class SRMService
             'success' => true,
             'message' => 'Attachment deleted successfully ',
             'data' => $data
+        ];
+    }
+
+    public function getCommercialBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $details = PricingScheduleMaster::with(['tender_bid_format_master','bid_schedule' => function($q) use($bidMasterId){
+            $q->where('bid_master_id',$bidMasterId);
+        },'tender_main_works' => function($q) use($bidMasterId){
+            $q->with(['tender_bid_format_detail','bid_main_work' => function($q) use($bidMasterId){
+                $q->where('bid_master_id',$bidMasterId);
+            }]);
+        }])->where('tender_id',$tenderId)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $details
+        ];
+    }
+
+    public function saveBidSchedule($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $att['remarks'] = $detail['bid_schedule']['remarks'];
+        if(isset($detail['bid_schedule']['id'])){
+            $att['updated_by'] = $supplierRegId;
+            $result = BidSchedule::where('id', $detail['bid_schedule']['id'])->update($att);
+        }else{
+            $att['schedule_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['tender_id'] = $tenderId;
+            $att['supplier_registration_id'] = $supplierRegId;
+            $att['created_by'] = $supplierRegId;
+            $result = BidSchedule::create($att);
+        }
+        return [
+            'success' => true,
+            'message' => 'Successfully Saved',
+            'data' =>  $result
         ];
     }
 }
