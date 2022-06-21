@@ -685,6 +685,7 @@ WHERE
                                 $calDt['to_date'] = $to_date;
                                 $calDt['company_id'] = $input['company_id'];
                                 $calDt['created_by'] = $employee->employeeSystemID;
+                                $calDt['created_at'] = Carbon::now();
 
                                 CalendarDatesDetail::create($calDt);
                             }
