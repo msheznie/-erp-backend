@@ -87,8 +87,8 @@ class PosAPIController extends AppBaseController
            "" as category_id,"" as category_description,"" as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
            "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
-           confirmedYN as confirmedYN,"" as confirmedDate,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmedbyName,isApproved as approvedYN,approvedDate as approvedDate,
-           approvedBySystemID as approvedbyEmpID,approvedBy as approvedbyEmpName,approvedComment as approvedComment')
+           confirmedYN as is_confirmed,confirmedEmpDate as confirmed_date,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmed_user_name,isApproved as is_approved,approvedDate as approved_date,
+           approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
            ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
            ->where('chartofaccountsassigned.companySystemID','=',$company_id)
            ->where('chartofaccounts.AccountCode','!=','')
