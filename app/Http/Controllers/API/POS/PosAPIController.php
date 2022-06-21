@@ -235,6 +235,8 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.documentID','!=','')
                 ->where('secondaryItemCode','!=','')
                 ->where('itemShortDescription','!=','')
+                ->where('financeCategoryMaster','!=','')
+                ->where('financeCategorySub','!=','')
                 ->where('itemDescription','!=','')
                 ->where('financeitemcategorymaster.categoryDescription','!=','')
                 ->where('units.UnitShortCode','!=','')
