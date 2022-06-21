@@ -16,7 +16,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\GRVDetails;
+use App\Models\FinanceItemCategorySub;
 /**
  * Class ExpenseAssetAllocationController
  * @package App\Http\Controllers\API
@@ -118,11 +119,12 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         if (!isset($input['documentSystemID'])) {
             return $this->sendError("Document system ID not found");
         }
-
+        
         $checkForAssetDuplicate = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->where('assetID', $input['assetID'])
                                                   ->first();
+                                                      
 
         if ($checkForAssetDuplicate) {
             return $this->sendError("This asset alreday allocated", 500);
@@ -166,6 +168,34 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
         }
+        else if($input['documentSystemID'] == 3) {
+            $grvDetail = GRVDetails::with(['master'])->find($input['documentDetailID']);
+            
+            if (!$grvDetail) {
+                return $this->sendError("GRV detail not found");
+            }
+
+            if(isset($grvDetail->itemFinanceCategorySubID))
+            {
+                $subCat = FinanceItemCategorySub::find($grvDetail->itemFinanceCategorySubID);
+                $chart_of_account = $subCat->financeGLcodePLSystemID;
+            }
+            else
+            {
+                $chart_of_account = null;
+            }
+            
+            $detailTotal = $grvDetail->netAmount;
+            $input['chartOfAccountSystemID'] = $chart_of_account;
+            $companySystemID = isset($grvDetail->master->companySystemID) ? $grvDetail->master->companySystemID : null;
+
+            $transactionCurrencyID = isset($grvDetail->master->supplierTransactionCurrencyID) ? $grvDetail->master->supplierTransactionCurrencyID : null;
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+        
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+        }
+
         else
         {
                 $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']); 
@@ -190,7 +220,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                   ->sum('amount');
 
         $newTotal = $allocatedSum + floatval($input['amount']);
-
+    
 
         if ($newTotal > $detailTotal) {
             return $this->sendError("Allocated amount cannot be greater than detail amount.");
