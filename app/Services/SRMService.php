@@ -1194,7 +1194,6 @@ class SRMService
     {
 
         $input = $request->all();
-
         $registrationLinkIds = array();
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
