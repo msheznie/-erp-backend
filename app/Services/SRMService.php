@@ -36,6 +36,7 @@ use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
@@ -1181,8 +1182,18 @@ class SRMService
     {
 
         $input = $request->all();
+        $registrationLinkIds = array();
+        $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+        foreach($supplierRegIdAll as $supplierReg){
+            $registrationLinkIds[] = $supplierReg['id'];
+        }
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
+        $tenderIds = TenderSupplierAssignee::select('tender_master_id')->whereIn('registration_link_id', $registrationLinkIds)->get()->toArray();
+        foreach($tenderIds as $tenderId){
+            $tenderMasterId[] = $tenderId['tender_master_id'];
+        }
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1192,12 +1203,13 @@ class SRMService
         if ($request->input('extra.tender_status') == 1) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            }, 'tenderSupplierAssignee'  => function ($q) use ($supplierData) {
-                $q->where('registration_link_id', '=', $supplierData['id']);
-            }])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+            }, 'tenderSupplierAssignee'])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })
-                ->where('published_yn', 1);
+            })->whereIn('id', $tenderMasterId)
+                ->orWhere(function ($query) {
+                      $query->where('published_yn', 1)
+                          ->where('tender_type_id', 1);
+                });
         } else if ($request->input('extra.tender_status') == 2) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
@@ -1276,6 +1288,19 @@ class SRMService
         }
         return 0;
     }
+
+    public static function getAllSupplierRegIdByUUID($uuid)
+    {
+        if ($uuid) {
+            $supplierResult = SupplierRegistrationLink::select('id')->where('uuid', $uuid)->get()->toArray();
+
+            if (!empty($supplierResult)) {
+                return $supplierResult;
+            }
+        }
+        return 0;
+    }
+
 
     public function getFaqList(Request $request)
     {
