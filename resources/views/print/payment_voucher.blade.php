@@ -575,22 +575,24 @@
             </table>
         </div>
     @endif
+    <div style="padding-bottom: 60px!important; padding-top: 10px!important;" class="container">
+    <table style="width:100%;">
+        <tr>
+            <td width="40%"><span
+                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+            </td>
+            <td><span class="font-weight-bold">Review By :</span></td>
+        </tr>
+        <tr>
+            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+        </tr>
+        <tr>
+            &nbsp;
+        </tr>
+    </table>
+    </div>
 </div>
 
-<table style="width:100%;">
-    <tr>
-        <td width="40%"><span
-                    class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
-        </td>
-        <td><span class="font-weight-bold">Review By :</span></td>
-    </tr>
-</table>
-<table style="width:100%;">
-    <tr>
-        <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-    </tr>
-    <tr>
-        &nbsp;
-    </tr>
-</table>
+
+
 </body>
