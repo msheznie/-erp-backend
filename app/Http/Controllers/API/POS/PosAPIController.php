@@ -84,7 +84,7 @@ class PosAPIController extends AppBaseController
            $company_id = $request->get('company_id');
            $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,chartofaccounts.AccountCode As system_code,chartofaccounts.AccountCode As secondary_code,chartofaccounts.AccountDescription as description,
            isMasterAccount as is_master_account,chartofaccounts.masterAccount as master_account_id , "" as master_system_code,chartofaccounts.catogaryBLorPL as master_category,
-           "" as category_id,"" as category_description,"" as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
+           "" as category_id,"" as category_description,controlAccounts as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
            "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
            confirmedYN as is_confirmed,confirmedEmpDate as confirmed_date,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmed_user_name,isApproved as is_approved,approvedDate as approved_date,
