@@ -734,7 +734,7 @@ WHERE
     ) t GROUP BY t.employeeID');
 
 
-        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$refLocalAmount], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
 
     }
 
@@ -2237,6 +2237,279 @@ WHERE
         return \Excel::create('upload_budget_template', function ($excel) use ($output) {
             $excel->sheet('New sheet', function ($sheet) use ($output) {
                 $sheet->loadView('export_report.project_utilization_report', $output);
+            });
+        })->download('xlsx');
+    }
+
+    public function downloadEmployeeLedgerReport(Request $request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+
+        $companyID = $request->comapnyID;
+        $currencyID = $request->currencyID;
+
+        $companyCurrency = \Helper::companyCurrency($companyID);
+
+        $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
+        $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
+
+
+
+
+        $input = $request->all();
+        if (array_key_exists('employeeID', $input)) {
+            $employeeDatas = (array)$input['employeeID'];
+            $employeeDatas = collect($employeeDatas)->pluck('id');
+        }
+
+        if (array_key_exists('typeID', $input)) {
+            $typeID = (array)$input['typeID'];
+            $typeID = collect($typeID)->pluck('id');
+        }
+
+        $data = DB::select('SELECT * FROM (SELECT
+	erp_bookinvsuppmaster.bookingDate AS documentDate,
+	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+	erp_bookinvsuppmaster.comments AS description,
+	expense_employee_allocation.employeeSystemID AS employeeID,
+	expense_employee_allocation.amountLocal AS amountLocal,
+	expense_employee_allocation.amountRpt AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    1 AS type
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+	LEFT JOIN expense_employee_allocation ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = expense_employee_allocation.documentSystemCode
+    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    expense_employee_allocation.documentSystemID = 11 AND
+    1 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    2 AS type
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 3 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    2 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+    UNION ALL 
+    SELECT
+     srp_erp_iouvouchers.voucherDate AS documentDate,
+	srp_erp_iouvouchers.iouCode AS documentCode,
+	srp_erp_iouvouchers.narration AS description,
+	srp_erp_iouvouchers.empID AS employeeID,
+    srp_erp_iouvouchers.companyLocalAmount AS amountLocal,
+    srp_erp_iouvouchers.companyReportingAmount AS amountRpt,
+    srp_erp_ioubookingmaster.bookingCode AS referenceDoc,
+    srp_erp_ioubookingmaster.bookingDate AS referenceDocDate,
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID,
+    srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
+    srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
+    3 AS type
+FROM
+	srp_erp_iouvouchers
+    LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
+WHERE
+    DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+    3 IN (' . join(',', json_decode($typeID)) . ') AND
+    srp_erp_iouvouchers.companyID = "'.$companyID.'" AND
+    srp_erp_iouvouchers.approvedYN = 1
+    ) AS t1');
+
+
+        $refAmounts = DB::select("SELECT * FROM (SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
+    srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
+    srp_erp_payrolldetail.empID as employeeID
+FROM
+	expense_employee_allocation
+    LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
+    LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+	    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+    LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
+    LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
+WHERE
+    srp_erp_payrolldetail.fromTB = 'MD' AND
+    srp_erp_payrollmaster.approvedYN = 1 AND
+    expense_employee_allocation.documentSystemID = 11
+    UNION ALL
+    SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
+    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt,
+    0 as employeeID
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+    LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
+    LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 3 AND 
+    srp_erp_payrolldetail.fromTB = 'MD' AND
+    srp_erp_payrollmaster.approvedYN = 1
+   ) AS t1");
+
+
+        $refIouAmounts = DB::select("SELECT * FROM (SELECT
+    srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
+    srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID
+FROM
+	srp_erp_ioubookingmaster 
+WHERE 
+srp_erp_ioubookingmaster.approvedYN = 1
+    )As t2");
+
+        foreach ($data as $da){
+            $da->referenceAmount = 0;
+            foreach($refAmounts as $amount) {
+                if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                }
+                if($da->masterID == $amount->masterID && $da->type == 2) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                }
+            }
+            foreach ($refIouAmounts as $iouAmount){
+                if($da->masterID == $iouAmount->masterID && $da->type == 3) {
+                    $da->referenceAmountLocal = $iouAmount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $iouAmount->referenceAmountRpt;
+                }
+            }
+
+        }
+        $dataArray = array();
+        $i = 0;
+        foreach ($data as $dt){
+            if($dt->type == 3){
+                $dataArray[$i]['documentCode'] = $dt->documentCode;
+                $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
+                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
+                $dataArray[$i]['index'] = $i;
+
+            }
+            $i++;
+        }
+
+        $arrayTemp = array();
+
+        foreach($dataArray as $val)
+        {
+            if (!in_array($val['documentCode'], $arrayTemp))
+            {
+                $arrayTemp[] = $val['documentCode'];
+            }
+            else
+            {
+                unset($data[$val['index']]);
+                $documentCode = $val['documentCode'];
+                $referenceDoc = $val['referenceDoc'];
+                $referenceDocDate = $val['referenceDocDate'];
+                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyLocalAmount;
+                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyReportingAmount;
+
+                foreach ($data as $da) {
+                    if ($da->documentCode == $documentCode) {
+                        $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
+                        $da->referenceDocDate = $da->referenceDocDate . ', ' . $referenceDocDate;
+                        $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
+                        $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
+                    }
+                }
+
+            }
+        }
+
+        $data = array_values($data);
+
+        $employees = DB::select('SELECT * FROM (SELECT
+	
+	expense_employee_allocation.employeeSystemID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	expense_employee_allocation
+LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
+LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    expense_employee_allocation.documentSystemID = 11 AND
+    erp_bookinvsuppmaster.approved = -1 AND
+    expense_employee_allocation.employeeSystemID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    1 IN (' . join(',', json_decode($typeID)) . ')  
+    UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 3 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    2 IN (' . join(',', json_decode($typeID)) . ')  
+    UNION ALL 
+    SELECT
+	srp_erp_iouvouchers.empID AS employeeID,
+    srp_erp_iouvouchers.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	srp_erp_iouvouchers
+LEFT JOIN employees ON srp_erp_iouvouchers.empID = employees.employeeSystemID
+WHERE
+    DATE(srp_erp_iouvouchers.voucherDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+    srp_erp_iouvouchers.empID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    3 IN (' . join(',', json_decode($typeID)) . ') AND
+    srp_erp_iouvouchers.approvedYN = 1
+    ) t GROUP BY t.employeeID');
+
+        $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
+
+        $reportData = array('datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
+
+        $templateName = "export_report.employee_ledger_report";
+
+        return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+            $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                $sheet->loadView($templateName, $reportData);
             });
         })->download('xlsx');
     }
