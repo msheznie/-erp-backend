@@ -2367,6 +2367,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
 
         Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
+        Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition');
+
 
 
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
