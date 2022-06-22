@@ -18,6 +18,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\GRVDetails;
 use App\Models\FinanceItemCategorySub;
+use App\Models\JvDetail;
 /**
  * Class ExpenseAssetAllocationController
  * @package App\Http\Controllers\API
@@ -119,7 +120,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         if (!isset($input['documentSystemID'])) {
             return $this->sendError("Document system ID not found");
         }
-        
+       
         $checkForAssetDuplicate = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->where('assetID', $input['assetID'])
@@ -195,7 +196,24 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
         }
+        else if($input['documentSystemID'] == 17) {
+            $jvDetail = JvDetail::with(['master'])->find($input['documentDetailID']);
 
+            if (!$jvDetail) {
+                return $this->sendError("GRV detail not found");
+            }
+
+            
+            $detailTotal = $jvDetail->debitAmount;
+            $input['chartOfAccountSystemID'] = $jvDetail->chartOfAccountSystemID;
+            $companySystemID = isset($jvDetail->master->companySystemID) ? $jvDetail->master->companySystemID : null;
+
+            $transactionCurrencyID = isset($jvDetail->master->currencyID) ? $jvDetail->master->currencyID : null;
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+        
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+        }
         else
         {
                 $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']); 
@@ -213,7 +231,8 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             
         }
 
-        
+       
+
         
         $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
@@ -221,7 +240,6 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
         $newTotal = $allocatedSum + floatval($input['amount']);
     
-
         if ($newTotal > $detailTotal) {
             return $this->sendError("Allocated amount cannot be greater than detail amount.");
         }
