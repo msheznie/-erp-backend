@@ -575,7 +575,7 @@
             </table>
         </div>
     @endif
-    <div style="padding-bottom: 15px!important; padding-top: 5px!important;">
+    <div style="padding-bottom: 20px!important; padding-top: 15px!important;">
     <table style="width:100%;">
         <tr>
             <td width="40%"><span
