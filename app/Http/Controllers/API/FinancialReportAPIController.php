@@ -627,6 +627,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         foreach ($data as $da){
             $da->referenceAmount = 0;
+            $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
@@ -648,10 +649,14 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $dataArray = array();
         $i = 0;
         foreach ($data as $dt){
+
             if($dt->type == 3){
+                if($dt->referenceDocDate != null) {
+                    $referenceDocDate = \Carbon\Carbon::parse($dt->referenceDocDate)->format("d/m/Y");
+                }
                 $dataArray[$i]['documentCode'] = $dt->documentCode;
                 $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
+                $dataArray[$i]['referenceDocDate'] = $referenceDocDate;
                 $dataArray[$i]['index'] = $i;
 
             }
@@ -678,9 +683,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 foreach ($data as $da) {
                     if ($da->documentCode == $documentCode) {
                         $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
-                        $da->referenceDocDate = $da->referenceDocDate . ', ' . $referenceDocDate;
+                        $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y") . ', ' . $referenceDocDate;
                         $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
                         $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
+                        $da->isLine = 1;
                     }
                 }
 
@@ -2395,6 +2401,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         foreach ($data as $da){
             $da->referenceAmount = 0;
+            $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
@@ -2416,10 +2423,14 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $dataArray = array();
         $i = 0;
         foreach ($data as $dt){
+
             if($dt->type == 3){
+                if($dt->referenceDocDate != null) {
+                    $referenceDocDate = \Carbon\Carbon::parse($dt->referenceDocDate)->format("d/m/Y");
+                }
                 $dataArray[$i]['documentCode'] = $dt->documentCode;
                 $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
+                $dataArray[$i]['referenceDocDate'] = $referenceDocDate;
                 $dataArray[$i]['index'] = $i;
 
             }
@@ -2446,9 +2457,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 foreach ($data as $da) {
                     if ($da->documentCode == $documentCode) {
                         $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
-                        $da->referenceDocDate = $da->referenceDocDate . ', ' . $referenceDocDate;
+                        $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y") . ', ' . $referenceDocDate;
                         $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
                         $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
+                        $da->isLine = 1;
                     }
                 }
 

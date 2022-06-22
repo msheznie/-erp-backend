@@ -56,18 +56,25 @@
                             <td>-</td>
                         @endif
                         @if($data->referenceDocDate != null)
+                            @if($data->isLine == 1)
                             <td>{{ $data->referenceDocDate }}</td>
+                            @endif
+                            @if($data->isLine == 0)
+                            <td>{{ \Carbon\Carbon::parse($data->referenceDocDate)->format("d/m/Y") }}</td>
+                            @endif
                         @endif
                         @if($data->referenceDocDate == null)
                             <td>-</td>
                         @endif
 
-                        @if(isset($data->referenceAmountLocal) && isset($data->referenceAmountRpt))
-
-                            @if($data->referenceAmountLocal != null && $currencyID == 1)
+                        @php
+                            $data->referenceAmountLocal = isset($data->referenceAmountLocal) ? $data->referenceAmountLocal : null;
+                            $data->referenceAmountRpt = isset($data->referenceAmountRpt) ? $data->referenceAmountRpt : null;
+                        @endphp
+                            @if(isset($data->referenceAmountLocal) &&$data->referenceAmountLocal != null && $currencyID == 1)
                                 <td style="text-align: right">{{ number_format(ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
                             @endif
-                            @if($data->referenceAmountRpt != null && $currencyID == 2)
+                            @if(isset($data->referenceAmountRpt) && $data->referenceAmountRpt != null && $currencyID == 2)
                                 <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
                             @endif
                             @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null)
@@ -95,10 +102,7 @@
                             @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null && $data->amountRpt == null && $data->amountLocal == null)
                                 <td  style="text-align: right">0</td>
                             @endif
-                        @else
-                            <td>0</td>
-                            <td>0</td>
-                        @endif
+
 
                     </tr>
                     @endif
