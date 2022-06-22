@@ -91,7 +91,11 @@ class PosAPIController extends AppBaseController
            approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
            ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
            ->where('chartofaccountsassigned.companySystemID','=',$company_id)
+           ->where('chartofaccounts.chartOfAccountSystemID','!=','')
            ->where('chartofaccounts.AccountCode','!=','')
+           ->where('chartofaccounts.AccountDescription','!=','')
+           ->where('chartofaccounts.catogaryBLorPL','!=','')
+           ->where('chartofaccounts.controlAccounts','!=','')
            ->get();
    
            DB::commit();
