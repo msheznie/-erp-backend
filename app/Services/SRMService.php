@@ -1196,7 +1196,6 @@ class SRMService
 
     public function getTenders(Request $request)
     {
-        Log::info('-------------------------------1111111111');
         $input = $request->all();
         $registrationLinkIds = array();
         $tenderMasterId = array();
