@@ -2504,7 +2504,6 @@ WHERE
         $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
 
         $reportData = array('datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
-
         $templateName = "export_report.employee_ledger_report";
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {

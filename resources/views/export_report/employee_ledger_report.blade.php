@@ -11,7 +11,7 @@
 @foreach($employees as $employee)
       <table>
                  <thead>
-                 <tr><td>{{ $employee->employeeName}} - {{ $employee->empID }}</td></tr>
+                 <tr><td><B>{{ $employee->employeeName}} - {{ $employee->empID }}</B></td></tr>
                      <tr>
                           <th>Document Date</th>
                           <th>Document Code</th>
@@ -37,9 +37,71 @@
                  </thead>
                 <tbody>
                 @foreach($datas as $data)
+                    @if($employee->employeeID == $data->employeeID)
                     <tr>
-                        <td>test</td>
+
+                        <td>{{ \Carbon\Carbon::parse($data->documentDate)->format("d/m/Y") }}</td>
+                        <td>{{ $data->documentCode }}</td>
+                        <td>{{ $data->description }}</td>
+                        @if($currencyID == 1)
+                        <td  style="text-align: right">{{ number_format($data->amountLocal,$data->localCurrencyDecimals) }}</td>
+                        @endif
+                        @if($currencyID == 2)
+                            <td  style="text-align: right">{{ number_format($data->amountRpt,$data->rptCurrencyDecimals) }}</td>
+                        @endif
+                        @if($data->referenceDoc != null)
+                        <td>{{ $data->referenceDoc }}</td>
+                        @endif
+                        @if($data->referenceDoc == null)
+                            <td>-</td>
+                        @endif
+                        @if($data->referenceDocDate != null)
+                            <td>{{ $data->referenceDocDate }}</td>
+                        @endif
+                        @if($data->referenceDocDate == null)
+                            <td>-</td>
+                        @endif
+
+                        @if(isset($data->referenceAmountLocal) && isset($data->referenceAmountRpt))
+
+                            @if($data->referenceAmountLocal != null && $currencyID == 1)
+                                <td style="text-align: right">{{ number_format(ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt != null && $currencyID == 2)
+                                <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null)
+                                <td  style="text-align: right">0</td>
+                            @endif
+                            @if($data->referenceAmountLocal != null && $data->amountLocal != null && $currencyID == 1)
+                                <td style="text-align: right">{{ number_format($data->amountLocal - ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt != null && $data->amountRpt != null && $currencyID == 2)
+                                <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt) - $data->amountRpt, $data->rptCurrencyDecimals) }}</td>
+                            @endif
+
+                            @if($data->referenceAmountLocal == null && $data->amountLocal != null && $currencyID == 1)
+                                    <td style="text-align: right">{{ number_format($data->amountLocal, $data->localCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt == null && $data->amountRpt != null && $currencyID == 2)
+                                    <td  style="text-align: right">{{ number_format($data->amountRpt, $data->rptCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountLocal != null && $data->amountLocal == null && $currencyID == 1)
+                                    <td style="text-align: right">{{ number_format(ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt != null && $data->amountRpt == null && $currencyID == 2)
+                                    <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
+                            @endif
+                            @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null && $data->amountRpt == null && $data->amountLocal == null)
+                                <td  style="text-align: right">0</td>
+                            @endif
+                        @else
+                            <td>0</td>
+                            <td>0</td>
+                        @endif
+
                     </tr>
+                    @endif
                 @endforeach
                 </tbody>
       </table>
