@@ -21,7 +21,7 @@
 
         .footer {
             bottom: 0;
-            height: 100px;
+            height: 60px;
         }
 
         .footer {
@@ -122,8 +122,8 @@
         }
 
         hr {
-            margin-top: 16px;
-            margin-bottom: 16px;
+            margin-top: 12px;
+            margin-bottom: 12px;
             border: 0;
             border-top: 1px solid
         }
@@ -172,23 +172,7 @@
 </head>
 <body>
 <div class="footer">
-    <table style="width:100%;">
-        <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
-            </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;">
+    <table style="width:100%; margin-top: 1em!important;">
         <tr>
             @if ($masterdata->approved_by)
                 @foreach ($masterdata->approved_by as $det)
@@ -592,3 +576,21 @@
         </div>
     @endif
 </div>
+
+<table style="width:100%;">
+    <tr>
+        <td width="40%"><span
+                    class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+        </td>
+        <td><span class="font-weight-bold">Review By :</span></td>
+    </tr>
+</table>
+<table style="width:100%;">
+    <tr>
+        <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+    </tr>
+    <tr>
+        &nbsp;
+    </tr>
+</table>
+</body>
