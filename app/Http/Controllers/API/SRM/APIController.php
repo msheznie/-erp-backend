@@ -69,6 +69,9 @@ define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
 define('GET_COMMERCIAL_BID_SUBMISSION', 'GET_COMMERCIAL_BID_SUBMISSION');
 define('SAVE_BID_SCHEDULE', 'SAVE_BID_SCHEDULE');
 define('GET_MAIN_ENVELOP_DATA', 'GET_MAIN_ENVELOP_DATA');
+define('SAVE_BID_MAIN_WORK', 'SAVE_BID_MAIN_WORK');
+define('GET_BID_BOQ_DATA', 'GET_BID_BOQ_DATA');
+define('SAVE_BID_BOQ', 'SAVE_BID_BOQ');
 
 class APIController extends Controller
 {
@@ -195,6 +198,12 @@ class APIController extends Controller
                 return $this->SRMService->saveBidSchedule($request);
             case GET_MAIN_ENVELOP_DATA :
                 return $this->SRMService->getMainEnvelopData($request);
+            case SAVE_BID_MAIN_WORK :
+                return $this->SRMService->saveBidMainWork($request);
+            case GET_BID_BOQ_DATA :
+                return $this->SRMService->getBidBoqData($request);
+            case SAVE_BID_BOQ :
+                return $this->SRMService->saveBidBoq($request);
             default:
                 return [
                     'success'   => false,
