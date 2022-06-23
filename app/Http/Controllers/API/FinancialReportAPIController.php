@@ -4728,6 +4728,7 @@ AND MASTER .canceledYN = 0';
                     'totaldocumentRptAmountCredit' => $totaldocumentRptAmountCredit,
                 );
 
+                dd($dataArr);
                 $html = view('print.report_general_ledger', $dataArr);
 
                 $pdf = \App::make('dompdf.wrapper');
