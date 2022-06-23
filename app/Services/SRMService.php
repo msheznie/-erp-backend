@@ -2298,7 +2298,8 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $attachments = DocumentAttachments::with(['tender_document_types' => function($q){
+
+        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function($q){
             $q->where('srm_action',1);
         }, 'document_attachments'])->whereHas('tender_document_types',function($q){
             $q->where('srm_action',1);
@@ -2307,7 +2308,7 @@ class SRMService
         return [
             'success' => true,
             'message' => 'Successfully Received',
-            'data' => $attachments
+            'data' => $data
         ];
     }
 
