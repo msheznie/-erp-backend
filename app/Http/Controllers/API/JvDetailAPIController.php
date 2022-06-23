@@ -418,7 +418,7 @@ class JvDetailAPIController extends AppBaseController
         $id = $input['jvMasterAutoId'];
 
         $items = JvDetail::where('jvMasterAutoId', $id)
-            ->with(['segment', 'currency_by', 'console_company'])
+            ->with(['segment', 'currency_by', 'console_company','chartofaccount'])
             ->orderBy('jvDetailAutoID', 'ASC')
             ->get();
 
