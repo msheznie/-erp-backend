@@ -2299,7 +2299,11 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $attachments = DocumentAttachments::with(['tender_document_types', 'document_attachments'])->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->where('attachmentType', 1)->get();
+        $attachments = DocumentAttachments::with(['tender_document_types' => function($q){
+            $q->where('srm_action',1);
+        }, 'document_attachments'])->whereHas('tender_document_types',function($q){
+            $q->where('srm_action',1);
+        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
 
         return [
             'success' => true,
@@ -2535,13 +2539,13 @@ class SRMService
             $att['boq_id'] = $detail['id'];
             $att['bid_master_id'] = $bidMasterId;
             $att['main_works_id'] = $detail['main_work_id'];
-            $att['qty'] = $detail['qty'];
+            $att['qty'] = $detail['bid_boq']['qty'];
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
 
             if(isset($detail['bid_boq']['id'])){
-                if(empty($detail['bid_boq']['unit_amount'])){
+                if(empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])){
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
                 }else{
                     $att['updated_by'] = $supplierRegId;
