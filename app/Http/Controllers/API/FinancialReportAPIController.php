@@ -4727,6 +4727,7 @@ AND MASTER .canceledYN = 0';
                     'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), (int) $decimalPlaceRpt),
                     'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), (int) $decimalPlaceRpt),
                 );
+                dd($dataArr);
 
                 $html = view('print.report_general_ledger', $dataArr);
 
