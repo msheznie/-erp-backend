@@ -371,7 +371,7 @@
                             {{number_format($directTraSubTotal, $numberFormatting)}}
                         @endif</td>
                 </tr>
-                @if ($request->isVATEligible)
+                {{-- @if ($request->isVATEligible) --}}
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
@@ -389,16 +389,16 @@
                     <tr>
                         <td colspan="2"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->amountInWordsEnglish}}</td>
+                        <td colspan="3" class="text-right">{{$request->floatedAmountInWordsEnglish}}</td>
                     </tr>
-                @endif
+                {{-- @endif --}}
                 </tbody>
             </table>
             
             <table class="table">
                 <tbody>
                     <tr>
-                        <td colspan="8">we certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
+                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
                     </tr>
                 </tbody>
             </table>

@@ -3223,8 +3223,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
-
         $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $numberfrmtDirectTraSubTotal = number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $numberfrmtDirectTraSubTotal = str_replace(',', '', $numberfrmtDirectTraSubTotal);
+        $floatedDirectTraSubTotal = floatval($numberfrmtDirectTraSubTotal);
+        $floatedAmountInWordsEnglish = ucwords($numFormatterEn->format($floatedDirectTraSubTotal));
+        $customerInvoice->floatedAmountInWordsEnglish = $floatedAmountInWordsEnglish.' Only';
+
+
 
         $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
 
