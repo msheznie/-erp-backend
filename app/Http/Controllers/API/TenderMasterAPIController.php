@@ -579,19 +579,19 @@ WHERE
 
 
         if ($document_sales_start_date > $document_sales_end_date) {
-            return ['success' => false, 'message' => 'Document sales from date cannot be greater than Document sales to date'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the To date for document sales'];
         }
 
         if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
-            return ['success' => false, 'message' => 'Pre-bid clarification from date cannot be greater than Pre-bid clarification to date'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the To date for pre-bid clarification'];
         }
 
         if ($bid_submission_opening_date > $bid_submission_closing_date) {
-            return ['success' => false, 'message' => 'Bid submission from date cannot be greater than Bid submission to date'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the To date for bid submission'];
         }
 
         if ($site_visit_date > $site_visit_end_date) {
-            return ['success' => false, 'message' => 'Site Visit from date cannot be greater than Site Visit to date'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the To date for site visit'];
         }
 
         $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->first();
@@ -667,15 +667,15 @@ WHERE
                                 $to_date = null;
                             }
                             if(!empty($to_date) && empty($frm_date)){
-                                return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be empty'];
+                                return ['success' => false, 'message' => 'From date cannot be empty for '.$calDate['calendar_date']];
                             }
                             if(!empty($frm_date) && empty($to_date)){
-                                return ['success' => false, 'message' => $calDate['calendar_date'].' To cannot be empty'];
+                                return ['success' => false, 'message' => 'To date cannot be empty for '.$calDate['calendar_date']];
                             }
 
                             if(!empty($frm_date) && !empty($to_date)){
                                 if($frm_date>$to_date){
-                                    return ['success' => false, 'message' => $calDate['calendar_date'].' From cannot be greater than To'];
+                                    return ['success' => false, 'message' => 'From date cannot be greater than the to date for '.$calDate['calendar_date']];
                                 }
                             }
                             if(!empty($to_date) || !empty($frm_date)){
