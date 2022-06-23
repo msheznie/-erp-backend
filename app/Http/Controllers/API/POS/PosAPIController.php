@@ -218,7 +218,7 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
             $financeItemCategorySub = FinanceItemCategorySub::selectRaw('financeitemcategorysub.itemCategorySubID As id,financeitemcategorysub.categoryDescription As description,itemCategoryID As master_id ,
-            financeitemcategorysub.financeGLcodeRevenue as revenue_gl,financeitemcategorysub.financeGLcodePL as cost_gl')
+            financeitemcategorysub.financeGLcodeRevenueSystemID as revenue_gl,financeitemcategorysub.financeGLcodePLSystemID as cost_gl')
             ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
             ->where('financeitemcategorysub.itemCategorySubID','!=','')
             ->where('financeitemcategorysub.categoryDescription','!=','')
