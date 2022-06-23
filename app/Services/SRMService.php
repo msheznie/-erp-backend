@@ -2444,7 +2444,7 @@ class SRMService
             ->where('documentSystemCode', $tenderId)
             ->where('documentSystemID', 108)
             ->where('parent_id', null)
-            ->where('attachmentType', 1)
+            ->where('srm_action', 1)
             ->count();
 
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId ,$bidMasterId) {
