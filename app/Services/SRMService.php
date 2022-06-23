@@ -53,6 +53,7 @@ use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -2464,7 +2465,47 @@ class SRMService
             ->where('tender_id', $tenderId)
             ->count();
 
+        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId){ 
+            $q1->where('tender_id',$tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId){
+                $q2->where('tender_id',$tenderId); 
+                $q2->with(['tender_boq_items'=> function ($q3){ 
+                    $q3->whereDoesntHave('bid_boq');
+                }]);
+            }]); 
+        }]) 
+        ->where('tender_id',$tenderId) 
+        ->get();
+
+
+        $tenderArr = collect($pricingScheduleMaster)->map(function ($group) { 
+            return $group['tender_main_works'];
+        });
+
+        $singleArr = Arr::flatten($tenderArr); 
+
+        $tenderArrFilter = collect($singleArr)->map(function ($group) {   
+            if ($group['bid_main_work']==null) { 
+                $group['isExist'] = 1;
+            } 
+            else if(count($group['bid_main_work']['tender_boq_items']) == 0 && $group['bid_main_work']['total_amount'] == 0){ 
+               $group['isExist'] = 1;
+            }else if(count($group['bid_main_work']['tender_boq_items']) > 0){ 
+                $group['isExist'] = 1;
+            }else { 
+                $group['isExist'] = 0;
+            } 
+            return $group['isExist'];
+        });
+
+        $filtered = $tenderArrFilter->filter(function ($value, $key) {
+            return $value > 0;
+        });
+        $filtered->all();
+ 
         $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
+        $data['commercialBidSubmission'] = $filtered->count();
+
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
