@@ -2974,3 +2974,5 @@ Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPICon
 Route::resource('bid_schedules', 'BidScheduleAPIController');
 
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
+
+Route::resource('bid_boqs', 'BidBoqAPIController');

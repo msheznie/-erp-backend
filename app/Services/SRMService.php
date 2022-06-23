@@ -8,6 +8,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidBoq;
+use App\Models\BidMainWork;
 use App\Models\BidSchedule;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
@@ -35,6 +37,7 @@ use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
+use App\Models\TenderBoqItems;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
 use App\Models\TenderMainWorks;
@@ -2444,6 +2447,133 @@ class SRMService
             'message' => 'Main Envelop data retrieved successfully',
             'data' => $data
         ];
-
     }
+
+    public function saveBidMainWork($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            $att['main_works_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['tender_id'] = $tenderId;
+            $att['bid_format_detail_id'] = $detail['bid_format_detail_id'];
+            $att['qty'] = $detail['bid_main_work']['qty'];
+            $att['amount'] = $detail['bid_main_work']['amount'];
+            $att['total_amount'] = $detail['bid_main_work']['total_amount'];
+            $att['remarks'] = $detail['bid_main_work']['remarks'];
+            $att['supplier_registration_id'] = $supplierRegId;
+
+            if(isset($detail['bid_main_work']['id'])){
+                if(empty($detail['bid_main_work']['qty']) && empty($detail['bid_main_work']['amount']) && empty($detail['bid_main_work']['remarks'])){
+                    $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->delete();
+                }else{
+                    $att['updated_by'] = $supplierRegId;
+                    $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->update($att);
+                }
+            }else{
+                $att['created_by'] = $supplierRegId;
+                $result = BidMainWork::create($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getBidBoqData($request)
+    {
+        $mainWorkId = $request->input('extra.mainWorkId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $details = TenderBoqItems::with(['unit','bid_boq' => function($q) use($bidMasterId){
+            $q->where('bid_master_id',$bidMasterId);
+        }])->where('main_work_id',$mainWorkId)->get();
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $details
+        ];
+    }
+
+    public function saveBidBoq($request)
+    {
+        $mainWorkId = $request->input('extra.mainWorkId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+
+        DB::beginTransaction();
+        try {
+            $att['boq_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['main_works_id'] = $detail['main_work_id'];
+            $att['qty'] = $detail['qty'];
+            $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
+            $att['total_amount'] = $detail['bid_boq']['total_amount'];
+            $att['supplier_registration_id'] = $supplierRegId;
+
+            if(isset($detail['bid_boq']['id'])){
+                if(empty($detail['bid_boq']['unit_amount'])){
+                    $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
+                }else{
+                    $att['updated_by'] = $supplierRegId;
+                    $result = BidBoq::where('id', $detail['bid_boq']['id'])->update($att);
+                }
+            }else{
+                $att['created_by'] = $supplierRegId;
+                $result = BidBoq::create($att);
+            }
+            $boqTot = BidBoq::selectRaw('SUM(qty) as qty , SUM(total_amount) as total_amount')->where('bid_master_id',$bidMasterId)->where('main_works_id',$detail['main_work_id'])->first();
+
+            if(!empty($boqTot['qty'])){
+                $bidMainWork = BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->first();
+                if(!empty($bidMainWork)){
+                    $mainWork['qty'] = $boqTot['qty'];
+                    $mainWork['total_amount'] = $boqTot['total_amount'];
+                    $mainWork['updated_by'] = $supplierRegId;
+                    BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
+                }else{
+                    $tenderMainWork = TenderMainWorks::where('id', $detail['main_work_id'])->first();
+                    $mainWork['main_works_id'] = $detail['main_work_id'];
+                    $mainWork['bid_master_id'] = $bidMasterId;
+                    $mainWork['tender_id'] = $tenderMainWork['tender_id'];
+                    $mainWork['bid_format_detail_id'] = $tenderMainWork['bid_format_detail_id'];
+                    $mainWork['qty'] = $boqTot['qty'];
+                    $mainWork['total_amount'] = $boqTot['total_amount'];
+                    $mainWork['supplier_registration_id'] = $supplierRegId;
+
+                    $mainWork['created_by'] = $supplierRegId;
+                    BidMainWork::create($mainWork);
+                }
+            } else{
+                BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->delete();
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
 }
