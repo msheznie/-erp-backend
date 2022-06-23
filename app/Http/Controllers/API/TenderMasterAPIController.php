@@ -579,19 +579,19 @@ WHERE
 
 
         if ($document_sales_start_date > $document_sales_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for document sales'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the to date for document sales'];
         }
 
         if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for pre-bid clarification'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the to date for pre-bid clarification'];
         }
 
         if ($bid_submission_opening_date > $bid_submission_closing_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for bid submission'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the to date for bid submission'];
         }
 
         if ($site_visit_date > $site_visit_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for site visit'];
+            return ['success' => false, 'message' => 'From date cannot be greater than the to date for site visit'];
         }
 
         $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->first();
