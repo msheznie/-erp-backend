@@ -1199,7 +1199,6 @@ class SRMService
 
     public function getTenders(Request $request)
     {
-
         $input = $request->all();
         $registrationLinkIds = array();
         $tenderMasterId = array();
@@ -1209,9 +1208,29 @@ class SRMService
             $registrationLinkIds[] = $supplierReg['id'];
         }
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
-        $tenderIds = TenderSupplierAssignee::select('tender_master_id')->whereIn('registration_link_id', $registrationLinkIds)->get()->toArray();
+
+        //Get Purchased tenders for user
+        $purchasedTenderIds = TenderMasterSupplier::select(DB::raw('DISTINCT tender_master_id'))->whereIn('purchased_by', $registrationLinkIds)->get()->toArray();
+
+        //Get Assigned tenders for user without purchased tenders
+        $tenderIds = TenderSupplierAssignee::select('tender_master_id')
+            ->whereIn('registration_link_id', $registrationLinkIds)
+            ->whereNotIn('tender_master_id', $purchasedTenderIds)
+            ->get()
+            ->toArray();
+
         foreach($tenderIds as $tenderId){
             $tenderMasterId[] = $tenderId['tender_master_id'];
+        }
+
+        //Get Open Tenders Not Purchased
+        $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
+            ->whereNotIn('id', $purchasedTenderIds)
+            ->get()
+            ->toArray();
+
+        foreach($openTendersNotPurchased as $openTendersNotPurchasedId){
+            $tenderMasterId[] = $openTendersNotPurchasedId['id'];
         }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -1225,18 +1244,13 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }, 'tenderSupplierAssignee'])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->whereIn('id', $tenderMasterId)
-                ->orWhere(function ($query) {
-                      $query->where('published_yn', 1)
-                          ->where('tender_type_id', 1);
-                });
+            })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
         } else if ($request->input('extra.tender_status') == 2) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })
-                ->where('published_yn', 1);
+            })->where('published_yn', 1);
         }
         $search = $request->input('search.value');
         if ($search) {
