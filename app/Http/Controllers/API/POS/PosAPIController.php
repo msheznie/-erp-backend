@@ -264,6 +264,7 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.itemDescription','!=','')
                 ->where('financeitemcategorymaster.categoryDescription','!=','')
                 ->where('units.UnitShortCode','!=','')
+                ->where('itemmaster.financeCategoryMaster','!=',3)
                 ->get();
 
             DB::commit();
