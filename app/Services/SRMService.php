@@ -53,6 +53,7 @@ use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -2299,10 +2300,10 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
 
-        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function($q){
-            $q->where('srm_action',1);
-        }, 'document_attachments'])->whereHas('tender_document_types',function($q){
-            $q->where('srm_action',1);
+        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
+            $q->where('srm_action', 1);
+        }, 'document_attachments'])->whereHas('tender_document_types', function ($q) {
+            $q->where('srm_action', 1);
         })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
 
         return [
@@ -2465,7 +2466,51 @@ class SRMService
             ->where('tender_id', $tenderId)
             ->count();
 
+        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId) {
+            $q1->where('tender_id', $tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId) {
+                $q2->where('tender_id', $tenderId);
+                $q2->with(['tender_boq_items' => function ($q3) {
+                    $q3->whereDoesntHave('bid_boq');
+                }]);
+            }]);
+        }])
+            ->where('tender_id', $tenderId)
+            ->get();
+
+
+        $tenderArr = collect($pricingScheduleMaster)->map(function ($group) {
+            return $group['tender_main_works'];
+        });
+
+        $singleArr = Arr::flatten($tenderArr);
+
+        $tenderArrFilter = collect($singleArr)->map(function ($group) {
+            if ($group['bid_main_work'] == null) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && $group['bid_main_work']['total_amount'] == 0) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) > 0) {
+                $group['isExist'] = 1;
+            } else {
+                $group['isExist'] = 0;
+            }
+            return $group['isExist'];
+        });
+
+        $filtered = $tenderArrFilter->filter(function ($value, $key) {
+            return $value > 0;
+        });
+        $filtered->all();
+
+        $bidsubmission =  BidSubmissionMaster::where('id', $bidMasterId)
+        ->where('tender_id',$tenderId)
+        ->first();
+
         $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
+        $data['commercialBidSubmission'] = $filtered->count();
+        $data['isBidSubmissionStatus'] = $bidsubmission['status'];
+
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
@@ -2550,8 +2595,8 @@ class SRMService
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
 
-            if(isset($detail['bid_boq']['id'])){
-                if(empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])){
+            if (isset($detail['bid_boq']['id'])) {
+                if (empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])) {
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
                 } else {
                     $att['updated_by'] = $supplierRegId;
@@ -2587,6 +2632,29 @@ class SRMService
                 BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->delete();
             }
 
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+    public function submitBidTender($request)
+    {
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $tenderId = $request->input('extra.tenderId');
+
+        DB::beginTransaction();
+        try { 
+            $updateData['status'] = 1;
+            $result = BidSubmissionMaster::where('id', $bidMasterId)
+                ->where('tender_id',$tenderId)
+                ->update($updateData);
             DB::commit();
             return [
                 'success' => true,
