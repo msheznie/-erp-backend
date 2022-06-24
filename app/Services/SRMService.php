@@ -2361,7 +2361,7 @@ class SRMService
             $att['parent_id'] = $parentId;
             $att['attachmentType'] = 0;
             $att['originalFileName'] = $attachment['originalFileName'];
-            $att['myFileName'] = $company->CompanyID . '_' . time() . '_PreBidClarification.' . $extension;
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_BidSubmission.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
             DocumentAttachments::create($att);
