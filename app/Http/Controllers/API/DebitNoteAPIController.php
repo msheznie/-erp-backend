@@ -61,6 +61,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use App\Models\Employee;
+use App\Models\CurrencyMaster;
+
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -1263,6 +1266,13 @@ class DebitNoteAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
+        $employees = Employee::select(DB::raw("employeeSystemID,empName"))
+        ->where('empCompanySystemID', $companyId)
+        ->where('empActive', 1)
+        ->get();
+
+        $currency = CurrencyMaster::all();
+
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
 
@@ -1288,10 +1298,12 @@ class DebitNoteAPIController extends AppBaseController
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
             'suppliers' => $suppliers,
+            'employee' =>$employees,
             'segments' => $segments,
             'companyBasePO' => $companyBasePO,
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
+            'currency' => $currency,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
