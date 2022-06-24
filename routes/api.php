@@ -2689,6 +2689,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
+
+        Route::resource('cash_flow_templates', 'CashFlowTemplateAPIController');
+        Route::resource('cash_flow_template_details', 'CashFlowTemplateDetailAPIController');
+        Route::post('getAllCashFlowTemplate', 'CashFlowTemplateAPIController@getAllCashFlowTemplate');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2974,3 +2978,4 @@ Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPICon
 Route::resource('bid_schedules', 'BidScheduleAPIController');
 
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
+
