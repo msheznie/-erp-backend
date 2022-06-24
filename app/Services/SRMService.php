@@ -2466,10 +2466,11 @@ class SRMService
             ->where('tender_id', $tenderId)
             ->count();
 
-        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId) {
+        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId , $bidMasterId) {
             $q1->where('tender_id', $tenderId);
-            $q1->with(['bid_main_work' => function ($q2) use ($tenderId) {
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId , $bidMasterId) {
                 $q2->where('tender_id', $tenderId);
+                $q2->where('bid_master_id', $bidMasterId);
                 $q2->with(['tender_boq_items' => function ($q3) {
                     $q3->whereDoesntHave('bid_boq');
                 }]);
