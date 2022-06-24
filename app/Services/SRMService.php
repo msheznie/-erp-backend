@@ -2488,7 +2488,7 @@ class SRMService
         $tenderArrFilter = collect($singleArr)->map(function ($group) {
             if ($group['bid_main_work'] == null) {
                 $group['isExist'] = 1;
-            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && $group['bid_main_work']['total_amount'] == 0) {
+            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && ($group['bid_main_work']['total_amount'] == 0 && $group['bid_main_work']['qty'] == 0)) {
                 $group['isExist'] = 1;
             } else if (count($group['bid_main_work']['tender_boq_items']) > 0) {
                 $group['isExist'] = 1;
