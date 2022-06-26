@@ -1964,6 +1964,8 @@ class SRMService
             }]);
         }])->where('tender_id', $tenderId)->where('level', 1)->where('critera_type_id', $critera_type_id)->get();
 
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
         return [
             'success' => true,
             'message' => 'Go No Go Bid Submission Successfully get',
@@ -2306,6 +2308,8 @@ class SRMService
             $q->where('srm_action', 1);
         })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
 
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
         return [
             'success' => true,
             'message' => 'Successfully Received',
@@ -2397,7 +2401,7 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $details = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
+        $data['commercialBid'] = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
         }, 'tender_main_works' => function ($q) use ($bidMasterId) {
             $q->with(['tender_bid_format_detail', 'bid_main_work' => function ($q) use ($bidMasterId) {
@@ -2405,10 +2409,12 @@ class SRMService
             }]);
         }])->where('tender_id', $tenderId)->get();
 
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
         return [
             'success' => true,
             'message' => 'Successfully Received',
-            'data' =>  $details
+            'data' =>  $data
         ];
     }
 
@@ -2567,14 +2573,16 @@ class SRMService
     {
         $mainWorkId = $request->input('extra.mainWorkId');
         $bidMasterId = $request->input('extra.bidMasterId');
-        $details = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
+        $data['boqItems'] = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
         }])->where('main_work_id', $mainWorkId)->get();
+
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
         return [
             'success' => true,
             'message' => 'Successfully Received',
-            'data' =>  $details
+            'data' =>  $data
         ];
     }
 
@@ -2666,6 +2674,15 @@ class SRMService
             DB::rollback();
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getBidMasterData($bidMasterId){
+        $bidMaster = BidSubmissionMaster::where('id',$bidMasterId)->first();
+        if($bidMaster['status'] == 1){
+            return 1;
+        }else{
+            return 0;
         }
     }
 }
