@@ -563,26 +563,27 @@
             <td><span class="font-weight-bold">Review By :</span></td>
         </tr>
         <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+            <td><span class="font-weight-bold">Electronically Approved By :</span>
+                @if ($masterdata->approved_by)
+                    @foreach ($masterdata->approved_by as $det)
+                        <div style="padding-right: 25px;font-size: 9px;">
+                            <div>
+                                @if($det->employee)
+                                    {{$det->employee->empFullName }}
+                                @endif
+                            </div>
+                            <div><span>
+                @if(!empty($det->approvedDate))
+                                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    @endif
+              </span></div>
+                        </div>
+                    @endforeach
+                @endif
+            </td>
         </tr>
         <tr>
-            @if ($masterdata->approved_by)
-                @foreach ($masterdata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
+
         </tr>
     </table>
     </div>
