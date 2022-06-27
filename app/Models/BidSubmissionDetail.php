@@ -78,8 +78,7 @@ class BidSubmissionDetail extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'bid_master_id',
@@ -87,7 +86,9 @@ class BidSubmissionDetail extends Model
         'evaluation_detail_id',
         'score_id',
         'score',
+        'created_at',
         'created_by',
+        'updated_at',
         'updated_by'
     ];
 
