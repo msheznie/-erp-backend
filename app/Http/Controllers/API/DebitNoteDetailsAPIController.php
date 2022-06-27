@@ -130,11 +130,13 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $debitNote = DebitNote::find($input['debitNoteAutoID']);
 
+        $type =  $debitNote->type;
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
         }
         $validator = \Validator::make($debitNote->toArray(), [
-            'supplierID' => 'required|numeric|min:1',
+            'supplierID' => ['required_if:type,1|numeric|min:1'],
+            'empID' => ['required_if:type,2|numeric|min:1'],
             'supplierTransactionCurrencyID' => 'required|numeric|min:1',
             'comments' => 'required',
         ]);
