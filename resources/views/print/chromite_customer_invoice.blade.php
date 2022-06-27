@@ -181,14 +181,6 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    {{-- @if($request->logoExists)
-                          @if($type == 1)
-                            <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
-                          @else
-                            image not found
-                          @endif
-                    @endif --}}
                 </td>
 
 
@@ -321,8 +313,6 @@
             </tr>
         </table>
 
-        {{-- @if (isset($request->item_invoice) && $request->item_invoice) --}}
-
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
@@ -395,7 +385,6 @@
                             {{number_format($directTraSubTotal, $numberFormatting)}}
                         @endif</td>
                 </tr>
-                {{-- @if ($request->isVATEligible) --}}
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
@@ -417,7 +406,6 @@
                             and
                             {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif only</td>
                     </tr>
-                {{-- @endif --}}
                 </tbody>
             </table>
             
@@ -428,7 +416,6 @@
                     </tr>
                 </tbody>
             </table>
-        {{-- @endif --}}
     </div>
   
 
