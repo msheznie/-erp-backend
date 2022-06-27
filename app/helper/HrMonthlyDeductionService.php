@@ -131,7 +131,7 @@ class HrMonthlyDeductionService
                 'transactionCurrencyID'=> $this->emp_currency->currencyID,
                 'transactionCurrency'=> $this->emp_currency->CurrencyCode,
                 'transactionCurrencyDecimalPlaces'=> $this->emp_currency->DecimalPlaces,
-                'transactionExchangeRate'=> 1, 'transactionAmount'=> ($row->DPAmount * $this->emp_currency->ExchangeRate),
+                'transactionExchangeRate'=> 1, 'transactionAmount'=> (($row->DPAmount + $row->vatAmount) * $this->emp_currency->ExchangeRate),
 
                 'companyLocalCurrencyID'=> $this->local_currency->currencyID,
                 'companyLocalCurrency'=> $this->local_currency->CurrencyCode,
@@ -246,7 +246,7 @@ class HrMonthlyDeductionService
 
     function load_pv_details(){
         $this->pv_details = DirectPaymentDetails::where('directPaymentAutoID', $this->pv_id)
-            ->selectRaw('DPAmount, deductionType, localAmount, comRptAmount, localCurrencyER, comRptCurrencyER')
+            ->selectRaw('DPAmount, vatAmount, deductionType, localAmount, comRptAmount, localCurrencyER, comRptCurrencyER')
             ->whereHas('monthly_deduction_det')
             ->with('monthly_deduction_det:monthlyDeclarationID,salaryCategoryID,expenseGLCode')
             ->get();

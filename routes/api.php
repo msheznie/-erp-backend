@@ -18,6 +18,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
+        Route::post('pull_chart_of_account', 'POS\PosAPIController@pullChartOfAccount');
+        Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
+        Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
+        Route::post('pull_warehouse', 'POS\PosAPIController@pullWarehouse');
+        Route::post('pull_warehouse_item', 'POS\PosAPIController@pullWarehouseItem');
+        Route::post('srp_erp_warehousebinlocation', 'POS\PosAPIController@pullWarehouseBinLocation');
+        Route::post('pull_item', 'POS\PosAPIController@pullItem');
+        Route::post('pull_item_bin_location', 'POS\PosAPIController@pullItemBinLocation');
+        Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
+        Route::post('pull_user', 'POS\PosAPIController@pullUser');
+        Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -440,9 +451,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
         Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');      
+        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');   
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
+        Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
@@ -760,6 +772,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
         Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+        Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
@@ -2356,6 +2369,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
 
         Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
+        Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition');
+
 
 
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
@@ -2941,3 +2956,26 @@ Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 Route::resource('calendar_dates', 'CalendarDatesAPIController');
 
 Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
+
+
+
+Route::resource('bid_submission_masters', 'BidSubmissionMasterAPIController');
+
+Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');
+
+Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
+
+Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');
+
+
+
+
+
+
+
+
+Route::resource('bid_schedules', 'BidScheduleAPIController');
+
+Route::resource('bid_main_works', 'BidMainWorkAPIController');
+
+Route::resource('bid_boqs', 'BidBoqAPIController');

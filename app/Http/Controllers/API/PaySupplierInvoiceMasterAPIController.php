@@ -353,8 +353,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
 
-            if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
+            if (isset($input['paymentMode'])) {
+                if ($input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
@@ -2849,89 +2849,89 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
         $sql = 'SELECT
-            	erp_accountspayableledger.apAutoID,
-            	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
-            	erp_accountspayableledger.supplierTransCurrencyID,
-            	erp_accountspayableledger.supplierTransER,
-            	erp_accountspayableledger.localCurrencyID,
-            	erp_accountspayableledger.localER,
-            	erp_accountspayableledger.localAmount,
-            	erp_accountspayableledger.comRptCurrencyID,
-            	erp_accountspayableledger.comRptER,
-            	erp_accountspayableledger.comRptAmount,
-            	erp_accountspayableledger.companySystemID,
-            	erp_accountspayableledger.companyID,
-            	erp_accountspayableledger.documentSystemID as addedDocumentSystemID,
-            	erp_accountspayableledger.documentID as addedDocumentID,
-            	erp_accountspayableledger.documentCode as bookingInvDocCode,
-            	erp_accountspayableledger.documentDate as bookingInvoiceDate,
-            	erp_accountspayableledger.invoiceType as addedDocumentType,
-            	erp_accountspayableledger.supplierCodeSystem,
-            	erp_accountspayableledger.supplierInvoiceNo,
-            	erp_accountspayableledger.supplierInvoiceDate,
-            	erp_accountspayableledger.supplierDefaultCurrencyID,
-            	erp_accountspayableledger.supplierDefaultCurrencyER,
-            	erp_accountspayableledger.supplierDefaultAmount,
-                erp_accountspayableledger.purchaseOrderID,
-                erp_accountspayableledger.isRetention,
-                poid.purchaseOrderCode,
-            	CurrencyCode,
-            	DecimalPlaces,
-            	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-            	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
-            	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
-            	false as isChecked 
-            FROM
-            	erp_accountspayableledger
-                LEFT JOIN (
-                  SELECT
-                        erp_purchaseordermaster.purchaseOrderCode,
-                        erp_purchaseordermaster.purchaseOrderID
-                    FROM
-                        erp_purchaseordermaster
-                    ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
-            	LEFT JOIN (
-            SELECT
-            	erp_paysupplierinvoicedetail.apAutoID,
-            	IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
-            	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
-            FROM
-            	erp_paysupplierinvoicedetail 
-            GROUP BY
-            	erp_paysupplierinvoicedetail.apAutoID 
-            	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
-            	LEFT JOIN (
-            SELECT
-            	erp_matchdocumentmaster.PayMasterAutoId,
-            	erp_matchdocumentmaster.companyID,
-            	erp_matchdocumentmaster.companySystemID,
-            	erp_matchdocumentmaster.documentSystemID,
-            	erp_matchdocumentmaster.BPVcode,
-            	erp_matchdocumentmaster.BPVsupplierID,
-            	erp_matchdocumentmaster.supplierTransCurrencyID,
-            	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
-            	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
-            	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
-            FROM
-            	erp_matchdocumentmaster 
-            WHERE
-            	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-            	AND erp_matchdocumentmaster.documentSystemID = 15
-            	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
-            	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
-            	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
-            	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
-            	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
-            	AND md.companySystemID = erp_accountspayableledger.companySystemID 
-            	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
-            WHERE
-            	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-            	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
-            	AND erp_accountspayableledger.selectedToPaymentInv = 0 
-            	AND erp_accountspayableledger.fullyInvoice <> 2 
-            	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-            	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-            	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
+                	erp_accountspayableledger.apAutoID,
+                	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
+                	erp_accountspayableledger.supplierTransCurrencyID,
+                	erp_accountspayableledger.supplierTransER,
+                	erp_accountspayableledger.localCurrencyID,
+                	erp_accountspayableledger.localER,
+                	erp_accountspayableledger.localAmount,
+                	erp_accountspayableledger.comRptCurrencyID,
+                	erp_accountspayableledger.comRptER,
+                	erp_accountspayableledger.comRptAmount,
+                	erp_accountspayableledger.companySystemID,
+                	erp_accountspayableledger.companyID,
+                	erp_accountspayableledger.documentSystemID as addedDocumentSystemID,
+                	erp_accountspayableledger.documentID as addedDocumentID,
+                	erp_accountspayableledger.documentCode as bookingInvDocCode,
+                	erp_accountspayableledger.documentDate as bookingInvoiceDate,
+                	erp_accountspayableledger.invoiceType as addedDocumentType,
+                	erp_accountspayableledger.supplierCodeSystem,
+                	erp_accountspayableledger.supplierInvoiceNo,
+                	erp_accountspayableledger.supplierInvoiceDate,
+                	erp_accountspayableledger.supplierDefaultCurrencyID,
+                	erp_accountspayableledger.supplierDefaultCurrencyER,
+                	erp_accountspayableledger.supplierDefaultAmount,
+                    erp_accountspayableledger.purchaseOrderID,
+                    erp_accountspayableledger.isRetention,
+                    poid.purchaseOrderCode,
+                	CurrencyCode,
+                	DecimalPlaces,
+                	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
+                	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+                	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
+                	false as isChecked 
+                FROM
+                	erp_accountspayableledger
+                    LEFT JOIN (
+                      SELECT
+                            erp_purchaseordermaster.purchaseOrderCode,
+                            erp_purchaseordermaster.purchaseOrderID
+                        FROM
+                            erp_purchaseordermaster
+                        ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
+                	LEFT JOIN (
+                        SELECT
+                        	erp_paysupplierinvoicedetail.apAutoID,
+                        	IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
+                        	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
+                        FROM
+                        	erp_paysupplierinvoicedetail 
+                        GROUP BY
+                        	erp_paysupplierinvoicedetail.apAutoID 
+                        	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
+                        	LEFT JOIN (
+                        SELECT
+                        	erp_matchdocumentmaster.PayMasterAutoId,
+                        	erp_matchdocumentmaster.companyID,
+                        	erp_matchdocumentmaster.companySystemID,
+                        	erp_matchdocumentmaster.documentSystemID,
+                        	erp_matchdocumentmaster.BPVcode,
+                        	erp_matchdocumentmaster.BPVsupplierID,
+                        	erp_matchdocumentmaster.supplierTransCurrencyID,
+                        	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+                        	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+                        	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
+                        FROM
+                        	erp_matchdocumentmaster 
+                        WHERE
+                        	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                        	AND erp_matchdocumentmaster.documentSystemID = 15
+                        	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
+                        	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
+                	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
+                	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
+                	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
+                	AND md.companySystemID = erp_accountspayableledger.companySystemID 
+                	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
+                WHERE
+                	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7, 2,3 ) 
+                	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
+                	AND erp_accountspayableledger.selectedToPaymentInv = 0 
+                	AND erp_accountspayableledger.fullyInvoice <> 2 
+                	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
+                	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
 
         $output = DB::select($sql);
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -3179,6 +3179,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3189,9 +3190,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption IS NULL
 )
 WHERE
 	approved = - 1
@@ -3200,116 +3202,119 @@ AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
-	MASTER.debitNoteAutoID as masterAutoID,
-	MASTER.debitNoteCode as documentCode,
-	MASTER.debitNoteDate as docDate,
-	MASTER.debitAmountTrans as transAmount,
-	MASTER.supplierID,
-	currency.CurrencyCode,
-	currency.DecimalPlaces,
-	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
-	(MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
-	) AS BalanceAmt
-FROM
-	erp_debitnote AS MASTER
-INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
-LEFT JOIN (
-	SELECT
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID,
-		erp_matchdocumentmaster.companySystemID,
-		erp_matchdocumentmaster.BPVcode,
-		COALESCE (
-			SUM(
-				erp_matchdocumentmaster.matchingAmount
-			),
-			0
-		) AS SumOfmatchingAmount
-	FROM
-		erp_matchdocumentmaster
-	GROUP BY
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
-) AS advd ON (
-	MASTER .debitNoteAutoID = advd.PayMasterAutoId
-	AND MASTER .documentSystemID = advd.documentSystemID
-	AND MASTER .companySystemID = advd.companySystemID
-)
-LEFT JOIN (
-	SELECT
-		erp_paysupplierinvoicedetail.PayMasterAutoId,
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode,
-		erp_paysupplierinvoicedetail.bookingInvDocCode,
-		erp_paysupplierinvoicedetail.companySystemID,
-		Sum(
-			erp_paysupplierinvoicedetail.supplierPaymentAmount
-		) AS SumOfsupplierPaymentAmount
-	FROM
-		erp_paysupplierinvoicedetail
-	GROUP BY
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode
-) AS payInvoice ON (
-	MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
-	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
-	AND MASTER.companySystemID = payInvoice.companySystemID
-)
-WHERE
-	approved = - 1
-AND matchInvoice <> 2
-AND MASTER.companySystemID = ' . $input['companySystemID'] . '
-AND supplierID = ' . $input['BPVsupplierID'] . '
-HAVING
-	(
-		ROUND(
-			BalanceAmt,
-			currency.DecimalPlaces
-		) > 0
-	)');
+                MASTER.debitNoteAutoID as masterAutoID,
+                MASTER.debitNoteCode as documentCode,
+                MASTER.debitNoteDate as docDate,
+                MASTER.debitAmountTrans as transAmount,
+                MASTER.supplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
+                IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
+                (MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+                ) AS BalanceAmt
+            FROM
+                erp_debitnote AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    erp_matchdocumentmaster.matchingOption,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.matchingOption
+            ) AS advd ON (
+                MASTER .debitNoteAutoID = advd.PayMasterAutoId
+                AND MASTER .documentSystemID = advd.documentSystemID
+                AND MASTER .companySystemID = advd.companySystemID
+                AND advd.matchingOption IS NULL
+            )
+            LEFT JOIN (
+                SELECT
+                    erp_paysupplierinvoicedetail.PayMasterAutoId,
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                    erp_paysupplierinvoicedetail.bookingInvDocCode,
+                    erp_paysupplierinvoicedetail.companySystemID,
+                    Sum(
+                        erp_paysupplierinvoicedetail.supplierPaymentAmount
+                    ) AS SumOfsupplierPaymentAmount
+                FROM
+                    erp_paysupplierinvoicedetail
+                GROUP BY
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode
+            ) AS payInvoice ON (
+                MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
+                AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
+                AND MASTER.companySystemID = payInvoice.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND matchInvoice <> 2
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . '
+            AND supplierID = ' . $input['BPVsupplierID'] . '
+            HAVING
+                (
+                    ROUND(
+                        BalanceAmt,
+                        currency.DecimalPlaces
+                    ) > 0
+                )');
         }
         elseif ($input['matchType'] == 4) {
             $invoiceMaster = DB::select('SELECT
-	MASTER.PayMasterAutoId as masterAutoID,
-	MASTER.BPVcode as documentCode,
-	MASTER.BPVdate as docDate,
-	MASTER.payAmountSuppTrans as transAmount,
-	MASTER.BPVsupplierID,
-	currency.CurrencyCode,
-	currency.DecimalPlaces,
-	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
-	(
-		MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
-	) AS BalanceAmt
-FROM
-	erp_paysupplierinvoicemaster AS MASTER
-INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
-LEFT JOIN (
-	SELECT
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID,
-		erp_matchdocumentmaster.companySystemID,
-		erp_matchdocumentmaster.BPVcode,
-		COALESCE (
-			SUM(
-				erp_matchdocumentmaster.matchingAmount
-			),
-			0
-		) AS SumOfmatchingAmount
-	FROM
-		erp_matchdocumentmaster
-	GROUP BY
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
-) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
-)
-WHERE
-	approved = - 1
-AND invoiceType = 3    
-AND matchInvoice <> 2
-AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
+                MASTER.PayMasterAutoId as masterAutoID,
+                MASTER.BPVcode as documentCode,
+                MASTER.BPVdate as docDate,
+                MASTER.payAmountSuppTrans as transAmount,
+                MASTER.BPVsupplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+                (
+                    MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+                ) AS BalanceAmt
+            FROM
+                erp_paysupplierinvoicemaster AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID
+            ) AS advd ON (
+                MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND invoiceType = 3    
+            AND matchInvoice <> 2
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
         elseif ($input['matchType'] == 3) {
             $invoiceMaster = DB::select('SELECT
@@ -3333,6 +3338,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3343,9 +3349,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption = 1
 )
 WHERE
 	approved = - 1

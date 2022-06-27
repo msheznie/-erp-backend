@@ -56,6 +56,23 @@ define('GET_APPOINTMENT_ATTACHMENT', 'GET_APPOINTMENT_ATTACHMENT');
 define('REMOVE_APPOINTMENT_ATTACHMENT', 'REMOVE_APPOINTMENT_ATTACHMENT');
 define('REMOVE_CLARIFICATION_ATTACHMENT', 'REMOVE_CLARIFICATION_ATTACHMENT');
 define('REMOVE_PRE_BID_CLARIFICATION_RESPONSE', 'REMOVE_PRE_BID_CLARIFICATION_RESPONSE');
+define('GET_CONSOLIDATED_DATA', 'GET_CONSOLIDATED_DATA');
+define('GET_CONSOLIDATED_DATA_ATTACHMENT', 'GET_CONSOLIDATED_DATA_ATTACHMENT');
+define('GET_GO_NO_GO_BID_SUBMISSION', 'GET_GO_NO_GO_BID_SUBMISSION');
+define('CHECK_BID_SUBMITTED', 'CHECK_BID_SUBMITTED');
+define('SAVE_TECHNICAL_BID_SUBMISSION', 'SAVE_TECHNICAL_BID_SUBMISSION');
+define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
+define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
+define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
+define('RE_UPLOAD_TENDER_ATTACHMENT', 'RE_UPLOAD_TENDER_ATTACHMENT');
+define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
+define('GET_COMMERCIAL_BID_SUBMISSION', 'GET_COMMERCIAL_BID_SUBMISSION');
+define('SAVE_BID_SCHEDULE', 'SAVE_BID_SCHEDULE');
+define('GET_MAIN_ENVELOP_DATA', 'GET_MAIN_ENVELOP_DATA');
+define('SAVE_BID_MAIN_WORK', 'SAVE_BID_MAIN_WORK');
+define('GET_BID_BOQ_DATA', 'GET_BID_BOQ_DATA');
+define('SAVE_BID_BOQ', 'SAVE_BID_BOQ');
+define('SUBMIT_BID_TENDER', 'SUBMIT_BID_TENDER');
 
 class APIController extends Controller
 {
@@ -132,31 +149,64 @@ class APIController extends Controller
                 return $this->SRMService->getSrmApprovedDetails($request);
             case GET_TENDERS:
                 return $this->SRMService->getTenders($request);
-            case SAVE_TENDER_PURCHASE :
+            case SAVE_TENDER_PURCHASE:
                 return $this->SRMService->saveTenderPurchase($request);
-            case GET_FAQ :
+            case GET_FAQ:
                 return $this->SRMService->getFaqList($request);
-            case GET_TENDER_PRE_BID_CLARIFICATION_LIST :
+            case GET_TENDER_PRE_BID_CLARIFICATION_LIST:
                 return $this->SRMService->getPrebidClarificationList($request);
-            case ADD_CLARIFICATION :
+            case ADD_CLARIFICATION:
                 return $this->SRMService->saveTenderPrebidClarification($request);
-            case GET_PRE_BID_CLARIFICATION_RESPONSE :
+            case GET_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->getPreBidClarificationsResponse($request);
-            case ADD_PRE_BID_CLARIFICATION_RESPONSE :
+            case ADD_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->createClarificationResponse($request);
-            case GET_TENDER_PRE_BID_CLARIFICATION :
+            case GET_TENDER_PRE_BID_CLARIFICATION:
                 return $this->SRMService->getPrebidClarification($request);
-            case ADD_APPOINTMENT_ATTACHMENT :
+            case ADD_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->uploadAppointmentAttachment($request);
-            case GET_APPOINTMENT_ATTACHMENT :
+            case GET_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->getDeliveryAppointmentAttachment($request);
-            case REMOVE_APPOINTMENT_ATTACHMENT :
+            case REMOVE_APPOINTMENT_ATTACHMENT:
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
-            case REMOVE_CLARIFICATION_ATTACHMENT :
+            case REMOVE_CLARIFICATION_ATTACHMENT:
                 return $this->SRMService->removeDeliveryAppointmentAttachment($request);
-            case REMOVE_PRE_BID_CLARIFICATION_RESPONSE :
+            case REMOVE_PRE_BID_CLARIFICATION_RESPONSE:
                 return $this->SRMService->removePreBidClarificationResponse($request);
-
+            case GET_CONSOLIDATED_DATA:
+                return $this->SRMService->getConsolidatedData($request);
+            case GET_CONSOLIDATED_DATA_ATTACHMENT:
+                return $this->SRMService->getConsolidatedDataAttachment($request);
+            case GET_GO_NO_GO_BID_SUBMISSION :
+                return $this->SRMService->getGoNoGoBidSubmissionData($request);
+            case CHECK_BID_SUBMITTED :
+                return $this->SRMService->checkBidSubmitted($request);
+            case SAVE_TECHNICAL_BID_SUBMISSION :
+                return $this->SRMService->saveTechnicalBidSubmission($request);
+            case SAVE_TECHNICAL_BID_LINE :
+                return $this->SRMService->saveTechnicalBidSubmissionLine($request);
+            case SAVE_GO_NO_GO_BID_LINE :
+                return $this->SRMService->saveGoNoGoBidSubmissionLine($request);
+            case GET_TENDER_ATTACHMENT :
+                return $this->SRMService->getTenderAttachment($request);
+            case RE_UPLOAD_TENDER_ATTACHMENT :
+                return $this->SRMService->reUploadTenderAttachment($request);
+            case DELETE_TENDER_ATTACHMENT :
+                return $this->SRMService->deleteBidSubmissionAttachment($request);
+            case GET_COMMERCIAL_BID_SUBMISSION :
+                return $this->SRMService->getCommercialBidSubmissionData($request);
+            case SAVE_BID_SCHEDULE :
+                return $this->SRMService->saveBidSchedule($request);
+            case GET_MAIN_ENVELOP_DATA :
+                return $this->SRMService->getMainEnvelopData($request);
+            case SAVE_BID_MAIN_WORK :
+                return $this->SRMService->saveBidMainWork($request);
+            case GET_BID_BOQ_DATA :
+                return $this->SRMService->getBidBoqData($request);
+            case SAVE_BID_BOQ :
+                return $this->SRMService->saveBidBoq($request);
+            case SUBMIT_BID_TENDER : 
+                return $this->SRMService->submitBidTender($request);
             default:
                 return [
                     'success'   => false,
@@ -188,7 +238,7 @@ class APIController extends Controller
             ]);
 
             if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
-                if($response->data ){ 
+                if ($response->data) {
                     foreach ($response->data  as $key1 => $data1) {
                         foreach ($data1->groups as $val2) {
                             foreach ($val2->controls as $val3) {
@@ -219,7 +269,6 @@ class APIController extends Controller
                         }
                     }
                 }
-               
             }
 
             return response()->json($response);

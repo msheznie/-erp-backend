@@ -6,6 +6,7 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderDocumentTypes;
 use App\Repositories\TenderDocumentTypesRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -66,9 +67,9 @@ class DocumentAttachmentTypeController extends AppBaseController
                 ->where('document_type', '=', $input['document_type'])->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type \'' . $input['document_type'] . '\' already exists');
         }
-
+        $input['created_at'] = Carbon::now();
         $input['created_by'] = Helper::getEmployeeSystemID();
         $input['company_id'] = $companySystemID;
         $attachmentType = $this->tenderDocumentTypesRepository->create($input);
@@ -135,10 +136,11 @@ class DocumentAttachmentTypeController extends AppBaseController
             ->first();
 
         if (!empty($attachmentTypeExist)) {
-            return $this->sendError('Document Type ' . $input['document_type'] . ' already exists');
+            return $this->sendError('Document Type \'' . $input['document_type'] . '\' already exists');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
+        $input['updated_at'] = Carbon::now();
 
         $attachmentType = TenderDocumentTypes::where('id', $id)->update($input);
 
