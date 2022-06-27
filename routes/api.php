@@ -1009,6 +1009,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
         Route::resource('debit_notes', 'DebitNoteAPIController');
         Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency');
+        Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
         Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
         Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
         Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
