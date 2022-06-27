@@ -190,6 +190,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
         Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
+        Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster');
+
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
         Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');

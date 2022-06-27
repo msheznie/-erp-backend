@@ -278,4 +278,30 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
         return $this->sendSuccess('Reason Code Master deleted successfully');
     }
+
+    /**
+     * Get bank master data for list
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllReasonCodeMaster(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $reasonCodeMasters = ReasonCodeMaster::select('*');
+
+
+        return \DataTables::eloquent($reasonCodeMasters)
+            ->order(function ($query) use ($input) {
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }
