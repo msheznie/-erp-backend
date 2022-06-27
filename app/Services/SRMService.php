@@ -2508,6 +2508,7 @@ class SRMService
             }
             return $group['isExist'];
         });
+        $data['filterBefore'] = $tenderArrFilter;
 
         $filtered = $tenderArrFilter->filter(function ($value, $key) {
             return $value > 0;
