@@ -2523,10 +2523,31 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
 
-                            $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
-                            $data['glCode'] = $masterData->supplierGLCode;
-                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            if($masterData->type == 1)
+                            {
+                                $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
+                                $data['glCode'] = $masterData->supplierGLCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            }
+                            else if($masterData->type == 2)
+                            {
+
+                                $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$masterData->companySystemID)->first();
+                                if(isset($emp_control_acc))
+                                {
+                                    $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                                    if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                                    {
+                                        $data['chartOfAccountSystemID'] = $emp_chart_acc;
+                                        $data['glCode'] = ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']);
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    }
+                                }
+                            }
+
+                           
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionCurrencyER;
                             $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));

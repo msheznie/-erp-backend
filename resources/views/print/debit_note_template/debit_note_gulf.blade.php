@@ -218,8 +218,16 @@
                 <td>
                     <b>
                         <p>
-                         @if($entity->supplier)
-                                {{$entity->supplier->supplierName}}
+                         @if($entity->type == 1)
+                            @if($entity->supplier)
+                                    {{$entity->supplier->supplierName}}
+                            @endif
+                         @endif
+
+                         @if($entity->type == 2)
+                            @if($entity->employee)
+                                    {{$entity->employee->empName}}
+                            @endif
                          @endif
                         </p>
                     </b>
