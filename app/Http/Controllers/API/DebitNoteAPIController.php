@@ -321,7 +321,7 @@ class DebitNoteAPIController extends AppBaseController
             }
 
         }
-        if($type == 2)
+        else if($type == 2)
         {
 
             
@@ -464,7 +464,7 @@ class DebitNoteAPIController extends AppBaseController
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
-        $type =  $debitNote->type;
+        $type =  $input['type'];
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
@@ -514,6 +514,7 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         // adding supplier grv details
+
         if($type == 1)
         {
             $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
@@ -529,9 +530,30 @@ class DebitNoteAPIController extends AppBaseController
                 $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
                 $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
                 $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+                $input["empControlAccount"] = null;
+                $input["empID"] = null;
             }
         }
+        else if($type == 2)
+        {
 
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$input['companySystemID'])->first();
+
+         
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                    $input["supplierID"] = null;
+                }
+            }
+
+          
+        }
+    
 
         if (isset($input['debitNoteDate'])) {
             if ($input['debitNoteDate']) {
@@ -838,7 +860,7 @@ class DebitNoteAPIController extends AppBaseController
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
-        $type =  $debitNote->type;
+        $type =  $input['type'];
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
@@ -905,8 +927,28 @@ class DebitNoteAPIController extends AppBaseController
                 $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
                 $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
                 $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+                $input["empControlAccount"] = null;
+                $input["empID"] = null;
             }
         }
+        else if($type == 2)
+        {
+
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$input['companySystemID'])->first();
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                    $input["supplierID"] = null;
+                }
+            }
+
+          
+        }
+
  
 
         if (isset($input['debitNoteDate'])) {
@@ -1173,6 +1215,46 @@ class DebitNoteAPIController extends AppBaseController
         return $this->sendResponse($debitNote, 'Debit note updated successfully');
 
     }
+
+    public function updateDebiteNoteType($id, UpdateDebitNoteAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
+
+        $input = $this->convertArrayToValue($input);
+
+      
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
+
+        $type =  $input['type'];
+
+        if($type == 1)
+        {
+            $details["empControlAccount"] = null;
+            $details["empID"] = null;
+        }
+        else if($type == 2)
+        {
+            $details["supplierID"] = null;
+        }
+
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        if ($debitNote->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
+        $details['type'] = $type;
+
+        $debitNote = $this->debitNoteRepository->update($details, $id);
+
+        return $this->sendResponse($debitNote, 'Debit note updated successfully');
+
+    }
+
     /**
      * @param int $id
      * @return Response

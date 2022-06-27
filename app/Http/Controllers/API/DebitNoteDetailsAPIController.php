@@ -130,7 +130,10 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $debitNote = DebitNote::find($input['debitNoteAutoID']);
 
-        $type =  $debitNote->type;
+        $type =  $input['type'];
+
+
+     
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
         }
@@ -144,7 +147,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
+       
         $alreadyAdded = DebitNote::where('debitNoteAutoID', $debitNote->debitNoteAutoID)
             ->whereHas('detail', function ($query) use ($input) {
                 $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
