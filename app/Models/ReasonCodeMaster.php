@@ -57,7 +57,7 @@ class ReasonCodeMaster extends Model
         'id' => 'integer',
         'description' => 'string',
         'isPost' => 'boolean',
-        'glCode' => 'string'
+        'glCode' => 'integer'
     ];
 
     /**
@@ -66,7 +66,6 @@ class ReasonCodeMaster extends Model
      * @var array
      */
     public static $rules = [
-        'isPost' => 'required'
     ];
 
     

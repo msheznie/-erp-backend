@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateReasonCodeMasterAPIRequest;
 use App\Http\Requests\API\UpdateReasonCodeMasterAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\ReasonCodeMaster;
 use App\Repositories\ReasonCodeMasterRepository;
 use Illuminate\Http\Request;
@@ -275,8 +276,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
         }
 
         $reasonCodeMaster->delete();
-
-        return $this->sendSuccess('Reason Code Master deleted successfully');
+        return $this->sendResponse([],'Reason Code Master deleted successfully');
     }
 
     /**
@@ -303,5 +303,13 @@ class ReasonCodeMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getAllGLCodes(Request $request)
+    {
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
+
+        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }
 }

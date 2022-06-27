@@ -344,6 +344,7 @@ class SalesReturnDetailAPIController extends AppBaseController
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
 
                 $invDetail_arr['qtyReturned'] = $currentItemData['qtyReturned'];
+                $invDetail_arr['reasonCode'] = $currentItemData['reasonCode'];
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
 
                 $totalNetcost = ($currentItemData['unitTransactionAmount'] - $currentItemData['discountAmount']) * $currentItemData['qtyReturned'];
