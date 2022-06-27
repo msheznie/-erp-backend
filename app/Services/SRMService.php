@@ -2479,8 +2479,10 @@ class SRMService
             $q1->with(['bid_main_work' => function ($q2) use ($tenderId , $bidMasterId) {
                 $q2->where('tender_id', $tenderId);
                 $q2->where('bid_master_id', $bidMasterId);
-                $q2->with(['tender_boq_items' => function ($q3) {
-                    $q3->whereDoesntHave('bid_boq');
+                $q2->with(['tender_boq_items' => function ($q3)  use ($bidMasterId) {
+                    $q3->whereDoesntHave('bid_boq',function ($query) use ($bidMasterId) {
+                        $query->where('bid_master_id', '=', $bidMasterId);
+                    });
                 }]);
             }]);
         }])
