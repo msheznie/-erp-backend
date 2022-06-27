@@ -1985,6 +1985,7 @@ class SRMService
             $att['supplier_registration_id'] = $supplierRegId;
             $att['uuid'] = Uuid::generate()->string;
             $att['bid_sequence'] = 1;
+            $att['created_at'] = Carbon::now();
             $att['created_by'] = $supplierRegId;
             $result = BidSubmissionMaster::create($att);
 
@@ -2128,6 +2129,7 @@ class SRMService
             if (count($details) > 0) {
                 foreach ($details as $dt) {
                     $att['bid_master_id'] = $dt['bid_master_id'];
+                    $att['created_at'] = Carbon::now();
                     $att['created_by'] = $dt['created_by'];
                     $att['evaluation_detail_id'] = $dt['evaluation_detail_id'];
                     $att['score'] = $dt['score'];
@@ -2226,9 +2228,11 @@ class SRMService
             $att['score_id'] = $push['score_id'];
             $att['tender_id'] = $push['tender_id'];
             if ($push['id'] == 0) {
+                $att['created_at'] = Carbon::now();
                 $att['created_by'] = $push['created_by'];
                 $result = BidSubmissionDetail::create($att);
             } else {
+                $att['updated_at'] = Carbon::now();
                 $att['updated_by'] = $push['created_by'];
                 $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
             }
@@ -2289,9 +2293,11 @@ class SRMService
             $att['score_id'] = $push['score_id'];
             $att['tender_id'] = $push['tender_id'];
             if ($push['id'] == 0) {
+                $att['created_at'] = Carbon::now();
                 $att['created_by'] = $push['created_by'];
                 $result = BidSubmissionDetail::create($att);
             } else {
+                $att['updated_at'] = Carbon::now();
                 $att['updated_by'] = $push['created_by'];
                 $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
             }
@@ -2441,6 +2447,7 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $att['remarks'] = $detail['bid_schedule']['remarks'];
         if (isset($detail['bid_schedule']['id'])) {
+            $att['updated_at'] = Carbon::now();
             $att['updated_by'] = $supplierRegId;
             $result = BidSchedule::where('id', $detail['bid_schedule']['id'])->update($att);
         } else {
@@ -2448,6 +2455,7 @@ class SRMService
             $att['bid_master_id'] = $bidMasterId;
             $att['tender_id'] = $tenderId;
             $att['supplier_registration_id'] = $supplierRegId;
+            $att['created_at'] = Carbon::now();
             $att['created_by'] = $supplierRegId;
             $result = BidSchedule::create($att);
         }
@@ -2466,8 +2474,8 @@ class SRMService
         $documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
         }])
-            ->whereDoesntHave('document_attachments', function ($q) use ($tenderId) {
-                $q->where('documentSystemCode', $tenderId);
+            ->whereDoesntHave('document_attachments', function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
                 $q->where('documentSystemID', 108);
             })
             ->where('documentSystemCode', $tenderId)
@@ -2476,7 +2484,7 @@ class SRMService
             ->whereHas('tender_document_types', function ($q) {
                 $q->where('srm_action', 1);
             })
-            ->count();
+            ->count(); 
 
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
             $q2->where('bid_master_id', $bidMasterId);
@@ -2491,8 +2499,10 @@ class SRMService
             $q1->with(['bid_main_work' => function ($q2) use ($tenderId , $bidMasterId) {
                 $q2->where('tender_id', $tenderId);
                 $q2->where('bid_master_id', $bidMasterId);
-                $q2->with(['tender_boq_items' => function ($q3) {
-                    $q3->whereDoesntHave('bid_boq');
+                $q2->with(['tender_boq_items' => function ($q3)  use ($bidMasterId) {
+                    $q3->whereDoesntHave('bid_boq',function ($query) use ($bidMasterId) {
+                        $query->where('bid_master_id', '=', $bidMasterId);
+                    });
                 }]);
             }]);
         }])
@@ -2518,6 +2528,7 @@ class SRMService
             }
             return $group['isExist'];
         });
+        $data['filterBefore'] = $tenderArrFilter;
 
         $filtered = $tenderArrFilter->filter(function ($value, $key) {
             return $value > 0;
@@ -2531,6 +2542,7 @@ class SRMService
         $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
         $data['commercialBidSubmission'] = $filtered->count();
         $data['isBidSubmissionStatus'] = $bidsubmission['status'];
+        $data['singleArr'] = $singleArr;
 
         return [
             'success' => true,
@@ -2562,10 +2574,12 @@ class SRMService
                 if (empty($detail['bid_main_work']['qty']) && empty($detail['bid_main_work']['amount']) && empty($detail['bid_main_work']['remarks'])) {
                     $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->delete();
                 } else {
+                    $att['updated_at'] = Carbon::now();
                     $att['updated_by'] = $supplierRegId;
                     $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->update($att);
                 }
             } else {
+                $att['created_at'] = Carbon::now();
                 $att['created_by'] = $supplierRegId;
                 $result = BidMainWork::create($att);
             }
@@ -2622,10 +2636,12 @@ class SRMService
                 if (empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])) {
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
                 } else {
+                    $att['updated_at'] = Carbon::now();
                     $att['updated_by'] = $supplierRegId;
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->update($att);
                 }
             } else {
+                $att['created_at'] = Carbon::now();
                 $att['created_by'] = $supplierRegId;
                 $result = BidBoq::create($att);
             }
@@ -2636,6 +2652,7 @@ class SRMService
                 if (!empty($bidMainWork)) {
                     $mainWork['qty'] = $boqTot['qty'];
                     $mainWork['total_amount'] = $boqTot['total_amount'];
+                    $mainWork['updated_at'] = Carbon::now();
                     $mainWork['updated_by'] = $supplierRegId;
                     BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
                 } else {
@@ -2648,6 +2665,7 @@ class SRMService
                     $mainWork['total_amount'] = $boqTot['total_amount'];
                     $mainWork['supplier_registration_id'] = $supplierRegId;
 
+                    $mainWork['created_at'] = Carbon::now();
                     $mainWork['created_by'] = $supplierRegId;
                     BidMainWork::create($mainWork);
                 }
@@ -2675,6 +2693,7 @@ class SRMService
         DB::beginTransaction();
         try { 
             $updateData['status'] = 1;
+            $updateData['updated_at'] = Carbon::now();
             $result = BidSubmissionMaster::where('id', $bidMasterId)
                 ->where('tender_id',$tenderId)
                 ->update($updateData);
