@@ -2304,7 +2304,9 @@ class SRMService
 
         $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
-        }, 'document_attachments'])->whereHas('tender_document_types', function ($q) {
+        }, 'document_attachments'=> function ($q) use($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) {
             $q->where('srm_action', 1);
         })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
 
@@ -2359,7 +2361,7 @@ class SRMService
             $att['companyID'] = $company->CompanyID;
             $att['documentSystemID'] = $documentCode->documentSystemID;
             $att['documentID'] = $documentCode->documentID;
-            $att['documentSystemCode'] = $tenderId;
+            $att['documentSystemCode'] = $bidMasterId;
             $att['attachmentDescription'] = 'Bid Submission ' . time();
             $att['path'] = $path;
             $att['parent_id'] = $parentId;
