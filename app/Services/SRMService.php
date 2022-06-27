@@ -2519,6 +2519,7 @@ class SRMService
         $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
         $data['commercialBidSubmission'] = $filtered->count();
         $data['isBidSubmissionStatus'] = $bidsubmission['status'];
+        $data['singleArr'] = $singleArr;
 
         return [
             'success' => true,
