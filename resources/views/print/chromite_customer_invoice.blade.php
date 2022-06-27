@@ -321,13 +321,19 @@
             </tr>
         </table>
 
-        @if (isset($request->item_invoice) && $request->item_invoice)
+        {{-- @if (isset($request->item_invoice) && $request->item_invoice) --}}
 
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
+                @if(count($request->issue_item_details) > 0 )
                     <th style="width:10%;">Item</th>
                     <th style="width:25%;">Content</th>
+                @endif
+                @if(count($request->invoicedetails) > 0 )
+                    <th style="width:10%;">Account Code</th>
+                    <th style="width:25%;">Description</th>
+                @endif
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">Quantity</th>
                     <th style="width:15%;text-align: center">Rate</th>
@@ -362,6 +368,24 @@
                     @endforeach
                 @endif
 
+                @if(!empty($request->invoicedetails))
+                    @foreach ($request->invoicedetails as $item)
+
+                            {{$directTraSubTotal +=$item->invoiceAmount}}
+
+                            <tr style="border: 1px solid !important;">
+                                <td style="text-align: center;">{{$item->glCode}}</td>
+                                <td style="word-wrap:break-word;">{{$item->glCodeDes}}</td>
+                                <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
+                                <td style="text-align: center;">{{$item->invoiceQty}}</td>
+                                <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-center">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                    @endforeach
+                @endif
+
                 </tbody>
                 <tbody>
                 <tr>
@@ -389,7 +413,9 @@
                     <tr>
                         <td colspan="2"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->floatedAmountInWordsEnglish}}</td>
+                        <td colspan="3" class="text-right">{{$request->amount_word}}
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif only</td>
                     </tr>
                 {{-- @endif --}}
                 </tbody>
@@ -402,7 +428,7 @@
                     </tr>
                 </tbody>
             </table>
-        @endif
+        {{-- @endif --}}
     </div>
   
 
