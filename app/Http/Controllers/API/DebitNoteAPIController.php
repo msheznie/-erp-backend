@@ -321,6 +321,22 @@ class DebitNoteAPIController extends AppBaseController
             }
 
         }
+        if($type == 2)
+        {
+
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$company_id)->first();
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                }
+            }
+
+          
+        }
 
         if ($documentMaster) {
             $code = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
