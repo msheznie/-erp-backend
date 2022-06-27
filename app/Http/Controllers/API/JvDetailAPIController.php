@@ -302,7 +302,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, UpdateJvDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by', 'console_company']);
+        $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
