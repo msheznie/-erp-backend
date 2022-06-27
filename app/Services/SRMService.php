@@ -2197,7 +2197,19 @@ class SRMService
                     } else {
                         $push['id'] = 0;
                     }
-                } else {
+                } else if ($criteriaDetail['bid_submission_detail']['score'] == 0) {
+                    $push['bid_master_id'] = $bidMasterId;
+                    $push['tender_id'] = $tenderId;
+                    $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                    $push['score_id'] = null;
+                    $push['score'] = $criteriaDetail['bid_submission_detail']['score'];
+                    $push['created_by'] = $supplierRegId;
+                    if (isset($criteriaDetail['bid_submission_detail']['id'])) {
+                        $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                    } else {
+                        $push['id'] = 0;
+                    }
+                }else {
                     $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
                     DB::commit();
                     return [
