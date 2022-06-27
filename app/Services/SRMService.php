@@ -2337,7 +2337,7 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
         $extension = $attachment['fileType'];
-        $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+        $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx', 'pptx'];
 
         if (!in_array(strtolower($extension), $allowExtensions)) {
             throw new Exception("This type of file not allow to upload.", 500);
