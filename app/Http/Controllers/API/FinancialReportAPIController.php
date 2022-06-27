@@ -599,8 +599,8 @@ WHERE
     UNION ALL
     SELECT
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
-    SUM(srp_erp_payrolldetail.companyLocalAmount) OVER (PARTITION BY srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID) as referenceAmountLocal,
-    SUM(srp_erp_payrolldetail.companyReportingAmount) OVER (PARTITION BY srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID) as referenceAmountRpt,
+    SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
+    SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt,
     0 as employeeID
 FROM
 	erp_paysupplierinvoicemaster
@@ -611,7 +611,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
    ) AS t1");
 
 
