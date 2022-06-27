@@ -78,8 +78,7 @@ class BidSubmissionMaster extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'uuid',
@@ -87,7 +86,9 @@ class BidSubmissionMaster extends Model
         'supplier_registration_id',
         'bid_sequence',
         'status',
+        'created_at',
         'created_by',
+        'updated_at',
         'updated_by'
     ];
 

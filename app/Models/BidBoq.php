@@ -89,8 +89,7 @@ class BidBoq extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'boq_id',
@@ -101,7 +100,9 @@ class BidBoq extends Model
         'total_amount',
         'remarks',
         'supplier_registration_id',
+        'created_at',
         'created_by',
+        'updated_at',
         'updated_by'
     ];
 

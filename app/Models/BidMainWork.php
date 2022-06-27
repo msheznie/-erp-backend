@@ -95,8 +95,7 @@ class BidMainWork extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'main_works_id',
@@ -108,7 +107,9 @@ class BidMainWork extends Model
         'total_amount',
         'remarks',
         'supplier_registration_id',
+        'created_at',
         'created_by',
+        'updated_at',
         'updated_by'
     ];
 
