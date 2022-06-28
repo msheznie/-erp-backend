@@ -248,6 +248,21 @@
                                 @endif
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
+                        <tr>
+                            <td><b>Customer VATIN </b></td>
+                            <td>:
+                                {{$request->customer->vatNumber}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer Address 1 </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress1}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer Address 2 </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress2}}</td>
+                        </tr>
 
                     </table>
                 </td>
