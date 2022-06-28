@@ -299,6 +299,7 @@ class SalesReturnDetail extends Model
         'qtyReturned',
         'trackingType',
         'reasonCode',
+        'isPost',
         'qtyReturnedDefaultMeasure',
         'currentStockQty',
         'currentWareHouseStockQty',

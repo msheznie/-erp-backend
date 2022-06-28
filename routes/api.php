@@ -191,7 +191,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
         Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster');
+        Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update');
         Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes');
+        Route::get('reasonCodeMasterRecordSalesReturn/{id}', 'ReasonCodeMasterAPIController@reasonCodeMasterRecordSalesReturn');
 
 
         Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');

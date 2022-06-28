@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateReasonCodeMasterAPIRequest;
 use App\Http\Requests\API\UpdateReasonCodeMasterAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ReasonCodeMaster;
+use App\Models\SalesReturnDetail;
 use App\Repositories\ReasonCodeMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -212,18 +213,21 @@ class ReasonCodeMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateReasonCodeMasterAPIRequest $request)
+    public function update(Request $request)
     {
         $input = $request->all();
 
         /** @var ReasonCodeMaster $reasonCodeMaster */
-        $reasonCodeMaster = $this->reasonCodeMasterRepository->findWithoutFail($id);
+        $reasonCodeMaster = $this->reasonCodeMasterRepository->findWithoutFail($input['id']);
 
         if (empty($reasonCodeMaster)) {
             return $this->sendError('Reason Code Master not found');
         }
+        $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
+        $data =array_except($input, ['id','created_at']);
 
-        $reasonCodeMaster = $this->reasonCodeMasterRepository->update($input, $id);
+
+        $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
 
         return $this->sendResponse($reasonCodeMaster->toArray(), 'ReasonCodeMaster updated successfully');
     }
@@ -275,6 +279,11 @@ class ReasonCodeMasterAPIController extends AppBaseController
             return $this->sendError('Reason Code Master not found');
         }
 
+        $salesReturn = SalesReturnDetail::where('reasonCode', $id)->first();
+        if($salesReturn){
+            return $this->sendError('Reason Code Master cannot be deleted. Record already exist in sales return detail');
+        }
+
         $reasonCodeMaster->delete();
         return $this->sendResponse([],'Reason Code Master deleted successfully');
     }
@@ -311,5 +320,11 @@ class ReasonCodeMasterAPIController extends AppBaseController
             ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
         return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+    }
+
+    public function reasonCodeMasterRecordSalesReturn($id){
+        $salesReturn = SalesReturnDetail::where('reasonCode', $id)->first();
+        return $this->sendResponse($salesReturn, 'Record exist in sales return detail');
+
     }
 }
