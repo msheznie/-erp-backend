@@ -65,7 +65,7 @@ use Response;
 use App\helper\CreateExcel;
 use App\Models\Employee;
 use App\Models\CurrencyMaster;
-
+use App\helper\Helper;
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -1445,10 +1445,17 @@ class DebitNoteAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
-        $employees = Employee::select(DB::raw("employeeSystemID,empName"))
-        ->where('empCompanySystemID', $companyId)
-        ->where('empActive', 1)
-        ->get();
+ 
+
+        $employees = Employee::selectRaw('empID, empName, employeeSystemID')->where('discharegedYN','<>', 2);
+        if(Helper::checkHrmsIntergrated($companyId)){
+            $employees = $employees->whereHas('hr_emp', function($q){
+                $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+            });
+        }
+        $employees = $employees->get();
+
+
 
         $currency = CurrencyMaster::all();
 
