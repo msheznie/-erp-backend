@@ -2515,8 +2515,7 @@ class SRMService
                 $group['isExist'] = 0;
             }
             return $group['isExist'];
-        });
-        $data['filterBefore'] = $tenderArrFilter;
+        }); 
 
         $filtered = $tenderArrFilter->filter(function ($value, $key) {
             return $value > 0;
@@ -2529,9 +2528,8 @@ class SRMService
 
         $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
         $data['commercialBidSubmission'] = $filtered->count();
-        $data['isBidSubmissionStatus'] = $bidsubmission['status'];
-        $data['singleArr'] = $singleArr;
-
+        $data['isBidSubmissionStatus'] = $bidsubmission['status']; 
+        
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
