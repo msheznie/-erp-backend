@@ -351,7 +351,7 @@ class SalesReturnAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-
+  
         $salesReturn = $this->salesReturnRepository->findWithoutFail($id);
 
         if (empty($salesReturn)) {
@@ -499,6 +499,27 @@ class SalesReturnAPIController extends AppBaseController
                 }
 
                 foreach ($detail as $item) {
+                    
+                    $quotation_detail_id = DeliveryOrderDetail::where('deliveryOrderDetailID',$item->deliveryOrderDetailID)->select('quotationDetailsID')->first();
+                    if(isset($quotation_detail_id))
+                    {
+                        $return_quantity = DeliveryOrderDetail::where('deliveryOrderDetailID',$item->deliveryOrderDetailID)->sum('returnQty');
+                        $do_qua = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)->select('doQuantity')->first();
+    
+                        if($do_qua->doQuantity == $return_quantity)
+                        {
+                            $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                             ->update(['fullyOrdered' => 0]);
+                        }
+                        else
+                        {
+                            $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                            ->update(['fullyOrdered' => 1]);
+                        }
+                    }
+          
+     
+
 
                     //If the revenue account or cost account or BS account is null do not allow to confirm
                     if(!($item->financeGLcodebBSSystemID > 0)){
