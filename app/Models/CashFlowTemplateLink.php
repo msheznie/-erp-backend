@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CashFlowTemplateDetail",
+ *      definition="CashFlowTemplateLink",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,25 +15,14 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="cashFlowTemplateID",
- *          description="cashFlowTemplateID",
+ *          property="templateMasterID",
+ *          description="templateMasterID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="description",
- *          description="description",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="type",
- *          description="type",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="masterID",
- *          description="masterID",
+ *          property="templateDetailID",
+ *          description="templateDetailID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -44,20 +33,36 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="subExits",
- *          description="subExits",
+ *          property="glAutoID",
+ *          description="glAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="logicType",
- *          description="logicType",
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glDescription",
+ *          description="glDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="subCategory",
+ *          description="subCategory",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="controlAccountType",
- *          description="controlAccountType",
+ *          property="categoryType",
+ *          description="categoryType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -97,10 +102,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CashFlowTemplateDetail extends Model
+class CashFlowTemplateLink extends Model
 {
 
-    public $table = 'cash_flow_template_details';
+    public $table = 'cash_flow_template_links';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -109,18 +114,17 @@ class CashFlowTemplateDetail extends Model
 
 
     public $fillable = [
-        'cashFlowTemplateID',
-        'description',
-        'type',
-        'masterID',
+        'templateMasterID',
+        'templateDetailID',
         'sortOrder',
-        'subExits',
-        'logicType',
-        'controlAccountType',
+        'glAutoID',
+        'glCode',
+        'glDescription',
+        'subCategory',
+        'categoryType',
+        'companySystemID',
         'createdPCID',
         'createdUserSystemID',
-        'isDefault',
-        'isFinalLevel',
         'modifiedPCID',
         'modifiedUserSystemID'
     ];
@@ -132,18 +136,17 @@ class CashFlowTemplateDetail extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'cashFlowTemplateID' => 'integer',
-        'description' => 'string',
-        'type' => 'integer',
-        'masterID' => 'integer',
+        'templateMasterID' => 'integer',
+        'templateDetailID' => 'integer',
         'sortOrder' => 'integer',
-        'subExits' => 'integer',
-        'logicType' => 'integer',
-        'controlAccountType' => 'integer',
-        'isFinalLevel' => 'integer',
+        'glAutoID' => 'integer',
+        'glCode' => 'string',
+        'glDescription' => 'string',
+        'subCategory' => 'integer',
+        'categoryType' => 'integer',
+        'companySystemID' => 'integer',
         'createdPCID' => 'string',
         'createdUserSystemID' => 'integer',
-        'isDefault' => 'integer',
         'modifiedPCID' => 'string',
         'modifiedUserSystemID' => 'integer'
     ];
@@ -157,38 +160,38 @@ class CashFlowTemplateDetail extends Model
         
     ];
 
-    public function scopeOfMaster($query, $cashFlowTemplateID)
+    public function scopeOfTemplate($query, $templateMasterID)
     {
-        return $query->where('cashFlowTemplateID',  $cashFlowTemplateID);
+        return $query->where('templateMasterID',  $templateMasterID);
     }
+
 
     public function subcategory()
     {
-        return $this->hasMany(CashFlowTemplateDetail::class,'masterID','id');
+        return $this->belongsTo('App\Models\CashFlowTemplateDetail','subCategory','id');
     }
 
-    public function master()
+     public function template_category()
     {
-        return $this->belongsTo('App\Models\CashFlowTemplate','cashFlowTemplateID','id');
+        return $this->belongsTo('App\Models\CashFlowTemplateDetail','templateDetailID','id');
     }
 
-    public function gllink()
+    public function chartofaccount()
     {
-        return $this->hasMany('App\Models\CashFlowTemplateLink','templateDetailID','id');
+        return $this->belongsTo('App\Models\ChartOfAccount','glAutoID','chartOfAccountSystemID');
     }
 
-    public function subcatlink()
-    {
-        return $this->hasMany('App\Models\CashFlowTemplateLink','subCategory','id');
+    public function general_ledger(){
+        return $this->hasMany('App\Models\GeneralLedger','chartOfAccountSystemID','glAutoID');
     }
 
-    public function subcategorytot()
+    public function subcategory_detail()
     {
-        return $this->hasMany('App\Models\CashFlowTemplateLink','templateDetailID','id');
+        return $this->belongsTo('App\Models\CashFlowTemplateDetail','subCategory','id');
     }
 
-    public function gl_codes()
+    public function chart_of_account()
     {
-        return $this->gllink();
+        return $this->belongsTo('App\Models\ChartOfAccountsAssigned', 'glAutoID', 'chartOfAccountSystemID');
     }
 }

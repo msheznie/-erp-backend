@@ -5,12 +5,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCashFlowTemplateDetailAPIRequest;
 use App\Http\Requests\API\UpdateCashFlowTemplateDetailAPIRequest;
 use App\Models\CashFlowTemplateDetail;
+use App\Models\CashFlowTemplateLink;
+use App\Models\CashFlowTemplate;
+use App\Models\Company;
 use App\Repositories\CashFlowTemplateDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class CashFlowTemplateDetailController
@@ -214,12 +218,15 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
     public function update($id, UpdateCashFlowTemplateDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
+        $input = $this->convertArrayToValue($input);
 
-        /** @var CashFlowTemplateDetail $cashFlowTemplateDetail */
-        $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
 
-        if (empty($cashFlowTemplateDetail)) {
-            return $this->sendError('Cash Flow Template Detail not found');
+         /** @var ReportTemplateDetails $reportTemplateDetails */
+        $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
+
+        if (empty($reportTemplateDetails)) {
+            return $this->sendError('Template Details not found');
         }
 
         $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->update($input, $id);
@@ -267,15 +274,188 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var CashFlowTemplateDetail $cashFlowTemplateDetail */
-        $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
+        DB::beginTransaction();
+        try {
+            /** @var ReportTemplateDetails $reportTemplateDetails */
+            $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
+            if (empty($reportTemplateDetails)) {
+                return $this->sendError('Template Details not found');
+            }
 
-        if (empty($cashFlowTemplateDetail)) {
-            return $this->sendError('Cash Flow Template Detail not found');
+            $checkIsAddedToGroupTotal = CashFlowTemplateLink::where('subCategory', $id)
+                                                           ->where('templateMasterID', $reportTemplateDetails->cashFlowTemplateID)
+                                                           ->whereHas('template_category', function($query) {
+                                                                $query->where('type', 3);
+                                                           })
+                                                           ->count();
+
+            if ($checkIsAddedToGroupTotal > 0) {
+                return $this->sendError('Category cannot be deleted as it is added for total calculation');
+            }
+
+
+            $detID = $reportTemplateDetails->subcategory()->pluck('id')->toArray();
+
+            foreach ($detID as $key => $value) {
+                $res = $this->deleteSubCategories($value);
+                if (!$res['status']) {
+                    return $this->sendError($res['message']);
+                }
+            }
+
+            $reportTemplateDetails->subcategory()->delete();
+            $reportTemplateDetails->gllink()->delete();
+            $reportTemplateDetails->subcatlink()->delete();
+            if ($detID) {
+                $glLink = CashFlowTemplateLink::whereIN('templateDetailID', $detID)->delete();
+            }
+            $reportTemplateDetails->delete();
+            DB::commit();
+            return $this->sendResponse($id, 'Template Details deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function deleteSubCategories($categoryID)
+    {
+        $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($categoryID);
+        if (empty($reportTemplateDetails)) {
+            return ['status'=> false, 'message' => 'Template Details not found'];
         }
 
-        $cashFlowTemplateDetail->delete();
+        $detID = $reportTemplateDetails->subcategory()->pluck('id')->toArray();
 
-        return $this->sendSuccess('Cash Flow Template Detail deleted successfully');
+        foreach ($detID as $key => $value) {
+            $res = $this->deleteSubCategories($value);
+            if (!$res['status']) {
+                return ['status'=> false, 'message' => $res['message']];
+            }
+        }
+
+        $reportTemplateDetails->subcategory()->delete();
+        $reportTemplateDetails->gllink()->delete();
+        $reportTemplateDetails->subcatlink()->delete();
+        if ($detID) {
+            $glLink = CashFlowTemplateLink::whereIN('templateDetailID', $detID)->delete();
+        }
+        $reportTemplateDetails->delete();
+
+        return ['status' => true];
+    }
+
+    public function getCashFlowTemplateDetail($id, Request $request)
+    {
+        $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+            $q->with(['gllink' => function ($q) {
+                $q->with('subcategory');
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategory' => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory');
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
+                $q->orderBy('sortOrder', 'asc');
+            }]);
+            $q->orderBy('sortOrder', 'asc');
+        }, 'subcategorytot' => function ($q) {
+            $q->with('subcategory');
+        }, 'gllink'])->OfMaster($id)->whereNull('masterID')->orderBy('sortOrder')->get();
+
+        $output = ['template' => $reportTemplateDetails->toArray()];
+
+        return $this->sendResponse($output, 'Report Template Details retrieved successfully');
+    }
+
+     public function addCashFlowTemplateSubCategory(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+                'subCategory.*.description' => 'required',
+                'subCategory.*.type' => 'required',
+                'subCategory.*.sortOrder' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+
+            $input['createdPCID'] = gethostname();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $subCategory = $input['subCategory'];
+            unset($input['subCategory']);
+            if(count($subCategory) > 0){
+                foreach ($subCategory as $val) {
+                    $masterDetails = CashFlowTemplateDetail::find($input['masterID']);
+
+                    if ($masterDetails) {
+                        $input['controlAccountType'] = $masterDetails->controlAccountType;
+                    }
+
+                    $input['description'] = $val['description'];
+                    $input['type'] = $val['type'];
+                    $input['sortOrder'] = $val['sortOrder'];
+                    if($input['type'] == 3){
+                        $input['isFinalLevel'] = 1;
+                    } else {
+                        $input['isFinalLevel'] = 0;
+                    }
+
+                    $reportTemplateDetails = CashFlowTemplateDetail::create($input);
+                }
+            }
+            DB::commit();
+            return $this->sendResponse([], 'Report Template Details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getCashFlowTemplateSubCat(Request $request)
+    {
+        $reportTemplateDetails = '';
+        if ($request->isHeader == 1) {
+            $reportTemplateDetails = CashFlowTemplateDetail::where('cashFlowTemplateID', $request->templateID)->whereIN('type', [2,4])->orderBy('sortOrder')->get();
+            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+        } else {
+            $reportTemplateDetails = CashFlowTemplateDetail::where('masterID', $request->masterID)->where('sortOrder', '<', $request->sortOrder)->whereIN('type', [2,4])->orderBy('sortOrder')->get();
+
+            $this->finalLevelSubCategories = [];
+            $reportTemplateDetailsFinalLevels = $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, [2,4]);
+
+            return $this->sendResponse($reportTemplateDetailsFinalLevels, 'Report Template Details retrieved successfully');
+        }
+    }
+
+    public function getFinalCategoriesOfSubLevel($categories, $types)
+    {
+        foreach ($categories as $key => $value) {
+            if ($value->isFinalLevel == 1) {
+                $this->finalLevelSubCategories[] = $value;
+            } else {
+                $reportTemplateDetails = CashFlowTemplateDetail::where('masterID', $value->id)->whereIN('type', $types)->orderBy('sortOrder')->get();
+                $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, $types);
+            }
+        }
+
+        return $this->finalLevelSubCategories;
     }
 }
