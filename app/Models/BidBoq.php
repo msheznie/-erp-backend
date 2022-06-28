@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="TenderBoqItems",
+ *      definition="BidBoq",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,28 +15,45 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="main_work_id",
- *          description="main_work_id",
+ *          property="boq_id",
+ *          description="boq_id",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="item_id",
- *          description="item_id",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="uom",
- *          description="uom",
+ *          property="bid_master_id",
+ *          description="bid_master_id",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="qty",
  *          description="qty",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="unit_amount",
+ *          description="unit_amount",
  *          type="number",
  *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="total_amount",
+ *          description="total_amount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="remarks",
+ *          description="remarks",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplier_registration_id",
+ *          description="supplier_registration_id",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="created_at",
@@ -61,35 +78,32 @@ use Eloquent as Model;
  *          description="updated_by",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="company_id",
- *          description="company_id",
- *          type="integer",
- *          format="int32"
  *      )
  * )
  */
-class TenderBoqItems extends Model
+class BidBoq extends Model
 {
 
-    public $table = 'srm_tender_boq_items';
+    public $table = 'srm_bid_boq';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
-        'main_work_id',
-        'item_name',
-        'description',
-        'uom',
+        'boq_id',
+        'bid_master_id',
+        'main_works_id',
         'qty',
+        'unit_amount',
+        'total_amount',
+        'remarks',
+        'supplier_registration_id',
+        'created_at',
         'created_by',
-        'updated_by',
-        'company_id'
+        'updated_at',
+        'updated_by'
     ];
 
     /**
@@ -99,14 +113,16 @@ class TenderBoqItems extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'main_work_id' => 'integer',
-        'item_name' => 'string',
-        'description' => 'string',
-        'uom' => 'integer',
-        'qty' => 'float',
+        'boq_id' => 'integer',
+        'bid_master_id' => 'integer',
+        'main_works_id' => 'integer',
+        'qty' => 'integer',
+        'unit_amount' => 'float',
+        'total_amount' => 'float',
+        'remarks' => 'string',
+        'supplier_registration_id' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer',
-        'company_id' => 'integer'
+        'updated_by' => 'integer'
     ];
 
     /**
@@ -117,16 +133,6 @@ class TenderBoqItems extends Model
     public static $rules = [
         
     ];
-
-    public function bid_boq()
-    {
-        return $this->hasOne('App\Models\BidBoq', 'boq_id', 'id');
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo('App\Models\Unit','uom','UnitID');
-    }
 
     
 }

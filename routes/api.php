@@ -772,6 +772,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
         Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
         Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
+        Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
         Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
         Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
@@ -1008,6 +1009,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
         Route::resource('debit_notes', 'DebitNoteAPIController');
         Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency');
+        Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
         Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
         Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
         Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
@@ -2368,6 +2370,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('budget_detail_histories', 'BudgetDetailHistoryAPIController');
 
         Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
+        Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition');
+
 
 
         Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
@@ -2986,5 +2990,4 @@ Route::resource('bid_schedules', 'BidScheduleAPIController');
 
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
-
-
+Route::resource('bid_boqs', 'BidBoqAPIController');

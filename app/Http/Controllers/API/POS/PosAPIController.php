@@ -84,14 +84,18 @@ class PosAPIController extends AppBaseController
            $company_id = $request->get('company_id');
            $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,chartofaccounts.AccountCode As system_code,chartofaccounts.AccountCode As secondary_code,chartofaccounts.AccountDescription as description,
            isMasterAccount as is_master_account,chartofaccounts.masterAccount as master_account_id , "" as master_system_code,chartofaccounts.catogaryBLorPL as master_category,
-           "" as category_id,"" as category_description,"" as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
+           "" as category_id,"" as category_description,chartofaccounts.controlAccounts as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
            "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
            confirmedYN as is_confirmed,confirmedEmpDate as confirmed_date,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmed_user_name,isApproved as is_approved,approvedDate as approved_date,
            approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
            ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
            ->where('chartofaccountsassigned.companySystemID','=',$company_id)
+           ->where('chartofaccounts.chartOfAccountSystemID','!=','')
            ->where('chartofaccounts.AccountCode','!=','')
+           ->where('chartofaccounts.AccountDescription','!=','')
+           ->where('chartofaccounts.catogaryBLorPL','!=','')
+           ->where('chartofaccounts.controlAccounts','!=','')
            ->get();
    
            DB::commit();
@@ -214,7 +218,7 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
             $financeItemCategorySub = FinanceItemCategorySub::selectRaw('financeitemcategorysub.itemCategorySubID As id,financeitemcategorysub.categoryDescription As description,itemCategoryID As master_id ,
-            financeitemcategorysub.financeGLcodeRevenue as revenue_gl,financeitemcategorysub.financeGLcodePL as cost_gl')
+            financeitemcategorysub.financeGLcodeRevenueSystemID as revenue_gl,financeitemcategorysub.financeGLcodePLSystemID as cost_gl')
             ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
             ->where('financeitemcategorysub.itemCategorySubID','!=','')
             ->where('financeitemcategorysub.categoryDescription','!=','')
@@ -248,8 +252,8 @@ class PosAPIController extends AppBaseController
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
-                ->join('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
-                ->join('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+                ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
+                ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
                 ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                 ->where('itemassigned.companySystemID','=',$company_id)
                 ->where('primaryCode','!=','')
@@ -260,6 +264,7 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.itemDescription','!=','')
                 ->where('financeitemcategorymaster.categoryDescription','!=','')
                 ->where('units.UnitShortCode','!=','')
+                ->where('itemmaster.financeCategoryMaster','!=',3)
                 ->get();
 
             DB::commit();

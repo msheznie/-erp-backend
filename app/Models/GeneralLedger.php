@@ -547,4 +547,33 @@ class GeneralLedger extends Model
     public function sales_return(){
         return $this->belongsTo('App\Models\SalesReturn',['documentSystemCode','documentSystemID','companySystemID'], ['id','documentSystemID','companySystemID']);
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_generalledger.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_generalledger.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_generalledger.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_generalledger.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    public function scopeChartOfAccountJoin($q,$as = 'chartOfAccount', $column = 'chartOfAccountSystemID' , $columnAs = 'AccountCode')
+    {
+        return $q->leftJoin('chartofaccounts as '.$as,$as.'.chartOfAccountSystemID','erp_generalledger.'.$column);
+    }
+
 }
