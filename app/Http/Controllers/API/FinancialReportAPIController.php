@@ -611,7 +611,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
    ) AS t1");
 
 
@@ -738,7 +738,6 @@ WHERE
     3 IN (' . join(',', json_decode($typeID)) . ') AND
     srp_erp_iouvouchers.approvedYN = 1
     ) t GROUP BY t.employeeID');
-
 
         return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
 
@@ -2385,7 +2384,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
    ) AS t1");
 
 
