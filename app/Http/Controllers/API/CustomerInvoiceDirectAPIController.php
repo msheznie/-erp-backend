@@ -3225,6 +3225,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
 
+        $customerInvoice->floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($customerInvoice->floatAmt != 00){
+            $length = strlen($customerInvoice->floatAmt);
+            if($length<$customerInvoice->currency->DecimalPlaces){
+                $count = $customerInvoice->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $customerInvoice->floatAmt .= '0';
+                }
+            }
+        }
+        $customerInvoice->amount_word = ucfirst($numFormatterEn->format($intAmt));
+        $customerInvoice->amount_word = str_replace('-', ' ', $customerInvoice->amount_word);
+
         $numberfrmtDirectTraSubTotal = number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
         $numberfrmtDirectTraSubTotal = str_replace(',', '', $numberfrmtDirectTraSubTotal);
         $floatedDirectTraSubTotal = floatval($numberfrmtDirectTraSubTotal);
