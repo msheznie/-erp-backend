@@ -68,5 +68,10 @@ class ReasonCodeMaster extends Model
     public static $rules = [
     ];
 
-    
+    public function glCodes(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'glCode','chartOfAccountSystemID');
+    }
+
+
+
 }

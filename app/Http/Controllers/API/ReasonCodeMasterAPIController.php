@@ -289,7 +289,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
     }
 
     /**
-     * Get bank master data for list
+     * Get reason code master data for list
      * @param Request $request
      * @return mixed
      */
@@ -303,7 +303,14 @@ class ReasonCodeMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $reasonCodeMasters = ReasonCodeMaster::select('*');
+        $reasonCodeMasters = ReasonCodeMaster::with('glCodes')->select('*');
+
+        $search = $request->input('search.value');
+        if($search){
+            $reasonCodeMasters =   $reasonCodeMasters->where(function ($q) use($search){
+                $q->where('description','LIKE',"%{$search}%");
+            });
+        }
 
 
         return \DataTables::eloquent($reasonCodeMasters)
