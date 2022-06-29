@@ -2712,6 +2712,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
 
         Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+
+        Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
+        Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
+        Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2999,3 +3003,8 @@ Route::resource('bid_schedules', 'BidScheduleAPIController');
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
+
+
+
+
+Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
