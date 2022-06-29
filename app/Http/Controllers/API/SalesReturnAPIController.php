@@ -505,17 +505,21 @@ class SalesReturnAPIController extends AppBaseController
                     {
                         $return_quantity = DeliveryOrderDetail::where('deliveryOrderDetailID',$item->deliveryOrderDetailID)->sum('returnQty');
                         $do_qua = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)->select('doQuantity')->first();
-    
-                        if($do_qua->doQuantity == $return_quantity)
+                        
+                        if(isset($do_qua))
                         {
-                            $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
-                             ->update(['fullyOrdered' => 0]);
+                            if($do_qua->doQuantity == $return_quantity)
+                            {
+                                $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                                 ->update(['fullyOrdered' => 0]);
+                            }
+                            else
+                            {
+                                $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                                ->update(['fullyOrdered' => 1]);
+                            }
                         }
-                        else
-                        {
-                            $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
-                            ->update(['fullyOrdered' => 1]);
-                        }
+                 
                     }
           
      
