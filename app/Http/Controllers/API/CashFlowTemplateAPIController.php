@@ -144,8 +144,8 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data2['cashFlowTemplateID'] = $reportTemplates->id;
             $data2['description'] = 'Loss before income tax';
             $data2['type'] = 2;
-            $data2['masterID'] = null;
-            $data2['sortOrder'] = 2;
+            $data2['masterID'] = $reportTemplateDetails->id;
+            $data2['sortOrder'] = 1;
             $data2['subExits'] = 0;
             $data2['logicType'] = 1;
             $data2['isDefault'] = 1;
@@ -158,7 +158,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data3['description'] = 'Adjustments for:';
             $data3['type'] = 2;
             $data3['masterID'] = $reportTemplateDetails->id;
-            $data3['sortOrder'] = 1;
+            $data3['sortOrder'] = 2;
             $data3['subExits'] = 1;
             $data3['logicType'] = 1;
             $data3['isDefault'] = 1;
@@ -171,7 +171,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data4['description'] = 'Operating cash flows before working capital changes:';
             $data4['type'] = 2;
             $data4['masterID'] = $reportTemplateDetails->id;
-            $data4['sortOrder'] = 2;
+            $data4['sortOrder'] = 3;
             $data4['subExits'] = 1;
             $data4['logicType'] = 1;
             $data4['isDefault'] = 1;
@@ -185,7 +185,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data5['type'] = 3;
             $data5['isFinalLevel'] = 1;
             $data5['masterID'] = $reportTemplateDetails->id;
-            $data5['sortOrder'] = 3;
+            $data5['sortOrder'] = 4;
             $data5['subExits'] = 0;
             $data5['logicType'] = 2;
             $data5['isDefault'] = 1;
@@ -198,11 +198,12 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data6['description'] = 'Income taxes paid';
             $data6['type'] = 2;
             $data6['masterID'] = $reportTemplateDetails->id;
-            $data6['sortOrder'] = 4;
+            $data6['sortOrder'] = 5;
             $data6['subExits'] = 0;
             $data6['logicType'] = 3;
             $data6['controlAccountType'] = 2;
             $data6['isDefault'] = 1;
+            $data6['manualGlMapping'] = 1;
             $data6['createdPCID'] = gethostname();
             $data6['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplateDetails6 = CashFlowTemplateDetail::create($data6);
@@ -211,11 +212,12 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data7['description'] = 'End-of-service benefits paid';
             $data7['type'] = 2;
             $data7['masterID'] = $reportTemplateDetails->id;
-            $data7['sortOrder'] = 5;
+            $data7['sortOrder'] = 6;
             $data7['subExits'] = 0;
             $data7['logicType'] = 3;
             $data7['controlAccountType'] = 2;
             $data7['isDefault'] = 1;
+            $data7['manualGlMapping'] = 1;
             $data7['createdPCID'] = gethostname();
             $data7['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplateDetails7 = CashFlowTemplateDetail::create($data7);
@@ -225,7 +227,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data8['type'] = 3;
             $data8['isFinalLevel'] = 1;
             $data8['masterID'] = $reportTemplateDetails->id;
-            $data8['sortOrder'] = 6;
+            $data8['sortOrder'] = 7;
             $data8['subExits'] = 0;
             $data8['logicType'] = 2;
             $data8['isDefault'] = 1;
@@ -245,6 +247,8 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data9['isDefault'] = 1;
             $data9['logicType'] = null;
             $data9['controlAccountType'] = null;
+            $data9['proceedPaymentSelection'] = 1;
+            $data9['manualGlMapping'] = 1;
             $data9['createdPCID'] = gethostname();
             $data9['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplateDetails9 = CashFlowTemplateDetail::create($data9);
@@ -270,8 +274,10 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data11['sortOrder'] = 4;
             $data11['subExits'] = 1;
             $data11['isDefault'] = 1;
+            $data11['manualGlMapping'] = 1;
             $data11['logicType'] = null;
             $data11['controlAccountType'] = null;
+            $data11['proceedPaymentSelection'] = 1;
             $data11['createdPCID'] = gethostname();
             $data11['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $reportTemplateDetails11 = CashFlowTemplateDetail::create($data11);
@@ -555,5 +561,18 @@ class CashFlowTemplateAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    public function getCashFlowReportHeaderData(Request $request)
+    {
+        $input = $request->all();
+
+        $templateData = CashFlowTemplateDetail::with(['subcategory' => function ($query) {
+                                                $query->where('type', 2)
+                                                      ->orderBy('sortOrder');
+                                            }])->find($input['templateDetailID']);
+
+        return $this->sendResponse($templateData, 'Report Template retrieved successfully');
     }
 }

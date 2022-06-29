@@ -407,11 +407,13 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
 
                     if ($masterDetails) {
                         $input['controlAccountType'] = $masterDetails->controlAccountType;
+                        $input['manualGlMapping'] = $masterDetails->manualGlMapping;
                     }
 
                     $input['description'] = $val['description'];
                     $input['type'] = $val['type'];
                     $input['sortOrder'] = $val['sortOrder'];
+                    $input['proceedPaymentType'] = isset($val['proceedPaymentType']) ? $val['proceedPaymentType'] : null;
                     if($input['type'] == 3){
                         $input['isFinalLevel'] = 1;
                     } else {
