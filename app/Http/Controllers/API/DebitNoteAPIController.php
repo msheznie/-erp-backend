@@ -170,21 +170,57 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
         $company_id = $input['companySystemID'];
 
-     
+      
         if($type == 2)
         {
-            $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->whereHas('company_scenario',function($query) use($company_id){
+                $is_valid = true;
+
+                               $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
                                 $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
-                               })->first();
+                               }])->first();
 
-                               
+                               if(isset($emp_control_acc))
+                               {
+                                if(isset($emp_control_acc->company_scenario))
+                                {
 
-            if(!isset($emp_control_acc))
+                                    if(isset($emp_control_acc->company_scenario->chartOfAccountSystemID))
+                                    {
+                                        $ChartOfAccountsAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$emp_control_acc->company_scenario->chartOfAccountSystemID)
+                                            ->where('companySystemID',$company_id)->where('isAssigned',-1)->first();
+                                            if(!isset($ChartOfAccountsAssigned))
+                                            {
+                                                $is_valid = false;
+                                            }
+
+                                    }
+                                    else
+                                    {
+                                        $is_valid = false;
+                                    }
+                              
+                                }
+                                else
+                                {
+                                    $is_valid = false;
+                                }
+                               }
+                               else
+                               {
+                                $is_valid = false;
+                               }
+                              
+
+                             
+
+            if(!($is_valid))
             {
                 return $this->sendError('Employee Control Account not Configured !', 500);
             }
             
         }
+
+    
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
