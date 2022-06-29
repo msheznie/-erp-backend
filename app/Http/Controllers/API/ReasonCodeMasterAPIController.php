@@ -227,18 +227,22 @@ class ReasonCodeMasterAPIController extends AppBaseController
         if (empty($reasonCodeMaster)) {
             return $this->sendError('Reason Code Master not found');
         }
-        $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
+
 
         if($input['isPost'] == true){
             $input['glCode'] = null;
         }
 
+        $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
 
         if($input['isPost'] == false){
-            if($input['glCode'] == null){
+            if($input['glCode'] == null || $input['glCode'] == 0){
                 return $this->sendError('GL Code field is required');
             };
         }
+
+
+
         $data =array_except($input, ['id','created_at']);
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
