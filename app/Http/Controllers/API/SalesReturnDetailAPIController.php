@@ -350,11 +350,17 @@ class SalesReturnDetailAPIController extends AppBaseController
                 $invDetail_arr['reasonCode'] = $currentItemData['reasonCode'];
                 $reasonCode = ReasonCodeMaster::find($currentItemData['reasonCode']);
                 if($reasonCode){
-                    $invDetail_arr['isPost'] = $reasonCode->isPost;
+                    $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $invDetail_arr['financeGLcodebBSSystemID'] = $reasonCode->glCode;
                         $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
-                        $invDetail_arr['financeGLcodebBS'] = $chartOfAccountAssigned->AccountCode;
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
                     }
                 }
 
@@ -463,11 +469,18 @@ class SalesReturnDetailAPIController extends AppBaseController
                 $invDetail_arr['reasonCode'] = $currentItemData['reasonCode'];
                 $reasonCode = ReasonCodeMaster::find($currentItemData['reasonCode']);
                 if($reasonCode){
-                    $invDetail_arr['isPost'] = $reasonCode->isPost;
+                    $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $invDetail_arr['financeGLcodebBSSystemID'] = $reasonCode->glCode;
                         $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
-                        $invDetail_arr['financeGLcodebBS'] = $chartOfAccountAssigned->AccountCode;
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
+
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
                     }
                 }
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
