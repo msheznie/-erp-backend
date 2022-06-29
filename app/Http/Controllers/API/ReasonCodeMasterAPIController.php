@@ -232,6 +232,13 @@ class ReasonCodeMasterAPIController extends AppBaseController
         if($input['isPost'] == true){
             $input['glCode'] = null;
         }
+
+
+        if($input['isPost'] == false){
+            if($input['glCode'] == null){
+                return $this->sendError('GL Code field is required');
+            };
+        }
         $data =array_except($input, ['id','created_at']);
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
