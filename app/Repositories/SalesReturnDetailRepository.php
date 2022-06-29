@@ -60,6 +60,7 @@ class SalesReturnDetailRepository extends BaseRepository
         'deliveryOrderDetailID',
         'remarks',
         'qtyIssued',
+        'reasonCode',
         'balanceQty',
         'fullyReturned',
         'timestamp'

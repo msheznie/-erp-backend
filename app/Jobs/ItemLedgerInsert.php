@@ -465,114 +465,172 @@ class ItemLedgerInsert implements ShouldQueue
                     if ($masterRec[$docInforArr["childRelation"]]) {
                         $data = [];
                         $i = 0;
-                        foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
+                        if($masterModel["documentSystemID"] == 87) {
+                            foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
+                                if($detail->reasonCode == null || ($detail->reasonCode != null && $detail->isPost == 1)) {
 
-                            foreach ($detailColumnArray as $column => $value) {
-                                if($column == 'inOutQty') {
-                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
-                                        $data[$i][$column] = ABS($detail[$value]); // make qty always plus
-                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71){
-                                        $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
-                                    }else if($masterModel["documentSystemID"] == 7){    // stock adjustment
-                                        if($masterRec['stockAdjustmentType'] == 2){       // cost adjustment
-                                            $data[$i][$column] = 1;
-                                            Log::info('qty is'.$data[$i][$column]);
-                                        }else{
+                                    foreach ($detailColumnArray as $column => $value) {
+                                        if ($column == 'inOutQty') {
+                                            if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 || $masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
+                                                $data[$i][$column] = ABS($detail[$value]); // make qty always plus
+                                            } else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71) {
+                                                $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
+                                            } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
+                                                if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
+                                                    $data[$i][$column] = 1;
+                                                    Log::info('qty is' . $data[$i][$column]);
+                                                } else {
+                                                    $data[$i][$column] = $detail[$value];
+                                                }
+                                            } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                                $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                                if ($masterRec['stockCountType'] == 2) {       // cost count
+                                                    $data[$i][$column] = 1;
+                                                    Log::info('qty is' . $data[$i][$column]);
+                                                } else {
+                                                    $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                                                }
+                                            } else {
+                                                $data[$i][$column] = $detail[$value];
+                                            }
+                                        } else if ($column == 'wacLocal') {
+                                            if ($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType'] == 2) { // stock adjustment, cost adjustment
+                                                $data[$i][$column] = (($detail['wacAdjLocal']) - ($detail['currentWaclocal'])) * $detail['currenctStockQty'];
+
+                                            } elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 || $masterRec["isPerforma"] == 5)) {
+                                                $data[$i][$column] = $detail['issueCostLocal'];
+                                            } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                                $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                                $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+
+                                                $data[$i][$column] = $companyCurrencyConversion['localAmount'];
+                                            } else {
+                                                $data[$i][$column] = $detail[$value];
+                                            }
+                                        } else if ($column == 'wacRpt') {
+                                            if ($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType'] == 2) { // stock adjustment, cost adjustment
+                                                $data[$i][$column] = (($detail['wacAdjRpt']) - ($detail['currentWacRpt'])) * $detail['currenctStockQty'];
+
+                                            } elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 || $masterRec["isPerforma"] == 5)) {
+                                                $data[$i][$column] = $data[$i][$column] = $detail['issueCostRpt'];
+                                            } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                                $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                    'wareHouseId' => $masterRec['location']);
+
+                                                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                                $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
+                                            } else {
+                                                $data[$i][$column] = $detail[$value];
+                                            }
+                                        } else {
                                             $data[$i][$column] = $detail[$value];
                                         }
-                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
-                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
-                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
-                                                    'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
-
-                                        if($masterRec['stockCountType']==2){       // cost count
-                                            $data[$i][$column] = 1;
-                                            Log::info('qty is'.$data[$i][$column]);
-                                        }else{
-                                            $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                                        }
-                                    } else{
-                                        $data[$i][$column] = $detail[$value];
                                     }
-                                }else if ($column == 'wacLocal'){
-                                    if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){ // stock adjustment, cost adjustment
-                                        $data[$i][$column] = (($detail['wacAdjLocal'])-($detail['currentWaclocal']))*$detail['currenctStockQty'];
 
-                                    }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
-                                        $data[$i][$column] = $detail['issueCostLocal'];
-                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
-                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
-                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
-                                                    'wareHouseId' => $masterRec['location']);
-
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
-
-                                        $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'],$detail['wacValueReportingCurrencyID'],$detail['wacValueReportingCurrencyID'],$itemCurrentCostAndQty['wacValueReporting']);
-
-                                        $data[$i][$column] = $companyCurrencyConversion['localAmount'];
-                                    } else{
-                                        $data[$i][$column] = $detail[$value];
+                                    foreach ($masterColumnArray as $column => $value) {
+                                        $data[$i][$column] = isset($masterRec[$value]) ? $masterRec[$value] : null;
                                     }
-                                }else if ($column == 'wacRpt'){
-                                    if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2) { // stock adjustment, cost adjustment
-                                        $data[$i][$column] = (($detail['wacAdjRpt'])-($detail['currentWacRpt']))*$detail['currenctStockQty'];
+                                    $data[$i]['documentSystemCode'] = $masterModel["autoID"];
+                                    $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
+                                    $data[$i]['createdUserID'] = $empID->empID;
+                                    $data[$i]['fromDamagedTransactionYN'] = 0;
+                                    $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                                    $data[$i]['timestamp'] = date('Y-m-d H:i:s');
+                                    $i++;
 
-                                    }elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 ||$masterRec["isPerforma"] == 5)){
-                                        $data[$i][$column] = $data[$i][$column] = $detail['issueCostRpt'];
-                                    } else if($masterModel["documentSystemID"] == 97){    // stock count
-                                        $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
-                                                    'itemCodeSystem' => $detail['itemCodeSystem'],
-                                                    'wareHouseId' => $masterRec['location']);
-
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
-
-                                        $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
-                                    } else{
-                                        $data[$i][$column] = $detail[$value];
-                                    }
-                                }else{
-                                    $data[$i][$column] = $detail[$value];
                                 }
-
                             }
-
-                            foreach ($masterColumnArray as $column => $value) {
-                                $data[$i][$column] = isset($masterRec[$value]) ? $masterRec[$value] : null;
-                            }
-                            $data[$i]['documentSystemCode'] = $masterModel["autoID"];
-                            $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
-                            $data[$i]['createdUserID'] = $empID->empID;
-                            $data[$i]['fromDamagedTransactionYN'] = 0;
-                            $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
-                            $data[$i]['timestamp'] = date('Y-m-d H:i:s');
-                            $i++;
-
-                            /*
-                             * stock adjustment
-                             * cost adjustment
-                             * if cost adjustment, add one more row to balance qty
-                             *
-                             * */
-
-                            if($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType']==2){
+                        }
+                        else{
+                            foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
+                                Log::info($detail . date('H:i:s'));
 
                                 foreach ($detailColumnArray as $column => $value) {
-                                    if($column == 'inOutQty') {
-                                        $data[$i][$column] = -1;
-                                    }elseif ($column == 'wacLocal') {
-                                        $data[$i][$column] = 0;
-                                    }elseif ($column == 'wacRpt'){
-                                        $data[$i][$column] = 0;
-                                    }else{
+                                    if ($column == 'inOutQty') {
+                                        if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 || $masterModel["documentSystemID"] == 10 || $masterModel["documentSystemID"] == 87 || $masterModel["documentSystemID"] == 11) {
+                                            $data[$i][$column] = ABS($detail[$value]); // make qty always plus
+                                        } else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24 || $masterModel["documentSystemID"] == 20 || $masterModel["documentSystemID"] == 71) {
+                                            $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
+                                        } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
+                                            if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
+                                                $data[$i][$column] = 1;
+                                                Log::info('qty is' . $data[$i][$column]);
+                                            } else {
+                                                $data[$i][$column] = $detail[$value];
+                                            }
+                                        } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                            $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                'wareHouseId' => $masterRec['location']);
+
+                                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                            if ($masterRec['stockCountType'] == 2) {       // cost count
+                                                $data[$i][$column] = 1;
+                                                Log::info('qty is' . $data[$i][$column]);
+                                            } else {
+                                                $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                                            }
+                                        } else {
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+                                    } else if ($column == 'wacLocal') {
+                                        if ($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType'] == 2) { // stock adjustment, cost adjustment
+                                            $data[$i][$column] = (($detail['wacAdjLocal']) - ($detail['currentWaclocal'])) * $detail['currenctStockQty'];
+
+                                        } elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 || $masterRec["isPerforma"] == 5)) {
+                                            $data[$i][$column] = $detail['issueCostLocal'];
+                                        } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                            $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                'wareHouseId' => $masterRec['location']);
+
+                                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                            $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+
+                                            $data[$i][$column] = $companyCurrencyConversion['localAmount'];
+                                        } else {
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+                                    } else if ($column == 'wacRpt') {
+                                        if ($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType'] == 2) { // stock adjustment, cost adjustment
+                                            $data[$i][$column] = (($detail['wacAdjRpt']) - ($detail['currentWacRpt'])) * $detail['currenctStockQty'];
+
+                                        } elseif ($masterModel["documentSystemID"] == 20 && ($masterRec["isPerforma"] == 2 || $masterRec["isPerforma"] == 4 || $masterRec["isPerforma"] == 5)) {
+                                            $data[$i][$column] = $data[$i][$column] = $detail['issueCostRpt'];
+                                        } else if ($masterModel["documentSystemID"] == 97) {    // stock count
+                                            $stockCountWacData = array('companySystemID' => $masterRec['companySystemID'],
+                                                'itemCodeSystem' => $detail['itemCodeSystem'],
+                                                'wareHouseId' => $masterRec['location']);
+
+                                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+
+                                            $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
+                                        } else {
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+                                    } else {
                                         $data[$i][$column] = $detail[$value];
                                     }
 
                                 }
 
                                 foreach ($masterColumnArray as $column => $value) {
-                                    $data[$i][$column] = $masterRec[$value];
+                                    $data[$i][$column] = isset($masterRec[$value]) ? $masterRec[$value] : null;
                                 }
                                 $data[$i]['documentSystemCode'] = $masterModel["autoID"];
                                 $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
@@ -581,8 +639,43 @@ class ItemLedgerInsert implements ShouldQueue
                                 $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
                                 $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                                 $i++;
+
+                                /*
+                                 * stock adjustment
+                                 * cost adjustment
+                                 * if cost adjustment, add one more row to balance qty
+                                 *
+                                 * */
+
+                                if ($masterModel["documentSystemID"] == 7 && $masterRec['stockAdjustmentType'] == 2) {
+
+                                    foreach ($detailColumnArray as $column => $value) {
+                                        if ($column == 'inOutQty') {
+                                            $data[$i][$column] = -1;
+                                        } elseif ($column == 'wacLocal') {
+                                            $data[$i][$column] = 0;
+                                        } elseif ($column == 'wacRpt') {
+                                            $data[$i][$column] = 0;
+                                        } else {
+                                            $data[$i][$column] = $detail[$value];
+                                        }
+
+                                    }
+
+                                    foreach ($masterColumnArray as $column => $value) {
+                                        $data[$i][$column] = $masterRec[$value];
+                                    }
+                                    $data[$i]['documentSystemCode'] = $masterModel["autoID"];
+                                    $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
+                                    $data[$i]['createdUserID'] = $empID->empID;
+                                    $data[$i]['fromDamagedTransactionYN'] = 0;
+                                    $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                                    $data[$i]['timestamp'] = date('Y-m-d H:i:s');
+                                    $i++;
+                                }
+                                // end stock adjustment
                             }
-                            // end stock adjustment
+
                         }
                         if($data){
                             Log::info($data);
