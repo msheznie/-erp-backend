@@ -112,6 +112,10 @@ class ReasonCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if($input['isPost'] == true){
+            $input['glCode'] = null;
+        }
+
         $reasonCodeMaster = $this->reasonCodeMasterRepository->create($input);
 
         return $this->sendResponse($reasonCodeMaster->toArray(), 'Reason Code Master saved successfully');
@@ -224,8 +228,18 @@ class ReasonCodeMasterAPIController extends AppBaseController
             return $this->sendError('Reason Code Master not found');
         }
         $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
-        $data =array_except($input, ['id','created_at']);
 
+        if($input['isPost'] == true){
+            $input['glCode'] = null;
+        }
+
+
+        if($input['isPost'] == false){
+            if($input['glCode'] == null){
+                return $this->sendError('GL Code field is required');
+            };
+        }
+        $data =array_except($input, ['id','created_at']);
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
 
