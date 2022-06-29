@@ -342,7 +342,10 @@ class DebitNote extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
-        'netAmountRpt'
+        'netAmountRpt',
+        'type',
+        'empID',
+        'empControlAccount'
     ];
 
     /**
@@ -447,6 +450,11 @@ class DebitNote extends Model
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empID', 'employeeSystemID');
     }
 
     public function approved_by()

@@ -375,6 +375,22 @@ class VATReportAPIController extends AppBaseController
                     $data[$x]['Party Name'] ='';
                 }
 
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['Country'] =isset($val->supplier->country->countryName) ? $val->supplier->country->countryName: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                    $data[$x]['Country'] =isset($val->customer->country->countryName) ? $val->customer->country->countryName: '';
+                }else{
+                    $data[$x]['Country'] ='';
+                }
+
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['VATIN'] =isset($val->supplier->vatNumber) ? $val->supplier->vatNumber: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                    $data[$x]['VATIN'] =isset($val->customer->vatNumber) ? $val->customer->vatNumber: '';
+                }else{
+                    $data[$x]['VATIN'] ='';
+                }
+
                 $data[$x]['Approved By'] = isset($val->final_approved_by->empName)? $val->final_approved_by->empName : '';
 
                 $localDecimalPlaces = isset($val->localcurrency->DecimalPlaces) ? $val->localcurrency->DecimalPlaces : 3;
@@ -464,7 +480,7 @@ class VATReportAPIController extends AppBaseController
                     }
                 }
                 $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
-                $data[$x]['Customer VAT Registration No'] = $val->partyVATRegNo;
+                $data[$x]['VATIN'] = $val->partyVATRegNo;
                 $data[$x]['Invoice Line Item No'] = $val->itemCode;
                 $data[$x]['Line Item Description'] = $val->itemDescription;
                 if (isset($val->company->companyCountry) && ($val->company->companyCountry == $val->countryID)) {
@@ -578,7 +594,14 @@ class VATReportAPIController extends AppBaseController
                             ->when(isset($input['isClaimed']), function ($query) use ($input) {
                                 $query->where('isClaimed', $input['isClaimed']);
                             })
-                            ->with(['supplier','customer','rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
+                            ->with(['supplier'=>
+                                function($query){
+                                    $query->with(['country']);
+                                },'customer'=>
+                                function($query){
+                                    $query->with(['country']);
+                                }
+                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
                             ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){

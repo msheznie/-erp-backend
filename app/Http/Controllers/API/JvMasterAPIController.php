@@ -1450,6 +1450,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         if (!empty($fetchJournalVoucherDetails)) {
             foreach ($fetchJournalVoucherDetails as $bookDetail) {
                 $bookDetail['timesReferred'] = $jvMasterData->timesReferred;
+                $bookDetail->setAppends([]);
             }
         }
 

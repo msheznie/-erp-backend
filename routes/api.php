@@ -1016,6 +1016,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
         Route::resource('debit_notes', 'DebitNoteAPIController');
         Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency');
+        Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
         Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
         Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
         Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
@@ -2699,6 +2700,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
        
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
+
+        Route::resource('cash_flow_templates', 'CashFlowTemplateAPIController');
+        Route::resource('cash_flow_template_details', 'CashFlowTemplateDetailAPIController');
+        Route::post('getAllCashFlowTemplate', 'CashFlowTemplateAPIController@getAllCashFlowTemplate');
+        Route::get('getCashFlowReportHeaderData', 'CashFlowTemplateAPIController@getCashFlowReportHeaderData');
+        Route::get('getCashFlowTemplateSubCat', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateSubCat');
+        Route::post('deleteAllLinkedGLCodesCashFlow', 'CashFlowTemplateLinkAPIController@deleteAllLinkedGLCodesCashFlow');
+        Route::post('cashFlowTemplateDetailSubCatLink', 'CashFlowTemplateLinkAPIController@cashFlowTemplateDetailSubCatLink');
+        Route::post('addCashFlowTemplateSubCategory', 'CashFlowTemplateDetailAPIController@addCashFlowTemplateSubCategory');
+        Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
+
+        Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');

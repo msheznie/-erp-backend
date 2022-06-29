@@ -77,8 +77,7 @@ class BidSchedule extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'schedule_id',
@@ -86,7 +85,9 @@ class BidSchedule extends Model
         'tender_id',
         'supplier_registration_id',
         'remarks',
+        'created_at',
         'created_by',
+        'updated_at',
         'updated_by'
     ];
 
@@ -115,5 +116,7 @@ class BidSchedule extends Model
         
     ];
 
-    
+    public function tenderMainWorks(){ 
+        return $this->hasMany('App\Models\TenderMainWorks', 'schedule_id', 'schedule_id'); 
+    } 
 }

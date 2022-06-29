@@ -238,7 +238,7 @@
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td>
                                 <span>
-                                {{$request->customer->ReportTitle}}
+                                {{$request->customer->CustomerName}}
                                 </span>
                                 </td>
                             </tr>
@@ -251,8 +251,8 @@
                                 </span>
                                 </td>
                             </tr>
-
                             @if($request->lineSecondAddress)
+
                                 <tr>
                                     <td width="110px"><span class="font-weight-bold">Address Line 2</span></td>
                                     <td width="10px"><span class="font-weight-bold">-</span></td>

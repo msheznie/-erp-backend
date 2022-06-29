@@ -181,14 +181,6 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    {{-- @if($request->logoExists)
-                          @if($type == 1)
-                            <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
-                          @else
-                            image not found
-                          @endif
-                    @endif --}}
                 </td>
 
 
@@ -233,7 +225,8 @@
                     {{$request->CompanyAddress}}<br>
                     Tel: {{$request->CompanyTelephone}}<br>
                     Fax: {{$request->CompanyFax}}<br>
-                </td> 
+                    VAT NO: {{$request->vatRegistratonNumber}}<br>
+                </td>
                 <td colspan="1" class="thicker">---</td>
                 <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
                                                                     {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
@@ -266,7 +259,7 @@
                         TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
                         FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
                     @endif
-                    
+                        VATIN NO : {{$request->vatNumber}}
 
                 </td> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">
@@ -321,13 +314,17 @@
             </tr>
         </table>
 
-        @if (isset($request->item_invoice) && $request->item_invoice)
-
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
+                @if(count($request->issue_item_details) > 0 )
                     <th style="width:10%;">Item</th>
                     <th style="width:25%;">Content</th>
+                @endif
+                @if(count($request->invoicedetails) > 0 )
+                    <th style="width:10%;">Account Code</th>
+                    <th style="width:25%;">Description</th>
+                @endif
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">Quantity</th>
                     <th style="width:15%;text-align: center">Rate</th>
@@ -362,6 +359,24 @@
                     @endforeach
                 @endif
 
+                @if(!empty($request->invoicedetails))
+                    @foreach ($request->invoicedetails as $item)
+
+                            {{$directTraSubTotal +=$item->invoiceAmount}}
+
+                            <tr style="border: 1px solid !important;">
+                                <td style="text-align: center;">{{$item->glCode}}</td>
+                                <td style="word-wrap:break-word;">{{$item->glCodeDes}}</td>
+                                <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
+                                <td style="text-align: center;">{{$item->invoiceQty}}</td>
+                                <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-center">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                    @endforeach
+                @endif
+
                 </tbody>
                 <tbody>
                 <tr>
@@ -371,7 +386,6 @@
                             {{number_format($directTraSubTotal, $numberFormatting)}}
                         @endif</td>
                 </tr>
-                {{-- @if ($request->isVATEligible) --}}
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
@@ -389,9 +403,10 @@
                     <tr>
                         <td colspan="2"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->floatedAmountInWordsEnglish}}</td>
+                        <td colspan="3" class="text-right">{{$request->amount_word}}
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif only</td>
                     </tr>
-                {{-- @endif --}}
                 </tbody>
             </table>
             
@@ -402,7 +417,6 @@
                     </tr>
                 </tbody>
             </table>
-        @endif
     </div>
   
 
