@@ -225,7 +225,8 @@
                     {{$request->CompanyAddress}}<br>
                     Tel: {{$request->CompanyTelephone}}<br>
                     Fax: {{$request->CompanyFax}}<br>
-                </td> 
+                    VAT NO: {{$request->vatRegistratonNumber}}<br>
+                </td>
                 <td colspan="1" class="thicker">---</td>
                 <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
                                                                     {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
@@ -258,7 +259,7 @@
                         TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
                         FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
                     @endif
-                    
+                        VATIN NO : {{$request->vatNumber}}
 
                 </td> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">

@@ -274,8 +274,7 @@
             <tr>
                 <td style="width: 50%; text-align: left">
                     <b>CUSTOMER NAME : {{$request->customer->CustomerName}}</b><br>
-                    <b>ADDRESS 1: {{$request->customer->customerAddress1}}</b><br>
-                    <b>ADDRESS 1: {{$request->customer->customerAddress2}}</b><br>
+                    <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
                     <b>CUSTOMER VATIN NO : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">

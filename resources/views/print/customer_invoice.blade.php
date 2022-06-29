@@ -268,11 +268,6 @@
                             </td>
                         </tr>
 
-                            <tr>
-                                <td>
-                                    <div>{{$request->customer->customerAddress2}}</div>
-                                </td>
-                            </tr>
                             @if(!$request->lineSecondAddress)
                                 <tr>
                                 <td>{{$request->customer->customerCity}}</td>
