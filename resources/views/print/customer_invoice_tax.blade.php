@@ -246,7 +246,27 @@
                             <td>:@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
-                                {{$request->customer->ReportTitle}}</td>
+                                {{$request->customer->CustomerName}}</td>
+                        </tr>
+                        @php
+                        $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+                        @endphp
+                        @if($totalVATAmount > 0)
+                        <tr>
+                            <td><b>Customer VATIN NO</b></td>
+                            <td>:
+                                {{$request->vatNumber}}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td><b>Customer Address 1 </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress1}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer Address 2 </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress2}}</td>
                         </tr>
 
                     </table>

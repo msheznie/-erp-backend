@@ -251,21 +251,30 @@
                             </tr>
                         @endif
                         <tr>
-                            <td>{{$request->customer->ReportTitle}}</td>
+                            <td>{{$request->customer->CustomerName}}</td>
                         </tr>
+                        @php
+                                $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+                            @endphp
+                            @if($totalVATAmount > 0)
+                                <tr>
+                                    <td>
+                                        {{$request->vatNumber}}</td>
+                                </tr>
+                        @endif
                         <tr>
                             <td>
                                 <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
                             </td>
                         </tr>
-                        @if($request->lineSecondAddress)
+
                             <tr>
                                 <td>
                                     <div>{{$request->customer->customerAddress2}}</div>
                                 </td>
                             </tr>
-                        @else
-                            <tr>
+                            @if(!$request->lineSecondAddress)
+                                <tr>
                                 <td>{{$request->customer->customerCity}}</td>
                             </tr>
                             <tr>
