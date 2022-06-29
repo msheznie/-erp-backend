@@ -136,12 +136,12 @@ class HrMonthlyDeductionService
                 'companyLocalCurrencyID'=> $this->local_currency->currencyID,
                 'companyLocalCurrency'=> $this->local_currency->CurrencyCode,
                 'companyLocalCurrencyDecimalPlaces'=> $this->local_currency->DecimalPlaces,
-                'companyLocalExchangeRate'=> $this->local_currency->ExchangeRate, 'companyLocalAmount'=> $row->localAmount,
+                'companyLocalExchangeRate'=> $this->local_currency->ExchangeRate, 'companyLocalAmount'=> (($row->DPAmount + $row->vatAmount) * $this->emp_currency->ExchangeRate)/$this->local_currency->ExchangeRate,
 
                 'companyReportingCurrencyID'=> $this->rpt_currency->currencyID,
                 'companyReportingCurrency'=> $this->rpt_currency->CurrencyCode,
                 'companyReportingCurrencyDecimalPlaces'=> $this->rpt_currency->DecimalPlaces,
-                'companyReportingExchangeRate'=> $this->rpt_currency->ExchangeRate, 'companyReportingAmount'=> $row->comRptAmount,
+                'companyReportingExchangeRate'=> $this->rpt_currency->ExchangeRate, 'companyReportingAmount'=> (($row->DPAmount + $row->vatAmount) * $this->emp_currency->ExchangeRate)/$this->rpt_currency->ExchangeRate,
 
                 'companyID'=> $this->companyID, 'companyCode'=> $this->pv_master->companyID,
                 'createdPCID'=> gethostname(), 'createdUserID'=> $this->current_user['user_id'],

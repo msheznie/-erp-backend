@@ -611,7 +611,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
    ) AS t1");
 
 
@@ -651,12 +651,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
         foreach ($data as $dt){
 
             if($dt->type == 3){
-                if($dt->referenceDocDate != null) {
-                    $referenceDocDate = \Carbon\Carbon::parse($dt->referenceDocDate)->format("d/m/Y");
-                }
                 $dataArray[$i]['documentCode'] = $dt->documentCode;
                 $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $referenceDocDate;
+                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
                 $dataArray[$i]['index'] = $i;
 
             }
@@ -676,14 +673,19 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 unset($data[$val['index']]);
                 $documentCode = $val['documentCode'];
                 $referenceDoc = $val['referenceDoc'];
-                $referenceDocDate = $val['referenceDocDate'];
+                $referenceDocDate = \Carbon\Carbon::parse($val['referenceDocDate'])->format("d/m/Y");
                 $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyLocalAmount;
                 $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyReportingAmount;
 
                 foreach ($data as $da) {
                     if ($da->documentCode == $documentCode) {
                         $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
-                        $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y") . ', ' . $referenceDocDate;
+
+                        try {
+                            $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y"). ', ' . $referenceDocDate;
+                        } catch (\Exception $e) {
+                            $da->referenceDocDate = $da->referenceDocDate. ', ' . $referenceDocDate;
+                        }
                         $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
                         $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
                         $da->isLine = 1;
@@ -738,7 +740,6 @@ WHERE
     3 IN (' . join(',', json_decode($typeID)) . ') AND
     srp_erp_iouvouchers.approvedYN = 1
     ) t GROUP BY t.employeeID');
-
 
         return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
 
@@ -2385,7 +2386,7 @@ FROM
 WHERE
     erp_paysupplierinvoicemaster.invoiceType = 3 AND 
     srp_erp_payrolldetail.fromTB = 'MD' AND
-    srp_erp_payrollmaster.approvedYN = 1
+    srp_erp_payrollmaster.approvedYN = 1 GROUP BY masterID
    ) AS t1");
 
 
@@ -2425,12 +2426,9 @@ srp_erp_ioubookingmaster.approvedYN = 1
         foreach ($data as $dt){
 
             if($dt->type == 3){
-                if($dt->referenceDocDate != null) {
-                    $referenceDocDate = \Carbon\Carbon::parse($dt->referenceDocDate)->format("d/m/Y");
-                }
                 $dataArray[$i]['documentCode'] = $dt->documentCode;
                 $dataArray[$i]['referenceDoc'] = $dt->referenceDoc;
-                $dataArray[$i]['referenceDocDate'] = $referenceDocDate;
+                $dataArray[$i]['referenceDocDate'] = $dt->referenceDocDate;
                 $dataArray[$i]['index'] = $i;
 
             }
@@ -2450,14 +2448,18 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 unset($data[$val['index']]);
                 $documentCode = $val['documentCode'];
                 $referenceDoc = $val['referenceDoc'];
-                $referenceDocDate = $val['referenceDocDate'];
+                $referenceDocDate = \Carbon\Carbon::parse($val['referenceDocDate'])->format("d/m/Y");
                 $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyLocalAmount;
                 $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyReportingAmount;
 
                 foreach ($data as $da) {
                     if ($da->documentCode == $documentCode) {
                         $da->referenceDoc = $da->referenceDoc . ', ' . $referenceDoc;
-                        $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y") . ', ' . $referenceDocDate;
+                        try {
+                            $da->referenceDocDate = \Carbon\Carbon::parse($da->referenceDocDate)->format("d/m/Y"). ', ' . $referenceDocDate;
+                        } catch (\Exception $e) {
+                            $da->referenceDocDate = $da->referenceDocDate. ', ' . $referenceDocDate;
+                        }
                         $da->referenceAmountLocal = $da->referenceAmountLocal + $refLocalAmount;
                         $da->referenceAmountRpt = $da->referenceAmountRpt + $refRptAmount;
                         $da->isLine = 1;
