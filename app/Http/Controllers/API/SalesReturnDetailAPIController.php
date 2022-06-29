@@ -352,7 +352,13 @@ class SalesReturnDetailAPIController extends AppBaseController
                 if($reasonCode){
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
                     } else {
                         $invDetail_arr['reasonGLCode'] = null;
                     }
@@ -465,7 +471,14 @@ class SalesReturnDetailAPIController extends AppBaseController
                 if($reasonCode){
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
+
                     } else {
                         $invDetail_arr['reasonGLCode'] = null;
                     }
