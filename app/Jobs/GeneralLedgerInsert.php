@@ -4921,7 +4921,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
+                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount, reasonCode, isPostItemLedger, reasonGLCode, financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodebBSSystemID')
                             ->get();
