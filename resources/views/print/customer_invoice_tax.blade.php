@@ -246,16 +246,16 @@
                             <td>:@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
-                                {{$request->customer->ReportTitle}}</td>
+                                {{$request->customer->CustomerName}}</td>
                         </tr>
                         @php
                         $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
                         @endphp
                         @if($totalVATAmount > 0)
                         <tr>
-                            <td><b>Customer VATIN </b></td>
+                            <td><b>Customer VATIN NO</b></td>
                             <td>:
-                                {{$request->customer->vatNumber}}</td>
+                                {{$request->vatNumber}}</td>
                         </tr>
                         @endif
                         <tr>
