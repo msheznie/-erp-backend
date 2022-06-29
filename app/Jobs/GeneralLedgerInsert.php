@@ -5017,8 +5017,17 @@ class GeneralLedgerInsert implements ShouldQueue
                             if ($allAc) {
                                 foreach ($allAc as $val) {
                                     $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
-                                    $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
-                                    $data['glCode'] = $val->financeGLcodebBS;
+                                    if($val->isPostItemLedger == 0 && $val->reasonCode != null){
+                                        $data['chartOfAccountSystemID'] = $val->reasonGLCode;
+                                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$val->reasonGLCode)->first();
+                                        if($chartOfAccountAssigned){
+                                            $data['glCode'] = $chartOfAccountAssigned->AccountCode;
+                                        }
+                                    }else{
+                                        $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                                        $data['glCode'] = $val->financeGLcodebBS;
+                                    }
+
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;

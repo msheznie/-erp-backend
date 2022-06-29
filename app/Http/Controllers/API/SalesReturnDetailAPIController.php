@@ -353,6 +353,8 @@ class SalesReturnDetailAPIController extends AppBaseController
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
                         $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
                     }
                 }
 
@@ -464,6 +466,8 @@ class SalesReturnDetailAPIController extends AppBaseController
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
                         $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
                     }
                 }
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
