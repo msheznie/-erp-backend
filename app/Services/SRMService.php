@@ -1204,6 +1204,7 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+       // Log::info(["$supplierRegIdAll", $supplierRegIdAll]);
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1218,7 +1219,7 @@ class SRMService
             ->whereNotIn('tender_master_id', $purchasedTenderIds)
             ->get()
             ->toArray();
-
+        Log::info($tenderIds);
         foreach ($tenderIds as $tenderId) {
             $tenderMasterId[] = $tenderId['tender_master_id'];
         }

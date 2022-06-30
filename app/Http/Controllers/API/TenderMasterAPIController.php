@@ -21,6 +21,7 @@ use App\Models\EvaluationType;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\SupplierCategoryMaster;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
@@ -1363,5 +1364,15 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function supplierCategory(){
+        try{
+            return SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
+                ->get();
+        } catch (\Exception $ex){
+            return [];
+        }
+
     }
 }
