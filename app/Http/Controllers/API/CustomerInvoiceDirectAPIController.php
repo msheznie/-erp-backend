@@ -3202,9 +3202,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $directTraSubTotal += $customerInvoice->tax->amount;
             }
         }
-
-
-        $amountSplit = explode(".", $directTraSubTotal);
+        $directTraSubTotalnumberformat=  number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+        $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
         $intAmt = 0;
         $floatAmt = 00;
 
@@ -3215,7 +3215,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $intAmt = $amountSplit[0];
             $floatAmt = $amountSplit[1];
         }
-
+        // $floatAmt = floatval(53268156);
         $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
@@ -3340,6 +3340,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else if ($printTemplate['printTemplateID'] == 11) {
             if($type == 1)
             {
+                // return $array;
                 $html = view('print.chromite_customer_invoice', $array);
                 $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
                 $mpdf->AddPage('P');
