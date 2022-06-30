@@ -352,7 +352,7 @@ class SalesReturnDetailAPIController extends AppBaseController
                 if($reasonCode){
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->where('companySystemID',$currentItemData['companySystemID'])->where('isActive', 1)->where('isAssigned', -1)->first();
                         if($chartOfAccountAssigned){
                             $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
                         }
@@ -471,7 +471,7 @@ class SalesReturnDetailAPIController extends AppBaseController
                 if($reasonCode){
                     $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
                     if($reasonCode->isPost == 0){
-                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->first();
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->where('companySystemID',$currentItemData['companySystemID'])->where('isActive', 1)->where('isAssigned', -1)->first();
                         if($chartOfAccountAssigned){
                             $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
                         }
