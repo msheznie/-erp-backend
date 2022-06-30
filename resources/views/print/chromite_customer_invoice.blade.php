@@ -404,8 +404,13 @@
                         <td colspan="2"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
                         <td colspan="3" class="text-right">{{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
                             and
-                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif only</td>
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            @endif
+                            
+                            only
+                        </td>
                     </tr>
                 </tbody>
             </table>
