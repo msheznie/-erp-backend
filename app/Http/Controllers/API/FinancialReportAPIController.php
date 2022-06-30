@@ -16,7 +16,6 @@
  */
 
 namespace App\Http\Controllers\API;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
