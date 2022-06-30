@@ -1424,7 +1424,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID','type'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1513,8 +1513,13 @@ class DebitNoteAPIController extends AppBaseController
         $projects = ErpProjectMaster::where('companySystemID', $companyId)
                                         ->get();
 
+
+          
+        $debite_note_type = [["id"=>1,"name"=>"Supplier"],["id"=>2,"name"=>"Employee",]];                                
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
+            'type' => $debite_note_type,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
@@ -2335,6 +2340,12 @@ UNION ALL
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('type', $input)) {
+            if ($input['type'] && !is_null($input['type'])) {
+                $debitNotes = $debitNotes->where('type', $input['type']);
             }
         }
 
