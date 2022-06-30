@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSalesReturnAPIRequest;
 use App\Http\Requests\API\UpdateSalesReturnAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesReturn;
@@ -520,6 +521,11 @@ class SalesReturnAPIController extends AppBaseController
                             }
                         }
                  
+                    }
+
+                    $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$item->reasonGLCode)->where('companySystemID',$salesReturn->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
+                    if(empty($chartOfAccountAssigned) && $item->reasonGLCode != null && $item->isPostItemLedger == 0 && $item->reasonCode != null){
+                        return $this->sendError($item->itemPrimaryCode.'-'.'Reason Code Master GL Code is not assigned to the company ', 500);
                     }
           
      
