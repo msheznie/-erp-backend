@@ -1,5 +1,21 @@
 <html>
-
+<table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$companyName}} </B></td>
+            </div>
+        </thead>
+    </table>
+    <table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$Title}}</B></td>
+            </div>
+        </thead>
+    </table>
+    <br>
 <table>
     <thead>
     <tr>
@@ -11,6 +27,9 @@
     </tr>
     </thead>
 </table>
+
+
+    <br>
     @foreach($reportData as $name => $key)
     <div>
         <h4>{{ $name }}</h4>

@@ -46,6 +46,7 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use App\helper\Helper;
 use App\helper\CreateExcel;
+use App\Models\Company;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -754,6 +755,14 @@ ORDER BY
             return $this->sendError($validator->messages(), 422);
         }
 
+
+        $from_date = $request->asOfDate;
+        $to_date = $request->asOfDate;
+        $company = Company::find($request->companyId);
+        $company_name = $company->CompanyName;
+
+        $fileName = 'Advance Payment Request';
+
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
 
@@ -864,9 +873,8 @@ ORDER BY
                 $data = array();
             }
 
-            $fileName = 'advance_payment_request';
             $path = 'accounts-payable/report/advance_payment_request/excel/';
-            $basePath = CreateExcel::process($data,$type,$fileName,$path);
+            $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
             if($basePath == '')
             {
