@@ -3025,6 +3025,10 @@ WHERE
                         // })->download('xlsx');
 
                         $x = 0;
+                        $subTotalDebitRpt = 0;
+                        $subTotalCreditRpt = 0;
+                        $subTotalDebitLocal = 0;
+                        $subTotalCreditRptLocal = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
@@ -3062,11 +3066,38 @@ WHERE
 
                             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
-                            $x++; 
+
+                            $subTotalDebitRpt += $val->rptDebit;
+                                    $subTotalCreditRpt += $val->rptCredit;
+
+                                    $subTotalDebitLocal += $val->localDebit;
+                                    $subTotalCreditRptLocal += $val->localCredit;
+                            $x++;
                         }
                     }
                 }
 
+                
+                $data[$x]['Company ID'] = "";
+                $data[$x]['Company Name'] = "";
+                $data[$x]['GL Code'] = "";
+                $data[$x]['Account Description'] = "";
+                $data[$x]['GL  Type'] = "";
+                $data[$x]['Template Description'] = "";
+                $data[$x]['Document Type'] = "";
+                $data[$x]['Document Number'] = "";
+                $data[$x]['Date'] = "";
+                $data[$x]['Document Narration'] = "";
+                $data[$x]['Service Line'] = "";
+                $data[$x]['Contract'] = "";
+
+                $data[$x]['Supplier/Customer'] = "Grand Total";
+                if ($checkIsGroup->isGroup == 0) {
+                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
+                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                }
+                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
+                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
 
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
