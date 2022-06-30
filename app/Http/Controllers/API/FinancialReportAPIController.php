@@ -4722,10 +4722,10 @@ AND MASTER .canceledYN = 0';
                     'reportDate' => date('d/m/Y H:i:s A'),
                     'fromDate' => \Helper::dateFormat($request->fromDate),
                     'toDate' => \Helper::dateFormat($request->toDate),
-                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), (int)  $decimalPlaceCollectLocal),
-                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), (int) $decimalPlaceCollectLocal),
-                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), (int) $decimalPlaceRpt),
-                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), (int) $decimalPlaceRpt),
+                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
+                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
+                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),
+                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), 3),
                 );
 
                 $html = view('print.report_general_ledger', $dataArr);
