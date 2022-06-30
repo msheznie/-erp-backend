@@ -915,8 +915,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $data = array();
                 $type = $request->type;
-                if ($reportTypeID == 'CBS') {
 
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getSupplierLedgerQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->fromDate;
+
+
+                if ($reportTypeID == 'CBS') {
+                    $fileName = 'Customer Balance Statement';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
@@ -947,6 +954,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
                 } else if ($request->reportTypeID == 'CSA') {
+                    $fileName = 'Customer Statement of Account';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
                     if ($output) {
@@ -972,17 +980,20 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_balance_statement', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+          
+                
+                $path = 'accounts-receivable/report/customer_balance_statement/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
