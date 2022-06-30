@@ -475,21 +475,25 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Reference Invoice No'] = "" ;
                 $data[$x]['Reference Invoice Date'] = "";
                 if ($input['reportTypeID'] == 3) {
-                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Bill To CustomerName'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Bill To CustomerName'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
-                } else if ($input['reportTypeID'] == 4) {
-                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Supplier Name'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Supplier Name'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
                 }
-                $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                if ($input['reportTypeID'] == 3) {
+                    $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                    $data[$x]['Supplier Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                }
                 $data[$x]['VATIN'] = $val->partyVATRegNo;
                 $data[$x]['Invoice Line Item No'] = $val->itemCode;
                 $data[$x]['Line Item Description'] = $val->itemDescription;
