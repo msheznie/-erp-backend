@@ -916,13 +916,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $data = array();
                 $type = $request->type;
 
-                $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getSupplierLedgerQRY($request);
-                $fromDate = $request->fromDate;
-                $toDate = $request->fromDate;
-
+             
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
 
                 if ($reportTypeID == 'CBS') {
+                    $from_date = $request->fromDate;
+                    $toDate = $request->fromDate;
+
                     $fileName = 'Customer Balance Statement';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
@@ -954,6 +955,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
                 } else if ($request->reportTypeID == 'CSA') {
+                    $from_date = $request->fromDate;
+                    $toDate = $request->toDate;
                     $fileName = 'Customer Statement of Account';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
@@ -983,7 +986,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
           
                 
                 $path = 'accounts-receivable/report/customer_balance_statement/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$toDate,$company_name);
 
                 if($basePath == '')
                 {
@@ -998,8 +1001,17 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
+
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
+
                 $data = array();
                 if ($reportTypeID == 'CAD') { //customer aging detail
+
+                    $fileName = 'Customer Invoice Aging Report';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingDetailQRY($request);
 
@@ -1042,7 +1054,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingSummaryQRY($request);
-
+                    $fileName = 'Customer Invoice Aging Summary';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1066,9 +1078,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
 
-                $fileName = 'customer_aging';
+               
                 $path = 'accounts-receivable/report/customer_aging/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {

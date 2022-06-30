@@ -40,7 +40,31 @@ class CreateExcel
 
                 $sheet->fromArray($data, null, 'A7', true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+               // $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+
+               $sheet->row(7, function($row) {
+
+
+
+                // call cell manipulation methods
+
+                $row->setFontColor('#00000');
+
+                $row->setFont(array(
+
+                    'family'     => 'Calibri',
+
+                    'size'       => '14',
+
+                    'bold'       =>  true
+
+                ));
+
+           
+
+            });
+
+
             });
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
