@@ -2534,6 +2534,8 @@ WHERE
         switch ($reportID) {
             case 'FTB':
                 $reportTypeID = $request->reportTypeID;
+                $currencyId =  $request->currencyID;
+
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
@@ -2594,16 +2596,19 @@ WHERE
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
 
-                                if ($checkIsGroup->isGroup == 0) {
+                                if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
-                                $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
-                                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
-                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
-                                $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0 + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+                                if($currencyId == 2 || $currencyId ==3) {
+                                    $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
+                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
+                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
+                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0 + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+    
+                                }
                                 $x++;
                             }
                         }
