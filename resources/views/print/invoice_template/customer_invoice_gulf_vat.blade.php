@@ -238,7 +238,7 @@
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td>
                                 <span>
-                                {{$request->customer->CustomerName}}
+                                {{$request->customer->ReportTitle}}
                                 </span>
                                 </td>
                             </tr>

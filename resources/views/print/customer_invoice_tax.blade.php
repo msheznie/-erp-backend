@@ -246,7 +246,7 @@
                             <td>:@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
-                                {{$request->customer->CustomerName}}</td>
+                                {{$request->customer->ReportTitle}}</td>
                         </tr>
 
 
