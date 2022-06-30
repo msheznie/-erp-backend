@@ -1,6 +1,31 @@
 <html>
  	<table>
         <thead>
+
+			<tr>
+				<th colspan="5" align="center">{{$report_tittle}}</th>
+			</tr>
+			<tr>
+				<th colspan="5" align="center">{{$company->CompanyName}}</th>
+			</tr>
+			<tr></tr>
+			@if ($month != null)
+				<tr>
+					<th>As of - {{$month}}</th>
+				</tr>
+			@endif
+
+			@if ($from_date != null && $to_date != null)
+				<tr>
+					<th>From Date - {{$from_date}}</th>
+				</tr>
+				<tr>
+					<th>To Date - {{$to_date}} </th>
+				</tr>
+			@endif
+
+			<tr></tr>
+			<tr></tr>
             <tr>
                 @if($fourthLevel)
 	            	<th colspan="5"></th>

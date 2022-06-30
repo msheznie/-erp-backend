@@ -2228,6 +2228,7 @@ WHERE
 
         $closingBalance = $openingBalance - $budgetAmount;
         $output = array(
+            'companyName' => $reportingCurrency->CompanyName,
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
@@ -2669,11 +2670,12 @@ WHERE
                     }
                 }
          
-
-
-                $fileName = 'trial_balance';
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
+                $fileName = 'Financial Trial Balance';
                 $path = 'general-ledger/report/trial_balance/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {
@@ -3140,9 +3142,12 @@ WHERE
                     }
                 }
 
-                $fileName = 'tax_details';
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
+                $fileName = 'Tax Details';
                 $path = 'general-ledger/report/tax_details/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {
@@ -7452,6 +7457,19 @@ GROUP BY
         } else {
             $templateName = "export_report.finance";
         }
+
+        $month = '';
+        if ($request->dateType != 1) {
+            $period = CompanyFinancePeriod::find($request->month);
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $month = Carbon::parse($toDate)->format('Y-m-d');
+        }
+        if($month){
+            $reportData['month'] = $month;
+        }
+        $reportData['report_tittle'] = 'Finance Report';
+        $reportData['from_date'] = $input['fromDate'];
+        $reportData['to_date'] = $input['toDate'];
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
