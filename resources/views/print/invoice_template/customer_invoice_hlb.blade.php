@@ -234,7 +234,7 @@
                 <td style="width: 50%; text-align:left;vertical-align: top;">
                     <b>{{$request->customer->CustomerName}}</b><br>
                     <b>{{$request->customer->customerAddress1}}</b><br>
-                    <b>{{$request->vatNumber}}</b><br>
+                    <b>Customer VATIN : {{$request->vatNumber}}</b><br>
                 </td>
 
                 <td style="width: 50%; text-align:right;vertical-align: top;">

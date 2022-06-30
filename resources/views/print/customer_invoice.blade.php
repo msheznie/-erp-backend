@@ -253,15 +253,7 @@
                         <tr>
                             <td>{{$request->customer->CustomerName}}</td>
                         </tr>
-                        @php
-                                $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
-                            @endphp
-                            @if($totalVATAmount > 0)
-                                <tr>
-                                    <td>
-                                        {{$request->vatNumber}}</td>
-                                </tr>
-                        @endif
+
                         <tr>
                             <td>
                                 <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
@@ -282,6 +274,11 @@
                                 <td></td>
                             </tr>
                         @endif
+                                <tr>
+                                    <td>Customer VATIN</td>
+                                    <td width="10px"><span class="font-weight-bold">-</span></td>
+                                    <td>{{$request->vatNumber}}</td>
+                                </tr>
                         <tr>
                             <td>
                                 @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif

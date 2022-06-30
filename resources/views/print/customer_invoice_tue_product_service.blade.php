@@ -275,7 +275,7 @@
                 <td style="width: 50%; text-align: left">
                     <b>CUSTOMER NAME : {{$request->customer->CustomerName}}</b><br>
                     <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
-                    <b>CUSTOMER VATIN NO : {{$request->vatNumber}}</b>
+                    <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">
                     <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>

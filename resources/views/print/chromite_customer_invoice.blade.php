@@ -251,7 +251,7 @@
             <tr> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">
                     @if(!empty($request->customer) )
-                        {{isset($request->customer->ReportTitle)?$request->customer->ReportTitle:'-'}}<br>
+                        {{isset($request->customer->CustomerName)?$request->customer->CustomerName:'-'}}<br>
                         {{isset($request->customer->customerAddress1)?$request->customer->customerAddress1:'-'}}<br>
                     @endif
 
@@ -259,7 +259,7 @@
                         TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
                         FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
                     @endif
-                        VATIN NO : {{$request->vatNumber}}
+                       CUSTOMER VATIN : {{$request->vatNumber}}
 
                 </td> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">
