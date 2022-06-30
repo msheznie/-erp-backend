@@ -251,7 +251,7 @@
                             </tr>
                         @endif
                         <tr>
-                            <td>{{$request->customer->CustomerName}}</td>
+                            <td>{{$request->customer->ReportTitle}}</td>
                         </tr>
 
                         <tr>

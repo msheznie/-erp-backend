@@ -232,7 +232,7 @@
         <table style="width:100%">
             <tr>
                 <td style="width: 50%; text-align:left;vertical-align: top;">
-                    <b>{{$request->customer->CustomerName}}</b><br>
+                    <b>{{$request->customer->ReportTitle}}</b><br>
                     <b>{{$request->customer->customerAddress1}}</b><br>
                     <b>Customer VATIN : {{$request->vatNumber}}</b><br>
                 </td>
