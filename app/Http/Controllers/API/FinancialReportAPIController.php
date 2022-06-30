@@ -16,7 +16,6 @@
  */
 
 namespace App\Http\Controllers\API;
-
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
@@ -2799,6 +2798,35 @@ WHERE
                 $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                 $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
+                $toDate = $request->toDate;
+                $fromDate = $request->fromDate;
+                $reportSD = $request->reportSD;
+
+                $glData = array(
+                    'reportSD'=> $reportSD,
+                    'reportTittle' => 'Financial General Ledger',
+                    'fromDate'=> $fromDate,
+                    'toDate'=> $toDate,
+                    'company'=> $companyCurrency,
+                    'output'=>$output,
+                    'currencyIdLocal'=>$currencyIdLocal,
+                    'currencyIdRpt'=>$currencyIdRpt,
+                    'decimalPlaceCollectLocal'=>$decimalPlaceCollectLocal,
+                    'decimalPlaceUniqueLocal'=>$decimalPlaceUniqueLocal,
+                    'decimalPlaceCollectRpt'=>$decimalPlaceCollectRpt,
+                    'decimalPlaceUniqueRpt'=>$decimalPlaceUniqueRpt,
+                    'extraColumns'=>$extraColumns,
+                    'requestCurrencyLocal'=>$requestCurrencyLocal,
+                    'requestCurrencyRpt'=>$requestCurrencyRpt,
+                    'decimalPlaceLocal'=>$decimalPlaceLocal,
+                    'decimalPlaceRpt'=>$decimalPlaceRpt,
+                    'currencyLocal'=>$currencyLocal,
+                    'currencyRpt'=>$currencyRpt,
+                    'checkIsGroup'=> $checkIsGroup,
+                );
+
+
+
                 if ($reportSD == "glCode_wise") {
                     if (!empty($output)) {
                         $outputArr = array();
@@ -2986,53 +3014,22 @@ WHERE
                     }
                 } else {
                     if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['GL Code'] = $val->glCode;
-                            $data[$x]['Account Description'] = $val->AccountDescription;
-                            $data[$x]['GL  Type'] = $val->glAccountType;
-                            $data[$x]['Template Description'] = $val->templateDetailDescription;
-                            $data[$x]['Document Type'] = $val->documentID;
-                            $data[$x]['Document Number'] = $val->documentCode;
-                            $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Document Narration'] = $val->documentNarration;
-                            $data[$x]['Service Line'] = $val->serviceLineCode;
-                            $data[$x]['Contract'] = $val->clientContractID;
-                            $data[$x]['Supplier/Customer'] = $val->isCustomer;
-                            if (in_array('confi_name', $extraColumns)) {
-                                $data[$x]['Confirmed By'] = $val->confirmedBy;
-                            }
 
-                            if (in_array('confi_date', $extraColumns)) {
-                                $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->documentConfirmedDate);
-                            }
-
-                            if (in_array('app_name', $extraColumns)) {
-                                $data[$x]['Approved By'] = $val->approvedBy;
-                            }
-
-                            if (in_array('app_date', $extraColumns)) {
-                                $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
-                            }
-
-                            if ($checkIsGroup->isGroup == 0) {
-                                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
-                                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
-                            }
-
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
-                            $x++;
-                        }
+                        return \Excel::create('general_ledger', function ($excel) use ($glData) {
+                            $excel->sheet('New sheet', function ($sheet) use ($glData) {
+                                $sheet->loadView('export_report.general_ledger_report', $glData);
+                            });
+                        })->download('xlsx');
                     }
                 }
 
-
-                $fileName = 'general_ledger';
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = $request->toDate;
+                $from_date = $request->fromDate;
+                $fileName = 'Financial General Ledger';
                 $path = 'general-ledger/report/general_ledger/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
+
 
                 if($basePath == '')
                 {
