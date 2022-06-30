@@ -151,4 +151,9 @@ class CashFlowReport extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function template()
+    {
+        return $this->belongsTo('App\Models\CashFlowTemplate', 'cashFlowTemplateID', 'id');
+    }
 }

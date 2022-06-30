@@ -365,4 +365,48 @@ class CashFlowReportAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function getCashFlowReportData(Request $request)
+    {
+        $input = $request->all();
+
+        $reportMasterData = CashFlowReport::with(['finance_year_by', 'template'])->find($input['id']);
+
+        $reportDetails = [];
+        if ($reportMasterData) {
+            $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+                                                            $q->with(['gllink' => function ($q) {
+                                                                $q->with('subcategory');
+                                                                $q->orderBy('sortOrder', 'asc');
+                                                            }, 'subcategory' => function ($q) {
+                                                                $q->with(['gllink' => function ($q) {
+                                                                    $q->with('subcategory');
+                                                                    $q->orderBy('sortOrder', 'asc');
+                                                                }, 'subcategory' => function ($q) {
+                                                                    $q->with(['gllink' => function ($q) {
+                                                                        $q->with('subcategory');
+                                                                        $q->orderBy('sortOrder', 'asc');
+                                                                    }, 'subcategory' => function ($q) {
+                                                                        $q->with(['gllink' => function ($q) {
+                                                                            $q->with('subcategory');
+                                                                            $q->orderBy('sortOrder', 'asc');
+                                                                        }]);
+                                                                        $q->orderBy('sortOrder', 'asc');
+                                                                    }]);
+                                                                    $q->orderBy('sortOrder', 'asc');
+                                                                }]);
+                                                                $q->orderBy('sortOrder', 'asc');
+                                                            }]);
+                                                            $q->orderBy('sortOrder', 'asc');
+                                                        }, 'subcategorytot' => function ($q) {
+                                                            $q->with('subcategory');
+                                                        }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+
+
+        }
+     
+        $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray()];
+
+        return $this->sendResponse($output, 'Report Template Details retrieved successfully');   
+    }
 }
