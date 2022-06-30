@@ -356,6 +356,7 @@ class VATReportAPIController extends AppBaseController
 
     public function exportVATReport(Request $request){
         $input = $request->all();
+        $company = Company::find($request->companySystemID);
         $output = $this->getVatReportQuery($input);
 
         if (count((array)$output)>0) {
@@ -408,11 +409,20 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
             }
 
+            $company_name = $company->CompanyName;
+            $to_date = \Helper::dateFormat($request->toDate);
+            $from_date = \Helper::dateFormat($request->fromDate);
 
-            
-            $fileName = 'vat_report';
+            if($request->reportTypeID == 1){
+                $fileName = 'Output VAT Summary';
+            } elseif($request->reportTypeID == 2){
+                $fileName = 'Input VAT Summary';
+            } else{
+                $fileName = 'VAT Summary Report';
+            }
+
             $path = 'general-ledger/report/vat_report/excel/';
-            $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$from_date,$to_date,$company_name);
 
             if($basePath == '')
             {
