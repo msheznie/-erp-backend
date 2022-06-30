@@ -341,8 +341,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
     public function getAllGLCodes(Request $request)
     {
-        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))
-            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->where('isActive', 1)->where('isAssigned', -1)->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
         return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }
