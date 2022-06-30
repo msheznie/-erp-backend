@@ -253,7 +253,7 @@
                         @endphp
                         @if($totalVATAmount > 0)
                         <tr>
-                            <td><b>Customer VATIN NO</b></td>
+                            <td><b>Customer VATIN No</b></td>
                             <td>:
                                 {{$request->vatNumber}}</td>
                         </tr>

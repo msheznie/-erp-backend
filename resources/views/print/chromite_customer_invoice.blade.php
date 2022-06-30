@@ -259,7 +259,7 @@
                         TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
                         FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
                     @endif
-                        VATIN NO : {{$request->vatNumber}}
+                       CUSTOMER VATIN NO : {{$request->vatNumber}}
 
                 </td> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">

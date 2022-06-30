@@ -289,7 +289,7 @@
                                 </tr>
                             @endif
                             <tr>
-                                <td width="110px"><span class="font-weight-bold">Customer VATIN</span></td>
+                                <td width="110px"><span class="font-weight-bold">Customer VATIN No</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td>
                                 <span>
