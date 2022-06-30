@@ -3067,8 +3067,8 @@ WHERE
 
 
                 $company_name = $companyCurrency->CompanyName;
-                $to_date = $request->toDate;
-                $from_date = $request->fromDate;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
                 $fileName = 'Financial General Ledger';
                 $path = 'general-ledger/report/general_ledger/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
