@@ -87,7 +87,7 @@ class DocumentAttachments extends Model
         'path' => 'string',
         'pullFromAnotherDocument' => 'integer',
         'parent_id' => 'integer',
-        'envelopType' => 'integer'
+        'envelopType' => 'string'
     ];
 
     /**
