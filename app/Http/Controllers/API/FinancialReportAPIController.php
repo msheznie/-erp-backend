@@ -2925,11 +2925,11 @@ WHERE
 
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
-                                    $subTotalDebitRpt += $val->rptDebit;
-                                    $subTotalCreditRpt += $val->rptCredit;
+                                    $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
+                                    $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
-                                    $subTotalDebitLocal += $val->localDebit;
-                                    $subTotalCreditRptLocal += $val->localCredit;
+                                    $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                                    $subTotalCreditRptLocal += round($val->localCredit, $decimalPlaceLocal);
                                 }
                                 $x++;
                                 $data[$x]['Company ID'] = '';
@@ -3072,11 +3072,11 @@ WHERE
                             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
 
-                            $subTotalDebitRpt += $val->rptDebit;
-                                    $subTotalCreditRpt += $val->rptCredit;
+                            $subTotalDebitRpt += round($val->rptDebit, $decimalPlaceRpt);
+                                    $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
-                                    $subTotalDebitLocal += $val->localDebit;
-                                    $subTotalCreditRptLocal += $val->localCredit;
+                                    $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                                    $subTotalCreditRptLocal += round($val->localCredit, $decimalPlaceLocal);
                             $x++;
                         }
                     }
