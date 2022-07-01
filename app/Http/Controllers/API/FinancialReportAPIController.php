@@ -2534,14 +2534,14 @@ WHERE
         switch ($reportID) {
             case 'FTB':
                 $reportTypeID = $request->reportTypeID;
-                $currencyId =  $request->currencyID;
 
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $currencyId =  $request->currencyID;
+
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
-
                 if ($reportTypeID == 'FTB') {
                     if ($request->reportSD == 'company_wise_summary') {
                         $companyID = "";
@@ -2602,7 +2602,7 @@ WHERE
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
-                                if($currencyId == 2 || $currencyId ==3) {
+                                if($currencyId == 2 || $currencyId == 3) {
                                     $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
