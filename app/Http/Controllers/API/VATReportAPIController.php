@@ -356,6 +356,7 @@ class VATReportAPIController extends AppBaseController
 
     public function exportVATReport(Request $request){
         $input = $request->all();
+        $company = Company::find($request->companySystemID);
         $output = $this->getVatReportQuery($input);
 
         if (count((array)$output)>0) {
@@ -375,6 +376,22 @@ class VATReportAPIController extends AppBaseController
                     $data[$x]['Party Name'] ='';
                 }
 
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['Country'] =isset($val->supplier->country->countryName) ? $val->supplier->country->countryName: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                    $data[$x]['Country'] =isset($val->customer->country->countryName) ? $val->customer->country->countryName: '';
+                }else{
+                    $data[$x]['Country'] ='';
+                }
+
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['VATIN'] =isset($val->supplier->vatNumber) ? $val->supplier->vatNumber: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                    $data[$x]['VATIN'] =isset($val->customer->vatNumber) ? $val->customer->vatNumber: '';
+                }else{
+                    $data[$x]['VATIN'] ='';
+                }
+
                 $data[$x]['Approved By'] = isset($val->final_approved_by->empName)? $val->final_approved_by->empName : '';
 
                 $localDecimalPlaces = isset($val->localcurrency->DecimalPlaces) ? $val->localcurrency->DecimalPlaces : 3;
@@ -392,11 +409,20 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
             }
 
+            $company_name = $company->CompanyName;
+            $to_date = \Helper::dateFormat($request->toDate);
+            $from_date = \Helper::dateFormat($request->fromDate);
 
-            
-            $fileName = 'vat_report';
+            if($request->reportTypeID == 1){
+                $fileName = 'Output VAT Summary';
+            } elseif($request->reportTypeID == 2){
+                $fileName = 'Input VAT Summary';
+            } else{
+                $fileName = 'VAT Summary Report';
+            }
+
             $path = 'general-ledger/report/vat_report/excel/';
-            $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$from_date,$to_date,$company_name);
 
             if($basePath == '')
             {
@@ -449,22 +475,26 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Reference Invoice No'] = "" ;
                 $data[$x]['Reference Invoice Date'] = "";
                 if ($input['reportTypeID'] == 3) {
-                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Bill To CustomerName'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Bill To CustomerName'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
-                } else if ($input['reportTypeID'] == 4) {
-                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Supplier Name'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Supplier Name'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
                 }
-                $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
-                $data[$x]['Customer VAT Registration No'] = $val->partyVATRegNo;
+                if ($input['reportTypeID'] == 3) {
+                    $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                    $data[$x]['Supplier Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                }
+                $data[$x]['VATIN'] = $val->partyVATRegNo;
                 $data[$x]['Invoice Line Item No'] = $val->itemCode;
                 $data[$x]['Line Item Description'] = $val->itemDescription;
                 if (isset($val->company->companyCountry) && ($val->company->companyCountry == $val->countryID)) {
@@ -578,7 +608,14 @@ class VATReportAPIController extends AppBaseController
                             ->when(isset($input['isClaimed']), function ($query) use ($input) {
                                 $query->where('isClaimed', $input['isClaimed']);
                             })
-                            ->with(['supplier','customer','rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
+                            ->with(['supplier'=>
+                                function($query){
+                                    $query->with(['country']);
+                                },'customer'=>
+                                function($query){
+                                    $query->with(['country']);
+                                }
+                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
                             ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){

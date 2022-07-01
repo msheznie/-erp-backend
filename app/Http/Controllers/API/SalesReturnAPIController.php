@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSalesReturnAPIRequest;
 use App\Http\Requests\API\UpdateSalesReturnAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\QuotationDetails;
 use App\Models\QuotationMaster;
 use App\Models\SalesReturn;
@@ -351,7 +352,7 @@ class SalesReturnAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-
+  
         $salesReturn = $this->salesReturnRepository->findWithoutFail($id);
 
         if (empty($salesReturn)) {
@@ -499,6 +500,36 @@ class SalesReturnAPIController extends AppBaseController
                 }
 
                 foreach ($detail as $item) {
+                    
+                    $quotation_detail_id = DeliveryOrderDetail::where('deliveryOrderDetailID',$item->deliveryOrderDetailID)->select('quotationDetailsID')->first();
+                    if(isset($quotation_detail_id))
+                    {
+                        $return_quantity = DeliveryOrderDetail::where('deliveryOrderDetailID',$item->deliveryOrderDetailID)->sum('returnQty');
+                        $do_qua = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)->select('doQuantity')->first();
+                        
+                        if(isset($do_qua))
+                        {
+                            if($do_qua->doQuantity == $return_quantity)
+                            {
+                                $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                                 ->update(['fullyOrdered' => 0]);
+                            }
+                            else
+                            {
+                                $update = QuotationDetails::where('quotationDetailsID', $quotation_detail_id->quotationDetailsID)
+                                ->update(['fullyOrdered' => 1]);
+                            }
+                        }
+                 
+                    }
+
+                    $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$item->reasonGLCode)->where('companySystemID',$salesReturn->companySystemID)->where('isActive', 1)->where('isAssigned', -1)->first();
+                    if(empty($chartOfAccountAssigned) && $item->reasonGLCode != null && $item->isPostItemLedger == 0 && $item->reasonCode != null){
+                        return $this->sendError($item->itemPrimaryCode.'-'.'Reason Code Master GL Code is not assigned to the company ', 500);
+                    }
+          
+     
+
 
                     //If the revenue account or cost account or BS account is null do not allow to confirm
                     if(!($item->financeGLcodebBSSystemID > 0)){

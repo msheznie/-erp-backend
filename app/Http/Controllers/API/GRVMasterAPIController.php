@@ -836,7 +836,6 @@ class GRVMasterAPIController extends AppBaseController
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
 
-//        return $this->sendResponse($customers, 'Good Receipt Voucher deleted successfully');
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -946,6 +945,11 @@ class GRVMasterAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
+        $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->first();
+
 
         $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
             ->where('companySystemID', $companyId)
@@ -1016,6 +1020,7 @@ class GRVMasterAPIController extends AppBaseController
             'grvTypes' => $grvTypes,
             'companyFinanceYear' => $companyFinanceYear,
             'companyPolicy' => $allowPartialGRVPolicy,
+            'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
             'warehouseBinLocationPolicy' => $warehouseBinLocationPolicy,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'isEEOSSPolicy' => $hasEEOSSPolicy,

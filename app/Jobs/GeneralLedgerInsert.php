@@ -2523,10 +2523,31 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
 
-                            $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
-                            $data['glCode'] = $masterData->supplierGLCode;
-                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            if($masterData->type == 1)
+                            {
+                                $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
+                                $data['glCode'] = $masterData->supplierGLCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            }
+                            else if($masterData->type == 2)
+                            {
+
+                                $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$masterData->companySystemID)->first();
+                                if(isset($emp_control_acc))
+                                {
+                                    $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                                    if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                                    {
+                                        $data['chartOfAccountSystemID'] = $emp_chart_acc;
+                                        $data['glCode'] = ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']);
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    }
+                                }
+                            }
+
+                           
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionCurrencyER;
                             $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));
@@ -4900,7 +4921,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }], 'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
-                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
+                        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount, reasonCode, isPostItemLedger, reasonGLCode, financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
                             ->WHERE('salesReturnID', $masterModel["autoID"])
                             ->groupBy('financeGLcodebBSSystemID')
                             ->get();
@@ -4996,8 +5017,17 @@ class GeneralLedgerInsert implements ShouldQueue
                             if ($allAc) {
                                 foreach ($allAc as $val) {
                                     $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
-                                    $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
-                                    $data['glCode'] = $val->financeGLcodebBS;
+                                    if($val->isPostItemLedger == 0 && $val->reasonCode != null){
+                                        $data['chartOfAccountSystemID'] = $val->reasonGLCode;
+                                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$val->reasonGLCode)->first();
+                                        if($chartOfAccountAssigned){
+                                            $data['glCode'] = $chartOfAccountAssigned->AccountCode;
+                                        }
+                                    }else{
+                                        $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                                        $data['glCode'] = $val->financeGLcodebBS;
+                                    }
+
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;

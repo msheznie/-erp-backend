@@ -8,6 +8,11 @@ use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\AppointmentDetailsRefferedBack;
 use App\Models\AppointmentRefferedBack;
+use App\Models\BidBoq;
+use App\Models\BidMainWork;
+use App\Models\BidSchedule;
+use App\Models\BidSubmissionDetail;
+use App\Models\BidSubmissionMaster;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -19,7 +24,11 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\EvaluationCriteriaDetails;
+use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentOrder;
+use App\Models\ScheduleBidSubmission;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
@@ -28,10 +37,13 @@ use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
+use App\Models\TenderBoqItems;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
+use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
@@ -41,10 +53,12 @@ use Aws\Ec2\Exception\Ec2Exception;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
+use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 
@@ -59,18 +73,18 @@ class SRMService
     private $documentAttachmentsRepo;
 
     public function __construct(
-        POService $POService,
-        SupplierService $supplierService,
-        SharedService $sharedService,
-        InvoiceService $invoiceService,
+        POService                           $POService,
+        SupplierService                     $supplierService,
+        SharedService                       $sharedService,
+        InvoiceService                      $invoiceService,
         SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
-        TenderBidClarificationsRepository $tenderBidClarificationsRepo,
-        DocumentAttachmentsRepository $documentAttachmentsRepo
+        TenderBidClarificationsRepository   $tenderBidClarificationsRepo,
+        DocumentAttachmentsRepository       $documentAttachmentsRepo
     ) {
-        $this->POService        = $POService;
-        $this->supplierService  = $supplierService;
-        $this->sharedService    = $sharedService;
-        $this->invoiceService   = $invoiceService;
+        $this->POService = $POService;
+        $this->supplierService = $supplierService;
+        $this->sharedService = $sharedService;
+        $this->invoiceService = $invoiceService;
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
         $this->documentAttachmentsRepo = $documentAttachmentsRepo;
@@ -89,11 +103,12 @@ class SRMService
         ];
 
         return [
-            'success'   => true,
-            'message'   => 'currencies successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'currencies successfully get',
+            'data' => $data
         ];
     }
+
     public function getPoList(Request $request): array
     {
         $input = $request->all();
@@ -158,21 +173,22 @@ class SRMService
     public function getPoPrintData(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
-        $data =  $this->POService->getPoPrintData($purchaseOrderID);
+        $data = $this->POService->getPoPrintData($purchaseOrderID);
         return [
-            'success'   => true,
-            'message'   => 'Purchase order print data successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Purchase order print data successfully get',
+            'data' => $data
         ];
     }
+
     public function getPoAddons(Request $request)
     {
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
-        $data =  $this->POService->getPoAddons($purchaseOrderID);
+        $data = $this->POService->getPoAddons($purchaseOrderID);
         return [
-            'success'   => true,
-            'message'   => 'Purchase order addon successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Purchase order addon successfully get',
+            'data' => $data
         ];
     }
 
@@ -181,16 +197,17 @@ class SRMService
         $tenantID = $request->input('tenantId');
         $wareHouseID = $request->input('extra.wareHouseID');
         $searchText = $request->input('extra.searchText');
-        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $poData = [];
-        $data =  $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
+        $data = $this->POService->getPurchaseOrders($wareHouseID, $supplierID, $tenantID, $searchText);
 
         return [
-            'success'   => true,
-            'message'   => 'Purchase Orders successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Purchase Orders successfully get',
+            'data' => $data
         ];
     }
+
     public function SavePurchaseOrderList(Request $request)
     {
         $tenantID = $request->input('tenantId');
@@ -198,7 +215,7 @@ class SRMService
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotCompanyId = $request->input('extra.slotCompanyId');
         $company = Company::where('companySystemID', $slotCompanyId)->first();
-        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $appointmentID = $request->input('extra.appointmentID');
         $amend = $request->input('extra.amend');
         $document = DocumentMaster::select('documentID', 'documentSystemID')
@@ -220,7 +237,7 @@ class SRMService
             if ($lastSerial) {
                 $lastSerialNumber = intval($lastSerial->serial_no) + 1;
             }
-            $code =  ($document['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $code = ($document['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $dataMaster['serial_no'] = $lastSerialNumber;
             $dataMaster['primary_code'] = $code;
             $dataMaster['supplier_id'] = $supplierID;
@@ -268,16 +285,16 @@ class SRMService
 
             DB::commit();
             return [
-                'success'   => true,
-                'message'   => 'Appointment saved successfully',
-                'data'      => $data
+                'success' => true,
+                'message' => 'Appointment saved successfully',
+                'data' => $data
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
             return [
-                'success'   => false,
-                'message'   => 'Appointment save failed',
-                'data'      => $exception->getMessage()
+                'success' => false,
+                'message' => 'Appointment save failed',
+                'data' => $exception->getMessage()
             ];
         }
     }
@@ -285,20 +302,20 @@ class SRMService
     public function getSupplierInvitationInfo(Request $request)
     {
         $invitationToken = $request->input('extra.token');
-        $data =  $this->supplierService->getTokenData($invitationToken);
+        $data = $this->supplierService->getTokenData($invitationToken);
 
         if (!$data) {
             return [
-                'success'   => false,
-                'message'   => "Invalid Token",
-                'data'      => null
+                'success' => false,
+                'message' => "Invalid Token",
+                'data' => null
             ];
         }
 
         return [
-            'success'   => true,
-            'message'   => 'Valid Invitation Link',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Valid Invitation Link',
+            'data' => $data
         ];
     }
 
@@ -307,27 +324,28 @@ class SRMService
         $invitationToken = $request->input('extra.token');
         $supplierUuid = $request->input('supplier_uuid');
 
-        $isUpdated =  $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid);
+        $isUpdated = $this->supplierService->updateTokenStatus($invitationToken, $supplierUuid);
 
         if (!$isUpdated) {
             return [
-                'success'   => false,
-                'message'   => "Update Failed",
-                'data'      => null
+                'success' => false,
+                'message' => "Update Failed",
+                'data' => null
             ];
         }
 
         return [
-            'success'   => true,
-            'message'   => 'Updated Successfully',
-            'data'      => $isUpdated
+            'success' => true,
+            'message' => 'Updated Successfully',
+            'data' => $isUpdated
         ];
     }
-    public function  getAppointmentSlots(Request $request)
+
+    public function getAppointmentSlots(Request $request)
     {
         $tenantID = $request->input('tenantId');
-        $data =  $this->POService->getAppointmentSlots($tenantID);
-        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $data = $this->POService->getAppointmentSlots($tenantID);
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $x = 0;
         if (isset($data) && $data != '') {
@@ -374,17 +392,18 @@ class SRMService
                 }
             }
             return [
-                'success'   => true,
-                'message'   => 'Calander appointment slots successfully get',
-                'data'      => $arr
+                'success' => true,
+                'message' => 'Calander appointment slots successfully get',
+                'data' => $arr
             ];
         }
     }
+
     public function getAppointmentDeliveries(Request $request)
     {
         $slotDetailID = $request->input('extra.slotDetailID');
         $slotMasterID = $request->input('extra.slotMasterID');
-        $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $arr = [];
         $appointment = Appointment::select('id')
             ->where('slot_detail_id', $slotDetailID)
@@ -419,11 +438,12 @@ class SRMService
             ->get();
         $arr['data'] = $data;
         return [
-            'success'   => true,
-            'message'   => 'Calander appointment deliveries get',
-            'data'      => $arr
+            'success' => true,
+            'message' => 'Calander appointment deliveries get',
+            'data' => $arr
         ];
     }
+
     public function getPoAppointments(Request $request)
     {
         $appointmentID = $request->input('extra.appointmentID');
@@ -436,11 +456,12 @@ class SRMService
             ->where('id', $appointmentID)->first();
 
         return [
-            'success'   => true,
-            'message'   => 'Calander appointment get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Calander appointment get',
+            'data' => $data
         ];
     }
+
     public function deleteSupplierAppointment(Request $request)
     {
         $appointmentID = $request->input('extra.id');
@@ -448,7 +469,7 @@ class SRMService
         $slotDetailID = $request->input('extra.slotDetailID');
         $appointment = Appointment::where('id', $appointmentID)->delete();
         if ($appointment) {
-            $appointmentDetail =  AppointmentDetails::where('appointment_id', $appointmentID)->delete();
+            $appointmentDetail = AppointmentDetails::where('appointment_id', $appointmentID)->delete();
         }
         $slotMaster = SlotMaster::select('no_of_deliveries')->where('id', $slotMasterID)->first();
         $slotDetailAppointment = Appointment::select('id')->where('slot_detail_id', $slotDetailID)->get();
@@ -461,20 +482,21 @@ class SRMService
 
 
         return [
-            'success'   => true,
-            'message'   => 'Appointment deleted successfully',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Appointment deleted successfully',
+            'data' => $data
         ];
     }
+
     public function confirmSupplierAppointment(Request $request)
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
         $confirm = \Helper::confirmDocument($params);
 
         return [
-            'success'   => $confirm['success'],
-            'message'   => $confirm['message'],
-            'data'      => $params
+            'success' => $confirm['success'],
+            'message' => $confirm['message'],
+            'data' => $params
         ];
     }
 
@@ -508,16 +530,16 @@ class SRMService
         throw_unless($supplierLink, "Something went wrong, UUID doesn't match with ERP supplier link table reocrd");
 
         $data = $this->supplierService->createSupplierApprovalSetup([
-            'autoID'    => $supplierLink->id,
-            'company'   => $supplierLink->company_id,
-            'documentID'  => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
-            'email'  =>   $supplierLink->email
+            'autoID' => $supplierLink->id,
+            'company' => $supplierLink->company_id,
+            'documentID' => 107, // 107 mean documentMaster id of "Supplier Registration" document in ERP
+            'email' => $supplierLink->email
         ]);
 
         return [
-            'success'   => $data['success'],
-            'message'   => $data['message'],
-            'data'      => $data
+            'success' => $data['success'],
+            'message' => $data['message'],
+            'data' => $data
         ];
     }
 
@@ -536,10 +558,10 @@ class SRMService
             'url' => env('ERP_ENDPOINT'),
             'method' => 'POST',
             'data' => [
-                'api_key'       => $apiKey,
-                'request'       => $data['request'],
-                'auth'          => $data['auth'],
-                'extra'         => $data['extra'] ?? null,
+                'api_key' => $apiKey,
+                'request' => $data['request'],
+                'auth' => $data['auth'],
+                'extra' => $data['extra'] ?? null,
                 'supplier_uuid' => $data['supplier_uuid'] ?? null,
             ]
         ]);
@@ -565,9 +587,9 @@ class SRMService
             'url' => env('SRM_ENDPOINT'),
             'method' => 'POST',
             'data' => [
-                'api_key'       => $data['apiKey'],
-                'request'       => $data['request'],
-                'extra'         => $data['extra'] ?? null
+                'api_key' => $data['apiKey'],
+                'request' => $data['request'],
+                'extra' => $data['extra'] ?? null
             ]
         ]);
     }
@@ -582,9 +604,9 @@ class SRMService
     {
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         return [
-            'success'   => true,
-            'message'   => 'Record retrieved successfully',
-            'data'      =>  $this->invoiceService->getInvoicesList($request, $supplierID)
+            'success' => true,
+            'message' => 'Record retrieved successfully',
+            'data' => $this->invoiceService->getInvoicesList($request, $supplierID)
         ];
     }
 
@@ -601,8 +623,8 @@ class SRMService
         $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
         if (!empty($masterData)) {
             $masterData = $masterData->toArray();
-            $input['bookingSuppMasInvAutoID']    = $id;
-            $masterData['detail_data'] =  ['grvDetails' => [], 'logisticYN' => 0];
+            $input['bookingSuppMasInvAutoID'] = $id;
+            $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
 
             foreach ($masterData['detail'] as $detail) {
                 $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
@@ -620,9 +642,9 @@ class SRMService
         }
 
         return [
-            'success'   => true,
-            'message'   => 'Record retrieved successfully',
-            'data'      => $masterData
+            'success' => true,
+            'message' => 'Record retrieved successfully',
+            'data' => $masterData
         ];
     }
 
@@ -689,17 +711,17 @@ class SRMService
                 self::poAppointmentReferback($appointmentID, $slotCompanyId);
 
                 return [
-                    'success'   => true,
-                    'message'   => 'Appointment amended successfully',
-                    'data'      => [$insertAppointment, $insertAppointmentDetails]
+                    'success' => true,
+                    'message' => 'Appointment amended successfully',
+                    'data' => [$insertAppointment, $insertAppointmentDetails]
                 ];
             }
         }
 
         return [
-            'success'   => false,
-            'message'   => 'Appointment amendment failed',
-            'data'      => 'failed'
+            'success' => false,
+            'message' => 'Appointment amendment failed',
+            'data' => 'failed'
         ];
     }
 
@@ -727,12 +749,13 @@ class SRMService
             ->where('documentSystemID', 106)
             ->delete();
     }
+
     public function supplierRegistrationApprovalAmmend(Request $request)
     {
         $kycFormDetails = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))
             ->first();
-        $id =  $kycFormDetails->id;
-        $companySystemID =  $kycFormDetails->company_id;
+        $id = $kycFormDetails->id;
+        $companySystemID = $kycFormDetails->company_id;
         $documentSystemID = 107;
         $timesReferred = $kycFormDetails->timesReferred;
 
@@ -765,18 +788,19 @@ class SRMService
             $kycFormDetails->save();
         }
         return [
-            'success'   => true,
-            'message'   => 'Supplier Ammend',
-            'data'      => $kycFormDetails
+            'success' => true,
+            'message' => 'Supplier Ammend',
+            'data' => $kycFormDetails
         ];
     }
+
     public function getERPFormData(Request $request)
     {
         $currencyMaster = CurrencyMaster::select('currencyID', 'CurrencyName', 'CurrencyCode')->get();
         $countryMaster = CountryMaster::select('countryID', 'countryCode', 'countryName')->get();
         $supplierCategoryMaster = SupplierCategoryMaster::select('supCategoryMasterID', 'categoryCode', 'categoryDescription')->get();
         $supplierCategorySubMaster = SupplierCategorySub::select('supCategorySubID', 'supMasterCategoryID', 'subCategoryCode', 'categoryDescription')->get();
-        $formData =  array(
+        $formData = array(
             'currencyMaster' => $currencyMaster,
             'countryMaster' => $countryMaster,
             'supplierCategoryMaster' => $supplierCategoryMaster,
@@ -784,9 +808,9 @@ class SRMService
         );
 
         return [
-            'success'   => true,
-            'message'   => 'ERP Form Data Retrieved',
-            'data'      => $formData
+            'success' => true,
+            'message' => 'ERP Form Data Retrieved',
+            'data' => $formData
         ];
     }
 
@@ -820,30 +844,30 @@ class SRMService
                 $result['canCancel'] = $canCancel;
                 $result['appointments'] = $appointment;
                 return [
-                    'success'   => true,
-                    'message'   => 'Appointment Can Be Created',
-                    'data'      => $result
+                    'success' => true,
+                    'message' => 'Appointment Can Be Created',
+                    'data' => $result
                 ];
             } else {
                 $result['canCreate'] = 0;
                 $result['canCancel'] = $canCancel;
                 $result['appointments'] = $appointment;
                 return [
-                    'success'   => true,
-                    'message'   => 'Appointments can not be created for past dates',
-                    'data'      => $result
+                    'success' => true,
+                    'message' => 'Appointments can not be created for past dates',
+                    'data' => $result
                 ];
             }
         } else {
             return [
-                'success'   => false,
-                'message'   => 'Slot Detail Not Available',
-                'data'      => $detail
+                'success' => false,
+                'message' => 'Slot Detail Not Available',
+                'data' => $detail
             ];
         }
     }
 
-    public function  getAppointmentDetails(Request $request)
+    public function getAppointmentDetails(Request $request)
     {
         $appointmentID = $request->input('extra.appointmentID');
 
@@ -872,16 +896,16 @@ class SRMService
                 $result['purchaseOrderCode'] = $detail[0]['getPoMaster']['purchaseOrderCode'];
             }
             return [
-                'success'   => true,
-                'message'   => 'Appointment Details Available',
-                'data'      => $result
+                'success' => true,
+                'message' => 'Appointment Details Available',
+                'data' => $result
             ];
         } else {
             $result['exist'] = 0;
             return [
-                'success'   => false,
-                'message'   => 'Appointment Details Not Available',
-                'data'      => $result
+                'success' => false,
+                'message' => 'Appointment Details Not Available',
+                'data' => $result
             ];
         }
     }
@@ -919,9 +943,9 @@ class SRMService
 
         $result['poDetail'] = $po;
         return [
-            'success'   => true,
-            'message'   => 'Po Details Retrieved',
-            'data'      => $result
+            'success' => true,
+            'message' => 'Po Details Retrieved',
+            'data' => $result
         ];
     }
 
@@ -983,7 +1007,7 @@ class SRMService
 
     public function getAllAppointmentList(Request $request): array
     {
-        $input  = $request->all();
+        $input = $request->all();
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $warehouseId = $request->input('extra.warehouseId');
         $appointDate = $request->input('extra.appointDate');
@@ -1011,7 +1035,7 @@ class SRMService
         }
 
 
-        if ($warehouseId != 0 &&  !(is_null($warehouseId))) {
+        if ($warehouseId != 0 && !(is_null($warehouseId))) {
             $query->where('wareHouseSystemCode', $warehouseId);
         }
 
@@ -1032,9 +1056,9 @@ class SRMService
             ->make(true);
 
         return [
-            'success'   => true,
-            'message'   => 'Appointment list successfully get',
-            'data'      => $data
+            'success' => true,
+            'message' => 'Appointment list successfully get',
+            'data' => $data
         ];
     }
 
@@ -1048,9 +1072,9 @@ class SRMService
         }
 
         return [
-            'success'   => true,
-            'message'   => $message,
-            'data'      => $warehouse
+            'success' => true,
+            'message' => $message,
+            'data' => $warehouse
         ];
     }
 
@@ -1081,9 +1105,9 @@ class SRMService
         }
 
         return [
-            'success'   => true,
-            'message'   => $message,
-            'data'      => $remainingAppointments
+            'success' => true,
+            'message' => $message,
+            'data' => $remainingAppointments
         ];
     }
 
@@ -1091,7 +1115,7 @@ class SRMService
     {
         try {
             $id = $request->input('extra.appointmentID');
-            $supplierID =  self::getSupplierIdByUUID($request->input('supplier_uuid'));
+            $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
 
             $supplier = SupplierMaster::where('supplierCodeSystem', $supplierID)->first();
 
@@ -1112,9 +1136,9 @@ class SRMService
         }
 
         return [
-            'success'   => $success,
-            'message'   => $message,
-            'data'      => $result
+            'success' => $success,
+            'message' => $message,
+            'data' => $result
         ];
     }
 
@@ -1139,9 +1163,9 @@ class SRMService
 
                 if (empty($companyDocument)) {
                     return [
-                        'success'   => false,
-                        'message'   => 'Policy not found',
-                        'data'      => $companyDocument
+                        'success' => false,
+                        'message' => 'Policy not found',
+                        'data' => $companyDocument
                     ];
                 }
 
@@ -1167,17 +1191,48 @@ class SRMService
         }
 
         return [
-            'success'   => true,
-            'message'   => 'Record retrieved successfully',
-            'data'      => $approveDetails
+            'success' => true,
+            'message' => 'Record retrieved successfully',
+            'data' => $approveDetails
         ];
     }
+
     public function getTenders(Request $request)
     {
-
         $input = $request->all();
+        $registrationLinkIds = array();
+        $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+        foreach ($supplierRegIdAll as $supplierReg) {
+            $registrationLinkIds[] = $supplierReg['id'];
+        }
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
+
+        //Get Purchased tenders for user
+        $purchasedTenderIds = TenderMasterSupplier::select(DB::raw('DISTINCT tender_master_id'))->whereIn('purchased_by', $registrationLinkIds)->get()->toArray();
+
+        //Get Assigned tenders for user without purchased tenders
+        $tenderIds = TenderSupplierAssignee::select('tender_master_id')
+            ->whereIn('registration_link_id', $registrationLinkIds)
+            ->whereNotIn('tender_master_id', $purchasedTenderIds)
+            ->get()
+            ->toArray();
+
+        foreach ($tenderIds as $tenderId) {
+            $tenderMasterId[] = $tenderId['tender_master_id'];
+        }
+
+        //Get Open Tenders Not Purchased
+        $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
+            ->whereNotIn('id', $purchasedTenderIds)
+            ->get()
+            ->toArray();
+
+        foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
+            $tenderMasterId[] = $openTendersNotPurchasedId['id'];
+        }
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1187,19 +1242,15 @@ class SRMService
         if ($request->input('extra.tender_status') == 1) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            }, 'tenderSupplierAssignee'  => function ($q) use ($supplierData) {
-                $q->where('registration_link_id', '=', $supplierData['id']);
-            }])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
+            }, 'tenderSupplierAssignee'])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })
-                ->where('published_yn', 1);
+            })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
         } else if ($request->input('extra.tender_status') == 2) {
             $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })
-                ->where('published_yn', 1);
+            })->where('published_yn', 1);
         }
         $search = $request->input('search.value');
         if ($search) {
@@ -1231,9 +1282,10 @@ class SRMService
             'data' => $data
         ];
     }
+
     public function saveTenderPurchase(Request $request)
     {
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $tenderMasterId = $request->input('extra.tenderId');
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
         DB::beginTransaction();
@@ -1252,12 +1304,13 @@ class SRMService
         } catch (\Exception $exception) {
             DB::rollBack();
             return [
-                'success'   => false,
-                'message'   => 'Tender Purchase failed',
-                'data'      => $exception->getMessage()
+                'success' => false,
+                'message' => 'Tender Purchase failed',
+                'data' => $exception->getMessage()
             ];
         }
     }
+
     public static function getSupplierRegIdByUUID($uuid)
     {
 
@@ -1271,6 +1324,19 @@ class SRMService
         }
         return 0;
     }
+
+    public static function getAllSupplierRegIdByUUID($uuid)
+    {
+        if ($uuid) {
+            $supplierResult = SupplierRegistrationLink::select('id')->where('uuid', $uuid)->get()->toArray();
+
+            if (!empty($supplierResult)) {
+                return $supplierResult;
+            }
+        }
+        return 0;
+    }
+
 
     public function getFaqList(Request $request)
     {
@@ -1308,7 +1374,7 @@ class SRMService
     {
         $prebidId = $request->input('extra.preBidId');
         $postAnonymous = $request->input('extra.postAnonymous');
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $tenderMasterId = $request->input('extra.tenderId');
         $currentDate = Carbon::parse(now())->format('Y-m-d H:i:s');
         $tenderMaster = TenderMaster::find($tenderMasterId);
@@ -1346,9 +1412,9 @@ class SRMService
                         if ($exception->getCode() == 500) {
                             DB::rollBack();
                             return [
-                                'success'   => false,
-                                'message'   => $exception->getMessage(),
-                                'data'      => $exception->getMessage()
+                                'success' => false,
+                                'message' => $exception->getMessage(),
+                                'data' => $exception->getMessage()
                             ];
                         }
                     }
@@ -1363,9 +1429,9 @@ class SRMService
             } catch (\Exception $exception) {
                 DB::rollBack();
                 return [
-                    'success'   => false,
-                    'message'   => 'Pre-bid clarification failed',
-                    'data'      => $exception->getMessage()
+                    'success' => false,
+                    'message' => 'Pre-bid clarification failed',
+                    'data' => $exception->getMessage()
                 ];
             }
         }
@@ -1375,7 +1441,7 @@ class SRMService
     {
         $input = $request->all();
         $extra = $input['extra'];
-        $supplierRegId =  0;
+        $supplierRegId = 0;
         $SearchText = "";
         if (isset($extra['SearchText'])) {
             $SearchText = $extra['SearchText'];
@@ -1406,7 +1472,7 @@ class SRMService
 
             $data = $data->get();
 
-            $data =  [
+            $data = [
                 'data' => $data,
                 'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
             ];
@@ -1478,7 +1544,7 @@ class SRMService
         $companySystemID = $tenderMaster['company_id'];
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 109)->first();
-        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $updateRecordId = $request->input('extra.updateRecordId');
         if ($updateRecordId !== 0) {
             return $this->updatePreBidResponse($request, $updateRecordId, $companySystemID, $company, $newAttachment);
@@ -1503,7 +1569,7 @@ class SRMService
 
             if ($result) {
                 $updateRec['is_answered'] = 0;
-                $result =  TenderBidClarifications::where('id', $id)
+                $result = TenderBidClarifications::where('id', $id)
                     ->update($updateRec);
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
@@ -1605,9 +1671,9 @@ class SRMService
             }
         } catch (\Exception $e) {
             return [
-                'success'   => false,
-                'message'   => $e,
-                'data'      => ''
+                'success' => false,
+                'message' => $e,
+                'data' => ''
             ];
         }
     }
@@ -1723,6 +1789,7 @@ class SRMService
             'data' => $data
         ];
     }
+
     public static function getSupplierData($uuid)
     {
 
@@ -1764,6 +1831,7 @@ class SRMService
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
+
     public function getConsolidatedData($request)
     {
         $tenderMasterId = $request->input('extra.tenderId');
@@ -1793,7 +1861,7 @@ class SRMService
         })
             ->where('tender_id', $tenderMasterId)
             ->get();
-        
+
         $ClanderDetailsArrayData = array_map(function ($query) {
             return (array)$query;
         }, $ClanderDetails->toArray());
@@ -1803,12 +1871,12 @@ class SRMService
                 [
                     'calendar_date' => 'Document Sale',
                     'from_date' => (!is_null($tenderMaster['document_sales_start_date'])) ? Carbon::parse($tenderMaster['document_sales_start_date'])->format('Y-m-d') : null,
-                    'to_date' =>  (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d'): null
+                    'to_date' => (!is_null($tenderMaster['document_sales_end_date'])) ? Carbon::parse($tenderMaster['document_sales_end_date'])->format('Y-m-d') : null
                 ],
                 [
                     'calendar_date' => 'Pre-bid Clarification',
                     'from_date' => (!is_null($tenderMaster['pre_bid_clarification_start_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_start_date'])->format('Y-m-d') : null,
-                    'to_date' => (!is_null($tenderMaster['pre_bid_clarification_end_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_end_date'])->format('Y-m-d'): null
+                    'to_date' => (!is_null($tenderMaster['pre_bid_clarification_end_date'])) ? Carbon::parse($tenderMaster['pre_bid_clarification_end_date'])->format('Y-m-d') : null
                 ],
                 [
                     'calendar_date' => 'Site Visit',
@@ -1818,44 +1886,822 @@ class SRMService
                 [
                     'calendar_date' => 'Bid Submission Date',
                     'from_date' => (!is_null($tenderMaster['bid_submission_opening_date'])) ? Carbon::parse($tenderMaster['bid_submission_opening_date'])->format('Y-m-d') : null,
-                    'to_date' => (!is_null($tenderMaster['bid_submission_closing_date'])) ? Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d'): null
+                    'to_date' => (!is_null($tenderMaster['bid_submission_closing_date'])) ? Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d') : null
                 ]
             );
         }
 
         $calendarDateMerge = collect($tenderDates)->merge($ClanderDetailsArrayData);
-        
+
         $currentSequence = collect($calendarDateMerge)->map(function ($group) {
             $data = null;
-            if ($group['from_date']  <= Carbon::now()->format("Y-m-d") && $group['to_date']  >= Carbon::now()->format("Y-m-d")) {
+            if ($group['from_date'] <= Carbon::now()->format("Y-m-d") && $group['to_date'] >= Carbon::now()->format("Y-m-d")) {
                 $data = $group['calendar_date'];
             }
-            return  $data;
+            return $data;
         });
-
-        
         $data['currentSequence'] = $currentSequence->filter()->last();
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
-        $data['sequenceDate'] = $calendarDateMerge; 
-        $data['attachments'] = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId){ 
-            $q->where('documentSystemCode',$tenderMasterId);
-            $q->where('documentSystemID',108);
+        $data['sequenceDate'] = $calendarDateMerge;
+        $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date' ? 1 : 0);
+        $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId) {
+            $q->where('documentSystemCode', $tenderMasterId);
+            $q->where('documentSystemID', 108);
         }])
-        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
-            $q1->where('documentSystemCode',$tenderMasterId)
-            ->where('documentSystemID',108);
-        }) 
-        ->get();
-        /*  DocumentAttachments::where('documentSystemID',108) 
-        ->where('documentSystemCode',$tenderMasterId)
-        ->get()
-        ->toArray(); */
+            ->where('srm_action', '!=', 2)
+            ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+                $q1->where('documentSystemCode', $tenderMasterId)
+                    ->where('documentSystemID', 108);
+            })
+            ->get();
 
+        $data['attachments'] = $attachments;
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function getConsolidatedDataAttachment($request)
+    {
+        $tenderMasterId = $request->input('extra.tenderId');
+        $attachmentId = $request->input('extra.attachmentId');
+
+        $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
+            ->where('documentSystemID', 108)
+            ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
+        return [
+            'success' => true,
+            'message' => 'Consolidated view data Successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function getGoNoGoBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $critera_type_id = $request->input('extra.critera_type_id');
+        $bidMasterId = $request->input('extra.bidMasterId');
+
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }, 'child' => function ($q) use ($bidMasterId) {
+            $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+            }, 'child' => function ($q) use ($bidMasterId) {
+                $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+                    $q->where('bid_master_id', $bidMasterId);
+                }, 'child' => function ($q) use ($bidMasterId) {
+                    $q->with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
+                        $q->where('bid_master_id', $bidMasterId);
+                    }]);
+                }]);
+            }]);
+        }])->where('tender_id', $tenderId)->where('level', 1)->where('critera_type_id', $critera_type_id)->get();
+
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
+        return [
+            'success' => true,
+            'message' => 'Go No Go Bid Submission Successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function checkBidSubmitted($request)
+    {
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tender_id = $request->input('extra.tenderId');
+        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)->where('supplier_registration_id', $supplierRegId)->first();
+        if (!empty($bidSubmitted)) {
+            $bidMasterId = $bidSubmitted['id'];
+        } else {
+            $att['tender_id'] = $tender_id;
+            $att['supplier_registration_id'] = $supplierRegId;
+            $att['uuid'] = Uuid::generate()->string;
+            $att['bid_sequence'] = 1;
+            $att['created_at'] = Carbon::now();
+            $att['created_by'] = $supplierRegId;
+            $result = BidSubmissionMaster::create($att);
+
+            $bidMasterId = $result['id'];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Retrieved Bid Submission id',
+            'data' => $bidMasterId
+        ];
+    }
+
+    public function saveTechnicalBidSubmission($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $details = array();
+
+        if (count($criteriaDetail) > 0) {
+            BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->delete();
+            foreach ($criteriaDetail as $val) {
+                if ($val['is_final_level'] == 1) {
+                    if ($val['bid_submission_detail']['score_id'] > 0 && $val['bid_submission_detail']['score_id'] != null) {
+                        if ($val['answer_type_id'] == 4 || $val['answer_type_id'] == 2) {
+                            $score = EvaluationCriteriaScoreConfig::where('id', $val['bid_submission_detail']['score_id'])->first();
+                            $push['bid_master_id'] = $bidMasterId;
+                            $push['tender_id'] = $tenderId;
+                            $push['evaluation_detail_id'] = $val['id'];
+                            $push['score_id'] = $val['bid_submission_detail']['score_id'];
+                            $push['score'] = $score['score'];
+                            $push['created_by'] = $supplierRegId;
+                            array_push($details, $push);
+                        }
+                    }
+                    if ($val['bid_submission_detail']['score'] != null) {
+                        if ($val['answer_type_id'] == 1 || $val['answer_type_id'] == 3) {
+                            $push['bid_master_id'] = $bidMasterId;
+                            $push['tender_id'] = $tenderId;
+                            $push['evaluation_detail_id'] = $val['id'];
+                            $push['score_id'] = null;
+                            $push['score'] = $val['bid_submission_detail']['score'];
+                            $push['created_by'] = $supplierRegId;
+                            array_push($details, $push);
+                        }
+                    }
+                }
+
+                foreach ($val['child'] as $val2) {
+                    if ($val2['is_final_level'] == 1) {
+                        if ($val2['bid_submission_detail']['score_id'] > 0 && $val2['bid_submission_detail']['score_id'] != null) {
+                            if ($val2['answer_type_id'] == 4 || $val2['answer_type_id'] == 2) {
+                                $score = EvaluationCriteriaScoreConfig::where('id', $val2['bid_submission_detail']['score_id'])->first();
+                                $push['bid_master_id'] = $bidMasterId;
+                                $push['tender_id'] = $tenderId;
+                                $push['evaluation_detail_id'] = $val2['id'];
+                                $push['score_id'] = $val2['bid_submission_detail']['score_id'];
+                                $push['score'] = $score['score'];
+                                $push['created_by'] = $supplierRegId;
+                                array_push($details, $push);
+                            }
+                        }
+                        if ($val2['bid_submission_detail']['score'] != null) {
+                            if ($val2['answer_type_id'] == 1 || $val2['answer_type_id'] == 3) {
+                                $push['bid_master_id'] = $bidMasterId;
+                                $push['tender_id'] = $tenderId;
+                                $push['evaluation_detail_id'] = $val2['id'];
+                                $push['score_id'] = null;
+                                $push['score'] = $val2['bid_submission_detail']['score'];
+                                $push['created_by'] = $supplierRegId;
+                                array_push($details, $push);
+                            }
+                        }
+                    }
+
+                    foreach ($val2['child'] as $val3) {
+                        if ($val3['is_final_level'] == 1) {
+                            if ($val3['bid_submission_detail']['score_id'] > 0 && $val3['bid_submission_detail']['score_id'] != null) {
+                                if ($val3['answer_type_id'] == 4 || $val3['answer_type_id'] == 2) {
+                                    $score = EvaluationCriteriaScoreConfig::where('id', $val3['bid_submission_detail']['score_id'])->first();
+                                    $push['bid_master_id'] = $bidMasterId;
+                                    $push['tender_id'] = $tenderId;
+                                    $push['evaluation_detail_id'] = $val3['id'];
+                                    $push['score_id'] = $val3['bid_submission_detail']['score_id'];
+                                    $push['score'] = $score['score'];
+                                    $push['created_by'] = $supplierRegId;
+                                    array_push($details, $push);
+                                }
+                            }
+                            if ($val3['bid_submission_detail']['score'] != null) {
+                                if ($val3['answer_type_id'] == 1 || $val3['answer_type_id'] == 3) {
+                                    $push['bid_master_id'] = $bidMasterId;
+                                    $push['tender_id'] = $tenderId;
+                                    $push['evaluation_detail_id'] = $val3['id'];
+                                    $push['score_id'] = null;
+                                    $push['score'] = $val3['bid_submission_detail']['score'];
+                                    $push['created_by'] = $supplierRegId;
+                                    array_push($details, $push);
+                                }
+                            }
+                        }
+
+                        foreach ($val3['child'] as $val4) {
+                            if ($val4['is_final_level'] == 1) {
+                                if ($val4['bid_submission_detail']['score_id'] > 0 && $val4['bid_submission_detail']['score_id'] != null) {
+                                    if ($val4['answer_type_id'] == 4 || $val4['answer_type_id'] == 2) {
+                                        $score = EvaluationCriteriaScoreConfig::where('id', $val4['bid_submission_detail']['score_id'])->first();
+                                        $push['bid_master_id'] = $bidMasterId;
+                                        $push['tender_id'] = $tenderId;
+                                        $push['evaluation_detail_id'] = $val4['id'];
+                                        $push['score_id'] = $val4['bid_submission_detail']['score_id'];
+                                        $push['score'] = $score['score'];
+                                        $push['created_by'] = $supplierRegId;
+                                        array_push($details, $push);
+                                    }
+                                }
+                                if ($val4['bid_submission_detail']['score'] != null) {
+                                    if ($val4['answer_type_id'] == 1 || $val4['answer_type_id'] == 3) {
+                                        $push['bid_master_id'] = $bidMasterId;
+                                        $push['tender_id'] = $tenderId;
+                                        $push['evaluation_detail_id'] = $val4['id'];
+                                        $push['score_id'] = null;
+                                        $push['score'] = $val4['bid_submission_detail']['score'];
+                                        $push['created_by'] = $supplierRegId;
+                                        array_push($details, $push);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            return ['success' => false, 'data' => '', 'message' => 'No Record Found'];
+        }
+
+        DB::beginTransaction();
+        try {
+            if (count($details) > 0) {
+                foreach ($details as $dt) {
+                    $att['bid_master_id'] = $dt['bid_master_id'];
+                    $att['created_at'] = Carbon::now();
+                    $att['created_by'] = $dt['created_by'];
+                    $att['evaluation_detail_id'] = $dt['evaluation_detail_id'];
+                    $att['score'] = $dt['score'];
+                    $att['score_id'] = $dt['score_id'];
+                    $att['tender_id'] = $dt['tender_id'];
+                    $result = BidSubmissionDetail::create($att);
+                }
+            }
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $details
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function saveTechnicalBidSubmissionLine($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            if ($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2) {
+                if ($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) {
+                    $score = EvaluationCriteriaScoreConfig::where('id', $criteriaDetail['bid_submission_detail']['score_id'])->first();
+                    $push['bid_master_id'] = $bidMasterId;
+                    $push['tender_id'] = $tenderId;
+                    $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                    $push['score_id'] = $criteriaDetail['bid_submission_detail']['score_id'];
+                    $push['score'] = $score['score'];
+                    $push['created_by'] = $supplierRegId;
+
+                    if (isset($criteriaDetail['bid_submission_detail']['id'])) {
+                        $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                    } else {
+                        $push['id'] = 0;
+                    }
+                } else {
+                    $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                    DB::commit();
+                    return [
+                        'success' => true,
+                        'message' => 'Successfully Saved',
+                        'data' => $result
+                    ];
+                }
+            }
+
+            if ($criteriaDetail['answer_type_id'] == 1 || $criteriaDetail['answer_type_id'] == 3) {
+                if (!is_null($criteriaDetail['bid_submission_detail']['score'])) {
+                    $push['bid_master_id'] = $bidMasterId;
+                    $push['tender_id'] = $tenderId;
+                    $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                    $push['score_id'] = null;
+                    $push['score'] = $criteriaDetail['bid_submission_detail']['score'];
+                    $push['created_by'] = $supplierRegId;
+                    if (isset($criteriaDetail['bid_submission_detail']['id'])) {
+                        $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                    } else {
+                        $push['id'] = 0;
+                    }
+                } else {
+                    $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                    DB::commit();
+                    return [
+                        'success' => true,
+                        'message' => 'Successfully Saved',
+                        'data' => $result
+                    ];
+                }
+            }
+
+            $att['bid_master_id'] = $push['bid_master_id'];
+            $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
+            $att['score'] = $push['score'];
+            $att['score_id'] = $push['score_id'];
+            $att['tender_id'] = $push['tender_id'];
+            if ($push['id'] == 0) {
+                $att['created_at'] = Carbon::now();
+                $att['created_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::create($att);
+            } else {
+                $att['updated_at'] = Carbon::now();
+                $att['updated_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $push
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function saveGoNoGoBidSubmissionLine($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $criteriaDetail = $request->input('extra.criteriaDetail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            if ($criteriaDetail['bid_submission_detail']['score_id'] > 0 && $criteriaDetail['bid_submission_detail']['score_id'] != null) {
+                $score = EvaluationCriteriaScoreConfig::where('id', $criteriaDetail['bid_submission_detail']['score_id'])->first();
+                $push['bid_master_id'] = $bidMasterId;
+                $push['tender_id'] = $tenderId;
+                $push['evaluation_detail_id'] = $criteriaDetail['id'];
+                $push['score_id'] = $criteriaDetail['bid_submission_detail']['score_id'];
+                if ($criteriaDetail['bid_submission_detail']['score_id'] == 1) {
+                    $push['score'] = 0;
+                } else {
+                    $push['score'] = 1;
+                }
+                $push['created_by'] = $supplierRegId;
+
+                if (isset($criteriaDetail['bid_submission_detail']['id'])) {
+                    $push['id'] = $criteriaDetail['bid_submission_detail']['id'];
+                } else {
+                    $push['id'] = 0;
+                }
+            } else {
+                $result = BidSubmissionDetail::where('bid_master_id', $bidMasterId)->where('tender_id', $tenderId)->where('evaluation_detail_id', $criteriaDetail['id'])->delete();
+                DB::commit();
+                return [
+                    'success' => true,
+                    'message' => 'Successfully Saved',
+                    'data' => $result
+                ];
+            }
+
+            $att['bid_master_id'] = $push['bid_master_id'];
+            $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
+            $att['score'] = $push['score'];
+            $att['score_id'] = $push['score_id'];
+            $att['tender_id'] = $push['tender_id'];
+            if ($push['id'] == 0) {
+                $att['created_at'] = Carbon::now();
+                $att['created_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::create($att);
+            } else {
+                $att['updated_at'] = Carbon::now();
+                $att['updated_by'] = $push['created_by'];
+                $result = BidSubmissionDetail::where('id', $push['id'])->update($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $push
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+
+        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
+            $q->where('srm_action', 1);
+        }, 'document_attachments'=> function ($q) use($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) {
+            $q->where('srm_action', 1);
+        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
+
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' => $data
+        ];
+    }
+
+    public function reUploadTenderAttachment($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $parentId = $request->input('extra.masterId');
+        $attachment = $request->input('extra.attachment');
+        /*return [
+            'success' => true,
+            'message' => 'Attached Successfully',
+            'data' =>  $request->input('extra')
+        ];*/
+        $tenderMaster = TenderMaster::find($tenderId);
+        $companySystemID = $tenderMaster['company_id'];
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        $extension = $attachment['fileType'];
+        $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx', 'pptx'];
+
+        if (!in_array(strtolower($extension), $allowExtensions)) {
+            throw new Exception("This type of file not allow to upload.", 500);
+        }
+
+        if (isset($attachment['size'])) {
+            if ($attachment['size'] > 2097152) {
+                throw new Exception("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $file = $attachment['file'];
+            $decodeFile = base64_decode($file);
+            $attch = time() . '_BidSubmission.' . $extension;
+            $path = $companySystemID . '/BidSubmission/' . $attch;
+            Storage::disk('s3')->put($path, $decodeFile);
+
+            $att['companySystemID'] = $companySystemID;
+            $att['companyID'] = $company->CompanyID;
+            $att['documentSystemID'] = $documentCode->documentSystemID;
+            $att['documentID'] = $documentCode->documentID;
+            $att['documentSystemCode'] = $bidMasterId;
+            $att['attachmentDescription'] = 'Bid Submission ' . time();
+            $att['path'] = $path;
+            $att['parent_id'] = $parentId;
+            $att['attachmentType'] = 0;
+            $att['originalFileName'] = $attachment['originalFileName'];
+            $att['myFileName'] = $company->CompanyID . '_' . time() . '_BidSubmission.' . $extension;
+            $att['sizeInKbs'] = $attachment['sizeInKbs'];
+            $att['isUploaded'] = 1;
+            DocumentAttachments::create($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Attached Successfully',
+                'data' => $att
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function deleteBidSubmissionAttachment($request)
+    {
+        $attachment = $request->input('extra.attachment');
+
+        $data = DocumentAttachments::where('attachmentID', $attachment['attachmentID'])
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment deleted successfully ',
+            'data' => $data
+        ];
+    }
+
+    public function getCommercialBidSubmissionData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $data['commercialBid'] = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }, 'tender_main_works' => function ($q) use ($bidMasterId) {
+            $q->with(['tender_bid_format_detail', 'bid_main_work' => function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+            }]);
+        }])->where('tender_id', $tenderId)->get();
+
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
             'data' =>  $data
         ];
+    }
+
+    public function saveBidSchedule($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $att['remarks'] = $detail['bid_schedule']['remarks'];
+        if (isset($detail['bid_schedule']['id'])) {
+            $att['updated_at'] = Carbon::now();
+            $att['updated_by'] = $supplierRegId;
+            $result = BidSchedule::where('id', $detail['bid_schedule']['id'])->update($att);
+        } else {
+            $att['schedule_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['tender_id'] = $tenderId;
+            $att['supplier_registration_id'] = $supplierRegId;
+            $att['created_at'] = Carbon::now();
+            $att['created_by'] = $supplierRegId;
+            $result = BidSchedule::create($att);
+        }
+        return [
+            'success' => true,
+            'message' => 'Successfully Saved',
+            'data' =>  $result
+        ];
+    }
+
+    public function getMainEnvelopData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+
+        $documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
+            $q->where('srm_action', 1);
+        }])
+            ->whereDoesntHave('document_attachments', function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
+                $q->where('documentSystemID', 108);
+            })
+            ->where('documentSystemCode', $tenderId)
+            ->where('documentSystemID', 108)
+            ->where('parent_id', null)
+            ->whereHas('tender_document_types', function ($q) {
+                $q->where('srm_action', 1);
+            })
+            ->count(); 
+
+        $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
+            $q2->where('bid_master_id', $bidMasterId);
+            $q2->where('tender_id', $tenderId);
+        })
+            ->where('is_final_level', 1)
+            ->where('tender_id', $tenderId)
+            ->count();
+
+        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId , $bidMasterId) {
+            $q1->where('tender_id', $tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId , $bidMasterId) {
+                $q2->where('tender_id', $tenderId);
+                $q2->where('bid_master_id', $bidMasterId);
+                $q2->with(['tender_boq_items' => function ($q3)  use ($bidMasterId) {
+                    $q3->whereDoesntHave('bid_boq',function ($query) use ($bidMasterId) {
+                        $query->where('bid_master_id', '=', $bidMasterId);
+                    });
+                }]);
+            }]);
+        }])
+            ->where('tender_id', $tenderId)
+            ->get();
+
+
+        $tenderArr = collect($pricingScheduleMaster)->map(function ($group) {
+            return $group['tender_main_works'];
+        });
+
+        $singleArr = Arr::flatten($tenderArr);
+
+        $tenderArrFilter = collect($singleArr)->map(function ($group) {
+            if ($group['bid_main_work'] == null) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && ($group['bid_main_work']['total_amount'] == 0 && $group['bid_main_work']['qty'] == 0)) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) > 0) {
+                $group['isExist'] = 1;
+            } else {
+                $group['isExist'] = 0;
+            }
+            return $group['isExist'];
+        }); 
+
+        $filtered = $tenderArrFilter->filter(function ($value, $key) {
+            return $value > 0;
+        });
+        $filtered->all();
+
+        $bidsubmission =  BidSubmissionMaster::where('id', $bidMasterId)
+        ->where('tender_id',$tenderId)
+        ->first();
+
+        $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
+        $data['commercialBidSubmission'] = $filtered->count();
+        $data['isBidSubmissionStatus'] = $bidsubmission['status']; 
+        
+        return [
+            'success' => true,
+            'message' => 'Main Envelop data retrieved successfully',
+            'data' => $data
+        ];
+    }
+
+    public function saveBidMainWork($request)
+    {
+        $tenderId = $request->input('extra.tenderMasterId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+        DB::beginTransaction();
+        try {
+            $att['main_works_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['tender_id'] = $tenderId;
+            $att['bid_format_detail_id'] = $detail['bid_format_detail_id'];
+            $att['qty'] = $detail['bid_main_work']['qty'];
+            $att['amount'] = $detail['bid_main_work']['amount'];
+            $att['total_amount'] = $detail['bid_main_work']['total_amount'];
+            $att['remarks'] = $detail['bid_main_work']['remarks'];
+            $att['supplier_registration_id'] = $supplierRegId;
+
+            if (isset($detail['bid_main_work']['id'])) {
+                if (empty($detail['bid_main_work']['qty']) && empty($detail['bid_main_work']['amount']) && empty($detail['bid_main_work']['remarks'])) {
+                    $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->delete();
+                } else {
+                    $att['updated_at'] = Carbon::now();
+                    $att['updated_by'] = $supplierRegId;
+                    $result = BidMainWork::where('id', $detail['bid_main_work']['id'])->update($att);
+                }
+            } else {
+                $att['created_at'] = Carbon::now();
+                $att['created_by'] = $supplierRegId;
+                $result = BidMainWork::create($att);
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getBidBoqData($request)
+    {
+        $mainWorkId = $request->input('extra.mainWorkId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $data['boqItems'] = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }])->where('main_work_id', $mainWorkId)->get();
+
+        $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $data
+        ];
+    }
+
+    public function saveBidBoq($request)
+    {
+        $mainWorkId = $request->input('extra.mainWorkId');
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $detail = $request->input('extra.detail');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+
+
+        DB::beginTransaction();
+        try {
+            $att['boq_id'] = $detail['id'];
+            $att['bid_master_id'] = $bidMasterId;
+            $att['main_works_id'] = $detail['main_work_id'];
+            $att['qty'] = $detail['bid_boq']['qty'];
+            $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
+            $att['total_amount'] = $detail['bid_boq']['total_amount'];
+            $att['supplier_registration_id'] = $supplierRegId;
+
+            if (isset($detail['bid_boq']['id'])) {
+                if (empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])) {
+                    $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
+                } else {
+                    $att['updated_at'] = Carbon::now();
+                    $att['updated_by'] = $supplierRegId;
+                    $result = BidBoq::where('id', $detail['bid_boq']['id'])->update($att);
+                }
+            } else {
+                $att['created_at'] = Carbon::now();
+                $att['created_by'] = $supplierRegId;
+                $result = BidBoq::create($att);
+            }
+            $boqTot = BidBoq::selectRaw('SUM(qty) as qty , SUM(total_amount) as total_amount')->where('bid_master_id', $bidMasterId)->where('main_works_id', $detail['main_work_id'])->first();
+
+            if (!empty($boqTot['qty'])) {
+                $bidMainWork = BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->first();
+                if (!empty($bidMainWork)) {
+                    $mainWork['qty'] = $boqTot['qty'];
+                    $mainWork['total_amount'] = $boqTot['total_amount'];
+                    $mainWork['updated_at'] = Carbon::now();
+                    $mainWork['updated_by'] = $supplierRegId;
+                    BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
+                } else {
+                    $tenderMainWork = TenderMainWorks::where('id', $detail['main_work_id'])->first();
+                    $mainWork['main_works_id'] = $detail['main_work_id'];
+                    $mainWork['bid_master_id'] = $bidMasterId;
+                    $mainWork['tender_id'] = $tenderMainWork['tender_id'];
+                    $mainWork['bid_format_detail_id'] = $tenderMainWork['bid_format_detail_id'];
+                    $mainWork['qty'] = $boqTot['qty'];
+                    $mainWork['total_amount'] = $boqTot['total_amount'];
+                    $mainWork['supplier_registration_id'] = $supplierRegId;
+
+                    $mainWork['created_at'] = Carbon::now();
+                    $mainWork['created_by'] = $supplierRegId;
+                    BidMainWork::create($mainWork);
+                }
+            } else {
+                BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->delete();
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+    public function submitBidTender($request)
+    {
+        $bidMasterId = $request->input('extra.bidMasterId');
+        $tenderId = $request->input('extra.tenderId');
+
+        DB::beginTransaction();
+        try { 
+            $updateData['status'] = 1;
+            $updateData['updated_at'] = Carbon::now();
+            $result = BidSubmissionMaster::where('id', $bidMasterId)
+                ->where('tender_id',$tenderId)
+                ->update($updateData);
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+
+    public function getBidMasterData($bidMasterId){
+        $bidMaster = BidSubmissionMaster::where('id',$bidMasterId)->first();
+        if($bidMaster['status'] == 1){
+            return 1;
+        }else{
+            return 0;
+        }
     }
 }

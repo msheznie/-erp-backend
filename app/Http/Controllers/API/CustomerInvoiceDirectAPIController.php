@@ -3202,9 +3202,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $directTraSubTotal += $customerInvoice->tax->amount;
             }
         }
-
-
-        $amountSplit = explode(".", $directTraSubTotal);
+        $directTraSubTotalnumberformat=  number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+        $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
         $intAmt = 0;
         $floatAmt = 00;
 
@@ -3215,7 +3215,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $intAmt = $amountSplit[0];
             $floatAmt = $amountSplit[1];
         }
-
         $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
@@ -3223,8 +3222,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
-
         $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $customerInvoice->floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($customerInvoice->floatAmt != 00){
+            $length = strlen($customerInvoice->floatAmt);
+            if($length<$customerInvoice->currency->DecimalPlaces){
+                $count = $customerInvoice->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $customerInvoice->floatAmt .= '0';
+                }
+            }
+        }
+        $customerInvoice->amount_word = ucfirst($numFormatterEn->format($intAmt));
+        $customerInvoice->amount_word = str_replace('-', ' ', $customerInvoice->amount_word);
+
+        $numberfrmtDirectTraSubTotal = number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $numberfrmtDirectTraSubTotal = str_replace(',', '', $numberfrmtDirectTraSubTotal);
+        $floatedDirectTraSubTotal = floatval($numberfrmtDirectTraSubTotal);
+        $floatedAmountInWordsEnglish = ucwords($numFormatterEn->format($floatedDirectTraSubTotal));
+        $customerInvoice->floatedAmountInWordsEnglish = $floatedAmountInWordsEnglish.' Only';
+
+
 
         $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
 

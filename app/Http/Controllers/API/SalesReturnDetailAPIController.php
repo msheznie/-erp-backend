@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSalesReturnDetailAPIRequest;
 use App\Http\Requests\API\UpdateSalesReturnDetailAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\ReasonCodeMaster;
 use App\Models\SalesReturnDetail;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
@@ -344,6 +346,24 @@ class SalesReturnDetailAPIController extends AppBaseController
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
 
                 $invDetail_arr['qtyReturned'] = $currentItemData['qtyReturned'];
+                $currentItemData['reasonCode'] = isset($currentItemData['reasonCode'][0]) ? $currentItemData['reasonCode'][0] : $currentItemData['reasonCode'];
+                $invDetail_arr['reasonCode'] = $currentItemData['reasonCode'];
+                $reasonCode = ReasonCodeMaster::find($currentItemData['reasonCode']);
+                if($reasonCode){
+                    $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
+                    if($reasonCode->isPost == 0){
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->where('companySystemID',$currentItemData['companySystemID'])->where('isActive', 1)->where('isAssigned', -1)->first();
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
+                    }
+                }
+
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
 
                 $totalNetcost = ($currentItemData['unitTransactionAmount'] - $currentItemData['discountAmount']) * $currentItemData['qtyReturned'];
@@ -445,6 +465,24 @@ class SalesReturnDetailAPIController extends AppBaseController
 
                 // $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                 $invDetail_arr['qtyReturned'] = $currentItemData['qtyReturned'];
+                $currentItemData['reasonCode'] = isset($currentItemData['reasonCode'][0]) ? $currentItemData['reasonCode'][0] : $currentItemData['reasonCode'];
+                $invDetail_arr['reasonCode'] = $currentItemData['reasonCode'];
+                $reasonCode = ReasonCodeMaster::find($currentItemData['reasonCode']);
+                if($reasonCode){
+                    $invDetail_arr['isPostItemLedger'] = $reasonCode->isPost;
+                    if($reasonCode->isPost == 0){
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$reasonCode->glCode)->where('companySystemID',$currentItemData['companySystemID'])->where('isActive', 1)->where('isAssigned', -1)->first();
+                        if($chartOfAccountAssigned){
+                            $invDetail_arr['reasonGLCode'] = $reasonCode->glCode;
+                        }
+                        else{
+                            return $this->sendError('Reason Code Master GL Code is not assigned to the company');
+                        }
+
+                    } else {
+                        $invDetail_arr['reasonGLCode'] = null;
+                    }
+                }
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
 
                 $totalNetcost = $currentItemData['unitTransactionAmount'] * $currentItemData['qtyReturned'];

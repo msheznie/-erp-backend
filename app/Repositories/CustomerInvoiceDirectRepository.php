@@ -196,7 +196,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 ->where('documentSystemID', 20);
         },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_issuing']);
+                $query->with(['uom_issuing','sales_quotation']);
             }
         ])->findWithoutFail($id);
         return $customerInvoiceDirect;

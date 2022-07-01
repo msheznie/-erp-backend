@@ -249,6 +249,18 @@
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
 
+
+                        <tr>
+                            <td><b>Customer Address </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress1}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer VATIN</b></td>
+                            <td>:
+                                {{$request->vatNumber}}</td>
+                        </tr>
+
                     </table>
                 </td>
             <tr>

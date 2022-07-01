@@ -10,17 +10,17 @@ use Carbon\CarbonPeriod;
 	        <thead>
             <tr></tr>
             <tr>
-              <th></th>
-              <th></th>
-              <th align='center' style="font-size:50px">{{$reportTittle}}</th>
+              <th colspan="5" align='center' style="font-size:50px">{{$reportTittle}}</th>
+            </tr>
+            <tr>
+              <th colspan="5" align='center' style="font-size:50px">{{$companyName}}</th>
             </tr>
             <tr></tr>
             <tr>
-              <th></th>
               <th style="font-size:15px;">Date From: {{$fromDate}}</th>
+            </tr>
+            <tr>
               <th style="font-size:15px;">Date To: {{$toDate}}</th>
-              <th></th>
-              <th></th>
             </tr>
             <tr></tr>
             <tr></tr>

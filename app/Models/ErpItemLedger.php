@@ -250,4 +250,38 @@ class ErpItemLedger extends Model
     public function item_master(){
         return $this->belongsTo('App\Models\itemmaster', 'itemSystemCode','itemCodeSystem');
     }
+
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_itemledger.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_itemledger.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_itemledger.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
+    {
+        return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_itemledger.'.$column)
+        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    public function scopeUnitJoin($q,$as = 'unit', $column = 'unitOfMeasure' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('units as '.$as,$as.'.UnitID','erp_itemledger.'.$column);
+    }
+
+    public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
+    {
+        return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_itemledger.'.$column)
+        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+    }
 }
