@@ -876,15 +876,25 @@ WHERE
                 $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
-                $total = array();
-                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
-                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
-                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
-                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
-
+               
                 $sort = 'asc';
 
-                return \DataTables::of($output)
+                $dataOrg = array();
+                if($request->month) {
+                    foreach($output as $ou) {
+                        if(strcmp($request->month,Carbon::parse($ou->documentConfirmedDate)->format('M')) == 0 && Carbon::parse($ou->documentConfirmedDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
+                            
+                            array_push($dataOrg,$ou);
+                        }
+                    }
+
+                    $total = array();
+                    $total['documentLocalAmountDebit'] = array_sum(collect($dataOrg)->pluck('localDebit')->toArray());
+                    $total['documentLocalAmountCredit'] = array_sum(collect($dataOrg)->pluck('localCredit')->toArray());
+                    $total['documentRptAmountDebit'] = array_sum(collect($dataOrg)->pluck('rptDebit')->toArray());
+                    $total['documentRptAmountCredit'] = array_sum(collect($dataOrg)->pluck('rptCredit')->toArray());
+
+                    return \DataTables::of($dataOrg)
                     ->addIndexColumn()
                     ->with('companyName', $checkIsGroup->CompanyName)
                     ->with('isGroup', $checkIsGroup->isGroup)
@@ -896,6 +906,28 @@ WHERE
                     ->addIndexColumn()
                     // ->with('orderCondition', $sort)
                     ->make(true);
+                }else {
+                    $total = array();
+                    $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+                    $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+                    $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+                    $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+    
+                    return \DataTables::of($output)
+                    ->addIndexColumn()
+                    ->with('companyName', $checkIsGroup->CompanyName)
+                    ->with('isGroup', $checkIsGroup->isGroup)
+                    ->with('total', $total)
+                    ->with('decimalPlaceLocal', $decimalPlaceLocal)
+                    ->with('decimalPlaceRpt', $decimalPlaceRpt)
+                    ->with('currencyLocal', $requestCurrencyLocal->CurrencyCode)
+                    ->with('currencyRpt', $requestCurrencyRpt->CurrencyCode)
+                    ->addIndexColumn()
+                    // ->with('orderCondition', $sort)
+                    ->make(true);
+                }
+
+                
 
                 /*return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
