@@ -230,7 +230,7 @@
                 <td colspan="1" class="thicker">
                     @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
                         @foreach ($request->issue_item_details as $item)
-                            {{$item->sales_quotation->quotationCode}}
+                            {{isset($item->sales_quotation->quotationCode)?$item->sales_quotation->quotationCode:' '}}
                         @endforeach
                     @endif
                 </td>
