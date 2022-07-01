@@ -62,7 +62,8 @@ class DocumentAttachments extends Model
         'isUploaded',
         'path',
         'pullFromAnotherDocument',
-        'parent_id'
+        'parent_id',
+        'envelopType'
     ];
 
     /**
@@ -85,7 +86,8 @@ class DocumentAttachments extends Model
         'isUploaded' => 'integer',
         'path' => 'string',
         'pullFromAnotherDocument' => 'integer',
-        'parent_id' => 'integer'
+        'parent_id' => 'integer',
+        'envelopType' => 'integer'
     ];
 
     /**
