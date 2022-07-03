@@ -1244,8 +1244,7 @@ WHERE
         foreach ($selectedCategories as $selectedCategory) {
             $selectedCategoryIds[] = $selectedCategory['id'];
         }
-        Log::info($selectedCategoryIds);
-        $supplierCategoryId = 0;
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
