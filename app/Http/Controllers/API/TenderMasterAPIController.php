@@ -1383,7 +1383,6 @@ WHERE
     public function getSupplierCategoryList(Request $request){
         try{
             return SupplierCategory::onlyNotDeletedAndActive();
-               // ->get();
         } catch (\Exception $ex){
             return [];
         }

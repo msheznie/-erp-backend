@@ -1219,7 +1219,7 @@ class SRMService
             ->whereNotIn('tender_master_id', $purchasedTenderIds)
             ->get()
             ->toArray();
-
+        
         foreach ($tenderIds as $tenderId) {
             $tenderMasterId[] = $tenderId['tender_master_id'];
         }
