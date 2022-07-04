@@ -760,6 +760,7 @@ ORDER BY
         $to_date = $request->asOfDate;
         $company = Company::find($request->companyId);
         $company_name = $company->CompanyName;
+        $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
 
         $fileName = 'Advance Payment Request';
 
@@ -872,9 +873,13 @@ ORDER BY
             } else {
                 $data = array();
             }
-
+            $requestCurrency = 'LKR';
             $path = 'accounts-payable/report/advance_payment_request/excel/';
-            $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
+
+            
+
+         
+            $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,2);
 
             if($basePath == '')
             {
