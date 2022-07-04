@@ -1381,7 +1381,6 @@ WHERE
 
     public function getSupplierCategoryList(Request $request){
         try{
-            //return SupplierCategory::onlyNotDeletedAndActive();
             return SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
                 ->get();
         } catch (\Exception $ex){
