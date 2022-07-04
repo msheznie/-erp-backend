@@ -1262,7 +1262,7 @@ WHERE
             ->where('registrationNumber', '!=', null)
             ->whereHas('master', function($query) use ($selectedCategoryIds) {
                 if( sizeof($selectedCategoryIds) != 0 ){
-                    $query->whereIn('supplier_category_id', $selectedCategoryIds);
+                    $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
                 }
             });
 
@@ -1381,7 +1381,9 @@ WHERE
 
     public function getSupplierCategoryList(Request $request){
         try{
-            return SupplierCategory::onlyNotDeletedAndActive();
+            //return SupplierCategory::onlyNotDeletedAndActive();
+            return SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
+                ->get();
         } catch (\Exception $ex){
             return [];
         }
