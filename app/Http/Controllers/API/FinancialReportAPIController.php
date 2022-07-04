@@ -16,7 +16,7 @@
  */
 
 namespace App\Http\Controllers\API;
-
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
@@ -2228,6 +2228,7 @@ WHERE
 
         $closingBalance = $openingBalance - $budgetAmount;
         $output = array(
+            'companyName' => $reportingCurrency->CompanyName,
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
@@ -2533,12 +2534,14 @@ WHERE
         switch ($reportID) {
             case 'FTB':
                 $reportTypeID = $request->reportTypeID;
+
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $currencyId =  $request->currencyID;
+
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
-
                 if ($reportTypeID == 'FTB') {
                     if ($request->reportSD == 'company_wise_summary') {
                         $companyID = "";
@@ -2593,16 +2596,19 @@ WHERE
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
 
-                                if ($checkIsGroup->isGroup == 0) {
+                                if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
-                                $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
-                                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
-                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
-                                $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0 + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+                                if($currencyId == 2 || $currencyId == 3) {
+                                    $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
+                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
+                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
+                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0 + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+    
+                                }
                                 $x++;
                             }
                         }
@@ -2669,11 +2675,12 @@ WHERE
                     }
                 }
          
-
-
-                $fileName = 'trial_balance';
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
+                $fileName = 'Financial Trial Balance';
                 $path = 'general-ledger/report/trial_balance/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {
@@ -2799,6 +2806,35 @@ WHERE
                 $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                 $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
+                $toDate = $request->toDate;
+                $fromDate = $request->fromDate;
+                $reportSD = $request->reportSD;
+
+                $glData = array(
+                    'reportSD'=> $reportSD,
+                    'reportTittle' => 'Financial General Ledger',
+                    'fromDate'=> $fromDate,
+                    'toDate'=> $toDate,
+                    'company'=> $companyCurrency,
+                    'output'=>$output,
+                    'currencyIdLocal'=>$currencyIdLocal,
+                    'currencyIdRpt'=>$currencyIdRpt,
+                    'decimalPlaceCollectLocal'=>$decimalPlaceCollectLocal,
+                    'decimalPlaceUniqueLocal'=>$decimalPlaceUniqueLocal,
+                    'decimalPlaceCollectRpt'=>$decimalPlaceCollectRpt,
+                    'decimalPlaceUniqueRpt'=>$decimalPlaceUniqueRpt,
+                    'extraColumns'=>$extraColumns,
+                    'requestCurrencyLocal'=>$requestCurrencyLocal,
+                    'requestCurrencyRpt'=>$requestCurrencyRpt,
+                    'decimalPlaceLocal'=>$decimalPlaceLocal,
+                    'decimalPlaceRpt'=>$decimalPlaceRpt,
+                    'currencyLocal'=>$currencyLocal,
+                    'currencyRpt'=>$currencyRpt,
+                    'checkIsGroup'=> $checkIsGroup,
+                );
+
+
+
                 if ($reportSD == "glCode_wise") {
                     if (!empty($output)) {
                         $outputArr = array();
@@ -2889,11 +2925,11 @@ WHERE
 
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
-                                    $subTotalDebitRpt += $val->rptDebit;
-                                    $subTotalCreditRpt += $val->rptCredit;
+                                    $subTotalDebitRpt +=  round($val->rptDebit, $decimalPlaceRpt);
+                                    $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
 
-                                    $subTotalDebitLocal += $val->localDebit;
-                                    $subTotalCreditRptLocal += $val->localCredit;
+                                    $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                                    $subTotalCreditRptLocal += round($val->localCredit, $decimalPlaceLocal);
                                 }
                                 $x++;
                                 $data[$x]['Company ID'] = '';
@@ -2986,7 +3022,18 @@ WHERE
                     }
                 } else {
                     if ($output) {
+                        
+                        // return \Excel::create('general_ledger', function ($excel) use ($glData) {
+                        //     $excel->sheet('New sheet', function ($sheet) use ($glData) {
+                        //         $sheet->loadView('export_report.general_ledger_report', $glData);
+                        //     });
+                        // })->download('xlsx');
+
                         $x = 0;
+                        $subTotalDebitRpt = 0;
+                        $subTotalCreditRpt = 0;
+                        $subTotalDebitLocal = 0;
+                        $subTotalCreditRptLocal = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
@@ -3024,15 +3071,65 @@ WHERE
 
                             $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+
+                            $subTotalDebitRpt += round($val->rptDebit, $decimalPlaceRpt);
+                                    $subTotalCreditRpt += round($val->rptCredit, $decimalPlaceRpt);
+
+                                    $subTotalDebitLocal += round($val->localDebit, $decimalPlaceLocal);
+                                    $subTotalCreditRptLocal += round($val->localCredit, $decimalPlaceLocal);
                             $x++;
                         }
                     }
                 }
 
+                
+                $data[$x]['Company ID'] = "";
+                $data[$x]['Company Name'] = "";
+                $data[$x]['GL Code'] = "";
+                $data[$x]['Account Description'] = "";
+                $data[$x]['GL  Type'] = "";
+                $data[$x]['Template Description'] = "";
+                $data[$x]['Document Type'] = "";
+                $data[$x]['Document Number'] = "";
+                $data[$x]['Date'] = "";
+                $data[$x]['Document Narration'] = "";
+                $data[$x]['Service Line'] = "";
+                $data[$x]['Contract'] = "";
 
-                $fileName = 'general_ledger';
+                $data[$x]['Supplier/Customer'] = "Grand Total";
+                if ($checkIsGroup->isGroup == 0) {
+                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
+                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                }
+                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
+                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
+                $x++;
+                $data[$x]['Company ID'] = "";
+                $data[$x]['Company Name'] = "";
+                $data[$x]['GL Code'] = "";
+                $data[$x]['Account Description'] = "";
+                $data[$x]['GL  Type'] = "";
+                $data[$x]['Template Description'] = "";
+                $data[$x]['Document Type'] = "";
+                $data[$x]['Document Number'] = "";
+                $data[$x]['Date'] = "";
+                $data[$x]['Document Narration'] = "";
+                $data[$x]['Service Line'] = "";
+                $data[$x]['Contract'] = "";
+
+                $data[$x]['Supplier/Customer'] = "";
+                if ($checkIsGroup->isGroup == 0) {
+                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
+                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal);
+                }
+                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
+                $fileName = 'Financial General Ledger';
                 $path = 'general-ledger/report/general_ledger/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {
@@ -3101,9 +3198,12 @@ WHERE
                     }
                 }
 
-                $fileName = 'tax_details';
+                $company_name = $companyCurrency->CompanyName;
+                $to_date = \Helper::dateFormat($request->toDate);
+                $from_date = \Helper::dateFormat($request->fromDate);
+                $fileName = 'Tax Details';
                 $path = 'general-ledger/report/tax_details/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
 
                 if($basePath == '')
                 {
@@ -4724,12 +4824,11 @@ AND MASTER .canceledYN = 0';
                     'reportDate' => date('d/m/Y H:i:s A'),
                     'fromDate' => \Helper::dateFormat($request->fromDate),
                     'toDate' => \Helper::dateFormat($request->toDate),
-                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), (int)  $decimalPlaceCollectLocal),
-                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), (int) $decimalPlaceCollectLocal),
-                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), (int) $decimalPlaceRpt),
-                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), (int) $decimalPlaceRpt),
+                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
+                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
+                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),
+                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), 3),
                 );
-                dd($dataArr);
 
                 $html = view('print.report_general_ledger', $dataArr);
 
@@ -7414,6 +7513,19 @@ GROUP BY
         } else {
             $templateName = "export_report.finance";
         }
+
+        $month = '';
+        if ($request->dateType != 1) {
+            $period = CompanyFinancePeriod::find($request->month);
+            $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+            $month = Carbon::parse($toDate)->format('Y-m-d');
+        }
+        if($month){
+            $reportData['month'] = $month;
+        }
+        $reportData['report_tittle'] = 'Finance Report';
+        $reportData['from_date'] = $input['fromDate'];
+        $reportData['to_date'] = $input['toDate'];
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
