@@ -1204,6 +1204,7 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
