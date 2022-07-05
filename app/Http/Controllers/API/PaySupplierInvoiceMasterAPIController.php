@@ -286,8 +286,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
                 if ($supDetail) {
-                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                    $input['supplierGLCode'] = $supDetail->AdvanceAccount;
+                    $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
                     $input['VATPercentage'] = $supDetail->vatPercentage;
 
                 }
@@ -526,8 +526,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
                     if ($supDetail) {
-                        $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                        $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                        $input['supplierGLCode'] = $supDetail->AdvanceAccount;
+                        $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -1419,10 +1419,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
+                
                     if ($supDetail) {
-                        $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                        $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                        $input['supplierGLCode'] = $supDetail->AdvanceAccount;
+                        $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
