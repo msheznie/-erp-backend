@@ -1,12 +1,20 @@
 <html>
 <table>
-<tr>
-    <td>Period From : {{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }}</td>
-    <td></td>
-    <td> </td>
-    <td> </td>
-    <td>Period To : {{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }}</td>
-</tr>
+    <thead>
+        <tr>
+            <th colspan="5" align="center">{{$report_tittle}}</th>
+        </tr>
+        <tr>
+            <th colspan="5" align="center">{{$companyName}}</th>
+        </tr>
+        <tr></tr>
+        <tr>
+            <th>Period From : {{ \Carbon\Carbon::parse($fromDate)->format("d/m/Y") }}</th>
+        </tr>
+        <tr>
+            <th>Period To : {{ \Carbon\Carbon::parse($toDate)->format("d/m/Y") }} </th>
+        </tr>
+    </thead>
 </table>
 @foreach($employees as $employee)
       <table>
