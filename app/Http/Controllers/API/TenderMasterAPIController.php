@@ -668,22 +668,22 @@ WHERE
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
                 if (isset($input['calendarDates'])) {
-                    Log::info($input['calendarDates']);
-                    Log::info(['tender_id', $input['id'], 'company_id', $input['company_id']]);
+                    /*Log::info($input['calendarDates']);
+                    Log::info(['tender_id', $input['id'], 'company_id', $input['company_id']]);*/
                     if (count($input['calendarDates']) > 0) {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                        foreach ($input['calendarDates'] as $calDate) {
                             if (!empty($calDate['from_date'])) {
                                 $frm_date = new Carbon($calDate['from_date']);
                                 $frm_date = $frm_date->format('Y-m-d');
-                                Log::info(['$calDate[\'from_date\']', $calDate['from_date']]);
+                               // Log::info(['$calDate[\'from_date\']', $calDate['from_date']]);
                             }else{
                                 $frm_date = null;
                             }
                             if (!empty($calDate['to_date'])) {
                                 $to_date = new Carbon($calDate['to_date']);
                                 $to_date = $to_date->format('Y-m-d');
-                                Log::info(['$calDate[\'to_date\']', $calDate['to_date']]);
+                                //Log::info(['$calDate[\'to_date\']', $calDate['to_date']]);
                             }else{
                                 $to_date = null;
                             }
@@ -1406,5 +1406,28 @@ WHERE
             return [];
         }
 
+    }
+
+    public function removeCalenderDate(Request $request){
+        DB::beginTransaction();
+        try{
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->get();
+
+            if (empty($calendarDatesDetail)) {
+                return $this->sendError('Calendar Date Type not found');
+            }
+
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->delete();
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
     }
 }
