@@ -2263,7 +2263,7 @@ WHERE
         $currencyID = $request->currencyID;
 
         $companyCurrency = \Helper::companyCurrency($companyID);
-
+        $companyName =  $companyCurrency->CompanyName;        
         $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
         $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
 
@@ -2520,7 +2520,7 @@ WHERE
 
         $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
 
-        $reportData = array('datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
+        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
         $templateName = "export_report.employee_ledger_report";
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
@@ -2680,9 +2680,23 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                $fileName = 'Financial Trial Balance';
+                
+                if ($reportTypeID == 'FTBM') {
+                    $title = 'Financial Trial Balance Month Wise';
+                } else {
+                    $title = 'Financial Trial Balance';
+                }
+                $cur = null;
+                $detail_array = array(  'type' => 1,
+                                        'from_date'=>$from_date,
+                                        'to_date'=>$to_date,
+                                        'company_name'=>$company_name,
+                                        'cur'=>$cur,
+                                        'title'=>$title);
+               
+                $fileName = 'financial_trial_balance';
                 $path = 'general-ledger/report/trial_balance/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -3126,12 +3140,24 @@ WHERE
                 }
                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
                 $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
+                
+                $cur = null;
+                $title = 'Financial General Ledger';
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                $fileName = 'Financial General Ledger';
+
+                $detail_array = array(  'type' => 1,
+                                        'from_date'=>$from_date,
+                                        'to_date'=>$to_date,
+                                        'company_name'=>$company_name,
+                                        'cur'=>$cur,
+                                        'title'=>$title);
+
+                $fileName = 'financial_general_ledger';
                 $path = 'general-ledger/report/general_ledger/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
 
                 if($basePath == '')
                 {
@@ -3200,12 +3226,22 @@ WHERE
                     }
                 }
 
+                $cur = null;
+                $title = 'Tax Details';
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                $fileName = 'Tax Details';
+                $detail_array = array(  'type' => 1,
+                                        'from_date'=>$from_date,
+                                        'to_date'=>$to_date,
+                                        'company_name'=>$company_name,
+                                        'cur'=>$cur,
+                                        'title'=>$title);
+
+                $fileName = 'tax_details';
                 $path = 'general-ledger/report/tax_details/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
 
                 if($basePath == '')
                 {
@@ -7523,7 +7559,7 @@ GROUP BY
             $month = Carbon::parse($toDate)->format('Y-m-d');
         }
         if($month){
-            $reportData['month'] = $month;
+            $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
         }
         $reportData['report_tittle'] = 'Finance Report';
         $reportData['from_date'] = $input['fromDate'];
