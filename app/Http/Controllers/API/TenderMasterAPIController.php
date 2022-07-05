@@ -494,12 +494,25 @@ class TenderMasterAPIController extends AppBaseController
 	srm_calendar_dates_detail.to_date as to_date
 FROM
 	srm_calendar_dates 
+	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+WHERE
+	srm_calendar_dates.company_id = $companySystemID";
+
+        $qryAll ="SELECT
+	srm_calendar_dates.id as id,
+	srm_calendar_dates.calendar_date as calendar_date,
+	srm_calendar_dates.company_id as company_id,
+	srm_calendar_dates_detail.from_date as from_date,
+	srm_calendar_dates_detail.to_date as to_date
+FROM
+	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
 WHERE
 	srm_calendar_dates.company_id = $companySystemID";
 
 
         $data['calendarDates'] = DB::select($qry);
+        $data['calendarDatesAll'] = DB::select($qryAll);
 
         return $data;
     }
@@ -653,18 +666,22 @@ WHERE
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
                 if (isset($input['calendarDates'])) {
+                    Log::info($input['calendarDates']);
+                    Log::info(['tender_id', $input['id'], 'company_id', $input['company_id']]);
                     if (count($input['calendarDates']) > 0) {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                        foreach ($input['calendarDates'] as $calDate) {
+                       foreach ($input['calendarDates'] as $calDate) {
                             if (!empty($calDate['from_date'])) {
                                 $frm_date = new Carbon($calDate['from_date']);
                                 $frm_date = $frm_date->format('Y-m-d');
+                                Log::info(['$calDate[\'from_date\']', $calDate['from_date']]);
                             }else{
                                 $frm_date = null;
                             }
                             if (!empty($calDate['to_date'])) {
                                 $to_date = new Carbon($calDate['to_date']);
                                 $to_date = $to_date->format('Y-m-d');
+                                Log::info(['$calDate[\'to_date\']', $calDate['to_date']]);
                             }else{
                                 $to_date = null;
                             }
@@ -692,7 +709,7 @@ WHERE
                                 CalendarDatesDetail::create($calDt);
                             }
 
-                        }
+                       }
                     }else {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                     }
