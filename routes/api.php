@@ -2699,6 +2699,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
 
         Route::post('getSupplierCategoryList', 'TenderMasterAPIController@getSupplierCategoryList');
+        Route::post('removeCalenderDate', 'TenderMasterAPIController@removeCalenderDate');
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
 
