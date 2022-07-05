@@ -21,6 +21,8 @@ use App\Models\EvaluationType;
 use App\Models\PricingScheduleMaster;
 use App\Models\ProcumentActivity;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\SupplierCategory;
+use App\Models\SupplierCategoryMaster;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
@@ -1234,8 +1236,15 @@ WHERE
     public function getSupplierList(Request $request)
     {
         $input = $request->all();
+        $selectedCategoryIds = array();
         $selectedCompanyId = $input['companyId'];
         $tenderMasterId = $input['tenderMasterId'];
+        $selectedCategories = $input['selectedCategories'];
+
+        foreach ($selectedCategories as $selectedCategory) {
+            $selectedCategoryIds[] = $selectedCategory['id'];
+        }
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1250,7 +1259,12 @@ WHERE
             ->where('isActive', 1)
             ->where('isAssigned', -1)
             ->where('supEmail', '!=', null)
-            ->where('registrationNumber', '!=', null);
+            ->where('registrationNumber', '!=', null)
+            ->whereHas('master', function($query) use ($selectedCategoryIds) {
+                if( sizeof($selectedCategoryIds) != 0 ){
+                    $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+                }
+            });
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1363,5 +1377,15 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getSupplierCategoryList(Request $request){
+        try{
+            return SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
+                ->get();
+        } catch (\Exception $ex){
+            return [];
+        }
+
     }
 }
