@@ -626,7 +626,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
     )As t2");
 
         foreach ($data as $da){
-            $da->referenceAmount = 0;
+            $da->referenceAmountLocal = 0;
+            $da->referenceAmountRpt = 0;
             $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
@@ -2402,7 +2403,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
     )As t2");
 
         foreach ($data as $da){
-            $da->referenceAmount = 0;
+            $da->referenceAmountLocal = 0;
+            $da->referenceAmountRpt = 0;
             $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
