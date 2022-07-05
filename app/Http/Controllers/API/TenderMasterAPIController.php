@@ -508,7 +508,9 @@ FROM
 	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
 WHERE
-	srm_calendar_dates.company_id = $companySystemID";
+	srm_calendar_dates.company_id = $companySystemID
+	and ISNULL(srm_calendar_dates_detail.from_date)
+	and ISNULL(srm_calendar_dates_detail.to_date)";
 
 
         $data['calendarDates'] = DB::select($qry);
