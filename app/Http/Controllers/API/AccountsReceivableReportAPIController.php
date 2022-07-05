@@ -929,6 +929,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
 
                     $fileName = 'Customer Balance Statement';
+                    $title = 'Customer Balance Statement';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
@@ -962,11 +963,16 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $typ_re = 2;
                     $from_date = $request->fromDate;
                     $toDate = $request->toDate;
+                    $requestCurrency = $request->currency;
+                    $new_cu = explode(':',$requestCurrency);
+                    $requestCurrency = $new_cu[1];
+
 
                     $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
                     $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
 
                     $fileName = 'Customer Statement of Account';
+                    $title = 'Customer Statement of Account';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
                     if ($output) {
@@ -993,15 +999,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
           
-                
+               
                 $path = 'accounts-receivable/report/customer_balance_statement/excel/';
                 if($typ_re == 1)
                 {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$toDate,$company_name,NULL,2);
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
                 {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$toDate,$company_name,NULL,1);
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 
 
@@ -1030,6 +1040,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'CAD') { //customer aging detail
 
                     $fileName = 'Customer Invoice Aging Report';
+                    $title = 'Customer Invoice Aging Report';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingDetailQRY($request);
 
@@ -1073,6 +1084,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingSummaryQRY($request);
                     $fileName = 'Customer Invoice Aging Summary';
+                    $title = 'Customer Invoice Aging Summary';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1095,10 +1107,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-
+                $requestCurrency = NULL;
                
                 $path = 'accounts-receivable/report/customer_aging/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,2);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1260,8 +1274,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
  
                     $fileName = 'Customer Balance Summary';
+                    $title = 'Customer Balance Summary';
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,2);
+                    $requestCurrency = NULL;
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+    
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
@@ -1320,8 +1338,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
                 $fileName = 'Sales Register';
+                $title = 'Sales Register';
                 $path = 'accounts-receivable/report/customer_sales_register/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,1);
+                $requestCurrency = NULL;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
                 if($basePath == '')
                 {
                      return $this->sendError('Unable to export excel');
@@ -1348,6 +1370,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $data = [];
                 if ($reportTypeID == 'CCR') { //customer aging detail
                     $fileName = 'Collection Report';
+                    $title = 'Collection Report';
                     $from_date = $request->fromDate;
                     $to_date = $request->toDate;
                     $company = Company::find($request->companySystemID);
@@ -1405,6 +1428,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $output = $this->getCustomerCollectionMonthlyQRY($request);
                     $year = $request->year;
                     $fileName = 'Collection Report By Year -'.$year;
+                    $title = 'Collection Report By Year -'.$year;
                     $from_date = $request->fromDate;
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
@@ -1438,11 +1462,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $path = 'accounts-receivable/report/customer_collection/excel/';
                 if($typ_re == 1)
                 {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$requestCurrency,4);
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
                 {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$requestCurrency,3);
+                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                
 
@@ -1666,8 +1694,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
    
                 $fileName = 'Credit Note Register';
+                $title = 'Credit Note Register';
                 $path = 'accounts-receivable/report/credit_note_register/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$toDate,$company_name,NULL,1);
+                $requestCurrency = NULL;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {

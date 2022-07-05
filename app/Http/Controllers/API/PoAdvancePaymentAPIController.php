@@ -772,7 +772,7 @@ ORDER BY
         } else {
             $sort = 'desc';
         }
-
+        $data = array();
             $search = $request->input('search.value');
             $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
             $type = $request->type;
@@ -873,13 +873,19 @@ ORDER BY
             } else {
                 $data = array();
             }
-            $requestCurrency = 'LKR';
+            $requestCurrency = NULL;
             $path = 'accounts-payable/report/advance_payment_request/excel/';
-
+            if($input['reportTypeID'] == 'APRA') {
+                $title = 'Advance Payment Request Aging';
+            }
+            else
+            {
+                $title = 'Advance Payment Request Detail';
+            }
             
-
+            $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
          
-            $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,2);
+            $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
             if($basePath == '')
             {

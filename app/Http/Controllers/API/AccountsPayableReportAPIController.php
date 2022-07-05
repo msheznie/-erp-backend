@@ -736,24 +736,28 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'APPSY') {
                     $typ_re = 1;
                     $fileName = 'Payment Suppliers By Year -'.$year;
+                    $title = 'Payment Suppliers By Year -'.$year;
                     $requestCurrency = $request->currency;
 
                 }
                 else if ($request->reportTypeID == 'APDPY') {
                     $typ_re = 1;
                     $fileName = 'Direct Payments By Year -'.$year;
+                    $title = 'Direct Payments By Year -'.$year;
                     $requestCurrency = $request->currency;
                     
                 }
                 else if ($request->reportTypeID == 'APAPY') {
                     $typ_re = 1;
                     $fileName = 'All Payments By Year -'.$year;
+                    $title = 'All Payments By Year -'.$year;
                     $requestCurrency = $request->currency;
                  
                 }
                 else if ($request->reportTypeID == 'APLWS' && $request->reportSD != 'detail') {
                     $typ_re = 2;
                     $fileName = 'Payments Lists Status By Year';
+                    $title = 'Payments Lists Status By Year';
                     $requestCurrency = NULL;
                     $to_date = $request->toDate;
                     $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
@@ -945,15 +949,17 @@ class AccountsPayableReportAPIController extends AppBaseController
                 
                 $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
 
-               
+                    
 
                 if($typ_re == 1)
-                {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$requestCurrency,3);
+                {   
+                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
-                {
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$requestCurrency,1);
+                {   
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 
 
@@ -1011,7 +1017,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                 $fileName = 'Supplier Statement';
-         
+                $title = 'Supplier Statement';    
 
 
                 } else if ($reportTypeID == 'SBSR') {
@@ -1045,14 +1051,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
   
                     $fileName = 'Supplier Balance Statement';
-           
+                    $title = 'Supplier Balance Statement - Reconcile';    
 
 
                 }
 
                 $path = 'accounts-payable/report/supplier-statement/excel/';
                 $cur = NULL;
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$cur,2);
+      
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+       
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1136,9 +1147,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 $cur = NULL;
                 $fileName = 'Supplier Balance Summary';
+                $title = 'Supplier Balance Summary';
                 $path = 'accounts-payable/report/supplier_balance_summary/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$cur,2);
-
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 if($basePath == '')
                 {
                      return $this->sendError('Unable to export excel');
@@ -1162,6 +1174,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 if ($reportTypeID == 'SAD') { //supplier aging detail
                     $fileName = 'Supplier Aging Detail Report';
+                    $title = 'Supplier Aging Detail Report';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailQRY($request);
                     if ($output['data']) {
@@ -1193,6 +1206,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryQRY($request);
                     $fileName = 'Supplier Aging Summary Report';
+                    $title = 'Supplier Aging Summary Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1219,6 +1233,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
                     $fileName = 'Supplier Aging Detail Advance';
+                    $title = 'Supplier Aging Detail Advance Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1248,6 +1263,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
                     $fileName = 'Supplier Aging Summary Advance';
+                    $title = 'Supplier Aging Summary Advance Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1273,7 +1289,8 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $cur = NULL;
                 $path = 'accounts-payable/report/supplier_aging/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,$cur,2);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1344,6 +1361,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                     $fileName = 'Unbilled GRV Detail Report ';
+                    $title = 'Unbilled GRV Detail Report ';
                     $output = $this->getUnbilledDetailQRY($request);
                     $name = "detail";
                     if ($output) {
@@ -1370,6 +1388,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                     $output = $this->getUnbilledDetailQRY($request);
                     $fileName = 'Unbilled GRV Summary Report';
+                    $title = 'Unbilled GRV Summary Report';
                     $name = "summary";
                     if ($output) {
                         $x = 0;
@@ -1393,6 +1412,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
                     $fileName = 'Unbilled GRV Aging Detail';
+                    $title = 'Unbilled GRV Aging Detail Report';
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
                     $name = "aging_detail";
                     $decimal = 2;
@@ -1434,6 +1454,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
                     $fileName = 'Unbilled GRV Aging Summary';
+                    $title = 'Unbilled GRV Aging Summary Report';
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $name = "aging_summary";
                     $decimal = 2;
@@ -1474,7 +1495,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 else if ($reportTypeID == 'ULD') {
 
-                    $fileName = 'Unbilled Logistics Detail';       
+                    $fileName = 'Unbilled Logistics Detail';      
+                    $title = 'Unbilled Logistics Detail Report';       
                     $output = $this->getUnbilledLogisticsDetailQRY($request);
                     $name = "logistics_detail";
                     if ($output) {
@@ -1501,10 +1523,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
  
-                
+                $requestCurrency = NULL;
                 $path = $name.'/'; 
                 $path = 'accounts-payable/report/unbilled_grv_/'.$path.'excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path,$from_date,$to_date,$company_name,NULL,2);
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
