@@ -922,7 +922,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($reportTypeID == 'CBS') {
                     $typ_re = 1;
-
+                    $requestCurrency = NULL;
                     $from_date = $request->fromDate;
                     $toDate = $request->fromDate;
 
