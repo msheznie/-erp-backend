@@ -668,18 +668,22 @@ WHERE
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
                 if (isset($input['calendarDates'])) {
+                    /*Log::info($input['calendarDates']);
+                    Log::info(['tender_id', $input['id'], 'company_id', $input['company_id']]);*/
                     if (count($input['calendarDates']) > 0) {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                        foreach ($input['calendarDates'] as $calDate) {
                             if (!empty($calDate['from_date'])) {
                                 $frm_date = new Carbon($calDate['from_date']);
                                 $frm_date = $frm_date->format('Y-m-d');
+                               // Log::info(['$calDate[\'from_date\']', $calDate['from_date']]);
                             }else{
                                 $frm_date = null;
                             }
                             if (!empty($calDate['to_date'])) {
                                 $to_date = new Carbon($calDate['to_date']);
                                 $to_date = $to_date->format('Y-m-d');
+                                //Log::info(['$calDate[\'to_date\']', $calDate['to_date']]);
                             }else{
                                 $to_date = null;
                             }
@@ -1441,7 +1445,7 @@ WHERE
             $to_date = $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         }
-
+            
         if(!empty($to_date) && empty($frm_date)){
             return ['success' => false, 'message' => 'From date cannot be empty'];
         }
