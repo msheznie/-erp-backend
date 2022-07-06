@@ -1433,11 +1433,22 @@ WHERE
 
     public function updateCalenderDate(Request $request){
         $employee = \Helper::getEmployeeInfo();
-        $data['from_date'] = $request['from_date'];
-        $data['to_date'] = $request['to_date'];
+
+        if(isset($request['from_date'])){
+            $frm_date = new Carbon($request['from_date']);
+            $frm_date = $frm_date->format('Y-m-d');
+            $data['from_date'] = $frm_date;
+        }
+
+        if(isset($request['to_date'])){
+            $to_date = new Carbon($request['to_date']);
+            $to_date = $to_date->format('Y-m-d');
+            $data['to_date'] = $to_date;
+        }
+
         $data['updated_at'] = Carbon::now();
         $data['updated_by'] = $employee->employeeSystemID;
-
+        
         DB::beginTransaction();
         try{
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
