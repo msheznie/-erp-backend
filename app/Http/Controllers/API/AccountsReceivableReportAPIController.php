@@ -1487,6 +1487,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
 
                 if ($reportTypeID == 'RC') {
+
+
+                    $fileName = 'Revenue Detail';
+                    $title = 'Revenue Detail';
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = $request->fromDate;
+                    $toDate = $request->fromDate;
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                    $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
+
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getRevenueByCustomer($request);
@@ -1554,9 +1567,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $fileName = 'revenue_by_customer';
+                    $requestCurrency = NULL;
+                    $fileName = 'Revenue Detail';
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
@@ -1573,9 +1589,21 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
                     $type = $request->type;
+                    $year = $request->year;
+
+                    $fileName = 'Revenue Report '.$year;
+                    $title = 'Revenue Report '.$year;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = $request->fromDate;
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
 
                     $currency = $request->currencyID;
                     $currencyId = 2;
+                    $cure = $request->currency;
 
                     if ($currency == 2) {
                         $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
@@ -1617,9 +1645,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $fileName = 'revenue_by_customer';
+                    $fileName = 'Revenue Report '.$year;
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'cur'=>$cure,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
