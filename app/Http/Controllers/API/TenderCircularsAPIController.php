@@ -278,4 +278,43 @@ class TenderCircularsAPIController extends AppBaseController
 
         return $this->sendSuccess('Tender Circulars deleted successfully');
     }
+
+    public function getTenderCircularList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+        $tender_id = $input['tender_id'];
+
+
+
+        $tenderMaster = TenderCirculars::where('tender_id', $tender_id)->where('company_id', $companyId);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
+                $query->orWhere('circular_name', 'LIKE', "%{$search}%");
+                $query->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($tenderMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }
