@@ -1445,7 +1445,7 @@ WHERE
             $to_date = $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         }
-            
+
         if(!empty($to_date) && empty($frm_date)){
             return ['success' => false, 'message' => 'From date cannot be empty'];
         }
