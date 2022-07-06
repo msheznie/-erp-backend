@@ -878,14 +878,64 @@ WHERE
 
                
                 $sort = 'asc';
+                $monthNo = 0;
 
+                switch ($request->month) {
+                    case 'Jan':
+                        $monthNo = 1;
+                        break;
+                    case 'Feb':
+                        $monthNo = 2;
+                        break; 
+                    case 'Mar':
+                        $monthNo = 3;
+                        break;
+                    case 'Apr':
+                        $monthNo = 4;
+                        break; 
+                    case 'May':
+                        $monthNo = 5;
+                        break;
+                    case 'Jun':
+                        $monthNo = 6;
+                        break; 
+                    case 'Jul':
+                        $monthNo = 7;
+                        break;
+                    case 'Aug':
+                        $monthNo = 8;
+                        break; 
+                    case 'Sep':
+                        $monthNo = 9;
+                        break;
+                    case 'Oct':
+                        $monthNo = 10;
+                        break; 
+                    case 'Nov':
+                        $monthNo = 11;
+                        break;
+                    case 'Dece':
+                        $monthNo = 12;
+                        break; 
+                    default:
+                        # code...
+                        break;
+                }
                 $dataOrg = array();
                 if($request->month) {
                     foreach($output as $ou) {
-                        if(strcmp($request->month,Carbon::parse($ou->documentConfirmedDate)->format('M')) == 0 && Carbon::parse($ou->documentConfirmedDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
-                            
-                            array_push($dataOrg,$ou);
+
+                        if($request->isClosing) {
+                            if(Carbon::parse($ou->documentDate)->format('m') <= $monthNo && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
+                                array_push($dataOrg,$ou);
+                            }
+                        }else {
+                            if(strcmp($request->month,Carbon::parse($ou->documentDate)->format('M')) == 0 && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
+                                array_push($dataOrg,$ou);
+                            }
                         }
+
+                        
                     }
 
                     $total = array();
