@@ -1430,4 +1430,33 @@ WHERE
             return ['success' => false, 'message' => $e];
         }
     }
+
+    public function updateCalenderDate(Request $request){
+        $employee = \Helper::getEmployeeInfo();
+        $data['from_date'] = $request['from_date'];
+        $data['to_date'] = $request['to_date'];
+        $data['updated_at'] = Carbon::now();
+        $data['updated_by'] = $employee->employeeSystemID;
+
+        DB::beginTransaction();
+        try{
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->get();
+
+            if (empty($calendarDatesDetail)) {
+                return $this->sendError('Calendar Date Type not found');
+            }
+
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->update($data);
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
 }
