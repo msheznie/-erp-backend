@@ -2683,11 +2683,16 @@ WHERE
                 
                 if ($reportTypeID == 'FTBM') {
                     $title = 'Financial Trial Balance Month Wise';
+                    if ($request->currencyID == 1) {
+                        $cur = $currencyLocal;
+                    } else if ($request->currencyID == 2) {
+                        $cur = $currencyRpt;
+                    }
                 } else {
                     $title = 'Financial Trial Balance';
+                    $cur = null;
                 }
-                $cur = null;
-                $detail_array = array(  'type' => 1,
+                $detail_array = array(  'type' => 4,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
                                         'company_name'=>$company_name,

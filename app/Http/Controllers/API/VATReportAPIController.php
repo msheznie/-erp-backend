@@ -429,7 +429,7 @@ class VATReportAPIController extends AppBaseController
                 $title = 'VAT Summary Report';
                 $fileName = 'vat_summary_report';
             }
-            $detail_array = array(  'type' => 1,
+            $detail_array = array(  'type' => 4,
                                     'from_date'=>$from_date,
                                     'to_date'=>$to_date,
                                     'company_name'=>$company_name,
