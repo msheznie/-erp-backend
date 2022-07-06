@@ -276,6 +276,10 @@ class DebitNoteAPIController extends AppBaseController
             'empID' => ['required_if:type,2|numeric|min:1'],
             'supplierTransactionCurrencyID' => 'required|numeric|min:1',
             'comments' => 'required',
+        ],
+        [
+            'empID.required_if' => 'Please select an employee',
+            'supplierID.required_if' => 'Please select a supplier',
         ]);
       
         if ($validator->fails()) {
@@ -700,6 +704,10 @@ class DebitNoteAPIController extends AppBaseController
                 'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
@@ -1090,6 +1098,10 @@ class DebitNoteAPIController extends AppBaseController
                 'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
