@@ -497,12 +497,27 @@ class TenderMasterAPIController extends AppBaseController
 	srm_calendar_dates_detail.to_date as to_date
 FROM
 	srm_calendar_dates 
-	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
 WHERE
 	srm_calendar_dates.company_id = $companySystemID";
 
+        $qryAll ="SELECT
+	srm_calendar_dates.id as id,
+	srm_calendar_dates.calendar_date as calendar_date,
+	srm_calendar_dates.company_id as company_id,
+	srm_calendar_dates_detail.from_date as from_date,
+	srm_calendar_dates_detail.to_date as to_date
+FROM
+	srm_calendar_dates 
+	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+WHERE
+	srm_calendar_dates.company_id = $companySystemID
+	and ISNULL(srm_calendar_dates_detail.from_date)
+	and ISNULL(srm_calendar_dates_detail.to_date)";
+
 
         $data['calendarDates'] = DB::select($qry);
+        $data['calendarDatesAll'] = DB::select($qryAll);
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id',$tenderMasterId)->get();
         $docTypeArr = array();
@@ -618,7 +633,6 @@ WHERE
         $exist = TenderMaster::where('id', $input['id'])->first();
         DB::beginTransaction();
         try {
-
             $data['title'] = $input['title'];
             $data['title_sec_lang'] = $input['title_sec_lang'];
             $data['description'] = $input['description'];
@@ -672,28 +686,28 @@ WHERE
                             if (!empty($calDate['from_date'])) {
                                 $frm_date = new Carbon($calDate['from_date']);
                                 $frm_date = $frm_date->format('Y-m-d');
-                            } else {
+                            }else{
                                 $frm_date = null;
                             }
                             if (!empty($calDate['to_date'])) {
                                 $to_date = new Carbon($calDate['to_date']);
                                 $to_date = $to_date->format('Y-m-d');
-                            } else {
+                            }else{
                                 $to_date = null;
                             }
-                            if (!empty($to_date) && empty($frm_date)) {
-                                return ['success' => false, 'message' => 'From date cannot be empty for ' . $calDate['calendar_date']];
+                            if(!empty($to_date) && empty($frm_date)){
+                                return ['success' => false, 'message' => 'From date cannot be empty for '.$calDate['calendar_date']];
                             }
-                            if (!empty($frm_date) && empty($to_date)) {
-                                return ['success' => false, 'message' => 'To date cannot be empty for ' . $calDate['calendar_date']];
+                            if(!empty($frm_date) && empty($to_date)){
+                                return ['success' => false, 'message' => 'To date cannot be empty for '.$calDate['calendar_date']];
                             }
 
-                            if (!empty($frm_date) && !empty($to_date)) {
-                                if ($frm_date > $to_date) {
-                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for ' . $calDate['calendar_date']];
+                            if(!empty($frm_date) && !empty($to_date)){
+                                if($frm_date>$to_date){
+                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for '.$calDate['calendar_date']];
                                 }
                             }
-                            if (!empty($to_date) || !empty($frm_date)) {
+                            if(!empty($to_date) || !empty($frm_date)){
                                 $calDt['tender_id'] = $input['id'];
                                 $calDt['calendar_date_id'] = $calDate['id'];
                                 $calDt['from_date'] = $frm_date;
@@ -705,10 +719,10 @@ WHERE
                                 CalendarDatesDetail::create($calDt);
                             }
                         }
-                    } else {
+                    }else {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                     }
-                } else {
+                }else {
                     CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
 
@@ -1479,5 +1493,80 @@ WHERE
 
         return ['status' => true, 'message' => "success"];
     }
-    
+
+    public function removeCalenderDate(Request $request){
+        DB::beginTransaction();
+        try{
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->get();
+
+            if (empty($calendarDatesDetail)) {
+                return $this->sendError('Calendar Date Type not found');
+            }
+
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->delete();
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function updateCalenderDate(Request $request){
+        $employee = \Helper::getEmployeeInfo();
+
+        if(isset($request['from_date'])){
+            $frm_date = new Carbon($request['from_date']);
+            $frm_date = $frm_date->format('Y-m-d');
+            $data['from_date'] = $frm_date;
+        }
+
+        if(isset($request['to_date'])){
+            $to_date = new Carbon($request['to_date']);
+            $to_date = $to_date->format('Y-m-d');
+            $data['to_date'] = $to_date;
+        }
+
+        if(!empty($to_date) && empty($frm_date)){
+            return ['success' => false, 'message' => 'From date cannot be empty'];
+        }
+        if(!empty($frm_date) && empty($to_date)){
+            return ['success' => false, 'message' => 'To date cannot be empty'];
+        }
+
+        if(!empty($frm_date) && !empty($to_date)){
+            if($frm_date>$to_date){
+                return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
+            }
+        }
+
+        $data['updated_at'] = Carbon::now();
+        $data['updated_by'] = $employee->employeeSystemID;
+        
+        DB::beginTransaction();
+        try{
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->get();
+
+            if (empty($calendarDatesDetail)) {
+                return $this->sendError('Calendar Date Type not found');
+            }
+
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                ->where('tender_id', $request['tenderMasterId'])
+                ->update($data);
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
 }
