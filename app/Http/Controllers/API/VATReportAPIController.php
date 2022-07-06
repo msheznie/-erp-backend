@@ -370,7 +370,7 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Party Name'] =isset($val->supplier->supplierName) ? $val->supplier->supplierName: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['Party Name'] =isset($val->customer->CustomerName) ? $val->customer->CustomerName: '';
                 }else{
                     $data[$x]['Party Name'] ='';
@@ -378,7 +378,7 @@ class VATReportAPIController extends AppBaseController
 
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Country'] =isset($val->supplier->country->countryName) ? $val->supplier->country->countryName: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['Country'] =isset($val->customer->country->countryName) ? $val->customer->country->countryName: '';
                 }else{
                     $data[$x]['Country'] ='';
@@ -386,7 +386,7 @@ class VATReportAPIController extends AppBaseController
 
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['VATIN'] =isset($val->supplier->vatNumber) ? $val->supplier->vatNumber: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['VATIN'] =isset($val->customer->vatNumber) ? $val->customer->vatNumber: '';
                 }else{
                     $data[$x]['VATIN'] ='';
