@@ -2,30 +2,29 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateTenderDocumentTypesAPIRequest;
-use App\Http\Requests\API\UpdateTenderDocumentTypesAPIRequest;
-use App\Models\TenderDocumentTypes;
-use App\Repositories\TenderDocumentTypesRepository;
+use App\Http\Requests\API\CreateTenderDocumentTypeAssignAPIRequest;
+use App\Http\Requests\API\UpdateTenderDocumentTypeAssignAPIRequest;
+use App\Models\TenderDocumentTypeAssign;
+use App\Repositories\TenderDocumentTypeAssignRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use App\Models\TenderDocumentTypeAssign;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TenderDocumentTypesController
+ * Class TenderDocumentTypeAssignController
  * @package App\Http\Controllers\API
  */
 
-class TenderDocumentTypesAPIController extends AppBaseController
+class TenderDocumentTypeAssignAPIController extends AppBaseController
 {
-    /** @var  TenderDocumentTypesRepository */
-    private $tenderDocumentTypesRepository;
+    /** @var  TenderDocumentTypeAssignRepository */
+    private $tenderDocumentTypeAssignRepository;
 
-    public function __construct(TenderDocumentTypesRepository $tenderDocumentTypesRepo)
+    public function __construct(TenderDocumentTypeAssignRepository $tenderDocumentTypeAssignRepo)
     {
-        $this->tenderDocumentTypesRepository = $tenderDocumentTypesRepo;
+        $this->tenderDocumentTypeAssignRepository = $tenderDocumentTypeAssignRepo;
     }
 
     /**
@@ -33,10 +32,10 @@ class TenderDocumentTypesAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenderDocumentTypes",
-     *      summary="Get a listing of the TenderDocumentTypes.",
-     *      tags={"TenderDocumentTypes"},
-     *      description="Get all TenderDocumentTypes",
+     *      path="/tenderDocumentTypeAssigns",
+     *      summary="Get a listing of the TenderDocumentTypeAssigns.",
+     *      tags={"TenderDocumentTypeAssign"},
+     *      description="Get all TenderDocumentTypeAssigns",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -50,7 +49,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/TenderDocumentTypes")
+     *                  @SWG\Items(ref="#/definitions/TenderDocumentTypeAssign")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -62,29 +61,29 @@ class TenderDocumentTypesAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->tenderDocumentTypesRepository->pushCriteria(new RequestCriteria($request));
-        $this->tenderDocumentTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->all();
+        $this->tenderDocumentTypeAssignRepository->pushCriteria(new RequestCriteria($request));
+        $this->tenderDocumentTypeAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $tenderDocumentTypeAssigns = $this->tenderDocumentTypeAssignRepository->all();
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssigns->toArray(), 'Tender Document Type Assigns retrieved successfully');
     }
 
     /**
-     * @param CreateTenderDocumentTypesAPIRequest $request
+     * @param CreateTenderDocumentTypeAssignAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/tenderDocumentTypes",
-     *      summary="Store a newly created TenderDocumentTypes in storage",
-     *      tags={"TenderDocumentTypes"},
-     *      description="Store TenderDocumentTypes",
+     *      path="/tenderDocumentTypeAssigns",
+     *      summary="Store a newly created TenderDocumentTypeAssign in storage",
+     *      tags={"TenderDocumentTypeAssign"},
+     *      description="Store TenderDocumentTypeAssign",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="TenderDocumentTypes that should be stored",
+     *          description="TenderDocumentTypeAssign that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/TenderDocumentTypes")
+     *          @SWG\Schema(ref="#/definitions/TenderDocumentTypeAssign")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -97,7 +96,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/TenderDocumentTypes"
+     *                  ref="#/definitions/TenderDocumentTypeAssign"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -107,13 +106,13 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTenderDocumentTypesAPIRequest $request)
+    public function store(CreateTenderDocumentTypeAssignAPIRequest $request)
     {
         $input = $request->all();
 
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->create($input);
+        $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->create($input);
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types saved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'Tender Document Type Assign saved successfully');
     }
 
     /**
@@ -121,14 +120,14 @@ class TenderDocumentTypesAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/tenderDocumentTypes/{id}",
-     *      summary="Display the specified TenderDocumentTypes",
-     *      tags={"TenderDocumentTypes"},
-     *      description="Get TenderDocumentTypes",
+     *      path="/tenderDocumentTypeAssigns/{id}",
+     *      summary="Display the specified TenderDocumentTypeAssign",
+     *      tags={"TenderDocumentTypeAssign"},
+     *      description="Get TenderDocumentTypeAssign",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of TenderDocumentTypes",
+     *          description="id of TenderDocumentTypeAssign",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -144,7 +143,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/TenderDocumentTypes"
+     *                  ref="#/definitions/TenderDocumentTypeAssign"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -156,30 +155,30 @@ class TenderDocumentTypesAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var TenderDocumentTypes $tenderDocumentTypes */
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
+        /** @var TenderDocumentTypeAssign $tenderDocumentTypeAssign */
+        $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
-        if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+        if (empty($tenderDocumentTypeAssign)) {
+            return $this->sendError('Tender Document Type Assign not found');
         }
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'Tender Document Types retrieved successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'Tender Document Type Assign retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTenderDocumentTypesAPIRequest $request
+     * @param UpdateTenderDocumentTypeAssignAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/tenderDocumentTypes/{id}",
-     *      summary="Update the specified TenderDocumentTypes in storage",
-     *      tags={"TenderDocumentTypes"},
-     *      description="Update TenderDocumentTypes",
+     *      path="/tenderDocumentTypeAssigns/{id}",
+     *      summary="Update the specified TenderDocumentTypeAssign in storage",
+     *      tags={"TenderDocumentTypeAssign"},
+     *      description="Update TenderDocumentTypeAssign",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of TenderDocumentTypes",
+     *          description="id of TenderDocumentTypeAssign",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -187,9 +186,9 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="TenderDocumentTypes that should be updated",
+     *          description="TenderDocumentTypeAssign that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/TenderDocumentTypes")
+     *          @SWG\Schema(ref="#/definitions/TenderDocumentTypeAssign")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -202,7 +201,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/TenderDocumentTypes"
+     *                  ref="#/definitions/TenderDocumentTypeAssign"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -212,20 +211,20 @@ class TenderDocumentTypesAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTenderDocumentTypesAPIRequest $request)
+    public function update($id, UpdateTenderDocumentTypeAssignAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var TenderDocumentTypes $tenderDocumentTypes */
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
+        /** @var TenderDocumentTypeAssign $tenderDocumentTypeAssign */
+        $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
-        if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+        if (empty($tenderDocumentTypeAssign)) {
+            return $this->sendError('Tender Document Type Assign not found');
         }
 
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->update($input, $id);
+        $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->update($input, $id);
 
-        return $this->sendResponse($tenderDocumentTypes->toArray(), 'TenderDocumentTypes updated successfully');
+        return $this->sendResponse($tenderDocumentTypeAssign->toArray(), 'TenderDocumentTypeAssign updated successfully');
     }
 
     /**
@@ -233,14 +232,14 @@ class TenderDocumentTypesAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/tenderDocumentTypes/{id}",
-     *      summary="Remove the specified TenderDocumentTypes from storage",
-     *      tags={"TenderDocumentTypes"},
-     *      description="Delete TenderDocumentTypes",
+     *      path="/tenderDocumentTypeAssigns/{id}",
+     *      summary="Remove the specified TenderDocumentTypeAssign from storage",
+     *      tags={"TenderDocumentTypeAssign"},
+     *      description="Delete TenderDocumentTypeAssign",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of TenderDocumentTypes",
+     *          description="id of TenderDocumentTypeAssign",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -268,22 +267,15 @@ class TenderDocumentTypesAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var TenderDocumentTypes $tenderDocumentTypes */
-        $tenderDocumentTypes = $this->tenderDocumentTypesRepository->findWithoutFail($id);
+        /** @var TenderDocumentTypeAssign $tenderDocumentTypeAssign */
+        $tenderDocumentTypeAssign = $this->tenderDocumentTypeAssignRepository->findWithoutFail($id);
 
-        if (empty($tenderDocumentTypes)) {
-            return $this->sendError('Tender Document Types not found');
+        if (empty($tenderDocumentTypeAssign)) {
+            return $this->sendError('Tender Document Type Assign not found');
         }
 
-        $tenderDocumentTypes->delete();
+        $tenderDocumentTypeAssign->delete();
 
-        return $this->sendSuccess('Tender Document Types deleted successfully');
-    }
-
-    public function getTenderAttachmentType(Request $request)
-    {
-        $input = $request->all();
-        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
-        return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhere('company_id',null)->get(); 
+        return $this->sendSuccess('Tender Document Type Assign deleted successfully');
     }
 }
