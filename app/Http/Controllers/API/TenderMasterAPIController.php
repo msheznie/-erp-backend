@@ -571,7 +571,8 @@ WHERE
 
     public function updateTender(Request $request)
     {
-        $input = $this->convertArrayToSelectedValue($request->all(), array('bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id', 'procument_sub_cat_id'));
+        $input = $this->convertArrayToSelectedValue($request->all(), array('bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
+         'procument_sub_cat_id','tender_type_id','envelop_type_id','evaluation_type_id'));
 
 
         $resValidate = $this->validateTenderHeader($input);
@@ -769,6 +770,21 @@ WHERE
 
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
+
+                        if(is_null($input['tender_type_id']) || $input['tender_type_id']==0){ 
+                            return ['success' => false, 'message' => 'Selection is required'];
+                        }
+                        if(is_null($input['envelop_type_id']) || $input['envelop_type_id']==0){ 
+                            return ['success' => false, 'message' => 'Envelop is required'];
+                        }
+                        if(is_null($input['evaluation_type_id']) || $input['evaluation_type_id']==0){ 
+                            return ['success' => false, 'message' => 'Evaluation is required'];
+                        }
+                        if(is_null($input['stage']) || $input['stage']==0){ 
+                            return ['success' => false, 'message' => 'Stage is required'];
+                        }
+                        
+                        
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical)) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
@@ -842,7 +858,14 @@ WHERE
             'bid_submission_opening_date.required' => 'Bid Submission From Date.',
             'bid_submission_closing_date.required' => 'Bid Submission To Date.',
             'site_visit_date.required' => 'Site Visit From Date.',
-            'site_visit_end_date.required' => 'Site Visit To Date.'
+            'site_visit_end_date.required' => 'Site Visit To Date.',
+            'tender_type_id.required' => 'Type is required.',
+            'envelop_type_id.required' => 'Envelop Type is required.',
+            'evaluation_type_id.required' => 'Evaluation Type is required.',
+            'stage.required' => 'Stage is required.',
+            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+            'technical_weightage.required' => 'Technical Criteria Weightage is required.',
 
         ];
 
@@ -863,6 +886,13 @@ WHERE
             'bid_submission_closing_date' => 'required',
             'site_visit_date' => 'required',
             'site_visit_end_date' => 'required',
+            'tender_type_id' => 'required',
+            'envelop_type_id' => 'required',
+            'evaluation_type_id' => 'required',
+            'stage' => 'required',
+            'no_of_alternative_solutions' => 'required',
+            'commercial_weightage' => 'required',
+            'technical_weightage' => 'required'
 
         ], $messages);
 
