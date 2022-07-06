@@ -80,6 +80,12 @@ class CreateExcel
                         self::currency($array,$sheet,'A5');
 
                     }
+                    else if(($array['type']) == 5)
+                    {
+                        self::fromDate($array,$sheet,'As of Date');
+                        self::currency($array,$sheet,'A4');
+
+                    }
                 }
 
                 $sheet->fromArray($data, null, 'A7', true);
