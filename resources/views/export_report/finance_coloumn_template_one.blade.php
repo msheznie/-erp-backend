@@ -3,7 +3,7 @@
         <thead>
 
 			<tr>
-				<th colspan="5" align="center">{{$report_tittle}}</th>
+				<th colspan="5" align="center">{{$template->reportName}}</th>
 			</tr>
 			<tr>
 				<th colspan="5" align="center">{{$company->CompanyName}}</th>
@@ -17,10 +17,10 @@
 
 			@if ($from_date != null && $to_date != null)
 				<tr>
-					<th>From Date - {{$from_date}}</th>
+					<th>Period From - {{$from_date}}</th>
 				</tr>
 				<tr>
-					<th>To Date - {{$to_date}} </th>
+					<th>Period To - {{$to_date}} </th>
 				</tr>
 			@endif
 

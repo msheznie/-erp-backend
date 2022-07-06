@@ -412,17 +412,32 @@ class VATReportAPIController extends AppBaseController
             $company_name = $company->CompanyName;
             $to_date = \Helper::dateFormat($request->toDate);
             $from_date = \Helper::dateFormat($request->fromDate);
-
-            if($request->reportTypeID == 1){
-                $fileName = 'Output VAT Summary';
-            } elseif($request->reportTypeID == 2){
-                $fileName = 'Input VAT Summary';
-            } else{
-                $fileName = 'VAT Summary Report';
+            
+            if($input['currencyID']==1){
+                $cur = 'OMR';
+            } else {
+                $cur = 'USD';
             }
 
+            if($request->reportTypeID == 1){
+                $title = 'Output VAT Summary';
+                $fileName = 'output_vat_summary';
+            } elseif($request->reportTypeID == 2){
+                $title = 'Input VAT Summary';
+                $fileName = 'input_vat_summary';
+            } else{
+                $title = 'VAT Summary Report';
+                $fileName = 'vat_summary_report';
+            }
+            $detail_array = array(  'type' => 1,
+                                    'from_date'=>$from_date,
+                                    'to_date'=>$to_date,
+                                    'company_name'=>$company_name,
+                                    'cur'=>$cur,
+                                    'title'=>$title);
+
             $path = 'general-ledger/report/vat_report/excel/';
-            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$from_date,$to_date,$company_name);
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
             if($basePath == '')
             {
