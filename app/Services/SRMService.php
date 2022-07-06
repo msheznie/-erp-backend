@@ -1204,6 +1204,7 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -2307,6 +2308,7 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
+        $envelopType = $request->input('extra.envelopType');
 
         $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
@@ -2314,7 +2316,7 @@ class SRMService
             $q->where('documentSystemCode', $bidMasterId);
         }])->whereHas('tender_document_types', function ($q) {
             $q->where('srm_action', 1);
-        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
+        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->where('envelopType', $envelopType)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
