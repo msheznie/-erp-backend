@@ -1495,7 +1495,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $company_name = $company->CompanyName;
 
                     $from_date = $request->fromDate;
-                    $toDate = $request->fromDate;
+                    $toDate = $request->toDate;
 
                     $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
                     $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
