@@ -3172,8 +3172,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 if ($ap) {
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
-                                    $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
-                                    $data['glCode'] = $masterData->supplierGLCode;
+                                    $data['chartOfAccountSystemID'] = $masterData->advanceAccountSystemID;
+                                    $data['glCode'] = $masterData->AdvanceAccount;
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;

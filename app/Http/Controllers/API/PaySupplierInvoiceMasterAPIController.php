@@ -286,8 +286,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
                 if ($supDetail) {
-                    $input['supplierGLCode'] = $supDetail->AdvanceAccount;
-                    $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
+                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
                     $input['VATPercentage'] = $supDetail->vatPercentage;
 
                 }
@@ -339,6 +339,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
             }
+            if ($input['invoiceType'] == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+          
+            }
+
+
 
             if ($input['invoiceType'] == 6) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
@@ -526,8 +540,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
                     if ($supDetail) {
-                        $input['supplierGLCode'] = $supDetail->AdvanceAccount;
-                        $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
+                        $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                        $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -613,6 +628,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 }
             }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
@@ -1268,6 +1284,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
@@ -1421,8 +1448,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
                 
                     if ($supDetail) {
-                        $input['supplierGLCode'] = $supDetail->AdvanceAccount;
-                        $input['supplierGLCodeSystemID'] = $supDetail->advanceAccountSystemID;
+                        $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                        $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -2235,6 +2263,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
