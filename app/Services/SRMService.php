@@ -2481,6 +2481,7 @@ class SRMService
             $q2->where('tender_id', $tenderId);
         })
             ->where('is_final_level', 1)
+            ->where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
             ->count();
 
