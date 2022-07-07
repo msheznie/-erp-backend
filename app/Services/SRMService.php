@@ -1204,6 +1204,7 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -2307,6 +2308,7 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
+        $envelopType = $request->input('extra.envelopType');
 
         $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
@@ -2314,7 +2316,7 @@ class SRMService
             $q->where('documentSystemCode', $bidMasterId);
         }])->whereHas('tender_document_types', function ($q) {
             $q->where('srm_action', 1);
-        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->get();
+        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->where('envelopType', $envelopType)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
@@ -2459,7 +2461,7 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
 
-        $documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
+        /*$documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
             $q->where('srm_action', 1);
         }])
             ->whereDoesntHave('document_attachments', function ($q) use ($bidMasterId) {
@@ -2472,7 +2474,7 @@ class SRMService
             ->whereHas('tender_document_types', function ($q) {
                 $q->where('srm_action', 1);
             })
-            ->count(); 
+            ->count();*/
 
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
             $q2->where('bid_master_id', $bidMasterId);
@@ -2526,7 +2528,8 @@ class SRMService
         ->where('tender_id',$tenderId)
         ->first();
 
-        $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
+        // $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
+        $data['technicalBidSubmissionYn'] = $technicalEvaluationCriteria > 0 ? 1 : 0;
         $data['commercialBidSubmission'] = $filtered->count();
         $data['isBidSubmissionStatus'] = $bidsubmission['status']; 
         

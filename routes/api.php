@@ -2697,7 +2697,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
         Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
-       
+
+        Route::post('getSupplierCategoryList', 'TenderMasterAPIController@getSupplierCategoryList');
+        Route::post('removeCalenderDate', 'TenderMasterAPIController@removeCalenderDate');
+        Route::post('updateCalenderDate', 'TenderMasterAPIController@updateCalenderDate');
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
 
@@ -2712,6 +2715,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
 
         Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+        Route::post('updateTenderStrategy', 'TenderMasterAPIController@updateTenderStrategy');
+
+        Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2999,3 +3006,5 @@ Route::resource('bid_schedules', 'BidScheduleAPIController');
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
+
+Route::resource('tender_circulars', 'TenderCircularsAPIController');
