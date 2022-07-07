@@ -341,64 +341,85 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     }
     public function sendSupplierInvitation(Request $request)
     {
-
         $input = $request->all();
         $tenderId = $input['tenderId'];
         $companyId = $input['companySystemId'];
-
         $companyName = "";
         $company = Company::find($companyId);
         if (isset($company->CompanyName)) {
             $companyName =  $company->CompanyName;
         }
         $apiKey = $request->input('api_key');
+        $loginUrl = env('SRM_LINK');
+        $urlArray = explode('/', $loginUrl);
+        $urlArray = array_filter($urlArray);
+        array_pop($urlArray);
+
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
             ->where('tender_master_id', $tenderId)
             ->where('company_id', $companyId)
             ->where('mail_sent', 0)
             ->get();
+        DB::beginTransaction();
+        try{
+            if (count($getSupplierAssignedData) > 0) {
+                foreach ($getSupplierAssignedData as $val) {
+                    $token = md5(Carbon::now()->format('YmdHisu'));
+                    $name = (!is_null($val['supplierAssigned']['supplierName'])) ? $val['supplierAssigned']['supplierName'] : $val['supplier_name'];
+                    $email = (!is_null($val['supplierAssigned']['supEmail'])) ? $val['supplierAssigned']['supEmail'] : $val['supplier_email'];
+                    $regNo = (!is_null($val['supplierAssigned']['registrationNumber'])) ? $val['supplierAssigned']['registrationNumber'] : $val['registration_number'];
+                    $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
 
-        if (count($getSupplierAssignedData) > 0) {
-            foreach ($getSupplierAssignedData as $val) {
-                $token = md5(Carbon::now()->format('YmdHisu'));
-                $name = (!is_null($val['supplierAssigned']['supplierName'])) ? $val['supplierAssigned']['supplierName'] : $val['supplier_name'];
-                $email = (!is_null($val['supplierAssigned']['supEmail'])) ? $val['supplierAssigned']['supEmail'] : $val['supplier_email'];
-                $regNo = (!is_null($val['supplierAssigned']['registrationNumber'])) ? $val['supplierAssigned']['registrationNumber'] : $val['registration_number'];
-                $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
+                    $isExist = SupplierRegistrationLink::select('id', 'STATUS')
+                        ->where('company_id', $companyId)
+                        ->where('email', $email)
+                        ->where('registration_number', $regNo)
+                        ->orderBy("id", "desc")
+                        ->first();
 
-                $isExist = SupplierRegistrationLink::select('id')
-                    ->where('company_id', $companyId)
-                    ->where('email', $email)
-                    ->where('registration_number', $regNo)
-                    ->where('STATUS', 1)
-                    ->orderBy("id", "desc")
-                    ->first();
-                if (!empty($isExist)) {
-                    $loginUrl = env('SRM_LINK');
-                    $urlArray = explode('/', $loginUrl);
-                    $urlArray = array_filter($urlArray);
-                    array_pop($urlArray);
-                    $urlString = implode('/', $urlArray) . '/';
-                    TenderSupplierAssignee::find($val['id'])
-                        ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
-                    $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1);
-                } else {
-                    $isCreated = $this->registrationLinkRepository->save(request()->merge([
-                        'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companyId,
-                        'is_bid_tender' => $isBidTender, 'created_via' => 1
-                    ]), $token);
-                    $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
-                    if ($isCreated['status'] == true) {
-                        $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 2);
-                        TenderSupplierAssignee::find($val['id'])
-                            ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
+                    if (!empty($isExist)) {
+                        if($isExist['STATUS'] === 1){
+                            $urlString = implode('/', $urlArray) . '/';
+                            TenderSupplierAssignee::find($val['id'])
+                                ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                            $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1);
+                        } else if ($isExist['STATUS'] === 0){
+                            $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
+                            $updateRec['token'] = $token;
+                            $isUpdated = SupplierRegistrationLink::where('company_id', $companyId)
+                                ->where('email', $email)
+                                ->where('registration_number', $regNo)
+                                ->update($updateRec);
+                            if($isUpdated){
+                                $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1);
+                                TenderSupplierAssignee::find($val['id'])
+                                    ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                            }
+                        }
+                        DB::commit();
+                    } else {
+                        $isCreated = $this->registrationLinkRepository->save(request()->merge([
+                            'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companyId,
+                            'is_bid_tender' => $isBidTender, 'created_via' => 1
+                        ]), $token);
+                        $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
+                        if ($isCreated['status'] == true) {
+                            $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 2);
+                            TenderSupplierAssignee::find($val['id'])
+                                ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
+                        }
+                        DB::commit();
                     }
                 }
+                return $this->sendResponse([], 'Invitation sent successfully');
+            } else {
+                return $this->sendError('No records found', 500);
             }
-            return $this->sendResponse([], 'Invitation sent successfully');
-        } else {
-            return $this->sendError('No records found', 500);
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getLine() . $exception->getMessage());
         }
+
     }
     public function reSendInvitaitonLink(Request $request)
     {
@@ -412,6 +433,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             $companyName =  $company->CompanyName;
         }
         $apiKey = $request->input('api_key');
+        $loginUrl = env('SRM_LINK');
+        $urlArray = explode('/', $loginUrl);
+        $urlArray = array_filter($urlArray);
+        array_pop($urlArray);
 
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
             ->where('tender_master_id', $tenderId)
@@ -427,22 +452,31 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             $email = (!is_null($getSupplierAssignedData['supplierAssigned']['supEmail'])) ? $getSupplierAssignedData['supplierAssigned']['supEmail'] : $getSupplierAssignedData['supplier_email'];
             $regNo = (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? $getSupplierAssignedData['supplierAssigned']['registrationNumber'] : $getSupplierAssignedData['registration_number'];
             $isBidTender =  (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? 0 : 1;
-            $isExist = SupplierRegistrationLink::select('id')
+            $isExist = SupplierRegistrationLink::select('id','STATUS')
                 ->where('company_id', $companySystemId)
                 ->where('email', $email)
                 ->where('registration_number', $regNo)
-                ->where('STATUS', 1)
                 ->orderBy("id", "desc")
                 ->first();
+
             if (!empty($isExist)) {
-                $loginUrl = env('SRM_LINK');
-                $urlArray = explode('/', $loginUrl);
-                $urlArray = array_filter($urlArray);
-                array_pop($urlArray);
-                $urlString = implode('/', $urlArray) . '/';
-                $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1);
-                TenderSupplierAssignee::find($getSupplierAssignedData['id'])
-                    ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                if($isExist['STATUS'] === 1){
+                    $urlString = implode('/', $urlArray) . '/';
+                    $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1);
+                    TenderSupplierAssignee::find($getSupplierAssignedData['id'])
+                        ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                } elseif ($isExist['STATUS'] === 0) {
+                    $updateRec['token'] = $token;
+                    $isUpdated = SupplierRegistrationLink::where('company_id', $companySystemId)
+                        ->where('email', $email)
+                        ->where('registration_number', $regNo)
+                        ->update($updateRec);
+                    if($isUpdated){
+                        $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1);
+                        TenderSupplierAssignee::find($getSupplierAssignedData['id'])
+                            ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                    }
+                }
                     DB::commit(); 
             } else {
                 $isCreated = $this->registrationLinkRepository->save(request()->merge([
