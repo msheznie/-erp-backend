@@ -486,6 +486,9 @@ class SalesReturnDetailAPIController extends AppBaseController
                         $invDetail_arr['reasonGLCode'] = null;
                     }
                 }
+                else {
+                    $invDetail_arr['reasonGLCode'] = null;
+                }
                 $invDetail_arr['qtyReturnedDefaultMeasure'] = $currentItemData['qtyReturned'];
 
                 $totalNetcost = $currentItemData['unitTransactionAmount'] * $currentItemData['qtyReturned'];
