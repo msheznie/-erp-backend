@@ -1302,7 +1302,11 @@ WHERE
         }
 
 
-        $qry = SupplierAssigned::whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderMasterId) {
+        $qry = SupplierAssigned::with(['master' => function ($query) use ($selectedCategoryIds) {
+            if (sizeof($selectedCategoryIds) != 0) {
+                $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+            }
+        }])->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderMasterId) {
             $query->where('tender_master_id', '=', $tenderMasterId);
         })
             ->where('companySystemID', $selectedCompanyId)
