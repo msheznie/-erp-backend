@@ -136,5 +136,10 @@ class TenderCirculars extends Model
         
     ];
 
+    public function document_attachments()
+    {
+        return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'attachment_id');
+    }
+
     
 }

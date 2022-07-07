@@ -4,10 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
 use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
+use App\Models\DocumentAttachments;
 use App\Models\TenderCirculars;
 use App\Repositories\TenderCircularsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -294,7 +297,7 @@ class TenderCircularsAPIController extends AppBaseController
 
 
 
-        $tenderMaster = TenderCirculars::where('tender_id', $tender_id)->where('company_id', $companyId);
+        $tenderMaster = TenderCirculars::with(['document_attachments'])->where('tender_id', $tender_id)->where('company_id', $companyId);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -316,5 +319,136 @@ class TenderCircularsAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getAttachmentDropCircular(Request $request)
+    {
+        $input = $request->all();
+        $data['attachmentDrop'] = DocumentAttachments::where('documentSystemID',108)->where('attachmentType',3)->where('documentSystemCode',$input['tenderMasterId'])->get();
+
+        return $data;
+    }
+
+    public function addCircular(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
+
+        if(!isset($input['description']) && !isset($input['attachment_id'])){
+            return ['success' => false, 'message' => 'Description is required'];
+        }
+
+        if(isset($input['id'])) {
+            $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('circular_name', $input['circular_name'])->where('company_id', $input['companySystemID'])->first();
+
+            if(!empty($exist)){
+                return ['success' => false, 'message' => 'Circular name can not be duplicated'];
+            }
+        }else{
+            $exist = TenderCirculars::where('circular_name', $input['circular_name'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
+
+            if(!empty($exist)){
+                return ['success' => false, 'message' => 'Circular name can not be duplicated'];
+            }
+        }
+
+        if(isset($input['attachment_id'])){
+            if(isset($input['id'])) {
+                $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
+
+                if(!empty($exist)){
+                    return ['success' => false, 'message' => 'Attachment can not be duplicated'];
+                }
+            }else{
+               $exist = TenderCirculars::where('attachment_id', $input['attachment_id'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
+
+                if(!empty($exist)){
+                    return ['success' => false, 'message' => 'Attachment can not be duplicated'];
+                }
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $data['tender_id']=$input['tenderMasterId'];
+            $data['circular_name']=$input['circular_name'];
+            if(isset($input['description'])){
+                $data['description']=$input['description'];
+            }else{
+                $data['description']=null;
+            }
+            if(isset($input['attachment_id'])){
+                $data['attachment_id']=$input['attachment_id'];
+            }else{
+                $data['attachment_id']=null;
+            }
+            $data['company_id']=$input['companySystemID'];
+
+            if(isset($input['id'])){
+                $data['updated_by'] = $employee->employeeSystemID;
+                $result = TenderCirculars::where('id',$input['id'])->update($data);
+                if($result){
+                    DB::commit();
+                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
+                }
+            }else{
+                $data['created_by'] = $employee->employeeSystemID;
+                $result = TenderCirculars::create($data);
+                if($result){
+                    DB::commit();
+                    return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                }
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function getCircularMaster(Request $request)
+    {
+        $input = $request->all();
+        return TenderCirculars::where('id',$input['id'])->first();
+    }
+
+    public function deleteTenderCircular(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = TenderCirculars::where('id',$input['id'])->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function tenderCircularPublish(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $att['updated_by'] = $employee->employeeSystemID;
+            $att['status'] = 1;
+            $result = TenderCirculars::where('id', $input['id'])->update($att);
+
+            if ($result) {
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully Published'];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
     }
 }
