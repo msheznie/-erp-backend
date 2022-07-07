@@ -370,7 +370,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $regNo = (!is_null($val['supplierAssigned']['registrationNumber'])) ? $val['supplierAssigned']['registrationNumber'] : $val['registration_number'];
                     $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
 
-                    $isExist = SupplierRegistrationLink::select('id', 'STATUS')
+                    $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('company_id', $companyId)
                         ->where('email', $email)
                         ->where('registration_number', $regNo)
@@ -384,12 +384,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                             $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1);
                         } else if ($isExist['STATUS'] === 0){
-                            $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
-                            $updateRec['token'] = $token;
-                            $isUpdated = SupplierRegistrationLink::where('company_id', $companyId)
-                                ->where('email', $email)
-                                ->where('registration_number', $regNo)
-                                ->update($updateRec);
+                            $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
+                            $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                            $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                             if($isUpdated){
                                 $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1);
                                 TenderSupplierAssignee::find($val['id'])
@@ -452,7 +449,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             $email = (!is_null($getSupplierAssignedData['supplierAssigned']['supEmail'])) ? $getSupplierAssignedData['supplierAssigned']['supEmail'] : $getSupplierAssignedData['supplier_email'];
             $regNo = (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? $getSupplierAssignedData['supplierAssigned']['registrationNumber'] : $getSupplierAssignedData['registration_number'];
             $isBidTender =  (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? 0 : 1;
-            $isExist = SupplierRegistrationLink::select('id','STATUS')
+            $isExist = SupplierRegistrationLink::select('id','STATUS', 'token')
                 ->where('company_id', $companySystemId)
                 ->where('email', $email)
                 ->where('registration_number', $regNo)
@@ -466,11 +463,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                 } elseif ($isExist['STATUS'] === 0) {
-                    $updateRec['token'] = $token;
-                    $isUpdated = SupplierRegistrationLink::where('company_id', $companySystemId)
-                        ->where('email', $email)
-                        ->where('registration_number', $regNo)
-                        ->update($updateRec);
+                    $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
+                    $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                    $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                     if($isUpdated){
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1);
                         TenderSupplierAssignee::find($getSupplierAssignedData['id'])
