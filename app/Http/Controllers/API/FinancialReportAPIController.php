@@ -3348,12 +3348,8 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                if ($request->currencyID == 1) {
-                    $cur = $currencyLocal;
-                } else if ($request->currencyID == 2) {
-                    $cur = $currencyRpt;
-                }
-                $title = 'Tax Details';
+                $cur = null;
+                $title = "Financial General Ledeger Details";
                 $detail_array = array(  'type' => 1,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
