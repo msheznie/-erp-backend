@@ -357,13 +357,13 @@ class TenderCircularsAPIController extends AppBaseController
                 $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
 
                 if(!empty($exist)){
-                    return ['success' => false, 'message' => 'Attachment can not be duplicated'];
+                    return ['success' => false, 'message' => 'Selected Attachment has been used in different circular'];
                 }
             }else{
                $exist = TenderCirculars::where('attachment_id', $input['attachment_id'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
 
                 if(!empty($exist)){
-                    return ['success' => false, 'message' => 'Attachment can not be duplicated'];
+                    return ['success' => false, 'message' => 'Selected Attachment has been used in different circular'];
                 }
             }
         }
