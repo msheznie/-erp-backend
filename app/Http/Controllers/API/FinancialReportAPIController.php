@@ -881,47 +881,51 @@ WHERE
                 $sort = 'asc';
                 $monthNo = 0;
 
-                switch (isset($request->month)) {
-                    case 'Jan':
-                        $monthNo = 1;
-                        break;
-                    case 'Feb':
-                        $monthNo = 2;
-                        break; 
-                    case 'Mar':
-                        $monthNo = 3;
-                        break;
-                    case 'Apr':
-                        $monthNo = 4;
-                        break; 
-                    case 'May':
-                        $monthNo = 5;
-                        break;
-                    case 'Jun':
-                        $monthNo = 6;
-                        break; 
-                    case 'Jul':
-                        $monthNo = 7;
-                        break;
-                    case 'Aug':
-                        $monthNo = 8;
-                        break; 
-                    case 'Sep':
-                        $monthNo = 9;
-                        break;
-                    case 'Oct':
-                        $monthNo = 10;
-                        break; 
-                    case 'Nov':
-                        $monthNo = 11;
-                        break;
-                    case 'Dece':
-                        $monthNo = 12;
-                        break; 
-                    default:
-                        # code...
-                        break;
+                if(isset($request->month)) {
+                    switch ($request->month) {
+                        case 'Jan':
+                            $monthNo = 1;
+                            break;
+                        case 'Feb':
+                            $monthNo = 2;
+                            break; 
+                        case 'Mar':
+                            $monthNo = 3;
+                            break;
+                        case 'Apr':
+                            $monthNo = 4;
+                            break; 
+                        case 'May':
+                            $monthNo = 5;
+                            break;
+                        case 'Jun':
+                            $monthNo = 6;
+                            break; 
+                        case 'Jul':
+                            $monthNo = 7;
+                            break;
+                        case 'Aug':
+                            $monthNo = 8;
+                            break; 
+                        case 'Sep':
+                            $monthNo = 9;
+                            break;
+                        case 'Oct':
+                            $monthNo = 10;
+                            break; 
+                        case 'Nov':
+                            $monthNo = 11;
+                            break;
+                        case 'Dece':
+                            $monthNo = 12;
+                            break; 
+                        default:
+                            # code...
+                            break;
+                    }
                 }
+
+                
                 $dataOrg = array();
                 if(isset($request->month)) {
                     foreach($output as $ou) {
@@ -2762,7 +2766,6 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                
                 if ($reportTypeID == 'FTBM') {
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
@@ -2869,6 +2872,7 @@ WHERE
             case 'FGL':
                 $reportTypeID = $request->reportTypeID;
                 $reportSD = $request->reportSD;
+
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
@@ -3129,48 +3133,51 @@ WHERE
                     $outputArr = array();
                     if ($output) {
                         $monthNo = 0;
-
-                        switch (isset($request->month)) {
-                            case 'Jan':
-                                $monthNo = 1;
-                                break;
-                            case 'Feb':
-                                $monthNo = 2;
-                                break; 
-                            case 'Mar':
-                                $monthNo = 3;
-                                break;
-                            case 'Apr':
-                                $monthNo = 4;
-                                break; 
-                            case 'May':
-                                $monthNo = 5;
-                                break;
-                            case 'Jun':
-                                $monthNo = 6;
-                                break; 
-                            case 'Jul':
-                                $monthNo = 7;
-                                break;
-                            case 'Aug':
-                                $monthNo = 8;
-                                break; 
-                            case 'Sep':
-                                $monthNo = 9;
-                                break;
-                            case 'Oct':
-                                $monthNo = 10;
-                                break; 
-                            case 'Nov':
-                                $monthNo = 11;
-                                break;
-                            case 'Dece':
-                                $monthNo = 12;
-                                break; 
-                            default:
-                                # code...
-                                break;
+                        
+                        if(isset($request->month)) {
+                            switch ($request->month) {
+                                case 'Jan':
+                                    $monthNo = 1;
+                                    break;
+                                case 'Feb':
+                                    $monthNo = 2;
+                                    break; 
+                                case 'Mar':
+                                    $monthNo = 3;
+                                    break;
+                                case 'Apr':
+                                    $monthNo = 4;
+                                    break; 
+                                case 'May':
+                                    $monthNo = 5;
+                                    break;
+                                case 'Jun':
+                                    $monthNo = 6;
+                                    break; 
+                                case 'Jul':
+                                    $monthNo = 7;
+                                    break;
+                                case 'Aug':
+                                    $monthNo = 8;
+                                    break; 
+                                case 'Sep':
+                                    $monthNo = 9;
+                                    break;
+                                case 'Oct':
+                                    $monthNo = 10;
+                                    break; 
+                                case 'Nov':
+                                    $monthNo = 11;
+                                    break;
+                                case 'Dece':
+                                    $monthNo = 12;
+                                    break; 
+                                default:
+                                    # code...
+                                    break;
+                            }
                         }
+                        
                         $dataOrg = array();
                         if(isset($request->month)) {
                             foreach($output as $ou) {
@@ -3199,6 +3206,8 @@ WHERE
                         }else{
                             $outputArr = $output;
                         }
+
+
                         // return \Excel::create('general_ledger', function ($excel) use ($glData) {
                         //     $excel->sheet('New sheet', function ($sheet) use ($glData) {
                         //         $sheet->loadView('export_report.general_ledger_report', $glData);
@@ -3236,7 +3245,6 @@ WHERE
                             $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->OpeningBalance, $decimalPlaceRpt);
                         }
                         $x++;
-                        
                         foreach ($outputArr as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
@@ -3340,7 +3348,12 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-
+                if ($request->currencyID == 1) {
+                    $cur = $currencyLocal;
+                } else if ($request->currencyID == 2) {
+                    $cur = $currencyRpt;
+                }
+                $title = 'Tax Details';
                 $detail_array = array(  'type' => 1,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
