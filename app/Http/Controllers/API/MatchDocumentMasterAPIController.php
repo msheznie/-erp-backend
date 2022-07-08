@@ -65,6 +65,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
 use App\helper\CurrencyValidation;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\ChartOfAccount;
 
 /**
  * Class MatchDocumentMasterController
@@ -762,9 +764,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
+        $created_by = $input['created_by'];
         $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','supplier','customer']);
         $input = $this->convertArrayToValue($input);
 
+       
         $employee = \Helper::getEmployeeInfo();
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
@@ -1110,7 +1114,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
 
-
             if($matchDocumentMaster->matchingOption == 1) {
 
                 if (!empty($itemExistArray)) {
@@ -1411,6 +1414,104 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
+
+
+         if ($input['matchingConfirmedYN'] == 1) 
+            {
+                if($input['matchingType'] == 'AP')
+                {
+                    $finalData = [];
+                    $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($input["PayMasterAutoId"]);
+
+                    $ap = AdvancePaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER")->WHERE('PayMasterAutoId', $input["PayMasterAutoId"])->first();
+                    $masterDocumentDate = date('Y-m-d H:i:s');
+                    if ($masterData->financeperiod_by->isActive == -1) {
+                        $masterDocumentDate = $masterData->BPVdate;
+                    }   
+
+                    $supDetail = SupplierAssigned::where('supplierCodeSytem', $masterData->BPVsupplierID)->where('companySystemID', $input['companySystemID'])->first();
+              
+                    
+                    if ($matchDocumentMaster) {
+                        $data['companySystemID'] = $matchDocumentMaster->companySystemID;
+                        $data['companyID'] = $matchDocumentMaster->companyID;
+                        $data['serviceLineSystemID'] = null;
+                        $data['serviceLineCode'] = null;
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = $matchDocumentMaster->documentSystemID;
+                        $data['documentID'] = $matchDocumentMaster->documentID;
+                        $data['documentSystemCode'] = $id;
+                        $data['documentCode'] = $matchDocumentMaster->BPVcode;
+                        $data['documentDate'] = $masterDocumentDate;
+                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                        $data['documentConfirmedDate'] = $matchDocumentMaster->confirmedDate;
+                        $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
+                        $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->approvedDate;
+                        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                        $data['documentNarration'] = $matchDocumentMaster->BPVNarration;
+                        $data['clientContractID'] = 'X';
+                        $data['contractUID'] = 159;
+                        $data['supplierCodeSystem'] = $matchDocumentMaster->BPVsupplierID;
+                        $data['holdingShareholder'] = null;
+                        $data['holdingPercentage'] = 0;
+                        $data['nonHoldingPercentage'] = 0;
+                        $data['chequeNumber'] = $masterData->BPVchequeNo;
+                        $data['documentType'] = $masterData->invoiceType;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $created_by['empID'];
+                        $data['createdUserSystemID'] = $created_by['employeeSystemID'];
+                        $data['createdUserPC'] = gethostname();
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        if ($ap) {
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $masterData->advanceAccountSystemID;
+                            $data['glCode'] = $masterData->AdvanceAccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount) * -1;;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount) * -1;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+
+
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $supDetail->liabilityAccountSysemID;
+                            $data['glCode'] = $supDetail->liabilityAccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount);
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount);
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount);
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
+
+                        foreach ($finalData as $data) {
+                            GeneralLedger::create($data);
+                        }
+                    }
+                }
+               
+            }
 
         return $this->sendResponse($matchDocumentMaster->toArray(), 'Record updated successfully');
     }
