@@ -526,6 +526,7 @@ FROM
 WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 1 AND
     expense_employee_allocation.documentSystemID = 11 AND
     1 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
@@ -2385,6 +2386,7 @@ FROM
 WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 1 AND
     expense_employee_allocation.documentSystemID = 11 AND
     1 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
