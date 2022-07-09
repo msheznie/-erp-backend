@@ -3110,6 +3110,18 @@ WHERE
                         $subTotalDebitLocal = 0;
                         $subTotalCreditRptLocal = 0;
 
+                        $dataArrayNew = array();
+
+                        if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
+                            foreach($output as $ou) {
+                                if(Carbon::parse($ou->documentDate)->format('d/m/Y') <= Carbon::parse($request->toDate)->format('d/m/Y')  && (Carbon::parse($ou->documentDate)->format('m')  == Carbon::parse($request->toDate)->format('m')) ) {
+                                    array_push($dataArrayNew,$ou);
+                                }
+                            }
+
+                            $output = $dataArrayNew;
+                        }
+
                      
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
