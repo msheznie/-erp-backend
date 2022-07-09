@@ -888,13 +888,41 @@ WHERE
 
                
                 $sort = 'asc';
+                $dataArrayNew = array();
 
-                
+                if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
+                    foreach($output as $ou) {
+                        if(Carbon::parse($ou->documentDate)->format('d/m/Y') <= Carbon::parse($request->toDate)->format('d/m/Y')  && (Carbon::parse($ou->documentDate)->format('m')  == Carbon::parse($request->toDate)->format('m')) ) {
+                            array_push($dataArrayNew,$ou);
+                        }
+                    }
+
+                    $total = array();
+                    $total['documentLocalAmountDebit'] = array_sum(collect($dataArrayNew)->pluck('localDebit')->toArray());
+                    $total['documentLocalAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('localCredit')->toArray());
+                    $total['documentRptAmountDebit'] = array_sum(collect($dataArrayNew)->pluck('rptDebit')->toArray());
+                    $total['documentRptAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('rptCredit')->toArray());
+
+    
+                    return \DataTables::of($dataArrayNew)
+                    ->addIndexColumn()
+                    ->with('companyName', $checkIsGroup->CompanyName)
+                    ->with('isGroup', $checkIsGroup->isGroup)
+                    ->with('total', $total)
+                    ->with('decimalPlaceLocal', $decimalPlaceLocal)
+                    ->with('decimalPlaceRpt', $decimalPlaceRpt)
+                    ->with('currencyLocal', $requestCurrencyLocal->CurrencyCode)
+                    ->with('currencyRpt', $requestCurrencyRpt->CurrencyCode)
+                    ->addIndexColumn()
+                    // ->with('orderCondition', $sort)
+                    ->make(true);
+                }else {
                     $total = array();
                     $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
                     $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                     $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                     $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+
     
                     return \DataTables::of($output)
                     ->addIndexColumn()
@@ -908,6 +936,9 @@ WHERE
                     ->addIndexColumn()
                     // ->with('orderCondition', $sort)
                     ->make(true);
+                }
+                
+
 
                 
 
