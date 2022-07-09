@@ -119,6 +119,8 @@ class SupplierAssigned extends Model
         'vatEligible',
         'vatNumber',
         'vatPercentage',
+        'advanceAccountSystemID',
+        'AdvanceAccount',
     ];
 
     /**

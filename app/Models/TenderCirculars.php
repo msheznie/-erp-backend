@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="TenderDocumentTypes",
+ *      definition="TenderCirculars",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,13 +15,30 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="document_type",
- *          description="document_type",
+ *          property="tender_id",
+ *          description="tender_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="circular_name",
+ *          description="circular_name",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="srm_action",
- *          description="srm_action",
+ *          property="description",
+ *          description="description",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="attachment_id",
+ *          description="attachment_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="status",
+ *          description="if 1 published",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -50,6 +67,18 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="deleted_at",
+ *          description="deleted_at",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="deleted_by",
+ *          description="deleted_by",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="company_id",
  *          description="company_id",
  *          type="integer",
@@ -57,24 +86,27 @@ use Eloquent as Model;
  *      )
  * )
  */
-class TenderDocumentTypes extends Model
+class TenderCirculars extends Model
 {
 
-    public $table = 'srm_tender_document_types';
+    public $table = 'srm_tender_circulars';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    public $timestamps = false;
+
+
 
     public $fillable = [
-        'document_type',
-        'srm_action',
+        'tender_id',
+        'circular_name',
+        'description',
+        'attachment_id',
+        'status',
         'created_by',
         'updated_by',
-        'company_id',
-        'created_at',
-        'updated_at'
+        'deleted_by',
+        'company_id'
     ];
 
     /**
@@ -84,10 +116,14 @@ class TenderDocumentTypes extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'document_type' => 'string',
-        'srm_action' => 'integer',
+        'tender_id' => 'integer',
+        'circular_name' => 'string',
+        'description' => 'string',
+        'attachment_id' => 'integer',
+        'status' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
+        'deleted_by' => 'integer',
         'company_id' => 'integer'
     ];
 
@@ -100,13 +136,10 @@ class TenderDocumentTypes extends Model
         
     ];
 
-    public function attachments()
+    public function document_attachments()
     {
-        return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
-    }
-    public function tender_document_type_assign(){ 
-        return $this->hasOne('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
+        return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'attachment_id');
     }
 
-
+    
 }
