@@ -648,7 +648,9 @@ class PaySupplierInvoiceMaster extends Model
         'netAmountLocal',
         'netAmountRpt',
         'bankAccountBalance',
-        'payment_mode'
+        'payment_mode',
+        'advanceAccountSystemID',
+        'AdvanceAccount',
     ];
 
     /**

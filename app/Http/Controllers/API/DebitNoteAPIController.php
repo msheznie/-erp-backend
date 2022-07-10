@@ -51,6 +51,8 @@ use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\SystemGlCodeScenarioDetail;
+use App\Models\SystemGlCodeScenario;
 use App\Repositories\DebitNoteRepository;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
@@ -61,6 +63,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use App\Models\Employee;
+use App\Models\CurrencyMaster;
+use App\helper\Helper;
 /**
  * Class DebitNoteController
  * @package App\Http\Controllers\API
@@ -162,6 +167,60 @@ class DebitNoteAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
+        $type =  $input['type'];
+        $company_id = $input['companySystemID'];
+
+      
+        if($type == 2)
+        {
+                $is_valid = true;
+
+                               $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
+                                $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
+                               }])->first();
+
+                               if(isset($emp_control_acc))
+                               {
+                                if(isset($emp_control_acc->company_scenario))
+                                {
+
+                                    if(isset($emp_control_acc->company_scenario->chartOfAccountSystemID))
+                                    {
+                                        $ChartOfAccountsAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$emp_control_acc->company_scenario->chartOfAccountSystemID)
+                                            ->where('companySystemID',$company_id)->where('isAssigned',-1)->first();
+                                            if(!isset($ChartOfAccountsAssigned))
+                                            {
+                                                $is_valid = false;
+                                            }
+
+                                    }
+                                    else
+                                    {
+                                        $is_valid = false;
+                                    }
+                              
+                                }
+                                else
+                                {
+                                    $is_valid = false;
+                                }
+                               }
+                               else
+                               {
+                                $is_valid = false;
+                               }
+                              
+
+                             
+
+            if(!($is_valid))
+            {
+                return $this->sendError('Employee Control Account not Configured !', 500);
+            }
+            
+        }
+
+    
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -186,9 +245,19 @@ class DebitNoteAPIController extends AppBaseController
         unset($inputParam);
 
         if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
-            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+            if($type == 1)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
                 ->where('supplierID', $input['supplierID'])
                 ->first();
+            }
+            else if($type == 2)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('empID', $input['empID'])
+                ->first();
+            }
+      
 
             if ($alreadyAdded) {
                 return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
@@ -198,20 +267,25 @@ class DebitNoteAPIController extends AppBaseController
         if (isset($input['lcPayment']) && $input['lcPayment'] == 1 && empty($input['lcDocCode'])) {
             return $this->sendError("LC Doc Code is required", 500);
         }
-
+       
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
             'debitNoteDate' => 'required',
-            'supplierID' => 'required|numeric|min:1',
+            'supplierID' => ['required_if:type,1|numeric|min:1'],
+            'empID' => ['required_if:type,2|numeric|min:1'],
             'supplierTransactionCurrencyID' => 'required|numeric|min:1',
             'comments' => 'required',
+        ],
+        [
+            'empID.required_if' => 'Please select an employee',
+            'supplierID.required_if' => 'Please select a supplier',
         ]);
-
+      
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
+ 
         if (isset($input['debitNoteDate'])) {
             if ($input['debitNoteDate']) {
                 $input['debitNoteDate'] = new Carbon($input['debitNoteDate']);
@@ -270,25 +344,45 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
+        if($type == 1)
+        {
+            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
-        if ($supplierAssignedDetail) {
-            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
-            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
-            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+            if ($supplierAssignedDetail) {
+                $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+                $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+                $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+            }
+
+        }
+        else if($type == 2)
+        {
+
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$company_id)->first();
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                }
+            }
+
+          
         }
 
         if ($documentMaster) {
             $code = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['debitNoteCode'] = $code;
         }
-
+        
         $debitNotes = $this->debitNoteRepository->create($input);
 
         return $this->sendResponse($debitNotes->toArray(), 'Debit Note saved successfully');
@@ -341,6 +435,8 @@ class DebitNoteAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'supplier' => function($query){
             $query->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem');
+        }, 'employee' => function($query){
+            $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,DecimalPlaces,currencyID');
         }])->findWithoutFail($id);
@@ -402,11 +498,65 @@ class DebitNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
 
         $input = $this->convertArrayToValue($input);
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
+
+        $type =  $input['type'];
+
+        if($type == 2)
+        {   
+
+            $company_id = $debitNote->companySystemID;
+            $is_valid = true;
+
+            $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
+             $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
+            }])->first();
+
+            if(isset($emp_control_acc))
+            {
+             if(isset($emp_control_acc->company_scenario))
+             {
+
+                 if(isset($emp_control_acc->company_scenario->chartOfAccountSystemID))
+                 {
+                     $ChartOfAccountsAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$emp_control_acc->company_scenario->chartOfAccountSystemID)
+                         ->where('companySystemID',$company_id)->where('isAssigned',-1)->first();
+                         if(!isset($ChartOfAccountsAssigned))
+                         {
+                             $is_valid = false;
+                         }
+
+                 }
+                 else
+                 {
+                     $is_valid = false;
+                 }
+                
+            }
+                    else
+                    {
+                        $is_valid = false;
+                    }
+            }
+                    else
+                    {
+                    $is_valid = false;
+                    }
+           
+
+          
+
+                    if(!($is_valid))
+                    {
+                    return $this->sendError('Employee Control Account not Configured !', 500);
+                    }
+
+
+        }
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
@@ -427,10 +577,23 @@ class DebitNoteAPIController extends AppBaseController
 
 
         if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
-            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+
+            if($type == 1)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
                 ->where('supplierID', $input['supplierID'])
                 ->where('debitNoteAutoID', '<>', $id)
                 ->first();
+            }
+            else if($type == 2)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('empID', $input['empID'])
+                ->where('debitNoteAutoID', '<>', $id)
+                ->first();
+            }
+
+       
 
             if ($alreadyAdded) {
                 return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
@@ -443,20 +606,46 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
+
+        if($type == 1)
+        {
+            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
             'UnbilledGRVAccount','supplierName','primarySupplierCode')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
-        if ($supplierAssignedDetail) {
-            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
-            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
-            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+            if ($supplierAssignedDetail) {
+                $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+                $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+                $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+                $input["empControlAccount"] = null;
+                $input["empID"] = null;
+            }
         }
+        else if($type == 2)
+        {
+
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$input['companySystemID'])->first();
+
+         
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                    $input["supplierID"] = null;
+                }
+            }
+
+          
+        }
+    
 
         if (isset($input['debitNoteDate'])) {
             if ($input['debitNoteDate']) {
@@ -511,9 +700,14 @@ class DebitNoteAPIController extends AppBaseController
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'debitNoteDate' => 'required',
-                'supplierID' => 'required|numeric|min:1',
+                'supplierID' => ['required_if:type,1|numeric|min:1'],
+                'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
@@ -754,11 +948,15 @@ class DebitNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
 
         $input = $this->convertArrayToValue($input);
+
+      
         /** @var DebitNote $debitNote */
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
+
+        $type =  $input['type'];
 
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
@@ -779,10 +977,25 @@ class DebitNoteAPIController extends AppBaseController
 
 
         if (isset($input['invoiceNumber']) && !empty($input['invoiceNumber'])) {
-            $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+           
+
+
+            if($type == 1)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
                 ->where('supplierID', $input['supplierID'])
                 ->where('debitNoteAutoID', '<>', $id)
                 ->first();
+            }
+            else if($type == 2)
+            {
+                $alreadyAdded = DebitNote::where('invoiceNumber', $input['invoiceNumber'])
+                ->where('empID', $input['empID'])
+                ->where('debitNoteAutoID', '<>', $id)
+                ->first();
+            }
+
+
 
             if ($alreadyAdded) {
                 return $this->sendError("Entered invoice number was already used ($alreadyAdded->debitNoteCode). Please check again", 500);
@@ -795,20 +1008,44 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         // adding supplier grv details
-        $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
+        if($type == 1)
+        {
+            $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID',
             'UnbilledGRVAccount','supplierName','primarySupplierCode')
             ->where('supplierCodeSytem', $input['supplierID'])
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
-        if ($supplierAssignedDetail) {
-            $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
-            $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
-            $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
-            $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-            $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+            if ($supplierAssignedDetail) {
+                $input["supplierGLCodeSystemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["supplierGLCode"] = $supplierAssignedDetail->liabilityAccount;
+                $input["liabilityAccountSysemID"] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input["liabilityAccount"] = $supplierAssignedDetail->liabilityAccount;
+                $input["UnbilledGRVAccountSystemID"] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input["UnbilledGRVAccount"] = $supplierAssignedDetail->UnbilledGRVAccount;
+                $input["empControlAccount"] = null;
+                $input["empID"] = null;
+            }
         }
+        else if($type == 2)
+        {
+
+            
+            $emp_control_acc = SystemGlCodeScenarioDetail::where('systemGlScenarioID',12)->where('companySystemID',$input['companySystemID'])->first();
+            if(isset($emp_control_acc))
+            {
+                $emp_chart_acc = $emp_control_acc->chartOfAccountSystemID;
+                if(!empty($emp_chart_acc) && $emp_chart_acc != null)
+                {
+                    $input["empControlAccount"] = $emp_chart_acc;
+                    $input["supplierID"] = null;
+                }
+            }
+
+          
+        }
+
+ 
 
         if (isset($input['debitNoteDate'])) {
             if ($input['debitNoteDate']) {
@@ -857,9 +1094,14 @@ class DebitNoteAPIController extends AppBaseController
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'debitNoteDate' => 'required',
-                'supplierID' => 'required|numeric|min:1',
+                'supplierID' => ['required_if:type,1|numeric|min:1'],
+                'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
@@ -1073,6 +1315,46 @@ class DebitNoteAPIController extends AppBaseController
         return $this->sendResponse($debitNote, 'Debit note updated successfully');
 
     }
+
+    public function updateDebiteNoteType($id, UpdateDebitNoteAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
+
+        $input = $this->convertArrayToValue($input);
+
+      
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
+
+        $type =  $input['type'];
+
+        if($type == 1)
+        {
+            $details["empControlAccount"] = null;
+            $details["empID"] = null;
+        }
+        else if($type == 2)
+        {
+            $details["supplierID"] = null;
+        }
+
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        if ($debitNote->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
+        $details['type'] = $type;
+
+        $debitNote = $this->debitNoteRepository->update($details, $id);
+
+        return $this->sendResponse($debitNote, 'Debit note updated successfully');
+
+    }
+
     /**
      * @param int $id
      * @return Response
@@ -1206,7 +1488,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID','type'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1263,6 +1545,20 @@ class DebitNoteAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->get();
 
+ 
+
+        $employees = Employee::selectRaw('empID, empName, employeeSystemID')->where('discharegedYN','<>', 2);
+        if(Helper::checkHrmsIntergrated($companyId)){
+            $employees = $employees->whereHas('hr_emp', function($q){
+                $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+            });
+        }
+        $employees = $employees->get();
+
+
+
+        $currency = CurrencyMaster::all();
+
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
 
@@ -1281,17 +1577,24 @@ class DebitNoteAPIController extends AppBaseController
         $projects = ErpProjectMaster::where('companySystemID', $companyId)
                                         ->get();
 
+
+          
+        $debite_note_type = [["id"=>1,"name"=>"Supplier"],["id"=>2,"name"=>"Employee",]];                                
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
+            'type' => $debite_note_type,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
             'suppliers' => $suppliers,
+            'employee' =>$employees,
             'segments' => $segments,
             'companyBasePO' => $companyBasePO,
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
+            'currency' => $currency,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1668,6 +1971,8 @@ class DebitNoteAPIController extends AppBaseController
                                             ->where('companyID', $debitNote->companySystemID)
                                             ->where('documentID', 15)
                                             ->first();
+
+                                            
 
         if ($printTemplate && $printTemplate->printTemplateID == 10) {
             $html = view('print.debit_note_template.debit_note_gulf', $array);
@@ -2081,7 +2386,7 @@ UNION ALL
         }
 
         $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
-            ->with('created_by', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'final_approved_by', 'project')
+            ->with('created_by', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'final_approved_by', 'project','employee')
             ->where('documentSystemID', $input['documentId']);
 
         if (array_key_exists('supplierID', $input)) {
@@ -2099,6 +2404,12 @@ UNION ALL
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('type', $input)) {
+            if ($input['type'] && !is_null($input['type'])) {
+                $debitNotes = $debitNotes->where('type', $input['type']);
             }
         }
 

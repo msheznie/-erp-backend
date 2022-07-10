@@ -686,6 +686,11 @@ class JvMasterAPIController extends AppBaseController
             $allSubCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         }
 
+        $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->first();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -694,6 +699,7 @@ class JvMasterAPIController extends AppBaseController
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'allSubCompanies' => $allSubCompanies,
+            'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments
         );
@@ -1444,6 +1450,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         if (!empty($fetchJournalVoucherDetails)) {
             foreach ($fetchJournalVoucherDetails as $bookDetail) {
                 $bookDetail['timesReferred'] = $jvMasterData->timesReferred;
+                $bookDetail->setAppends([]);
             }
         }
 

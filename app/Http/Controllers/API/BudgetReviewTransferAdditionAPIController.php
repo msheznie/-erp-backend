@@ -278,4 +278,27 @@ class BudgetReviewTransferAdditionAPIController extends AppBaseController
 
         return $this->sendSuccess('Budget Review Transfer Addition deleted successfully');
     }
+
+    public function getBudgetReviewTransferAddition(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $budgetTransferType = $input['budgetTransferType'];
+
+        $budgetAddition = BudgetReviewTransferAddition::where('budgetTransferType', $budgetTransferType)
+            ->where('budgetTransferAdditionID', $id)
+            ->with(['purchase_request' => function($query){
+                    $query->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by'])
+                    ->where('cancelledYN', 0)
+                    ->where('approved', 0)
+                    ->where('budgetBlockYN', -1);
+            }, 'purchase_order' => function($query){
+                    $query->with(['financeCategory', 'segment', 'supplier', 'created_by','currency', 'document_by'])
+                    ->where('poCancelledYN', 0)
+                    ->where('approved', 0)
+                    ->where('budgetBlockYN', -1);
+            }])
+            ->get();
+        return $this->sendResponse($budgetAddition->toArray(), 'Budget Review Transfer Addition retrieved successfully');
+    }
 }

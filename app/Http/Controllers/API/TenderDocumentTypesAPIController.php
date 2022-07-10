@@ -8,6 +8,7 @@ use App\Models\TenderDocumentTypes;
 use App\Repositories\TenderDocumentTypesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\TenderDocumentTypeAssign;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -282,6 +283,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
     public function getTenderAttachmentType(Request $request)
     {
         $input = $request->all();
-        return TenderDocumentTypes::where('company_id',$input['companySystemID'])->orWhere('company_id',null)->get();
+        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
+        return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhere('company_id',null)->get(); 
     }
 }

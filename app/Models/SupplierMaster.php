@@ -168,7 +168,9 @@ class SupplierMaster extends Model
         'createdFrom',
         'supplier_category_id',
         'supplier_group_id',
-        'last_activity'
+        'last_activity',
+        'advanceAccountSystemID',
+        'AdvanceAccount',
     ];
 
     /**

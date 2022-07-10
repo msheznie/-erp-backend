@@ -181,14 +181,6 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    {{-- @if($request->logoExists)
-                          @if($type == 1)
-                            <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
-                          @else
-                            image not found
-                          @endif
-                    @endif --}}
                 </td>
 
 
@@ -233,13 +225,20 @@
                     {{$request->CompanyAddress}}<br>
                     Tel: {{$request->CompanyTelephone}}<br>
                     Fax: {{$request->CompanyFax}}<br>
-                </td> 
-                <td colspan="1" class="thicker">---</td>
+                    VAT NO: {{$request->vatRegistratonNumber}}<br>
+                </td>
+                <td colspan="1" class="thicker">
+                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                        @foreach ($request->issue_item_details as $item)
+                            {{isset($item->sales_quotation->quotationCode)?$item->sales_quotation->quotationCode:' '}}
+                        @endforeach
+                    @endif
+                </td>
                 <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
                                                                     {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
                                                                 @endif
                 </td>
-                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp; ----</td>
+                <td colspan="1" class="thicker"> (CONTRACT) DATE:</td>
 
             </tr>
         </table>
@@ -258,22 +257,22 @@
             <tr> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">
                     @if(!empty($request->customer) )
-                        {{isset($request->customer->ReportTitle)?$request->customer->ReportTitle:'-'}}<br>
-                        {{isset($request->customer->customerAddress1)?$request->customer->customerAddress1:'-'}}<br>
+                        {{isset($request->customer->ReportTitle)?$request->customer->ReportTitle:' '}}<br>
+                        {{isset($request->customer->customerAddress1)?$request->customer->customerAddress1:' '}}<br>
                     @endif
 
                     @if(!empty($request->CustomerContactDetails) )
-                        TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:'-'}}<br>
-                        FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:'-'}}<br>
+                        TEL: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}<br>
+                        FAX: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}<br>
                     @endif
-                    
+                       CUSTOMER VATIN : {{$request->vatNumber}}
 
                 </td> 
                 <td colspan="4"  style=" border-top: none;" class="thicker">
                     @if(!empty($request->customerInvoiceLogistic) )
-                            {{isset($request->customerInvoiceLogistic['consignee_name'])?$request->customerInvoiceLogistic['consignee_name']:'-'}}<br>
-                            {{isset($request->customerInvoiceLogistic['consignee_address'])?$request->customerInvoiceLogistic['consignee_address']:'-'}}<br>
-                            {{isset($request->customerInvoiceLogistic['consignee_contact_no'])?$request->customerInvoiceLogistic['consignee_contact_no']:'-'}}<br>
+                            {{isset($request->customerInvoiceLogistic['consignee_name'])?$request->customerInvoiceLogistic['consignee_name']:' '}}<br>
+                            {{isset($request->customerInvoiceLogistic['consignee_address'])?$request->customerInvoiceLogistic['consignee_address']:' '}}<br>
+                            {{isset($request->customerInvoiceLogistic['consignee_contact_no'])?$request->customerInvoiceLogistic['consignee_contact_no']:' '}}<br>
                     @endif
                 </td> 
             </tr> 
@@ -283,51 +282,55 @@
                 <td colspan="2" style="text-align: center" class="thicker">COUNTRY OF ORIGIN</td>
                 <td colspan="4" style="text-align: center" class="thicker">SULTANATE OF OMAN</td>
                 <td colspan="8" rowspan="10"><span class="thicker"> Terms Of Payment: </span><br> 
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['payment_terms'])?$request->customerInvoiceLogistic['payment_terms']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['payment_terms'])?$request->customerInvoiceLogistic['payment_terms']:' '}}</span>
                 </td>
             </tr> 
             <tr> 
 
                 <td colspan="2" style="text-align: center"><span class="thick"> Vessel Name</span> <br>
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['vessel_no'])?$request->customerInvoiceLogistic['vessel_no']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['vessel_no'])?$request->customerInvoiceLogistic['vessel_no']:' '}}</span>
                 </td> 
                 <td colspan="2" style="text-align: center"><span class="thick"> Port Of Loading</span> <br> 
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_loading']['port_name'])?$request->customerInvoiceLogistic['port_of_loading']['port_name']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_loading']['port_name'])?$request->customerInvoiceLogistic['port_of_loading']['port_name']:' '}}</span>
                 </td> 
                 <td colspan="2" style="text-align: center"><span class="thick"> Delivery Term</span> <br>
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['delivery_payment'])?$request->customerInvoiceLogistic['delivery_payment']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['delivery_payment'])?$request->customerInvoiceLogistic['delivery_payment']:' '}}</span>
                 </td> 
             </tr> 
         </table>
         <table border="1" width="100%">
             <tr>
                 <td colspan="1" rowspan="4" style="text-align: center" class="thick">B/Lading No <br> 
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['b_ladding_no'])?$request->customerInvoiceLogistic['b_ladding_no']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['b_ladding_no'])?$request->customerInvoiceLogistic['b_ladding_no']:' '}}</span>
                 </td>
                 <td colspan="1" rowspan="4" style="text-align: center" class="thick">Port of Discharge <br>
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_discharge']['port_name'])?$request->customerInvoiceLogistic['port_of_discharge']['port_name']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['port_of_discharge']['port_name'])?$request->customerInvoiceLogistic['port_of_discharge']['port_name']:' '}}</span>
                 </td>
                 <td colspan="1"  style="text-align: center" class="thicker">No of Containers</td>
                 <td colspan="4" class="thicker">Packing</td>
-                <td colspan="4" >BULKS</td>
+                <td colspan="4" ></td>
             </tr>
             <tr>
 
                 <td colspan="1" style="text-align: center">
-                    <span class="normal">{{isset($request->customerInvoiceLogistic['no_of_container'])?$request->customerInvoiceLogistic['no_of_container']:'-'}}</span>
+                    <span class="normal">{{isset($request->customerInvoiceLogistic['no_of_container'])?$request->customerInvoiceLogistic['no_of_container']:' '}}</span>
                 </td>
                 <td colspan="4" class="thicker">Currency</td>
                 <td colspan="4" >{{isset($request->currency->CurrencyName)?$request->currency->CurrencyName:''}}</td>
             </tr>
         </table>
 
-        @if (isset($request->item_invoice) && $request->item_invoice)
-
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
+                @if(count($request->issue_item_details) > 0 )
                     <th style="width:10%;">Item</th>
                     <th style="width:25%;">Content</th>
+                @endif
+                @if(count($request->invoicedetails) > 0 )
+                    <th style="width:10%;">Account Code</th>
+                    <th style="width:25%;">Description</th>
+                @endif
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">Quantity</th>
                     <th style="width:15%;text-align: center">Rate</th>
@@ -362,6 +365,24 @@
                     @endforeach
                 @endif
 
+                @if(!empty($request->invoicedetails))
+                    @foreach ($request->invoicedetails as $item)
+
+                            {{$directTraSubTotal +=$item->invoiceAmount}}
+
+                            <tr style="border: 1px solid !important;">
+                                <td style="text-align: center;">{{$item->glCode}}</td>
+                                <td style="word-wrap:break-word;">{{$item->glCodeDes}}</td>
+                                <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
+                                <td style="text-align: center;">{{$item->invoiceQty}}</td>
+                                <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-center">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
+                            </tr>
+                            {{ $x++ }}
+                    @endforeach
+                @endif
+
                 </tbody>
                 <tbody>
                 <tr>
@@ -371,7 +392,6 @@
                             {{number_format($directTraSubTotal, $numberFormatting)}}
                         @endif</td>
                 </tr>
-                @if ($request->isVATEligible)
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
@@ -389,20 +409,25 @@
                     <tr>
                         <td colspan="2"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->amountInWordsEnglish}}</td>
+                        <td colspan="3" class="text-right">{{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            @endif
+                            
+                            only
+                        </td>
                     </tr>
-                @endif
                 </tbody>
             </table>
             
             <table class="table">
                 <tbody>
                     <tr>
-                        <td colspan="8">we certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
+                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
                     </tr>
                 </tbody>
             </table>
-        @endif
     </div>
   
 

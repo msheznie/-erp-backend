@@ -234,6 +234,7 @@
             <td style="width: 80%">
                 <table>
                     <tr>
+                       @if($entity->type == 1)
                         <td width="150px">
                             <span class="font-weight-bold">Supplier Code</span>
                         </td>
@@ -245,8 +246,24 @@
                                 {{$entity->supplier->primarySupplierCode}}
                             @endif
                         </td>
+                        @endif
+
+                        @if($entity->type == 2)
+                        <td width="150px">
+                            <span class="font-weight-bold">Employee Code</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->employee)
+                                {{$entity->employee->empID}}
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                     <tr>
+                       @if($entity->type == 1)
                         <td width="50px">
                             <span class="font-weight-bold">Supplier Name</span>
                         </td>
@@ -258,6 +275,21 @@
                                 {{$entity->supplier->supplierName}}
                             @endif
                         </td>
+                        @endif
+
+                        @if($entity->type == 2)
+                        <td width="50px">
+                            <span class="font-weight-bold">Employee Name</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->employee)
+                                {{$entity->employee->empName}}
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                     <tr>
                         <td width="50px">

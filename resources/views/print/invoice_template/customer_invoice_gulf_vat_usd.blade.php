@@ -251,7 +251,6 @@
                                 </span>
                             </td>
                         </tr>
-
                         @if($request->lineSecondAddress)
                         <tr>
                             <td width="110px"><span class="font-weight-bold">Address Line 2</span></td>
@@ -262,7 +261,7 @@
                                 </span>
                             </td>
                         </tr>
-                        @else
+                       @else
                             <tr>
                                 <td>{{$request->customer->customerCity}}</td>
                             </tr>
