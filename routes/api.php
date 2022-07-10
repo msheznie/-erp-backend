@@ -2716,6 +2716,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
         Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
         Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
+        Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
         Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
     });
 

@@ -12,6 +12,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CashFlowTemplate;
 use App\Models\GeneralLedger;
+use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\CashFlowReportRepository;
 use Illuminate\Http\Request;
@@ -533,5 +534,34 @@ class CashFlowReportAPIController extends AppBaseController
         $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray()];
 
         return $this->sendResponse($output, 'Report Template Details retrieved successfully');   
+    }
+
+    public function getCashFlowPullingItems(Request $request){
+
+        $dataCashFlow = $request->dataCashFlow;
+        $dataCashFlow = (array)$dataCashFlow;
+        $dataCashFlow = collect($dataCashFlow)->pluck('glAutoID');
+
+        $details = DB::select('SELECT * FROM (SELECT
+	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
+    erp_grvdetails.netAmount as grvAmount,
+    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+    erp_bookinvsupp_item_det.totLocalAmount as bsiAmountLocal,
+    erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
+    erp_paysupplierinvoicemaster.BPVcode as payCode
+	FROM 
+    erp_grvdetails
+    LEFT JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID
+    LEFT JOIN erp_bookinvsupp_item_det ON erp_grvdetails.grvDetailsID = erp_bookinvsupp_item_det.grvDetailsID
+    LEFT JOIN erp_bookinvsuppmaster ON erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+    LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
+    LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
+    WHERE
+    erp_grvdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ')
+    )AS t1');
+
+
+        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+
     }
 }
