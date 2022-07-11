@@ -526,6 +526,7 @@ FROM
 WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 1 AND
     expense_employee_allocation.documentSystemID = 11 AND
     1 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
@@ -848,8 +849,16 @@ WHERE
 
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
+
+                if(isset($request->month)) {
+                    $request->toDate = $request->month."".Carbon::parse($request->month)->endOfMonth()
+                    ->format('d').",2022";
+                }
+
+
                 $output = $this->getGeneralLedger($request);
 
+                
                 // return $this->sendResponse($output, 'Record ');
                 // die();
 
@@ -879,73 +888,23 @@ WHERE
 
                
                 $sort = 'asc';
-                $monthNo = 0;
+                $dataArrayNew = array();
 
-                switch (isset($request->month)) {
-                    case 'Jan':
-                        $monthNo = 1;
-                        break;
-                    case 'Feb':
-                        $monthNo = 2;
-                        break; 
-                    case 'Mar':
-                        $monthNo = 3;
-                        break;
-                    case 'Apr':
-                        $monthNo = 4;
-                        break; 
-                    case 'May':
-                        $monthNo = 5;
-                        break;
-                    case 'Jun':
-                        $monthNo = 6;
-                        break; 
-                    case 'Jul':
-                        $monthNo = 7;
-                        break;
-                    case 'Aug':
-                        $monthNo = 8;
-                        break; 
-                    case 'Sep':
-                        $monthNo = 9;
-                        break;
-                    case 'Oct':
-                        $monthNo = 10;
-                        break; 
-                    case 'Nov':
-                        $monthNo = 11;
-                        break;
-                    case 'Dece':
-                        $monthNo = 12;
-                        break; 
-                    default:
-                        # code...
-                        break;
-                }
-                $dataOrg = array();
-                if(isset($request->month)) {
+                if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
                     foreach($output as $ou) {
-
-                        if($request->isClosing) {
-                            if(Carbon::parse($ou->documentDate)->format('m') <= $monthNo && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
-                                array_push($dataOrg,$ou);
-                            }
-                        }else {
-                            if(strcmp($request->month,Carbon::parse($ou->documentDate)->format('M')) == 0 && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
-                                array_push($dataOrg,$ou);
-                            }
+                        if(Carbon::parse($ou->documentDate)->format('d/m/Y') <= Carbon::parse($request->toDate)->format('d/m/Y')  && (Carbon::parse($ou->documentDate)->format('m')  == Carbon::parse($request->toDate)->format('m')) ) {
+                            array_push($dataArrayNew,$ou);
                         }
-
-                        
                     }
 
                     $total = array();
-                    $total['documentLocalAmountDebit'] = array_sum(collect($dataOrg)->pluck('localDebit')->toArray());
-                    $total['documentLocalAmountCredit'] = array_sum(collect($dataOrg)->pluck('localCredit')->toArray());
-                    $total['documentRptAmountDebit'] = array_sum(collect($dataOrg)->pluck('rptDebit')->toArray());
-                    $total['documentRptAmountCredit'] = array_sum(collect($dataOrg)->pluck('rptCredit')->toArray());
+                    $total['documentLocalAmountDebit'] = array_sum(collect($dataArrayNew)->pluck('localDebit')->toArray());
+                    $total['documentLocalAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('localCredit')->toArray());
+                    $total['documentRptAmountDebit'] = array_sum(collect($dataArrayNew)->pluck('rptDebit')->toArray());
+                    $total['documentRptAmountCredit'] = array_sum(collect($dataArrayNew)->pluck('rptCredit')->toArray());
 
-                    return \DataTables::of($dataOrg)
+    
+                    return \DataTables::of($dataArrayNew)
                     ->addIndexColumn()
                     ->with('companyName', $checkIsGroup->CompanyName)
                     ->with('isGroup', $checkIsGroup->isGroup)
@@ -963,6 +922,7 @@ WHERE
                     $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                     $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                     $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+
     
                     return \DataTables::of($output)
                     ->addIndexColumn()
@@ -977,6 +937,8 @@ WHERE
                     // ->with('orderCondition', $sort)
                     ->make(true);
                 }
+                
+
 
                 
 
@@ -2385,6 +2347,7 @@ FROM
 WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 1 AND
     expense_employee_allocation.documentSystemID = 11 AND
     1 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
@@ -2762,7 +2725,6 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-                
                 if ($reportTypeID == 'FTBM') {
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
@@ -2869,11 +2831,20 @@ WHERE
             case 'FGL':
                 $reportTypeID = $request->reportTypeID;
                 $reportSD = $request->reportSD;
+
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
+
+                if(isset($request->month)) {
+                    $request->toDate = $request->month."".Carbon::parse($request->month)->endOfMonth()
+                    ->format('d').",2022";
+                }
+
+
+
                 $output = $this->getGeneralLedger($request);
 
                 $currencyIdLocal = 1;
@@ -3126,79 +3097,9 @@ WHERE
                     }
                 } else {
 
-                    $outputArr = array();
                     if ($output) {
-                        $monthNo = 0;
+                       
 
-                        switch (isset($request->month)) {
-                            case 'Jan':
-                                $monthNo = 1;
-                                break;
-                            case 'Feb':
-                                $monthNo = 2;
-                                break; 
-                            case 'Mar':
-                                $monthNo = 3;
-                                break;
-                            case 'Apr':
-                                $monthNo = 4;
-                                break; 
-                            case 'May':
-                                $monthNo = 5;
-                                break;
-                            case 'Jun':
-                                $monthNo = 6;
-                                break; 
-                            case 'Jul':
-                                $monthNo = 7;
-                                break;
-                            case 'Aug':
-                                $monthNo = 8;
-                                break; 
-                            case 'Sep':
-                                $monthNo = 9;
-                                break;
-                            case 'Oct':
-                                $monthNo = 10;
-                                break; 
-                            case 'Nov':
-                                $monthNo = 11;
-                                break;
-                            case 'Dece':
-                                $monthNo = 12;
-                                break; 
-                            default:
-                                # code...
-                                break;
-                        }
-                        $dataOrg = array();
-                        if(isset($request->month)) {
-                            foreach($output as $ou) {
-
-                                if($request->isClosing) {
-                                    if(Carbon::parse($ou->documentDate)->format('m') <= $monthNo && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
-                                        array_push($dataOrg,$ou);
-                                    }
-                                }else {
-                                    if(strcmp($request->month,Carbon::parse($ou->documentDate)->format('M')) == 0 && Carbon::parse($ou->documentDate)->between(Carbon::parse($request->fromDate) ,Carbon::parse($request->toDate))) {
-                                        array_push($dataOrg,$ou);
-                                    }
-                                }
-
-                                
-                            }
-
-                            $total = array();
-                            $total['documentLocalAmountDebit'] = array_sum(collect($dataOrg)->pluck('localDebit')->toArray());
-                            $total['documentLocalAmountCredit'] = array_sum(collect($dataOrg)->pluck('localCredit')->toArray());
-                            $total['documentRptAmountDebit'] = array_sum(collect($dataOrg)->pluck('rptDebit')->toArray());
-                            $total['documentRptAmountCredit'] = array_sum(collect($dataOrg)->pluck('rptCredit')->toArray());
-
-                            $outputArr = $dataOrg;
-
-                        }else{
-                            $outputArr = $output;
-                        }
                         // return \Excel::create('general_ledger', function ($excel) use ($glData) {
                         //     $excel->sheet('New sheet', function ($sheet) use ($glData) {
                         //         $sheet->loadView('export_report.general_ledger_report', $glData);
@@ -3211,33 +3112,20 @@ WHERE
                         $subTotalDebitLocal = 0;
                         $subTotalCreditRptLocal = 0;
 
-                        $x++;
-                        $data[$x]['Company ID'] = "";
-                        $data[$x]['Company Name'] = "";
-                        $data[$x]['GL Code'] = "";
-                        $data[$x]['Account Description'] = "";
-                        $data[$x]['GL  Type'] = "";
-                        $data[$x]['Template Description'] = "";
-                        $data[$x]['Document Type'] = "";
-                        $data[$x]['Document Number'] = "";
-                        $data[$x]['Date'] = "";
-                        $data[$x]['Document Narration'] = "";
-                        $data[$x]['Service Line'] = "";
-                        $data[$x]['Contract'] = "";
+                        $dataArrayNew = array();
 
-                        $data[$x]['Supplier/Customer'] = "Opening Balance";
-                        if ($checkIsGroup->isGroup == 0 && $request->currencyID == 1) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($request->OpeningBalance, $decimalPlaceLocal);
+                        if(isset($request->isClosing) && !$request->isClosing && isset($request->month)) {
+                            foreach($output as $ou) {
+                                if(Carbon::parse($ou->documentDate)->format('d/m/Y') <= Carbon::parse($request->toDate)->format('d/m/Y')  && (Carbon::parse($ou->documentDate)->format('m')  == Carbon::parse($request->toDate)->format('m')) ) {
+                                    array_push($dataArrayNew,$ou);
+                                }
+                            }
+
+                            $output = $dataArrayNew;
                         }
 
-                        if($request->currencyID == 2) {
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->OpeningBalance, $decimalPlaceRpt);
-                        }
-                        $x++;
-                        
-                        foreach ($outputArr as $val) {
+                     
+                        foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['GL Code'] = $val->glCode;
@@ -3340,7 +3228,8 @@ WHERE
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
-
+                $cur = null;
+                $title = "Financial General Ledeger Details";
                 $detail_array = array(  'type' => 1,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
