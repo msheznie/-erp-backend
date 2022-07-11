@@ -61,7 +61,7 @@ use Throwable;
 use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
-
+use App\Models\TenderDocumentTypeAssign;
 class SRMService
 {
     private $POService = null;
@@ -1836,8 +1836,10 @@ class SRMService
     public function getConsolidatedData($request)
     {
         $tenderMasterId = $request->input('extra.tenderId');
+        $assignDocumentTypesDeclared = [1,2,3];
+        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->pluck('document_type_id')->toArray();
         $tenderDates = [];
-
+        $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
         $tenderMaster = TenderMaster::select(
             'title',
             'tender_code',
@@ -1848,7 +1850,9 @@ class SRMService
             'site_visit_date',
             'site_visit_end_date',
             'bid_submission_opening_date',
-            'bid_submission_closing_date'
+            'bid_submission_closing_date',
+            'no_of_alternative_solutions',
+            'is_active_go_no_go'
         )
             ->where('id', $tenderMasterId)
             ->first();
@@ -1902,6 +1906,8 @@ class SRMService
             return $data;
         });
         $data['currentSequence'] = $currentSequence->filter()->last();
+        $data['noOfBids'] = $tenderMaster['no_of_alternative_solutions'];
+        $data['goNoGoEnable'] = $tenderMaster['is_active_go_no_go'];
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
         $data['sequenceDate'] = $calendarDateMerge;
@@ -1909,13 +1915,14 @@ class SRMService
         $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId) {
             $q->where('documentSystemCode', $tenderMasterId);
             $q->where('documentSystemID', 108);
-        }])
-            ->where('srm_action', '!=', 2)
-            ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
+        }]) 
+        ->whereIn('id',$doucments)   
+        ->where('srm_action', '!=', 2)
+        ->WhereHas('attachments', function ($q1) use ($tenderMasterId) {
                 $q1->where('documentSystemCode', $tenderMasterId)
                     ->where('documentSystemID', 108);
-            })
-            ->get();
+        }) 
+        ->get();
 
         $data['attachments'] = $attachments;
         return [
@@ -1978,9 +1985,13 @@ class SRMService
     {
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $tender_id = $request->input('extra.tenderId');
-        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)->where('supplier_registration_id', $supplierRegId)->first();
-        if (!empty($bidSubmitted)) {
-            $bidMasterId = $bidSubmitted['id'];
+        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tender_id)
+            ->where('supplier_registration_id', $supplierRegId)
+            ->orderBy('id', 'ASC')
+            ->get();
+
+        if (!empty($bidSubmitted) && count($bidSubmitted) > 0) {
+            $bidMasterId = 0; 
         } else {
             $att['tender_id'] = $tender_id;
             $att['supplier_registration_id'] = $supplierRegId;
@@ -1989,14 +2000,16 @@ class SRMService
             $att['created_at'] = Carbon::now();
             $att['created_by'] = $supplierRegId;
             $result = BidSubmissionMaster::create($att);
-
             $bidMasterId = $result['id'];
         }
+
+        $data['bidMasterId'] = $bidMasterId;
+        $data['bidSubmittedData'] = $bidSubmitted;
 
         return [
             'success' => true,
             'message' => 'Retrieved Bid Submission id',
-            'data' => $bidMasterId
+            'data' => $data
         ];
     }
 
@@ -2309,12 +2322,18 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
+        $assignDocumentTypesDeclared = [1,2,3];
+        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
+        $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
 
-        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) {
+        $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $q->whereIn('id',$doucments);
             $q->where('srm_action', 1);
-        }, 'document_attachments'=> function ($q) use($bidMasterId) {
+            
+        }, 'document_attachments' => function ($q) use ($bidMasterId) {
             $q->where('documentSystemCode', $bidMasterId);
-        }])->whereHas('tender_document_types', function ($q) {
+        }])->whereHas('tender_document_types', function ($q) use ($doucments){
+            $q->whereIn('id',$doucments);
             $q->where('srm_action', 1);
         })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->where('envelopType', $envelopType)->get();
 
@@ -2476,7 +2495,7 @@ class SRMService
             })
             ->count();*/
 
-        $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
+        /*    $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
             $q2->where('bid_master_id', $bidMasterId);
             $q2->where('tender_id', $tenderId);
         })
@@ -2527,13 +2546,15 @@ class SRMService
 
         $bidsubmission =  BidSubmissionMaster::where('id', $bidMasterId)
         ->where('tender_id',$tenderId)
-        ->first();
+        ->first(); */
+
+        $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
 
         // $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
-        $data['technicalBidSubmissionYn'] = $technicalEvaluationCriteria > 0 ? 1 : 0;
-        $data['commercialBidSubmission'] = $filtered->count();
-        $data['isBidSubmissionStatus'] = $bidsubmission['status']; 
-        
+        $data['technicalBidSubmissionYn'] = $bidSubmissionData['technicalEvaluationCriteria'];
+        $data['commercialBidSubmission'] = $bidSubmissionData['filtered'];
+        $data['isBidSubmissionStatus'] = $bidSubmissionData['bidsubmission'];
+
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
@@ -2681,11 +2702,11 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
 
         DB::beginTransaction();
-        try { 
+        try {
             $updateData['status'] = 1;
             $updateData['updated_at'] = Carbon::now();
             $result = BidSubmissionMaster::where('id', $bidMasterId)
-                ->where('tender_id',$tenderId)
+                ->where('tender_id', $tenderId)
                 ->update($updateData);
             DB::commit();
             return [
@@ -2700,12 +2721,177 @@ class SRMService
         }
     }
 
-    public function getBidMasterData($bidMasterId){
-        $bidMaster = BidSubmissionMaster::where('id',$bidMasterId)->first();
-        if($bidMaster['status'] == 1){
+    public function getBidMasterData($bidMasterId)
+    {
+        $bidMaster = BidSubmissionMaster::where('id', $bidMasterId)->first();
+        if ($bidMaster['status'] == 1) {
             return 1;
-        }else{
+        } else {
             return 0;
         }
+    }
+    public function BidSubmissionStatusData($bidMasterId, $tenderId)
+    {
+        $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
+            $q2->where('bid_master_id', $bidMasterId);
+            $q2->where('tender_id', $tenderId);
+        })
+            ->where('is_final_level', 1)
+            ->where('critera_type_id', 2)
+            ->where('tender_id', $tenderId)
+            ->count();
+
+        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId, $bidMasterId) {
+            $q1->where('tender_id', $tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId, $bidMasterId) {
+                $q2->where('tender_id', $tenderId);
+                $q2->where('bid_master_id', $bidMasterId);
+                $q2->with(['tender_boq_items' => function ($q3)  use ($bidMasterId) {
+                    $q3->whereDoesntHave('bid_boq', function ($query) use ($bidMasterId) {
+                        $query->where('bid_master_id', '=', $bidMasterId);
+                    });
+                }]);
+            }]);
+        }])
+            ->where('tender_id', $tenderId)
+            ->get();
+
+
+        $tenderArr = collect($pricingScheduleMaster)->map(function ($group) {
+            return $group['tender_main_works'];
+        });
+
+        $singleArr = Arr::flatten($tenderArr);
+
+        $tenderArrFilter = collect($singleArr)->map(function ($group) {
+            if ($group['bid_main_work'] == null) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && ($group['bid_main_work']['total_amount'] == 0 && $group['bid_main_work']['qty'] == 0)) {
+                $group['isExist'] = 1;
+            } else if (count($group['bid_main_work']['tender_boq_items']) > 0) {
+                $group['isExist'] = 1;
+            } else {
+                $group['isExist'] = 0;
+            }
+            return $group['isExist'];
+        });
+
+        $filtered = $tenderArrFilter->filter(function ($value, $key) {
+            return $value > 0;
+        });
+        $filtered->all();
+
+        $bidsubmission =  self::getBidMasterData($bidMasterId);
+
+        $data['filtered'] = $filtered->count();
+        $data['technicalEvaluationCriteria'] = $technicalEvaluationCriteria > 0 ? 1 : 0;
+        $data['bidsubmission'] = $bidsubmission;
+
+        return $data;
+    }
+    public function submitBidSubmissionCreate($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $noOfBids = $request->input('extra.noOfBids');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        DB::beginTransaction(); 
+        try { 
+            $att['tender_id'] = $tenderId;
+            $att['supplier_registration_id'] = $supplierRegId;
+            $att['uuid'] = Uuid::generate()->string;
+            $att['bid_sequence'] = 1;
+            $att['created_at'] = Carbon::now();
+            $att['created_by'] = $supplierRegId;  
+            $result = BidSubmissionMaster::create($att); 
+
+            $submittedCount = BidSubmissionMaster::where('tender_id',$tenderId)
+            ->where('supplier_registration_id',$supplierRegId)
+            ->get();  
+
+            if( count($submittedCount) > $noOfBids){ 
+                return [
+                    'success' => false,
+                    'message' => 'Supplier can submit only '.(int)$noOfBids.' bids for this tender',
+                    'data' =>  ' '
+                ];
+            }
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully bid created',
+                'data' =>  $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
+    public function getBidSubmittedData($request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tenderId)
+            ->where('supplier_registration_id', $supplierRegId)
+            ->orderBy('id', 'ASC')
+            ->get();
+
+        $bidSubmitted = collect($bidSubmitted)->map(function ($group) {
+            $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
+            $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
+            $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
+            $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
+            return $group;
+        });
+        if(!empty($bidSubmitted) && count($bidSubmitted) > 0){ 
+            return [
+                'success' => true,
+                'message' => 'Successfully retrived',
+                'data' =>  $bidSubmitted
+            ];
+        }else { 
+            return [
+                'success' => true,
+                'message' => 'Successfully retrived Data',
+                'data' =>  ' '
+            ];
+        }
+        
+    }
+    
+    public function deleteBidData($request){ 
+        $tenderId = $request->input('extra.tenderId');
+        $bidId = $request->input('extra.bidId');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+
+        BidSubmissionMaster::where('tender_id', $tenderId)
+        ->where('id',$bidId)
+        ->delete();
+        
+        BidBoq::where('bid_master_id',$bidId)->delete();
+
+        BidMainWork::where('bid_master_id',$bidId)
+        ->where('tender_id',$tenderId)
+        ->delete();
+
+        BidSchedule::where('tender_id',$tenderId)
+        ->where('bid_master_id',$bidId)
+        ->delete();
+
+        BidSubmissionDetail::where('bid_master_id',$bidId)
+        ->where('tender_id',$tenderId)
+        ->delete();
+
+        DocumentAttachments::where('documentSystemID',108)
+        ->whereNotNull('parent_id')
+        ->where('documentSystemCode',$bidId)
+        ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Successfully retrived',
+            'data' =>  ' '
+        ];
     }
 }

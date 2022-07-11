@@ -73,6 +73,9 @@ define('SAVE_BID_MAIN_WORK', 'SAVE_BID_MAIN_WORK');
 define('GET_BID_BOQ_DATA', 'GET_BID_BOQ_DATA');
 define('SAVE_BID_BOQ', 'SAVE_BID_BOQ');
 define('SUBMIT_BID_TENDER', 'SUBMIT_BID_TENDER');
+define('BID_SUBMISSION_CREATE', 'BID_SUBMISSION_CREATE');
+define('GET_BID_SUBMITTED_DATA', 'GET_BID_SUBMITTED_DATA');
+define('BID_SUBMISSION_DELETE', 'BID_SUBMISSION_DELETE');
 
 class APIController extends Controller
 {
@@ -207,6 +210,12 @@ class APIController extends Controller
                 return $this->SRMService->saveBidBoq($request);
             case SUBMIT_BID_TENDER : 
                 return $this->SRMService->submitBidTender($request);
+            case BID_SUBMISSION_CREATE : 
+                return $this->SRMService->submitBidSubmissionCreate($request);
+            case GET_BID_SUBMITTED_DATA : 
+                return $this->SRMService->getBidSubmittedData($request);   
+            case BID_SUBMISSION_DELETE : 
+                return $this->SRMService->deleteBidData($request);       
             default:
                 return [
                     'success'   => false,
