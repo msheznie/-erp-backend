@@ -429,7 +429,7 @@
                 <tr class="theme-tr-head">
                     <th style="width:2%"></th>
                     <th style="width:15%;text-align: center">Description</th>
-                    <!-- <th style="width:10%;text-align: center">UOM</th> -->
+                    <th style="width:10%;text-align: center">Part No / Ref.Number</th>
                     <th style="width:5%;text-align: center">Quantity</th>
                     <th style="width:10%;text-align: center">Unit Price</th>
                     <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
@@ -450,6 +450,7 @@
                             <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                                 <td>{{$x}}</td>
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
                             <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
                                 <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
                                 <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
