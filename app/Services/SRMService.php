@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\API\DocumentAttachmentsAPIController;
 use App\Models\Appointment;
@@ -62,6 +63,7 @@ use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
+use InfyOm\Generator\Utils\ResponseUtil;
 use Response;
 
 class SRMService
@@ -2912,7 +2914,6 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $reportID = $request->input('extra.reportID');
-        Log::info(['$tenderId', $tenderId, '$reportID', $reportID]);
 
         switch ($reportID) {
             case 'FAQ':
@@ -2953,7 +2954,11 @@ class SRMService
 
                 //$basePath = CreateExcel::process($data,$type,$fileName,$path);
                 $fileName2 = 'pre-bid_clarifications';
-                $basePath = CreateExcel::process($dataPrebid,$type,$fileName2,$path);
+                $prebidConfig['faq'] = 'FAQ';
+                $prebidConfig['faq_data'] = $data;
+                $prebidConfig['prebid'] = 'PREBID';
+                $prebidConfig['prebid_data'] = $dataPrebid;
+                $basePath = CreateExcel::process($dataPrebid,$type,$fileName2,$path, $prebidConfig);
 
                 if($basePath == '')
                 {
@@ -2963,7 +2968,6 @@ class SRMService
                 }
             default:
                 return $this->sendError('No report ID found');
-
         }
     }
 
