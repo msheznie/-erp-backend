@@ -196,7 +196,7 @@
         <tr class="theme-tr-head">
             <th colspan="1" style="width:3%"></th>
             <th colspan="2" style="width:60%;text-align: center">Description</th>
-            <!-- <th style="width:10%;text-align: center">UOM</th> -->
+            <th colspan="2" style="width:30%;text-align: center">Part No / Ref.Number</th>
             <th colspan="2" style="width:10%;text-align: center">Quantity</th>
             <th colspan="2" style="width:10%;text-align: center">Unit Price</th>
             <th colspan="2" style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
@@ -217,6 +217,7 @@
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                         <td colspan="1" >{{$x}}</td>
                         <td colspan="2" >{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                        <td colspan="2" style="text-align: center">{{$item->part_no}}</td>
                     <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
                         <td colspan="2" class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
                         <td colspan="2" class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
@@ -239,15 +240,15 @@
     <tbody>
     <tr>
        @if ($request->template <> 1 && !$request->line_invoiceDetails && isset($request->invoicedetails) && sizeof($request->invoicedetails) > 0)
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
            .
         </td>
         @elseif(($request->template == 2 && isset($request->item_invoice) && $request->item_invoice))
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
             .
         </td>
         @else
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
           .
         </td>
         @endif
@@ -267,11 +268,11 @@
     {{$directTraSubTotal+= $totalVATAmount}}
     <tr>
     @if ($request->template <> 1 && !$request->line_invoiceDetails && isset($request->invoicedetails) && sizeof($request->invoicedetails) > 0)
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
             &nbsp;
         </td>
         @elseif(($request->template == 2 && isset($request->item_invoice) && $request->item_invoice))
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
             &nbsp;
         </td>
         @endif
@@ -287,11 +288,11 @@
 
     <tr>
        @if ($request->template <> 1 && !$request->line_invoiceDetails && isset($request->invoicedetails) && sizeof($request->invoicedetails) > 0)
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
             &nbsp;
         </td>
         @elseif(($request->template == 2 && isset($request->item_invoice) && $request->item_invoice))
-        <td colspan="10" style="border:none !important;">
+        <td colspan="12" style="border:none !important;">
             &nbsp;
         </td>
         @endif

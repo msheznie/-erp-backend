@@ -299,7 +299,8 @@ class CustomerInvoiceItemDetails extends Model
         'VATApplicableOn',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'timestamp'
+        'timestamp',
+        'part_no'
     ];
 
     /**
