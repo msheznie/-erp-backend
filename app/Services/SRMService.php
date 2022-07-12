@@ -62,6 +62,8 @@ use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
+use Response;
+
 class SRMService
 {
     private $POService = null;
@@ -2904,5 +2906,87 @@ class SRMService
             'message' => 'Successfully retrived',
             'data' =>  ' '
         ];
+    }
+
+    public function exportReport(Request $request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $reportID = $request->input('extra.reportID');
+        Log::info(['$tenderId', $tenderId, '$reportID', $reportID]);
+
+        switch ($reportID) {
+            case 'FAQ':
+                $type = 'xlsx';
+                $input = $request->all();
+                $data = array();
+                $dataPrebid = array();
+
+                $output = DB::table("srm_tender_faq")
+                    ->selectRaw("srm_tender_faq.question,
+                                srm_tender_faq.answer")
+                    ->where('tender_master_id', $tenderId)
+                    ->orderBy('srm_tender_faq.id', 'ASC')->get();
+                $prebidDate = $this->getPreBidClarificationsResponseForExcel($tenderId);
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $x++;
+                        $data[$x]['Question'] = $val->question;
+                        $data[$x]['Answer'] = strip_tags($val->answer);
+                    }
+                }
+
+                $fileName = 'faq_and_prebid_clarifications';
+                $x = 0;
+                foreach ($prebidDate as $val) {
+                    foreach ($val as $valIn) {
+                        $x++;
+                        $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $valIn['supplier']['name'] : "ERP- User";
+                        $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
+                    }
+                }
+
+                $fileName = 'faq';
+                $path = 'srm/faq/report/excel/';
+                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                //$basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $fileName2 = 'pre-bid_clarifications';
+                $basePath = CreateExcel::process($dataPrebid,$type,$fileName2,$path);
+
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                } else {
+                    return Response::json(ResponseUtil::makeResponse(trans('custom.success_export'), $basePath));
+                }
+            default:
+                return $this->sendError('No report ID found');
+
+        }
+    }
+
+        private function getPreBidClarificationsResponseForExcel($tenderId)
+        {
+        $array_value = array();
+        $x = 0;
+        $parentPreBid = TenderBidClarifications::where('tender_master_id', $tenderId)
+            ->where('parent_id', '=', 0)
+            ->get();
+
+        foreach ($parentPreBid as $parent) {
+            $prebidResponse = TenderBidClarifications::with(['supplier'])
+                ->where('id', '=', $parent->id)
+                ->orWhere('parent_id', '=', $parent->id)
+                ->orderBy('parent_id', 'asc')
+                ->get()
+                ->toArray();
+
+            $array_value[] = $prebidResponse;
+            $x++;
+        }
+
+        return $array_value;
     }
 }
