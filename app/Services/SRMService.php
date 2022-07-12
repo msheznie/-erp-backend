@@ -1343,12 +1343,23 @@ class SRMService
     {
         $input = $request->all();
         $tenderId = $input['extra']['tenderId'];
+        $SearchText = "";
+        if (isset($input['extra']['SearchText'])) {
+            $SearchText = $input['extra']['SearchText'];
+        }
         try {
             $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
             if (sizeof($queryRecordsCount)) {
                 $result = TenderFaq::select('id', 'question', 'answer')
-                    ->where('tender_master_id', $tenderId)
-                    ->get();
+                    ->where('tender_master_id', $tenderId);
+                if (!empty($SearchText)) {
+                    $SearchText = str_replace("\\", "\\\\", $SearchText);
+                    $result = $result->where(function ($query) use ($SearchText) {
+                        $query->where('answer', 'LIKE', "%{$SearchText}%");
+                        $query->orWhere('question', 'LIKE', "%{$SearchText}%");
+                    });
+                }
+                $result = $result->get();
 
                 return [
                     'success' => true,
