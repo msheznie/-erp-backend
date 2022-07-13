@@ -2919,7 +2919,10 @@ class SRMService
             case 'FAQ':
                 $type = 'xlsx';
                 $input = $request->all();
+                $supplierId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
                 $data = array();
+                $parentIdArr = array();
+                $nonParentIdArr = array();
                 $dataPrebid = array();
 
                 $output = DB::table("srm_tender_faq")
@@ -2943,8 +2946,28 @@ class SRMService
                 foreach ($prebidDate as $val) {
                     foreach ($val as $valIn) {
                         $x++;
-                        $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $valIn['supplier']['name'] : "ERP- User";
+                        if($supplierId == $valIn['created_by']){
+                            $supplierName = $valIn['supplier']['name'];
+                        } elseif (($supplierId != $valIn['created_by'])&& ($valIn['is_anonymous'] == 0)){
+                            $supplierName = $valIn['supplier']['name'];
+                        } elseif (($supplierId != $valIn['created_by'])&& ($valIn['is_anonymous'] == 1)){
+                            $supplierName = "Anonymous";
+                        }
+
+                        if($valIn['parent_id'] === 0){
+                            $parentIdArr[] = $x + 1;
+                        } else {
+                            $nonParentIdArr[] = $x + 1;
+                        }
+
+                        $dataPrebid[$x]['Id'] = $valIn['id'];
+                        $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
                         $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
+                        $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
+                        $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
+                        $dataPrebid[$x]['Created At'] = $valIn['created_at'];
+                        $dataPrebid[$x]['Is Answered'] = ($valIn['is_answered'] === 1) ? 'Answered' : 'Not Answered';
+                        $dataPrebid[$x]['Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Thread Closed' : 'Thread Not Closed';
                     }
                 }
 
@@ -2958,6 +2981,8 @@ class SRMService
                 $prebidConfig['faq_data'] = $data;
                 $prebidConfig['prebid'] = 'PREBID';
                 $prebidConfig['prebid_data'] = $dataPrebid;
+                $prebidConfig['parentIdList'] = $parentIdArr;
+                $prebidConfig['nonParentIdList'] = $nonParentIdArr;
                 $basePath = CreateExcel::process($dataPrebid,$type,$fileName2,$path, $prebidConfig);
 
                 if($basePath == '')
