@@ -2811,7 +2811,7 @@ class SRMService
             if( count($submittedCount) > $noOfBids){ 
                 return [
                     'success' => false,
-                    'message' => 'Supplier can submit only '.(int)$noOfBids.' bids for this tender',
+                    'message' => 'Cannot have more than '.(int)$noOfBids.' bids for this tender',
                     'data' =>  ' '
                 ];
             }

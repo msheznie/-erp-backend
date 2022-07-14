@@ -1457,6 +1457,17 @@ WHERE
         if ($total != 100) {
             return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than or greater than 100'];
         }
+
+        if($input['commercial_weightage']!=0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))){ 
+            return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+        }
+
+        if($input['technical_weightage']!=0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))){ 
+            return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+        }
+        
+      
+
         DB::beginTransaction();
         try {
             $data['tender_type_id'] = $input['tender_type_id'];
@@ -1467,6 +1478,8 @@ WHERE
             $data['commercial_weightage'] = $input['commercial_weightage'];
             $data['technical_weightage'] = $input['technical_weightage'];
             $data['is_active_go_no_go'] = isset($input['is_active_go_no_go']) ? $input['is_active_go_no_go'] : 0;
+            $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
+            $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if($result){ 
                 if (isset($input['document_types'])) {
@@ -1505,6 +1518,8 @@ WHERE
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
             'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+            'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
+            'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
@@ -1514,7 +1529,9 @@ WHERE
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required'
+            'technical_weightage' => 'required',
+            'commercial_passing_weightage' => 'required',
+            'technical_passing_weightage' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
