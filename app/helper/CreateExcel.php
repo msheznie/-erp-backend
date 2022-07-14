@@ -5,7 +5,6 @@ namespace App\helper;
 use App\Models\ProcumentOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 class CreateExcel
 {
@@ -18,7 +17,7 @@ class CreateExcel
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
                 $faqFile = "FAQ";
-                $prebidFile = "pre-bid clarifications";
+                $prebidFile = "Pre-bid Clarifications";
 
                 $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
                     $i = 2;

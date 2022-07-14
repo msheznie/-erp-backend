@@ -2918,7 +2918,7 @@ class SRMService
         switch ($reportID) {
             case 'FAQ':
                 $type = 'xlsx';
-                $input = $request->all();
+                // $input = $request->all();
                 $supplierId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
                 $data = array();
                 $parentIdArr = array();
@@ -2941,41 +2941,41 @@ class SRMService
                     }
                 }
 
-                $fileName = 'faq_and_prebid_clarifications';
                 $x = 0;
                 foreach ($prebidDate as $val) {
                     foreach ($val as $valIn) {
-                        $x++;
-                        if($supplierId == $valIn['created_by']){
-                            $supplierName = $valIn['supplier']['name'];
-                        } elseif (($supplierId != $valIn['created_by'])&& ($valIn['is_anonymous'] == 0)){
-                            $supplierName = $valIn['supplier']['name'];
-                        } elseif (($supplierId != $valIn['created_by'])&& ($valIn['is_anonymous'] == 1)){
-                            $supplierName = "Anonymous";
-                        }
+                        if(!($valIn['is_public'] === 0 && $supplierId !== $valIn['created_by'])) {
+                            $x++;
+                            if ($supplierId == $valIn['created_by']) {
+                                $supplierName = $valIn['supplier']['name'];
+                            } elseif (($supplierId != $valIn['created_by']) && ($valIn['is_anonymous'] == 0)) {
+                                $supplierName = $valIn['supplier']['name'];
+                            } elseif (($supplierId != $valIn['created_by']) && ($valIn['is_anonymous'] == 1)) {
+                                $supplierName = "Anonymous";
+                            }
 
-                        if($valIn['parent_id'] === 0){
-                            $parentIdArr[] = $x + 1;
-                        } else {
-                            $nonParentIdArr[] = $x + 1;
-                        }
+                            if ($valIn['parent_id'] === 0) {
+                                $parentIdArr[] = $x + 1;
+                            } else {
+                                $nonParentIdArr[] = $x + 1;
+                            }
 
-                        $dataPrebid[$x]['Id'] = $valIn['id'];
-                        $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
-                        $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
-                        $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
-                        $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
-                        $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
-                        $dataPrebid[$x]['Is Answered'] = ($valIn['is_answered'] === 1) ? 'Yes' : 'No';
-                        $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
+                            $dataPrebid[$x]['Question Id'] = $valIn['id'];
+                            $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
+                            $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
+                            $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
+                            $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
+                            $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
+                            $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
+                        }
                     }
                 }
 
                 $fileNameFaq = 'faq';
+                $fileNamePreBid = 'pre-bid_clarifications';
                 $path = 'srm/faq/report/excel/';
                 CreateExcel::process($data, $type, $fileNameFaq, $path);
 
-                $fileNamePreBid = 'pre-bid_clarifications';
                 $prebidConfig['origin'] = 'SRM';
                 $prebidConfig['faq_data'] = $data;
                 $prebidConfig['prebid'] = 'PREBID';
