@@ -1157,7 +1157,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                              'balanceAmount' => $balanceAmount, 
                              'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
                              'paidAmount' => $paidAmount, 
-                             'invoiceAmount' => $invoiceAmount);
+                             'invoiceAmount' => $invoiceAmount,
+                             'fromDate' =>  $request->fromDate,);
             
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData) {
