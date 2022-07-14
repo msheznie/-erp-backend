@@ -2794,14 +2794,25 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $noOfBids = $request->input('extra.noOfBids');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $lastSerialNumber = 1;
         DB::beginTransaction(); 
         try { 
+
+            $lastSerial = BidSubmissionMaster::where('tender_id', $tenderId)
+				->where('supplier_registration_id', $supplierRegId)
+				->orderBy('id', 'desc')
+				->first(); 
+			if ($lastSerial) {
+				$lastSerialNumber = intval($lastSerial->bid_sequence) + 1;
+			}
+
             $att['tender_id'] = $tenderId;
             $att['supplier_registration_id'] = $supplierRegId;
             $att['uuid'] = Uuid::generate()->string;
             $att['bid_sequence'] = 1;
             $att['created_at'] = Carbon::now();
             $att['created_by'] = $supplierRegId;  
+            $att['bid_sequence'] = $lastSerialNumber;  
             $result = BidSubmissionMaster::create($att); 
 
             $submittedCount = BidSubmissionMaster::where('tender_id',$tenderId)
