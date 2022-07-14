@@ -266,7 +266,9 @@ class TenderMaster extends Model
         'no_of_alternative_solutions',
         'commercial_weightage',
         'technical_weightage',
-        'is_active_go_no_go'
+        'is_active_go_no_go',
+        'commercial_passing_weightage',
+        'technical_passing_weightage'
     ];
 
     /**
@@ -326,7 +328,9 @@ class TenderMaster extends Model
         'no_of_alternative_solutions' => 'integer',
         'commercial_weightage' => 'integer',
         'technical_weightage' => 'integer',
-        'is_active_go_no_go' => 'integer'
+        'is_active_go_no_go' => 'integer',
+        'commercial_passing_weightage'=> 'integer',
+        'technical_passing_weightage'=> 'integer',
     ];
 
     /**
