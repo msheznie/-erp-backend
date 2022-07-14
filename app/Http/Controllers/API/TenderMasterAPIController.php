@@ -1455,7 +1455,7 @@ WHERE
         $total = ((int)$commercialWeightage + (int)$technicalWeightage);
         $employee = \Helper::getEmployeeInfo();
         if ($total != 100) {
-            return ['status' => false, 'message' => 'Commercial Criteria Weightage and Technical Criteria Weightage total should be equal to 100.'];
+            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than or greater than 100'];
         }
         DB::beginTransaction();
         try {
