@@ -2918,7 +2918,6 @@ class SRMService
         switch ($reportID) {
             case 'FAQ':
                 $type = 'xlsx';
-                // $input = $request->all();
                 $supplierId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
                 $data = array();
                 $parentIdArr = array();
