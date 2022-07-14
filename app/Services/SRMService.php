@@ -2965,25 +2965,24 @@ class SRMService
                         $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
                         $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
                         $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
-                        $dataPrebid[$x]['Created At'] = $valIn['created_at'];
-                        $dataPrebid[$x]['Is Answered'] = ($valIn['is_answered'] === 1) ? 'Answered' : 'Not Answered';
-                        $dataPrebid[$x]['Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Thread Closed' : 'Thread Not Closed';
+                        $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
+                        $dataPrebid[$x]['Is Answered'] = ($valIn['is_answered'] === 1) ? 'Yes' : 'No';
+                        $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
                     }
                 }
 
-                $fileName = 'faq';
+                $fileNameFaq = 'faq';
                 $path = 'srm/faq/report/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                CreateExcel::process($data, $type, $fileNameFaq, $path);
 
-                //$basePath = CreateExcel::process($data,$type,$fileName,$path);
-                $fileName2 = 'pre-bid_clarifications';
-                $prebidConfig['faq'] = 'FAQ';
+                $fileNamePreBid = 'pre-bid_clarifications';
+                $prebidConfig['origin'] = 'SRM';
                 $prebidConfig['faq_data'] = $data;
                 $prebidConfig['prebid'] = 'PREBID';
                 $prebidConfig['prebid_data'] = $dataPrebid;
                 $prebidConfig['parentIdList'] = $parentIdArr;
                 $prebidConfig['nonParentIdList'] = $nonParentIdArr;
-                $basePath = CreateExcel::process($dataPrebid,$type,$fileName2,$path, $prebidConfig);
+                $basePath = CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig);
 
                 if($basePath == '')
                 {

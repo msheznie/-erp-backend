@@ -14,29 +14,44 @@ class CreateExcel
     {
 
         $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array) {
-            if($array['faq'] == 'FAQ'){
+            if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
                 $faqFile = "FAQ";
-                $prebidFile = "pre-bid_clarifications";
+                $prebidFile = "pre-bid clarifications";
+
                 $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
+                    $i = 2;
                     $sheet->fromArray($dataNew, null, 'A1', true);
                     $sheet->setAutoSize(true);
-                    //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
 
                     $sheet->row(1, function($row) {
+                        $row->setBackground('#827e7e');
                         $row->setFont(array(
                             'family'     => 'Calibri',
                             'size'       => '12',
                             'bold'       =>  true
                         ));
                     });
+
+                    foreach ($dataNew as $valId) {
+                        $sheet->row($i, function($row) {
+                            $row->setBackground('#ebdfdf');
+                            $row->setFont(array(
+                                'family'     => 'Calibri',
+                                'size'       => '12',
+                            ));
+                        });
+                        $i++;
+                    }
+
                 });
+
                 $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array) {
                     $sheet->fromArray($dataNewPrebid, null, 'A1', true);
                     $sheet->setAutoSize(true);
-                    //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     $sheet->row(1, function($row) {
+                        $row->setBackground('#827e7e');
                         $row->setFont(array(
                             'family'     => 'Calibri',
                             'size'       => '12',
@@ -45,13 +60,10 @@ class CreateExcel
                     });
                     foreach ($array['parentIdList'] as $valId) {
                         $sheet->row($valId, function($row) {
-                            // call cell manipulation methods
                             $row->setBackground('#CCCCCC');
-                            $row->setFontColor('#00000');
                             $row->setFont(array(
                                 'family'     => 'Calibri',
-                                'size'       => '12',
-                                'bold'       =>  true
+                                'size'       => '12'
                             ));
                         });
                     }
@@ -59,7 +71,6 @@ class CreateExcel
                     foreach ($array['nonParentIdList'] as $valId) {
                         $sheet->row($valId, function($row) {
                             $row->setBackground('#ebdfdf');
-                           // $row->setFontColor('#00000');
                             $row->setFont(array(
                                 'family'     => 'Calibri',
                                 'size'       => '12',
