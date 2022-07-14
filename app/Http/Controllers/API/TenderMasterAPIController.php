@@ -795,7 +795,7 @@ WHERE
                         if (($input['is_active_go_no_go'] == 1) || $input['is_active_go_no_go'] == true) {
                             $goNoGo = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 1)->first();
                             if (empty($goNoGo)) {
-                                return ['success' => false, 'message' => 'At least one Go/No Go should be added'];
+                                return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
                             }
                         }
 
