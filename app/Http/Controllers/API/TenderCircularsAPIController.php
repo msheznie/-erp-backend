@@ -325,7 +325,26 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
-        $data['attachmentDrop'] = DocumentAttachments::where('documentSystemID',108)->where('attachmentType',3)->where('documentSystemCode',$input['tenderMasterId'])->get();
+        $attachment = TenderCirculars::where('tender_id',$input['tenderMasterId'])->get();
+        if(count($attachment) > 0){
+            $attchArray = $attachment->pluck('attachment_id');
+            $attchArray = $attchArray->filter();
+        }
+
+        $data['attachmentDrop'] = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
+            ->where('documentSystemID',108)
+            ->where('attachmentType',3)
+            ->where('parent_id', null)
+            ->where('documentSystemCode',$input['tenderMasterId'])->get();
+
+        if(isset($input['circularId']) && $input['circularId'] > 0){
+           $circular = TenderCirculars::where('id',$input['circularId'])->first();
+           if($circular['attachment_id']>0){
+               $attachment = DocumentAttachments::where('attachmentID',$circular['attachment_id'])->first();
+               $data['attachmentDrop'][] = $attachment;
+           }
+
+        }
 
         return $data;
     }
@@ -336,7 +355,7 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
-            return ['success' => false, 'message' => 'Description is required'];
+            return ['success' => false, 'message' => 'Description or Attachment is required'];
         }
 
         if(isset($input['id'])) {
