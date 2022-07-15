@@ -326,6 +326,7 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         $attachment = TenderCirculars::where('tender_id',$input['tenderMasterId'])->get();
+        $attchArray = array();
         if(count($attachment) > 0){
             $attchArray = $attachment->pluck('attachment_id');
             $attchArray = $attchArray->filter();
