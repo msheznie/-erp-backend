@@ -3155,12 +3155,12 @@ WHERE
                                 $data[$x]['Approved Date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
                             }
 
-                            if ($checkIsGroup->isGroup == 0 && $request->currencyID == 1) {
+                            if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                                 $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
                                 $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
                             }
 
-                            if($request->currencyID == 2) {
+                            if($request->currencyID == 2 || !isset($request->month)) {
                                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                                 $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
                             }
@@ -3191,12 +3191,12 @@ WHERE
                 $data[$x]['Contract'] = "";
 
                 $data[$x]['Supplier/Customer'] = "Grand Total";
-                if ($checkIsGroup->isGroup == 0 && $request->currencyID == 1) {
+                if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
                 }
 
-                if($request->currencyID == 2) {
+                if($request->currencyID == 2 || !isset($request->month)) {
                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
                 }
@@ -3215,12 +3215,12 @@ WHERE
                 $data[$x]['Contract'] = "";
 
                 $data[$x]['Supplier/Customer'] = "";
-                if ($checkIsGroup->isGroup == 0 && $request->currencyID == 1) {
+                if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal);
                 }
 
-                if($request->currencyID == 2) {
+                if($request->currencyID == 2 || !isset($request->month)) {
                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
                 }
