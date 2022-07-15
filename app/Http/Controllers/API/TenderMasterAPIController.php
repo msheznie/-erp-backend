@@ -394,7 +394,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        $data['documentTypes'] = TenderDocumentTypes::where('company_id',$employee->empCompanySystemID)->whereNotIn('id',[1,2,3])->get();
+        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2, 3])->get();
 
         if (isset($input['tenderMasterId'])) {
             if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
@@ -501,7 +501,7 @@ FROM
 WHERE
 	srm_calendar_dates.company_id = $companySystemID";
 
-        $qryAll ="SELECT
+        $qryAll = "SELECT
 	srm_calendar_dates.id as id,
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
@@ -519,7 +519,7 @@ WHERE
         $data['calendarDates'] = DB::select($qry);
         $data['calendarDatesAll'] = DB::select($qryAll);
 
-        $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id',$tenderMasterId)->get();
+        $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
         if (!empty($documentTypes)) {
             foreach ($documentTypes as $vl) {
@@ -571,8 +571,10 @@ WHERE
 
     public function updateTender(Request $request)
     {
-        $input = $this->convertArrayToSelectedValue($request->all(), array('bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
-         'procument_sub_cat_id','tender_type_id','envelop_type_id','evaluation_type_id'));
+        $input = $this->convertArrayToSelectedValue($request->all(), array(
+            'bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
+            'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id'
+        ));
 
 
         $resValidate = $this->validateTenderHeader($input);
@@ -687,28 +689,28 @@ WHERE
                             if (!empty($calDate['from_date'])) {
                                 $frm_date = new Carbon($calDate['from_date']);
                                 $frm_date = $frm_date->format('Y-m-d');
-                            }else{
+                            } else {
                                 $frm_date = null;
                             }
                             if (!empty($calDate['to_date'])) {
                                 $to_date = new Carbon($calDate['to_date']);
                                 $to_date = $to_date->format('Y-m-d');
-                            }else{
+                            } else {
                                 $to_date = null;
                             }
-                            if(!empty($to_date) && empty($frm_date)){
-                                return ['success' => false, 'message' => 'From date cannot be empty for '.$calDate['calendar_date']];
+                            if (!empty($to_date) && empty($frm_date)) {
+                                return ['success' => false, 'message' => 'From date cannot be empty for ' . $calDate['calendar_date']];
                             }
-                            if(!empty($frm_date) && empty($to_date)){
-                                return ['success' => false, 'message' => 'To date cannot be empty for '.$calDate['calendar_date']];
+                            if (!empty($frm_date) && empty($to_date)) {
+                                return ['success' => false, 'message' => 'To date cannot be empty for ' . $calDate['calendar_date']];
                             }
 
-                            if(!empty($frm_date) && !empty($to_date)){
-                                if($frm_date>$to_date){
-                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for '.$calDate['calendar_date']];
+                            if (!empty($frm_date) && !empty($to_date)) {
+                                if ($frm_date > $to_date) {
+                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for ' . $calDate['calendar_date']];
                                 }
                             }
-                            if(!empty($to_date) || !empty($frm_date)){
+                            if (!empty($to_date) || !empty($frm_date)) {
                                 $calDt['tender_id'] = $input['id'];
                                 $calDt['calendar_date_id'] = $calDate['id'];
                                 $calDt['from_date'] = $frm_date;
@@ -720,10 +722,10 @@ WHERE
                                 CalendarDatesDetail::create($calDt);
                             }
                         }
-                    }else {
+                    } else {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                     }
-                }else {
+                } else {
                     CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
 
@@ -771,24 +773,32 @@ WHERE
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
 
-                        if(is_null($input['tender_type_id']) || $input['tender_type_id']==0){ 
+                        if (is_null($input['tender_type_id']) || $input['tender_type_id'] == 0) {
                             return ['success' => false, 'message' => 'Selection is required'];
                         }
-                        if(is_null($input['envelop_type_id']) || $input['envelop_type_id']==0){ 
+                        if (is_null($input['envelop_type_id']) || $input['envelop_type_id'] == 0) {
                             return ['success' => false, 'message' => 'Envelop is required'];
                         }
-                        if(is_null($input['evaluation_type_id']) || $input['evaluation_type_id']==0){ 
+                        if (is_null($input['evaluation_type_id']) || $input['evaluation_type_id'] == 0) {
                             return ['success' => false, 'message' => 'Evaluation is required'];
                         }
-                        if(is_null($input['stage']) || $input['stage']==0){ 
+                        if (is_null($input['stage']) || $input['stage'] == 0) {
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
-                        
-                        
+
+
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical)) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
                         }
+
+                        if (($input['is_active_go_no_go'] == 1) || $input['is_active_go_no_go'] == true) {
+                            $goNoGo = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 1)->first();
+                            if (empty($goNoGo)) {
+                                return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
+                            }
+                        }
+
                         $schedule = PricingScheduleMaster::where('tender_id', $input['id'])->first();
                         if (empty($schedule)) {
                             return ['success' => false, 'message' => 'At least one work schedule should be added'];
@@ -1457,18 +1467,31 @@ WHERE
         if ($total != 100) {
             return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than or greater than 100'];
         }
+
+        if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
+            return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+        }
+
+        if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
+            return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+        }
+
+
+
         DB::beginTransaction();
         try {
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['envelop_type_id'] = $input['envelop_type_id'];
             $data['evaluation_type_id'] = $input['evaluation_type_id'];
             $data['stage'] = $input['stage'];
-            $data['no_of_alternative_solutions'] = $input['no_of_alternative_solutions']; 
+            $data['no_of_alternative_solutions'] = $input['no_of_alternative_solutions'];
             $data['commercial_weightage'] = $input['commercial_weightage'];
             $data['technical_weightage'] = $input['technical_weightage'];
             $data['is_active_go_no_go'] = isset($input['is_active_go_no_go']) ? $input['is_active_go_no_go'] : 0;
+            $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
+            $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
             $result = TenderMaster::where('id', $input['id'])->update($data);
-            if($result){ 
+            if ($result) {
                 if (isset($input['document_types'])) {
                     if (count($input['document_types']) > 0) {
                         TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
@@ -1484,7 +1507,7 @@ WHERE
                     }
                 }
             }
-          
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated'];
         } catch (\Exception $e) {
@@ -1505,6 +1528,8 @@ WHERE
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
             'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+            'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
+            'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
@@ -1514,7 +1539,9 @@ WHERE
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required'
+            'technical_weightage' => 'required',
+            'commercial_passing_weightage' => 'required',
+            'technical_passing_weightage' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
@@ -1528,9 +1555,10 @@ WHERE
         return ['status' => true, 'message' => "success"];
     }
 
-    public function removeCalenderDate(Request $request){
+    public function removeCalenderDate(Request $request)
+    {
         DB::beginTransaction();
-        try{
+        try {
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
                 ->get();
@@ -1551,39 +1579,40 @@ WHERE
         }
     }
 
-    public function updateCalenderDate(Request $request){
+    public function updateCalenderDate(Request $request)
+    {
         $employee = \Helper::getEmployeeInfo();
 
-        if(isset($request['from_date'])){
+        if (isset($request['from_date'])) {
             $frm_date = new Carbon($request['from_date']);
             $frm_date = $frm_date->format('Y-m-d');
             $data['from_date'] = $frm_date;
         }
 
-        if(isset($request['to_date'])){
+        if (isset($request['to_date'])) {
             $to_date = new Carbon($request['to_date']);
             $to_date = $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         }
 
-        if(!empty($to_date) && empty($frm_date)){
+        if (!empty($to_date) && empty($frm_date)) {
             return ['success' => false, 'message' => 'From date cannot be empty'];
         }
-        if(!empty($frm_date) && empty($to_date)){
+        if (!empty($frm_date) && empty($to_date)) {
             return ['success' => false, 'message' => 'To date cannot be empty'];
         }
 
-        if(!empty($frm_date) && !empty($to_date)){
-            if($frm_date>$to_date){
+        if (!empty($frm_date) && !empty($to_date)) {
+            if ($frm_date > $to_date) {
                 return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
             }
         }
 
         $data['updated_at'] = Carbon::now();
         $data['updated_by'] = $employee->employeeSystemID;
-        
+
         DB::beginTransaction();
-        try{
+        try {
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
                 ->get();

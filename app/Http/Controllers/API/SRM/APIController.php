@@ -76,6 +76,8 @@ define('SUBMIT_BID_TENDER', 'SUBMIT_BID_TENDER');
 define('BID_SUBMISSION_CREATE', 'BID_SUBMISSION_CREATE');
 define('GET_BID_SUBMITTED_DATA', 'GET_BID_SUBMITTED_DATA');
 define('BID_SUBMISSION_DELETE', 'BID_SUBMISSION_DELETE');
+define('FAQ_CLARIFICATIONS', 'FAQ_CLARIFICATIONS');
+
 
 class APIController extends Controller
 {
@@ -93,7 +95,7 @@ class APIController extends Controller
      * @return array
      * @throws Throwable
      */
-    public function handleRequest(Request $request): array
+    public function handleRequest(Request $request)
     {
         switch ($request->input('request')) {
             case GET_CURRENCIES:
@@ -215,7 +217,9 @@ class APIController extends Controller
             case GET_BID_SUBMITTED_DATA : 
                 return $this->SRMService->getBidSubmittedData($request);   
             case BID_SUBMISSION_DELETE : 
-                return $this->SRMService->deleteBidData($request);       
+                return $this->SRMService->deleteBidData($request);
+            case FAQ_CLARIFICATIONS :
+                return $this->SRMService->exportReport($request);
             default:
                 return [
                     'success'   => false,

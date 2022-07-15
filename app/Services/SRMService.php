@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\Http\Controllers\API\DocumentAttachmentsAPIController;
 use App\Models\Appointment;
@@ -62,6 +63,9 @@ use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
+use InfyOm\Generator\Utils\ResponseUtil;
+use Response;
+
 class SRMService
 {
     private $POService = null;
@@ -1343,12 +1347,23 @@ class SRMService
     {
         $input = $request->all();
         $tenderId = $input['extra']['tenderId'];
+        $SearchText = "";
+        if (isset($input['extra']['SearchText'])) {
+            $SearchText = $input['extra']['SearchText'];
+        }
         try {
             $queryRecordsCount = TenderFaq::where('tender_master_id', $tenderId)->firstOrFail()->toArray();
             if (sizeof($queryRecordsCount)) {
                 $result = TenderFaq::select('id', 'question', 'answer')
-                    ->where('tender_master_id', $tenderId)
-                    ->get();
+                    ->where('tender_master_id', $tenderId);
+                if (!empty($SearchText)) {
+                    $SearchText = str_replace("\\", "\\\\", $SearchText);
+                    $result = $result->where(function ($query) use ($SearchText) {
+                        $query->where('answer', 'LIKE', "%{$SearchText}%");
+                        $query->orWhere('question', 'LIKE', "%{$SearchText}%");
+                    });
+                }
+                $result = $result->get();
 
                 return [
                     'success' => true,
@@ -2794,14 +2809,25 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $noOfBids = $request->input('extra.noOfBids');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $lastSerialNumber = 1;
         DB::beginTransaction(); 
         try { 
+
+            $lastSerial = BidSubmissionMaster::where('tender_id', $tenderId)
+				->where('supplier_registration_id', $supplierRegId)
+				->orderBy('id', 'desc')
+				->first(); 
+			if ($lastSerial) {
+				$lastSerialNumber = intval($lastSerial->bid_sequence) + 1;
+			}
+
             $att['tender_id'] = $tenderId;
             $att['supplier_registration_id'] = $supplierRegId;
             $att['uuid'] = Uuid::generate()->string;
             $att['bid_sequence'] = 1;
             $att['created_at'] = Carbon::now();
             $att['created_by'] = $supplierRegId;  
+            $att['bid_sequence'] = $lastSerialNumber;  
             $result = BidSubmissionMaster::create($att); 
 
             $submittedCount = BidSubmissionMaster::where('tender_id',$tenderId)
@@ -2811,7 +2837,7 @@ class SRMService
             if( count($submittedCount) > $noOfBids){ 
                 return [
                     'success' => false,
-                    'message' => 'Supplier can submit only '.(int)$noOfBids.' bids for this tender',
+                    'message' => 'Cannot have more than '.(int)$noOfBids.' bids for this tender',
                     'data' =>  ' '
                 ];
             }
@@ -2893,5 +2919,112 @@ class SRMService
             'message' => 'Successfully retrived',
             'data' =>  ' '
         ];
+    }
+
+    public function exportReport(Request $request)
+    {
+        $tenderId = $request->input('extra.tenderId');
+        $reportID = $request->input('extra.reportID');
+
+        switch ($reportID) {
+            case 'FAQ':
+                $type = 'xlsx';
+                $supplierId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+                $data = array();
+                $parentIdArr = array();
+                $nonParentIdArr = array();
+                $dataPrebid = array();
+
+                $output = DB::table("srm_tender_faq")
+                    ->selectRaw("srm_tender_faq.question,
+                                srm_tender_faq.answer")
+                    ->where('tender_master_id', $tenderId)
+                    ->orderBy('srm_tender_faq.id', 'ASC')->get();
+                $prebidDate = $this->getPreBidClarificationsResponseForExcel($tenderId);
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $x++;
+                        $data[$x]['Question'] = $val->question;
+                        $data[$x]['Answer'] = strip_tags($val->answer);
+                    }
+                }
+
+                $x = 0;
+                foreach ($prebidDate as $val) {
+                    foreach ($val as $valIn) {
+                        if(!($valIn['is_public'] === 0 && $supplierId !== $valIn['created_by'])) {
+                            $x++;
+                            if ($supplierId == $valIn['created_by']) {
+                                $supplierName = $valIn['supplier']['name'];
+                            } elseif (($supplierId != $valIn['created_by']) && ($valIn['is_anonymous'] == 0)) {
+                                $supplierName = $valIn['supplier']['name'];
+                            } elseif (($supplierId != $valIn['created_by']) && ($valIn['is_anonymous'] == 1)) {
+                                $supplierName = "Anonymous";
+                            }
+
+                            if ($valIn['parent_id'] === 0) {
+                                $parentIdArr[] = $x + 1;
+                            } else {
+                                $nonParentIdArr[] = $x + 1;
+                            }
+
+                            $dataPrebid[$x]['Question Id'] = $valIn['id'];
+                            $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
+                            $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
+                            $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
+                            $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
+                            $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
+                            $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
+                        }
+                    }
+                }
+
+                $fileNameFaq = 'faq';
+                $fileNamePreBid = 'pre-bid_clarifications';
+                $path = 'srm/faq/report/excel/';
+                CreateExcel::process($data, $type, $fileNameFaq, $path);
+
+                $prebidConfig['origin'] = 'SRM';
+                $prebidConfig['faq_data'] = $data;
+                $prebidConfig['prebid'] = 'PREBID';
+                $prebidConfig['prebid_data'] = $dataPrebid;
+                $prebidConfig['parentIdList'] = $parentIdArr;
+                $prebidConfig['nonParentIdList'] = $nonParentIdArr;
+                $basePath = CreateExcel::process($dataPrebid, $type, $fileNamePreBid, $path, $prebidConfig);
+
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                } else {
+                    return Response::json(ResponseUtil::makeResponse(trans('custom.success_export'), $basePath));
+                }
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+        private function getPreBidClarificationsResponseForExcel($tenderId)
+        {
+        $array_value = array();
+        $x = 0;
+        $parentPreBid = TenderBidClarifications::where('tender_master_id', $tenderId)
+            ->where('parent_id', '=', 0)
+            ->get();
+
+        foreach ($parentPreBid as $parent) {
+            $prebidResponse = TenderBidClarifications::with(['supplier'])
+                ->where('id', '=', $parent->id)
+                ->orWhere('parent_id', '=', $parent->id)
+                ->orderBy('parent_id', 'asc')
+                ->get()
+                ->toArray();
+
+            $array_value[] = $prebidResponse;
+            $x++;
+        }
+
+        return $array_value;
     }
 }
