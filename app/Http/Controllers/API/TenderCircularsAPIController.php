@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
 use App\Models\DocumentAttachments;
 use App\Models\TenderCirculars;
 use App\Repositories\TenderCircularsRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -387,6 +388,7 @@ class TenderCircularsAPIController extends AppBaseController
 
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
+                $data['updated_at'] = Carbon::now();
                 $result = TenderCirculars::where('id',$input['id'])->update($data);
                 if($result){
                     DB::commit();
@@ -394,6 +396,7 @@ class TenderCircularsAPIController extends AppBaseController
                 }
             }else{
                 $data['created_by'] = $employee->employeeSystemID;
+                $data['created_at'] = Carbon::now();
                 $result = TenderCirculars::create($data);
                 if($result){
                     DB::commit();
