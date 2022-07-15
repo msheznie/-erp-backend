@@ -94,8 +94,7 @@ class TenderCirculars extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-
+    public $timestamps = false;
 
     public $fillable = [
         'tender_id',
@@ -106,7 +105,9 @@ class TenderCirculars extends Model
         'created_by',
         'updated_by',
         'deleted_by',
-        'company_id'
+        'company_id',
+        'created_at',
+        'updated_at'
     ];
 
     /**
