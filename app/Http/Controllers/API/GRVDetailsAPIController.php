@@ -721,7 +721,7 @@ class GRVDetailsAPIController extends AppBaseController
             $id = Auth::id();
             $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-            if ($input['grvMasterData']){
+            if (isset($input['grvMasterData'])){
 
                 $input['grvMasterData'] = $this->convertArrayToValue($input['grvMasterData']);
                 $grvMasterData = $input['grvMasterData'];
@@ -1191,7 +1191,7 @@ class GRVDetailsAPIController extends AppBaseController
 
 
             DB::commit();
-                if($grvPrimaryCode){
+                if(isset($grvPrimaryCode) && $grvPrimaryCode != null){
                     return $this->sendResponse('', 'GRV created successfully ' . $grvPrimaryCode);
                 } else {
                     return $this->sendResponse('', 'GRV details saved successfully');
