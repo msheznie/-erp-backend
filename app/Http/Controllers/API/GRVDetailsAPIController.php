@@ -44,9 +44,17 @@ use App\Repositories\GRVDetailsRepository;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
+use App\Models\CompanyFinanceYear;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
+use App\Models\GRVTypes;
+use App\Models\SupplierCurrency;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
@@ -706,12 +714,195 @@ class GRVDetailsAPIController extends AppBaseController
         $input = $request->all();
         $GRVDetail_arr = array();
 
+        DB::beginTransaction();
+        try {
+
+            
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+            if ($input['grvMasterData']){
+
+                $input['grvMasterData'] = $this->convertArrayToValue($input['grvMasterData']);
+                $grvMasterData = $input['grvMasterData'];
+
+                $companyFinanceYear = \Helper::companyFinanceYearCheck($grvMasterData);
+                if (!$companyFinanceYear["success"]) {
+                    return $this->sendError($companyFinanceYear["message"], 500);
+                }
+
+                $inputParam = $grvMasterData;
+                $inputParam["departmentSystemID"] = 10;
+                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                if (!$companyFinancePeriod["success"]) {
+                    return $this->sendError($companyFinancePeriod["message"], 500);
+                } else {
+                    $grvMasterData['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                    $grvMasterData['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+                }
+        
+                unset($inputParam);
+
+                $currentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+                if (isset($grvMasterData['grvDate'])) {
+                    if ($grvMasterData['grvDate']) {
+                        $grvMasterData['grvDate'] = Carbon::parse($grvMasterData['grvDate'])->format('Y-m-d') . ' 00:00:00';
+                        if ($grvMasterData['grvDate'] > $currentDate) {
+                            return $this->sendError('GRV date can not be greater than current date', 500);
+                        }
+                    }
+                }
+
+                if (isset($grvMasterData['stampDate'])) {
+                    if ($grvMasterData['stampDate']) {
+                        $grvMasterData['stampDate'] = Carbon::parse($grvMasterData['stampDate'])->format('Y-m-d') . ' 00:00:00';
+                    }
+        
+                    if ($grvMasterData['stampDate'] > $currentDate) {
+                        return $this->sendError('Stamp date can not be greater than current date', 500);
+                    }
+                }
+
+                if(isset($grvMasterData['grvLocation'])){
+
+                    $warehouse = WarehouseMaster::where("wareHouseSystemCode", $grvMasterData['grvLocation'])
+                    ->where('companySystemID', $grvMasterData['companySystemID'])
+                    ->first();
     
+                    if (!$warehouse) {
+                    return $this->sendError('Location not found', 500);
+                    }
+    
+                    if ($warehouse->manufacturingYN == 1) {
+                        if (is_null($warehouse->WIPGLCode)) {
+                            return $this->sendError('Please assigned WIP GLCode for this warehouse', 500);
+                        } else {
+                            $checkGLIsAssigned = ChartOfAccountsAssigned::checkCOAAssignedStatus($warehouse->WIPGLCode, $input['companySystemID']);
+                            if (!$checkGLIsAssigned) {
+                                return $this->sendError('Assigned WIP GL Code is not assigned to this company!', 500);
+                            }
+                        }
+                    }
+                } else {
+                    return $this->sendError('Location Not Selected', 500);
+                }
 
-        $grvAutoID = $input['grvAutoID'];
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+                $documentDate = $grvMasterData['grvDate'];
+                $monthBegin = $grvMasterData['FYBiggin'];
+                $monthEnd = $grvMasterData['FYEnd'];
+        
+                if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+                } else {
+                    return $this->sendError('GRV date is not within the financial period!');
+                }
+
+                $grvMasterData['createdPcID'] = gethostname();
+                $grvMasterData['createdUserID'] = $user->employee['empID'];
+                $grvMasterData['createdUserSystemID'] = $user->employee['employeeSystemID'];
+                $grvMasterData['documentSystemID'] = '3';
+                $grvMasterData['documentID'] = 'GRV';
+
+                $grvType = GRVTypes::where('grvTypeID', $grvMasterData['grvTypeID'])->first();
+                if ($grvType) {
+                    $grvMasterData['grvType'] = $grvType->idERP_GrvTpes;
+                }
+
+                $segment = SegmentMaster::where('serviceLineSystemID', $grvMasterData['serviceLineSystemID'])->first();
+                if ($segment) {
+                    $grvMasterData['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+
+                $companyCurrencyConversion = \Helper::currencyConversion($grvMasterData['companySystemID'], $grvMasterData['supplierTransactionCurrencyID'], $grvMasterData['supplierTransactionCurrencyID'], 0);
+
+                $company = Company::where('companySystemID', $grvMasterData['companySystemID'])->first();
+                if ($company) {
+                    $grvMasterData['companyID'] = $company->CompanyID;
+                    $grvMasterData['localCurrencyID'] = $company->localCurrencyID;
+                    $grvMasterData['companyReportingCurrencyID'] = $company->reportingCurrency;
+                    $grvMasterData['vatRegisteredYN'] = $company->vatRegisteredYN;
+                    $grvMasterData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $grvMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
+        
+                $grvMasterData['supplierTransactionER'] = 1;
+        
+                $supplier = SupplierMaster::where('supplierCodeSystem', $grvMasterData['supplierID'])->first();
+                if ($supplier) {
+                    $grvMasterData['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                    $grvMasterData['supplierName'] = $supplier->supplierName;
+                    $grvMasterData['supplierAddress'] = $supplier->address;
+                    $grvMasterData['supplierTelephone'] = $supplier->telephone;
+                    $grvMasterData['supplierFax'] = $supplier->fax;
+                    $grvMasterData['supplierEmail'] = $supplier->supEmail;
+                }
+
+                    // get last serial number by company financial year
+                $lastSerial = GRVMaster::where('companySystemID', $grvMasterData['companySystemID'])
+                ->where('companyFinanceYearID', $grvMasterData['companyFinanceYearID'])
+                ->orderBy('grvSerialNo', 'desc')
+                ->first();
+
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
+                }
+                $grvMasterData['grvSerialNo'] = $lastSerialNumber;
+                // get document code
+                $documentMaster = DocumentMaster::where('documentSystemID', $grvMasterData['documentSystemID'])->first();
+
+                $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $grvMasterData['companyFinanceYearID'])
+                    ->where('companySystemID', $grvMasterData['companySystemID'])
+                    ->first();
+
+                if ($companyfinanceyear) {
+                    $startYear = $companyfinanceyear['bigginingDate'];
+                    $finYearExp = explode('-', $startYear);
+                    $finYear = $finYearExp[0];
+                } else {
+                    $finYear = date("Y");
+                }
+                if ($documentMaster) { // generate document code
+                    $grvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $grvMasterData['grvPrimaryCode'] = $grvCode;
+                }
+
+                $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $grvMasterData['supplierID'])
+                    ->where('isDefault', -1)
+                    ->first();
+
+                if ($supplierCurrency) {
+
+                    $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+
+                    $grvMasterData['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+
+                    if ($erCurrency) {
+                        $grvMasterData['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                    }
+                }
+
+                // adding supplier grv details
+                $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $grvMasterData['supplierID'])
+                    ->where('companySystemID', $grvMasterData['companySystemID'])
+                    ->first();
+
+                if ($supplierAssignedDetail) {
+                    $grvMasterData['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+                    $grvMasterData['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
+                    $grvMasterData['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                    $grvMasterData['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+                }
+
+                $gRVMasters = $this->gRVMasterRepository->create($grvMasterData);
+
+                $grvPrimaryCode = $gRVMasters->grvPrimaryCode;
+                $grvAutoID = $gRVMasters->grvAutoID;
+
+            } else {
+                $grvAutoID = $input['grvAutoID'];
+            }
 
         $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
             ->first();
@@ -742,8 +933,7 @@ class GRVDetailsAPIController extends AppBaseController
             }
         }
 
-        DB::beginTransaction();
-        try {
+
 
             $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
                                                                 ->where('companySystemID', $GRVMaster->companySystemID)
@@ -1001,7 +1191,11 @@ class GRVDetailsAPIController extends AppBaseController
 
 
             DB::commit();
-            return $this->sendResponse('', 'GRV details saved successfully');
+                if($grvPrimaryCode){
+                    return $this->sendResponse('', 'GRV created successfully ' . $grvPrimaryCode);
+                } else {
+                    return $this->sendResponse('', 'GRV details saved successfully');
+                }
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
