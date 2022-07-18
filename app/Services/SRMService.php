@@ -2996,12 +2996,16 @@ class SRMService
 
                 if($basePath == '')
                 {
-                    return $this->sendError('Unable to export excel');
+                    return ['success' => false, 'data' => '', 'message' => 'Unable to export excel'];
                 } else {
-                    return Response::json(ResponseUtil::makeResponse(trans('custom.success_export'), $basePath));
+                    return [
+                        'success' => true,
+                        'message' => 'Successfully retrieved',
+                        'data' =>  $basePath
+                    ];
                 }
             default:
-                return $this->sendError('No report ID found');
+                return ['success' => false, 'data' => '', 'message' => 'No report ID found'];
         }
     }
 
