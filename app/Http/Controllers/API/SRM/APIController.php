@@ -95,7 +95,7 @@ class APIController extends Controller
      * @return array
      * @throws Throwable
      */
-    public function handleRequest(Request $request)
+    public function handleRequest(Request $request): array
     {
         switch ($request->input('request')) {
             case GET_CURRENCIES:
