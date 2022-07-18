@@ -2955,7 +2955,7 @@ class SRMService
                     foreach ($output as $val) {
                         $x++;
                         $data[$x]['Question'] = $val->question;
-                        $data[$x]['Answer'] = strip_tags($val->answer);
+                        $data[$x]['Answer'] = html_entity_decode(strip_tags($val->answer));
                     }
                 }
 
@@ -2980,8 +2980,8 @@ class SRMService
 
                             $dataPrebid[$x]['Question Id'] = $valIn['id'];
                             $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
-                            $dataPrebid[$x]['Question / Answer'] = strip_tags($valIn['post']);
-                            $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
+                            $dataPrebid[$x]['Question / Answer'] = html_entity_decode(strip_tags($valIn['post']));
+                            $dataPrebid[$x]['Parent Question Id'] = $valIn['parent_id'];
                             $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
                             $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
                             $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
