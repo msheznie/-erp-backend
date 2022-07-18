@@ -381,7 +381,11 @@ class MatchDocumentMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'user_type',
+        'employee_id',
+        'employeeGLCodeSystemID',
+        'employeeGLCode'
     ];
 
     /**
@@ -489,6 +493,11 @@ class MatchDocumentMaster extends Model
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employee_id', 'employeeSystemID');
     }
 
     public function customer()
