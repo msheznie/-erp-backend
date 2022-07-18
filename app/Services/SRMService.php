@@ -58,6 +58,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use stdClass;
 use Throwable;
 use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
@@ -1363,13 +1364,20 @@ class SRMService
                         $query->orWhere('question', 'LIKE', "%{$SearchText}%");
                     });
                 }
-                $result = $result->get();
 
-                return [
-                    'success' => true,
-                    'message' => 'FAQ list successfully get',
-                    'data' => $result
-                ];
+                if(sizeof($result->get()) > 0 ){
+                    return [
+                        'success' => true,
+                        'message' => 'FAQ list successfully get',
+                        'data' => $result->get()
+                    ];
+                } else {
+                    return [
+                        'success' => true,
+                        'message' => 'No records found',
+                        'data' => new stdClass()
+                    ];
+                }
             } else {
                 return [
                     'success' => true,
@@ -2972,7 +2980,7 @@ class SRMService
 
                             $dataPrebid[$x]['Question Id'] = $valIn['id'];
                             $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
-                            $dataPrebid[$x]['Post'] = strip_tags($valIn['post']);
+                            $dataPrebid[$x]['Question / Answer'] = strip_tags($valIn['post']);
                             $dataPrebid[$x]['Parent Question Id'] = strip_tags($valIn['parent_id']);
                             $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
                             $dataPrebid[$x]['Created At'] = Carbon::createFromFormat('Y-m-d H:i:s', $valIn['created_at'])->format('Y-m-d H:i A');
