@@ -18,6 +18,11 @@ class CashFlowSubCategoryGLCode extends Model
 
     public $fillable = [
         'cashFlowReportID',
+        'pvID',
+        'brvID',
+        'pvDetailID',
+        'brvDetailID',
+        'payDetailAutoID',
         'chartOfAccountID',
         'subCategoryID',
         'localAmount',

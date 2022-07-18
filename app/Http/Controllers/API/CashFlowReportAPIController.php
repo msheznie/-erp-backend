@@ -14,6 +14,8 @@ use App\Models\CashFlowTemplate;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\CashFlowReportRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -427,9 +429,13 @@ class CashFlowReportAPIController extends AppBaseController
         $templates = CashFlowTemplate::OfCompany($input['companySystemID'])
                                      ->get();
 
+        $yesNoSelection = YesNoSelection::all();
+
+
         $data = [
             'companyFinanceYear' => $companyFinanceYear,
-            'templates' => $templates
+            'templates' => $templates,
+            'yesNoSelection'=> $yesNoSelection
         ];
 
         return $this->sendResponse($data, "Form data retrived successfully");
@@ -484,7 +490,7 @@ class CashFlowReportAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $reportMasterData = CashFlowReport::with(['finance_year_by', 'template'])->find($input['id']);
+        $reportMasterData = CashFlowReport::with(['finance_year_by','template','confirmed_by'])->find($input['id']);
 
         $reportDetails = [];
         if ($reportMasterData) {
@@ -517,7 +523,7 @@ class CashFlowReportAPIController extends AppBaseController
                                                         }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
             foreach ($reportTemplateDetails as $data) {
                 foreach ($data->subcategory as $dt) {
-                    if ($dt->logicType == 2 || $dt->logicType == 3) {
+                    if ($dt->logicType == 2 || $dt->logicType == 3 || $dt->logicType == 6) {
                         $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
                         if($amount){
                             $dt->amount = $amount;
@@ -560,6 +566,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_bookinvsupp_item_det.totLocalAmount as bsiAmountLocal,
     erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
+    erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
+    erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
     erp_grvdetails.financeGLcodePLSystemID as glAutoID
 	FROM 
     erp_grvdetails
@@ -583,6 +591,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directinvoicedetails.netAmountLocal as bsiAmountLocal,
     erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
+    erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
+    erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
     erp_directinvoicedetails.chartOfAccountSystemID as glAutoID
 	FROM 
     erp_directinvoicedetails
@@ -603,6 +613,8 @@ class CashFlowReportAPIController extends AppBaseController
     NULL as bsiAmountLocal,
     erp_directpaymentdetails.netAmountLocal as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
+    erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
+    erp_directpaymentdetails.directPaymentDetailsID as pvDetailID,
     erp_directpaymentdetails.chartOfAccountSystemID as glAutoID
 	FROM 
     erp_directpaymentdetails
@@ -611,7 +623,13 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ')
     ) AS t3');
 
-
+        foreach($details as $detail)
+        {
+            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->first();
+            if($pv){
+                $detail->cashFlowAmount = $pv->localAmount;
+            }
+        }
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
 
     }
@@ -629,58 +647,71 @@ class CashFlowReportAPIController extends AppBaseController
     erp_custinvoicedirect.bookingInvCode as bookingInvCode,
     erp_customerinvoiceitemdetails.issueCostLocalTotal as custAmountLocal,
     erp_custreceivepaymentdet.bookingAmountLocal as receiveAmountLocal,
-    erp_customerrecievepayment.custPaymentReceiveCode as receiveCode,
+    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
+    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
+    erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
     erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID
 	FROM 
     erp_delivery_order_detail
     LEFT JOIN erp_delivery_order ON erp_delivery_order_detail.deliveryOrderID = erp_delivery_order.deliveryOrderID
     LEFT JOIN erp_customerinvoiceitemdetails ON erp_delivery_order_detail.deliveryOrderDetailID = erp_customerinvoiceitemdetails.deliveryOrderDetailID
     LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
-    LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvSystemCode
-    LEFT JOIN erp_customerrecievepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerrecievepayment.custReceivePaymentAutoID
+    LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
+    LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
     erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
-    erp_customerrecievepayment.custPaymentReceiveCode IS NOT NULL
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
     )AS t1
     UNION ALL
       SELECT
       * FROM
       (SELECT
-    "-" AS grvPrimaryCode,
-    NULL as grvAmount,
-    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
-    erp_directinvoicedetails.netAmountLocal as bsiAmountLocal,
-    erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
-    erp_paysupplierinvoicemaster.BPVcode as payCode,
-    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID
+	"-" AS deliveryOrderCode,
+    NULL as deliveryAmount,
+    erp_custinvoicedirect.bookingInvCode as bookingInvCode,
+    erp_customerinvoiceitemdetails.issueCostLocalTotal as custAmountLocal,
+    erp_custreceivepaymentdet.bookingAmountLocal as receiveAmountLocal,
+    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
+    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
+    erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
+    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID
 	FROM 
-    erp_directinvoicedetails
-    LEFT JOIN erp_bookinvsuppmaster ON erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
-    LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
-    LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
+    erp_customerinvoiceitemdetails
+    LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
+    LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
+    LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
-    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
+    erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
 ) AS t2
-    UNION ALL
+  UNION ALL
     SELECT
       * FROM
       (SELECT
-    "-" AS grvPrimaryCode,
-    NULL as grvAmount,
+	"-" AS deliveryOrderCode,
+    NULL as deliveryAmount,
     "-" as bookingInvCode,
-    NULL as bsiAmountLocal,
-    erp_directpaymentdetails.netAmountLocal as payAmountLocal,
-    erp_paysupplierinvoicemaster.BPVcode as payCode,
-    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID
+    NULL as custAmountLocal,
+    erp_directreceiptdetails.localAmount as receiveAmountLocal,
+    erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
+    erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
+    erp_directreceiptdetails.directReceiptAutoID as brvDetailID,
+    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID
 	FROM 
-    erp_directpaymentdetails
-    LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
+    erp_directreceiptdetails
+    LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ')
-    ) AS t3');
+    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') 
+) AS t3');
 
+        foreach($details as $detail)
+        {
+            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->first();
+            if($brv){
+                $detail->cashFlowAmount = $brv->localAmount;
+            }
+        }
 
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
 
@@ -720,21 +751,103 @@ class CashFlowReportAPIController extends AppBaseController
                     $applicableAmount = $detail['bsiAmountLocal'];
                 }
             }
-
-            if($detail['cashFlowAmount'] > $applicableAmount){
-                return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+            if($detail['grvAmount'] == null && $detail['bsiAmountLocal'] == null) {
+                $applicableAmount = $detail['payAmountLocal'];
             }
-            $data['localAmount'] = $detail['cashFlowAmount'];
-            $data['subCategoryID'] = $subCategoryID;
-            $data['chartOfAccountID'] = $detail['glAutoID'];
-            $data['cashFlowReportID'] = $cashFlowReportID;
-            $data['rptAmount'] = 0;
+            if(isset($detail['cashFlowAmount'])) {
+                if($detail['cashFlowAmount'] > $applicableAmount){
+                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                }
+                $data['localAmount'] = $detail['cashFlowAmount'];
+                $data['subCategoryID'] = $subCategoryID;
+                $data['chartOfAccountID'] = $detail['glAutoID'];
+                $data['pvID'] = $detail['pvID'];
+                $data['pvDetailID'] = $detail['pvDetailID'];
+                $data['cashFlowReportID'] = $cashFlowReportID;
+                $data['rptAmount'] = 0;
 
-            CashFlowSubCategoryGLCode::create($data);
+                $pvID = CashFlowSubCategoryGLCode::where('pvID', $detail['pvID'])->where('pvDetailID', $detail['pvDetailID'])->first();
+                if($pvID){
+                    CashFlowSubCategoryGLCode::where('pvID', $detail['pvID'])->where('pvDetailID', $detail['pvDetailID'])->update($data);
+                }
+                else{
+                    CashFlowSubCategoryGLCode::create($data);
+                }
+            }
         }
-
-
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+    }
 
+    public function postCashFlowPulledItemsForProceeds(Request $request){
+
+        $details = $request->data;
+        $subCategoryID = $request->subCategoryID;
+        $cashFlowReportID = $request->cashFlowReportID;
+
+        $data = array();
+        foreach($details as $detail){
+            $applicableAmount = 0;
+            if($detail['deliveryAmount'] != null){
+                if($detail['receiveAmountLocal'] <  $detail['custAmountLocal'] && $detail['receiveAmountLocal'] <  $detail['deliveryAmount']){
+                    $applicableAmount = $detail['payAmountLocal'];
+                }
+                if($detail['custAmountLocal'] <  $detail['receiveAmountLocal'] && $detail['custAmountLocal'] <  $detail['deliveryAmount']){
+                    $applicableAmount = $detail['custAmountLocal'];
+                }
+                if($detail['deliveryAmount'] <  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] <  $detail['custAmountLocal']){
+                    $applicableAmount = $detail['deliveryAmount'];
+                }
+                if($detail['deliveryAmount'] ==  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
+                    $applicableAmount = $detail['deliveryAmount'];
+                }
+            }
+            if($detail['deliveryAmount'] == null){
+                if($detail['receiveAmountLocal'] <  $detail['custAmountLocal']){
+                    $applicableAmount = $detail['payAmountLocal'];
+                }
+                if($detail['custAmountLocal'] <  $detail['receiveAmountLocal']){
+                    $applicableAmount = $detail['custAmountLocal'];
+                }
+                if($detail['custAmountLocal'] ==  $detail['receiveAmountLocal']){
+                    $applicableAmount = $detail['custAmountLocal'];
+                }
+            }
+            if($detail['deliveryAmount'] == null && $detail['custAmountLocal'] == null) {
+                $applicableAmount = $detail['receiveAmountLocal'];
+            }
+            if(isset($detail['cashFlowAmount'])) {
+
+                if ($detail['cashFlowAmount'] > $applicableAmount) {
+                    return $this->sendError($detail['cashFlowAmount'] .'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
+                }
+                $data['localAmount'] = $detail['cashFlowAmount'];
+                $data['subCategoryID'] = $subCategoryID;
+                $data['brvID'] = $detail['brvID'];
+                $data['brvDetailID'] = $detail['brvDetailID'];
+                $data['chartOfAccountID'] = $detail['glAutoID'];
+                $data['cashFlowReportID'] = $cashFlowReportID;
+                $data['rptAmount'] = 0;
+
+                $brvID = CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->first();
+                if($brvID){
+                    CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->update($data);
+                }
+                else{
+                    CashFlowSubCategoryGLCode::create($data);
+                }
+            }
+        }
+        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+    }
+
+    public function cashFlowConfirmation(Request $request){
+        $input = $request->reportData;
+        $input = array_except($input, ['finance_year_by','template','confirmed_by']);
+        $input['confirmed_by'] = \Helper::getEmployeeSystemID();
+        $input['confirmed_date'] = now();
+        $cashFlowReport = $this->cashFlowReportRepository->update($input, $input['id']);
+
+
+        return $this->sendResponse($cashFlowReport, 'Report Template Details retrieved successfully');
     }
 }

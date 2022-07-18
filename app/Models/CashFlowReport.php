@@ -156,4 +156,8 @@ class CashFlowReport extends Model
     {
         return $this->belongsTo('App\Models\CashFlowTemplate', 'cashFlowTemplateID', 'id');
     }
+
+    public function confirmed_by(){
+        return $this->belongsTo('App\Models\Employee','confirmed_by','employeeSystemID');
+    }
 }
