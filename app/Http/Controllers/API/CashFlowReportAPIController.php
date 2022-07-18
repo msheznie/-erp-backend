@@ -557,7 +557,9 @@ class CashFlowReportAPIController extends AppBaseController
 
         $dataCashFlow = $request->dataCashFlow;
         $dataCashFlow = (array)$dataCashFlow;
-        $dataCashFlow = collect($dataCashFlow)->pluck('glAutoID');
+        $glAutoID = collect($dataCashFlow)->pluck('glAutoID');
+        $companySystemID = collect($dataCashFlow)->pluck('companySystemID');
+        $companySystemID = isset($companySystemID[0]) ? $companySystemID[0] : $companySystemID;
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
@@ -577,7 +579,8 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_grvdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
+    erp_grvdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_grvdetails.companySystemID = '.$companySystemID.' AND
     erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
     )AS t1
@@ -600,7 +603,8 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_paysupplierinvoicedetail ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_paysupplierinvoicedetail.bookingInvSystemCode
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.payMasterAutoId = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
+    erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
 ) AS t2
     UNION ALL
@@ -620,7 +624,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directpaymentdetails
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
-    erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ')
+    erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_directpaymentdetails.companySystemID = '.$companySystemID.'
     ) AS t3');
 
         foreach($details as $detail)
@@ -639,7 +644,9 @@ class CashFlowReportAPIController extends AppBaseController
 
         $dataCashFlow = $request->dataCashFlow;
         $dataCashFlow = (array)$dataCashFlow;
-        $dataCashFlow = collect($dataCashFlow)->pluck('glAutoID');
+        $glAutoID = collect($dataCashFlow)->pluck('glAutoID');
+        $companySystemID = collect($dataCashFlow)->pluck('companySystemID');
+        $companySystemID = isset($companySystemID[0]) ? $companySystemID[0] : $companySystemID;
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_delivery_order.deliveryOrderCode AS deliveryOrderCode,
@@ -659,8 +666,9 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
+    erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
+    erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
     )AS t1
     UNION ALL
@@ -682,7 +690,8 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') AND
+    erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
 ) AS t2
   UNION ALL
@@ -702,7 +711,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directreceiptdetails
     LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($dataCashFlow)) . ') 
+    erp_directreceiptdetails.companySystemID = '.$companySystemID.' AND
+    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') 
 ) AS t3');
 
         foreach($details as $detail)
