@@ -603,7 +603,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                 ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
                         }
                     }
-                    else
+                    else if($user_type == 1)
                     {
                         if ($totalPaidAmount == 0) {
                             $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
