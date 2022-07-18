@@ -478,9 +478,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     return $this->sendError('You cannot delete the detail, this document already confirmed', 500);
                 }
             }
-
+            $user_type = null;
             $matchDocumentMasterObj = MatchDocumentMaster::find($paySupplierInvoiceDetail->matchingDocID);
-            $user_type = $matchDocumentMasterObj->user_type;
+            if(isset($matchDocumentMasterObj))
+            {
+                $user_type = $matchDocumentMasterObj->user_type;
+            }
+           
 
 
             if ($paySupplierInvoiceDetail->documentSystemID != 0) {
@@ -565,7 +569,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         }
                         
                     }
-                    else
+                    else if($user_type == 1)
                     {
                         if ($totalPaidAmount == 0) {
                             $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
