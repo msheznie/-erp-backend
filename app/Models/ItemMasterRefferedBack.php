@@ -301,7 +301,8 @@ class ItemMasterRefferedBack extends Model
         'createdUserSystemID',
         'modifiedUserSystemID',
         'isPOSItem',
-        'vatSubCategory'
+        'vatSubCategory',
+        'pos_type'
     ];
 
     /**
@@ -352,7 +353,8 @@ class ItemMasterRefferedBack extends Model
         'createdUserSystemID' => 'integer',
         'modifiedUserSystemID' => 'integer',
         'isPOSItem' => 'integer',
-        'vatSubCategory'=>'integer'
+        'vatSubCategory'=>'integer',
+        'pos_type' => 'integer'
     ];
 
     /**
