@@ -3015,4 +3015,9 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
 
  
-//Route::post('requests', 'POS\PosAPIController@handleRequest');
+Route::post('requests', 'POS\PosAPIController@handleRequest');
+ 
+
+Route::resource('p_o_s_trans_logs', 'POSTransLogAPIController');
+
+Route::resource('p_o_s_trans_statuses', 'POSTransStatusAPIController');

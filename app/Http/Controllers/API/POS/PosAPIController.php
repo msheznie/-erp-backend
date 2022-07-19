@@ -18,6 +18,8 @@ use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\POSSTAGInvoice;
+use App\Models\POSSTAGInvoiceDetail;
 use App\Services\POSService;
 
 class PosAPIController extends AppBaseController
@@ -339,12 +341,11 @@ class PosAPIController extends AppBaseController
     }
 
     public function handleRequest(Request $request)
-    {
-        define('INVOICE', 'INVOICE');
-
+    {  
+        define('INVOICE', 'INVOICE');  
         switch ($request->input('request')) {
             case INVOICE:
-                return $this->POSService->posInvoice($request);
+                return $this->POSService->getMappingData($request);  
             default:
                 return [
                     'success'   => false,
@@ -352,6 +353,5 @@ class PosAPIController extends AppBaseController
                     'data'      => null
                 ];
         }
-        
     }
 }
