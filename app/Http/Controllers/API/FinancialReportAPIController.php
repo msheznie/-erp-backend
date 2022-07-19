@@ -2640,7 +2640,6 @@ WHERE
                                 $data[$x]['Account Code'] = $val->glCode;
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
-
                                 if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
@@ -2799,13 +2798,13 @@ WHERE
                 
 
 
-                array_push($data,$totalArray);
 
          
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 if ($reportTypeID == 'FTBM') {
+                    array_push($data,$totalArray);
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
                         $cur = $currencyLocal;
