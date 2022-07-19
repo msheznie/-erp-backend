@@ -699,15 +699,15 @@ WHERE
                                 $to_date = null;
                             }
                             if (!empty($to_date) && empty($frm_date)) {
-                                return ['success' => false, 'message' => 'From date cannot be empty for ' . $calDate['calendar_date']];
+                                return ['success' => false, 'message' => 'From date cannot be empty'];
                             }
                             if (!empty($frm_date) && empty($to_date)) {
-                                return ['success' => false, 'message' => 'To date cannot be empty for ' . $calDate['calendar_date']];
+                                return ['success' => false, 'message' => 'To date cannot be empty'];
                             }
 
                             if (!empty($frm_date) && !empty($to_date)) {
                                 if ($frm_date > $to_date) {
-                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for ' . $calDate['calendar_date']];
+                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
                                 }
                             }
                             if (!empty($to_date) || !empty($frm_date)) {
