@@ -2653,7 +2653,7 @@ WHERE
                                     $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
-                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0 + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
+                                    $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round((isset($val->openingBalRpt) ? $val->openingBalRpt : 0) + $val->documentRptAmountDebit - $val->documentRptAmountCredit, $decimalPlaceRpt);
     
                                 }
                                 $x++;
