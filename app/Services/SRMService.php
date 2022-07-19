@@ -1496,8 +1496,11 @@ class SRMService
 
             $data = $data->get();
 
+            $getDates = TenderMaster::select('pre_bid_clarification_start_date', 'pre_bid_clarification_end_date')->where('id', $extra['tenderId'])->get();
+
             $data = [
                 'data' => $data,
+                'dates' => $getDates,
                 'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
             ];
 
