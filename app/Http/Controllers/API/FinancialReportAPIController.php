@@ -504,7 +504,33 @@ class FinancialReportAPIController extends AppBaseController
             $typeID = collect($typeID)->pluck('id');
         }
 
-        $data = DB::select('SELECT * FROM (SELECT
+        $data = DB::select('SELECT * FROM (
+    SELECT
+	erp_bookinvsuppmaster.bookingDate AS documentDate,
+	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+	erp_bookinvsuppmaster.comments AS description,
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+	erp_bookinvsuppmaster.bookingAmountLocal AS amountLocal,
+	erp_bookinvsuppmaster.bookingAmountRpt AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    1 AS type
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
