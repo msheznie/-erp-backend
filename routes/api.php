@@ -3031,3 +3031,8 @@ Route::resource('tender_circulars', 'TenderCircularsAPIController');
  
 Route::post('requests', 'POS\PosAPIController@handleRequest');
 
+
+
+Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
+
+Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');
