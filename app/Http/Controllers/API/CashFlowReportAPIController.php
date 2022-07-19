@@ -415,7 +415,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         $cashFlowReport->delete();
 
-        return $this->sendSuccess('Cash Flow Report deleted successfully');
+        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.cash_flow_report')]));
     }
 
     public function getCashFlowFormData(Request $request)
@@ -582,6 +582,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_grvdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_grvdetails.companySystemID = '.$companySystemID.' AND
     erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
+    erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
     )AS t1
     UNION ALL
@@ -605,6 +606,7 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
+    erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
 ) AS t2
     UNION ALL
@@ -625,6 +627,7 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
     erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_paysupplierinvoicemaster.approved = -1 AND
     erp_directpaymentdetails.companySystemID = '.$companySystemID.'
     ) AS t3');
 
@@ -632,7 +635,7 @@ class CashFlowReportAPIController extends AppBaseController
         {
             $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->first();
             if($pv){
-                $detail->cashFlowAmount = $pv->localAmount;
+                $detail->cashFlowAmount = number_format($pv->localAmount,3);;
             }
         }
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
@@ -669,6 +672,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
     erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
+    erp_customerreceivepayment.approved = -1 AND
     erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
     )AS t1
     UNION ALL
@@ -692,6 +696,7 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
+    erp_customerreceivepayment.approved = -1 AND
     erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
 ) AS t2
   UNION ALL
@@ -712,6 +717,7 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
     erp_directreceiptdetails.companySystemID = '.$companySystemID.' AND
+    erp_customerreceivepayment.approved = -1 AND
     erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') 
 ) AS t3');
 
@@ -719,7 +725,7 @@ class CashFlowReportAPIController extends AppBaseController
         {
             $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->first();
             if($brv){
-                $detail->cashFlowAmount = $brv->localAmount;
+                $detail->cashFlowAmount = number_format($brv->localAmount,3);
             }
         }
 
