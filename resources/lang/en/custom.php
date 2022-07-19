@@ -141,6 +141,7 @@ return [
     'bank_account_reffered_backs' => 'Bank Account Reffered Backs',
     'bank_assigns' => 'Bank Assigns',
     'bank_ledgers' => 'Bank Ledgers',
+    'cash_flow_report' => 'Cash Flow Report',
     'bank_reconciliation' => 'Bank Reconciliation',
     'you_cannot_edit_this_document_already_confirmed' => 'You cannot edit, This document already confirmed',
     'you_cannot_edit_this_item_already_added_to_bank_reconciliation' => 'You cannot edit, This item already added to bank reconciliation.',
