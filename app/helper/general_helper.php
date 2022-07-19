@@ -4139,6 +4139,7 @@ class Helper
                     $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
                     $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
                     unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                    $val->setAppends([]);
                 }
             }
 
@@ -4220,6 +4221,7 @@ class Helper
                     $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
                     $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
                     unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                    $val->setAppends([]);
                 }
             }
 

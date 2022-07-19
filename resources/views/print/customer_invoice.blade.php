@@ -253,19 +253,15 @@
                         <tr>
                             <td>{{$request->customer->ReportTitle}}</td>
                         </tr>
+
                         <tr>
                             <td>
                                 <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
                             </td>
                         </tr>
-                        @if($request->lineSecondAddress)
-                            <tr>
-                                <td>
-                                    <div>{{$request->customer->customerAddress2}}</div>
-                                </td>
-                            </tr>
-                        @else
-                            <tr>
+
+                            @if(!$request->lineSecondAddress)
+                                <tr>
                                 <td>{{$request->customer->customerCity}}</td>
                             </tr>
                             <tr>
@@ -278,6 +274,11 @@
                                 <td></td>
                             </tr>
                         @endif
+                                <tr>
+                                    <td>Customer VATIN</td>
+                                    <td width="10px"><span class="font-weight-bold">-</span></td>
+                                    <td>{{$request->vatNumber}}</td>
+                                </tr>
                         <tr>
                             <td>
                                 @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif

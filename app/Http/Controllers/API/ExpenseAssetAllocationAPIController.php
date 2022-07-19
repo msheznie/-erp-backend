@@ -120,6 +120,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         if (!isset($input['documentSystemID'])) {
             return $this->sendError("Document system ID not found");
         }
+        
        
         $checkForAssetDuplicate = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
@@ -199,12 +200,23 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         else if($input['documentSystemID'] == 17) {
             $jvDetail = JvDetail::with(['master'])->find($input['documentDetailID']);
 
+            if($jvDetail->creditAmount == 0)
+            {
+                $detailTotal = $jvDetail->debitAmount;
+            }
+            else
+            {
+                $detailTotal = $jvDetail->creditAmount;
+
+           
+            }
+
             if (!$jvDetail) {
                 return $this->sendError("GRV detail not found");
             }
 
             
-            $detailTotal = $jvDetail->debitAmount;
+            
             $input['chartOfAccountSystemID'] = $jvDetail->chartOfAccountSystemID;
             $companySystemID = isset($jvDetail->master->companySystemID) ? $jvDetail->master->companySystemID : null;
 
@@ -238,7 +250,11 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->sum('amount');
 
+                                                 
+
+
         $newTotal = $allocatedSum + floatval($input['amount']);
+
     
         if ($newTotal > $detailTotal) {
             return $this->sendError("Allocated amount cannot be greater than detail amount.");

@@ -46,6 +46,7 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use App\helper\Helper;
 use App\helper\CreateExcel;
+use App\Models\Company;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -754,6 +755,15 @@ ORDER BY
             return $this->sendError($validator->messages(), 422);
         }
 
+
+        $from_date = $request->asOfDate;
+        $to_date = $request->asOfDate;
+        $company = Company::find($request->companyId);
+        $company_name = $company->CompanyName;
+        $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
+        $fileName = 'Advance Payment Request';
+
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
 
@@ -762,7 +772,7 @@ ORDER BY
         } else {
             $sort = 'desc';
         }
-
+        $data = array();
             $search = $request->input('search.value');
             $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
             $type = $request->type;
@@ -863,10 +873,19 @@ ORDER BY
             } else {
                 $data = array();
             }
-
-            $fileName = 'advance_payment_request';
+            $requestCurrency = NULL;
             $path = 'accounts-payable/report/advance_payment_request/excel/';
-            $basePath = CreateExcel::process($data,$type,$fileName,$path);
+            if($input['reportTypeID'] == 'APRA') {
+                $title = 'Advance Payment Request Aging';
+            }
+            else
+            {
+                $title = 'Advance Payment Request Detail';
+            }
+            
+            $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+         
+            $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
             if($basePath == '')
             {

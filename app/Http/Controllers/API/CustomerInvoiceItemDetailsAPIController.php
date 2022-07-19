@@ -138,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -163,6 +163,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Direct Not Found');
         }
 
+     
 
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
@@ -254,8 +255,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){

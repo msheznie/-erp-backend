@@ -8,6 +8,9 @@
             <tr>
                 <h2  colspan="12" style="text-align: center;">Customer Ledger</h2>
             </tr>
+            <tr>
+                <h4  colspan="12" style="text-align: center;">As of Date {{\App\helper\Helper::dateFormat($fromDate)}}</h4>
+            </tr>
         </thead>
         @foreach($reportData as $name => $value)
             <thead>

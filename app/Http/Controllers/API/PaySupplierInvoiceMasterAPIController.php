@@ -339,6 +339,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
             }
+            if ($input['invoiceType'] == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+          
+            }
+
+
 
             if ($input['invoiceType'] == 6) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
@@ -528,6 +542,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -613,6 +628,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 }
             }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
@@ -1268,6 +1284,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
@@ -1419,10 +1446,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
+                
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -2235,6 +2263,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
@@ -3153,9 +3191,30 @@ WHERE
     {
         $input = $request->all();
 
-        if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
-            return $this->sendError('Please select a supplier');
+        if ($input['matchType'] == 2) {
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                    return $this->sendError('Please select a supplier');
+                }
+            }
+            else{
+                if (!isset($input['employeeID']) || $input['employeeID'] == 0) {
+                    return $this->sendError('Please select a employee');
+                }
+            }
+
         }
+        else
+        {
+            if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                return $this->sendError('Please select a supplier');
+            }
+        }
+
+     
 
         if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
@@ -3201,6 +3260,21 @@ AND invoiceType = 5
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
+
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                $col = 'supplierID';
+                $val = $input['BPVsupplierID'];
+            }
+            else{
+                $col = 'empID';
+                $val = $input['employeeID'];
+            }
+           
+
+
             $invoiceMaster = DB::select('SELECT
                 MASTER.debitNoteAutoID as masterAutoID,
                 MASTER.debitNoteCode as documentCode,
@@ -3223,6 +3297,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                     erp_matchdocumentmaster.companySystemID,
                     erp_matchdocumentmaster.BPVcode,
                     erp_matchdocumentmaster.matchingOption,
+                    erp_matchdocumentmaster.user_type,
                     COALESCE (
                         SUM(
                             erp_matchdocumentmaster.matchingAmount
@@ -3240,6 +3315,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 AND MASTER .documentSystemID = advd.documentSystemID
                 AND MASTER .companySystemID = advd.companySystemID
                 AND advd.matchingOption IS NULL
+                AND advd.user_type = ' . $user_type . '
             )
             LEFT JOIN (
                 SELECT
@@ -3264,8 +3340,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             WHERE
                 approved = - 1
             AND matchInvoice <> 2
+            AND type = '.$user_type.'
             AND MASTER.companySystemID = ' . $input['companySystemID'] . '
-            AND supplierID = ' . $input['BPVsupplierID'] . '
+            AND '.$col.' = ' . $val . '
             HAVING
                 (
                     ROUND(

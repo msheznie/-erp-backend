@@ -721,14 +721,62 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getPaymentSuppliersByYear($request);
+
+                
+             
+
+                $from_date = $request->fromDate;
+                $to_date = $request->toDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $year = $request->year;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
                 $decimalPlace = 0;
                 $data = array();
+                if ($request->reportTypeID == 'APPSY') {
+                    $typ_re = 1;
+                    $fileName = 'Payment Suppliers By Year -'.$year;
+                    $title = 'Payment Suppliers By Year -'.$year;
+                    $requestCurrency = $request->currency;
+
+                }
+                else if ($request->reportTypeID == 'APDPY') {
+                    $typ_re = 1;
+                    $fileName = 'Direct Payments By Year -'.$year;
+                    $title = 'Direct Payments By Year -'.$year;
+                    $requestCurrency = $request->currency;
+                    
+                }
+                else if ($request->reportTypeID == 'APAPY') {
+                    $typ_re = 1;
+                    $fileName = 'All Payments By Year -'.$year;
+                    $title = 'All Payments By Year -'.$year;
+                    $requestCurrency = $request->currency;
+                 
+                }
+                else if ($request->reportTypeID == 'APLWS' && $request->reportSD != 'detail') {
+                    $typ_re = 2;
+                    $fileName = 'Payments Lists Status By Year';
+                    $title = 'Payments Lists Status By Year';
+                    $requestCurrency = NULL;
+                    $to_date = $request->toDate;
+                    $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
+                }
+
+
+
                 if ($output) {
                     $reportSD = $request->reportSD;
                     $currency = $request->currencyID;
                     $reportTypeID = $request->reportTypeID;
 
+           
                     if ($reportTypeID == 'APPSY') {
+                        $typ_re = 1;
+
+                        
+
+                        $fileName = 'Payment Suppliers By Year -'.$year;
                         if ($reportSD == 'detail') {
                             $x = 0;
                             foreach ($output as $val) {
@@ -739,7 +787,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Payment Document Number'] = $val->documentCode;
                                 $data[$x]['Supplier Code'] = $val->supplierCode;
                                 $data[$x]['Supplier Name'] = $val->supplierName;
-
+                                
                                 if ($currency == 2) {
                                     $data[$x]['Currency'] = $val->documentLocalCurrency;
                                     $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
@@ -774,7 +822,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
                     else if ($reportTypeID == 'APDPY') {
-
+                        $typ_re = 1;
+                        $fileName = 'Direct Payments By Year -'.$year;
                         if ($reportSD == 'detail') {
                             $x = 0;
                             foreach ($output as $val) {
@@ -819,7 +868,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
                     else if ($reportTypeID == 'APAPY') {
-
+                        $typ_re = 1;
+                        $fileName = 'All Payments By Year -'.$year;
                         if ($reportSD != 'detail') {
                             $x = 0;
                             foreach ($output as $val) {
@@ -845,6 +895,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
                     else if ($reportTypeID == 'APLWS' && $reportSD != 'detail') {
+                        $typ_re = 2;
+                        $to_date = $request->toDate;
+                        $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
+
+                        
+
+                        $fileName = 'Payments Lists Status By Year';
                             $x = 0;
                             foreach ($output as $val) {
 
@@ -889,9 +946,22 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
 
-                $fileName = 'payment_suppliers_by_year';
+                
                 $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                    
+
+                if($typ_re == 1)
+                {   
+                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+                else
+                {   
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+                
 
                 if($basePath == '')
                 {
@@ -906,13 +976,25 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'APSS':
                 $type = $request->type;
                 $reportTypeID = $request->reportTypeID;
+
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
+
+
                 if ($reportTypeID == 'SS') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $request->fromPath = 'view';
                     $output = $this->getSupplierStatementQRY($request);
+            
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Supplier Code'] = $val->SupplierCode;
@@ -933,24 +1015,15 @@ class AccountsPayableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-                      
-                $fileName = 'supplier-statement';
-                $path = 'accounts-payable/report/supplier-statement/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                $fileName = 'Supplier Statement';
+                $title = 'Supplier Statement';    
 
 
                 } else if ($reportTypeID == 'SBSR') {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
+
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -977,24 +1050,31 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
   
-                    $fileName = 'supplier_balance_statement';
-                    $path = 'accounts-payable/report/supplier_balance_statement/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
-    
-                    if($basePath == '')
-                    {
-                         return $this->sendError('Unable to export excel');
-                    }
-                    else
-                    {
-                         return $this->sendResponse($basePath, trans('custom.success_export'));
-                    }
+                    $fileName = 'Supplier Balance Statement';
+                    $title = 'Supplier Balance Statement - Reconcile';    
 
 
                 }
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                $path = 'accounts-payable/report/supplier-statement/excel/';
+                $cur = NULL;
+      
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+       
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 break;
+
             case 'APSL':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
@@ -1024,10 +1104,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $templateName = "export_report.payment_suppliers";
 
-                $reportData = ['reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
+                $reportData = ['reportData' => $outputArr,'Title'=>'Supplier Ledger', 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'fromDate' => $fromDate, 'toDate' => $toDate];
 
-                $fileName = 'supplier_ledger';
+                $fileName = 'Supplier Ledger';
                 $path = 'accounts-payable/report/supplier_ledger/excel/';
+
                 $basePath = CreateExcel::loadView($reportData,$type,$fileName,$path,$templateName);
 
                 if($basePath == '')
@@ -1042,6 +1123,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 break;
             case 'APSBS':
                 $type = $request->type;
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $output = $this->getSupplierBalanceSummeryQRY($request);
                 if ($output) {
@@ -1058,11 +1145,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-
-                $fileName = 'supplier_balance_summary';
+                $cur = NULL;
+                $fileName = 'Supplier Balance Summary';
+                $title = 'Supplier Balance Summary';
                 $path = 'accounts-payable/report/supplier_balance_summary/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
-
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 if($basePath == '')
                 {
                      return $this->sendError('Unable to export excel');
@@ -1077,7 +1165,16 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'APSA':// Supplier Aging
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
+
+                $from_date = $request->fromDate;
+                $to_date = $request->toDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
                 if ($reportTypeID == 'SAD') { //supplier aging detail
+                    $fileName = 'Supplier Aging Detail Report';
+                    $title = 'Supplier Aging Detail Report';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailQRY($request);
                     if ($output['data']) {
@@ -1108,6 +1205,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'SAS') { //supplier aging summary
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryQRY($request);
+                    $fileName = 'Supplier Aging Summary Report';
+                    $title = 'Supplier Aging Summary Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1133,6 +1232,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'SADA') { //supplier aging detail advance
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
+                    $fileName = 'Supplier Aging Detail Advance';
+                    $title = 'Supplier Aging Detail Advance Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1161,6 +1262,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else if ($reportTypeID == 'SASA') { //supplier aging summary
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
+                    $fileName = 'Supplier Aging Summary Advance';
+                    $title = 'Supplier Aging Summary Advance Report';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1184,9 +1287,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'supplier_aging';
+                $cur = NULL;
                 $path = 'accounts-payable/report/supplier_aging/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1248,7 +1352,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $name = "";
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'localOrForeign', 'controlAccountsSystemID'));
 
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
                 if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
+                    $fileName = 'Unbilled GRV Detail Report ';
+                    $title = 'Unbilled GRV Detail Report ';
                     $output = $this->getUnbilledDetailQRY($request);
                     $name = "detail";
                     if ($output) {
@@ -1274,6 +1387,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 } else if ($reportTypeID == 'UGRVS') {  //Unbilled GRV summary
                     $output = $this->getUnbilledDetailQRY($request);
+                    $fileName = 'Unbilled GRV Summary Report';
+                    $title = 'Unbilled GRV Summary Report';
                     $name = "summary";
                     if ($output) {
                         $x = 0;
@@ -1296,7 +1411,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
                 else if ($reportTypeID == 'UGRVAD') { //Unbilled GRV aging detail
-
+                    $fileName = 'Unbilled GRV Aging Detail';
+                    $title = 'Unbilled GRV Aging Detail Report';
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
                     $name = "aging_detail";
                     $decimal = 2;
@@ -1337,7 +1453,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
                 else if ($reportTypeID == 'UGRVAS') {//Unbilled GRV aging summary
-
+                    $fileName = 'Unbilled GRV Aging Summary';
+                    $title = 'Unbilled GRV Aging Summary Report';
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
                     $name = "aging_summary";
                     $decimal = 2;
@@ -1377,6 +1494,9 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 }
                 else if ($reportTypeID == 'ULD') {
+
+                    $fileName = 'Unbilled Logistics Detail';      
+                    $title = 'Unbilled Logistics Detail Report';       
                     $output = $this->getUnbilledLogisticsDetailQRY($request);
                     $name = "logistics_detail";
                     if ($output) {
@@ -1403,10 +1523,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
  
-                $fileName = 'unbilled_grv_' . $name;
+                $requestCurrency = NULL;
                 $path = $name.'/'; 
                 $path = 'accounts-payable/report/unbilled_grv_/'.$path.'excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {

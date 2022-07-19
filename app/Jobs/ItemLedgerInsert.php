@@ -467,7 +467,7 @@ class ItemLedgerInsert implements ShouldQueue
                         $i = 0;
                         if($masterModel["documentSystemID"] == 87) {
                             foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
-                                if($detail->reasonCode == null || ($detail->reasonCode != null && $detail->isPost == 1)) {
+                                if($detail->isPostItemLedger == 1) {
 
                                     foreach ($detailColumnArray as $column => $value) {
                                         if ($column == 'inOutQty') {
