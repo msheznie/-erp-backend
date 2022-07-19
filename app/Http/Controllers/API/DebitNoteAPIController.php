@@ -170,21 +170,57 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
         $company_id = $input['companySystemID'];
 
-     
+      
         if($type == 2)
         {
-            $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->whereHas('company_scenario',function($query) use($company_id){
+                $is_valid = true;
+
+                               $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
                                 $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
-                               })->first();
+                               }])->first();
 
-                               
+                               if(isset($emp_control_acc))
+                               {
+                                if(isset($emp_control_acc->company_scenario))
+                                {
 
-            if(!isset($emp_control_acc))
+                                    if(isset($emp_control_acc->company_scenario->chartOfAccountSystemID))
+                                    {
+                                        $ChartOfAccountsAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$emp_control_acc->company_scenario->chartOfAccountSystemID)
+                                            ->where('companySystemID',$company_id)->where('isAssigned',-1)->first();
+                                            if(!isset($ChartOfAccountsAssigned))
+                                            {
+                                                $is_valid = false;
+                                            }
+
+                                    }
+                                    else
+                                    {
+                                        $is_valid = false;
+                                    }
+                              
+                                }
+                                else
+                                {
+                                    $is_valid = false;
+                                }
+                               }
+                               else
+                               {
+                                $is_valid = false;
+                               }
+                              
+
+                             
+
+            if(!($is_valid))
             {
                 return $this->sendError('Employee Control Account not Configured !', 500);
             }
             
         }
+
+    
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -240,6 +276,10 @@ class DebitNoteAPIController extends AppBaseController
             'empID' => ['required_if:type,2|numeric|min:1'],
             'supplierTransactionCurrencyID' => 'required|numeric|min:1',
             'comments' => 'required',
+        ],
+        [
+            'empID.required_if' => 'Please select an employee',
+            'supplierID.required_if' => 'Please select a supplier',
         ]);
       
         if ($validator->fails()) {
@@ -466,6 +506,58 @@ class DebitNoteAPIController extends AppBaseController
 
         $type =  $input['type'];
 
+        if($type == 2)
+        {   
+
+            $company_id = $debitNote->companySystemID;
+            $is_valid = true;
+
+            $emp_control_acc = SystemGlCodeScenario::where('id',12)->where('isActive',1)->with(['company_scenario'=>function($query) use($company_id){
+             $query->where('systemGlScenarioID',12)->where('companySystemID',$company_id);
+            }])->first();
+
+            if(isset($emp_control_acc))
+            {
+             if(isset($emp_control_acc->company_scenario))
+             {
+
+                 if(isset($emp_control_acc->company_scenario->chartOfAccountSystemID))
+                 {
+                     $ChartOfAccountsAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$emp_control_acc->company_scenario->chartOfAccountSystemID)
+                         ->where('companySystemID',$company_id)->where('isAssigned',-1)->first();
+                         if(!isset($ChartOfAccountsAssigned))
+                         {
+                             $is_valid = false;
+                         }
+
+                 }
+                 else
+                 {
+                     $is_valid = false;
+                 }
+                
+            }
+                    else
+                    {
+                        $is_valid = false;
+                    }
+            }
+                    else
+                    {
+                    $is_valid = false;
+                    }
+           
+
+          
+
+                    if(!($is_valid))
+                    {
+                    return $this->sendError('Employee Control Account not Configured !', 500);
+                    }
+
+
+        }
+
         if (empty($debitNote)) {
             return $this->sendError('Debit Note not found');
         }
@@ -612,6 +704,10 @@ class DebitNoteAPIController extends AppBaseController
                 'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
@@ -1002,6 +1098,10 @@ class DebitNoteAPIController extends AppBaseController
                 'empID' => ['required_if:type,2|numeric|min:1'],
                 'supplierTransactionCurrencyID' => 'required|numeric|min:1',
                 'comments' => 'required',
+            ],
+            [
+                'empID.required_if' => 'Please select an employee',
+                'supplierID.required_if' => 'Please select a supplier',
             ]);
 
             if ($validator->fails()) {
@@ -1388,7 +1488,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID','type'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1477,8 +1577,13 @@ class DebitNoteAPIController extends AppBaseController
         $projects = ErpProjectMaster::where('companySystemID', $companyId)
                                         ->get();
 
+
+          
+        $debite_note_type = [["id"=>1,"name"=>"Supplier"],["id"=>2,"name"=>"Employee",]];                                
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
+            'type' => $debite_note_type,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
@@ -2299,6 +2404,12 @@ UNION ALL
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('type', $input)) {
+            if ($input['type'] && !is_null($input['type'])) {
+                $debitNotes = $debitNotes->where('type', $input['type']);
             }
         }
 

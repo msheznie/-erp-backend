@@ -3,6 +3,28 @@
     $frDate = date('d/m/Y', strtotime($fromDate));
     $tDate = date('d/m/Y', strtotime($toDate));
 @endphp
+
+<table>
+        <thead>
+        <div style="font-size: 26px !important;">
+                <th colspan="3"></th>
+                <th style="font-size:26px"><B>{{$companyName}} </B></th>
+            </div>
+        </thead>
+    </table>
+    <table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td style="font-size: 16px !important;"><B>{{$Title}}</B></td>
+            </div>
+        </thead>
+    </table>
+    <br>
+<table>
+    
+  
+
 <div class="table-responsive">
     <table class="table table-sm table-striped hover table-bordered" width="100%">
         <thead>

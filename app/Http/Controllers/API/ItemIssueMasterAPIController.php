@@ -433,7 +433,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (isset($input['wareHouseFrom'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found', 500, $wareHouseError);
+                return $this->sendError('Warehouse not found', 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {

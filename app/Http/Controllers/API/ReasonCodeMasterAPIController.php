@@ -112,6 +112,10 @@ class ReasonCodeMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if($input['isPost'] == true){
+            $input['glCode'] = null;
+        }
+
         $reasonCodeMaster = $this->reasonCodeMasterRepository->create($input);
 
         return $this->sendResponse($reasonCodeMaster->toArray(), 'Reason Code Master saved successfully');
@@ -223,9 +227,23 @@ class ReasonCodeMasterAPIController extends AppBaseController
         if (empty($reasonCodeMaster)) {
             return $this->sendError('Reason Code Master not found');
         }
-        $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
-        $data =array_except($input, ['id','created_at']);
 
+
+        if($input['isPost'] == true){
+            $input['glCode'] = null;
+        }
+
+        $input['glCode'] = isset($input['glCode'][0]) ? $input['glCode'][0] : $input['glCode'];
+
+        if($input['isPost'] == false){
+            if($input['glCode'] == null || $input['glCode'] == 0){
+                return $this->sendError('GL Code field is required');
+            };
+        }
+
+
+
+        $data =array_except($input, ['id','created_at']);
 
         $reasonCodeMaster = $this->reasonCodeMasterRepository->update($data, $input['id']);
 
@@ -323,8 +341,7 @@ class ReasonCodeMasterAPIController extends AppBaseController
 
     public function getAllGLCodes(Request $request)
     {
-        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))
-            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->where('isActive', 1)->where('isAssigned', -1)->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
         return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }

@@ -822,10 +822,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $value['directInvoiceDetailsID'])
                                                                           ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
                                                                           ->sum('amount');
-
-                        if ($allocatedSum != $detailTotalOfLine) {
-                            return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                        if ($input['documentType'] != 4){
+                            if ($allocatedSum != $detailTotalOfLine) {
+                                return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                            }
                         }
+
 
                         if ($bookInvSuppMaster->createMonthlyDeduction && (is_null($value->deductionType) || $value->deductionType == 0)) {
                             return $this->sendError("Please set deduction Type for ".$value->glCode." - ".$value->glCodeDes);
