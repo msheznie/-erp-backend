@@ -134,10 +134,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                 }
             }
 
-            $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
-            if ($error_count > 0) {
-                return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
-            }else{
+
                 foreach ($input['glAutoID'] as $key => $val) {
                     if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {
                         $data['templateMasterID'] = $input['templateMasterID'];
@@ -158,7 +155,7 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                     }
                 }
             }
-        }
+        
 
         $updateTemplateDetailAsFinal = CashFlowTemplateDetail::where('id', $input['templateDetailID'])->update(['isFinalLevel' => 1]);
 
