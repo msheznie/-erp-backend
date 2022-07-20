@@ -465,8 +465,11 @@ class ItemMasterAPIController extends AppBaseController
         $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
                             ->where('companySystemID', $selectedCompanyId)
                             ->first();
-
-        $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
+        if(!empty($isPosIntegratedPolicy->isYesNO)){
+            $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
+        } else {
+            $isPosIntegrated = false;
+        }
 
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
