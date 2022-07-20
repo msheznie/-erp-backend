@@ -18,44 +18,55 @@ use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\POSSTAGInvoice;
+use App\Models\POSSTAGInvoiceDetail;
+use App\Services\POSService;
 
 class PosAPIController extends AppBaseController
 {
- function pullCustomerCategory(Request $request){
+    private $POSService = null;
 
-     DB::beginTransaction();
-     try {
-     $company_id = $request->get('company_id');
-     $customerCategories = CustomerMasterCategory::where('companySystemID','=',$company_id)->get();
-     $customerCategoryArray = array();
-     foreach($customerCategories as $item){
-         $data = array('id'=>$item->categoryID, 'party_type'=>1, 'description'=>$item->categoryDescription);
-         array_push($customerCategoryArray,$data);
-     }
+    public function __construct(POSService $POSService)
+    {
+        $this->POSService = $POSService;
+    }
 
-         DB::commit();
-         return $this->sendResponse($customerCategoryArray, 'Data Retrieved successfully');
-     } catch (\Exception $exception) {
-         DB::rollBack();
-         return $this->sendError($exception->getMessage());
-     }
- }
+    function pullCustomerCategory(Request $request)
+    {
+
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+            $customerCategories = CustomerMasterCategory::where('companySystemID', '=', $company_id)->get();
+            $customerCategoryArray = array();
+            foreach ($customerCategories as $item) {
+                $data = array('id' => $item->categoryID, 'party_type' => 1, 'description' => $item->categoryDescription);
+                array_push($customerCategoryArray, $data);
+            }
+
+            DB::commit();
+            return $this->sendResponse($customerCategoryArray, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
 
     public function pullLocation(Request $request)
     {
-        
-            DB::beginTransaction();
-            try {
-                $company_id = $request->get('company_id');
-                $location = ErpLocation::selectRaw('locationID as id,locationName as description')
-                ->where('locationName','!=','')
+
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+            $location = ErpLocation::selectRaw('locationID as id,locationName as description')
+                ->where('locationName', '!=', '')
                 ->get();
-                DB::commit();
-                return $this->sendResponse($location, 'Data Retrieved successfully');
-            } catch (\Exception $exception) {
-                DB::rollBack();
-                return $this->sendError($exception->getMessage());
-            }
+            DB::commit();
+            return $this->sendResponse($location, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     public function pullSegment(Request $request)
@@ -64,55 +75,55 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
             $segments = SegmentMaster::selectRaw('serviceLineSystemID As id,ServiceLineCode As segment_code ,ServiceLineDes as description,isActive as status')
-            ->where('ServiceLineCode','!=','')
-            ->where('companySystemID','=',$company_id)
-            ->where('ServiceLineDes','!=','')
-            ->get();
-    
+                ->where('ServiceLineCode', '!=', '')
+                ->where('companySystemID', '=', $company_id)
+                ->where('ServiceLineDes', '!=', '')
+                ->get();
+
             DB::commit();
             return $this->sendResponse($segments, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
-   }
+    }
 
-   public function pullChartOfAccount(Request $request)
-   {
-       DB::beginTransaction();
-       try {
-           $company_id = $request->get('company_id');
-           $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,chartofaccounts.AccountCode As system_code,chartofaccounts.AccountCode As secondary_code,chartofaccounts.AccountDescription as description,
+    public function pullChartOfAccount(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+            $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,chartofaccounts.AccountCode As system_code,chartofaccounts.AccountCode As secondary_code,chartofaccounts.AccountDescription as description,
            isMasterAccount as is_master_account,chartofaccounts.masterAccount as master_account_id , "" as master_system_code,chartofaccounts.catogaryBLorPL as master_category,
            "" as category_id,"" as category_description,chartofaccounts.controlAccounts as sub_category,chartofaccounts.controllAccountYN as is_control_account,chartofaccounts.isActive as is_active,"" as default_type,
            "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
            confirmedYN as is_confirmed,confirmedEmpDate as confirmed_date,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmed_user_name,isApproved as is_approved,approvedDate as approved_date,
            approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
-           ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
-           ->where('chartofaccountsassigned.companySystemID','=',$company_id)
-           ->where('chartofaccounts.chartOfAccountSystemID','!=','')
-           ->where('chartofaccounts.AccountCode','!=','')
-           ->where('chartofaccounts.AccountDescription','!=','')
-           ->where('chartofaccounts.catogaryBLorPL','!=','')
-           ->where('chartofaccounts.controlAccounts','!=','')
-           ->get();
-   
-           DB::commit();
-           return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
-       } catch (\Exception $exception) {
-           DB::rollBack();
-           return $this->sendError($exception->getMessage());
-       }
-   }
-   
+                ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                ->where('chartofaccountsassigned.companySystemID', '=', $company_id)
+                ->where('chartofaccounts.chartOfAccountSystemID', '!=', '')
+                ->where('chartofaccounts.AccountCode', '!=', '')
+                ->where('chartofaccounts.AccountDescription', '!=', '')
+                ->where('chartofaccounts.catogaryBLorPL', '!=', '')
+                ->where('chartofaccounts.controlAccounts', '!=', '')
+                ->get();
+
+            DB::commit();
+            return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     public function pullUnitOfMeasure(Request $request)
     {
         DB::beginTransaction();
         try {
             $units = Unit::selectRaw('UnitID As id,UnitShortCode As short_code ,UnitDes as description')
-            ->where('UnitShortCode','!=','')
-            ->get();
+                ->where('UnitShortCode', '!=', '')
+                ->get();
             DB::commit();
             return $this->sendResponse($units, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
@@ -126,10 +137,10 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $unitConvertion = UnitConversion::selectRaw('unitsConversionAutoID As id,masterUnitID As master_id ,subUnitID as sub_id,conversion as conversion')
-            ->where('masterUnitID','!=','')
-            ->where('subUnitID','!=','')
-            ->where('conversion','!=','')
-            ->get();
+                ->where('masterUnitID', '!=', '')
+                ->where('subUnitID', '!=', '')
+                ->where('conversion', '!=', '')
+                ->get();
             DB::commit();
             return $this->sendResponse($unitConvertion, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
@@ -139,7 +150,7 @@ class PosAPIController extends AppBaseController
     }
 
 
-    
+
     public function pullWarehouse(Request $request)
     {
         DB::beginTransaction();
@@ -149,12 +160,12 @@ class PosAPIController extends AppBaseController
                 erp_location.locationName as location,isPosLocation as is_pos_location, isDefault as is_default ,warehouseType as warehouse_type,WIPGLCode as gl_id,"" as address,
                 "" as phone_number,isActive as is_active,"" as warehouse_image,
                 "" as footer_note')
-            ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
-            ->where('wareHouseCode','!=','')
-            ->where('wareHouseDescription','!=','')
-            ->where('wareHouseLocation','!=','')
-            ->where('companySystemID','=',$company_id)
-            ->get();
+                ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
+                ->where('wareHouseCode', '!=', '')
+                ->where('wareHouseDescription', '!=', '')
+                ->where('wareHouseLocation', '!=', '')
+                ->where('companySystemID', '=', $company_id)
+                ->get();
 
             DB::commit();
             return $this->sendResponse($warehouse, 'Data Retrieved successfully');
@@ -172,15 +183,15 @@ class PosAPIController extends AppBaseController
             $warehouseItems = WarehouseItems::selectRaw('warehouseItemsID As id,warehouseitems.warehouseSystemCode As warehouse_id ,
              erp_location.locationName as location,erp_location.locationName as description,itemmaster.itemCodeSystem as item_id,itemmaster.primaryCode as item_code,
              itemmaster.itemDescription as item_description,"" as is_active,"" as sales_price,unitOfMeasure as unit_id')
-            ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehouseitems.warehouseSystemCode')
-            ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
-            ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'warehouseitems.itemSystemCode')
-            ->where('warehouseitems.warehouseSystemCode','!=','')
-            ->where('erp_location.locationName','!=','')
-            ->where('itemmaster.primaryCode','!=','')
-            ->where('itemmaster.itemDescription','!=','')
-            ->where('warehouseitems.companySystemID','=',$company_id)
-            ->get();
+                ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehouseitems.warehouseSystemCode')
+                ->join('erp_location', 'erp_location.locationID', '=', 'warehousemaster.wareHouseLocation')
+                ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'warehouseitems.itemSystemCode')
+                ->where('warehouseitems.warehouseSystemCode', '!=', '')
+                ->where('erp_location.locationName', '!=', '')
+                ->where('itemmaster.primaryCode', '!=', '')
+                ->where('itemmaster.itemDescription', '!=', '')
+                ->where('warehouseitems.companySystemID', '=', $company_id)
+                ->get();
 
             DB::commit();
             return $this->sendResponse($warehouseItems, 'Data Retrieved successfully');
@@ -196,12 +207,12 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
             $warehousebin = WarehouseBinLocation::selectRaw('binLocationID As binLocationID,warehousemaster.wareHouseSystemCode As warehouseAutoID,binLocationDes As Description')
-            ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehousebinlocationmaster.warehouseSystemCode')
-            ->where('binLocationID','!=','')
-            ->where('warehousemaster.wareHouseSystemCode','!=','')
-            ->where('binLocationDes','!=','')
-            ->where('warehousebinlocationmaster.companySystemID','=',$company_id)
-            ->get();
+                ->join('warehousemaster', 'warehousemaster.warehouseSystemCode', '=', 'warehousebinlocationmaster.warehouseSystemCode')
+                ->where('binLocationID', '!=', '')
+                ->where('warehousemaster.wareHouseSystemCode', '!=', '')
+                ->where('binLocationDes', '!=', '')
+                ->where('warehousebinlocationmaster.companySystemID', '=', $company_id)
+                ->get();
 
             DB::commit();
             return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
@@ -211,7 +222,7 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    
+
     public function pullItemSubCategory(Request $request)
     {
         DB::beginTransaction();
@@ -219,11 +230,11 @@ class PosAPIController extends AppBaseController
             $company_id = $request->get('company_id');
             $financeItemCategorySub = FinanceItemCategorySub::selectRaw('financeitemcategorysub.itemCategorySubID As id,financeitemcategorysub.categoryDescription As description,itemCategoryID As master_id ,
             financeitemcategorysub.financeGLcodeRevenueSystemID as revenue_gl,financeitemcategorysub.financeGLcodePLSystemID as cost_gl')
-            ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
-            ->where('financeitemcategorysub.itemCategorySubID','!=','')
-            ->where('financeitemcategorysub.categoryDescription','!=','')
-            ->where('financeitemcategorysubassigned.companySystemID','=',$company_id)
-            ->get();
+                ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
+                ->where('financeitemcategorysub.itemCategorySubID', '!=', '')
+                ->where('financeitemcategorysub.categoryDescription', '!=', '')
+                ->where('financeitemcategorysubassigned.companySystemID', '=', $company_id)
+                ->get();
 
             DB::commit();
             return $this->sendResponse($financeItemCategorySub, 'Data Retrieved successfully');
@@ -233,7 +244,8 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function pullItem(Request $request){
+    public function pullItem(Request $request)
+    {
         DB::beginTransaction();
         try {
 
@@ -255,16 +267,16 @@ class PosAPIController extends AppBaseController
                 ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
                 ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
                 ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                ->where('itemassigned.companySystemID','=',$company_id)
-                ->where('primaryCode','!=','')
-                ->where('itemmaster.documentID','!=','')
-                ->where('itemmaster.secondaryItemCode','!=','')
-                ->where('itemmaster.financeCategoryMaster','!=','')
-                ->where('itemmaster.financeCategorySub','!=','')
-                ->where('itemmaster.itemDescription','!=','')
-                ->where('financeitemcategorymaster.categoryDescription','!=','')
-                ->where('units.UnitShortCode','!=','')
-                ->where('itemmaster.financeCategoryMaster','!=',3)
+                ->where('itemassigned.companySystemID', '=', $company_id)
+                ->where('primaryCode', '!=', '')
+                ->where('itemmaster.documentID', '!=', '')
+                ->where('itemmaster.secondaryItemCode', '!=', '')
+                ->where('itemmaster.financeCategoryMaster', '!=', '')
+                ->where('itemmaster.financeCategorySub', '!=', '')
+                ->where('itemmaster.itemDescription', '!=', '')
+                ->where('financeitemcategorymaster.categoryDescription', '!=', '')
+                ->where('units.UnitShortCode', '!=', '')
+                ->where('itemmaster.financeCategoryMaster', '!=', 3)
                 ->get();
 
             DB::commit();
@@ -280,7 +292,7 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
-            
+
 
             DB::commit();
             return $this->sendResponse($warehousebin, 'Data Retrieved successfully');
@@ -298,9 +310,9 @@ class PosAPIController extends AppBaseController
             $company_id = $request->get('company_id');
             $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
             empActive as is_active')
-            ->where('discharegedYN', 0)
-            ->where('empCompanySystemID','=',$company_id)
-            ->get();
+                ->where('discharegedYN', 0)
+                ->where('empCompanySystemID', '=', $company_id)
+                ->get();
 
             DB::commit();
             return $this->sendResponse($employee, 'Data Retrieved successfully');
@@ -315,10 +327,10 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $financeItemCategory = FinanceItemCategoryMaster::selectRaw('itemCategoryID As id,categoryDescription As description,itemCodeDef As item_code ')
-            ->where('itemCategoryID','!=','')
-            ->where('categoryDescription','!=','')
-            ->where('itemCodeDef','!=','')
-            ->get();
+                ->where('itemCategoryID', '!=', '')
+                ->where('categoryDescription', '!=', '')
+                ->where('itemCodeDef', '!=', '')
+                ->get();
 
             DB::commit();
             return $this->sendResponse($financeItemCategory, 'Data Retrieved successfully');
@@ -328,4 +340,18 @@ class PosAPIController extends AppBaseController
         }
     }
 
+    public function handleRequest(Request $request)
+    {  
+        define('INVOICE', 'INVOICE');  
+        switch ($request->input('request')) {
+            case INVOICE:
+                return $this->POSService->getMappingData($request);  
+            default:
+                return [
+                    'success'   => false,
+                    'message'   => 'Requested API not available, please recheck!',
+                    'data'      => null
+                ];
+        }
+    }
 }

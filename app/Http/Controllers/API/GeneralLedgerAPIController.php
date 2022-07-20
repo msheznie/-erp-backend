@@ -950,8 +950,9 @@ class GeneralLedgerAPIController extends AppBaseController
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
         $type = $request->currency;
+        $company = $request->company;
 
-        $details = $this->generateGLReport($fromDate,$toDate,$type);
+        $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
 
         return $this->sendResponse($details,'Posting date changed successfully');
 
@@ -967,13 +968,21 @@ class GeneralLedgerAPIController extends AppBaseController
         $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
         $type = $request->currency;
         $file_type = $request->type;
+        $company = $request->company;
 
-        $reportData = $this->generateGLReport($fromDate,$toDate,$type);
+        $checkIsGroup = Company::find($company);
+        
+
+        $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
         $deb_cred = array("Debit","Credit","Total");
         $reportData['deb_cred'] = $deb_cred;
         $reportData['length'] = ($reportData['j']*3)+3;
+        $reportData['fromDate'] = $fromDate;
+        $reportData['toDate'] = $toDate;
+        $reportData['company'] = $checkIsGroup->CompanyName;
+        $reportData['Title'] = 'Segment Wise GL Report';
 
-        
+   
         
         $templateName = "export_report.segment-wise-gL-report";
         $fileName = 'gl_segment_report';
@@ -991,7 +1000,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
     }
 
-    public function generateGLReport($fromDate,$toDate,$type)
+    public function generateGLReport($fromDate,$toDate,$type,$company)
     {
 
 
@@ -1022,7 +1031,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $segments = SegmentMaster::get();
 
-
+        $checkIsGroup = Company::find($company);
 
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
         $seg_info = SegmentMaster::pluck('serviceLineSystemID');
@@ -1109,6 +1118,7 @@ class GeneralLedgerAPIController extends AppBaseController
         
         $details['data'] = $data;
         $details['segment'] = $segment_data;
+        $details['company'] = $checkIsGroup->CompanyName;
         $details['j'] = $j;
 
         return $details;

@@ -414,6 +414,12 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
                     $input['type'] = $val['type'];
                     $input['sortOrder'] = $val['sortOrder'];
                     $input['proceedPaymentType'] = isset($val['proceedPaymentType']) ? $val['proceedPaymentType'] : null;
+                    if($input['proceedPaymentType'] == 1){
+                        $input['logicType'] = 6;
+                    }
+                    if($input['proceedPaymentType'] == 2){
+                        $input['logicType'] = 3;
+                    }
                     if($input['type'] == 3){
                         $input['isFinalLevel'] = 1;
                     } else {

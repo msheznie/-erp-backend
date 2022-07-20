@@ -104,6 +104,9 @@ class TenderDocumentTypes extends Model
     {
         return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
     }
+    public function tender_document_type_assign(){ 
+        return $this->hasOne('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
+    }
 
 
 }

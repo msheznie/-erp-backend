@@ -2697,7 +2697,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
         Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
         Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
-       
+
+        Route::post('getSupplierCategoryList', 'TenderMasterAPIController@getSupplierCategoryList');
+        Route::post('removeCalenderDate', 'TenderMasterAPIController@removeCalenderDate');
+        Route::post('updateCalenderDate', 'TenderMasterAPIController@updateCalenderDate');
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
 
@@ -2712,6 +2715,26 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
 
         Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+
+
+        Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
+        Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
+        Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
+        Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation');
+        Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
+        Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds');
+        Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
+        Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
+        Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
+        Route::post('updateTenderStrategy', 'TenderMasterAPIController@updateTenderStrategy');
+
+        Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
+        Route::post('getAttachmentDropCircular', 'TenderCircularsAPIController@getAttachmentDropCircular');
+        Route::post('addCircular', 'TenderCircularsAPIController@addCircular');
+        Route::post('getCircularMaster', 'TenderCircularsAPIController@getCircularMaster');
+        Route::post('deleteTenderCircular', 'TenderCircularsAPIController@deleteTenderCircular');
+        Route::post('tenderCircularPublish', 'TenderCircularsAPIController@tenderCircularPublish');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2999,3 +3022,17 @@ Route::resource('bid_schedules', 'BidScheduleAPIController');
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
+
+
+
+
+Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
+Route::resource('tender_circulars', 'TenderCircularsAPIController');
+ 
+Route::post('requests', 'POS\PosAPIController@handleRequest');
+
+
+
+Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
+
+Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');

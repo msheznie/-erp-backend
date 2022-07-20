@@ -95,6 +95,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         $invMaster->whereIn('documentSystemID', [4, 15]);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
+        }, 'employee' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
         },'cancelled_by']);
 

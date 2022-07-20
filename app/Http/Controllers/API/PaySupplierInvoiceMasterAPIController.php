@@ -3191,9 +3191,30 @@ WHERE
     {
         $input = $request->all();
 
-        if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
-            return $this->sendError('Please select a supplier');
+        if ($input['matchType'] == 2) {
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                    return $this->sendError('Please select a supplier');
+                }
+            }
+            else{
+                if (!isset($input['employeeID']) || $input['employeeID'] == 0) {
+                    return $this->sendError('Please select a employee');
+                }
+            }
+
         }
+        else
+        {
+            if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                return $this->sendError('Please select a supplier');
+            }
+        }
+
+     
 
         if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
@@ -3239,6 +3260,21 @@ AND invoiceType = 5
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
+
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                $col = 'supplierID';
+                $val = $input['BPVsupplierID'];
+            }
+            else{
+                $col = 'empID';
+                $val = $input['employeeID'];
+            }
+           
+
+
             $invoiceMaster = DB::select('SELECT
                 MASTER.debitNoteAutoID as masterAutoID,
                 MASTER.debitNoteCode as documentCode,
@@ -3261,6 +3297,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                     erp_matchdocumentmaster.companySystemID,
                     erp_matchdocumentmaster.BPVcode,
                     erp_matchdocumentmaster.matchingOption,
+                    erp_matchdocumentmaster.user_type,
                     COALESCE (
                         SUM(
                             erp_matchdocumentmaster.matchingAmount
@@ -3278,6 +3315,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 AND MASTER .documentSystemID = advd.documentSystemID
                 AND MASTER .companySystemID = advd.companySystemID
                 AND advd.matchingOption IS NULL
+                AND advd.user_type = ' . $user_type . '
             )
             LEFT JOIN (
                 SELECT
@@ -3302,8 +3340,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             WHERE
                 approved = - 1
             AND matchInvoice <> 2
+            AND type = '.$user_type.'
             AND MASTER.companySystemID = ' . $input['companySystemID'] . '
-            AND supplierID = ' . $input['BPVsupplierID'] . '
+            AND '.$col.' = ' . $val . '
             HAVING
                 (
                     ROUND(

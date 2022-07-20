@@ -370,7 +370,7 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Party Name'] =isset($val->supplier->supplierName) ? $val->supplier->supplierName: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['Party Name'] =isset($val->customer->CustomerName) ? $val->customer->CustomerName: '';
                 }else{
                     $data[$x]['Party Name'] ='';
@@ -378,7 +378,7 @@ class VATReportAPIController extends AppBaseController
 
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Country'] =isset($val->supplier->country->countryName) ? $val->supplier->country->countryName: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['Country'] =isset($val->customer->country->countryName) ? $val->customer->country->countryName: '';
                 }else{
                     $data[$x]['Country'] ='';
@@ -386,7 +386,7 @@ class VATReportAPIController extends AppBaseController
 
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['VATIN'] =isset($val->supplier->vatNumber) ? $val->supplier->vatNumber: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['VATIN'] =isset($val->customer->vatNumber) ? $val->customer->vatNumber: '';
                 }else{
                     $data[$x]['VATIN'] ='';
@@ -412,17 +412,32 @@ class VATReportAPIController extends AppBaseController
             $company_name = $company->CompanyName;
             $to_date = \Helper::dateFormat($request->toDate);
             $from_date = \Helper::dateFormat($request->fromDate);
-
-            if($request->reportTypeID == 1){
-                $fileName = 'Output VAT Summary';
-            } elseif($request->reportTypeID == 2){
-                $fileName = 'Input VAT Summary';
-            } else{
-                $fileName = 'VAT Summary Report';
+            
+            if($input['currencyID']==1){
+                $cur = 'OMR';
+            } else {
+                $cur = 'USD';
             }
 
+            if($request->reportTypeID == 1){
+                $title = 'Output VAT Summary';
+                $fileName = 'output_vat_summary';
+            } elseif($request->reportTypeID == 2){
+                $title = 'Input VAT Summary';
+                $fileName = 'input_vat_summary';
+            } else{
+                $title = 'VAT Summary Report';
+                $fileName = 'vat_summary_report';
+            }
+            $detail_array = array(  'type' => 4,
+                                    'from_date'=>$from_date,
+                                    'to_date'=>$to_date,
+                                    'company_name'=>$company_name,
+                                    'cur'=>$cur,
+                                    'title'=>$title);
+
             $path = 'general-ledger/report/vat_report/excel/';
-            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$from_date,$to_date,$company_name);
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
             if($basePath == '')
             {
