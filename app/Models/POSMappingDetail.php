@@ -59,7 +59,9 @@ class POSMappingDetail extends Model
         'master_id' => 'integer',
         'table' => 'string',
         'key' => 'string',
-        'model_name' => 'string' 
+        'model_name' => 'string' ,
+        'source_table_name' => 'string',
+        'source_model_name' => 'string' 
     ];
 
     /**
