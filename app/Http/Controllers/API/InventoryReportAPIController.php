@@ -160,6 +160,10 @@ class InventoryReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
+        
+        $company = Company::find($companiesByGroup[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
@@ -179,6 +183,7 @@ class InventoryReportAPIController extends AppBaseController
             'document' => $document,
             'segment' => $segment,
             'item' => $item,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -439,6 +444,10 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $companyID = (array)$request->companySystemID;
                     }
+                    
+                    $company = Company::find($companyID[0]);
+                    $company_name = $company->CompanyName;
+
 
                     $warehouse = (array)$request->warehouse;
                     $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
@@ -506,6 +515,7 @@ class InventoryReportAPIController extends AppBaseController
                                 }
                             }
                         })
+                        ->with('company_name', $company_name)
                         ->addIndexColumn()
                         /*  ->with('orderCondition', $sort)*/
                         ->make(true);
@@ -535,7 +545,14 @@ class InventoryReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'INVMMA') {
                     $output = $this->minAndMaxAnalysis($request);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $detail['output'] = $output;
+                    $detail['company_name'] = $company_name;
+
+                    return $this->sendResponse($detail, 'Items retrieved successfully');
                 }
                 break;
             case 'INVIM':
@@ -574,6 +591,11 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+        
         $input = $request;
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -802,7 +824,8 @@ class InventoryReportAPIController extends AppBaseController
         $output = array(
             'categories' => $finalArray,
             'grandWacLocal' => $GrandWacLocal,
-            'grandWacRpt' => $GrandWacRpt
+            'grandWacRpt' => $GrandWacRpt,
+            'company_name' => $company_name
         );
 
 
@@ -824,6 +847,9 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -945,7 +971,8 @@ FROM
             'subCompanies' => $subCompanies,
             'grandWacLocal' => $GrandWacLocal,
             'grandWacRpt' => $GrandWacRpt,
-            'warehouse' => $request->warehouse
+            'warehouse' => $request->warehouse,
+            'company_name' => $company_name
         );
 
         return $output;
