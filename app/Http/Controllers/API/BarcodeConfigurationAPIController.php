@@ -613,16 +613,18 @@ class BarcodeConfigurationAPIController extends AppBaseController
               {
      
                  $barcodesCountPage = 0;
-                 $maxBarcodesPerPage = 42;
-                 $maxBarcodesPerRow = 3;
-                 $marginTop = 7;
+                 $maxBarcodesPerPage = 10;
+                 $maxBarcodesPerRow = 1;
+                 $marginTop = 3;
                  $marginLeft = 3;
                  $barcodeWidth = 95;
-                 $barcodeHeight = 20;
+                 $barcodeHeight = 35;
                  $barcodesCountTotal = 0;
                  $column = 0;
+                 $page_width = 70;
+                 $page_height = 400;
      
-                 $pdf = new \PDF_BARCODE('P', 'mm', $page);
+                 $pdf = new \PDF_BARCODE('P', 'mm',  [$page_width,$page_height]);
      
                  foreach($assets as $key=>$val)
                  {

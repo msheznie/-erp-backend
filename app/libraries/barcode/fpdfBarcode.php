@@ -268,8 +268,8 @@ function Barcode($x, $y, $barcode, $h, $w, $fSize, $len,$bool,$price,$name)
 function Code128($code,$fSize) {
     $x = 7;
     $y = 7;
-    $h = 10;
-    $w = 90;
+    $h = 25.4;
+    $w = 50.4;
     $this->SetFont('Arial', '', 8);
     $this->Text($x, $y+$h+4, $code);
     $Aguid = "";                                                                      // Création des guides de choix ABC
