@@ -2963,7 +2963,19 @@ class SRMService
                     }
                 }
 
+                if(sizeof($output) == 0){
+                    $data[$x]['Question'] = '';
+                    $data[$x]['Answer'] = '';
+                }
+
                 $x = 0;
+                if((sizeof($prebidDate) == 0) && (sizeof($output) == 0)){
+                    return [
+                        'success' => false,
+                        'message' => 'There are no FAQ or Pre bid clarifications to download',
+                        'data' =>  new stdClass()
+                    ];
+                }
                 foreach ($prebidDate as $val) {
                     foreach ($val as $valIn) {
                         if(!($valIn['is_public'] === 0 && $supplierId !== $valIn['created_by'])) {
@@ -2997,6 +3009,16 @@ class SRMService
                             $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
                         }
                     }
+                }
+
+                if(sizeof($prebidDate) == 0){
+                    $dataPrebid[$x]['Question Id'] = '';
+                    $dataPrebid[$x]['Supplier'] = '';
+                    $dataPrebid[$x]['Question / Answer'] = '';
+                    $dataPrebid[$x]['Parent Question Id'] = '';
+                    $dataPrebid[$x]['Publish as'] = '';
+                    $dataPrebid[$x]['Created At'] = '';
+                    $dataPrebid[$x]['Is Thread Closed'] = '';
                 }
 
                 $fileNameFaq = 'faq';
