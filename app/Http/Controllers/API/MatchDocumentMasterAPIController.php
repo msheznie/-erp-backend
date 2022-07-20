@@ -1461,7 +1461,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $ap = $is_advance_payment->selectRaw("SUM(paymentLocalAmount) as localAmount,SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount")->first();
                     $finalData = [];
                     $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($input["PayMasterAutoId"]);
-
                    // $ap = AdvancePaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER")->WHERE('PayMasterAutoId', $input["PayMasterAutoId"])->first();
                     $masterDocumentDate = date('Y-m-d H:i:s');
                     if ($masterData->financeperiod_by->isActive == -1) {
