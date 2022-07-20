@@ -123,6 +123,15 @@ class CompanyAPIController extends AppBaseController
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
+        $assetAndLiabilityAccount = ChartOfAccount::where('controlAccountsSystemID', 3)
+        ->orWhere('controlAccountsSystemID', 4)
+        ->where('catogaryBLorPL', '=', 'BS')
+        ->orderBy('AccountDescription', 'asc')
+        ->get();    
+
+
+
+
         /**Country Drop Down */
         $country = CountryMaster::orderBy('countryName', 'asc')
             ->get();
@@ -186,6 +195,7 @@ class CompanyAPIController extends AppBaseController
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
+            'assetAndLiaAccount' => $assetAndLiabilityAccount,
             'country' => $country,
             'supplierCategoryMaster' => $supplierCategory,
             'currencyMaster' => $currencyMaster,
