@@ -745,8 +745,21 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+     SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
