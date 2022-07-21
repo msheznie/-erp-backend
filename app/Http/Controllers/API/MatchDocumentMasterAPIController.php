@@ -169,10 +169,20 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         if ($input['tempType'] == 'PVM') {
 
-            if (!isset($input['paymentAutoID'])) {
-                return $this->sendError('Please select a payment voucher !', 500);
-            }
             $input = $this->convertArrayToValue($input);
+            if (!isset($input['paymentAutoID'])) {
+
+                if($input['matchType'] == 1 || $input['matchType'] == 3)
+                {
+                    return $this->sendError('Please select a payment voucher !', 500);
+                }
+                else if($input['matchType'] == 2)
+                {
+                    return $this->sendError('Please select a debit note !', 500);
+                }
+               
+            }
+           
 
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required',
