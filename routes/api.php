@@ -29,6 +29,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
         Route::post('pull_user', 'POS\PosAPIController@pullUser');
         Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
+        Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -3029,10 +3030,12 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
  
-Route::post('requests', 'POS\PosAPIController@handleRequest');
+
 
 
 
 Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
 
 Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');
+
+Route::resource('p_o_s_trans_error_logs', 'POSTransErrorLogAPIController');
