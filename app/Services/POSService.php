@@ -25,7 +25,7 @@ class POSService
     {
         $db = $request->input('db');
 
-        if (!Schema::hasTable('pos_mapping_master') || !Schema::hasTable('pos_mapping_detail')) {
+        if (!Schema::connection('mysql')->hasTable('pos_mapping_master') || !Schema::connection('mysql')->hasTable('pos_mapping_detail')) {
             return [
                 'success' => false,
                 'message' => 'Mapping table does not exist',
@@ -46,9 +46,9 @@ class POSService
             ];
         }
         $MappingDataArrFilter = collect($getMapping['mapping_detail'])->map(function ($group) use ($request) {
-            if (!Schema::hasTable($group['table'])) {
+            if (!Schema::connection('mysql')->hasTable($group['table'])) {
                 return $group['table'] . ' table does not exists';
-            } else if (!Schema::hasTable($group['source_table_name'])) {
+            } else if (!Schema::connection('mysql')->hasTable($group['source_table_name'])) {
                 return $group['table'] . ' sourse table does not exists';
             } else if ($request->input('data.' . $group['key']) == null) {
                 return $group['key'] . ' records does not exists';
@@ -152,12 +152,8 @@ class POSService
             collect($posMappingData['posMappingMaster']['mapping_detail'])->map(function ($group) use ($posMappingData, $logId) {
                 $namespacedModel = 'App\Models\\' . $group["model_name"];
                 $namespacedModelSource = 'App\Models\\' . $group["source_model_name"];
-                $data = $namespacedModel::where('transaction_log_id', $logId)->get()->toArray();
-                $dataUpdate2 = collect($data)->map(function ($group2) use ($posMappingData) {
-                    $group2['mapping_master_id']  = $posMappingData['pos_mapping_id'];
-                    return $group2;
-                });
-                $namespacedModelSource::insert($dataUpdate2->toArray());
+                $data = $namespacedModel::where('transaction_log_id', $logId)->get()->toArray(); 
+                $namespacedModelSource::insert($data);
                 //$namespacedModel::truncate();
             });
             
