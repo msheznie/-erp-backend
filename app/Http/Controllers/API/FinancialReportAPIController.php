@@ -745,8 +745,21 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+     SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -2609,8 +2622,21 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+    SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -2893,45 +2919,44 @@ WHERE
                             $x++;
                         }
                     }
+                    $data[$x]['Account Code'] = '';
+                    $data[$x]['Account Description'] = '';
+                    $data[$x]['Type'] = '';
+                    $data[$x]['Opening Balance'] = '';
+                    $data[$x]['Jan'] = '';
+                    $data[$x]['JanClosing'] = '';
+                    $data[$x]['Feb'] = '';
+                    $data[$x]['FebClosing'] = '';
+                    $data[$x]['Mar'] = '';
+                    $data[$x]['MarClosing'] = '';
+                    $data[$x]['Apr'] = '';
+                    $data[$x]['AprClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Jun'] = '';
+                    $data[$x]['JunClosing'] = '';
+                    $data[$x]['Jul'] = '';
+                    $data[$x]['JulClosing'] = '';
+                    $data[$x]['Aug'] = '';
+                    $data[$x]['AugClosing'] = '';
+                    $data[$x]['Sep'] = '';
+                    $data[$x]['SepClosing'] = '';
+                    $data[$x]['Oct'] = '';
+                    $data[$x]['OctClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Nov'] = '';
+                    $data[$x]['NovClosing'] = '';
+                    $data[$x]['Dece'] = '';
+                    $data[$x]['DeceClosing'] = '';
+    
+                    array_push($data,$totalArray);
+
                 }
 
 
                
-                $data[$x]['Account Code'] = '';
-                $data[$x]['Account Description'] = '';
-                $data[$x]['Type'] = '';
-                $data[$x]['Opening Balance'] = '';
-                $data[$x]['Jan'] = '';
-                $data[$x]['JanClosing'] = '';
-                $data[$x]['Feb'] = '';
-                $data[$x]['FebClosing'] = '';
-                $data[$x]['Mar'] = '';
-                $data[$x]['MarClosing'] = '';
-                $data[$x]['Apr'] = '';
-                $data[$x]['AprClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Jun'] = '';
-                $data[$x]['JunClosing'] = '';
-                $data[$x]['Jul'] = '';
-                $data[$x]['JulClosing'] = '';
-                $data[$x]['Aug'] = '';
-                $data[$x]['AugClosing'] = '';
-                $data[$x]['Sep'] = '';
-                $data[$x]['SepClosing'] = '';
-                $data[$x]['Oct'] = '';
-                $data[$x]['OctClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Nov'] = '';
-                $data[$x]['NovClosing'] = '';
-                $data[$x]['Dece'] = '';
-                $data[$x]['DeceClosing'] = '';
-                
-
-                
-
-
+              
 
          
                 $company_name = $companyCurrency->CompanyName;
