@@ -2893,45 +2893,44 @@ WHERE
                             $x++;
                         }
                     }
+                    $data[$x]['Account Code'] = '';
+                    $data[$x]['Account Description'] = '';
+                    $data[$x]['Type'] = '';
+                    $data[$x]['Opening Balance'] = '';
+                    $data[$x]['Jan'] = '';
+                    $data[$x]['JanClosing'] = '';
+                    $data[$x]['Feb'] = '';
+                    $data[$x]['FebClosing'] = '';
+                    $data[$x]['Mar'] = '';
+                    $data[$x]['MarClosing'] = '';
+                    $data[$x]['Apr'] = '';
+                    $data[$x]['AprClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Jun'] = '';
+                    $data[$x]['JunClosing'] = '';
+                    $data[$x]['Jul'] = '';
+                    $data[$x]['JulClosing'] = '';
+                    $data[$x]['Aug'] = '';
+                    $data[$x]['AugClosing'] = '';
+                    $data[$x]['Sep'] = '';
+                    $data[$x]['SepClosing'] = '';
+                    $data[$x]['Oct'] = '';
+                    $data[$x]['OctClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Nov'] = '';
+                    $data[$x]['NovClosing'] = '';
+                    $data[$x]['Dece'] = '';
+                    $data[$x]['DeceClosing'] = '';
+    
+                    array_push($data,$totalArray);
+
                 }
 
 
                
-                $data[$x]['Account Code'] = '';
-                $data[$x]['Account Description'] = '';
-                $data[$x]['Type'] = '';
-                $data[$x]['Opening Balance'] = '';
-                $data[$x]['Jan'] = '';
-                $data[$x]['JanClosing'] = '';
-                $data[$x]['Feb'] = '';
-                $data[$x]['FebClosing'] = '';
-                $data[$x]['Mar'] = '';
-                $data[$x]['MarClosing'] = '';
-                $data[$x]['Apr'] = '';
-                $data[$x]['AprClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Jun'] = '';
-                $data[$x]['JunClosing'] = '';
-                $data[$x]['Jul'] = '';
-                $data[$x]['JulClosing'] = '';
-                $data[$x]['Aug'] = '';
-                $data[$x]['AugClosing'] = '';
-                $data[$x]['Sep'] = '';
-                $data[$x]['SepClosing'] = '';
-                $data[$x]['Oct'] = '';
-                $data[$x]['OctClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Nov'] = '';
-                $data[$x]['NovClosing'] = '';
-                $data[$x]['Dece'] = '';
-                $data[$x]['DeceClosing'] = '';
-                
-
-                
-
-
+              
 
          
                 $company_name = $companyCurrency->CompanyName;
