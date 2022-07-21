@@ -350,7 +350,8 @@ class CustomerInvoiceItemDetailsRefferedback extends Model
         'quotationMasterID',
         'quotationDetailsID',
         'timesReferred',
-        'timestamp'
+        'timestamp',
+        'part_no'
     ];
 
     /**
