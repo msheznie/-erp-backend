@@ -123,10 +123,17 @@ class CompanyAPIController extends AppBaseController
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
-        $assetAndLiabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 0)
-        ->where('controlAccountsSystemID', 3)
-        ->orWhere('controlAccountsSystemID', 4)
+        $assetAndLiabilityAccount = ChartOfAccount::
+        where(function ($query)  {
+            $query->where('controlAccountsSystemID', 3)
+                ->orWhere('controlAccountsSystemID', 4);
+        })
+         ->where('isBank',0)
+         ->where('isApproved',1)
         ->where('catogaryBLorPL', '=', 'BS')
+        ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+            $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+        })
         ->orderBy('AccountDescription', 'asc')
         ->get();    
 
