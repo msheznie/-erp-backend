@@ -177,6 +177,10 @@
 </style>
 
 <div class="content">
+    <br/>
+    <br/>
+    <br/>
+    <br/>
     <div class="row">
         <table style="width:100%">
             <tr>
@@ -436,7 +440,7 @@
             <table class="table">
                 <tbody>
                     <tr>
-                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
+                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate of Oman origin: Manufacturer Oman Chromite Company (SAOG)-Commodity chrome ore.</td>
                     </tr>
                 </tbody>
             </table>
