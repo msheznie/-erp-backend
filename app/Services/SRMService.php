@@ -1496,8 +1496,11 @@ class SRMService
 
             $data = $data->get();
 
+            $getDates = TenderMaster::select('pre_bid_clarification_start_date', 'pre_bid_clarification_end_date')->where('id', $extra['tenderId'])->get();
+
             $data = [
                 'data' => $data,
+                'dates' => $getDates,
                 'supplier_id' => self::getSupplierRegIdByUUID($request->input('supplier_uuid')),
             ];
 
@@ -2938,6 +2941,7 @@ class SRMService
             case 'FAQ':
                 $type = 'xlsx';
                 $supplierId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+                $erpUser = '';
                 $data = array();
                 $parentIdArr = array();
                 $nonParentIdArr = array();
@@ -2959,7 +2963,19 @@ class SRMService
                     }
                 }
 
+                if(sizeof($output) == 0){
+                    $data[$x]['Question'] = '';
+                    $data[$x]['Answer'] = '';
+                }
+
                 $x = 0;
+                if((sizeof($prebidDate) == 0) && (sizeof($output) == 0)){
+                    return [
+                        'success' => false,
+                        'message' => 'There are no FAQ or Pre bid clarifications to download',
+                        'data' =>  new stdClass()
+                    ];
+                }
                 foreach ($prebidDate as $val) {
                     foreach ($val as $valIn) {
                         if(!($valIn['is_public'] === 0 && $supplierId !== $valIn['created_by'])) {
@@ -2972,6 +2988,12 @@ class SRMService
                                 $supplierName = "Anonymous";
                             }
 
+                            if(isset($valIn['employee'])){
+                                $erpUser = $valIn['employee']['empName'];
+                            } else {
+                                $erpUser = '';
+                            }
+
                             if ($valIn['parent_id'] === 0) {
                                 $parentIdArr[] = $x + 1;
                             } else {
@@ -2979,7 +3001,7 @@ class SRMService
                             }
 
                             $dataPrebid[$x]['Question Id'] = $valIn['id'];
-                            $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : "ERP- User";
+                            $dataPrebid[$x]['Supplier'] = isset($valIn['supplier']['name']) ? $supplierName : $erpUser;
                             $dataPrebid[$x]['Question / Answer'] = html_entity_decode(strip_tags($valIn['post']));
                             $dataPrebid[$x]['Parent Question Id'] = $valIn['parent_id'];
                             $dataPrebid[$x]['Publish as'] = ($valIn['is_public'] === 0) ? "Private" : "Public";
@@ -2987,6 +3009,16 @@ class SRMService
                             $dataPrebid[$x]['Is Thread Closed'] = ($valIn['is_closed'] === 1) ? 'Yes' : 'No';
                         }
                     }
+                }
+
+                if(sizeof($prebidDate) == 0){
+                    $dataPrebid[$x]['Question Id'] = '';
+                    $dataPrebid[$x]['Supplier'] = '';
+                    $dataPrebid[$x]['Question / Answer'] = '';
+                    $dataPrebid[$x]['Parent Question Id'] = '';
+                    $dataPrebid[$x]['Publish as'] = '';
+                    $dataPrebid[$x]['Created At'] = '';
+                    $dataPrebid[$x]['Is Thread Closed'] = '';
                 }
 
                 $fileNameFaq = 'faq';
@@ -3026,7 +3058,7 @@ class SRMService
             ->get();
 
         foreach ($parentPreBid as $parent) {
-            $prebidResponse = TenderBidClarifications::with(['supplier'])
+            $prebidResponse = TenderBidClarifications::with(['supplier', 'employee'])
                 ->where('id', '=', $parent->id)
                 ->orWhere('parent_id', '=', $parent->id)
                 ->orderBy('parent_id', 'asc')

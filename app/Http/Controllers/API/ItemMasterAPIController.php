@@ -60,6 +60,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
 use App\helper\CreateExcel;
+use App\Models\CompanyPolicyMaster;
+
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -460,6 +462,15 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
         $selectedCompanyId = $request['selectedCompanyId'];
 
+        $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
+                            ->where('companySystemID', $selectedCompanyId)
+                            ->first();
+        if(!empty($isPosIntegratedPolicy->isYesNO)){
+            $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
+        } else {
+            $isPosIntegrated = false;
+        }
+
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
@@ -557,7 +568,8 @@ class ItemMasterAPIController extends AppBaseController
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'vatSubCategory' => $vatSubCategory,
-            'masterCompany' => $masterCompany
+            'masterCompany' => $masterCompany,
+            'isPosIntegrated' => $isPosIntegrated
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

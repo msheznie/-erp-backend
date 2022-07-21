@@ -699,15 +699,15 @@ WHERE
                                 $to_date = null;
                             }
                             if (!empty($to_date) && empty($frm_date)) {
-                                return ['success' => false, 'message' => 'From date cannot be empty for ' . $calDate['calendar_date']];
+                                return ['success' => false, 'message' => 'From date cannot be empty'];
                             }
                             if (!empty($frm_date) && empty($to_date)) {
-                                return ['success' => false, 'message' => 'To date cannot be empty for ' . $calDate['calendar_date']];
+                                return ['success' => false, 'message' => 'To date cannot be empty'];
                             }
 
                             if (!empty($frm_date) && !empty($to_date)) {
                                 if ($frm_date > $to_date) {
-                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date for ' . $calDate['calendar_date']];
+                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
                                 }
                             }
                             if (!empty($to_date) || !empty($frm_date)) {
@@ -1465,7 +1465,7 @@ WHERE
         $total = ((int)$commercialWeightage + (int)$technicalWeightage);
         $employee = \Helper::getEmployeeInfo();
         if ($total != 100) {
-            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than or greater than 100'];
+            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
         }
 
         if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {

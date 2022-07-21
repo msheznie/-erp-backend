@@ -160,6 +160,10 @@ class InventoryReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
+        
+        $company = Company::find($companiesByGroup[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
@@ -179,6 +183,7 @@ class InventoryReportAPIController extends AppBaseController
             'document' => $document,
             'segment' => $segment,
             'item' => $item,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -249,7 +254,7 @@ class InventoryReportAPIController extends AppBaseController
                                     ->whereIn('wareHouseSystemCode', $warehouse)
                                     ->whereIn('itemPrimaryCode', $items)
                                     ->groupBy('itemPrimaryCode')
-                                    ->selectRaw('itemLedgerAutoID,unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription')
+                                    ->selectRaw('itemLedgerAutoID,unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription,itemmaster.secondaryItemCode')
                                     ->get();
 
     }
@@ -332,7 +337,6 @@ class InventoryReportAPIController extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
                 $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$request['Suppliers'],$currency_id,$request->companySystemID);
-
                 $array = array();
                 if (!empty($filter_val)) {
                     foreach ($filter_val as $element)
@@ -439,6 +443,10 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $companyID = (array)$request->companySystemID;
                     }
+                    
+                    $company = Company::find($companyID[0]);
+                    $company_name = $company->CompanyName;
+
 
                     $warehouse = (array)$request->warehouse;
                     $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
@@ -506,6 +514,7 @@ class InventoryReportAPIController extends AppBaseController
                                 }
                             }
                         })
+                        ->with('company_name', $company_name)
                         ->addIndexColumn()
                         /*  ->with('orderCondition', $sort)*/
                         ->make(true);
@@ -535,7 +544,14 @@ class InventoryReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'INVMMA') {
                     $output = $this->minAndMaxAnalysis($request);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $detail['output'] = $output;
+                    $detail['company_name'] = $company_name;
+
+                    return $this->sendResponse($detail, 'Items retrieved successfully');
                 }
                 break;
             case 'INVIM':
@@ -574,6 +590,11 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+        
         $input = $request;
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -802,7 +823,8 @@ class InventoryReportAPIController extends AppBaseController
         $output = array(
             'categories' => $finalArray,
             'grandWacLocal' => $GrandWacLocal,
-            'grandWacRpt' => $GrandWacRpt
+            'grandWacRpt' => $GrandWacRpt,
+            'company_name' => $company_name
         );
 
 
@@ -824,6 +846,9 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -945,7 +970,8 @@ FROM
             'subCompanies' => $subCompanies,
             'grandWacLocal' => $GrandWacLocal,
             'grandWacRpt' => $GrandWacRpt,
-            'warehouse' => $request->warehouse
+            'warehouse' => $request->warehouse,
+            'company_name' => $company_name
         );
 
         return $output;
@@ -1194,6 +1220,7 @@ FROM
                     $data[] = array(
                         'Category' => $val->categoryDescription,
                         'Item Code' => $val->itemPrimaryCode,
+                        'Part No / Reference No' => $val->secondaryItemCode,
                         'Item Description' => $val->itemDescription,
                         'UOM' => $val->UnitShortCode,
                         'Opening Balance Qty' => $val->opening_balance_quantity,

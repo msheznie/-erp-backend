@@ -29,6 +29,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
         Route::post('pull_user', 'POS\PosAPIController@pullUser');
         Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
+        Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -2715,6 +2716,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
 
         Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+
+
+        Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
+        Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
+        Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
+        Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation');
+        Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
+        Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds');
+        Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
+        Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
+        Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
         Route::post('updateTenderStrategy', 'TenderMasterAPIController@updateTenderStrategy');
 
         Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
@@ -3012,7 +3024,18 @@ Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
 
-Route::resource('tender_circulars', 'TenderCircularsAPIController');
 
+
+
+Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
+Route::resource('tender_circulars', 'TenderCircularsAPIController');
  
-//Route::post('requests', 'POS\PosAPIController@handleRequest');
+
+
+
+
+Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
+
+Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');
+
+Route::resource('p_o_s_trans_error_logs', 'POSTransErrorLogAPIController');
