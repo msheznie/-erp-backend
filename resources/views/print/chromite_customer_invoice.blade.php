@@ -460,6 +460,14 @@
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>VAT @ {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}%</b></td>
                         <td colspan="3" class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                     </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td colspan="2" style="text-align: left; border-right: none !important;"><b>Advance</b></td>
+                    @php
+                        $sumAdvance = \App\Models\CustomerReceivePaymentDetail::where('bookingInvCodeSystem',$request->custInvoiceDirectAutoID)->sum('receiveAmountLocal');
+                    @endphp
+                    <td colspan="3" class="text-right">{{number_format($sumAdvance, $numberFormatting)}}</td>
+                </tr>
 
                     <tr>
                         <td colspan="3"></td>
