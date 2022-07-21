@@ -757,6 +757,7 @@ class CashFlowReportAPIController extends AppBaseController
         foreach($details as $detail)
         {
             $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $detail->cashFlowAmount = null;
             if($brv){
                 $detail->cashFlowAmount = number_format($brv->localAmount,3);
             }
