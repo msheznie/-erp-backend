@@ -126,6 +126,7 @@ class CustomerInvoiceLogistic extends Model
         'no_of_container',
         'delivery_payment',
         'payment_terms',
+        'packing',
         'parking',
         'is_deleted',
         'created_by',

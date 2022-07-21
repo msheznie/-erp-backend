@@ -188,7 +188,7 @@
                     <div class="text-center">
 
                         <h3>
-                            <b>COMMERICAL INVOICE</b>
+                            <b>COMMERCIAL INVOICE</b>
                             <br>
                         </h3>
 
@@ -234,11 +234,23 @@
                         @endforeach
                     @endif
                 </td>
-                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
-                                                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                                                @endif
+                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;
+                @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                    @foreach ($request->issue_item_details as $item)
+                        {{isset($item->sales_quotation->referenceNo)?$item->sales_quotation->referenceNo:' '}}
+                    @endforeach
+                @endif
+                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp;
+                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                        @foreach ($request->issue_item_details as $item)
+                            @if(isset($item->sales_quotation->documentDate))
+                                {{ \Carbon\Carbon::parse($item->sales_quotation->documentDate)->format('d/m/Y') }}
+                            @else
+                                -
+                            @endif
+                        @endforeach
+                    @endif
                 </td>
-                <td colspan="1" class="thicker"> (CONTRACT) DATE:</td>
 
             </tr>
         </table>
