@@ -389,8 +389,7 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'transaction_log_id',
-        'mapping_master_id'
+        'transaction_log_id'
     ];
 
     /**
@@ -452,8 +451,7 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer',
-        'mapping_master_id' => 'integer'
+        'transaction_log_id' => 'integer'
     ];
 
     /**
