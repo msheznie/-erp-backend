@@ -645,5 +645,13 @@ class POSInvoiceSource extends Model
         
     ];
 
-    
+    public function invoiceDetailSource(){ 
+        return $this->hasMany('App\Models\POSInvoiceSourceDetail', 'invoiceID', 'invoiceID');
+    }
+    public function invoicePaymentSource(){ 
+        return $this->hasMany('App\Models\POSSourceInvoicePayment', 'invoiceID', 'invoiceID');
+    }
+    public function employee(){ 
+        return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
+    }
 }

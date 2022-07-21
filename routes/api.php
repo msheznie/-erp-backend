@@ -2735,6 +2735,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getCircularMaster', 'TenderCircularsAPIController@getCircularMaster');
         Route::post('deleteTenderCircular', 'TenderCircularsAPIController@deleteTenderCircular');
         Route::post('tenderCircularPublish', 'TenderCircularsAPIController@tenderCircularPublish');
+        Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
 
     });
 
@@ -3039,3 +3040,11 @@ Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
 Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');
 
 Route::resource('p_o_s_trans_error_logs', 'POSTransErrorLogAPIController');
+
+Route::resource('p_o_s_stag_invoice_payments', 'POSStagInvoicePaymentAPIController');
+
+Route::resource('p_o_s_source_invoice_payments', 'POSSourceInvoicePaymentAPIController');
+
+Route::resource('p_o_s_stag_payment_gl_configs', 'POSStagPaymentGlConfigAPIController');
+
+Route::resource('p_o_s_source_payment_gl_configs', 'POSSourcePaymentGlConfigAPIController');
