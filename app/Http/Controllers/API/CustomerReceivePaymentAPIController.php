@@ -2617,7 +2617,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $master = $master->select([
-            'custPaymentReceiveCode',
+            'custPaymentReceiveCode','postedDate',
             'transCurr.CurrencyCode as transCurrencyCode',
             'bankCurr.CurrencyCode as bankCurrencyCode',
             'documentType',

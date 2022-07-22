@@ -2874,9 +2874,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
 
+
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Payment voucher not found');
         }
+        return $paySupplierInvoiceMaster;
 
         if ($paySupplierInvoiceMaster->invoiceType == 6) {
             $output1 = $this->getEmployeePaymentForPV($request, $paySupplierInvoiceMaster);
