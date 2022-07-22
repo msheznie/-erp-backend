@@ -756,6 +756,7 @@ FROM
 WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     erp_bookinvsuppmaster.documentType = 4 AND
     4 IN (' . join(',', json_decode($typeID)) . ')
 UNION ALL
@@ -2634,6 +2635,7 @@ WHERE
     DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
     erp_bookinvsuppmaster.approved = -1 AND
     erp_bookinvsuppmaster.documentType = 4 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     4 IN (' . join(',', json_decode($typeID)) . ')
 UNION ALL
     SELECT
