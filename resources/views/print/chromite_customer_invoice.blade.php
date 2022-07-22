@@ -177,6 +177,10 @@
 </style>
 
 <div class="content">
+    <br/>
+    <br/>
+    <br/>
+    <br/>
     <div class="row">
         <table style="width:100%">
             <tr>
@@ -188,7 +192,7 @@
                     <div class="text-center">
 
                         <h3>
-                            <b>COMMERICAL INVOICE</b>
+                            <b>COMMERCIAL INVOICE</b>
                             <br>
                         </h3>
 
@@ -233,12 +237,67 @@
                             {{isset($item->sales_quotation->quotationCode)?$item->sales_quotation->quotationCode:' '}}
                         @endforeach
                     @endif
+                        @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                            @foreach ($request->issue_item_details as $item)
+                                @php
+                                $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
+                                $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
+                                if($quotationMaster){
+                                  $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
+                                }
+
+                                @endphp
+                                @if($salesOrder)
+                                    {{ $salesOrder->quotationCode }}
+                                @endif
+                            @endforeach
+                        @endif
                 </td>
-                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;@if(!empty($request->invoicedetails) )
-                                                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                                                @endif
+                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;
+                @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                    @foreach ($request->issue_item_details as $item)
+                        {{isset($item->sales_quotation->referenceNo)?$item->sales_quotation->referenceNo:' '}}
+                    @endforeach
+                @endif
+                @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                    @foreach ($request->issue_item_details as $item)
+                        @php
+                            $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
+                            $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
+                            if($quotationMaster){
+                              $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
+                            }
+
+                        @endphp
+                        @if($salesOrder)
+                           {{ $salesOrder->referenceNo }}
+                        @endif
+                    @endforeach
+                @endif
+                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp;
+                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                        @foreach ($request->issue_item_details as $item)
+                            @if(isset($item->sales_quotation->documentDate))
+                                {{ \Carbon\Carbon::parse($item->sales_quotation->documentDate)->format('d/m/Y') }}
+                            @endif
+                        @endforeach
+                    @endif
+                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
+                        @foreach ($request->issue_item_details as $item)
+                            @php
+                                $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
+                                $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
+                                if($quotationMaster){
+                                  $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
+                                }
+
+                            @endphp
+                            @if($salesOrder)
+                                {{ \Carbon\Carbon::parse($salesOrder->documentDate)->format('d/m/Y') }}
+                            @endif
+                        @endforeach
+                    @endif
                 </td>
-                <td colspan="1" class="thicker"> (CONTRACT) DATE:</td>
 
             </tr>
         </table>
@@ -308,7 +367,7 @@
                 </td>
                 <td colspan="1"  style="text-align: center" class="thicker">No of Containers</td>
                 <td colspan="4" class="thicker">Packing</td>
-                <td colspan="4" ></td>
+                <td colspan="4" >{{isset($request->customerInvoiceLogistic['packing'])?$request->customerInvoiceLogistic['packing']:' '}}</td>
             </tr>
             <tr>
 
@@ -331,6 +390,7 @@
                     <th style="width:10%;">Account Code</th>
                     <th style="width:25%;">Description</th>
                 @endif
+                    <th style="width:10%;text-align: center">Delivery Note No</th>
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">Quantity</th>
                     <th style="width:15%;text-align: center">Rate</th>
@@ -354,6 +414,7 @@
                             <tr style="border: 1px solid !important;">
                                 <td style="text-align: center;">{{$item->itemPrimaryCode}}</td>
                                 <td style="word-wrap:break-word;">{{$item->itemDescription}}</td>
+                                <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->qtyIssued}}</td>
                                 <td style="text-align: center;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
@@ -386,7 +447,7 @@
                 </tbody>
                 <tbody>
                 <tr>
-                    <td colspan="2"></td>
+                    <td colspan="3"></td>
                     <td colspan="2" style="text-align: left; border-right: none !important;"><b>Total Taxable Value</b></td>
                     <td colspan="3" class="text-right">@if ($request->invoicedetails)
                             {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -395,19 +456,27 @@
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotal+=$totalVATAmount}}
                     <tr>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>VAT @ {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}%</b></td>
                         <td colspan="3" class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                     </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td colspan="2" style="text-align: left; border-right: none !important;"><b>Advance</b></td>
+                    @php
+                        $sumAdvance = \App\Models\CustomerReceivePaymentDetail::where('bookingInvCodeSystem',$request->custInvoiceDirectAutoID)->sum('receiveAmountLocal');
+                    @endphp
+                    <td colspan="3" class="text-right">{{number_format($sumAdvance, $numberFormatting)}}</td>
+                </tr>
 
                     <tr>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable</b></td>
                         <td colspan="3" class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
 
                     <tr>
-                        <td colspan="2"></td>
+                        <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
                         <td colspan="3" class="text-right">{{$request->amount_word}}
                             @if ($request->floatAmt > 0)
@@ -424,7 +493,7 @@
             <table class="table">
                 <tbody>
                     <tr>
-                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate Of Oman origin - Manufactuer Oman Chromite Company (SAOG) - Commodity chrome ore.</td>
+                        <td colspan="8">We certify that the goods mentioned in this invoice are of Sultanate of Oman origin: Manufacturer Oman Chromite Company (SAOG)-Commodity chrome ore.</td>
                     </tr>
                 </tbody>
             </table>
