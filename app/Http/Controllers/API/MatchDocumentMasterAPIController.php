@@ -1490,9 +1490,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentID'] = $matchDocumentMaster->documentID;
                         $data['documentSystemCode'] = $input["PayMasterAutoId"];
                         $data['documentCode'] = $matchDocumentMaster->BPVcode;
-                        $data['documentDate'] = $masterDocumentDate;
-                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
                         $data['documentConfirmedDate'] = $matchDocumentMaster->confirmedDate;
                         $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
