@@ -567,6 +567,13 @@ class CashFlowReportAPIController extends AppBaseController
         $companySystemID = collect($dataCashFlow)->pluck('companySystemID');
         $companySystemID = isset($companySystemID[0]) ? $companySystemID[0] : $companySystemID;
 
+        $confimedYN = collect($dataCashFlow)->pluck('confimedYN');
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+
+        $cashFlowReportID = collect($dataCashFlow)->pluck('cashFlowReportID');
+        $cashFlowReportID = isset($cashFlowReportID[0]) ? $cashFlowReportID[0] : $cashFlowReportID;
+
+
         $details = DB::select('SELECT * FROM (SELECT
 	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
     erp_grvdetails.netAmount as grvAmount,
@@ -639,11 +646,25 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->first();
+            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $detail->cashFlowAmount = null;
             if($pv){
                 $detail->cashFlowAmount = number_format($pv->localAmount,3);;
             }
+
         }
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+    if($confimedYN == 1){
+        foreach ($details as $key => $detail) {
+            if($detail->cashFlowAmount == null){
+                unset($details[$key]);
+            }
+        }
+        $details = array_values($details);
+    }
+
+
+
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
 
     }
@@ -656,6 +677,12 @@ class CashFlowReportAPIController extends AppBaseController
         $glAutoID = collect($dataCashFlow)->pluck('glAutoID');
         $companySystemID = collect($dataCashFlow)->pluck('companySystemID');
         $companySystemID = isset($companySystemID[0]) ? $companySystemID[0] : $companySystemID;
+
+        $confimedYN = collect($dataCashFlow)->pluck('confimedYN');
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+
+        $cashFlowReportID = collect($dataCashFlow)->pluck('cashFlowReportID');
+        $cashFlowReportID = isset($cashFlowReportID[0]) ? $cashFlowReportID[0] : $cashFlowReportID;
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_delivery_order.deliveryOrderCode AS deliveryOrderCode,
@@ -729,10 +756,20 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->first();
+            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $detail->cashFlowAmount = null;
             if($brv){
                 $detail->cashFlowAmount = number_format($brv->localAmount,3);
             }
+        }
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+        if($confimedYN == 1){
+            foreach ($details as $key => $detail) {
+                if($detail->cashFlowAmount == null){
+                    unset($details[$key]);
+                }
+            }
+            $details = array_values($details);
         }
 
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
