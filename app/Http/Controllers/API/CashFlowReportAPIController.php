@@ -653,7 +653,7 @@ class CashFlowReportAPIController extends AppBaseController
             }
 
         }
-        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : 0;
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
     if($confimedYN == 1){
         foreach ($details as $key => $detail) {
             if($detail->cashFlowAmount == null){
@@ -762,7 +762,7 @@ class CashFlowReportAPIController extends AppBaseController
                 $detail->cashFlowAmount = number_format($brv->localAmount,3);
             }
         }
-        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : 0;
+        $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
         if($confimedYN == 1){
             foreach ($details as $key => $detail) {
                 if($detail->cashFlowAmount == null){
