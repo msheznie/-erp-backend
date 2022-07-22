@@ -291,6 +291,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
         $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
@@ -719,6 +720,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         } else {
             $_post['invoiceDueDate'] = null;
+        }
+
+        if ($input['date_of_supply'] != '') {
+            $_post['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            $_post['date_of_supply'] = null;
         }
 
         /*validaation*/
