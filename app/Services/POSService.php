@@ -25,13 +25,13 @@ class POSService
     {
         $db = $request->input('db');
 
-        if (!Schema::connection('mysql')->hasTable('pos_mapping_master') || !Schema::connection('mysql')->hasTable('pos_mapping_detail')) {
+      /*   if (!Schema::connection('mysql')->hasTable('pos_mapping_master') || !Schema::connection('mysql')->hasTable('pos_mapping_detail')) {
             return [
                 'success' => false,
                 'message' => 'Mapping table does not exist',
                 'data' => null
             ];
-        }
+        } */
 
         $getMapping = POSMappingMaster::with(['mapping_detail'])
             ->where('key', $request->input('request'))
@@ -46,11 +46,7 @@ class POSService
             ];
         }
         $MappingDataArrFilter = collect($getMapping['mapping_detail'])->map(function ($group) use ($request) {
-            if (!Schema::connection('mysql')->hasTable($group['table'])) {
-                return $group['table'] . ' table does not exists';
-            } else if (!Schema::connection('mysql')->hasTable($group['source_table_name'])) {
-                return $group['table'] . ' sourse table does not exists';
-            } else if ($request->input('data.' . $group['key']) == null) {
+            if ($request->input('data.' . $group['key']) == null) {
                 return $group['key'] . ' records does not exists';
             } else if ($group['model_name'] == null) {
                 return $group['table'] . ' model name does not exists in mapping detail table';
