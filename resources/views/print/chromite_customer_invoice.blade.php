@@ -237,65 +237,63 @@
                             {{isset($item->sales_quotation->quotationCode)?$item->sales_quotation->quotationCode:' '}}
                         @endforeach
                     @endif
-                        @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                            @foreach ($request->issue_item_details as $item)
-                                @php
-                                $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
-                                $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
-                                if($quotationMaster){
-                                  $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
-                                }
-
-                                @endphp
-                                @if($salesOrder)
-                                    {{ $salesOrder->quotationCode }}
-                                @endif
-                            @endforeach
-                        @endif
-                </td>
-                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;
-                @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                    @foreach ($request->issue_item_details as $item)
-                        {{isset($item->sales_quotation->referenceNo)?$item->sales_quotation->referenceNo:' '}}
-                    @endforeach
-                @endif
-                @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                    @foreach ($request->issue_item_details as $item)
                         @php
-                            $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
-                            $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
-                            if($quotationMaster){
-                              $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
-                            }
+                        $quotations = DB::table('erp_custinvoicedirect')->selectRaw('erp_quotationmaster.quotationCode as quotationCode,erp_quotationmaster.referenceNo as referenceNo, erp_quotationmaster.documentDate as documentDate')
+                        ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                        ->join('erp_quotationmaster', 'erp_quotationmaster.quotationMasterID', '=', 'erp_customerinvoiceitemdetails.quotationMasterID')
+                        ->where('erp_custinvoicedirect.custInvoiceDirectAutoID', $request->custInvoiceDirectAutoID)
+                        ->groupBy('erp_quotationmaster.quotationMasterID')
+                        ->get();
 
-                        @endphp
-                        @if($salesOrder)
-                           {{ $salesOrder->referenceNo }}
+
+
+                        $quotationsByDeo = DB::table('erp_custinvoicedirect')->selectRaw('erp_quotationmaster.quotationCode as quotationCode,erp_quotationmaster.referenceNo as referenceNo, erp_quotationmaster.documentDate as documentDate')
+                ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
+                 ->join('erp_delivery_order_detail', 'erp_delivery_order_detail.deliveryOrderDetailID', '=', 'erp_customerinvoiceitemdetails.deliveryOrderDetailID')
+                  ->join('erp_quotationmaster', 'erp_quotationmaster.quotationMasterID', '=', 'erp_delivery_order_detail.quotationMasterID')
+                  ->where('erp_custinvoicedirect.custInvoiceDirectAutoID', $request->custInvoiceDirectAutoID)
+                  ->groupBy('erp_quotationmaster.quotationMasterID')
+                ->get();
+
+
+
+
+                    @endphp
+                        @if($quotationsByDeo)
+                    @if(count($quotationsByDeo) == 1)
+                        {{ $quotationsByDeo[0]->quotationCode }}
                         @endif
-                    @endforeach
-                @endif
-                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp;
-                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                        @foreach ($request->issue_item_details as $item)
-                            @if(isset($item->sales_quotation->documentDate))
-                                {{ \Carbon\Carbon::parse($item->sales_quotation->documentDate)->format('d/m/Y') }}
+                        @endif
+                        @if($quotations)
+                            @if(count($quotations) == 1)
+                                {{ $quotations[0]->quotationCode }}
                             @endif
-                        @endforeach
-                    @endif
-                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                        @foreach ($request->issue_item_details as $item)
-                            @php
-                                $deliveryOrderDetailID = isset($item->deliveryOrderDetailID)?$item->deliveryOrderDetailID:null;
-                                $quotationMaster = \App\Models\DeliveryOrderDetail::find($deliveryOrderDetailID);
-                                if($quotationMaster){
-                                  $salesOrder = \App\Models\QuotationMaster::find($quotationMaster->quotationMasterID);
-                                }
+                        @endif
 
-                            @endphp
-                            @if($salesOrder)
-                                {{ \Carbon\Carbon::parse($salesOrder->documentDate)->format('d/m/Y') }}
-                            @endif
-                        @endforeach
+                </td>
+
+                <td colspan="1" class="thicker"> Contract No:&nbsp;&nbsp;&nbsp;
+                @if($quotationsByDeo)
+                    @if(count($quotationsByDeo) == 1)
+                        {{ $quotationsByDeo[0]->referenceNo }}
+                    @endif
+                @endif
+                    @if($quotations)
+                        @if(count($quotations) == 1)
+                            {{ $quotations[0]->referenceNo }}
+                        @endif
+                    @endif
+                </td>
+                <td colspan="1" class="thicker"> (CONTRACT) DATE:&nbsp;&nbsp;&nbsp;
+                    @if($quotationsByDeo)
+                        @if(count($quotationsByDeo) == 1)
+                            {{ \Carbon\Carbon::parse($quotationsByDeo[0]->documentDate)->format('d/m/Y') }}
+                        @endif
+                    @endif
+                    @if($quotations)
+                        @if(count($quotations) == 1)
+                            {{ \Carbon\Carbon::parse($quotations[0]->documentDate)->format('d/m/Y') }}
+                        @endif
                     @endif
                 </td>
 
