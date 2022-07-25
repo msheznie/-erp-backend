@@ -2152,9 +2152,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
             FROM
                 erp_paysupplierinvoicedetail
-            JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
-            WHERE 
-                erp_paysupplierinvoicemaster.invoiceType = 6
             GROUP BY
                 erp_paysupplierinvoicedetail.apAutoID 
                 ) sid ON sid.apAutoID = employee_ledger.id
