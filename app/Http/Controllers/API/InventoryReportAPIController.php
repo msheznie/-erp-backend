@@ -1216,7 +1216,18 @@ FROM
                 $from_date =  ((new Carbon($request->fromDate))->format('d/m/Y'));
                 $to_date =  ((new Carbon($request->toDate))->format('d/m/Y'));
 
+                $openeingBalanceTotal = 0;
+                $closingBalanceTotal = 0;
+                $InwardsTotal = 0;
+                $outwardTotal = 0;
+
                 foreach ($filter_val as $val) {
+
+                    $openeingBalanceTotal = round($openeingBalanceTotal,$decimal_val) + round($val->opening_balance_value,$decimal_val);
+                    $closingBalanceTotal = round($closingBalanceTotal,$decimal_val) + round($val->closing_balance_value,$decimal_val);
+                    $InwardsTotal = round($InwardsTotal,$decimal_val) + round($val->inwards_value,$decimal_val);
+                    $outwardTotal = round($outwardTotal,$decimal_val) + round($val->outwards_value,$decimal_val);
+
                     $data[] = array(
                         'Category' => $val->categoryDescription,
                         'Item Code' => $val->itemPrimaryCode,
@@ -1238,12 +1249,33 @@ FROM
 
 
 
+                $dataSorted = collect($data)->sortBy('Category');
+
+                $GrandTotal =  array(
+                    'Category' => '',
+                    'Item Code' => '',
+                    'Part No / Reference No' => '',
+                    'Item Description' => 'Grand Total',
+                    'UOM' => '',
+                    'Opening Balance Qty' => '',
+                    'Opening Balance Val ('.$currencyCode.')' =>  round($openeingBalanceTotal,3),
+                    'Inwards Qty' => '',
+                    'Inwards Val ('.$currencyCode.')' => $InwardsTotal,
+                    'Outwards Qty' => '',
+                    'Outwards Val ('.$currencyCode.')' => $outwardTotal,
+                    'Closing Balance Qty' => '',
+                    'Closing Balance Val ('.$currencyCode.')' => round($closingBalanceTotal,3),
+
+                );
+
+                $dataSorted->push($GrandTotal);
+
                 $fileName = 'inventory_summary_report';
                 $title = 'Inventory Summary Report';
                 $path = 'inventory/report/inventory_summary_report/excel/';
                 $cur = NULL;
                 $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
-                $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
+                $basePath = CreateExcel::process($dataSorted,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')
                 {
