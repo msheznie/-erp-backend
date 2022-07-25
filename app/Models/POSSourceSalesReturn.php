@@ -424,7 +424,7 @@ class POSSourceSalesReturn extends Model
         'promotiondiscountAmount' => 'float',
         'subTotal' => 'float',
         'netTotal' => 'float',
-        'returnMode' => 'boolean',
+        'returnMode' => 'int',
         'isRefund' => 'boolean',
         'refundAmount' => 'float',
         'wareHouseAutoID' => 'integer',
