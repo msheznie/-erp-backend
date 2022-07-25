@@ -232,11 +232,6 @@
                     VAT NO: {{$request->vatRegistratonNumber}}<br>
                 </td>
                 <td colspan="1" class="thicker">
-                    @if(!empty($request->issue_item_details) && count($request->issue_item_details) == 1 )
-                        @foreach ($request->issue_item_details as $item)
-                            {{isset($item->sales_quotation->quotationCode)?$item->sales_quotation->quotationCode:' '}}
-                        @endforeach
-                    @endif
                         @php
                         $quotations = DB::table('erp_custinvoicedirect')->selectRaw('erp_quotationmaster.quotationCode as quotationCode,erp_quotationmaster.referenceNo as referenceNo, erp_quotationmaster.documentDate as documentDate')
                         ->join('erp_customerinvoiceitemdetails', 'erp_customerinvoiceitemdetails.custInvoiceDirectAutoID', '=', 'erp_custinvoicedirect.custInvoiceDirectAutoID')
@@ -417,7 +412,7 @@
                                 <td style="text-align: center;">{{$item->qtyIssued}}</td>
                                 <td style="text-align: center;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
                                 <td style="text-align: center;">{{$item->VATPercentage}}</td>
-                                <td class="text-center">{{number_format($item->sellingTotal+$item->VATAmountLocal,$numberFormatting)}}</td>
+                                <td class="text-right">{{number_format($item->sellingTotal+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
                         @endif
@@ -432,11 +427,12 @@
                             <tr style="border: 1px solid !important;">
                                 <td style="text-align: center;">{{$item->glCode}}</td>
                                 <td style="word-wrap:break-word;">{{$item->glCodeDes}}</td>
+                                <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->invoiceQty}}</td>
                                 <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
                                 <td style="text-align: center;">{{$item->VATPercentage}}</td>
-                                <td class="text-center">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
+                                <td class="text-right">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
                     @endforeach
