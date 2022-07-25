@@ -6,11 +6,11 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="POSInvoiceSourceDetail",
+ *      definition="POSSourceSalesReturn",
  *      required={""},
  *      @SWG\Property(
- *          property="invoiceDetailsID",
- *          description="invoiceDetailsID",
+ *          property="salesReturnID",
+ *          description="salesReturnID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -21,86 +21,49 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="itemAutoID",
- *          description="itemAutoID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="itemCategory",
- *          description="itemCategory",
+ *          property="documentSystemCode",
+ *          description="documentSystemCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="financeCategory",
- *          description="financeCategory",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="itemFinanceCategory",
- *          description="itemFinanceCategory",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="itemFinanceCategorySub",
- *          description="itemFinanceCategorySub",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="defaultUOMID",
- *          description="defaultUOMID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="UOMID",
- *          description="UOMID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="unitOfMeasure",
- *          description="unitOfMeasure",
+ *          property="documentCode",
+ *          description="documentCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="conversionRateUOM",
- *          description="conversionRateUOM",
- *          type="number",
- *          format="number"
- *      ),
- *      @SWG\Property(
- *          property="expenseGLAutoID",
- *          description="expenseGLAutoID",
+ *          property="serialNo",
+ *          description="serialNo",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="revenueGLAutoID",
- *          description="revenueGLAutoID",
+ *          property="customerID",
+ *          description="customerID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="assetGLAutoID",
- *          description="assetGLAutoID",
+ *          property="customerCode",
+ *          description="customerCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="counterID",
+ *          description="counterID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="qty",
- *          description="qty",
- *          type="number",
- *          format="number"
+ *          property="shiftID",
+ *          description="shiftID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="price",
- *          description="price",
- *          type="number",
- *          format="number"
+ *          property="salesReturnDate",
+ *          description="salesReturnDate",
+ *          type="string",
+ *          format="date"
  *      ),
  *      @SWG\Property(
  *          property="discountPer",
@@ -110,7 +73,7 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="discountAmount",
- *          description="individual discount amount",
+ *          description="discountAmount",
  *          type="number",
  *          format="number"
  *      ),
@@ -127,8 +90,8 @@ use Eloquent as Model;
  *          format="number"
  *      ),
  *      @SWG\Property(
- *          property="promoID",
- *          description="promoID",
+ *          property="promotionID",
+ *          description="promotionID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -145,16 +108,38 @@ use Eloquent as Model;
  *          format="number"
  *      ),
  *      @SWG\Property(
- *          property="taxCalculationformulaID",
- *          description="taxCalculationformulaID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="taxAmount",
- *          description="taxAmount",
+ *          property="subTotal",
+ *          description="subTotal",
  *          type="number",
  *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="netTotal",
+ *          description="netTotal",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="returnMode",
+ *          description="exchange=1, Refund=2,  credit-to-customer=3",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="isRefund",
+ *          description="isRefund",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="refundAmount",
+ *          description="refundAmount",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="wareHouseAutoID",
+ *          description="wareHouseAutoID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="transactionCurrencyID",
@@ -164,31 +149,20 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="transactionCurrency",
- *          description="transactionCurrency",
+ *          description="Document transaction currency",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="transactionAmountBeforeDiscount",
- *          description="transactionAmountBeforeDiscount",
- *          type="number",
- *          format="number"
- *      ),
- *      @SWG\Property(
- *          property="transactionAmount",
- *          description="transactionAmount",
+ *          property="transactionExchangeRate",
+ *          description="Always 1",
  *          type="number",
  *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="transactionCurrencyDecimalPlaces",
- *          description="transactionCurrencyDecimalPlaces",
- *          type="boolean"
- *      ),
- *      @SWG\Property(
- *          property="transactionExchangeRate",
- *          description="transactionExchangeRate",
- *          type="number",
- *          format="number"
+ *          description="Decimal places of transaction currency ",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="companyLocalCurrencyID",
@@ -198,25 +172,20 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="companyLocalCurrency",
- *          description="companyLocalCurrency",
+ *          description="Local currency of company in company master",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="companyLocalAmount",
- *          description="companyLocalAmount",
- *          type="number",
- *          format="number"
- *      ),
- *      @SWG\Property(
  *          property="companyLocalExchangeRate",
- *          description="companyLocalExchangeRate",
+ *          description="Exchange rate against transaction currency",
  *          type="number",
  *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="companyLocalCurrencyDecimalPlaces",
- *          description="companyLocalCurrencyDecimalPlaces",
- *          type="boolean"
+ *          description="Decimal places of company currency",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="companyReportingCurrencyID",
@@ -226,25 +195,55 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="companyReportingCurrency",
- *          description="companyReportingCurrency",
+ *          description="Reporting currency of company in company master",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="companyReportingAmount",
- *          description="companyReportingAmount",
+ *          property="companyReportingExchangeRate",
+ *          description="Exchange rate against transaction currency ",
  *          type="number",
  *          format="number"
  *      ),
  *      @SWG\Property(
  *          property="companyReportingCurrencyDecimalPlaces",
- *          description="companyReportingCurrencyDecimalPlaces",
- *          type="boolean"
+ *          description="Decimal places of company currency",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyReportingExchangeRate",
- *          description="companyReportingExchangeRate",
+ *          property="customerCurrencyID",
+ *          description="customerCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCurrency",
+ *          description="Default currency of supplier ",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCurrencyExchangeRate",
+ *          description="Exchange rate against transaction currency",
  *          type="number",
  *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCurrencyAmount",
+ *          description="Transaction amount in supplier currency ",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerCurrencyDecimalPlaces",
+ *          description="Decimal places of Supplier currency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="segmentID",
+ *          description="segmentID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="companyID",
@@ -306,30 +305,36 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="customerReceivableAutoID",
+ *          description="customerReceivableAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="timestamp",
  *          description="timestamp",
  *          type="string",
  *          format="date-time"
  *      ),
  *      @SWG\Property(
- *          property="transaction_log_id",
- *          description="transaction_log_id",
+ *          property="isGroupBasedTax",
+ *          description="isGroupBasedTax",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="mapping_master_id",
- *          description="mapping_master_id",
+ *          property="transaction_log_id",
+ *          description="transaction_log_id",
  *          type="integer",
  *          format="int32"
  *      )
  * )
  */
-class POSInvoiceSourceDetail extends Model
+class POSSourceSalesReturn extends Model
 {
 
-    public $table = 'pos_source_invoicedetail';
-
+    public $table = 'pos_source_salesreturn';
+    
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -338,45 +343,45 @@ class POSInvoiceSourceDetail extends Model
 
     public $fillable = [
         'invoiceID',
-        'itemAutoID',
-        'itemCategory',
-        'financeCategory',
-        'itemFinanceCategory',
-        'itemFinanceCategorySub',
-        'defaultUOMID',
-        'UOMID',
-        'unitOfMeasure',
-        'conversionRateUOM',
-        'expenseGLAutoID',
-        'revenueGLAutoID',
-        'assetGLAutoID',
-        'qty',
-        'price',
+        'documentSystemCode',
+        'documentCode',
+        'serialNo',
+        'customerID',
+        'customerCode',
+        'counterID',
+        'shiftID',
+        'salesReturnDate',
         'discountPer',
         'discountAmount',
         'generalDiscountPercentage',
         'generalDiscountAmount',
-        'promoID',
+        'promotionID',
         'promotiondiscount',
         'promotiondiscountAmount',
-        'taxCalculationformulaID',
-        'taxAmount',
+        'subTotal',
+        'netTotal',
+        'returnMode',
+        'isRefund',
+        'refundAmount',
+        'wareHouseAutoID',
         'transactionCurrencyID',
         'transactionCurrency',
-        'transactionAmountBeforeDiscount',
-        'transactionAmount',
-        'transactionCurrencyDecimalPlaces',
         'transactionExchangeRate',
+        'transactionCurrencyDecimalPlaces',
         'companyLocalCurrencyID',
         'companyLocalCurrency',
-        'companyLocalAmount',
         'companyLocalExchangeRate',
         'companyLocalCurrencyDecimalPlaces',
         'companyReportingCurrencyID',
         'companyReportingCurrency',
-        'companyReportingAmount',
-        'companyReportingCurrencyDecimalPlaces',
         'companyReportingExchangeRate',
+        'companyReportingCurrencyDecimalPlaces',
+        'customerCurrencyID',
+        'customerCurrency',
+        'customerCurrencyExchangeRate',
+        'customerCurrencyAmount',
+        'customerCurrencyDecimalPlaces',
+        'segmentID',
         'companyID',
         'companyCode',
         'createdUserGroup',
@@ -388,7 +393,9 @@ class POSInvoiceSourceDetail extends Model
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
+        'customerReceivableAutoID',
         'timestamp',
+        'isGroupBasedTax',
         'transaction_log_id'
     ];
 
@@ -398,47 +405,47 @@ class POSInvoiceSourceDetail extends Model
      * @var array
      */
     protected $casts = [
-        'invoiceDetailsID' => 'integer',
+        'salesReturnID' => 'integer',
         'invoiceID' => 'integer',
-        'itemAutoID' => 'integer',
-        'itemCategory' => 'string',
-        'financeCategory' => 'integer',
-        'itemFinanceCategory' => 'integer',
-        'itemFinanceCategorySub' => 'integer',
-        'defaultUOMID' => 'integer',
-        'UOMID' => 'integer',
-        'unitOfMeasure' => 'string',
-        'conversionRateUOM' => 'float',
-        'expenseGLAutoID' => 'integer',
-        'revenueGLAutoID' => 'integer',
-        'assetGLAutoID' => 'integer',
-        'qty' => 'float',
-        'price' => 'float',
+        'documentSystemCode' => 'string',
+        'documentCode' => 'string',
+        'serialNo' => 'integer',
+        'customerID' => 'integer',
+        'customerCode' => 'string',
+        'counterID' => 'integer',
+        'shiftID' => 'integer',
+        'salesReturnDate' => 'date',
         'discountPer' => 'float',
         'discountAmount' => 'float',
         'generalDiscountPercentage' => 'float',
         'generalDiscountAmount' => 'float',
-        'promoID' => 'integer',
+        'promotionID' => 'integer',
         'promotiondiscount' => 'float',
         'promotiondiscountAmount' => 'float',
-        'taxCalculationformulaID' => 'integer',
-        'taxAmount' => 'float',
+        'subTotal' => 'float',
+        'netTotal' => 'float',
+        'returnMode' => 'boolean',
+        'isRefund' => 'boolean',
+        'refundAmount' => 'float',
+        'wareHouseAutoID' => 'integer',
         'transactionCurrencyID' => 'integer',
         'transactionCurrency' => 'string',
-        'transactionAmountBeforeDiscount' => 'float',
-        'transactionAmount' => 'float',
-        'transactionCurrencyDecimalPlaces' => 'boolean',
         'transactionExchangeRate' => 'float',
+        'transactionCurrencyDecimalPlaces' => 'integer',
         'companyLocalCurrencyID' => 'integer',
         'companyLocalCurrency' => 'string',
-        'companyLocalAmount' => 'float',
         'companyLocalExchangeRate' => 'float',
-        'companyLocalCurrencyDecimalPlaces' => 'boolean',
+        'companyLocalCurrencyDecimalPlaces' => 'integer',
         'companyReportingCurrencyID' => 'integer',
         'companyReportingCurrency' => 'string',
-        'companyReportingAmount' => 'float',
-        'companyReportingCurrencyDecimalPlaces' => 'boolean',
         'companyReportingExchangeRate' => 'float',
+        'companyReportingCurrencyDecimalPlaces' => 'integer',
+        'customerCurrencyID' => 'integer',
+        'customerCurrency' => 'string',
+        'customerCurrencyExchangeRate' => 'float',
+        'customerCurrencyAmount' => 'float',
+        'customerCurrencyDecimalPlaces' => 'integer',
+        'segmentID' => 'integer',
         'companyID' => 'integer',
         'companyCode' => 'string',
         'createdUserGroup' => 'integer',
@@ -450,7 +457,9 @@ class POSInvoiceSourceDetail extends Model
         'modifiedUserID' => 'string',
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
+        'customerReceivableAutoID' => 'integer',
         'timestamp' => 'datetime',
+        'isGroupBasedTax' => 'integer',
         'transaction_log_id' => 'integer'
     ];
 
@@ -459,10 +468,17 @@ class POSInvoiceSourceDetail extends Model
      *
      * @var array
      */
-    public static $rules = [];
+    public static $rules = [
+        'invoiceID' => 'required'
+    ];
 
-    public function item_assigned()
-    {
-        return $this->hasOne('App\Models\ItemAssigned', 'itemCodeSystem', 'itemAutoID');
+    public function invoice(){  
+        return $this->hasOne('App\Models\POSInvoiceSource','invoiceID','invoiceID'); 
+    }
+    public function invoiceReturn(){ 
+        return $this->hasMany('App\Models\POSSourceSalesReturnDetails', 'salesReturnID', 'salesReturnID');
+    }
+    public function employee(){ 
+        return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
     }
 }

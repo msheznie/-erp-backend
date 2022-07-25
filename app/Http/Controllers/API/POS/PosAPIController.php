@@ -19,6 +19,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\POSInvoiceSource;
+use App\Models\POSSourceSalesReturn;
 use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
 use App\Services\POSService;
@@ -342,11 +343,11 @@ class PosAPIController extends AppBaseController
     }
 
     public function handleRequest(Request $request)
-    {  
-        define('INVOICE', 'INVOICE');  
+    {
+        define('INVOICE', 'INVOICE');
         switch ($request->input('request')) {
             case INVOICE:
-                return $this->POSService->getMappingData($request);  
+                return $this->POSService->getMappingData($request);
             default:
                 return [
                     'success'   => false,
@@ -356,9 +357,8 @@ class PosAPIController extends AppBaseController
         }
     }
 
-    public function getAllInvoicesPos(Request $request){ 
-        $input = $request->all();
-
+    public function getAllInvoicesPos(Request $request)
+    {
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -371,15 +371,22 @@ class PosAPIController extends AppBaseController
 
         $posData = POSInvoiceSource::withCount([
             'invoiceDetailSource AS qtyTotal' => function ($query) {
-                        $query->select(DB::raw("SUM(qty) as qtyTotal"));
-                    }
-                ])
-        ->with(['invoiceDetailSource','employee','invoicePaymentSource' => function ($q){ 
-            $q->with(['paymentConfigMaster']);
-        }])
-        ->whereHas('invoiceDetailSource')
-        ->whereHas('invoicePaymentSource')
-        ->where('isVoid',0);
+                $query->select(DB::raw("SUM(qty) as qtyTotal"));
+            }
+        ])
+            ->with(['invoiceDetailSource', 'employee', 'invoicePaymentSource' => function ($q) {
+                $q->with(['paymentConfigMaster']);
+            }])
+            ->whereHas('invoiceDetailSource')
+            ->whereHas('invoicePaymentSource')
+            ->where('isVoid', 0);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $posData = $posData->where(function ($query) use ($search) {
+                $query->where('invoiceCode', 'LIKE', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($posData)
             ->order(function ($query) use ($input) {
@@ -391,6 +398,97 @@ class PosAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
-            ->make(true); 
+            ->make(true);
+    }
+    public function getPosInvoiceData(Request $request)
+    {
+        $input = $request->all();
+        $invoiceId = $input['invoiceId'];
+
+        $data['invoiceData'] = POSInvoiceSource::withCount(['invoiceDetailSource AS qtyTotal' => function ($query) {
+            $query->select(DB::raw("SUM(qty) as qtyTotal"));
+        }, 'invoiceDetailSource AS transactionAmountBeforeDiscountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(transactionAmountBeforeDiscount) as transactionAmountBeforeDiscount"));
+        }, 'invoiceDetailSource AS taxAmountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(taxAmount) as taxAmount"));
+        }])
+            ->with(['invoiceDetailSource' => function ($q) {
+                $q->with(['item_assigned' => function ($q1) {
+                    $q1->with(['item_master' => function ($q2) {
+                        $q2->with(['unit']);
+                    }]);
+                }]);
+            }, 'employee', 'invoicePaymentSource' => function ($q) {
+                $q->with(['paymentConfigMaster']);
+            }])
+            ->where('invoiceID', $invoiceId)->first();
+
+        return $data;
+    }
+
+    public function getAllInvoicesPosReturn(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+      
+
+        $posDataReturn = POSSourceSalesReturn::with(['invoice', 'invoiceReturn' => function ($q) {
+            $q->with(['item_assigned' => function ($q1) {
+                $q1->with(['item_master' => function ($q2) {
+                    $q2->with(['unit']);
+                }]);
+            }]);
+        }, 'employee']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $posDataReturn = $posDataReturn->where(function ($query) use ($search) {
+                $query->whereHas('invoice', function($q)use ($search){
+                    $q->where('invoiceCode','LIKE', "%{$search}%");
+                });
+                $query->orWhere('documentSystemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($posDataReturn)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('salesReturnID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getPosInvoiceReturnData(Request $request)
+    { 
+        $input = $request->all();
+        $salesReturnId = $input['salesReturnId'];
+
+        $data['invoiceReturnData'] =  POSSourceSalesReturn::withCount(['invoiceReturn AS taxAmountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(taxAmount) as taxAmountTotal"));
+        }])  
+        ->with(['invoice', 'invoiceReturn' => function ($q) {
+            $q->with(['item_assigned' => function ($q1) {
+                $q1->with(['item_master' => function ($q2) {
+                    $q2->with(['unit']);
+                }]);
+            }]);
+        }, 'employee'])
+        ->where('salesReturnID',$salesReturnId)
+        ->first();
+
+        return $data;
     }
 }
