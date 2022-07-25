@@ -41,7 +41,8 @@ class AttendanceWeeklySummaryService{
         $this->empArr = array_unique($empArr);
         $this->insertToLogTb(        
             [ 
-                'weeklySummaryEmp'=>  $empArr, 'weekStart'=> $this->weekStart, 'weekEnd'=> $this->weekEnd
+                'weeklySummaryEmp'=> $this->empArr, 
+                'weekStart'=> $this->weekStart, 'weekEnd'=> $this->weekEnd
             ], 'info'
         );
 
@@ -57,13 +58,14 @@ class AttendanceWeeklySummaryService{
             TIME_FORMAT( TIMEDIFF(t.checkOut, t.checkIn), '%H:%i') AS workedHours
             ")
             ->where('t.companyID', $this->companyId)
-            ->where('t.presentTypeID', 1)
+            ->whereIn('t.presentTypeID', [1, 2]) //present and late to shift
             ->where('t.isNormalDay', 1)
             ->whereBetween('t.attendanceDate', [$this->weekStart, $this->weekEnd])            
             ->whereNotNull('t.onDuty')
             ->whereNotNull('t.offDuty')
             ->whereNotNull('t.checkIn')
-            ->whereNotNull('t.checkOut')                      
+            //even though checkOut time is not set, we are going to consider that day. and work hours will be zero for that day            
+            //->whereNotNull('t.checkOut')
             ->get();
     }
 
