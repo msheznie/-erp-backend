@@ -169,10 +169,20 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         if ($input['tempType'] == 'PVM') {
 
-            if (!isset($input['paymentAutoID'])) {
-                return $this->sendError('Please select a payment voucher !', 500);
-            }
             $input = $this->convertArrayToValue($input);
+            if (!isset($input['paymentAutoID'])) {
+
+                if($input['matchType'] == 1 || $input['matchType'] == 3)
+                {
+                    return $this->sendError('Please select a payment voucher !', 500);
+                }
+                else if($input['matchType'] == 2)
+                {
+                    return $this->sendError('Please select a debit note !', 500);
+                }
+               
+            }
+           
 
             $validator = \Validator::make($input, [
                 'companySystemID' => 'required',
@@ -796,6 +806,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
         /** @var MatchDocumentMaster $matchDocumentMaster */
         $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
+        $user_type = $matchDocumentMaster->user_type;
+
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
         }
@@ -984,20 +996,39 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['matchingDocCode'] = $matchingDocCode;
             }
 
-
+         
             //
             $itemExistArray = array();
             if($matchDocumentMaster->matchingOption != 1) {
 
-
+                  // return $user_type;
                 $pvDetailExist = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                     ->get();
 
                 foreach ($pvDetailExist as $item) {
 
-                    $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+
+                    if($user_type == 1)
+                    {
+                        $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
                         ->where('apAutoID', $item['apAutoID'])
+                        ->whereHas('matching_master',function($query){
+                            $query->where('user_type',1);
+                         })
                         ->first();
+
+                    }
+                    else if($user_type == 2)
+                    {
+                        $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                        ->where('apAutoID', $item['apAutoID'])
+                        ->whereHas('matching_master',function($query){
+                            $query->where('user_type',2);
+                         })
+                        ->first();
+                    }
+
+                  
 
                     if ($item['addedDocumentSystemID'] == 11) {
                         //supplier invoice
@@ -1008,7 +1039,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         }
                     }
                 }
-
+                
                 if (!empty($itemExistArray)) {
                     return $this->sendError($itemExistArray, 422);
                 }
@@ -1024,6 +1055,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $pvDetailExist = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                     ->get();
 
+                    
 
                    
                 foreach ($pvDetailExist as $val) {
@@ -1040,11 +1072,32 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     
                     if ($updatePayment) {
 
-                        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                        if($user_type == 2)
+                        {
+                            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                            ->where('apAutoID', $val->apAutoID)
+                            ->whereHas('matching_master',function($query){
+                                $query->where('user_type',2);
+                             })
+                            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                            ->first();
+                        }
+                        else if($user_type == 1)
+                        {
+                            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                            ->where('apAutoID', $val->apAutoID)
+                            ->whereHas('matching_master',function($query){
+                                $query->where('user_type',1);
+                             })
+                            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                            ->first();
+                        }
+                   
 
                         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
-                        
+
                         $machAmount = 0;
                         if ($matchedAmount) {
                             $machAmount = $matchedAmount["SumOfmatchedAmount"];
@@ -1480,13 +1533,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentID'] = $matchDocumentMaster->documentID;
                         $data['documentSystemCode'] = $input["PayMasterAutoId"];
                         $data['documentCode'] = $matchDocumentMaster->BPVcode;
-                        $data['documentDate'] = $masterDocumentDate;
-                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                        $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
+                        $data['documentYear'] = \Helper::dateYear($matchDocumentMaster->matchingDocdate);
+                        $data['documentMonth'] = \Helper::dateMonth($matchDocumentMaster->matchingDocdate);
                         $data['documentConfirmedDate'] = $matchDocumentMaster->confirmedDate;
                         $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
-                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->approvedDate;
+                        $data['documentFinalApprovedDate'] = $matchDocumentMaster->matchingConfirmedDate;
                         $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                         $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                         $data['documentNarration'] = $matchDocumentMaster->BPVNarration;

@@ -353,6 +353,10 @@ class ErpItemLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
+
         $startDate = new Carbon($request->fromDate);
         //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
@@ -580,7 +584,8 @@ WHERE
             'grandTotalQty' => $grandTotalQty,
             'grandLocalTotal' => $TotalWacLocal,
             'grandRptTotal' => $TotalWacRpt,
-            'data' => $dataFinal
+            'data' => $dataFinal,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Item ledger record retrieved successfully');
@@ -1183,6 +1188,10 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $input = $request->all();
         $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
@@ -1286,7 +1295,8 @@ WHERE
             'subCompanies' => $subCompanies,
             'grandWacLocal' => $GrandWacLocal,
             'grandWacRpt' => $GrandWacRpt,
-            'warehouse' => $request->warehouse
+            'warehouse' => $request->warehouse,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Erp Item Ledger retrieved successfully');
@@ -1471,6 +1481,10 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
 //        $input = $request->all();
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -1651,10 +1665,10 @@ GROUP BY
         $dataRec = \DataTables::of($data)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('company_name', $company_name)
             ->make(true);
 
         return $dataRec;
-
     }
 
     public function exportStockTaking(Request $request)

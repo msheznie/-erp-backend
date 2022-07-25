@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\POSMappingMaster;
-use App\Models\POSSTAGInvoice;
+use App\Jobs\POSMapping;
+use App\Models\POSInvoiceSource;
+use App\Models\POSMappingMaster; 
+use App\Models\POSTransErrorLog;
 use App\Models\POSTransLog;
-use App\Models\POSTransStatus;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\POSTransStatus;  
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
+use Illuminate\Http\Request; 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,15 +21,17 @@ class POSService
     {
     }
 
-    public function getMappingData($request)
+    public function getMappingData(Request $request)
     {
-        if (!Schema::hasTable('pos_mapping_master') || !Schema::hasTable('pos_mapping_detail')) {
+        $db = $request->input('db');
+
+      /*   if (!Schema::connection('mysql')->hasTable('pos_mapping_master') || !Schema::connection('mysql')->hasTable('pos_mapping_detail')) {
             return [
                 'success' => false,
                 'message' => 'Mapping table does not exist',
                 'data' => null
             ];
-        }
+        } */
 
         $getMapping = POSMappingMaster::with(['mapping_detail'])
             ->where('key', $request->input('request'))
@@ -44,13 +45,8 @@ class POSService
                 'data' => null
             ];
         }
-
         $MappingDataArrFilter = collect($getMapping['mapping_detail'])->map(function ($group) use ($request) {
-            if (!Schema::hasTable($group['table'])) {
-                return $group['table'] . ' table does not exists';
-            } else if (!Schema::hasTable($group['source_table_name'])) {
-                return $group['table'] . ' sourse table does not exists';
-            } else if ($request->input('data.' . $group['key']) == null) {
+            if ($request->input('data.' . $group['key']) == null) {
                 return $group['key'] . ' records does not exists';
             } else if ($group['model_name'] == null) {
                 return $group['table'] . ' model name does not exists in mapping detail table';
@@ -71,13 +67,13 @@ class POSService
                 'data' => null
             ];
         } else {
-            return  self::insertStagingTable($getMapping['mapping_detail'], $request, $getMapping['id']);
+            return  self::insertStagingTable($getMapping['mapping_detail'], $request, $getMapping['id'], $db);
         }
     }
 
-    public function insertStagingTable($MappingDetail, $request, $mapping_id)
+    public function insertStagingTable($MappingDetail, $request, $mapping_id, $db)
     {
-        $logExist = POSTransLog::whereIn('status', [1, 4])->first();
+        $logExist = POSTransLog::where('pos_mapping_id', $mapping_id)->whereIn('status', [1, 4, 2])->first();
         if ($logExist) {
             $logStatus = POSTransStatus::where('id', $logExist['status'])->first();
             return ['success' => false, 'data' => null, 'message' => $logStatus['description'] . ' please try again later'];
@@ -94,69 +90,91 @@ class POSService
                 });
                 $namespacedModel::insert($dataUpdate2->toArray());
             });
+            
+            
+            $LogTransactionCreate  = self::LogTransactionCreate($mapping_id, 2, 'u', $LogTransactionCreate['data']);
+            self::insertSourceTransactionJOB($LogTransactionCreate['data'],$db); 
+           // self::createSourceTransaction($LogTransactionCreate['data']);
             DB::commit();
-            self::LogTransactionCreate($mapping_id, 2, 'u', $LogTransactionCreate['data']);
-            $sourceTableCreate = self::createSourceTransaction($mapping_id, $MappingDetail, $LogTransactionCreate['data']);
-            return ['success' => $sourceTableCreate['success'], 'message' => $sourceTableCreate['message'], 'data' =>  $sourceTableCreate['data']];
+            return ['success' => true, 'message' => 'Data synced', 'data' => 2];
         } catch (\Throwable $e) {
             DB::rollback();
             Log::error($e);
-            self::LogTransactionCreate($mapping_id, 3, 'u', $LogTransactionCreate['data']);
+            $transactionErrorLog = self::insertTransactionError($LogTransactionCreate['data'], $e->getMessage());
+            $LogTransactionCreate = self::LogTransactionCreate($mapping_id, 3, 'u', $LogTransactionCreate['data']);
             return ['success' => false, 'data' => null, 'message' => $e->getMessage()];
         }
     }
 
-    public function LogTransactionCreate($mapping_id, $status, $type, $transactionId = null)
+
+    public function insertSourceTransactionJOB($logId, $db)
     {
-        DB::beginTransaction();
+        $db = isset($db) ? $db : "";
+        POSMapping::dispatch($logId, $db);
+        return true;
+    }
+
+    public static function LogTransactionCreate($mapping_id, $status, $type, $transactionId = null)
+    {
+        
         try {
             $data['pos_mapping_id'] = $mapping_id;
             $data['status'] = $status;
             if ($type == 'c') {
                 $result = POSTransLog::create($data);
+                $transactionId = $result['id'];
             } else {
                 $result =  POSTransLog::find($transactionId)
-                ->update($data);
+                    ->update($data);
             }
-            DB::commit();
             if ($result) {
-                return ['success' => true, 'data' => $result->id, 'message' => 'POS transaction log created successfully'];
+                return ['success' => true, 'data' => $transactionId, 'message' => 'POS transaction log created successfully'];
             }
-        } catch (\Throwable $e) {
-            DB::rollback();
-            Log::error($e);
+        } catch (\Throwable $e) { 
+            Log::error($e); 
             return ['success' => false, 'data' => null, 'message' => $e->getMessage()];
         }
     }
 
-    public function createSourceTransaction($mapping_id, $MappingDetail, $logId)
+    public static function createSourceTransaction($logId)
     {
+        $posMappingData = POSTransLog::with(['posMappingMaster' => function ($q) {
+            $q->with('mapping_detail');
+        }])->where('id', $logId)->first();
+
+        self::LogTransactionCreate($posMappingData['pos_mapping_id'], 4, 'u', $logId);
         DB::beginTransaction();
-        self::LogTransactionCreate($mapping_id, 4, 'u', $logId);
         try {
-            collect($MappingDetail)->map(function ($group) use ($mapping_id) {
+            collect($posMappingData['posMappingMaster']['mapping_detail'])->map(function ($group) use ($posMappingData, $logId) {
                 $namespacedModel = 'App\Models\\' . $group["model_name"];
                 $namespacedModelSource = 'App\Models\\' . $group["source_model_name"];
-                $data = $namespacedModel::get()->toArray();
-                $dataUpdate2 = collect($data)->map(function ($group2) use ($mapping_id) {
-                    $group2['mapping_master_id']  = $mapping_id;
-                    return $group2;
-                });
-                DB::commit();
-                $namespacedModelSource::insert($dataUpdate2->toArray());
-                $namespacedModel::truncate();
+                $data = $namespacedModel::where('transaction_log_id', $logId)->get()->toArray(); 
+                $namespacedModelSource::insert($data);
+                //$namespacedModel::truncate();
             });
-            self::LogTransactionCreate($mapping_id, 5, 'u', $logId);
+            
+            collect($posMappingData['posMappingMaster']['mapping_detail'])->map(function ($group) {
+                $namespacedModel = 'App\Models\\' . $group["model_name"]; 
+                $namespacedModel::truncate();
+            }); 
+            self::LogTransactionCreate($posMappingData['pos_mapping_id'], 5, 'u', $logId); 
+            DB::commit(); 
             return ['success' => true, 'message' => 'Successfully synced', 'data' =>  2];
         } catch (\Throwable $e) {
             DB::rollback();
             Log::error($e);
-            collect($MappingDetail)->map(function ($group) {
-                $namespacedModel = 'App\Models\\' . $group["model_name"];
-                $namespacedModel::truncate();
-            });
-            self::LogTransactionCreate($mapping_id, 6, 'u', $logId);
+            self::insertTransactionError($logId, $e->getMessage()); 
+            self::LogTransactionCreate($posMappingData['pos_mapping_id'], 6, 'u', $logId); 
             return ['success' => false, 'data' => null, 'message' => $e->getMessage()];
         }
+    }
+
+    public static function insertTransactionError($logId, $errorMsg)
+    {
+        $data['log_id'] = $logId;
+        $data['error'] = $errorMsg;
+        POSTransErrorLog::insert($data);
+        return true;
+      
     }
 }

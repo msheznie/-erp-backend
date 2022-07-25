@@ -745,8 +745,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+     SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -2609,8 +2623,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+    SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -2679,6 +2707,7 @@ WHERE
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
+
                 if ($reportTypeID == 'FTB') {
                     if ($request->reportSD == 'company_wise_summary') {
                         $companyID = "";
@@ -2692,7 +2721,6 @@ WHERE
                         $subCompanies = Company::whereIn('companySystemID', $companyID)->get(['companySystemID', 'CompanyID', 'CompanyName']);
 
                         $output = $this->getTrialBalanceCompanyWise($request, $subCompanies);
-
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
@@ -2721,6 +2749,15 @@ WHERE
                         $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                         $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
+                        $totalOpeningBalanceRpt = 0;
+                        $totalOpeningBalanceLocal = 0;
+                        $totaldocumentLocalAmountDebit = 0;
+                        $totaldocumentRptAmountDebit = 0;
+                        $totaldocumentLocalAmountCredit= 0;
+                        $totaldocumentRptAmountCredit = 0;
+                        $totalClosingBalanceRpt = 0;
+                        $totalClosingBalanceLocal= 0;
+
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
@@ -2732,12 +2769,24 @@ WHERE
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
                                 if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
+                                    $totalOpeningBalanceLocal = round( $totalOpeningBalanceRpt,$decimalPlaceLocal) + round($val->openingBalLocal,$decimalPlaceLocal);
+                                    $totaldocumentLocalAmountDebit = round( $totaldocumentLocalAmountDebit,$decimalPlaceLocal) + round($val->documentLocalAmountDebit,$decimalPlaceLocal);
+                                    $totaldocumentLocalAmountCredit = round( $totaldocumentLocalAmountCredit,$decimalPlaceLocal) + round($val->documentLocalAmountCredit,$decimalPlaceLocal);
+
+                                    $totalClosingBalanceLocal = round( $totalClosingBalanceLocal,$decimalPlaceLocal) + round($val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit),$decimalPlaceLocal);
+
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
                                 if($currencyId == 2 || $currencyId == 3) {
+                                    $totalOpeningBalanceRpt = round( $totalOpeningBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt,$decimalPlaceRpt);
+                                    $totaldocumentRptAmountDebit = round( $totaldocumentRptAmountDebit,$decimalPlaceRpt) + round($val->documentRptAmountDebit,$decimalPlaceRpt);
+                                    $totalClosingBalanceRpt = round( $totalClosingBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit),$decimalPlaceRpt);
+
+                                    $totaldocumentRptAmountCredit = round( $totaldocumentRptAmountCredit,$decimalPlaceRpt) + round($val->documentRptAmountCredit,$decimalPlaceRpt);
+
                                     $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
@@ -2747,12 +2796,33 @@ WHERE
                                 $x++;
                             }
                         }
+
+                        if ($request->reportSD == 'company_wise') {
+                            $data[$x]['Company ID'] = "";
+                            $data[$x]['Company Name'] = "";
+                        }
+                        $data[$x]['Account Code'] = "";
+                        $data[$x]['Account Description'] = "Grand Total";
+                        $data[$x]['Type'] = "";
+                        if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
+                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = $totalOpeningBalanceLocal;
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountDebit;
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountCredit;
+                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = $totalClosingBalanceLocal;
+                        }
+                        if($currencyId == 2 || $currencyId == 3) { 
+                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalOpeningBalanceRpt;
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountDebit;
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountCredit;
+                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalClosingBalanceRpt;
+                        }
+
+
                     }
                 } else if ($reportTypeID == 'FTBM') {
                     $result = $this->getTrialBalanceMonthWise($request);
                     $output = $result['data'];
                     $headers = $result['headers'];
-
 
                     $totalArray =  array(
                         'Account Code' => '',
@@ -2850,52 +2920,49 @@ WHERE
                             $x++;
                         }
                     }
+                    $data[$x]['Account Code'] = '';
+                    $data[$x]['Account Description'] = '';
+                    $data[$x]['Type'] = '';
+                    $data[$x]['Opening Balance'] = '';
+                    $data[$x]['Jan'] = '';
+                    $data[$x]['JanClosing'] = '';
+                    $data[$x]['Feb'] = '';
+                    $data[$x]['FebClosing'] = '';
+                    $data[$x]['Mar'] = '';
+                    $data[$x]['MarClosing'] = '';
+                    $data[$x]['Apr'] = '';
+                    $data[$x]['AprClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Jun'] = '';
+                    $data[$x]['JunClosing'] = '';
+                    $data[$x]['Jul'] = '';
+                    $data[$x]['JulClosing'] = '';
+                    $data[$x]['Aug'] = '';
+                    $data[$x]['AugClosing'] = '';
+                    $data[$x]['Sep'] = '';
+                    $data[$x]['SepClosing'] = '';
+                    $data[$x]['Oct'] = '';
+                    $data[$x]['OctClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Nov'] = '';
+                    $data[$x]['NovClosing'] = '';
+                    $data[$x]['Dece'] = '';
+                    $data[$x]['DeceClosing'] = '';
+    
+                    array_push($data,$totalArray);
+
                 }
 
-
                
-                $data[$x]['Account Code'] = '';
-                $data[$x]['Account Description'] = '';
-                $data[$x]['Type'] = '';
-                $data[$x]['Opening Balance'] = '';
-                $data[$x]['Jan'] = '';
-                $data[$x]['JanClosing'] = '';
-                $data[$x]['Feb'] = '';
-                $data[$x]['FebClosing'] = '';
-                $data[$x]['Mar'] = '';
-                $data[$x]['MarClosing'] = '';
-                $data[$x]['Apr'] = '';
-                $data[$x]['AprClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Jun'] = '';
-                $data[$x]['JunClosing'] = '';
-                $data[$x]['Jul'] = '';
-                $data[$x]['JulClosing'] = '';
-                $data[$x]['Aug'] = '';
-                $data[$x]['AugClosing'] = '';
-                $data[$x]['Sep'] = '';
-                $data[$x]['SepClosing'] = '';
-                $data[$x]['Oct'] = '';
-                $data[$x]['OctClosing'] = '';
-                $data[$x]['May'] = '';
-                $data[$x]['MayClosing'] = '';
-                $data[$x]['Nov'] = '';
-                $data[$x]['NovClosing'] = '';
-                $data[$x]['Dece'] = '';
-                $data[$x]['DeceClosing'] = '';
-                
-
-                
-
-
+              
 
          
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 if ($reportTypeID == 'FTBM') {
-                    array_push($data,$totalArray);
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
                         $cur = $currencyLocal;

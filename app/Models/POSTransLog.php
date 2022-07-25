@@ -98,5 +98,8 @@ class POSTransLog extends Model
         'pos_mapping_id' => 'required'
     ];
 
+    public function posMappingMaster(){ 
+        return $this->hasOne('App\Models\POSMappingMaster', 'id', 'pos_mapping_id');
+    }
     
 }

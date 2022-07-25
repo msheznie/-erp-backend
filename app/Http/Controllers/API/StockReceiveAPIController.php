@@ -876,6 +876,7 @@ class StockReceiveAPIController extends AppBaseController
             'erp_stockreceive.serviceLineCode',
             'erp_stockreceive.createdDateTime',
             'erp_stockreceive.confirmedDate',
+            'erp_stockreceive.postedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'approvalLevelID',

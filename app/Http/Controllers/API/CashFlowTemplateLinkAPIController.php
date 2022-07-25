@@ -118,28 +118,10 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
-        $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
-
-        $finalError = array(
-            'already_gl_linked' => array(),
-        );
-        $error_count = 0;
+        
 
         if ($input['glAutoID']) {
-            foreach ($input['glAutoID'] as $key => $val) {
-                if (in_array($val['chartOfAccountSystemID'], $tempDetail)) {
-                    array_push($finalError['already_gl_linked'], $val['AccountCode'] . ' | ' . $val['AccountDescription']);
-                    $error_count++;
-                }
-            }
-
-            $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
-            if ($error_count > 0) {
-                return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
-            }else{
                 foreach ($input['glAutoID'] as $key => $val) {
-                    if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {
                         $data['templateMasterID'] = $input['templateMasterID'];
                         $data['templateDetailID'] = $input['templateDetailID'];
                         $data['sortOrder'] = $key + 1;
@@ -157,8 +139,8 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                         $reportTemplateLinks = $this->cashFlowTemplateLinkRepository->create($data);
                     }
                 }
-            }
-        }
+
+        
 
         $updateTemplateDetailAsFinal = CashFlowTemplateDetail::where('id', $input['templateDetailID'])->update(['isFinalLevel' => 1]);
 

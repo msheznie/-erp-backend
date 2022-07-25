@@ -535,14 +535,7 @@ class POSInvoiceSource extends Model
         'customerCurrencyDecimalPlaces',
         'segmentID',
         'companyID',
-        'companyCode',
-        'customerReceivableAutoID',
-        'bankGLAutoID',
-        'bankCurrencyID',
-        'bankCurrency',
-        'bankCurrencyExchangeRate',
-        'bankCurrencyDecimalPlaces',
-        'bankCurrencyAmount',
+        'companyCode', 
         'isVoid',
         'voidBy',
         'voidDatetime',
@@ -560,8 +553,7 @@ class POSInvoiceSource extends Model
         'promotiondiscount',
         'promotiondiscountAmount',
         'isPromotion',
-        'transaction_log_id',
-        'mapping_master_id'
+        'transaction_log_id'
     ];
 
     /**
@@ -624,13 +616,6 @@ class POSInvoiceSource extends Model
         'segmentID' => 'integer',
         'companyID' => 'integer',
         'companyCode' => 'string',
-        'customerReceivableAutoID' => 'integer',
-        'bankGLAutoID' => 'integer',
-        'bankCurrencyID' => 'integer',
-        'bankCurrency' => 'string',
-        'bankCurrencyExchangeRate' => 'float',
-        'bankCurrencyDecimalPlaces' => 'integer',
-        'bankCurrencyAmount' => 'float',
         'isVoid' => 'integer',
         'voidBy' => 'integer',
         'voidDatetime' => 'datetime',
@@ -648,8 +633,7 @@ class POSInvoiceSource extends Model
         'promotiondiscount' => 'float',
         'promotiondiscountAmount' => 'float',
         'isPromotion' => 'integer',
-        'transaction_log_id' => 'integer',
-        'mapping_master_id' => 'integer'
+        'transaction_log_id' => 'integer'
     ];
 
     /**
@@ -661,5 +645,13 @@ class POSInvoiceSource extends Model
         
     ];
 
-    
+    public function invoiceDetailSource(){ 
+        return $this->hasMany('App\Models\POSInvoiceSourceDetail', 'invoiceID', 'invoiceID');
+    }
+    public function invoicePaymentSource(){ 
+        return $this->hasMany('App\Models\POSSourceInvoicePayment', 'invoiceID', 'invoiceID');
+    }
+    public function employee(){ 
+        return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
+    }
 }

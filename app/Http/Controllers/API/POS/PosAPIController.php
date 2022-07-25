@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\POSInvoiceSource;
 use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
 use App\Services\POSService;
@@ -260,7 +261,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
@@ -353,5 +354,43 @@ class PosAPIController extends AppBaseController
                     'data'      => null
                 ];
         }
+    }
+
+    public function getAllInvoicesPos(Request $request){ 
+        $input = $request->all();
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $posData = POSInvoiceSource::withCount([
+            'invoiceDetailSource AS qtyTotal' => function ($query) {
+                        $query->select(DB::raw("SUM(qty) as qtyTotal"));
+                    }
+                ])
+        ->with(['invoiceDetailSource','employee','invoicePaymentSource' => function ($q){ 
+            $q->with(['paymentConfigMaster']);
+        }])
+        ->whereHas('invoiceDetailSource')
+        ->whereHas('invoicePaymentSource')
+        ->where('isVoid',0);
+
+        return \DataTables::eloquent($posData)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('invoiceID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true); 
     }
 }

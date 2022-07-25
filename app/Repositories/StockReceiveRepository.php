@@ -153,7 +153,8 @@ class StockReceiveRepository extends BaseRepository
                 'confirmedYN',
                 'approved',
                 'approvedDate',
-                'refferedBackYN'
+                'refferedBackYN',
+                'postedDate'
             ]);
 
 
