@@ -390,8 +390,8 @@ function Code39($code, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = tru
 
     //Display code
 
-    $x = 10;
-    $y = 10;
+    $x = 5;
+    $y = 5;
      $this->SetFont('Arial', '', 8);
      $this->Text($x, $y+$h+4, $code);
 
