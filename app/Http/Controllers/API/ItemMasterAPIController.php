@@ -957,17 +957,19 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
                 $itemMaster->itemPicture = $input['itemPicture'];
+                $itemMaster->pos_type = $input['pos_type'];
                 $itemMaster->save();
 
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],
-                    'isActive' => $input['isActive']
+                    'isActive' => $input['isActive'],
+                    'pos_type' => $input['pos_type']
                 ];
 
                 $itemMasterOld = $itemMaster->toArray();
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
-                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture']);
-                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture']);
+                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
       
             
                 // update in to user log table
@@ -1032,7 +1034,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
