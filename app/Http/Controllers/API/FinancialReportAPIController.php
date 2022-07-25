@@ -2824,7 +2824,6 @@ WHERE
                     $output = $result['data'];
                     $headers = $result['headers'];
 
-
                     $totalArray =  array(
                         'Account Code' => '',
                         'Account Description' => 'Grand Total',
@@ -2956,7 +2955,6 @@ WHERE
 
                 }
 
-
                
               
 
@@ -2965,7 +2963,6 @@ WHERE
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 if ($reportTypeID == 'FTBM') {
-                    array_push($data,$totalArray);
                     $title = 'Financial Trial Balance Month Wise';
                     if ($request->currencyID == 1) {
                         $cur = $currencyLocal;
