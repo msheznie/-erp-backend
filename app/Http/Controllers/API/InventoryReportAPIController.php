@@ -1134,6 +1134,7 @@ FROM
                 $items = $request['Items'];
                 $suppliers = $request['Suppliers'];
                 $companySystemID = $request->companySystemID;
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
                 $items = (array)$items;
                 $items = collect($items)->pluck('itemPrimaryCode');
@@ -1147,15 +1148,23 @@ FROM
                 $templateName = "export_report.scrap_inventory_supplier_wise_report";
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
-                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
 
-                return $this->sendResponse(array(), 'successfully export');
+                $file_type = $request->type;  
+                $fileName = 'scrap_inventory_report';
+                $path = 'inventory/report/scrap-inventory/excel/';
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+        
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+                
 
                 break;
 
@@ -1184,13 +1193,19 @@ FROM
 
                 $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
+                $file_type = $request->type;  
+                $fileName = 'scrap_inventory_report';
+                $path = 'inventory/report/scrap-inventory/excel/';
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
         
-                return $this->sendResponse(array(), 'successfully export');
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
                 
 
                 break;
