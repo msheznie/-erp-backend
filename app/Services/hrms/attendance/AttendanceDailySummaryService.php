@@ -48,7 +48,7 @@ class AttendanceDailySummaryService{
             ->join('srp_employeesdetails AS e', 'e.EIdNo', '=', 't.empID')
             ->where('t.companyID', $this->companyId)
             ->whereDate('t.attendanceDate', $this->date)
-            ->where('t.presentTypeID', 1)
+            ->whereIn('t.presentTypeID', [1, 2]) //present and late to shift
             ->where('t.isNormalDay', 1)            
             ->whereNotNull('t.onDuty')
             ->whereNotNull('t.offDuty')
