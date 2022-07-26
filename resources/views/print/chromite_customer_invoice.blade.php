@@ -477,21 +477,41 @@
            $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
            $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
            $intAmt = 0;
+           $floatAmt = 00;
 
-           if (count($amountSplit) == 1) {
-               $intAmt = $amountSplit[0];
-           } else if (count($amountSplit) == 2) {
-               $intAmt = $amountSplit[0];
-           }
-                   $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        if (count($amountSplit) == 1) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = 00;
+        } else if (count($amountSplit) == 2) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = $amountSplit[1];
+        }
+        $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
+        $floatAmountInWords = '';
+        $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
+
+        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($floatAmt != 00){
+            $length = strlen($floatAmt);
+            if($length<$request->currency->DecimalPlaces){
+                $count = $request->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $floatAmt .= '0';
+                }
+            }
+        }
 
              $amountWord = ucfirst($numFormatterEn->format($intAmt));
              $amountWord = str_replace('-', ' ', $amountWord);
                         @endphp
                         <td colspan="3" class="text-right">{{$amountWord}}
-                            @if ($request->floatAmt > 0)
+                            @if ($floatAmt > 0)
                             and
-                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            {{$floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                             @endif
                             
                             only
