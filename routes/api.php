@@ -965,7 +965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
         Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
         Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
-        Route::put('custItemDetailUpdate', 'CustomerInvoiceDirectAPIController@custItemDetailUpdate');
+        Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
         Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
         Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
         Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
