@@ -192,7 +192,7 @@
                     <div class="text-center">
 
                         <h3>
-                            <b>Tax INVOICE</b>
+                            <b>TAX INVOICE</b>
                             <br>
                         </h3>
 
