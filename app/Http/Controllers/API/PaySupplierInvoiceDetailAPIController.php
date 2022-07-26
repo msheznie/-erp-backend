@@ -288,6 +288,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                                                                 ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
                                                                                                 ->first();
 
+        if($payMaster->invoiceType == 6){
+            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])
+                ->where('payDetailAutoID', '<>', $id)
+                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                ->first();
+        }
+
+
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
         $machAmount = 0;
