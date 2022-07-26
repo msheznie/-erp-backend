@@ -410,8 +410,8 @@
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->qtyIssued}}</td>
-                                <td style="text-align: center;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}%</td>
                                 <td class="text-right">{{number_format($item->sellingTotal+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
@@ -430,8 +430,8 @@
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->invoiceQty}}</td>
-                                <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}%</td>
                                 <td class="text-right">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
