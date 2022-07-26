@@ -192,7 +192,7 @@
                     <div class="text-center">
 
                         <h3>
-                            <b>COMMERCIAL INVOICE</b>
+                            <b>TAX INVOICE</b>
                             <br>
                         </h3>
 
@@ -466,13 +466,29 @@
                     <tr>
                         <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable</b></td>
-                        <td colspan="3" class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                        <td colspan="3" class="text-right">{{number_format($directTraSubTotal - $sumAdvance, $numberFormatting)}}</td>
                     </tr>
 
                     <tr>
                         <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->amount_word}}
+                        @php
+                            $directTraSubTotalnumberformat=  number_format(($directTraSubTotal - $sumAdvance),empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+           $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+           $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
+           $intAmt = 0;
+
+           if (count($amountSplit) == 1) {
+               $intAmt = $amountSplit[0];
+           } else if (count($amountSplit) == 2) {
+               $intAmt = $amountSplit[0];
+           }
+                   $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+             $amountWord = ucfirst($numFormatterEn->format($intAmt));
+             $amountWord = str_replace('-', ' ', $amountWord);
+                        @endphp
+                        <td colspan="3" class="text-right">{{$amountWord}}
                             @if ($request->floatAmt > 0)
                             and
                             {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
