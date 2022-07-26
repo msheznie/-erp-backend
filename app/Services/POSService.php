@@ -45,25 +45,19 @@ class POSService
                 'data' => null
             ];
         }
-        $MappingDataArrFilter = collect($getMapping['mapping_detail'])->map(function ($group) use ($request) {
-            if ($request->input('data.' . $group['key']) == null) {
-                return $group['key'] . ' records does not exists';
-            } else if ($group['model_name'] == null) {
-                return $group['table'] . ' model name does not exists in mapping detail table';
-            } else if ($group['source_model_name'] == null) {
-                return $group['source_table_name'] . ' model name does not exists in mapping detail table';
-            }
+        $MappingDataArrFilter = collect($getMapping['mapping_detail'])->map(function ($group) use ($request) { 
+            return $request->input('data.' . $group['key']); 
         });
-
+ 
         $filtered = $MappingDataArrFilter->filter(function ($value, $key) {
             return $value != null;
-        })->values()->all();
+        })->values()->all();/* 
+        return ['success' => false, 'data' =>($filtered)  , 'message' => 'asdasdasdadas'];  */
 
-
-        if (count($filtered) > 0) {
+        if (count($filtered) == 0) {
             return [
                 'success' => false,
-                'message' => $filtered,
+                'message' => 'No data to sync',
                 'data' => null
             ];
         } else {
@@ -72,7 +66,7 @@ class POSService
     }
 
     public function insertStagingTable($MappingDetail, $request, $mapping_id, $db)
-    {
+    { 
         $logExist = POSTransLog::where('pos_mapping_id', $mapping_id)->whereIn('status', [1, 4, 2])->first();
         if ($logExist) {
             $logStatus = POSTransStatus::where('id', $logExist['status'])->first();
@@ -83,15 +77,13 @@ class POSService
         try {
             collect($MappingDetail)->map(function ($group) use ($request, $LogTransactionCreate) {
                 $namespacedModel = 'App\Models\\' . $group["model_name"];
-                $dataUpdate = $request->input('data.' . $group['key']);
+                $dataUpdate = $request->input('data.' . $group['key']); 
                 $dataUpdate2 = collect($dataUpdate)->map(function ($group2) use ($request, $LogTransactionCreate) {
                     $group2['transaction_log_id']  = $LogTransactionCreate['data'];
                     return $group2;
                 });
                 $namespacedModel::insert($dataUpdate2->toArray());
-            });
-            
-            
+            }); 
             $LogTransactionCreate  = self::LogTransactionCreate($mapping_id, 2, 'u', $LogTransactionCreate['data']);
             self::insertSourceTransactionJOB($LogTransactionCreate['data'],$db); 
            // self::createSourceTransaction($LogTransactionCreate['data']);
