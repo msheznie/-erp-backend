@@ -872,6 +872,8 @@ class CashFlowReportAPIController extends AppBaseController
                 $applicableAmount = $detail['payAmountLocal'];
             }
             if(isset($detail['cashFlowAmount'])) {
+                $applicableAmount = round($applicableAmount,2);
+                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
                 if($detail['cashFlowAmount'] > $applicableAmount){
                     return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
                 }
@@ -906,7 +908,7 @@ class CashFlowReportAPIController extends AppBaseController
             $applicableAmount = 0;
             if($detail['deliveryAmount'] != null){
                 if($detail['receiveAmountLocal'] <  $detail['custAmountLocal'] && $detail['receiveAmountLocal'] <  $detail['deliveryAmount']){
-                    $applicableAmount = $detail['payAmountLocal'];
+                    $applicableAmount = $detail['receiveAmountLocal'];
                 }
                 if($detail['custAmountLocal'] <  $detail['receiveAmountLocal'] && $detail['custAmountLocal'] <  $detail['deliveryAmount']){
                     $applicableAmount = $detail['custAmountLocal'];
@@ -920,7 +922,7 @@ class CashFlowReportAPIController extends AppBaseController
             }
             if($detail['deliveryAmount'] == null){
                 if($detail['receiveAmountLocal'] <  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['payAmountLocal'];
+                    $applicableAmount = $detail['receiveAmountLocal'];
                 }
                 if($detail['custAmountLocal'] <  $detail['receiveAmountLocal']){
                     $applicableAmount = $detail['custAmountLocal'];
@@ -933,9 +935,10 @@ class CashFlowReportAPIController extends AppBaseController
                 $applicableAmount = $detail['receiveAmountLocal'];
             }
             if(isset($detail['cashFlowAmount'])) {
-                    $applicableAmount = number_format($applicableAmount,3);
+                    $applicableAmount = round($applicableAmount,2);
+                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
                 if ($detail['cashFlowAmount'] > $applicableAmount) {
-                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                    return $this->sendError($detail['cashFlowAmount'].'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
                 }
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
