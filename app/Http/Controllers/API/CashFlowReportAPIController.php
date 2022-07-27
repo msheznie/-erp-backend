@@ -183,7 +183,7 @@ class CashFlowReportAPIController extends AppBaseController
                     foreach ($dt->gllink as $gl){
                         $glLinkAutoID = $gl->glAutoID;
                     if ($reportMasterData) {
-                        if ($gl->categoryType == 1) {
+                        if ($gl->categoryType == 2) {
 
                             $plGlTot = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->where('companySystemID', $input['companySystemID'])->sum('documentLocalAmount');
                             $balGlTotRpt = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->where('companySystemID', $input['companySystemID'])->sum('documentRptAmount');
