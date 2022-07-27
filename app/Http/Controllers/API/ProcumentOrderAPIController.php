@@ -7816,6 +7816,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             }
             
+            if (isset($value2['matching_master'])) {
+                if ($type == "debit" && ($debitNoteID == $value2['matching_master']['PayMasterAutoId'])) {
+                    $temp2['cssClass'] = "ngx-org-step-two root-tracing-node";
+                } else {
+                    $temp2['cssClass'] = "ngx-org-step-two";
+                }
+                $temp2['name'] = "Debit Note";
+                $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
+                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+            }
+            
             $tracingData['childs'][] = $temp2;
         }
 

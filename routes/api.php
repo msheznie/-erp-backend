@@ -29,6 +29,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
         Route::post('pull_user', 'POS\PosAPIController@pullUser');
         Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
+        Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -964,6 +965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
         Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
         Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
+        Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
         Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
         Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
         Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
@@ -2715,6 +2717,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail');
 
         Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+
+
+        Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
+        Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData');
+        Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports');
+        Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation');
+        Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems');
+        Route::post('getCashFlowPullingItemsForProceeds', 'CashFlowReportAPIController@getCashFlowPullingItemsForProceeds');
+        Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
+        Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
+        Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
         Route::post('updateTenderStrategy', 'TenderMasterAPIController@updateTenderStrategy');
 
         Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
@@ -2723,6 +2736,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getCircularMaster', 'TenderCircularsAPIController@getCircularMaster');
         Route::post('deleteTenderCircular', 'TenderCircularsAPIController@deleteTenderCircular');
         Route::post('tenderCircularPublish', 'TenderCircularsAPIController@tenderCircularPublish');
+        Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
+        Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');
+        Route::post('getAllInvoicesPosReturn', 'POS\PosAPIController@getAllInvoicesPosReturn');
+        Route::post('getPosInvoiceReturnData', 'POS\PosAPIController@getPosInvoiceReturnData');
 
     });
 
@@ -3012,4 +3029,34 @@ Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
 
+
+
+
+Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
+ 
+
+
+
+
+Route::resource('p_o_s_invoice_sources', 'POSInvoiceSourceAPIController');
+
+Route::resource('p_o_s_invoice_source_details', 'POSInvoiceSourceDetailAPIController');
+
+Route::resource('p_o_s_trans_error_logs', 'POSTransErrorLogAPIController');
+
+Route::resource('p_o_s_stag_invoice_payments', 'POSStagInvoicePaymentAPIController');
+
+Route::resource('p_o_s_source_invoice_payments', 'POSSourceInvoicePaymentAPIController');
+
+Route::resource('p_o_s_stag_payment_gl_configs', 'POSStagPaymentGlConfigAPIController');
+
+Route::resource('p_o_s_source_payment_gl_configs', 'POSSourcePaymentGlConfigAPIController');
+
+Route::resource('p_o_s_satg_sales_returns', 'POSSatgSalesReturnAPIController');
+
+Route::resource('p_o_s_source_sales_returns', 'POSSourceSalesReturnAPIController');
+
+Route::resource('p_o_s_stag_sales_return_details', 'POSStagSalesReturnDetailsAPIController');
+
+Route::resource('p_o_s_source_sales_return_details', 'POSSourceSalesReturnDetailsAPIController');

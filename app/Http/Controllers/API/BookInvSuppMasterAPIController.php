@@ -2394,6 +2394,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.documentType',
             'erp_bookinvsuppmaster.supplierInvoiceNo',
             'erp_bookinvsuppmaster.supplierInvoiceDate',
+            'erp_bookinvsuppmaster.postedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -2488,6 +2489,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.documentType',
             'erp_bookinvsuppmaster.supplierInvoiceNo',
             'erp_bookinvsuppmaster.supplierInvoiceDate',
+            'erp_bookinvsuppmaster.postedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -2510,7 +2512,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $grvMasters = $grvMasters->where(function ($query) use ($search) {

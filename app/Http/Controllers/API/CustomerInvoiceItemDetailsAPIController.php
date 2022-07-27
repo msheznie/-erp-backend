@@ -138,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -163,6 +163,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             return $this->sendError('Customer Invoice Direct Not Found');
         }
 
+     
 
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
@@ -254,8 +255,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
@@ -745,6 +748,161 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         if (!$resVat['status']) {
            return $this->sendError($resVat['message']); 
         } 
+
+        return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
+    }
+
+    public function custItemDetailUpdate($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request){
+        $input = $request->all();
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation']);
+        $input = $this->convertArrayToValue($input);
+        $qtyError = array('type' => 'qty');
+        $message = "Item updated successfully";
+        /** @var CustomerInvoiceItemDetails $customerInvoiceItemDetails */
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->findWithoutFail($id);
+
+
+
+        if (empty($customerInvoiceItemDetails)) {
+            return $this->sendError('Customer Invoice Item Details not found');
+        }
+
+        $customerDirectInvoice = CustomerInvoiceDirect::find($customerInvoiceItemDetails->custInvoiceDirectAutoID);
+
+        if (empty($customerDirectInvoice)) {
+            return $this->sendError('Customer Invoice Details not found');
+        }
+
+        $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($customerDirectInvoice->documentSystemiD, $customerDirectInvoice->companySystemID, $id, $input, $customerDirectInvoice->customerID, $customerDirectInvoice->isPerforma);
+
+        if (!$validateVATCategories['status']) {
+            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+        } else {
+            $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];
+            $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];
+        }
+
+        if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
+            $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
+                ->where('subUnitID', $input['unitOfMeasureIssued'])
+                ->first();
+            if (empty($unitConvention)) {
+                return $this->sendError("Unit conversion isn't valid or configured", 500);
+            }
+
+            if ($unitConvention) {
+                $convention = $unitConvention->conversion;
+                $input['convertionMeasureVal'] = $convention;
+                if ($convention > 0) {
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention), 2);
+                } else {
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention), 2);
+                }
+            }
+        } else {
+            $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
+        }
+
+        /*margin calculation*/
+        if(isset($input['by']) && $input['by']== 'cost' ){
+            if($input['sellingCost'] > 0){
+                $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            }else{
+                $input['marginPercentage']=0;
+                if($customerInvoiceItemDetails->itemFinanceCategoryID != 1){
+                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                }
+            }
+        }elseif (isset($input['by']) && $input['by']== 'margin'){
+            $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+        }else{
+            if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
+                $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+            }else{
+                if($customerInvoiceItemDetails->itemFinanceCategoryID == 1){
+                    $input['sellingCostAfterMargin'] = $input['sellingCost'];
+                }else{
+                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                }
+            }
+        }
+        $costs = $this->updateCostBySellingCost($input,$customerDirectInvoice);
+        $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
+        $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
+
+
+        if(isset($input['by']) && ($input['by'] == 'VATPercentage' || $input['by'] == 'VATAmount')){
+            if ($input['by'] === 'VATPercentage') {
+                $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+            } else if ($input['by'] === 'VATAmount') {
+                $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+            }
+        } else {
+            if ($input['VATPercentage'] != 0) {
+                $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
+            } else {
+                $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
+            }
+        }
+
+        $currencyConversionVAT = \Helper::currencyConversion($customerDirectInvoice->companySystemID, $customerDirectInvoice->custTransactionCurrencyID, $customerDirectInvoice->custTransactionCurrencyID, $input['VATAmount']);
+
+        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+
+        if($customerInvoiceItemDetails->itemFinanceCategoryID == 1){
+            if ($customerInvoiceItemDetails->issueCostLocal == 0) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Cost is 0. You cannot issue.", 500);
+            }
+
+            if ($customerInvoiceItemDetails->issueCostLocal < 0 || $customerInvoiceItemDetails->issueCostRpt < 0) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Cost is negative. You cannot issue.", 500);
+            }
+
+            if ($customerInvoiceItemDetails->currentStockQty <= 0) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($customerInvoiceItemDetails->currentWareHouseStockQty <= 0) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($input['qtyIssuedDefaultMeasure'] > $customerInvoiceItemDetails->currentStockQty) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Current stock Qty is: " . $customerInvoiceItemDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
+            }
+
+            if ($input['qtyIssuedDefaultMeasure'] > $customerInvoiceItemDetails->currentWareHouseStockQty) {
+                $this->customerInvoiceItemDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Current warehouse stock Qty is: " . $customerInvoiceItemDetails->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
+            }
+        }
+
+        $input['issueCostLocalTotal'] = $customerInvoiceItemDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
+        $input['issueCostRptTotal'] = $customerInvoiceItemDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
+        $input['sellingTotal'] = $input['sellingCostAfterMargin'] * $input['qtyIssuedDefaultMeasure'];
+
+
+        if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
+        }
+
+        $input['issueCostLocal'] = Helper::roundValue($input['issueCostLocal']);
+        $input['issueCostLocalTotal'] = Helper::roundValue($input['issueCostLocalTotal']);
+        $input['issueCostRpt'] = Helper::roundValue($input['issueCostRpt']);
+        $input['issueCostRptTotal'] = Helper::roundValue($input['issueCostRptTotal']);
+        $input['sellingCost'] = Helper::roundValue($input['sellingCost']);
+        $input['sellingCostAfterMargin'] = Helper::roundValue($input['sellingCostAfterMargin']);
+        $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
+        $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
+        $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
+
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
 
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }
@@ -1913,7 +2071,7 @@ WHERE
             $vatAmount['VATAmountLocal'] = 0;
             $vatAmount['VATAmountRpt'] = 0;
 
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
+//            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
         }
 
 
