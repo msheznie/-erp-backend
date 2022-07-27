@@ -757,7 +757,7 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_delivery_order_detail.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
     erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
@@ -782,7 +782,7 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_customerinvoiceitemdetails.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
     erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
