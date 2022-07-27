@@ -662,7 +662,7 @@ class CashFlowReportAPIController extends AppBaseController
     NULL as grvAmount,
     "-" as bookingInvCode,
     NULL as bsiAmountLocal,
-    erp_directpaymentdetails.netAmountLocal as payAmountLocal,
+    erp_directpaymentdetails.localAmount as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_directpaymentdetails.directPaymentDetailsID as pvDetailID,
