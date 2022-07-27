@@ -538,6 +538,8 @@ class CashFlowReportAPIController extends AppBaseController
 
             $companyCurrencyCode = isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : '';
 
+            $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+
             $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
                                                             $q->with(['gllink' => function ($q) {
                                                                 $q->with('subcategory');
@@ -572,6 +574,12 @@ class CashFlowReportAPIController extends AppBaseController
                         if($amount){
                             $dt->amount = $amount;
                         }
+                        else{
+                            $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->first();
+                            if($isExist){
+                                $dt->amount = 0;
+                            }
+                        }
                     }
                     if ($dt->logicType == 1 || $dt->logicType == 4  || $dt->logicType == 5) {
                         foreach ($dt->subcategory as $da) {
@@ -579,12 +587,18 @@ class CashFlowReportAPIController extends AppBaseController
                             if($amount){
                                 $da->amount = $amount;
                             }
+                            else{
+                                $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$da->id)->where('cashFlowReportID',$input['id'])->first();
+                                if($isExist){
+                                    $da->amount = 0;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray(), 'currency' => $companyCurrencyCode];
+            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray(), 'currency' => $companyCurrencyCode, 'currencyDecimal' => $companyCurrencyDecimal];
 
 
         }
@@ -687,7 +701,10 @@ class CashFlowReportAPIController extends AppBaseController
             $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
-                $detail->cashFlowAmount = number_format($pv->localAmount,3);;
+                $companyCurrency = \Helper::companyCurrency($companySystemID);
+
+                $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                $detail->cashFlowAmount = number_format($pv->localAmount,$companyCurrencyDecimal);
             }
 
         }
@@ -797,7 +814,10 @@ class CashFlowReportAPIController extends AppBaseController
             $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
-                $detail->cashFlowAmount = number_format($brv->localAmount,3);
+                $companyCurrency = \Helper::companyCurrency($companySystemID);
+
+                $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                $detail->cashFlowAmount = number_format($brv->localAmount,$companyCurrencyDecimal);
             }
         }
         $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
