@@ -530,8 +530,14 @@ class CashFlowReportAPIController extends AppBaseController
 
         $reportMasterData = CashFlowReport::with(['finance_year_by','template','confirmed_by'])->find($input['id']);
 
+
         $reportDetails = [];
         if ($reportMasterData) {
+
+            $companyCurrency = \Helper::companyCurrency($reportMasterData->companySystemID);
+
+            $companyCurrencyCode = isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : '';
+
             $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
                                                             $q->with(['gllink' => function ($q) {
                                                                 $q->with('subcategory');
@@ -578,7 +584,7 @@ class CashFlowReportAPIController extends AppBaseController
                 }
             }
 
-            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray()];
+            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray(), 'currency' => $companyCurrencyCode];
 
 
         }
