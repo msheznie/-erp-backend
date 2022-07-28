@@ -179,12 +179,82 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach ($reportTemplateDetails as $data) {
             foreach ($data->subcategory as $dt) {
-                    foreach ($dt->subcategory as $da) {
+                if ($dt->logicType == 4) {
+                    foreach ($dt->gllink as $gl){
+                        $glLinkAutoID = $gl->glAutoID;
+                    if ($reportMasterData) {
+                        if ($gl->categoryType == 2) {
+
+                            $plGlTot = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->where('companySystemID', $input['companySystemID'])->sum('documentLocalAmount');
+                            $balGlTotRpt = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->where('companySystemID', $input['companySystemID'])->sum('documentRptAmount');
+
+                            $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                            $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
+                            $dataCashFlow['subCategoryID'] = $dt->id;
+                            $dataCashFlow['localAmount'] = $plGlTot;
+                            $dataCashFlow['rptAmount'] = $balGlTotRpt;
+                            CashFlowSubCategoryGLCode::create($dataCashFlow);
+                        }
+                    }
+                    }
+                }
+
+                if ($dt->logicType == 5) {
+                    foreach ($dt->gllink as $gl){
+                        $glLinkAutoID = $gl->glAutoID;
+                    if ($reportMasterData) {
+
+                        $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $reportMasterData->finance_year_by->endingDate)->where('companySystemID', $input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
+                        $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $reportMasterData->finance_year_by->endingDate)->where('companySystemID', $input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
+                        $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
+
+                        $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                        $dataCashFlow['subCategoryID'] = $dt->id;
+                        $dataCashFlow['localAmount'] = $plGlTot;
+                        $dataCashFlow['rptAmount'] = $balGlTotRpt;
+                        CashFlowSubCategoryGLCode::create($dataCashFlow);
+                    }
+                }
+                }
+
+                if ($dt->logicType == 1) {
+                    foreach ($dt->gllink as $gl){
+                        $glLinkAutoID = $gl->glAutoID;
+                        if ($gl->categoryType == 1) {
+                            $balGlTot = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
+                            $balGlTotRpt = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
+
+                            $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                            $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
+                            $dataCashFlow['subCategoryID'] = $dt->id;
+                            $dataCashFlow['localAmount'] = $balGlTot;
+                            $dataCashFlow['rptAmount'] = $balGlTotRpt;
+                            CashFlowSubCategoryGLCode::create($dataCashFlow);
+                        }
+                        if ($gl->categoryType == 2) {
+                            if ($reportMasterData) {
+                                $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
+                                $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('companySystemID',$input['companySystemID'])->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
+
+                                $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                                $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
+                                $dataCashFlow['subCategoryID'] = $dt->id;
+                                $dataCashFlow['localAmount'] = $plGlTot;
+                                $dataCashFlow['rptAmount'] = $balGlTotRpt;
+                                CashFlowSubCategoryGLCode::create($dataCashFlow);
+
+                            }
+                        }
+
+
+                    }
+                }
+                foreach ($dt->subcategory as $da) {
                         if ($dt->logicType == 1 || $dt->logicType == 3 || $dt->logicType == 4) {
                             if ($dt->logicType == 1) {
-                            if ($da->gllink != "[]") {
-                                $glLinkAutoID = $da->gllink[0]->glAutoID;
-                                if ($da->gllink[0]->categoryType == 1) {
+                                foreach ($da->gllink as $gl){
+                                $glLinkAutoID = $gl->glAutoID;
+                                if ($gl->categoryType == 1) {
                                     $balGlTot = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
                                     $balGlTotRpt = GeneralLedger::where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
 
@@ -195,31 +265,10 @@ class CashFlowReportAPIController extends AppBaseController
                                     $dataCashFlow['rptAmount'] = $balGlTotRpt;
                                     CashFlowSubCategoryGLCode::create($dataCashFlow);
                                 }
-                                if ($da->gllink[0]->categoryType == 2) {
+                                if ($gl->categoryType == 2) {
                                     if ($reportMasterData) {
-                                        $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentLocalAmount');
-                                        $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID',$glLinkAutoID)->sum('documentRptAmount');
-
-                                        $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
-                                        $dataCashFlow['chartOfAccountID'] = $da->gllink[0]->glAutoID;
-                                        $dataCashFlow['subCategoryID'] = $da->id;
-                                        $dataCashFlow['localAmount'] = $plGlTot;
-                                        $dataCashFlow['rptAmount'] = $balGlTotRpt;
-                                        CashFlowSubCategoryGLCode::create($dataCashFlow);
-
-                                    }
-                                }
-                            }
-                        }
-
-                        if ($dt->logicType == 4) {
-                            if ($reportMasterData) {
-                                if ($da->gllink != "[]") {
-                                    $glLinkAutoID = $da->gllink[0]->glAutoID;
-                                    if ($da->gllink[0]->categoryType == 1) {
-
-                                        $plGlTot = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->sum('documentLocalAmount');
-                                        $balGlTotRpt = GeneralLedger::where('chartOfAccountSystemID', $glLinkAutoID)->where('documentDate', "<=", $reportMasterData->finance_year_by->bigginingDate)->sum('documentRptAmount');
+                                        $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
+                                        $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $cashFlowReport->date)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
 
                                         $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
                                         $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
@@ -227,28 +276,13 @@ class CashFlowReportAPIController extends AppBaseController
                                         $dataCashFlow['localAmount'] = $plGlTot;
                                         $dataCashFlow['rptAmount'] = $balGlTotRpt;
                                         CashFlowSubCategoryGLCode::create($dataCashFlow);
+
                                     }
                                 }
+
                             }
                         }
 
-                        if ($dt->logicType == 5) {
-                            if ($reportMasterData) {
-                                if ($da->gllink != "[]") {
-                                    $glLinkAutoID = $da->gllink[0]->glAutoID;
-
-                                    $plGlTot = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $reportMasterData->finance_year_by->endingDate)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentLocalAmount');
-                                    $balGlTotRpt = GeneralLedger::where('documentDate', ">=", $reportMasterData->finance_year_by->bigginingDate)->where('documentDate', "<=", $reportMasterData->finance_year_by->endingDate)->where('chartOfAccountSystemID', $glLinkAutoID)->sum('documentRptAmount');
-                                        $dataCashFlow['chartOfAccountID'] = $glLinkAutoID;
-
-                                    $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
-                                    $dataCashFlow['subCategoryID'] = $da->id;
-                                    $dataCashFlow['localAmount'] = $plGlTot;
-                                    $dataCashFlow['rptAmount'] = $balGlTotRpt;
-                                    CashFlowSubCategoryGLCode::create($dataCashFlow);
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -498,8 +532,16 @@ class CashFlowReportAPIController extends AppBaseController
 
         $reportMasterData = CashFlowReport::with(['finance_year_by','template','confirmed_by'])->find($input['id']);
 
+
         $reportDetails = [];
         if ($reportMasterData) {
+
+            $companyCurrency = \Helper::companyCurrency($reportMasterData->companySystemID);
+
+            $companyCurrencyCode = isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : '';
+
+            $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+
             $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
                                                             $q->with(['gllink' => function ($q) {
                                                                 $q->with('subcategory');
@@ -527,26 +569,46 @@ class CashFlowReportAPIController extends AppBaseController
                                                         }, 'subcategorytot' => function ($q) {
                                                             $q->with('subcategory');
                                                         }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+            $totalCashFlow = 0;
             foreach ($reportTemplateDetails as $data) {
                 foreach ($data->subcategory as $dt) {
-                    if ($dt->logicType == 2 || $dt->logicType == 3 || $dt->logicType == 6) {
+                    if ($dt->logicType == 1 || $dt->logicType == 2 || $dt->logicType == 3 || $dt->logicType == 6|| $dt->logicType == 4  || $dt->logicType == 5) {
                         $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
                         if($amount){
                             $dt->amount = $amount;
+                            $totalCashFlow += $amount;
                         }
+                        else{
+                            $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->first();
+                            if($isExist){
+                                $dt->amount = 0;
+                            }
+                        }
+
                     }
-                    if ($dt->logicType == 1 || $dt->logicType == 4  || $dt->logicType == 5) {
+                    if ($dt->logicType == 1) {
                         foreach ($dt->subcategory as $da) {
                             $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$da->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
                             if($amount){
                                 $da->amount = $amount;
+                                $totalCashFlow += $amount;
+                            }
+                            else{
+                                $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$da->id)->where('cashFlowReportID',$input['id'])->first();
+                                if($isExist){
+                                    $da->amount = 0;
+                                }
                             }
                         }
+                    }
+                    if($dt->type == 3){
+                        $dt->amount = $totalCashFlow;
+                        $totalCashFlow = 0;
                     }
                 }
             }
 
-            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray()];
+            $output = ['template' => $reportMasterData->toArray(), 'details' => $reportTemplateDetails->toArray(), 'currency' => $companyCurrencyCode, 'currencyDecimal' => $companyCurrencyDecimal];
 
 
         }
@@ -576,14 +638,17 @@ class CashFlowReportAPIController extends AppBaseController
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
-    erp_grvdetails.netAmount as grvAmount,
+	erp_grvmaster.grvAutoID AS grvAutoID,
+    erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
+    SUM(erp_grvdetails.noQty * erp_grvdetails.GRVcostPerUnitLocalCur) as grvAmount,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
-    erp_bookinvsupp_item_det.totLocalAmount as bsiAmountLocal,
-    erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
+    SUM(erp_bookinvsupp_item_det.totLocalAmount) as bsiAmountLocal,
+    SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_grvdetails.financeGLcodePLSystemID as glAutoID
+    erp_grvdetails.financeGLcodePLSystemID as glAutoID,
+    erp_grvdetails.financeGLcodePL as glCode
 	FROM 
     erp_grvdetails
     LEFT JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID
@@ -596,7 +661,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_grvdetails.companySystemID = '.$companySystemID.' AND
     erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
+    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     )AS t1
     UNION ALL
       SELECT
@@ -604,13 +669,16 @@ class CashFlowReportAPIController extends AppBaseController
       (SELECT
     "-" AS grvPrimaryCode,
     NULL as grvAmount,
+    NULL AS grvAutoID,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
-    erp_directinvoicedetails.netAmountLocal as bsiAmountLocal,
-    erp_paysupplierinvoicedetail.localAmount as payAmountLocal,
+    erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
+    SUM(erp_directinvoicedetails.netAmountLocal) as bsiAmountLocal,
+    SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID
+    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID,
+    erp_directinvoicedetails.glCode as glCode
 	FROM 
     erp_directinvoicedetails
     LEFT JOIN erp_bookinvsuppmaster ON erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
@@ -620,7 +688,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL
+    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
 ) AS t2
     UNION ALL
     SELECT
@@ -630,26 +698,32 @@ class CashFlowReportAPIController extends AppBaseController
     NULL as grvAmount,
     "-" as bookingInvCode,
     NULL as bsiAmountLocal,
-    erp_directpaymentdetails.netAmountLocal as payAmountLocal,
+    NULL AS grvAutoID,
+    NULL as bookingSuppMasInvAutoID,
+    SUM(erp_directpaymentdetails.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_directpaymentdetails.directPaymentDetailsID as pvDetailID,
-    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID
+    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID,
+    erp_directpaymentdetails.glCode as glCode
 	FROM 
     erp_directpaymentdetails
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
     WHERE
     erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_directpaymentdetails.companySystemID = '.$companySystemID.'
+    erp_directpaymentdetails.companySystemID = '.$companySystemID.' GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     ) AS t3');
 
         foreach($details as $detail)
         {
-            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $pv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
-                $detail->cashFlowAmount = number_format($pv->localAmount,3);;
+                $companyCurrency = \Helper::companyCurrency($companySystemID);
+
+                $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                $detail->cashFlowAmount = number_format($pv->localAmount,$companyCurrencyDecimal);
             }
 
         }
@@ -686,14 +760,17 @@ class CashFlowReportAPIController extends AppBaseController
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_delivery_order.deliveryOrderCode AS deliveryOrderCode,
-    erp_delivery_order_detail.companyLocalAmount as deliveryAmount,
+	erp_delivery_order.deliveryOrderID AS deliveryOrderID,
+    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
+    SUM(erp_delivery_order_detail.companyLocalAmount) as deliveryAmount,
     erp_custinvoicedirect.bookingInvCode as bookingInvCode,
-    erp_customerinvoiceitemdetails.issueCostLocalTotal as custAmountLocal,
-    erp_custreceivepaymentdet.bookingAmountLocal as receiveAmountLocal,
+    SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
+    SUM(erp_custreceivepaymentdet.bookingAmountLocal) as receiveAmountLocal,
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
     erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID
+    erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID,
+    erp_delivery_order_detail.financeGLcodePL as glCode
 	FROM 
     erp_delivery_order_detail
     LEFT JOIN erp_delivery_order ON erp_delivery_order_detail.deliveryOrderID = erp_delivery_order.deliveryOrderID
@@ -702,11 +779,11 @@ class CashFlowReportAPIController extends AppBaseController
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_delivery_order_detail.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_delivery_order_detail.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
     erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
     )AS t1
     UNION ALL
       SELECT
@@ -714,23 +791,26 @@ class CashFlowReportAPIController extends AppBaseController
       (SELECT
 	"-" AS deliveryOrderCode,
     NULL as deliveryAmount,
+    NULL AS deliveryOrderID,
+    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
     erp_custinvoicedirect.bookingInvCode as bookingInvCode,
-    erp_customerinvoiceitemdetails.issueCostLocalTotal as custAmountLocal,
-    erp_custreceivepaymentdet.bookingAmountLocal as receiveAmountLocal,
+    SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
+    SUM(erp_custreceivepaymentdet.bookingAmountLocal) as receiveAmountLocal,
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
     erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID
+    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID,
+    erp_customerinvoiceitemdetails.financeGLcodePL as glCode
 	FROM 
     erp_customerinvoiceitemdetails
     LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
     LEFT JOIN erp_custreceivepaymentdet ON erp_custinvoicedirect.custInvoiceDirectAutoID = erp_custreceivepaymentdet.bookingInvCodeSystem
     LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
+    erp_customerinvoiceitemdetails.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID 
 ) AS t2
   UNION ALL
     SELECT
@@ -739,27 +819,33 @@ class CashFlowReportAPIController extends AppBaseController
 	"-" AS deliveryOrderCode,
     NULL as deliveryAmount,
     "-" as bookingInvCode,
+    NULL AS deliveryOrderID,
+    NULL as custInvoiceDirectAutoID,
     NULL as custAmountLocal,
-    erp_directreceiptdetails.localAmount as receiveAmountLocal,
+    SUM(erp_directreceiptdetails.localAmount) as receiveAmountLocal,
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
-    erp_directreceiptdetails.directReceiptAutoID as brvDetailID,
-    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID
+    erp_directreceiptdetails.directReceiptDetailsID as brvDetailID,
+    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID,
+    erp_directreceiptdetails.glCode as glCode
 	FROM 
     erp_directreceiptdetails
     LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
     WHERE
     erp_directreceiptdetails.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') 
+    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
 ) AS t3');
 
         foreach($details as $detail)
         {
-            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $brv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
-                $detail->cashFlowAmount = number_format($brv->localAmount,3);
+                $companyCurrency = \Helper::companyCurrency($companySystemID);
+
+                $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                $detail->cashFlowAmount = number_format($brv->localAmount,$companyCurrencyDecimal);
             }
         }
         $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
@@ -784,6 +870,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         $data = array();
         foreach($details as $detail){
+
             $applicableAmount = 0;
             if($detail['grvAmount'] != null){
                 if($detail['payAmountLocal'] <  $detail['bsiAmountLocal'] && $detail['payAmountLocal'] <  $detail['grvAmount']){
@@ -797,6 +884,15 @@ class CashFlowReportAPIController extends AppBaseController
                 }
                 if($detail['grvAmount'] ==  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
                     $applicableAmount = $detail['grvAmount'];
+                }
+                if($detail['grvAmount'] <  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
+                    $applicableAmount = $detail['grvAmount'];
+                }
+                if($detail['bsiAmountLocal'] >  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
+                    $applicableAmount = $detail['payAmountLocal'];
+                }
+                if($detail['bsiAmountLocal'] <  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['payAmountLocal']){
+                    $applicableAmount = $detail['bsiAmountLocal'];
                 }
             }
             if($detail['grvAmount'] == null){
@@ -814,20 +910,24 @@ class CashFlowReportAPIController extends AppBaseController
                 $applicableAmount = $detail['payAmountLocal'];
             }
             if(isset($detail['cashFlowAmount'])) {
+                $applicableAmount = round($applicableAmount,2);
+                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
                 if($detail['cashFlowAmount'] > $applicableAmount){
-                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                    return $this->sendError($detail['cashFlowAmount'].'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
                 }
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
                 $data['chartOfAccountID'] = $detail['glAutoID'];
                 $data['pvID'] = $detail['pvID'];
+                $data['grvID'] = $detail['grvAutoID'];
+                $data['invID'] = $detail['bookingSuppMasInvAutoID'];
                 $data['pvDetailID'] = $detail['pvDetailID'];
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $pvID = CashFlowSubCategoryGLCode::where('pvID', $detail['pvID'])->where('pvDetailID', $detail['pvDetailID'])->first();
-                if($pvID){
-                    CashFlowSubCategoryGLCode::where('pvID', $detail['pvID'])->where('pvDetailID', $detail['pvDetailID'])->update($data);
+                $pvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                if($pvData){
+                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);
@@ -848,7 +948,7 @@ class CashFlowReportAPIController extends AppBaseController
             $applicableAmount = 0;
             if($detail['deliveryAmount'] != null){
                 if($detail['receiveAmountLocal'] <  $detail['custAmountLocal'] && $detail['receiveAmountLocal'] <  $detail['deliveryAmount']){
-                    $applicableAmount = $detail['payAmountLocal'];
+                    $applicableAmount = $detail['receiveAmountLocal'];
                 }
                 if($detail['custAmountLocal'] <  $detail['receiveAmountLocal'] && $detail['custAmountLocal'] <  $detail['deliveryAmount']){
                     $applicableAmount = $detail['custAmountLocal'];
@@ -859,10 +959,19 @@ class CashFlowReportAPIController extends AppBaseController
                 if($detail['deliveryAmount'] ==  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
                     $applicableAmount = $detail['deliveryAmount'];
                 }
+                if($detail['deliveryAmount'] <  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
+                    $applicableAmount = $detail['deliveryAmount'];
+                }
+                if($detail['custAmountLocal'] >  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
+                    $applicableAmount = $detail['receiveAmountLocal'];
+                }
+                if($detail['receiveAmountLocal'] >  $detail['custAmountLocal'] && $detail['deliveryAmount'] ==  $detail['receiveAmountLocal']){
+                    $applicableAmount = $detail['custAmountLocal'];
+                }
             }
             if($detail['deliveryAmount'] == null){
                 if($detail['receiveAmountLocal'] <  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['payAmountLocal'];
+                    $applicableAmount = $detail['receiveAmountLocal'];
                 }
                 if($detail['custAmountLocal'] <  $detail['receiveAmountLocal']){
                     $applicableAmount = $detail['custAmountLocal'];
@@ -875,21 +984,24 @@ class CashFlowReportAPIController extends AppBaseController
                 $applicableAmount = $detail['receiveAmountLocal'];
             }
             if(isset($detail['cashFlowAmount'])) {
-                    $applicableAmount = number_format($applicableAmount,3);
+                    $applicableAmount = round($applicableAmount,2);
+                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
                 if ($detail['cashFlowAmount'] > $applicableAmount) {
-                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                    return $this->sendError($detail['cashFlowAmount'].'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
                 }
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
                 $data['brvID'] = $detail['brvID'];
+                $data['custInvID'] = $detail['custInvoiceDirectAutoID'];
+                $data['deoID'] = $detail['deliveryOrderID'];
                 $data['brvDetailID'] = $detail['brvDetailID'];
                 $data['chartOfAccountID'] = $detail['glAutoID'];
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $brvID = CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->first();
-                if($brvID){
-                    CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->update($data);
+                $brvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                if($brvData){
+                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);

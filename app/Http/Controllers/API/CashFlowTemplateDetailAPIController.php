@@ -221,6 +221,12 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
         $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
+        if($input['proceedPaymentType'] == 1){
+            $input['logicType'] = 6;
+        }
+        if($input['proceedPaymentType'] == 2){
+            $input['logicType'] = 3;
+        }
 
          /** @var ReportTemplateDetails $reportTemplateDetails */
         $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);

@@ -192,7 +192,7 @@
                     <div class="text-center">
 
                         <h3>
-                            <b>COMMERCIAL INVOICE</b>
+                            <b>TAX INVOICE</b>
                             <br>
                         </h3>
 
@@ -410,8 +410,8 @@
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->qtyIssued}}</td>
-                                <td style="text-align: center;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
-                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}%</td>
                                 <td class="text-right">{{number_format($item->sellingTotal+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
@@ -430,8 +430,8 @@
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->invoiceQty}}</td>
-                                <td style="text-align: center;">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                                <td style="text-align: center;">{{$item->VATPercentage}}</td>
+                                <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
+                                <td style="text-align: center;">{{$item->VATPercentage}}%</td>
                                 <td class="text-right">{{number_format($item->invoiceAmount+$item->VATAmountLocal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}
@@ -466,16 +466,52 @@
                     <tr>
                         <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable</b></td>
-                        <td colspan="3" class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                        <td colspan="3" class="text-right">{{number_format($directTraSubTotal - $sumAdvance, $numberFormatting)}}</td>
                     </tr>
 
                     <tr>
                         <td colspan="3"></td>
                         <td colspan="2" style="text-align: left; border-right: none !important;"><b>Net Receivable in word</b></td>
-                        <td colspan="3" class="text-right">{{$request->amount_word}}
-                            @if ($request->floatAmt > 0)
+                        @php
+                            $directTraSubTotalnumberformat=  number_format(($directTraSubTotal - $sumAdvance),empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+           $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+           $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
+           $intAmt = 0;
+           $floatAmt = 00;
+
+        if (count($amountSplit) == 1) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = 00;
+        } else if (count($amountSplit) == 2) {
+            $intAmt = $amountSplit[0];
+            $floatAmt = $amountSplit[1];
+        }
+        $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
+        $floatAmountInWords = '';
+        $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
+
+        $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($floatAmt != 00){
+            $length = strlen($floatAmt);
+            if($length<$request->currency->DecimalPlaces){
+                $count = $request->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $floatAmt .= '0';
+                }
+            }
+        }
+
+             $amountWord = ucfirst($numFormatterEn->format($intAmt));
+             $amountWord = str_replace('-', ' ', $amountWord);
+                        @endphp
+                        <td colspan="3" class="text-right">{{$amountWord}}
+                            @if ($floatAmt > 0)
                             and
-                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            {{$floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                             @endif
                             
                             only

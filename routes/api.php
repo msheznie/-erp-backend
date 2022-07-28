@@ -965,6 +965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
         Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
         Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
+        Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
         Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
         Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
         Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
@@ -3061,6 +3062,7 @@ Route::resource('p_o_s_source_sales_returns', 'POSSourceSalesReturnAPIController
 Route::resource('p_o_s_stag_sales_return_details', 'POSStagSalesReturnDetailsAPIController');
 
 Route::resource('p_o_s_source_sales_return_details', 'POSSourceSalesReturnDetailsAPIController');
+<<<<<<< HEAD
 
 Route::resource('p_o_s_stag_menu_sales_masters', 'POSStagMenuSalesMasterAPIController');
 
@@ -3093,3 +3095,5 @@ Route::resource('pos_source_menu_masters', 'PosSourceMenuMasterAPIController');
 Route::resource('pos_stag_menu_categories', 'PosStagMenuCategoryAPIController');
 
 Route::resource('pos_source_menu_categories', 'PosSourceMenuCategoryAPIController');
+=======
+>>>>>>> ad6479b66699479d6aaf9f50d03ecd268c43c137
