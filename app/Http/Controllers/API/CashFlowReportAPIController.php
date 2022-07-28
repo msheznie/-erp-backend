@@ -630,6 +630,8 @@ class CashFlowReportAPIController extends AppBaseController
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_grvmaster.grvPrimaryCode AS grvPrimaryCode,
+	erp_grvmaster.grvAutoID AS grvAutoID,
+    erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
     SUM(erp_grvdetails.noQty * erp_grvdetails.GRVcostPerUnitLocalCur) as grvAmount,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
     SUM(erp_bookinvsupp_item_det.totLocalAmount) as bsiAmountLocal,
@@ -650,7 +652,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_grvdetails.companySystemID = '.$companySystemID.' AND
     erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID
+    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     )AS t1
     UNION ALL
       SELECT
@@ -658,7 +660,9 @@ class CashFlowReportAPIController extends AppBaseController
       (SELECT
     "-" AS grvPrimaryCode,
     NULL as grvAmount,
+    NULL AS grvAutoID,
     erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+    erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
     SUM(erp_directinvoicedetails.netAmountLocal) as bsiAmountLocal,
     SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
@@ -674,7 +678,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID
+    erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
 ) AS t2
     UNION ALL
     SELECT
@@ -684,6 +688,8 @@ class CashFlowReportAPIController extends AppBaseController
     NULL as grvAmount,
     "-" as bookingInvCode,
     NULL as bsiAmountLocal,
+    NULL AS grvAutoID,
+    NULL as bookingSuppMasInvAutoID,
     SUM(erp_directpaymentdetails.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
@@ -695,12 +701,12 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_directpaymentdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_paysupplierinvoicemaster.approved = -1 AND
-    erp_directpaymentdetails.companySystemID = '.$companySystemID.' GROUP BY glAutoID
+    erp_directpaymentdetails.companySystemID = '.$companySystemID.' GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     ) AS t3');
 
         foreach($details as $detail)
         {
-            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('pvDetailID', $detail->pvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -743,6 +749,8 @@ class CashFlowReportAPIController extends AppBaseController
 
         $details = DB::select('SELECT * FROM (SELECT
 	erp_delivery_order.deliveryOrderCode AS deliveryOrderCode,
+	erp_delivery_order.deliveryOrderID AS deliveryOrderID,
+    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
     SUM(erp_delivery_order_detail.companyLocalAmount) as deliveryAmount,
     erp_custinvoicedirect.bookingInvCode as bookingInvCode,
     SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
@@ -763,7 +771,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_custinvoicedirect.bookingInvCode IS NOT NULL AND
     erp_delivery_order_detail.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
     )AS t1
     UNION ALL
       SELECT
@@ -771,6 +779,8 @@ class CashFlowReportAPIController extends AppBaseController
       (SELECT
 	"-" AS deliveryOrderCode,
     NULL as deliveryAmount,
+    NULL AS deliveryOrderID,
+    erp_custinvoicedirect.custInvoiceDirectAutoID as custInvoiceDirectAutoID,
     erp_custinvoicedirect.bookingInvCode as bookingInvCode,
     SUM(erp_customerinvoiceitemdetails.issueCostLocalTotal) as custAmountLocal,
     SUM(erp_custreceivepaymentdet.bookingAmountLocal) as receiveAmountLocal,
@@ -787,7 +797,7 @@ class CashFlowReportAPIController extends AppBaseController
     erp_customerinvoiceitemdetails.financeGLcodeRevenueSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_custinvoicedirect.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID
+    erp_customerreceivepayment.custPaymentReceiveCode IS NOT NULL GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID 
 ) AS t2
   UNION ALL
     SELECT
@@ -796,6 +806,8 @@ class CashFlowReportAPIController extends AppBaseController
 	"-" AS deliveryOrderCode,
     NULL as deliveryAmount,
     "-" as bookingInvCode,
+    NULL AS deliveryOrderID,
+    NULL as custInvoiceDirectAutoID,
     NULL as custAmountLocal,
     SUM(erp_directreceiptdetails.localAmount) as receiveAmountLocal,
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
@@ -808,12 +820,12 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_directreceiptdetails.companySystemID = '.$companySystemID.' AND
     erp_customerreceivepayment.approved = -1 AND
-    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') GROUP BY glAutoID
+    erp_directreceiptdetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') GROUP BY glAutoID, deliveryOrderID, custInvoiceDirectAutoID, brvID
 ) AS t3');
 
         foreach($details as $detail)
         {
-            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('brvDetailID', $detail->brvDetailID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -893,13 +905,15 @@ class CashFlowReportAPIController extends AppBaseController
                 $data['subCategoryID'] = $subCategoryID;
                 $data['chartOfAccountID'] = $detail['glAutoID'];
                 $data['pvID'] = $detail['pvID'];
+                $data['grvID'] = $detail['grvAutoID'];
+                $data['invID'] = $detail['bookingSuppMasInvAutoID'];
                 $data['pvDetailID'] = $detail['pvDetailID'];
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $pvData = CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('pvDetailID',  $data['pvDetailID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                $pvData = CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
                 if($pvData){
-                    CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('pvDetailID', $data['pvDetailID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+                    CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);
@@ -964,14 +978,16 @@ class CashFlowReportAPIController extends AppBaseController
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
                 $data['brvID'] = $detail['brvID'];
+                $data['custInvID'] = $detail['custInvoiceDirectAutoID'];
+                $data['deoID'] = $detail['deliveryOrderID'];
                 $data['brvDetailID'] = $detail['brvDetailID'];
                 $data['chartOfAccountID'] = $detail['glAutoID'];
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $brvData = CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                $brvData = CashFlowSubCategoryGLCode::where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
                 if($brvData){
-                    CashFlowSubCategoryGLCode::where('brvID', $detail['brvID'])->where('brvDetailID', $detail['brvDetailID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+                    CashFlowSubCategoryGLCode::where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);
