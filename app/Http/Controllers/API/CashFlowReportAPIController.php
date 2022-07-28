@@ -664,15 +664,15 @@ class CashFlowReportAPIController extends AppBaseController
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     )AS t1
     UNION ALL
-      SELECT
+    SELECT
       * FROM
       (SELECT
-    "-" AS grvPrimaryCode,
-    NULL as grvAmount,
-    NULL AS grvAutoID,
-    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+	"-" AS grvPrimaryCode,
+	NULL AS grvAutoID,
     erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
-    SUM(erp_directinvoicedetails.netAmountLocal) as bsiAmountLocal,
+    NULL as grvAmount,
+    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+    SUM(erp_directinvoicedetails.localAmount) as bsiAmountLocal,
     SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
@@ -687,9 +687,10 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
+    erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
-) AS t2
+    )AS t2
     UNION ALL
     SELECT
       * FROM
