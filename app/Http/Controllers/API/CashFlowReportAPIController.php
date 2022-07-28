@@ -639,7 +639,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_grvdetails.financeGLcodePLSystemID as glAutoID
+    erp_grvdetails.financeGLcodePLSystemID as glAutoID,
+    erp_grvdetails.financeGLcodePL as glCode
 	FROM 
     erp_grvdetails
     LEFT JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID
@@ -668,7 +669,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_paysupplierinvoicedetail.payDetailAutoID as pvDetailID,
-    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID
+    erp_directinvoicedetails.chartOfAccountSystemID as glAutoID,
+    erp_directinvoicedetails.glCode as glCode
 	FROM 
     erp_directinvoicedetails
     LEFT JOIN erp_bookinvsuppmaster ON erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
@@ -694,7 +696,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
     erp_directpaymentdetails.directPaymentDetailsID as pvDetailID,
-    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID
+    erp_directpaymentdetails.chartOfAccountSystemID as glAutoID,
+    erp_directpaymentdetails.glCode as glCode
 	FROM 
     erp_directpaymentdetails
     LEFT JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.payMasterAutoId
@@ -706,7 +709,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $pv = CashFlowSubCategoryGLCode::where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $pv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -758,7 +761,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
     erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID
+    erp_delivery_order_detail.financeGLcodePLSystemID as glAutoID,
+    erp_delivery_order_detail.financeGLcodePL as glCode
 	FROM 
     erp_delivery_order_detail
     LEFT JOIN erp_delivery_order ON erp_delivery_order_detail.deliveryOrderID = erp_delivery_order.deliveryOrderID
@@ -787,7 +791,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
     erp_custreceivepaymentdet.custRecivePayDetAutoID as brvDetailID,
-    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID
+    erp_customerinvoiceitemdetails.financeGLcodePLSystemID as glAutoID,
+    erp_customerinvoiceitemdetails.financeGLcodePL as glCode
 	FROM 
     erp_customerinvoiceitemdetails
     LEFT JOIN erp_custinvoicedirect ON erp_customerinvoiceitemdetails.custInvoiceDirectAutoID = erp_custinvoicedirect.custInvoiceDirectAutoID
@@ -813,7 +818,8 @@ class CashFlowReportAPIController extends AppBaseController
     erp_customerreceivepayment.custPaymentReceiveCode as receiveCode,
     erp_customerreceivepayment.custReceivePaymentAutoID as brvID,
     erp_directreceiptdetails.directReceiptDetailsID as brvDetailID,
-    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID
+    erp_directreceiptdetails.chartOfAccountSystemID as glAutoID,
+    erp_directreceiptdetails.glCode as glCode
 	FROM 
     erp_directreceiptdetails
     LEFT JOIN erp_customerreceivepayment ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
@@ -825,7 +831,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $brv = CashFlowSubCategoryGLCode::where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $brv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -911,9 +917,9 @@ class CashFlowReportAPIController extends AppBaseController
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $pvData = CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                $pvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
                 if($pvData){
-                    CashFlowSubCategoryGLCode::where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);
@@ -985,9 +991,9 @@ class CashFlowReportAPIController extends AppBaseController
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $brvData = CashFlowSubCategoryGLCode::where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                $brvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
                 if($brvData){
-                    CashFlowSubCategoryGLCode::where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
                 }
                 else{
                     CashFlowSubCategoryGLCode::create($data);
