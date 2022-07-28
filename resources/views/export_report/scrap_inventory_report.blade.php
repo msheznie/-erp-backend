@@ -21,12 +21,12 @@
         </thead>
     </table>
     <br>
-<table>
     
-  
+<table>
+</table>
 
 <div class="table-responsive">
-    <table class="table table-sm table-striped hover table-bordered" width="100%">
+    <table class="table table-sm table-striped hover table-bordered" >
         <thead>
         <tr>
             <th>Report Type:</th>

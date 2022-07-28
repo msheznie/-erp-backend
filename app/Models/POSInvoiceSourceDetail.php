@@ -329,7 +329,7 @@ class POSInvoiceSourceDetail extends Model
 {
 
     public $table = 'pos_source_invoicedetail';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -389,8 +389,7 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'transaction_log_id',
-        'mapping_master_id'
+        'transaction_log_id'
     ];
 
     /**
@@ -452,8 +451,7 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer',
-        'mapping_master_id' => 'integer'
+        'transaction_log_id' => 'integer'
     ];
 
     /**
@@ -461,9 +459,10 @@ class POSInvoiceSourceDetail extends Model
      *
      * @var array
      */
-    public static $rules = [
-        
-    ];
+    public static $rules = [];
 
-    
+    public function item_assigned()
+    {
+        return $this->hasOne('App\Models\ItemAssigned', 'itemCodeSystem', 'itemAutoID');
+    }
 }
