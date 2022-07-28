@@ -2739,6 +2739,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');
         Route::post('getAllInvoicesPosReturn', 'POS\PosAPIController@getAllInvoicesPosReturn');
         Route::post('getPosInvoiceReturnData', 'POS\PosAPIController@getPosInvoiceReturnData');
+        Route::post('getAllInvoicesRPos', 'POS\PosAPIController@getAllInvoicesRPos');
+        Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
 
     });
 
@@ -3059,3 +3061,35 @@ Route::resource('p_o_s_source_sales_returns', 'POSSourceSalesReturnAPIController
 Route::resource('p_o_s_stag_sales_return_details', 'POSStagSalesReturnDetailsAPIController');
 
 Route::resource('p_o_s_source_sales_return_details', 'POSSourceSalesReturnDetailsAPIController');
+
+Route::resource('p_o_s_stag_menu_sales_masters', 'POSStagMenuSalesMasterAPIController');
+
+Route::resource('p_o_s_source_menu_sales_masters', 'POSSourceMenuSalesMasterAPIController');
+
+Route::resource('p_o_s_stag_menu_sales_items', 'POSStagMenuSalesItemAPIController');
+
+Route::resource('p_o_s_source_menu_sales_items', 'POSSourceMenuSalesItemAPIController');
+
+Route::resource('p_o_s_stag_menue_sales_item_details', 'POSStagMenueSalesItemDetailAPIController');
+
+Route::resource('p_o_s_source_menue_sales_item_details', 'POSSourceMenueSalesItemDetailAPIController');
+
+Route::resource('p_o_s_stag_menu_sales_payments', 'POSStagMenuSalesPaymentAPIController');
+
+Route::resource('p_o_s_source_menu_sales_payments', 'POSSourceMenuSalesPaymentAPIController');
+
+Route::resource('p_o_s_stag_menu_sales_service_charges', 'POSStagMenuSalesServiceChargeAPIController');
+
+Route::resource('p_o_s_source_menu_sales_service_charges', 'POSSourceMenuSalesServiceChargeAPIController');
+
+Route::resource('stag_customer_type_masters', 'StagCustomerTypeMasterAPIController');
+
+Route::resource('source_customer_type_masters', 'SourceCustomerTypeMasterAPIController');
+
+Route::resource('pos_stag_menu_masters', 'PosStagMenuMasterAPIController');
+
+Route::resource('pos_source_menu_masters', 'PosSourceMenuMasterAPIController');
+
+Route::resource('pos_stag_menu_categories', 'PosStagMenuCategoryAPIController');
+
+Route::resource('pos_source_menu_categories', 'PosSourceMenuCategoryAPIController');
