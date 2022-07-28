@@ -569,12 +569,14 @@ class CashFlowReportAPIController extends AppBaseController
                                                         }, 'subcategorytot' => function ($q) {
                                                             $q->with('subcategory');
                                                         }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+            $totalCashFlow = 0;
             foreach ($reportTemplateDetails as $data) {
                 foreach ($data->subcategory as $dt) {
                     if ($dt->logicType == 1 || $dt->logicType == 2 || $dt->logicType == 3 || $dt->logicType == 6|| $dt->logicType == 4  || $dt->logicType == 5) {
                         $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
                         if($amount){
                             $dt->amount = $amount;
+                            $totalCashFlow += $amount;
                         }
                         else{
                             $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->first();
@@ -582,12 +584,14 @@ class CashFlowReportAPIController extends AppBaseController
                                 $dt->amount = 0;
                             }
                         }
+
                     }
                     if ($dt->logicType == 1) {
                         foreach ($dt->subcategory as $da) {
                             $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$da->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
                             if($amount){
                                 $da->amount = $amount;
+                                $totalCashFlow += $amount;
                             }
                             else{
                                 $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$da->id)->where('cashFlowReportID',$input['id'])->first();
@@ -596,6 +600,10 @@ class CashFlowReportAPIController extends AppBaseController
                                 }
                             }
                         }
+                    }
+                    if($dt->type == 3){
+                        $dt->amount = $totalCashFlow;
+                        $totalCashFlow = 0;
                     }
                 }
             }
