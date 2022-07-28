@@ -273,6 +273,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         //Update check
         $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+            ->where('attachmentID', '!=', $id)
             ->where('documentSystemID',$documentSystemID)
             ->where('attachmentType',$attachmentType)
             ->where('documentSystemCode',$documentSystemCode)
