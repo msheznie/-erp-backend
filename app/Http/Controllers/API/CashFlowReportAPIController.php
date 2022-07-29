@@ -483,10 +483,10 @@ class CashFlowReportAPIController extends AppBaseController
             return $this->sendError('Cash Flow Report not found');
         }
         $cashFlowReport->delete();
-        $cashFlowGL = CashFlowSubCategoryGLCode::where('cashFlowReportID',$id)->first();
-        if($cashFlowGL){
-            $cashFlowGL->delete();
-        }
+        CashFlowSubCategoryGLCode::where('cashFlowReportID',$id)->delete();
+
+        CashFlowReportDetail::where('cashFlowReportID',$id)->delete();
+
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.cash_flow_report')]));
     }
