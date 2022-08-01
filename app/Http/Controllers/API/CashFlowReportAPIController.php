@@ -24,6 +24,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Company;
+
 
 /**
  * Class CashFlowReportController
@@ -288,6 +290,8 @@ class CashFlowReportAPIController extends AppBaseController
             }
         }
 
+            $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
+
             return $this->sendResponse([$cashFlowReport->toArray(), $reportTemplateDetails], 'Cash Flow Report saved successfully');
     }
 
@@ -398,7 +402,36 @@ class CashFlowReportAPIController extends AppBaseController
             return $this->sendError('Cash Flow Report not found');
         }
 
+        $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+            $q->with(['gllink' => function ($q) {
+                $q->with('subcategory');
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategory' => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory');
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
+                $q->orderBy('sortOrder', 'asc');
+            }]);
+            $q->orderBy('sortOrder', 'asc');
+        }, 'subcategorytot' => function ($q) {
+            $q->with('subcategory');
+        }, 'gllink'])->OfMaster($input['cashFlowTemplateID'])->whereNull('masterID')->orderBy('sortOrder')->get();
+
         $cashFlowReport = $this->cashFlowReportRepository->update($input, $id);
+
 
         return $this->sendResponse($cashFlowReport->toArray(), 'CashFlowReport updated successfully');
     }
@@ -450,10 +483,10 @@ class CashFlowReportAPIController extends AppBaseController
             return $this->sendError('Cash Flow Report not found');
         }
         $cashFlowReport->delete();
-        $cashFlowGL = CashFlowSubCategoryGLCode::where('cashFlowReportID',$id)->first();
-        if($cashFlowGL){
-            $cashFlowGL->delete();
-        }
+        CashFlowSubCategoryGLCode::where('cashFlowReportID',$id)->delete();
+
+        CashFlowReportDetail::where('cashFlowReportID',$id)->delete();
+
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.cash_flow_report')]));
     }
@@ -569,7 +602,20 @@ class CashFlowReportAPIController extends AppBaseController
                                                         }, 'subcategorytot' => function ($q) {
                                                             $q->with('subcategory');
                                                         }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+
             foreach ($reportTemplateDetails as $data) {
+                if ($data->logicType == 2) {
+                    $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$data->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
+                    if($amount){
+                        $data->amount = $amount;
+                    }
+                    else{
+                        $isExist = CashFlowSubCategoryGLCode::where('subCategoryID',$data->id)->where('cashFlowReportID',$input['id'])->first();
+                        if($isExist){
+                            $data->amount = 0;
+                        }
+                    }
+                }
                 foreach ($data->subcategory as $dt) {
                     if ($dt->logicType == 1 || $dt->logicType == 2 || $dt->logicType == 3 || $dt->logicType == 6|| $dt->logicType == 4  || $dt->logicType == 5) {
                         $amount = CashFlowSubCategoryGLCode::where('subCategoryID',$dt->id)->where('cashFlowReportID',$input['id'])->sum('localAmount');
@@ -582,6 +628,7 @@ class CashFlowReportAPIController extends AppBaseController
                                 $dt->amount = 0;
                             }
                         }
+
                     }
                     if ($dt->logicType == 1) {
                         foreach ($dt->subcategory as $da) {
@@ -597,6 +644,7 @@ class CashFlowReportAPIController extends AppBaseController
                             }
                         }
                     }
+
                 }
             }
 
@@ -623,6 +671,9 @@ class CashFlowReportAPIController extends AppBaseController
 
         $confimedYN = collect($dataCashFlow)->pluck('confimedYN');
         $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+
+        $subCategoryID = collect($dataCashFlow)->pluck('subCategoryID');
+        $subCategoryID = isset($subCategoryID[0]) ? $subCategoryID[0] : $subCategoryID;
 
         $cashFlowReportID = collect($dataCashFlow)->pluck('cashFlowReportID');
         $cashFlowReportID = isset($cashFlowReportID[0]) ? $cashFlowReportID[0] : $cashFlowReportID;
@@ -656,15 +707,15 @@ class CashFlowReportAPIController extends AppBaseController
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
     )AS t1
     UNION ALL
-      SELECT
+    SELECT
       * FROM
       (SELECT
-    "-" AS grvPrimaryCode,
-    NULL as grvAmount,
-    NULL AS grvAutoID,
-    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+	"-" AS grvPrimaryCode,
+	NULL AS grvAutoID,
     erp_bookinvsuppmaster.bookingSuppMasInvAutoID as bookingSuppMasInvAutoID,
-    SUM(erp_directinvoicedetails.netAmountLocal) as bsiAmountLocal,
+    NULL as grvAmount,
+    erp_bookinvsuppmaster.bookingInvCode as bookingInvCode,
+    SUM(erp_directinvoicedetails.localAmount) as bsiAmountLocal,
     SUM(erp_paysupplierinvoicedetail.localAmount) as payAmountLocal,
     erp_paysupplierinvoicemaster.BPVcode as payCode,
     erp_paysupplierinvoicemaster.PayMasterAutoID as pvID,
@@ -679,9 +730,10 @@ class CashFlowReportAPIController extends AppBaseController
     WHERE
     erp_directinvoicedetails.chartOfAccountSystemID IN (' . join(',', json_decode($glAutoID)) . ') AND
     erp_directinvoicedetails.companySystemID = '.$companySystemID.' AND
+    erp_bookinvsuppmaster.bookingInvCode IS NOT NULL AND
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.BPVcode IS NOT NULL GROUP BY glAutoID, grvAutoID, bookingSuppMasInvAutoID, pvID
-) AS t2
+    )AS t2
     UNION ALL
     SELECT
       * FROM
@@ -709,7 +761,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $pv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $pv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->where('subCategoryID',$subCategoryID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -729,6 +781,35 @@ class CashFlowReportAPIController extends AppBaseController
         $details = array_values($details);
     }
 
+        $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+            $q->with(['gllink' => function ($q) {
+                $q->with('subcategory');
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategory' => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory');
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
+                $q->orderBy('sortOrder', 'asc');
+            }]);
+            $q->orderBy('sortOrder', 'asc');
+        }, 'subcategorytot' => function ($q) {
+            $q->with('subcategory');
+        }, 'gllink'])->OfMaster($cashFlowReportID)->whereNull('masterID')->orderBy('sortOrder')->get();
+
+        $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
 
 
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
@@ -746,6 +827,9 @@ class CashFlowReportAPIController extends AppBaseController
 
         $confimedYN = collect($dataCashFlow)->pluck('confimedYN');
         $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;
+
+        $subCategoryID = collect($dataCashFlow)->pluck('subCategoryID');
+        $subCategoryID = isset($subCategoryID[0]) ? $subCategoryID[0] : $subCategoryID;
 
         $cashFlowReportID = collect($dataCashFlow)->pluck('cashFlowReportID');
         $cashFlowReportID = isset($cashFlowReportID[0]) ? $cashFlowReportID[0] : $cashFlowReportID;
@@ -831,7 +915,7 @@ class CashFlowReportAPIController extends AppBaseController
 
         foreach($details as $detail)
         {
-            $brv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->first();
+            $brv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->where('subCategoryID',$subCategoryID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
@@ -850,6 +934,8 @@ class CashFlowReportAPIController extends AppBaseController
             $details = array_values($details);
         }
 
+
+
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
 
     }
@@ -860,52 +946,35 @@ class CashFlowReportAPIController extends AppBaseController
         $subCategoryID = $request->subCategoryID;
         $cashFlowReportID = $request->cashFlowReportID;
 
+
+        $cashFlowData = CashFlowReport::find($request->cashFlowReportID);
+        if($cashFlowData){
+
         $data = array();
         foreach($details as $detail){
 
             $applicableAmount = 0;
+
+            $minArray=array();
             if($detail['grvAmount'] != null){
-                if($detail['payAmountLocal'] <  $detail['bsiAmountLocal'] && $detail['payAmountLocal'] <  $detail['grvAmount']){
-                    $applicableAmount = $detail['payAmountLocal'];
-                }
-                if($detail['bsiAmountLocal'] <  $detail['payAmountLocal'] && $detail['bsiAmountLocal'] <  $detail['grvAmount']){
-                    $applicableAmount = $detail['bsiAmountLocal'];
-                }
-                if($detail['grvAmount'] <  $detail['payAmountLocal'] && $detail['grvAmount'] <  $detail['bsiAmountLocal']){
-                    $applicableAmount = $detail['grvAmount'];
-                }
-                if($detail['grvAmount'] ==  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
-                    $applicableAmount = $detail['grvAmount'];
-                }
-                if($detail['grvAmount'] <  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
-                    $applicableAmount = $detail['grvAmount'];
-                }
-                if($detail['bsiAmountLocal'] >  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['bsiAmountLocal']){
-                    $applicableAmount = $detail['payAmountLocal'];
-                }
-                if($detail['bsiAmountLocal'] <  $detail['payAmountLocal'] && $detail['grvAmount'] ==  $detail['payAmountLocal']){
-                    $applicableAmount = $detail['bsiAmountLocal'];
-                }
+                array_push($minArray,$detail['grvAmount']);
             }
-            if($detail['grvAmount'] == null){
-                if($detail['payAmountLocal'] <  $detail['bsiAmountLocal']){
-                    $applicableAmount = $detail['payAmountLocal'];
-                }
-                if($detail['bsiAmountLocal'] <  $detail['payAmountLocal']){
-                    $applicableAmount = $detail['bsiAmountLocal'];
-                }
-                if($detail['bsiAmountLocal'] ==  $detail['payAmountLocal']){
-                    $applicableAmount = $detail['bsiAmountLocal'];
-                }
+            if($detail['bsiAmountLocal'] != null){
+                array_push($minArray,$detail['bsiAmountLocal']);
             }
-            if($detail['grvAmount'] == null && $detail['bsiAmountLocal'] == null) {
-                $applicableAmount = $detail['payAmountLocal'];
+            if($detail['payAmountLocal'] != null) {
+                array_push($minArray,$detail['payAmountLocal']);
             }
+
+
             if(isset($detail['cashFlowAmount'])) {
-                $applicableAmount = round($applicableAmount,2);
-                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
-                if($detail['cashFlowAmount'] > $applicableAmount){
-                    return $this->sendError($detail['cashFlowAmount'].'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
+                $companyCurrency = \Helper::companyCurrency($cashFlowData->companySystemID);
+
+                $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                $applicableAmount = min($minArray);
+                $applicableAmount = round($applicableAmount,$companyCurrencyDecimal);
+                if ($detail['cashFlowAmount'] > $applicableAmount) {
+                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
                 }
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
@@ -917,13 +986,45 @@ class CashFlowReportAPIController extends AppBaseController
                 $data['cashFlowReportID'] = $cashFlowReportID;
                 $data['rptAmount'] = 0;
 
-                $pvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
-                if($pvData){
-                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID',$data['grvID'])->where('invID',$data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
-                }
-                else{
+                $pvData = CashFlowSubCategoryGLCode::where('chartOfAccountID', $data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID', $data['grvID'])->where('invID', $data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->where('subCategoryID',$data['subCategoryID'])->first();
+                if ($pvData) {
+                    CashFlowSubCategoryGLCode::where('chartOfAccountID', $data['chartOfAccountID'])->where('pvID', $data['pvID'])->where('grvID', $data['grvID'])->where('subCategoryID',$data['subCategoryID'])->where('invID', $data['invID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+
+                } else {
                     CashFlowSubCategoryGLCode::create($data);
                 }
+              }
+            }
+            $reportMasterData = CashFlowReport::find($cashFlowReportID);
+            if($reportMasterData) {
+                $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }, 'subcategory' => function ($q) {
+                            $q->with(['gllink' => function ($q) {
+                                $q->with('subcategory');
+                                $q->orderBy('sortOrder', 'asc');
+                            }, 'subcategory' => function ($q) {
+                                $q->with(['gllink' => function ($q) {
+                                    $q->with('subcategory');
+                                    $q->orderBy('sortOrder', 'asc');
+                                }]);
+                                $q->orderBy('sortOrder', 'asc');
+                            }]);
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategorytot' => function ($q) {
+                    $q->with('subcategory');
+                }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+                $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
             }
         }
         return $this->sendResponse($details, 'Report Template Details retrieved successfully');
@@ -934,73 +1035,87 @@ class CashFlowReportAPIController extends AppBaseController
         $details = $request->data;
         $subCategoryID = $request->subCategoryID;
         $cashFlowReportID = $request->cashFlowReportID;
+        $cashFlowData = CashFlowReport::find($request->cashFlowReportID);
+        if($cashFlowData){
 
-        $data = array();
-        foreach($details as $detail){
-            $applicableAmount = 0;
-            if($detail['deliveryAmount'] != null){
-                if($detail['receiveAmountLocal'] <  $detail['custAmountLocal'] && $detail['receiveAmountLocal'] <  $detail['deliveryAmount']){
-                    $applicableAmount = $detail['receiveAmountLocal'];
-                }
-                if($detail['custAmountLocal'] <  $detail['receiveAmountLocal'] && $detail['custAmountLocal'] <  $detail['deliveryAmount']){
-                    $applicableAmount = $detail['custAmountLocal'];
-                }
-                if($detail['deliveryAmount'] <  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] <  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['deliveryAmount'];
-                }
-                if($detail['deliveryAmount'] ==  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['deliveryAmount'];
-                }
-                if($detail['deliveryAmount'] <  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['deliveryAmount'];
-                }
-                if($detail['custAmountLocal'] >  $detail['receiveAmountLocal'] && $detail['deliveryAmount'] ==  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['receiveAmountLocal'];
-                }
-                if($detail['receiveAmountLocal'] >  $detail['custAmountLocal'] && $detail['deliveryAmount'] ==  $detail['receiveAmountLocal']){
-                    $applicableAmount = $detail['custAmountLocal'];
-                }
-            }
-            if($detail['deliveryAmount'] == null){
-                if($detail['receiveAmountLocal'] <  $detail['custAmountLocal']){
-                    $applicableAmount = $detail['receiveAmountLocal'];
-                }
-                if($detail['custAmountLocal'] <  $detail['receiveAmountLocal']){
-                    $applicableAmount = $detail['custAmountLocal'];
-                }
-                if($detail['custAmountLocal'] ==  $detail['receiveAmountLocal']){
-                    $applicableAmount = $detail['custAmountLocal'];
-                }
-            }
-            if($detail['deliveryAmount'] == null && $detail['custAmountLocal'] == null) {
-                $applicableAmount = $detail['receiveAmountLocal'];
-            }
-            if(isset($detail['cashFlowAmount'])) {
-                    $applicableAmount = round($applicableAmount,2);
-                $detail['cashFlowAmount'] = round($detail['cashFlowAmount'],2);
-                if ($detail['cashFlowAmount'] > $applicableAmount) {
-                    return $this->sendError($detail['cashFlowAmount'].'Cash Flow Amount is greater than applicable amount'.$applicableAmount, 500);
-                }
-                $data['localAmount'] = $detail['cashFlowAmount'];
-                $data['subCategoryID'] = $subCategoryID;
-                $data['brvID'] = $detail['brvID'];
-                $data['custInvID'] = $detail['custInvoiceDirectAutoID'];
-                $data['deoID'] = $detail['deliveryOrderID'];
-                $data['brvDetailID'] = $detail['brvDetailID'];
-                $data['chartOfAccountID'] = $detail['glAutoID'];
-                $data['cashFlowReportID'] = $cashFlowReportID;
-                $data['rptAmount'] = 0;
 
-                $brvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
-                if($brvData){
-                    CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+            $data = array();
+            foreach($details as $detail){
+                $applicableAmount = 0;
+                $minArray=array();
+                if($detail['deliveryAmount'] != null){
+                    array_push($minArray,$detail['deliveryAmount']);
                 }
-                else{
-                    CashFlowSubCategoryGLCode::create($data);
+                if($detail['custAmountLocal'] != null){
+                    array_push($minArray,$detail['custAmountLocal']);
+                }
+                if($detail['receiveAmountLocal'] != null) {
+                    array_push($minArray,$detail['receiveAmountLocal']);
+                }
+                if(isset($detail['cashFlowAmount'])) {
+                    $companyCurrency = \Helper::companyCurrency($cashFlowData->companySystemID);
+
+                    $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
+                    $applicableAmount = min($minArray);
+                    $applicableAmount = round($applicableAmount,$companyCurrencyDecimal);
+                    if ($detail['cashFlowAmount'] > $applicableAmount) {
+                        return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                    }
+                    $data['localAmount'] = $detail['cashFlowAmount'];
+                    $data['subCategoryID'] = $subCategoryID;
+                    $data['brvID'] = $detail['brvID'];
+                    $data['custInvID'] = $detail['custInvoiceDirectAutoID'];
+                    $data['deoID'] = $detail['deliveryOrderID'];
+                    $data['brvDetailID'] = $detail['brvDetailID'];
+                    $data['chartOfAccountID'] = $detail['glAutoID'];
+                    $data['cashFlowReportID'] = $cashFlowReportID;
+                    $data['rptAmount'] = 0;
+
+                    $brvData = CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('subCategoryID',$data['subCategoryID'])->where('cashFlowReportID', $data['cashFlowReportID'])->first();
+                    if($brvData){
+                        CashFlowSubCategoryGLCode::where('chartOfAccountID',$data['chartOfAccountID'])->where('brvID', $data['brvID'])->where('deoID', $data['deoID'])->where('custInvID',$data['custInvID'])->where('subCategoryID',$data['subCategoryID'])->where('cashFlowReportID', $data['cashFlowReportID'])->update($data);
+                    }
+                    else{
+                        CashFlowSubCategoryGLCode::create($data);
+                    }
                 }
             }
+            $reportMasterData = CashFlowReport::find($cashFlowReportID);
+    if($reportMasterData) {
+        $reportTemplateDetails = CashFlowTemplateDetail::selectRaw('*,0 as expanded')->with(['subcategory' => function ($q) {
+            $q->with(['gllink' => function ($q) {
+                $q->with('subcategory');
+                $q->orderBy('sortOrder', 'asc');
+            }, 'subcategory' => function ($q) {
+                $q->with(['gllink' => function ($q) {
+                    $q->with('subcategory');
+                    $q->orderBy('sortOrder', 'asc');
+                }, 'subcategory' => function ($q) {
+                    $q->with(['gllink' => function ($q) {
+                        $q->with('subcategory');
+                        $q->orderBy('sortOrder', 'asc');
+                    }, 'subcategory' => function ($q) {
+                        $q->with(['gllink' => function ($q) {
+                            $q->with('subcategory');
+                            $q->orderBy('sortOrder', 'asc');
+                        }]);
+                        $q->orderBy('sortOrder', 'asc');
+                    }]);
+                    $q->orderBy('sortOrder', 'asc');
+                }]);
+                $q->orderBy('sortOrder', 'asc');
+            }]);
+            $q->orderBy('sortOrder', 'asc');
+        }, 'subcategorytot' => function ($q) {
+            $q->with('subcategory');
+        }, 'gllink'])->OfMaster($reportMasterData->cashFlowTemplateID)->whereNull('masterID')->orderBy('sortOrder')->get();
+        $this->updateGroupTotalOfCashFlowTemplate($reportTemplateDetails, $cashFlowReportID);
+    }
+
         }
-        return $this->sendResponse($details, 'Report Template Details retrieved successfully');
+
+        return $this->sendResponse($reportTemplateDetails, 'Report Template Details retrieved successfully');
+
     }
 
     public function cashFlowConfirmation(Request $request){
@@ -1012,5 +1127,70 @@ class CashFlowReportAPIController extends AppBaseController
 
 
         return $this->sendResponse($cashFlowReport, 'Report Template Details retrieved successfully');
+    }
+
+    public function updateGroupTotalOfCashFlowTemplate($templateDetails, $cashFlowReportID)
+    {
+        $cashFlowReport = CashFlowReport::find($cashFlowReportID);
+
+        if ($cashFlowReport) {
+            $companyData = Company::find($cashFlowReport->companySystemID);
+
+            if ($companyData) {
+                foreach ($templateDetails as $key => $value) {
+
+                    foreach ($value->subcategory as $key1 => $value1) {
+                        if ($value1->logicType == 2 && $value1->type == 3) {
+                            $dataCashFlow = [];
+                            $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                            $dataCashFlow['subCategoryID'] = $value1->id;
+                            $dataCashFlow['localAmount'] = $this->getLinkedGrouptotal($value1->subcategorytot, $cashFlowReportID);
+
+                            $convertedAmount = \Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
+
+                            $dataCashFlow['rptAmount'] = $convertedAmount['reportingAmount'];
+
+                            $isExists = CashFlowSubCategoryGLCode::where('subCategoryID',$dataCashFlow['subCategoryID'])->where('cashFlowReportID', $dataCashFlow['cashFlowReportID'])->first();
+                            if($isExists){
+                                CashFlowSubCategoryGLCode::where('subCategoryID',$dataCashFlow['subCategoryID'])->where('cashFlowReportID',$dataCashFlow['cashFlowReportID'])->update($dataCashFlow);
+
+                            }
+                            else{
+                                CashFlowSubCategoryGLCode::create($dataCashFlow);
+                            }
+                        }
+                    }
+
+                    if ($value->logicType == 2 && $value->type == 3) {
+                        $dataCashFlow = [];
+                        $dataCashFlow['cashFlowReportID'] = $cashFlowReportID;
+                        $dataCashFlow['subCategoryID'] = $value->id;
+                        $dataCashFlow['localAmount'] = $this->getLinkedGrouptotal($value->subcategorytot, $cashFlowReportID);
+
+                        $convertedAmount = \Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
+
+                        $dataCashFlow['rptAmount'] = $convertedAmount['reportingAmount'];
+                        $isExists = CashFlowSubCategoryGLCode::where('subCategoryID',$dataCashFlow['subCategoryID'])->where('cashFlowReportID', $dataCashFlow['cashFlowReportID'])->first();
+                        if($isExists){
+                            CashFlowSubCategoryGLCode::where('subCategoryID',$dataCashFlow['subCategoryID'])->where('cashFlowReportID',$dataCashFlow['cashFlowReportID'])->update($dataCashFlow);
+                        }
+                        else{
+                            CashFlowSubCategoryGLCode::create($dataCashFlow);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function getLinkedGrouptotal($subCategories, $cashFlowReportID)
+    {
+        $totalAmount = 0;
+
+        foreach ($subCategories as $key3 => $value3) {
+            $totalAmount += CashFlowSubCategoryGLCode::where('subCategoryID',$value3->subCategory)->where('cashFlowReportID',$cashFlowReportID)->sum('localAmount');
+        }
+
+        return $totalAmount;
     }
 }
