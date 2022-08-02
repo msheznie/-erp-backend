@@ -237,6 +237,10 @@
                                 {{$request->PONumber}}
                             @endif
                         </b><br>
+                        <b>Date Of Supply : @if(!empty($request->date_of_supply))
+                            {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                            @endif
+                        </b><br>
                         <b>Contract / PO No : 
                              @if(!empty($request->invoicedetails) )
                                 {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
@@ -346,6 +350,17 @@
                         <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="6" style="text-align: left; border-right: none !important;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}): ({{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            @endif
+                            
+                            only)</b>
+                        </td>
                     </tr>
                 </tbody>
                 <tbody>
