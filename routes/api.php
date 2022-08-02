@@ -2540,6 +2540,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
         Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
+        Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
 
         Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
         Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
