@@ -1072,30 +1072,34 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['itemCode'] = $new['itemCode'];
                         $GRVDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                         $GRVDetail_arr['itemDescription'] = $new['itemDescription'];
-                        if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                        // if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
 
-                            if($financeCategorySub->includePLForGRVYN == -1)
-                            {
-                                $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
-                                $GRVDetail_arr['financeGLcodebBS'] = null;
-                                $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                            }
-                            else
-                            {
-                                $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
-                                $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
-                            }
+                        //     if($financeCategorySub->includePLForGRVYN == -1)
+                        //     {
+                        //         $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
+                        //         $GRVDetail_arr['financeGLcodebBS'] = null;
+                        //         $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                        //     }
+                        //     else
+                        //     {
+                        //         $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                        //         $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
+                        //     }
 
                         
-                        }  else {
-                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
-                            $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
-                            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
-                            $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
-                        }
+                        // }  
+                        
+                       
+
+                        $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
+                        $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
+                        $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                        $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
+                        
+                    
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                         $GRVDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
                         $GRVDetail_arr['includePLForGRVYN'] = $new['includePLForGRVYN'];
