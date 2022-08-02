@@ -2071,7 +2071,7 @@ WHERE
             $vatAmount['VATAmountLocal'] = 0;
             $vatAmount['VATAmountRpt'] = 0;
 
-//            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
         }
 
 
