@@ -7463,7 +7463,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function singleSupInvoiceTracingData($bookingSuppMasInvAutoID, $type = 'supInv', $PayMasterAutoId = null, $debitNoteID = null)
     {
         $masterData = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
-
+        
         if ($masterData && ($masterData->documentType == 1 || $masterData->documentType == 3)) {
             $res[] = $this->supplierInvoiceForwaredTracing($bookingSuppMasInvAutoID, $type, $PayMasterAutoId, $debitNoteID);
 
@@ -7681,8 +7681,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         $paymentsInvoiceMatch = $paymentsInvoiceMatch->get();
-
-        $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+       
+        //$totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+        $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
         $tracingData['name'] = "Supplier Invoice";
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
@@ -7732,6 +7733,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                     $temp2['childs'][] = $tempDeb;
                 }
+
+               
             }
 
             if (isset($value2['matching_master'])) {
@@ -7743,7 +7746,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['name'] = "Debit Note";
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
 
             $tracingData['childs'][] = $temp2;
@@ -7789,7 +7792,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $paymentsInvoiceMatch = $paymentsInvoiceMatch->get();
 
-        $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+        //$totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+        $totalInvoices = array_merge($paymentsInvoice->toArray(), $paymentsInvoiceMatch->toArray());
         $cancelStatus = ($invoiceMaster->cancelYN == -1) ? " -- @Cancelled@" : "";
         $tracingData['name'] = "Supplier Invoice";
         if ($type == "supInv" && ($bookingSuppMasInvAutoID == $invoiceMaster->bookingSuppMasInvAutoID)) {
@@ -7825,7 +7829,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['name'] = "Debit Note";
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
             
             $tracingData['childs'][] = $temp2;
