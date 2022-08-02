@@ -534,18 +534,46 @@ class VATReportAPIController extends AppBaseController
                 }
 
             }
+            $company = Company::find($request->companySystemID);
+            if(!empty($company)){
+                $company_name = $company->CompanyName;
+                $company_vat_registration_number = $company->vatRegistratonNumber;
+            } else {
+                $company_name = '';
+                $company_vat_registration_number = '';
+            }
+            $to_date = \Helper::dateFormat($request->toDate);
+            $from_date = \Helper::dateFormat($request->fromDate);
+            
 
-            \Excel::create('vat_detail_report', function ($excel) use ($data) {
-                $excel->sheet('sheet name', function ($sheet) use ($data) {
-                    $sheet->fromArray($data, null, 'A1', true);
-                    $sheet->setAutoSize(true);
-                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                });
-                $lastrow = $excel->getActiveSheet()->getHighestRow();
-                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download('csv');
+            if($request->reportTypeID == 3){
+                $title = 'Details Of Outward Supply';
+                $fileName = 'details_of_outward_supply';
+            } elseif($request->reportTypeID == 4){
+                $title = 'Details Of Inward Supply';
+                $fileName = 'details_of_inward_supply';
+            } elseif($request->reportTypeID == 5){
+                $title = 'Details of Capital Asset Purchase';
+                $fileName = 'capital_asset_purchase_details';
+            }
+            $detail_array = array(  'type' => 6,
+                                    'from_date'=>$from_date,
+                                    'to_date'=>$to_date,
+                                    'company_name'=>$company_name,
+                                    'title'=>$title,
+                                    'company_vat_registration_number' =>$company_vat_registration_number);
 
-            return $this->sendResponse(array(), 'successfully export');
+            $path = 'general-ledger/report/vat_report/excel/';
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
+
+            if($basePath == '')
+            {
+                 return $this->sendError('Unable to export excel');
+            }
+            else
+            {
+                 return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
         }
         return $this->sendError( 'No Records Found');
     }

@@ -152,6 +152,44 @@ class CreateExcel
                             self::currency($array,$sheet,'A4');
 
                         }
+                        else if(($array['type']) == 6)
+                        {
+                            self::fromDate($array,$sheet,'From Date ');
+                            self::toDate($array,$sheet);
+                            $sheet->cell('A5', function($cell) use($array)
+                            {
+                    
+                                if(isset($array['company_vat_registration_number']))
+                    
+                                {
+                    
+                                    $cell->setValue('Company VAT Registration No - '.$array['company_vat_registration_number']);  
+                    
+                                    $cell->setFont(array(
+                    
+                       
+                    
+                                        'family'     => 'Calibri',
+                    
+                       
+                    
+                                        'size'       => '12',
+                    
+                       
+                    
+                                        'bold'       =>  true
+                    
+                       
+                    
+                                    ));
+                    
+                                    $cell->setAlignment('left');
+                    
+                                }
+                    
+                           });
+
+                        }
                     }
 
                     $sheet->fromArray($data, null, 'A7', true);
