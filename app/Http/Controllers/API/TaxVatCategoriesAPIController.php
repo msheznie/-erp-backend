@@ -485,7 +485,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
                 ->orWhere('itemDescription','LIKE', "%{$seachText}%");
             });
         }
-        $output['items'] = $output['items']->take(50)->get();
+        $output['items'] = $output['items']->take(500)->get();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
