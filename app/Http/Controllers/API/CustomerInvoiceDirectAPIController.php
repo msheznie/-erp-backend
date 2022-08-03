@@ -24,6 +24,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -3317,6 +3318,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
+        $fileName_xls = 'customer_invoice_' . $id . '_' . $time;
 
      
 
@@ -3355,12 +3357,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
                     });
                     
-                })->download('csv');
+                })->download('xls');
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
