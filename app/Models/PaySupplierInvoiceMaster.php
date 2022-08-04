@@ -560,7 +560,7 @@ class PaySupplierInvoiceMaster extends Model
         'payAmountSuppDef',
         'payAmountCompLocal',
         'payAmountCompRpt',
-        'suppAmountDocTotal',
+        '`suppAmountDocTotal`',
         'createMonthlyDeduction',
         'confirmedYN',
         'confirmedByEmpSystemID',

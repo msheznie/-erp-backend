@@ -833,32 +833,36 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             $error_count = 0;
             $error_count_ap = 0;
+
             foreach ($input['detailTable'] as $item) {
+ 
                 if ($item['isChecked']) {
+                    // dd($item);
                     if ($isAdvancePaymentPaidChk) { // check advance payment already paid for the PO
                         if ($item['addedDocumentSystemID'] == 11) {
-                            $invoiceDet = BookInvSuppDet::where('bookingSuppMasInvAutoID', $item['bookingInvSystemCode'])->groupBy('purchaseOrderID')->get();
-                            if (count($invoiceDet) > 0) {
-                                foreach ($invoiceDet as $val) {
-                                    $chkRequestedAdvancePayment = PoAdvancePayment::where('poID', $val->purchaseOrderID)->groupBy('poID')->first();
-                                    if ($chkRequestedAdvancePayment) {
-                                        $chkPaidAdvancePayment = AdvancePaymentDetails::selectRaw('erp_advancepaymentdetails.purchaseOrderID, Sum(erp_advancepaymentdetails.paymentAmount) AS SumOfpaymentAmount, Sum(erp_advancepaymentdetails.supplierTransAmount) AS SumOfsupplierTransAmount, Sum(erp_advancepaymentdetails.localAmount) AS SumOflocalAmount, Sum(erp_advancepaymentdetails.comRptAmount) AS SumOfcomRptAmount,supplierTransCurrencyID')->with(['supplier_currency', 'purchaseorder_by'])->where('purchaseOrderID', $chkRequestedAdvancePayment->poID)->whereNotNull('erp_advancepaymentdetails.purchaseOrderID')->groupBy('erp_advancepaymentdetails.purchaseOrderID')->first();
-                                        if (!empty($chkPaidAdvancePayment)) {
-                                            $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
-                                            $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
-                                            $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
-                                            array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
-                                            $error_count_ap++;
+              
+                                $invoiceDet = BookInvSuppDet::where('bookingSuppMasInvAutoID', $item['bookingInvSystemCode'])->groupBy('purchaseOrderID')->get();
+                           
+                                if (count($invoiceDet) > 0) {
+                                    foreach ($invoiceDet as $val) {
+                                        $chkRequestedAdvancePayment = PoAdvancePayment::where('poID', $val->purchaseOrderID)->groupBy('poID')->first();
+                                        if ($chkRequestedAdvancePayment) {
+                                            $chkPaidAdvancePayment = AdvancePaymentDetails::selectRaw('erp_advancepaymentdetails.purchaseOrderID, Sum(erp_advancepaymentdetails.paymentAmount) AS SumOfpaymentAmount, Sum(erp_advancepaymentdetails.supplierTransAmount) AS SumOfsupplierTransAmount, Sum(erp_advancepaymentdetails.localAmount) AS SumOflocalAmount, Sum(erp_advancepaymentdetails.comRptAmount) AS SumOfcomRptAmount,supplierTransCurrencyID')->with(['supplier_currency', 'purchaseorder_by'])->where('purchaseOrderID', $chkRequestedAdvancePayment->poID)->whereNotNull('erp_advancepaymentdetails.purchaseOrderID')->groupBy('erp_advancepaymentdetails.purchaseOrderID')->first();
+                                            if (!empty($chkPaidAdvancePayment)) {
+                                                $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
+                                                $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
+                                                $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
+                                                array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
+                                                $error_count_ap++;
+                                            }
+    
                                         }
-
                                     }
                                 }
-                            }
+                            
                         }
                     }
-
                     $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $item['addedDocumentSystemID'])->where('companySystemID', $item['companySystemID'])->where('documentSystemCode', $item['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
-
                     if ($glCheck) {
                         if (round($glCheck->SumOfdocumentLocalAmount) != 0 || round($glCheck->SumOfdocumentRptAmount) != 0) {
                             array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
@@ -910,6 +914,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+                    if(isset($new['timeStamp'])) {
+                        unset($new['timeStamp'],$new['unit'],$new['vat_sub_category'],$new['created_at'], $new['updated_at']);
+                    }
                     $tempArray = $new;
                     $tempArray["supplierPaymentCurrencyID"] = $payMaster["BPVbankCurrency"];
                     $tempArray["supplierPaymentER"] = $payMaster["BPVbankCurrencyER"];
