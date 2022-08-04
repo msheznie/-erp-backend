@@ -3522,7 +3522,26 @@ WHERE
                             $x++;
                         }
                     }
-                } else if ($request->tempType == 2) {
+                }
+                else if ($request->tempType == 3) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->BPVcode;
+                            $data[$x]['PV Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->BPVNarration;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->payAmountSuppTrans;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
+                } else {
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -3541,25 +3560,6 @@ WHERE
                             $data[$x]['Net Value'] = $val->bookingAmountTrans;
                             $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Due Amount'] = ($val->bookingAmountTrans + $val->taxTotalAmount);
-                            $data[$x]['Posted Date'] = $val->postedDate;
-                            $x++;
-                        }
-                    }
-                }
-                else if ($request->tempType == 3) {
-                    if ($output) {
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Document Code'] = $val->BPVcode;
-                            $data[$x]['PV Date'] = $val->bookingDate;
-                            $data[$x]['Narration'] = $val->BPVNarration;
-                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Currency'] = $val->CurrencyCode;
-                            $data[$x]['Value'] = $val->payAmountSuppTrans;
-                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
-                            $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Posted Date'] = $val->postedDate;
                             $x++;
                         }
@@ -5079,52 +5079,7 @@ WHERE DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
 AND MASTER.approved = - 1
 AND MASTER.cancelYN = 0';
         }
-       else if ($request->tempType == 2) {
-            $query = 'SELECT
-	MASTER .companyID,
-	MASTER .bookingInvCode,
-	DATE_FORMAT(
-		MASTER .bookingDate,
-		"%d/%m/%Y"
-	) AS bookingDate,
-	MASTER .comments,
-	customermaster.CutomerCode,
-	customermaster.customerShortCode,
-	customermaster.CustomerName,
-	currencymaster.CurrencyCode,
-	currencymaster.DecimalPlaces,
-MASTER.bookingAmountTrans,
-	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
-	DATE_FORMAT(
-		MASTER .postedDate,
-		"%d/%m/%Y"
-	) AS postedDate
-FROM
-	erp_custinvoicedirect AS MASTER
-INNER JOIN customermaster ON customermaster.customerCodeSystem = MASTER.customerID
-INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.custTransactionCurrencyID
-LEFT JOIN (
-	SELECT
-		taxdetail.documentSystemID,
-		taxdetail.companySystemID,
-		taxdetail.documentSystemCode,
-		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
-	FROM
-		erp_taxdetail AS taxdetail
-	GROUP BY
-		taxdetail.documentSystemID,
-		taxdetail.companySystemID,
-		taxdetail.documentSystemCode
-) tax ON tax.documentSystemID = MASTER .documentSystemID
-AND tax.companySystemID = MASTER .companySystemID
-AND tax.documentSystemCode = MASTER .custInvoiceDirectAutoID
-WHERE
-	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
-AND MASTER .approved = - 1
-AND MASTER .canceledYN = 0';
-        }
-       else if ($request->tempType == 3){
+        else if ($request->tempType == 3){
            $query = 'SELECT
 	MASTER .companyID,
 	MASTER .BPVcode,
@@ -5170,6 +5125,51 @@ AND MASTER .approved = - 1
 AND MASTER .cancelYN = 0
 AND MASTER .invoiceType = 3';
        }
+        else {
+            $query = 'SELECT
+	MASTER .companyID,
+	MASTER .bookingInvCode,
+	DATE_FORMAT(
+		MASTER .bookingDate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .comments,
+	customermaster.CutomerCode,
+	customermaster.customerShortCode,
+	customermaster.CustomerName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+MASTER.bookingAmountTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_custinvoicedirect AS MASTER
+INNER JOIN customermaster ON customermaster.customerCodeSystem = MASTER.customerID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.custTransactionCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .custInvoiceDirectAutoID
+WHERE
+	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER .approved = - 1
+AND MASTER .canceledYN = 0';
+        }
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
