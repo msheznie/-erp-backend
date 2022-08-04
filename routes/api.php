@@ -957,6 +957,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
         Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
         Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
+        Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails');
+
+        
         Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
         Route::post('getMultipleAccountsByBank', 'PaySupplierInvoiceMasterAPIController@getMultipleAccountsByBank');
         Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
