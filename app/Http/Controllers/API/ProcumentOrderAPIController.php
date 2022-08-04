@@ -479,6 +479,18 @@ class ProcumentOrderAPIController extends AppBaseController
         if (isset($input['VATAmountPreview'])) {
             unset($input['VATAmountPreview']);
         }
+        
+        if (isset($input['totalSubOrderAmountPreview'])) {
+            unset($input['totalSubOrderAmountPreview']);
+        }
+        
+        if (isset($input['totalAddonAmountPreview'])) {
+            unset($input['totalAddonAmountPreview']);
+        }
+        
+        if (isset($input['totalOrderAmountPreview'])) {
+            unset($input['totalOrderAmountPreview']);
+        }
 
         // po total vat
         $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
@@ -498,14 +510,15 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+        // $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
        // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
-        // return $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        $advancedPaymentFomated = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
     
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
      
-            if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
+            if(abs($advancedPaymentFomated - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
