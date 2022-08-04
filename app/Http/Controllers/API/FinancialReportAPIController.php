@@ -3522,7 +3522,7 @@ WHERE
                             $x++;
                         }
                     }
-                } else {
+                } else if ($request->tempType == 2) {
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -3541,6 +3541,25 @@ WHERE
                             $data[$x]['Net Value'] = $val->bookingAmountTrans;
                             $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Due Amount'] = ($val->bookingAmountTrans + $val->taxTotalAmount);
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
+                }
+                else if ($request->tempType == 3) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->BPVcode;
+                            $data[$x]['PV Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->BPVNarration;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->payAmountSuppTrans - $val->taxTotalAmount;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Posted Date'] = $val->postedDate;
                             $x++;
                         }
