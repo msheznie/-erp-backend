@@ -2750,6 +2750,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
     Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen');
+    Route::post('validateSupplierAmend', 'SupplierMasterAPIController@validateSupplierAmend');
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
