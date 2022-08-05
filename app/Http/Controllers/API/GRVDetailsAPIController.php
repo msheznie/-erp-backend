@@ -1546,6 +1546,7 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['modifiedPc'] = gethostname();
             $GRVDetail_arr['modifiedUser'] = $user->empID;
+            $GRVDetail_arr['detail_project_id'] = $input['detail_project_id'];
 
             $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
 
