@@ -1848,7 +1848,7 @@ class SupplierMasterAPIController extends AppBaseController
         $successMessages = [];
         $amendable = [];
 
-        $grvMaster = GRVMaster::where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)->first();
+        $grvMaster = GRVMaster::where('supplierID', $input['supplierID'])->where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)->first();
 
         if ($grvMaster) {
             $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in good receipt voucher";
@@ -1858,7 +1858,7 @@ class SupplierMasterAPIController extends AppBaseController
             $amendable['unbilledAmendable'] = true;
         }
 
-        $suppInv = BookInvSuppMaster::where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
+        $suppInv = BookInvSuppMaster::where('supplierID', $input['supplierID'])->where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
 
         if ($suppInv) {
             $errorMessages[] = "Liability Account cannot be amended. Since, it has been used in supplier invoice";
@@ -1868,7 +1868,7 @@ class SupplierMasterAPIController extends AppBaseController
             $amendable['liablityAmendable'] = true;
         }
 
-        $paySupp = PaySupplierInvoiceMaster::where('advanceAccountSystemID', $supplierMaster->advanceAccountSystemID)->first();
+        $paySupp = PaySupplierInvoiceMaster::where('BPVsupplierID', $input['supplierID'])->where('advanceAccountSystemID', $supplierMaster->advanceAccountSystemID)->first();
 
         if ($paySupp) {
             $errorMessages[] = "Advance Account cannot be amended. Since, it has been used in payment voucher";
