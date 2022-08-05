@@ -1858,6 +1858,19 @@ class SupplierMasterAPIController extends AppBaseController
             $amendable['unbilledAmendable'] = true;
         }
 
+        $suppInvUn = BookInvSuppMaster::where('supplierID', $input['supplierID'])
+                                      ->where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)
+                                      ->whereIn('documentType', [0,2])
+                                      ->first();
+
+        if ($grvMaster) {
+            $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in supplier invoice";
+            $amendable['unbilledAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Unbilled Account checking is done in supplier invoice";
+            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? true : false;
+        }
+
         $suppInv = BookInvSuppMaster::where('supplierID', $input['supplierID'])->where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
 
         if ($suppInv) {
