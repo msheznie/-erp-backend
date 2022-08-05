@@ -1072,8 +1072,9 @@ class ItemIssueMasterAPIController extends AppBaseController
         $contracts = "";
 
         $units = Unit::all();
-
+        $job = [["id"=>1,"number"=>23],["id"=>2,"number"=>456]];
         $output = array(
+            'job_no' => $job,
             'segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1456,6 +1457,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         return $itemIssue->details;
+
+    }
+
+    public function checkManWareHouse(Request $request)
+    {
+       $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($request->wareHouseId);
+       return $this->sendResponse($is_manu, 'Data retrived!');
 
     }
 
