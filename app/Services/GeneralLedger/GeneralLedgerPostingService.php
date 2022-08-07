@@ -216,7 +216,9 @@ class GeneralLedgerPostingService
                         if ($suppInvData->invoiceType == 6) {
                             $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel, $dataBase);
                         } else {
-                            $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
+                            if ($suppInvData->invoiceType != 3) {
+                                $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                            }
                         }
                     } else {
                         $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
