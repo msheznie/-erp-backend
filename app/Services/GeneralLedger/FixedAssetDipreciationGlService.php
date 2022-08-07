@@ -88,7 +88,7 @@ class FixedAssetDipreciationGlService
 
         $debit = DB::table('erp_fa_assetdepreciationperiods')
             ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.depglCodeSystemID,erp_fa_asset_master.DEPGLCODE,
-                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
+                                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
             ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')
             ->join('chartofaccounts', 'chartOfAccountSystemID', 'depglCodeSystemID')
             ->where('depMasterAutoID', $masterModel["autoID"])
@@ -97,7 +97,7 @@ class FixedAssetDipreciationGlService
 
         $credit = DB::table('erp_fa_assetdepreciationperiods')
             ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.accdepglCodeSystemID,erp_fa_asset_master.ACCDEPGLCODE,
-                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
+                                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
             ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')
             ->join('chartofaccounts', 'chartOfAccountSystemID', 'accdepglCodeSystemID')
             ->where('depMasterAutoID', $masterModel["autoID"])
@@ -203,18 +203,18 @@ class FixedAssetDipreciationGlService
                     }
                 }
             }
-        }  
+        }
         else if($masterData->is_acc_dep)
         {
 
             $accumulate_Dep = DB::table('erp_fa_assetdepreciationperiods')
-            ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.*,
-                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
-            ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')
-            ->join('chartofaccounts', 'chartOfAccountSystemID', 'depglCodeSystemID')
-            ->where('depMasterAutoID', $masterModel["autoID"])
-            ->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.depglCodeSystemID')
-            ->first();
+                ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.*,
+                                        SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL,catogaryBLorPLID')
+                ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', 'erp_fa_assetdepreciationperiods.faID')
+                ->join('chartofaccounts', 'chartOfAccountSystemID', 'depglCodeSystemID')
+                ->where('depMasterAutoID', $masterModel["autoID"])
+                ->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID', 'erp_fa_asset_master.depglCodeSystemID')
+                ->first();
             $gl_data = array();
             $gl_data['companySystemID'] = $masterData->companySystemID;
             $gl_data['companyID'] = $masterData->companyID;
@@ -245,16 +245,16 @@ class FixedAssetDipreciationGlService
             $gl_data['supplierCodeSystem'] = 0;
 
 
-            
+
             $gl_data['documentTransCurrencyID'] = 0;
             $gl_data['documentTransCurrencyER'] = 0;
             $gl_data['documentTransAmount'] = 0;
             $gl_data['documentLocalCurrencyID'] = $masterData->depLocalCur;
             $gl_data['documentLocalCurrencyER'] = 0;
-           
+
             $gl_data['documentRptCurrencyID'] = $masterData->depRptCur;
             $gl_data['documentRptCurrencyER'] = 0;
-          
+
             $gl_data['holdingShareholder'] = null;
             $gl_data['holdingPercentage'] = 0;
             $gl_data['nonHoldingPercentage'] = 0;
@@ -266,18 +266,18 @@ class FixedAssetDipreciationGlService
 
             if($accumulate_Dep->postToGLYN)
             {
-                $finalData1 = [1,2,3];
+                $finalData1 = [1,2];
                 foreach ($finalData1 as $da) {
-                    
+
                     if($da == 1)
                     {
-                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->costglCodeSystemID;
-                        $gl_data['glCode'] = $accumulate_Dep->COSTGLCODE;
+                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->postToGLCodeSystemID;
+                        $gl_data['glCode'] = $accumulate_Dep->postToGLCode;
                         $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
                         $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
 
-                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT * -1;
-                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt * -1;
+                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl;
+                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt;
                     }
                     else if($da == 2)
                     {
@@ -286,28 +286,17 @@ class FixedAssetDipreciationGlService
                         $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
                         $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
 
-                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl;
-                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt;
+                        $gl_data['documentLocalAmount'] = $accumulate_Dep->accumulated_depreciation_amount_lcl*-1;
+                        $gl_data['documentRptAmount'] = $accumulate_Dep->accumulated_depreciation_amount_rpt*-1;
                     }
-                    
-                    else if($da == 3)
-                    {
-                        
-                        $gl_data['chartOfAccountSystemID'] = $accumulate_Dep->postToGLCodeSystemID;
-                        $gl_data['glCode'] = $accumulate_Dep->postToGLCode;
-                        $gl_data['glAccountType'] = ChartOfAccount::getGlAccountType($gl_data['chartOfAccountSystemID']);
-                        $gl_data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl_data['chartOfAccountSystemID']);
 
-                        $gl_data['documentLocalAmount'] = $accumulate_Dep->COSTUNIT - $accumulate_Dep->accumulated_depreciation_amount_lcl;
-                        $gl_data['documentRptAmount'] = $accumulate_Dep->costUnitRpt - $accumulate_Dep->accumulated_depreciation_amount_rpt;
-                    }
                     array_push($finalData, $gl_data);
-                   
+
                 }
             }
-        
-        }  
-        
+
+        }
+
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
     }
 }
