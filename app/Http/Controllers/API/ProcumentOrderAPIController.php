@@ -7733,7 +7733,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $invoiceMaster = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
             ->with(['transactioncurrency'])
             ->first();
-
+        
         //supplierPaymentAmount
         $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
@@ -7825,7 +7825,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 } else {
                     $temp2['cssClass'] = "ngx-org-step-two";
                 }
-                $temp2['name'] = "Debit Note";
+                if($value2['matching_master']['documentSystemID'] == 4)
+                {   
+                    $temp2['name'] = "Payment";
+                }
+                else if($value2['matching_master']['documentSystemID'] == 15)
+                {
+                    $temp2['name'] = "Debit Note";
+                }
+
+                
                 $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                 $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
                 $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchedAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
