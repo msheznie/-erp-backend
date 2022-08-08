@@ -211,6 +211,13 @@ class GeneralLedgerPostingService
                         } else {
                             $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
                         }
+                    } else if ($masterModel["documentSystemID"] == 15) {
+                        $debitNoteData = DebitNote::find($masterModel["autoID"]);
+                        if ($debitNoteData->type == 2) {
+                            $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel);
+                        } else {
+                            $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                        }
                     } else if ($masterModel["documentSystemID"] == 4) {
                         $suppInvData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
                         if ($suppInvData->invoiceType == 6) {
