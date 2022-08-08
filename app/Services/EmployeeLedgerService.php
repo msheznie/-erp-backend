@@ -162,6 +162,61 @@ class EmployeeLedgerService
                     }
                 }
                 break;
+            case 15: // Debite Note
+
+                // $masterData = DebitNote::with(['detail' => function ($query) {
+                //     $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount');
+                // }])->find($masterModel["autoID"]);
+
+                $masterData = DebitNote::with(['detail'])->find($masterModel["autoID"]);
+
+                $localAmount = 0;
+                $rptAmount = 0;
+                foreach($masterData['detail'] as $detail)
+                {
+                    $localAmount+=$detail->localAmount;
+                    $rptAmount+=$detail->comRptAmount;
+                }
+
+                if($masterData->type == 2) {
+                    $masterDocumentDate = date('Y-m-d H:i:s');
+
+                    if ($masterData) {
+                        $data['companySystemID'] = $masterData->companySystemID;
+                        $data['companyID'] = $masterData->companyID;
+                        $data['documentSystemID'] = $masterData->documentSystemID;
+                        $data['documentID'] = $masterData->documentID;
+                        $data['documentSystemCode'] = $masterModel["autoID"];
+                        $data['documentCode'] = $masterData->debitNoteCode;
+                        $data['documentDate'] = $masterData->debitNoteDate;
+                        $data['employeeSystemID'] = $masterData->empID;
+                        $data['supplierInvoiceNo'] = 'NA';
+                        $data['supplierInvoiceDate'] = $masterData->debitNoteDate;
+                        $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                        $data['supplierTransER'] = $masterData->supplierTransactionCurrencyER;
+                        $data['supplierInvoiceAmount'] = NULL;
+                        $data['supplierDefaultCurrencyID'] = NULL;
+                        $data['supplierDefaultCurrencyER'] = NULL;
+                        $data['supplierDefaultAmount'] = NULL;
+                        $data['localCurrencyID'] = $masterData->localCurrencyID;
+                        $data['localER'] = $masterData->localCurrencyER;
+                        $data['localAmount'] = \Helper::roundValue(ABS($localAmount) * -1);
+                        $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                        $data['comRptER'] = $masterData->companyReportingER;
+                        $data['comRptAmount'] = \Helper::roundValue(ABS($rptAmount) * -1);
+                        $data['isInvoiceLockedYN'] = 0;
+                        $data['invoiceType'] = $masterData->type;
+                        $data['selectedToPaymentInv'] = 0;
+                        $data['fullyInvoice'] = 0;
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $empID->empID;
+                        $data['createdUserSystemID'] = $empID->employeeSystemID;
+                        $data['createdPcID'] = gethostname();
+                        $data['timeStamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+                    }
+                }
+                break;
            default:
                 Log::warning('Document ID not found ' . date('H:i:s'));
         }
